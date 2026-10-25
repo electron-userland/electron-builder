@@ -69,6 +69,27 @@ test("parseDn", ({ expect }) => {
   expect(load("publisherName:\n  - 7digital Limited")).toMatchObject({ publisherName: ["7digital Limited"] })
 })
 
+test("parseDn decodes escaped characters", ({ expect }) => {
+  // a "\\+" escape followed by a hex digit, and UTF-8 hex pairs as `openssl x509 -nameopt RFC2253` prints them
+  const dn = parseDn("CN=Acme\\+Bolt Caf\\C3\\A9, O=Acme, C=FR")
+  expect(dn.get("CN")).toEqual("Acme+Bolt Café")
+  expect(dn.get("O")).toEqual("Acme")
+  expect(dn.get("C")).toEqual("FR")
+})
+
+test("parseDn decodes single-byte hex escapes that are not UTF-8 as Latin-1", ({ expect }) => {
+  expect(parseDn("CN=M\\FCller").get("CN")).toEqual("Müller")
+  expect(parseDn("CN=Caf\\E9").get("CN")).toEqual("Café")
+  expect(parseDn("CN=Caf\\C3\\A9").get("CN")).toEqual("Café")
+})
+
+test("parseDn decodes a hex escape run mixing UTF-8 and Latin-1 per sequence", ({ expect }) => {
+  expect(parseDn("CN=Caf\\C3\\A9\\FC").get("CN")).toEqual("Caféü")
+  expect(parseDn("CN=\\FC\\C3\\A9").get("CN")).toEqual("üé")
+  // a truncated UTF-8 sequence falls back to Latin-1
+  expect(parseDn("CN=\\C3").get("CN")).toEqual("Ã")
+})
+
 const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
 
 const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
