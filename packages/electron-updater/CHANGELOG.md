@@ -1,5 +1,27 @@
 ## 4.3.0
 
+## 6.8.12
+
+### Patch Changes
+
+- Fix(updater): every request of a differential download (single-range, multi-range and reading the embedded block map) follows redirects itself: credential headers such as `Authorization`, `PRIVATE-TOKEN`, `X-Api-Key` and `Cookie` are sent to a redirect target only on the same origin, each multi-range request starts at the update URL, at most 10 redirects are followed per request, and an invalid redirect URL fails the download instead of leaving it waiting _[`#10447`](https://github.com/electron-userland/electron-builder/pull/10447) [`99e0dc5`](https://github.com/electron-userland/electron-builder/commit/99e0dc523c8613f172be75e5fc91d643a277e2e2) [@claude](https://github.com/apps/claude)_
+- Fix(updater): differential downloads made with single range requests no longer send credential headers such as `Authorization` to a redirect target on another origin, which made pre-signed S3 or R2 URLs reject the range requests and forced a full download _[`#10427`](https://github.com/electron-userland/electron-builder/pull/10427) [`a1a74b1`](https://github.com/electron-userland/electron-builder/commit/a1a74b18587e430fb0e7759861d0930786f26408) [@claude](https://github.com/apps/claude)_
+- Fix: stop following redirects after 10 hops on the Electron path, matching the Node path _[`#10452`](https://github.com/electron-userland/electron-builder/pull/10452) [`d80fc04`](https://github.com/electron-userland/electron-builder/commit/d80fc04b464db059c24287349523810ca0aac291) [@claude](https://github.com/apps/claude)_
+- Fix(nsis): don't plan a differential download against a cached block map of another release. The cached block map is replaced when a download finishes, but the cached installer only when the update is installed, so a release found before the previous one was installed was planned against the wrong base: every differential byte was downloaded, the sha512 check failed, and the full installer was downloaded too. A cached block map that does not end at the cached installer's size is now ignored and the installed version's block map is fetched from the server. _[`#10338`](https://github.com/electron-userland/electron-builder/pull/10338) [`6f2dd83`](https://github.com/electron-userland/electron-builder/commit/6f2dd83818d128a4b112fa4cc0684a7c55418494) [@imlucas](https://github.com/imlucas)_
+- Fix: reject update download redirects to non-HTTP(S) URLs instead of throwing an uncaught exception _[`#10450`](https://github.com/electron-userland/electron-builder/pull/10450) [`1c5002e`](https://github.com/electron-userland/electron-builder/commit/1c5002eb62d5d816a745bb88ad8c5c9757fe9c6e) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`ed8990b`](https://github.com/electron-userland/electron-builder/commit/ed8990b0ac163add8aab74ceda11935304b3f237) [`99e0dc5`](https://github.com/electron-userland/electron-builder/commit/99e0dc523c8613f172be75e5fc91d643a277e2e2) [`02d65d5`](https://github.com/electron-userland/electron-builder/commit/02d65d5aa08e551697539e532ed50063ce27331e)
+
+</small>
+
+- `builder-util-runtime@9.7.1`
+
+</details>
+
 ## 6.8.11
 
 ### Patch Changes
