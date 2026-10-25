@@ -1,4 +1,4 @@
-import { BinaryToTextEncoding, createHash, Hash } from "crypto"
+import { BinaryToTextEncoding, createHash, Hash, randomBytes, scryptSync } from "crypto"
 import _debug from "debug"
 import { createWriteStream } from "fs"
 import { IncomingMessage, OutgoingHttpHeader, OutgoingHttpHeaders, RequestOptions } from "http"
@@ -635,8 +635,28 @@ export function isSensitiveFieldName(name: string): boolean {
   return SENSITIVE_FIELD_PATTERNS.some(p => normalized.includes(p)) || SENSITIVE_FIELD_SUFFIXES.some(s => normalized.endsWith(s))
 }
 
+// The key of the fingerprints of this process, created on first use and never logged
+let fingerprintKey: Buffer | null = null
+
+/** What a sensitive value is logged as when its fingerprint cannot be computed. */
+export const REDACTED_VALUE = "<redacted>"
+
+/**
+ * Stands in for a secret (a password, token or key) in logs and error messages: a fingerprint that is the same for the same
+ * value within this process, so log lines can be compared, but that cannot be checked against guesses offline, since it is
+ * keyed with a random secret of this process. Derived with scrypt at a low cost: it runs whenever a secret is logged. Never
+ * throws: it returns {@link REDACTED_VALUE} when the fingerprint cannot be computed.
+ */
 export function hashSensitiveValue(value: string): string {
-  return `${createHash("sha256").update(value).digest("hex")} (sha256 hash)`
+  try {
+    if (fingerprintKey == null) {
+      fingerprintKey = randomBytes(32)
+    }
+    const fingerprint = scryptSync(String(value), fingerprintKey, 16, { N: 1024, r: 8, p: 1 }).toString("hex")
+    return `${fingerprint} (redacted fingerprint)`
+  } catch {
+    return REDACTED_VALUE
+  }
 }
 
 export function safeStringifyJson(data: any, skippedNames?: Set<string>): string {

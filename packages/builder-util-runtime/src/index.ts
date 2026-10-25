@@ -13,6 +13,7 @@ export {
   HttpExecutor,
   isSensitiveFieldName,
   parseJson,
+  REDACTED_VALUE,
   RequestHeaders,
   safeGetHeader,
   safeStringifyJson,
