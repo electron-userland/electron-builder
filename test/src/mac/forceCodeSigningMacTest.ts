@@ -199,12 +199,82 @@ describe("MacPackager.sign under forceCodeSigning", () => {
     )
   })
 
-  test("without forceCodeSigning, a custom signer without an identity is still skipped and nothing is verified", async ({ expect }) => {
-    const packager = makeMacPackager({ sign: vi.fn(), notarize: false }, false)
+  test("without forceCodeSigning, a custom signer without a keychain identity is called too, saying so, and its output is not verified", async ({ expect }) => {
+    const info = vi.spyOn(log, "info").mockImplementation(() => undefined)
+    const customSign = vi.fn()
+    const packager = makeMacPackager({ sign: customSign, notarize: false }, false)
+    packager.helper.buildSignOptions = vi.fn(() => Promise.resolve({ app: "/out/mac/My.app" }))
     packager.doSign = vi.fn(() => Promise.resolve())
-    await expect(sign(packager)).resolves.toBe("skipped:no-certificate")
-    expect(packager.doSign).not.toHaveBeenCalled()
+    await expect(sign(packager)).resolves.toBe("signed:custom")
+    expect(packager.doSign).toHaveBeenCalledWith({ app: "/out/mac/My.app" }, customSign, null)
+    expect(info).toHaveBeenCalledWith(expect.objectContaining({ reason: "no keychain identity was found" }), "calling the custom mac.sign signer without an identity")
     expect(verifyMacCodeSignature).not.toHaveBeenCalled()
+  })
+
+  test("without forceCodeSigning, a MAS app is not signed by a custom signer without a keychain identity, which warns", async ({ expect }) => {
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    const packager = makeMacPackager({ sign: vi.fn() }, false)
+    packager.forceCodeSigningFor = () => false
+    packager.doSign = vi.fn(() => Promise.resolve())
+    await expect(packager.sign("/out/mas/My.app", Arch.x64, "mas")).resolves.toBe("skipped:no-certificate")
+    expect(packager.doSign).not.toHaveBeenCalled()
+    expect(warn).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: expect.stringContaining("the MAS installer needs one") }),
+      expect.stringContaining("is not called for the MAS app")
+    )
+  })
+})
+
+// mas and masDev cascade over mac like every other option, then the root value applies
+describe("forceCodeSigning of the Mac App Store flavors", () => {
+  // like makeMacPackager, but with the real forceCodeSigning getter and a root configuration
+  function packagerWith(root: any, macConfig: any = {}): any {
+    const packager = Object.create(MacPackager.prototype)
+    packager.platform = Platform.MAC
+    packager.platformSpecificBuildOptions = macConfig
+    packager.info = { config: root, options: {}, getWorkspaceRoot: () => Promise.resolve("/project") }
+    packager.appInfo = { type: "module", productFilename: "My" }
+    packager.helper = new MacTargetHelper(packager)
+    packager.codeSigningInfo = { value: Promise.resolve({ keychainFile: null }) }
+    return packager
+  }
+  const signFlavor = (packager: any, platformType: string) => packager.sign("/out/mas/My.app", Arch.x64, platformType)
+  const preflight = (packager: any, ...targetNames: Array<string>) =>
+    (MacPackager.prototype as any).checkForceCodeSigningAtBuildStart.call(packager, [{ packager, arch: Arch.x64, targets: targetNames.map(name => ({ name })) }])
+
+  test("mas.forceCodeSigning and masDev.forceCodeSigning apply to their flavors, and not to the macOS app", ({ expect }) => {
+    const masOnly = packagerWith({ mas: { forceCodeSigning: true } })
+    expect([masOnly.forceCodeSigningFor("mac"), masOnly.forceCodeSigningFor("mas"), masOnly.forceCodeSigningFor("mas-dev")]).toEqual([false, true, true])
+    const masDevOnly = packagerWith({ masDev: { forceCodeSigning: true } })
+    expect([masDevOnly.forceCodeSigningFor("mac"), masDevOnly.forceCodeSigningFor("mas"), masDevOnly.forceCodeSigningFor("mas-dev")]).toEqual([false, false, true])
+    // mac and the root value cascade to the MAS flavors, unless mas turns it off
+    expect(packagerWith({}, { forceCodeSigning: true }).forceCodeSigningFor("mas")).toBe(true)
+    expect(packagerWith({ forceCodeSigning: true }).forceCodeSigningFor("mas-dev")).toBe(true)
+    const masOff = packagerWith({ mas: { forceCodeSigning: false } }, { forceCodeSigning: true })
+    expect([masOff.forceCodeSigningFor("mac"), masOff.forceCodeSigningFor("mas")]).toEqual([true, false])
+  })
+
+  test("signing a MAS app fails where it cannot sign, naming the mas override, while the macOS app is not forced", async ({ expect }) => {
+    setPlatform("linux")
+    const packager = packagerWith({ mas: { forceCodeSigning: true } })
+    const error = await errorOf(signFlavor(packager, "mas"))
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toContain("-c.mas.forceCodeSigning=false")
+    await expect(signFlavor(packager, "mac")).resolves.toBe("skipped:unsupported")
+    expect((await errorOf(signFlavor(packagerWith({ masDev: { forceCodeSigning: true } }), "mas-dev"))).message).toContain("-c.masDev.forceCodeSigning=false")
+    // mas: false turns off what mac enables, for the MAS app only
+    await expect(signFlavor(packagerWith({ mas: { forceCodeSigning: false } }, { forceCodeSigning: true }), "mas")).resolves.toBe("skipped:unsupported")
+  })
+
+  test("the build-start preflight checks the flavors that are built, each with its own value", ({ expect }) => {
+    setPlatform("linux")
+    const masForced = packagerWith({ mas: { forceCodeSigning: true } })
+    expect(() => preflight(masForced, "mas")).toThrow("-c.mas.forceCodeSigning=false")
+    // the macOS app of this build is not forced, so a dmg-only build passes
+    expect(() => preflight(masForced, "dmg")).not.toThrow()
+    const macForcedMasOff = packagerWith({ mas: { forceCodeSigning: false } }, { forceCodeSigning: true, notarize: false })
+    expect(() => preflight(macForcedMasOff, "mas")).not.toThrow()
+    expect(() => preflight(macForcedMasOff, "dmg")).toThrow("macOS code signing needs a macOS host")
   })
 })
 
@@ -315,6 +385,8 @@ describe("a prepackaged app under forceCodeSigning", () => {
 describe("the MAS installer under forceCodeSigning", () => {
   function makeInstallerPackager(forceCodeSigning: boolean): any {
     const packager = makeMacPackager({}, forceCodeSigning)
+    // the MAS installer follows the forceCodeSigning of its flavor
+    packager.forceCodeSigningFor = (platformType: string) => platformType === "mas" && forceCodeSigning
     packager.expandArtifactNamePattern = () => "My-1.0.0.pkg"
     packager.doFlat = vi.fn(() => Promise.resolve())
     packager.emitArtifactBuildCompleted = vi.fn(() => Promise.resolve())

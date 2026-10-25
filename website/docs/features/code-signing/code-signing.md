@@ -196,7 +196,7 @@ What it enforces:
 
 Explicit opt-outs are honored, with a warning: `mac.notarize: false`, `updateManifest: false`, `win.signExts` exclusions and a custom `nsis.script`. `win.sign: false` and `mac.sign: null` contradict `forceCodeSigning` and fail the build.
 
-A platform-level value (`mac.forceCodeSigning`, `win.forceCodeSigning`, `linux.forceCodeSigning`) overrides the root one. To check a finished build — for example artifacts downloaded from CI — run [`electron-builder verify`](../../cli.md#verify).
+A platform-level value (`mac.forceCodeSigning`, `win.forceCodeSigning`, `linux.forceCodeSigning`) overrides the root one. Mac App Store targets cascade `mac` → `mas` → `masDev` like every other option, so `mas.forceCodeSigning` and `masDev.forceCodeSigning` apply to the `mas` / `mas-dev` targets only (for example `mas.forceCodeSigning: false` with `mac.forceCodeSigning: true` signs the MAS app without enforcing it). To check a finished build — for example artifacts downloaded from CI — run [`electron-builder verify`](../../cli.md#verify).
 
 ## Platform-Specific Guides
 

@@ -1,6 +1,13 @@
 import { collectManifestSignatures, UpdateInfo, verifyManifestSignatures } from "builder-util-runtime"
 import { KeyObject } from "crypto"
 import { load } from "js-yaml"
+import * as path from "path"
+
+/** The platform of an update manifest, by its file name: `latest-mac.yml`, `beta-linux-arm64.yml`, or `latest.yml` (Windows). */
+export function updateManifestPlatform(file: string): "mac" | "win" | "linux" {
+  const name = path.basename(file)
+  return /-mac\.ya?ml$/.test(name) ? "mac" : /-linux(-[^.]+)?\.ya?ml$/.test(name) ? "linux" : "win"
+}
 
 export type UpdateManifestVerification = { readonly ok: true; readonly keyId: string } | { readonly ok: false; readonly reason: string }
 

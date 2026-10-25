@@ -92,6 +92,7 @@ export {
   getCacheDirectoryInternal,
   resolveBuilderBinaryUrl,
 } from "./util/electronGet.js"
+export { checkUpdateManifestBeforeUpload } from "./publish/manifestUploadCheck.js"
 export { verifyBuildOutput } from "./util/buildOutputVerifier.js"
 export type { VerificationResult, VerificationStatus, VerifyBuildOutputOptions } from "./util/buildOutputVerifier.js"
 export { buildSourceCandidates, convertIcon, getPngSize } from "./util/iconConverter.js"

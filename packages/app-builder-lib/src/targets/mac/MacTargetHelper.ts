@@ -35,8 +35,8 @@ export class MacTargetHelper {
     return identity?.name === "-"
   }
 
-  handleNullIdentity(): SigningResult {
-    if (this.packager.forceCodeSigning) {
+  handleNullIdentity(targetPlatform: PlatformType): SigningResult {
+    if (this.packager.forceCodeSigningFor(targetPlatform)) {
       throw new InvalidConfigurationError("identity explicitly is set to null, but forceCodeSigning is set to true")
     }
     // The meaning of `mac.sign: null` flipped in v27. In v26 `sign` was only a custom-signer hook, so
@@ -86,7 +86,7 @@ export class MacTargetHelper {
         }
         identity = new Identity("-", undefined)
       } else if (noIdentity) {
-        await reportError(isMas, certificateTypes, qualifier, keychainFile, this.packager.forceCodeSigning)
+        await reportError(isMas, certificateTypes, qualifier, keychainFile, this.packager.forceCodeSigningFor(targetPlatform))
         return null
       }
     }
@@ -291,7 +291,7 @@ export class MacTargetHelper {
 
   async buildSignOptions(
     appPath: string,
-    // null only for a custom signer without a keychain identity, which forceCodeSigning calls anyway (see MacPackager.sign)
+    // null only for a custom signer without a keychain identity, which is called without one (see MacPackager.sign)
     identity: Identity | null,
     config: ElectronSignOptions | null | undefined,
     keychainFile: string | Nullish,
@@ -510,7 +510,7 @@ export class MacTargetHelper {
     MacTargetHelper.assertSafePathForCommandUsage(artifactName, "artifact name")
     const artifactPath = path.resolve(outDir, artifactName)
     await this.packager.doFlat(appPath, artifactPath, masInstallerIdentity, keychainFile)
-    await this.verifyInstallerPackage(artifactPath)
+    await this.verifyInstallerPackage(artifactPath, targetPlatform)
     await this.packager.emitArtifactBuildCompleted({
       file: artifactPath,
       target: null,
@@ -665,8 +665,8 @@ export class MacTargetHelper {
   }
 
   /** Under forceCodeSigning, checks the signature of an installer package electron-builder signed (`pkgutil --check-signature`). */
-  async verifyInstallerPackage(pkg: string): Promise<void> {
-    if (!this.packager.forceCodeSigning) {
+  async verifyInstallerPackage(pkg: string, targetPlatform: PlatformType = "mac"): Promise<void> {
+    if (!this.packager.forceCodeSigningFor(targetPlatform)) {
       return
     }
     const problem = await checkInstallerPackageSignature(pkg)
