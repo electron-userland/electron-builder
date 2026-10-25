@@ -208,4 +208,24 @@ describe("MSI project (.wxs)", () => {
       expect(oneClick[0][1]).not.toContain("WixUIExtension")
     })
   })
+
+  describe("file ids", () => {
+    test("a root-level file id is XML-escaped, like the file name", async ({ expect, tmpDir }) => {
+      // app-tree file names are not trusted input; `"`, `<`, `>` and `&` are valid in POSIX file names
+      const name = `a"b<c>&d.txt`
+      for (const schema of ["v3", "v4-preview"] as const) {
+        const project = await renderProject(tmpDir, { schema, files: [`${PRODUCT_NAME}.exe`, name] })
+        expect(XMLValidator.validate(project), schema).toBe(true)
+        expect(project).toContain(`<File Name="a&quot;b&lt;c&gt;&amp;d.txt"`)
+        expect(project).toContain(` Id="a&quot;b&lt;c&gt;&amp;d.txt_f"`)
+      }
+    })
+
+    test("ordinary root-level file ids are unchanged", async ({ expect, tmpDir }) => {
+      const project = await renderProject(tmpDir, { schema: "v3", files: [`${PRODUCT_NAME}.exe`, "LICENSE.electron.txt", "d3dcompiler_47.dll"] })
+      expect(project).toContain(` Id="LICENSE.electron.txt_f"`)
+      expect(project).toContain(` Id="d3dcompiler_47.dll_f"`)
+      expect(project).toContain(` Id="mainExecutable"`)
+    })
+  })
 })

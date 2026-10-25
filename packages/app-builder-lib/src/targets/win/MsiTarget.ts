@@ -266,7 +266,9 @@ export default class MsiTarget extends Target {
       if (isMainExecutable) {
         result += ' Id="mainExecutable"'
       } else if (directoryId === null) {
-        result += ` Id="${path.basename(packagePath)}_f"`
+        // file names in the app dir are not trusted input, so the id is escaped like the name (candle rejects an id that isn't a
+        // valid identifier, but the project must stay well-formed XML)
+        result += ` Id="${escapeForXml(path.basename(packagePath))}_f"`
       } else if (isWix3) {
         // WiX 3 derives an omitted File/@Id (and so the Component/@Id) from the file name alone, which collides for files of the same
         // name in different directories (LGHT0091). The component GUID is derived from the install path, not from this id.
