@@ -1,5 +1,5 @@
 import { AllPublishOptions } from "builder-util-runtime"
-import { accessSync, constants as fsConstants } from "fs"
+import { accessSync, constants as fsConstants, realpathSync, statSync } from "fs"
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter.js"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
@@ -15,7 +15,44 @@ const SAFE_PM_REGEX = /^[a-zA-Z0-9_-]+$/
  * caller's PATH, which can hold user-writable directories (`~/.local/bin`): a program planted there would run as root
  * once the user authenticates. A relative name is resolved in these system directories instead.
  */
-const TRUSTED_COMMAND_DIRS = ["/usr/sbin", "/usr/bin", "/sbin", "/bin"]
+const TRUSTED_COMMAND_DIRS: readonly string[] = ["/usr/sbin", "/usr/bin", "/sbin", "/bin"]
+
+/** The directories that `dirs` resolve to, following symlinks (`/bin` is `/usr/bin` on merged-/usr systems). */
+function realDirs(dirs: readonly string[]): string[] {
+  const result: string[] = []
+  for (const dir of dirs) {
+    try {
+      result.push(realpathSync(dir))
+    } catch {
+      // a directory this system does not have
+    }
+  }
+  return result
+}
+
+function isWithin(file: string, dir: string): boolean {
+  const relative = path.relative(dir, file)
+  return relative.length !== 0 && !relative.startsWith("..") && !path.isAbsolute(relative)
+}
+
+/**
+ * Whether `candidate` is an executable regular file that, symlinks followed, still lies in one of `trustedRealDirs`.
+ * Symlinks are allowed: package managers are commonly reached through one (`/bin` → `/usr/bin` on merged-/usr systems,
+ * `/usr/bin/dnf` → `dnf5`), and only root can create one in a trusted directory; the target has to be trusted as well.
+ */
+function isTrustedExecutable(candidate: string, trustedRealDirs: readonly string[]): boolean {
+  try {
+    const real = realpathSync(candidate)
+    if (!trustedRealDirs.some(dir => isWithin(real, dir)) || !statSync(real).isFile()) {
+      return false
+    }
+    accessSync(real, fsConstants.X_OK)
+    return true
+  } catch {
+    // missing, or not executable
+    return false
+  }
+}
 
 /**
  * How an install runs a privileged command, resolved once per install so that the installer path
@@ -186,24 +223,33 @@ export abstract class LinuxUpdater extends BaseUpdater {
     return { kind: this.takesArgv(helper[0]) ? "argv" : "wrapped", helper }
   }
 
+  /** Where {@link resolveTrustedCommand} looks up a command name: {@link TRUSTED_COMMAND_DIRS}. Overridden by tests only. */
+  protected get trustedCommandDirs(): readonly string[] {
+    return TRUSTED_COMMAND_DIRS
+  }
+
   /**
-   * Resolves a relative command name in {@link TRUSTED_COMMAND_DIRS}, for a command passed as argv to an elevation
-   * helper. Throws when it is not found there; the install plan treats that as a failed command.
+   * Resolves a relative command name in {@link trustedCommandDirs}, for a command passed as argv to an elevation
+   * helper: the first executable regular file of that name, which, symlinks followed, lies in a trusted directory as
+   * well. Only a bare name is looked up: one with a `/`, `.` and `..` would reach outside those directories. Throws when
+   * it is not found there; the install plan treats that as a failed command.
    */
   protected resolveTrustedCommand(command: string): string {
     if (path.isAbsolute(command)) {
       return command
     }
-    for (const dir of TRUSTED_COMMAND_DIRS) {
+    const dirs = this.trustedCommandDirs
+    if (command.length === 0 || command === "." || command === ".." || command.includes("/") || command.includes("\0")) {
+      throw new Error(`${JSON.stringify(command)} is not a command name, it cannot be looked up in ${dirs.join(":")}`)
+    }
+    const trustedRealDirs = realDirs(dirs)
+    for (const dir of dirs) {
       const candidate = path.join(dir, command)
-      try {
-        accessSync(candidate, fsConstants.X_OK)
+      if (isTrustedExecutable(candidate, trustedRealDirs)) {
         return candidate
-      } catch {
-        // not in this directory
       }
     }
-    throw new Error(`${command} not found in ${TRUSTED_COMMAND_DIRS.join(":")}`)
+    throw new Error(`${command} not found in ${dirs.join(":")}`)
   }
 
   /**

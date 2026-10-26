@@ -1,4 +1,4 @@
-import { mkdir, readdir, writeFile } from "fs/promises"
+import { mkdir, readdir, symlink, writeFile } from "fs/promises"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { spawn, spawnSync } from "child_process"
@@ -234,6 +234,64 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       } finally {
         vi.unstubAllEnvs()
       }
+    })
+
+    describe.skipIf(process.platform === "win32")("in trusted directories", () => {
+      let trustedDir: string
+      let outsideDir: string
+
+      beforeEach(async ({ tmpDir }) => {
+        trustedDir = await tmpDir.getTempDir({ prefix: "trusted-bin" })
+        outsideDir = await tmpDir.getTempDir({ prefix: "user-bin" })
+        await mkdir(trustedDir, { recursive: true })
+        await mkdir(outsideDir, { recursive: true })
+        vi.spyOn(updater as any, "trustedCommandDirs", "get").mockReturnValue([trustedDir])
+      })
+
+      const resolve = (command: string): string => (updater as any).resolveTrustedCommand(command)
+
+      it("finds an executable file", async () => {
+        await writeFile(path.join(trustedDir, "dpkg"), "#!/bin/sh\n", { mode: 0o755 })
+        expect(resolve("dpkg")).toBe(path.join(trustedDir, "dpkg"))
+      })
+
+      it("follows a symlink to an executable file in a trusted directory", async () => {
+        await writeFile(path.join(trustedDir, "dnf5"), "#!/bin/sh\n", { mode: 0o755 })
+        await symlink("dnf5", path.join(trustedDir, "dnf"))
+        expect(resolve("dnf")).toBe(path.join(trustedDir, "dnf"))
+      })
+
+      it.each(["sub/dpkg", "../dpkg", "./dpkg", "..", ".", ""])("rejects %j, which is not a bare command name", async command => {
+        // a file the name would reach, if it were joined with the trusted directory
+        await mkdir(path.join(trustedDir, "sub"), { recursive: true })
+        await writeFile(path.join(trustedDir, "sub", "dpkg"), "#!/bin/sh\n", { mode: 0o755 })
+        expect(() => resolve(command)).toThrow(`${JSON.stringify(command)} is not a command name`)
+      })
+
+      it("rejects a directory", async () => {
+        await mkdir(path.join(trustedDir, "dpkg"))
+        expect(() => resolve("dpkg")).toThrow(`dpkg not found in ${trustedDir}`)
+      })
+
+      it("rejects a file that is not executable", async () => {
+        await writeFile(path.join(trustedDir, "dpkg"), "#!/bin/sh\n", { mode: 0o644 })
+        expect(() => resolve("dpkg")).toThrow(`dpkg not found in ${trustedDir}`)
+      })
+
+      it("rejects a missing command", () => {
+        expect(() => resolve("dpkg")).toThrow(`dpkg not found in ${trustedDir}`)
+      })
+
+      it("rejects a symlink to an executable outside the trusted directories", async () => {
+        await writeFile(path.join(outsideDir, "dpkg"), "#!/bin/sh\n", { mode: 0o755 })
+        await symlink(path.join(outsideDir, "dpkg"), path.join(trustedDir, "dpkg"))
+        expect(() => resolve("dpkg")).toThrow(`dpkg not found in ${trustedDir}`)
+      })
+
+      it("rejects a dangling symlink", async () => {
+        await symlink(path.join(outsideDir, "missing"), path.join(trustedDir, "dpkg"))
+        expect(() => resolve("dpkg")).toThrow(`dpkg not found in ${trustedDir}`)
+      })
     })
   })
 
