@@ -95,6 +95,11 @@ export abstract class LinuxUpdater extends BaseUpdater {
     super(options, app)
   }
 
+  // doInstall runs the install plan to its end before it returns, so a failed install on quit can cancel the quit
+  protected get isQuitCancellable(): boolean {
+    return true
+  }
+
   /**
    * Returns true if the current process is running as root.
    */
@@ -171,6 +176,8 @@ export abstract class LinuxUpdater extends BaseUpdater {
     try {
       runInstallPlan(this.resolveInstallPlan(installerPath), commandWithArgs => this.runCommandWithSudoIfNeeded(commandWithArgs), this._logger)
     } catch (error: unknown) {
+      // on quit, an "error" listener that shows the error has no window left to show it in: the log has it
+      nonThrowingLogger(this._logger).error(`Cannot install update: ${errorMessage(error)}`)
       this.dispatchError(error instanceof Error ? error : new Error(String(error)))
       return false
     }

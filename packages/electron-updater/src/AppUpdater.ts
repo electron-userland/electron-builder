@@ -85,7 +85,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   /**
    * When a downloaded update is automatically installed (if `quitAndInstall` was not called before).
    *
-   * - `"onQuit"` (default) — install on app quit by spawning the installer while the app exits.
+   * - `"onQuit"` (default) — install on app quit by spawning the installer while the app exits. Linux package targets
+   *   (deb, rpm, pacman) install before the app exits: when that fails, for example because the user dismissed the
+   *   authentication dialog, the quit is cancelled and an `error` event is emitted. The app keeps running, with its
+   *   windows already closed, and its next quit is not cancelled and does not try to install again.
    * - `"onNextLaunch"` — defer the install: any app quit persists an install-on-next-launch marker for the downloaded
    *   update; on the next launch the updater re-validates the cached installer against freshly fetched update info and
    *   installs it (see `installPendingUpdateIfAvailable`). This avoids the class of failures where the on-quit installer

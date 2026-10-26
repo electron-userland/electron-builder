@@ -2,7 +2,7 @@ import { createRequire } from "node:module"
 import * as path from "path"
 
 const require = createRequire(import.meta.url)
-import { AppAdapter, getAppCacheDir } from "./AppAdapter.js"
+import { AppAdapter, CancellableQuitEvent, getAppCacheDir } from "./AppAdapter.js"
 
 export class ElectronAppAdapter implements AppAdapter {
   constructor(private readonly app = require("electron").app) {}
@@ -45,6 +45,11 @@ export class ElectronAppAdapter implements AppAdapter {
 
   onQuit(handler: (exitCode: number) => void): void {
     this.app.once("quit", (_: Electron.Event, exitCode: number) => handler(exitCode))
+  }
+
+  onWillQuit(handler: (event: CancellableQuitEvent) => void): void {
+    // `on`, not `once`: a cancelled quit is followed by another one
+    this.app.on("will-quit", (event: Electron.Event) => handler(event))
   }
 
   onSessionEnd(handler: () => void): void {

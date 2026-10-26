@@ -6,7 +6,7 @@ import type { FileHandle } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion } from "semver"
-import { AppAdapter } from "./AppAdapter.js"
+import { AppAdapter, CancellableQuitEvent } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask, UpdateInfoAndProvider } from "./AppUpdater.js"
 import type { Logger, VerifyUpdateFileResult } from "./types.js"
 import { QuitAndInstallOptions, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
@@ -107,6 +107,13 @@ export abstract class BaseUpdater extends AppUpdater {
   private quitHandlerAdded = false
   private sessionEndHandlerAdded = false
   private isSessionEnding = false
+  private willQuitHandlerAdded = false
+  /** Set while {@link runInstallAsync} waits for the install. */
+  private isInstallInFlight = false
+  /** A quit was cancelled to let the running install finish: the app quits once it settled. */
+  private isQuitDeferredUntilInstalled = false
+  /** An install failed while the app was quitting: no later quit in this session tries to install on quit again. */
+  private isInstallOnQuitFailed = false
 
   protected constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
@@ -132,7 +139,7 @@ export abstract class BaseUpdater extends AppUpdater {
     // If NOT in silent mode use `autoRunAppAfterInstall` to determine whether to force run the app
     // the install runs asynchronously on targets whose install shows an elevation dialog (see installAsync), so the
     // app quits once it finished instead of right after this call returns
-    void this.installAsync(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall)
+    void this.runInstallAsync(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall, true)
       .catch((error: unknown) => {
         // installAsync reports install failures itself; this is a failure to report one (an "error" listener that throws)
         nonThrowingLogger(this._logger).error(`Cannot install update: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
@@ -161,6 +168,17 @@ export abstract class BaseUpdater extends AppUpdater {
    * so they keep the pending update for an explicit `installPendingUpdateIfAvailable()` call instead.
    */
   protected get isAutoInstallOnNextLaunchSupported(): boolean {
+    return false
+  }
+
+  /**
+   * Whether a quit can be cancelled for this target (see {@link handleWillQuit}): a quit waits for an install that is
+   * running, and an install on quit that fails cancels the quit, so the app keeps running. Only for targets whose
+   * {@link doInstall} has finished, and knows whether it succeeded, when it returns: the Linux package targets. The
+   * others keep installing in the quit itself, which cannot be cancelled; NSIS, for one, only starts an installer that
+   * runs once the app exited.
+   */
+  protected get isQuitCancellable(): boolean {
     return false
   }
 
@@ -236,18 +254,50 @@ export abstract class BaseUpdater extends AppUpdater {
    * and the desktop reports it as not responding. Targets that do not override {@link doInstallAsync} keep
    * installing synchronously, so their timing is unchanged.
    */
-  async installAsync(isSilent = false, isForceRunAfter = false): Promise<boolean> {
+  installAsync(isSilent = false, isForceRunAfter = false): Promise<boolean> {
+    return this.runInstallAsync(isSilent, isForceRunAfter, false)
+  }
+
+  /**
+   * {@link installAsync}. A quit while the install runs waits for it (see {@link handleWillQuit}) and happens once it
+   * settled; `isQuitOnSuccess` tells that the caller quits by itself once the install succeeded, so that quit is its own.
+   */
+  private async runInstallAsync(isSilent: boolean, isForceRunAfter: boolean, isQuitOnSuccess: boolean): Promise<boolean> {
     const options = this.beginInstall(isSilent, isForceRunAfter)
     if (options == null) {
       return false
     }
 
+    this.addWillQuitHandler()
+    let isInstalled = false
+    this.isInstallInFlight = true
     try {
-      return await this.doInstallAsync(options)
+      isInstalled = await this.doInstallAsync(options)
+      return isInstalled
     } catch (e: any) {
       this.dispatchError(e)
       return false
+    } finally {
+      this.isInstallInFlight = false
+      this.quitIfDeferred(isInstalled, isQuitOnSuccess)
     }
+  }
+
+  private quitIfDeferred(isInstalled: boolean, isQuitOnSuccess: boolean): void {
+    if (!this.isQuitDeferredUntilInstalled) {
+      return
+    }
+    this.isQuitDeferredUntilInstalled = false
+    if (isInstalled && isQuitOnSuccess) {
+      // quitAndInstall and the install on launch quit once the install succeeded
+      return
+    }
+    if (!isInstalled) {
+      // the user cancelled the authentication dialog, for example: quitting must not show it again
+      this.isInstallOnQuitFailed = true
+    }
+    nonThrowingLogger(this._logger).info("The update install finished, quitting")
+    setImmediate(() => this.app.quit())
   }
 
   /**
@@ -358,7 +408,7 @@ export abstract class BaseUpdater extends AppUpdater {
     await downloadedUpdateHelper.clearPendingInstallMarker(this._logger)
     this.updateInfoAndProvider = updateInfoAndProvider
     this._logger.info(`Installing pending update ${latestInfo.version} on launch`)
-    const isInstalled = await this.installAsync(true, true)
+    const isInstalled = await this.runInstallAsync(true, true, true)
     if (isInstalled) {
       setImmediate(() => this.app.quit())
     } else {
@@ -405,6 +455,7 @@ export abstract class BaseUpdater extends AppUpdater {
     }
 
     this.quitHandlerAdded = true
+    this.addWillQuitHandler()
 
     this.app.onQuit(exitCode => {
       if (this.quitAndInstallCalled) {
@@ -436,9 +487,87 @@ export abstract class BaseUpdater extends AppUpdater {
         return
       }
 
+      if (this.isInstallOnQuitFailed) {
+        this._logger.info("Update will not be installed on quit because installing it failed earlier in this session")
+        return
+      }
+
       this._logger.info("Auto install update on quit")
       this.install(true, false)
     })
+  }
+
+  private addWillQuitHandler(): void {
+    if (this.willQuitHandlerAdded || !this.isQuitCancellable || this.app.onWillQuit == null) {
+      return
+    }
+
+    this.willQuitHandlerAdded = true
+    this.app.onWillQuit(event => this.handleWillQuit(event))
+  }
+
+  /** Whether the quit handler would install the downloaded update now; it logs why not, when not. */
+  private get isInstallOnQuitDue(): boolean {
+    return (
+      this.quitHandlerAdded &&
+      !this.quitAndInstallCalled &&
+      !this.isInstallOnQuitFailed &&
+      !this.isSessionEnding &&
+      this.installerPath != null &&
+      this.autoInstallEvent === "onQuit"
+    )
+  }
+
+  /**
+   * Runs on every quit that can still be cancelled (Electron's `will-quit`: after all windows closed, not for
+   * `app.exit()`), for targets where {@link isQuitCancellable}. It never throws.
+   * - While an install runs (an explicit `quitAndInstall()`, the install on launch), the quit waits for it: when it is
+   *   cancelled, the update would be left half installed, and the app would not be relaunched.
+   * - The install on quit runs here rather than in the quit handler, which cannot cancel the quit: when it fails (the
+   *   user dismissed the authentication dialog, for example), the quit is cancelled and the app keeps running, with
+   *   its windows closed, and an `error` event is emitted. The next quit is not cancelled again and does not try to
+   *   install; an explicit `quitAndInstall()` still can.
+   *
+   * When the OS session ends, the quit proceeds as before.
+   */
+  private handleWillQuit(event: CancellableQuitEvent): void {
+    const logger = nonThrowingLogger(this._logger)
+    if (this.isSessionEnding) {
+      return
+    }
+
+    if (this.isInstallInFlight) {
+      event.preventDefault()
+      if (!this.isQuitDeferredUntilInstalled) {
+        this.isQuitDeferredUntilInstalled = true
+        logger.info("Waiting for the update install to finish before quitting")
+      }
+      return
+    }
+
+    if (!this.isInstallOnQuitDue) {
+      return
+    }
+
+    logger.info("Auto install update on quit")
+    let isInstalled = false
+    try {
+      isInstalled = this.install(true, false)
+    } catch (error: unknown) {
+      // install() reports a failed install itself; this is a failure to report it (an "error" listener that throws)
+      logger.error(`Cannot install update on quit: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
+    }
+    if (isInstalled) {
+      return
+    }
+
+    event.preventDefault()
+    this.isInstallOnQuitFailed = true
+    // install() leaves it set; an explicit quitAndInstall() must still be able to install
+    this.quitAndInstallCalled = false
+    logger.warn(
+      'The update was not installed on quit, so the quit is cancelled: the app keeps running (its windows are already closed) and an "error" event is emitted. The next quit is not cancelled and does not try to install again; call quitAndInstall() to retry.'
+    )
   }
 
   private addSessionEndHandler(): void {

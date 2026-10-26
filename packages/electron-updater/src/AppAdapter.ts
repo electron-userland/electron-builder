@@ -1,6 +1,12 @@
 import * as path from "path"
 import { homedir as getHomedir } from "os"
 
+/** A quit that can still be cancelled, see {@link AppAdapter.onWillQuit}. */
+export interface CancellableQuitEvent {
+  /** Cancels the quit: the app keeps running. */
+  preventDefault(): void
+}
+
 export interface AppAdapter {
   readonly version: string
   readonly name: string
@@ -29,6 +35,13 @@ export interface AppAdapter {
   quit(): void
 
   onQuit(handler: (exitCode: number) => void): void
+
+  /**
+   * Called on every quit (`app.quit()`, the quit after the last window closed, the app menu), once all windows have
+   * closed and before {@link onQuit}; `event.preventDefault()` cancels that quit (Electron's `will-quit`). Not called
+   * for `app.exit()`. Optional: without it, an install on quit cannot cancel the quit when it fails.
+   */
+  onWillQuit?(handler: (event: CancellableQuitEvent) => void): void
 
   /**
    * Best-effort notification that the OS session is ending (shutdown / reboot / log off).
