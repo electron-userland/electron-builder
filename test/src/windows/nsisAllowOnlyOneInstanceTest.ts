@@ -1,3 +1,5 @@
+import { getMakeNsisPath } from "app-builder-lib/src/toolsets/nsis"
+import { spawnSync } from "child_process"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { beforeAll, expect } from "vitest"
@@ -39,8 +41,8 @@ describe("allowOnlyOneInstallerInstance.nsh", { concurrent: false }, () => {
       expect(availabilityMacro).toMatch(/\$\{if\} \$0 == 37\s+nsExec::Exec [^\n]*Get-ExecutionPolicy -Scope Process/)
     })
 
-    test("treats every other probe result, including 0, as unavailable", () => {
-      expect(availabilityMacro).toMatch(/\$\{if\} \$0 == 37[\s\S]*?\$\{else\}\s+StrCpy \$0 1\s+\$\{endIf\}/)
+    test("treats Wine's zero exit as unavailable without masking failures", () => {
+      expect(availabilityMacro).toMatch(/\$\{if\} \$0 == 37[\s\S]*?\$\{elseIf\} \$0 == 0\s+StrCpy \$0 1\s+\$\{endIf\}/)
     })
   })
 
@@ -239,6 +241,222 @@ describe("allowOnlyOneInstallerInstance.nsh", { concurrent: false }, () => {
       expect(withoutComments(findProcessMacro)).not.toMatch(/[`\s]tasklist[\s`]/)
       expect(findProcessMacro.match(/"\$CmdPath" \/S \/C ""\$SYSDIR\\tasklist\.exe" /g)).toHaveLength(2)
     })
+  })
+
+  test("bounds every PowerShell invocation with an inactivity timeout", () => {
+    const calls = templateContent.split("\n").filter(line => line.includes("nsExec::Exec") && line.includes('"$PowerShellPath"'))
+    expect(calls).toHaveLength(4)
+    for (const call of calls) {
+      expect(call).toContain("/TIMEOUT=${APP_PROCESS_QUERY_TIMEOUT}")
+    }
+    expect(templateContent).toContain("!define /ifndef APP_PROCESS_QUERY_TIMEOUT 30000")
+  })
+
+  // Check ordered branches, not just the presence of an abort somewhere in the file.
+  const instructions = (body: string) => body.replace(/#.*$/gm, "").replace(/\s+/g, " ").trim()
+
+  test("failed FIND cannot reach name-based fallback or be treated as absence", () => {
+    expect(instructions(findProcessMacro)).toContain(
+      "Pop ${_RETURN} ${if} ${_RETURN} != 0 ${andIf} ${_RETURN} != 1 !insertmacro ABORT_PROCESS_CHECK ${endIf} ${endIf} ${if} $IsPowerShellAvailable != 0"
+    )
+    expect(findProcessMacro).not.toMatch(/StrCpy\s+\$IsPowerShellAvailable/)
+  })
+
+  test("KILL timeout or launch error restores registers and aborts, numeric exits allow rechecking", () => {
+    const killMacro = templateContent.match(/!macro KILL_PROCESS[\s\S]*?!macroend/)![0]
+    expect(instructions(killMacro)).toContain("!macro KILL_PROCESS _FILE _FORCE Push $0 Push $1")
+    expect(instructions(killMacro)).toContain(
+      'Pop $1 ${if} $1 == "timeout" ${orIf} $1 == "error" Pop $1 Pop $0 !insertmacro ABORT_PROCESS_CHECK ${endIf} ${endIf} ${if} $IsPowerShellAvailable != 0'
+    )
+    expect(instructions(killMacro)).toMatch(/Pop \$1 \$\{endIf\} Pop \$1 Pop \$0 !macroend$/)
+    expect(killMacro).not.toMatch(/StrCpy\s+\$IsPowerShellAvailable/)
+    expect(killMacro).toContain('StrCpy $0 "/F"')
+    expect(killMacro).toContain('/FI "USERNAME eq %USERNAME%"')
+  })
+
+  test("either availability probe timeout aborts before normal unavailable fallback", () => {
+    const availability = instructions(templateContent.match(/!macro IS_POWERSHELL_AVAILABLE[\s\S]*?!macroend/)![0])
+    expect(availability).toMatch(/Pop \$0 \$\{if\} \$0 == 37 nsExec::Exec/)
+    expect(availability).toContain(
+      'Pop $0 ${elseIf} $0 == 0 StrCpy $0 1 ${endIf} ${if} $0 != 0 ${andIf} $0 != 1 ${andIf} $0 != "error" !insertmacro ABORT_PROCESS_CHECK ${endIf} ${if} $0 != 0 StrCpy $0 1 ${endIf} StrCpy $IsPowerShellAvailable $0'
+    )
+  })
+
+  test("failure shows a localized check-failed message and quits even in silent mode", async () => {
+    const abort = instructions(templateContent.match(/!macro ABORT_PROCESS_CHECK[\s\S]*?!macroend/)![0])
+    expect(abort).toBe('!macro ABORT_PROCESS_CHECK MessageBox MB_OK|MB_ICONEXCLAMATION "$(appProcessCheckFailed)" /SD IDOK SetErrorLevel 2 Quit !macroend')
+    const messages = await fs.readFile(path.join(path.dirname(templatePath), "../messages.yml"), "utf8")
+    const message = messages.match(/^appProcessCheckFailed:\n(?:[ \t]+.*\n)+/m)?.[0]
+    expect(message).toContain("Could not check whether ${PRODUCT_NAME} is running.")
+    expect(message).toContain("Setup will now exit.")
+    expect(message).not.toMatch(/Retry/i)
+  })
+
+  test("FIND distinguishes CIM query failures from an absent process", () => {
+    expect(findProcessMacro).toContain(' -C "try { if ((')
+    expect(findProcessMacro).toContain("Get-CimInstance -ClassName Win32_Process -ErrorAction Stop")
+    expect(findProcessMacro).toContain("{ exit 0 } else { exit 1 } } catch { exit 3 }")
+  })
+
+  for (const [probe, policy, expected] of [
+    ["37", "0", 10],
+    ["37", "1", 11],
+    ["0", "0", 11],
+    ["1", "0", 11],
+    ["error", "0", 11],
+    ["timeout", "0", 2],
+    ["7", "0", 2],
+    ["37", "timeout", 2],
+    ["37", "7", 2],
+  ] as const) {
+    test.runIf(process.platform === "win32")(`native availability results ${probe}/${policy}`, async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const makensis = await getMakeNsisPath("0.0.0", dir)
+      const exe = path.join(dir, "availability.exe")
+      const results = [probe, policy]
+      const availability = templateContent.match(/!macro IS_POWERSHELL_AVAILABLE[\s\S]*?!macroend/)![0].replace(/^\s*nsExec::Exec.*$/gm, () => `\n    Push "${results.shift()}"`)
+      const script = [
+        "Unicode true",
+        "RequestExecutionLevel user",
+        "SilentInstall silent",
+        `OutFile "${exe}"`,
+        '!include "LogicLib.nsh"',
+        'LangString appProcessCheckFailed 1033 "Process check failed."',
+        templateContent.match(/!macro ABORT_PROCESS_CHECK[\s\S]*?!macroend/)![0],
+        availability,
+        "Section",
+        "!insertmacro IS_POWERSHELL_AVAILABLE",
+        "IntOp $0 $IsPowerShellAvailable + 10",
+        "SetErrorLevel $0",
+        "SectionEnd",
+      ].join("\n")
+      const env = { SystemRoot: process.env.SystemRoot, TEMP: dir, TMP: dir, ...makensis.env }
+      const compiled = spawnSync(makensis.path, ["/WX", "/V2", "-"], { input: script, encoding: "utf8", env, timeout: 20000 })
+      expect(compiled.stdout + compiled.stderr).not.toMatch(/warning|error/i)
+      expect(compiled.status).toBe(0)
+      expect(spawnSync(exe, [], { env, timeout: 10000 }).status).toBe(expected)
+    })
+  }
+
+  // Execute the actual NSIS branch/stack handling with a deterministic nsExec result.
+  // Real timeout and process-lifetime behavior needs a separate native fixture.
+  for (const result of ["0", "1", "7", "timeout", "error"]) {
+    test.runIf(process.platform === "win32")(`native KILL result ${result}`, async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const makensis = await getMakeNsisPath("0.0.0", dir)
+      const exe = path.join(dir, "kill-result.exe")
+      const kill = templateContent.match(/!macro KILL_PROCESS[\s\S]*?!macroend/)![0].replace(/^\s*nsExec::Exec.*$/gm, `    Push "${result}"`)
+      const abort = templateContent.match(/!macro ABORT_PROCESS_CHECK[\s\S]*?!macroend/)![0]
+      const script = [
+        "Unicode true",
+        "RequestExecutionLevel user",
+        "SilentInstall silent",
+        `OutFile "${exe}"`,
+        '!include "LogicLib.nsh"',
+        "Var IsPowerShellAvailable",
+        'LangString appProcessCheckFailed 1033 "Process check failed. Setup will now exit."',
+        abort,
+        kill,
+        "Section",
+        "StrCpy $IsPowerShellAvailable 0",
+        'StrCpy $0 "saved0"',
+        'StrCpy $1 "saved1"',
+        'Push "canary"',
+        '!insertmacro KILL_PROCESS "unused.exe" 1',
+        "Pop $R2",
+        '${if} $0 != "saved0"',
+        '${orIf} $1 != "saved1"',
+        '${orIf} $R2 != "canary"',
+        "SetErrorLevel 20",
+        "Quit",
+        "${endIf}",
+        "SetErrorLevel 0",
+        "SectionEnd",
+      ].join("\n")
+      const env = { SystemRoot: process.env.SystemRoot, TEMP: dir, TMP: dir, ...makensis.env }
+      const compiled = spawnSync(makensis.path, ["/WX", "/V2", "-"], { input: script, encoding: "utf8", env, timeout: 20000 })
+      expect(compiled.stdout + compiled.stderr).not.toMatch(/warning|error/i)
+      expect(compiled.status).toBe(0)
+      const run = spawnSync(exe, [], { env, timeout: 10000 })
+      expect(run.status).toBe(result === "timeout" || result === "error" ? 2 : 0)
+    })
+  }
+
+  for (const [name, result, presentChecks, expected, forced] of [
+    ["already exited", 1, 1, 0, 0],
+    ["force succeeds", 1, 2, 0, 1],
+    ["still running", 1, 99, 2, 2],
+    ["timeout", "timeout", 1, 2, 0],
+    ["launch error", "error", 1, 2, 0],
+  ] as const) {
+    test.runIf(process.platform === "win32")(`native process recheck loop: ${name}`, async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const makensis = await getMakeNsisPath("0.0.0", dir)
+      const exe = path.join(dir, "process-loop.exe")
+      const report = path.join(dir, "forced.txt")
+      const kill = templateContent
+        .match(/!macro KILL_PROCESS[\s\S]*?!macroend/)![0]
+        .replace(/^\s*nsExec::Exec.*$/gm, `\n    IntOp $R4 $R4 + \${_FORCE}\n    FileOpen $R6 "${report}" w\n    FileWrite $R6 $R4\n    FileClose $R6\n    Push "${result}"`)
+      const body = templateContent
+        .match(/!macro _CHECK_APP_RUNNING_BODY[\s\S]*?!macroend/)![0]
+        .replace(/\$\{GetProcessInfo\}[^\n]+/, 'StrCpy $3 "launcher.exe"')
+        .replace(/\$\{isUpdated\}/g, "1 == 1")
+        .replace(/^\s*Sleep \d+/gm, "")
+      const script = [
+        "Unicode true",
+        "RequestExecutionLevel user",
+        "SilentInstall silent",
+        `OutFile "${exe}"`,
+        '!include "LogicLib.nsh"',
+        '!define APP_EXECUTABLE_FILENAME "unused.exe"',
+        '!define PRODUCT_NAME "Fixture"',
+        "Var IsPowerShellAvailable",
+        ...["appProcessCheckFailed", "appRunning", "appClosing", "appCannotBeClosed"].map(name => `LangString ${name} 1033 "${name}"`),
+        templateContent.match(/!macro ABORT_PROCESS_CHECK[\s\S]*?!macroend/)![0],
+        kill,
+        "!macro FIND_PROCESS _FILE _RETURN",
+        "IntOp $R5 $R5 + 1",
+        `\${if} $R5 <= ${presentChecks}`,
+        "StrCpy ${_RETURN} 0",
+        "${else}",
+        "StrCpy ${_RETURN} 1",
+        "${endIf}",
+        "!macroend",
+        body,
+        "Section",
+        "StrCpy $IsPowerShellAvailable 0",
+        "StrCpy $R4 0",
+        "StrCpy $R5 0",
+        '!insertmacro _CHECK_APP_RUNNING_BODY ""',
+        "SetErrorLevel 0",
+        "SectionEnd",
+      ].join("\n")
+      const env = { SystemRoot: process.env.SystemRoot, TEMP: dir, TMP: dir, ...makensis.env }
+      const compiled = spawnSync(makensis.path, ["/WX", "/V2", "-"], { input: script, encoding: "utf8", env, timeout: 20000 })
+      expect(compiled.stdout + compiled.stderr).not.toMatch(/warning|error/i)
+      expect(compiled.status).toBe(0)
+      expect(spawnSync(exe, [], { env, timeout: 10000 }).status).toBe(expected)
+      expect(await fs.readFile(report, "utf8")).toBe(String(forced))
+    })
+  }
+
+  test.runIf(process.platform === "win32").each([
+    ["absent", "", 1],
+    ["present", "@{ Path = 'fixture' }", 0],
+    ["query error", "Write-Error 'simulated CIM failure'", 3],
+  ] as const)("PowerShell FIND contract: %s", (_name, output, expected) => {
+    const command = findProcessMacro
+      .match(/-C "([^\n]+)"`/)![1]
+      .replaceAll("$$", "$")
+      .replace("$processPathFilter", "$true")
+    // A function-local CIM stub produces a non-terminating error without changing WMI.
+    const stub = `function Get-CimInstance { [CmdletBinding()] param([string] $ClassName) ${output} }; `
+    const systemRoot = process.env.SystemRoot!
+    const run = spawnSync(path.join(systemRoot, "System32/WindowsPowerShell/v1.0/powershell.exe"), ["-NoProfile", "-NonInteractive", "-Command", stub + command], {
+      env: { SystemRoot: systemRoot, SystemDrive: path.parse(systemRoot).root.slice(0, -1), TEMP: process.env.TEMP, TMP: process.env.TMP, USERPROFILE: process.env.USERPROFILE },
+      timeout: 15000,
+    })
+    expect(run.status).toBe(expected)
   })
 
   test("snapshot of FIND_PROCESS macro", () => {
