@@ -1,6 +1,6 @@
 import { expect, test, describe } from "vitest"
 import { CancellationToken, DigestTransform, HttpExecutor } from "builder-util-runtime"
-import { hashSensitiveValue, safeStringifyJson } from "builder-util-runtime/internal"
+import { hashSensitiveValue, REDACTED_VALUE, safeStringifyJson } from "builder-util-runtime/internal"
 import { addSensitiveFieldPattern, addSensitiveRedirectHeader, detectSha512Encoding, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
 import { createHash } from "crypto"
 import { RequestOptions } from "http"
@@ -59,6 +59,29 @@ describe("HttpExecutor.prepareRedirectUrlOptions", () => {
       expect(result.hostname).toBe("objects.githubusercontent.com")
       expect(result.path).toBe("/github-production-release-asset-12345/asset.zip")
     })
+
+    // ElectronHttpExecutor.createRequest moves a `Host` header to `host`, which Electron's net prefers over `hostname`
+    for (const [label, redirectUrl, hostname] of [
+      ["another host", "https://bucket.example.net/app.exe?X-Amz-Signature=abc", "bucket.example.net"],
+      ["the same host", "/files/app.exe", "feed.example.com"],
+    ] as const) {
+      test(`a redirect to ${label} is sent to the redirect target, not to the original \`host\``, () => {
+        const originalOptions: RequestOptions = {
+          protocol: "https:",
+          hostname: "feed.example.com",
+          host: "my-bucket.s3.amazonaws.com",
+          path: "/updates/app.exe",
+          headers: { authorization: "Bearer secret" },
+        }
+
+        const result = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, originalOptions)
+
+        expect(result).not.toHaveProperty("host")
+        expect(result.hostname).toBe(hostname)
+        // the original options are not changed
+        expect(originalOptions.host).toBe("my-bucket.s3.amazonaws.com")
+      })
+    }
   })
 
   describe("authorization header handling", () => {
@@ -950,5 +973,38 @@ describe("HttpExecutor redirect limit", () => {
     )
     // Same limit as doDownload: maxRedirects recursions + the initial request
     expect(executor.requestCount).toBe(executor["maxRedirects"] + 1)
+  })
+})
+
+describe("hashSensitiveValue", () => {
+  const FINGERPRINT = /^[a-f0-9]{32} \(redacted fingerprint\)$/
+
+  test("maps the same value to the same fingerprint within a run, and different values to different ones", ({ expect }) => {
+    const first = hashSensitiveValue("hunter2")
+    expect(first).toMatch(FINGERPRINT)
+    expect(hashSensitiveValue("hunter2")).toBe(first)
+    expect(hashSensitiveValue("hunter3")).not.toBe(first)
+    expect(hashSensitiveValue("")).toMatch(FINGERPRINT)
+  })
+
+  // a plain (unkeyed) hash of a weak secret in a log could be checked against guesses offline
+  test("is not a plain hash of the value, and does not contain it", ({ expect }) => {
+    const output = hashSensitiveValue("hunter2")
+    const fingerprint = output.split(" ")[0]
+    for (const algorithm of ["sha256", "sha1", "md5"]) {
+      const digest = createHash(algorithm).update("hunter2").digest("hex")
+      expect(output).not.toContain(digest)
+      expect(digest.startsWith(fingerprint)).toBe(false)
+    }
+    expect(output).not.toContain("hunter2")
+  })
+
+  test("never throws: a value that cannot be read is logged as a constant", ({ expect }) => {
+    const unreadable = {
+      toString() {
+        throw new Error("boom")
+      },
+    }
+    expect(hashSensitiveValue(unreadable as unknown as string)).toBe(REDACTED_VALUE)
   })
 })

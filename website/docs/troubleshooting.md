@@ -20,7 +20,7 @@ DEBUG=electron-builder electron-builder build
 : Renew the certificate in Apple Developer portal, re-export it, and update your CI secrets.
 
 **Build produces unsigned output without an error**
-: `CSC_LINK` isn't set, so electron-builder silently skips signing. Set `forceCodeSigning: true` to turn this into a build failure so you catch it early.
+: `CSC_LINK` isn't set, so electron-builder silently skips signing. Set `forceCodeSigning: true` to turn this — and skipped notarization or update-manifest signing — into a build failure so you catch it early, and run [`electron-builder verify`](./cli.md#verify) to check a build's output.
 
 **"Keychain not unlocked" / codesign hangs**
 : Verify `CSC_LINK` and `CSC_KEY_PASSWORD` are set correctly — electron-builder creates a temporary keychain and runs all required setup commands, including `set-key-partition-list`, automatically. If using a manually managed keychain (via `CSC_KEYCHAIN`), ensure you run `security set-key-partition-list -S apple-tool:,apple: -s -k <password> <keychain>` after importing.
@@ -175,7 +175,7 @@ Or run with `--appimage-extract-and-run`:
 : As of v27 the flatpak target requires `flatpak` 1.12.4 or newer and `flatpak-builder` 1.2.2 or newer; with an older tool the build fails with `<tool> <version> is not supported - version <minimum> or newer is required to build the flatpak target`. The stock packages of Ubuntu 22.04, Debian 12, RHEL 8 and 9 and newer releases are new enough; older releases, such as Ubuntu 20.04 (now only covered by Ubuntu Pro) and Debian 11, ship older tools. Without the tools the build fails with `cannot run flatpak - flatpak and flatpak-builder must be installed to build the flatpak target`, which is what happens in an `electronuserland/builder` Docker image with the date tag `-05.26` or an older one: only the images with a newer date tag [include the tools](features/multi-platform-build.md#flatpak-in-the-docker-images).
 
 **Flatpak build fails: "No remote refs found"**
-: A build needs the runtime, the SDK and the base app (`org.freedesktop.Platform`, `org.freedesktop.Sdk` and `org.electronjs.Electron2.BaseApp` in version `26.08` by default; [`20.08` before v27](migration/v27-breaking-changes.md#flatpak-tooling-requirements)). electron-builder installs whichever of them is missing itself, with `flatpak install --user`, which only searches the remotes of the user installation. Add Flathub there, and check that the configured `runtimeVersion` and `baseVersion` exist:
+: A build needs the runtime, the SDK and the base app (`org.freedesktop.Platform`, `org.freedesktop.Sdk` and `org.electronjs.Electron2.BaseApp` in version `26.08` by default; [`20.08` before v27](migration/v27-build-changes.md#flatpak-tooling-requirements)). electron-builder installs whichever of them is missing itself, with `flatpak install --user`, which only searches the remotes of the user installation. Add Flathub there, and check that the configured `runtimeVersion` and `baseVersion` exist:
 ```bash
 flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 ```

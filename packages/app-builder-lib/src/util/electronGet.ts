@@ -24,6 +24,7 @@ import * as unzipper from "unzipper"
 import { getPath7za } from "../toolsets/7zip.js"
 import { checksumMismatchMessage, ExpectedChecksum, parseChecksum, verifyFileChecksum } from "./checksum.js"
 import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState.js"
+import { BUILD_CHANGES_URL } from "./config/legacyOptions.js"
 
 export interface ElectronGetOptions extends Omit<
   ElectronPlatformArtifactDetails,
@@ -690,9 +691,11 @@ export function resolveBuilderBinaryUrl(releaseName: string, filenameWithExt: st
  * debug level, and on a warm cache it printed nothing at all — so a regression introduced by a new
  * bundle had no trace in the build log tying it to the toolset.
  */
+const TOOLSET_DEFAULTS_DOCS = `${BUILD_CHANGES_URL}#toolset-defaults-resolve-to-latest-newest-bundle`
+
 function announceToolsetVersion(releaseName: string): void {
   // once per toolset per process, so a multi-target build logs each one once
-  log.once(`toolset:${releaseName}`).info({ toolset: releaseName }, "using toolset")
+  log.once(`toolset:${releaseName}`).info({ toolset: releaseName, docs: TOOLSET_DEFAULTS_DOCS }, "using toolset")
 }
 
 export async function downloadBuilderToolset(options: {

@@ -22,6 +22,8 @@ Commands:
   electron-builder create-update-key        Generate an Ed25519 keypair for signing auto-u
                                   pdate manifests
   electron-builder migrate-schema           Migrate build config from v26 to v27 format
+  electron-builder verify [dir]             Verify code signatures, notarization and updat
+                                  e-manifest signatures of built artifacts
 
 Building:
   -m, -o, --mac, --macos       Build for macOS, accepts target list (see https:/
@@ -88,11 +90,43 @@ electron-builder migrate-schema --dry-run  # preview without writing (alias: -n)
 - Auto-detects your config: the `package.json` `build` key, or `electron-builder.{yml,yaml,json,json5,toml,js,cjs,mjs,ts}`. Pass `--config <path>` for a non-default file and `--project-dir <dir>` for the project root.
 - Rewrites **static** configs (`json`/`json5`/`yaml`/`package.json`) and **programmatic** ones (`.js`/`.ts`/`.cjs`/`.mjs`, via an AST codemod that preserves comments and formatting when the config reduces to a single object literal).
 - **TOML** is detected but not rewritten (the `toml` library is read-only) — it prints the required changes for you to apply. **JSON5** is re-serialized as JSON (comments are not preserved).
-- Prints a **warning** for anything it cannot rewrite mechanically (e.g. `squirrelWindows.customSquirrelVendorDir`) and an **advisory** for runtime defaults and behavior changes worth checking (an `nsis-web` target, a per-machine `nsis` / `nsisWeb` installer, a custom `win.sign.sign` hook without a publisher name, a `generic` publish `url` with a query string, macOS configs relying on the default entitlements). Advisories never change the file. See [what it does and does not do](./migration/v27-breaking-changes.md#new-command-migrate-schema).
+- Prints a **warning** for anything it cannot rewrite mechanically (e.g. `squirrelWindows.customSquirrelVendorDir`) and an **advisory** for runtime defaults and behavior changes worth checking (an `nsis-web` target, a per-machine `nsis` / `nsisWeb` installer, a custom `win.sign.sign` hook without a publisher name, a `generic` publish `url` with a query string, macOS configs relying on the default entitlements, `forceCodeSigning`). Advisories never change the file. See [what it does and does not do](./migration/v27-breaking-changes.md#new-command-migrate-schema).
 
 :::note[Removed CLI flags]
 The v22-era `--em.build` / `--em.directories` flags were removed — pass build config inline with `-c` (e.g. `-c.directories.output=dist`). Implicit publishing was also removed: pass [`--publish`](./publish) explicitly.
 :::
+
+## `verify`
+
+New in v27. Checks the signatures of a build's output and exits with code 1 when a check fails — a post-build gate for CI, the checks [`forceCodeSigning`](./features/code-signing/code-signing.md#the-forcecodesigning-option) makes during a build plus what can only be seen afterwards.
+
+```bash
+electron-builder verify                    # the output directory (directories.output) of the project configuration
+electron-builder verify path/to/dist       # another directory, e.g. downloaded build artifacts
+electron-builder verify --allow-unverified # only warn about checks that cannot run on this host
+```
+
+What it checks:
+
+- **Update manifests** — every `latest*.yml` (found by its content, also a further provider's in a subdirectory, such as `nsis-web/<provider>/latest.yml`; symlinks in the output are not followed) must be signed by a key in the trust list (`updateManifestPublicKey`) that each packaged app of its platform embeds in `app-update.yml`, the check electron-updater makes. Without a packaged app in the directory, it uses `updateManifest.publicKey` instead, and without that the manifest cannot be verified. `verify` uses public keys only: it never loads a signing key, from the configuration or `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`, so a cutover release signed outside its embedded trust list (`allowSigningKeyOutsideTrustList`) is reported as skipped. Every file a manifest lists must match an artifact by sha512 and size, which catches an artifact changed after the manifest was written.
+- **macOS** — every `.app` must have a valid code signature (`codesign --verify --deep --strict`) and, outside the Mac App Store, a stapled notarization ticket (`stapler validate`). A `.pkg` must be signed (`pkgutil --check-signature`) and notarized, and a DMG with `dmg.sign: true` must be signed. Any valid signature counts.
+- **Windows** — installers, `.msi` / AppX / MSIX packages and the app executable must carry a valid Authenticode signature, and the update installers must match the `publisherName` electron-updater verifies them against.
+
+The options of the project configuration are honored: `updateManifest: false`, `mac.notarize: false`, `mac.sign: null` (`mas.sign` / `masDev.sign` for Mac App Store apps), `win.sign: false` and `win.signExts` exclusions turn the checks they affect into warnings. Pass the configuration of the build with `-c` / `--config` and `--projectDir` as for a build.
+
+`codesign`, `stapler`, `pkgutil` and Windows PowerShell are started by absolute path, from [`toolsets.executables`](./toolsets.md#executables) of the configuration or their default locations, never from `PATH`.
+
+A check that cannot run on this host fails, unless `--allow-unverified` is passed: macOS checks need macOS, the signature hash of a Windows file can only be validated on Windows (elsewhere only its signer is read), and an update manifest needs a trust list to be verified against. Store-only AppX/MSIX packages are unsigned by design: exclude them with `win.signExts: ["!.appx"]`.
+
+In CI, verify before you publish, for example on macOS:
+
+```bash
+electron-builder --mac --publish never
+electron-builder verify
+electron-builder publish -f dist/*.dmg dist/*.zip dist/*.blockmap dist/latest-mac.yml
+```
+
+`electron-builder publish -f` checks an update manifest before it uploads anything: it must be signed, and, when `updateManifest.publicKey` is set, signed by one of those keys. See [Signed update manifests are required](./migration/v27-build-changes.md#signed-update-manifests-are-required).
 
 Prepend `npx` to sample commands below if you run them from Terminal and not from `package.json` scripts.
 

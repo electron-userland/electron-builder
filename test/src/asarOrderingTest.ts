@@ -67,7 +67,7 @@ describe("orderAsarStreams", () => {
 })
 
 describe("applyAsarOrdering", () => {
-  const MIGRATION_LINK = "https://www.electron.build/docs/migration/v27-breaking-changes#asar-ordering-is-now-applied"
+  const MIGRATION_LINK = "https://www.electron.build/docs/migration/v27-build-changes#asar-ordering-is-now-applied"
   const streams = [dir("lib"), file("lib/a.js"), file("main.js")]
 
   /** A packager stub that resolves the ordering file with the real `getResource` (build resources dir first, then the project dir). */
@@ -161,7 +161,7 @@ test.ifNotWindows("asar.ordering fails the build when the file is missing", ({ e
     {},
     error => {
       expect(error.message).toContain('asar.ordering file "no-such-order.txt" was not found')
-      expect(error.message).toContain("v27-breaking-changes#asar-ordering-is-now-applied")
+      expect(error.message).toContain("v27-build-changes#asar-ordering-is-now-applied")
     }
   )
 )

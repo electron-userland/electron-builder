@@ -238,7 +238,7 @@ function warnAboutArchAllExpansion(platforms: Array<Platform>): void {
     .warn(
       { expandsTo: "x64, arm64", previously: "x64, ia32", solution: "request ia32 explicitly (--ia32 / Arch.ia32) with electronVersion <= 43.x if you still ship 32-bit builds" },
       'arch "all" no longer includes ia32. Electron 44 removed Windows ia32 builds and Linux ia32 zips ended at Electron 19, so the old expansion produced broken builds on current Electron. ' +
-        "See https://www.electron.build/docs/migration/v27-breaking-changes#arch-all-now-expands-to-x64-and-arm64-32-bit-fails-fast-on-electron-44"
+        "See https://www.electron.build/docs/migration/v27-build-changes#arch-all-now-expands-to-x64-and-arm64-32-bit-fails-fast-on-electron-44"
     )
 }
 

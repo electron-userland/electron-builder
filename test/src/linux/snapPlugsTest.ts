@@ -233,7 +233,7 @@ describe("core24 plug notices", { concurrent: false }, () => {
     expect(warn).toHaveBeenCalledTimes(1)
     const message = warn.mock.calls[0][1] as string
     expect(message).toContain("--no-sandbox")
-    expect(message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#")
+    expect(message).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#")
   })
 
   test('announces the plugs that the "default" expansion now adds', ({ expect }) => {
@@ -243,7 +243,7 @@ describe("core24 plug notices", { concurrent: false }, () => {
     expect(warn).toHaveBeenCalledTimes(1)
     const [fields, message] = warn.mock.calls[0] as [Record<string, string>, string]
     expect(fields.added).toBe(BROWSER_SUPPORT_INTERFACE)
-    expect(message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#snap-core24-default-in-plugs-merges-the-full-default-set")
+    expect(message).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#snap-core24-default-in-plugs-merges-the-full-default-set")
   })
 
   test("warns again for each other project built in the same process", ({ expect }) => {

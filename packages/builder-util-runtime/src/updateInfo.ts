@@ -126,6 +126,17 @@ export interface WindowsUpdateInfo extends UpdateInfo {
   packages?: { [arch: string]: PackageFileInfo } | null
 
   /**
+   * Whether electron-updater's default Authenticode verification accepts a valid signature that Windows reports from a security catalog
+   * for this update's installer, when the catalog signer matches `publisherName` (like `NsisUpdater.allowCatalogSignature`, for this
+   * update only). Written by electron-builder for `win.allowCatalogSignature: true`.
+   *
+   * electron-updater honors it only when the signature of this manifest was verified against a trusted key (`updateManifestPublicKey`);
+   * otherwise it is ignored with a warning. When `true` it is covered by the manifest signature, so changing it means signing the manifest
+   * again. A value that is not a boolean makes a signed manifest invalid.
+   */
+  readonly allowCatalogSignature?: boolean
+
+  /**
    * @deprecated
    * @private
    */

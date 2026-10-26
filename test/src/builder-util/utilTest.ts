@@ -6,6 +6,10 @@ import { afterEach, expect, vi } from "vitest"
 const testValue = "secretValue"
 const testQuoted = "secret with spaces"
 
+// Fingerprints are keyed per process, so snapshots show where one stands, not its value
+const FINGERPRINT_PATTERN = /[a-f0-9]{32} \(redacted fingerprint\)/g
+const withoutFingerprints = (text: string) => text.replace(FINGERPRINT_PATTERN, "<fingerprint>")
+
 const keys = ["--accessKey", "--secretKey", "-p", "-pass", "-String", "/p", "pass:"]
 
 describe("getPlatformIconFileName", () => {
@@ -26,21 +30,21 @@ keys.forEach(key => {
       const input = `${key} ${testValue}`
       const output = removePassword(input)
 
-      expect(output).toMatchSnapshot()
+      expect(withoutFingerprints(output)).toMatchSnapshot()
     })
 
     test("handles double-quoted value (snapshot)", ({ expect }) => {
       const input = `${key} "${testQuoted}"`
       const output = removePassword(input)
 
-      expect(output).toMatchSnapshot()
+      expect(withoutFingerprints(output)).toMatchSnapshot()
     })
 
     test("handles single-quoted value (snapshot)", ({ expect }) => {
       const input = `${key} '${testQuoted}'`
       const output = removePassword(input)
 
-      expect(output).toMatchSnapshot()
+      expect(withoutFingerprints(output)).toMatchSnapshot()
     })
 
     if (key === "/p") {
@@ -49,7 +53,7 @@ keys.forEach(key => {
         const input = `${key} ${macPath}`
         const output = removePassword(input)
 
-        expect(output).toMatchSnapshot()
+        expect(withoutFingerprints(output)).toMatchSnapshot()
       })
     }
   })
@@ -61,7 +65,7 @@ describe("removePassword: /b … /c block", () => {
     const input = `/b ${secret} /c`
     const output = removePassword(input)
 
-    expect(output).toMatchSnapshot()
+    expect(withoutFingerprints(output)).toMatchSnapshot()
   })
 })
 
@@ -186,43 +190,43 @@ describe("removePassword: pass: colon-separator style", () => {
     const output = removePassword("enc pass:topsecret --other")
     expect(output).not.toContain("topsecret")
     expect(output).toContain("pass:")
-    expect(output).toContain("(sha256 hash)")
+    expect(output).toContain("(redacted fingerprint)")
   })
 
   test("redacts pass: value with space", ({ expect }) => {
     const output = removePassword("pass: spaced")
     expect(output).not.toContain("spaced")
-    expect(output).toContain("(sha256 hash)")
+    expect(output).toContain("(redacted fingerprint)")
   })
 })
 
-const SHA256_HASH_RE = /^[a-f0-9]{64} \(sha256 hash\)$/
+const FINGERPRINT_RE = /^[a-f0-9]{32} \(redacted fingerprint\)$/
 
 describe("filterSensitiveEnv", () => {
   test("redacts values for keys containing KEY", ({ expect }) => {
     const result = filterSensitiveEnv({ MY_API_KEY: "abc123" })
-    expect(result.MY_API_KEY).toMatch(SHA256_HASH_RE)
+    expect(result.MY_API_KEY).toMatch(FINGERPRINT_RE)
   })
 
   test("redacts values for keys containing TOKEN", ({ expect }) => {
     const result = filterSensitiveEnv({ GITHUB_TOKEN: "ghp_secret" })
-    expect(result.GITHUB_TOKEN).toMatch(SHA256_HASH_RE)
+    expect(result.GITHUB_TOKEN).toMatch(FINGERPRINT_RE)
   })
 
   test("redacts values for keys containing SECRET", ({ expect }) => {
     const result = filterSensitiveEnv({ AWS_SECRET_ACCESS_KEY: "secret" })
-    expect(result.AWS_SECRET_ACCESS_KEY).toMatch(SHA256_HASH_RE)
+    expect(result.AWS_SECRET_ACCESS_KEY).toMatch(FINGERPRINT_RE)
   })
 
   test("redacts values for keys containing PASSWORD", ({ expect }) => {
     const result = filterSensitiveEnv({ DB_PASSWORD: "hunter2" })
-    expect(result.DB_PASSWORD).toMatch(SHA256_HASH_RE)
+    expect(result.DB_PASSWORD).toMatch(FINGERPRINT_RE)
   })
 
   test("is case-insensitive on the key name", ({ expect }) => {
     const result = filterSensitiveEnv({ api_key: "secret", Auth_Token: "tok" })
-    expect(result.api_key).toMatch(SHA256_HASH_RE)
-    expect(result.Auth_Token).toMatch(SHA256_HASH_RE)
+    expect(result.api_key).toMatch(FINGERPRINT_RE)
+    expect(result.Auth_Token).toMatch(FINGERPRINT_RE)
   })
 
   test("does not redact values for non-sensitive keys", ({ expect }) => {
@@ -233,9 +237,9 @@ describe("filterSensitiveEnv", () => {
 
   test("replaces the entire value, not just the sensitive substring within it", ({ expect }) => {
     // The value itself contains 'password' — only the key triggers redaction.
-    // The entire value must be replaced with a sha256 hash, not "thisismy<hash>".
+    // The entire value must be replaced with a fingerprint, not "thisismy<hash>".
     const result = filterSensitiveEnv({ DB_PASSWORD: "thisismypassword" })
-    expect(result.DB_PASSWORD).toMatch(SHA256_HASH_RE)
+    expect(result.DB_PASSWORD).toMatch(FINGERPRINT_RE)
   })
 
   test("handles a mixed env object, redacting only sensitive keys", ({ expect }) => {
@@ -247,23 +251,23 @@ describe("filterSensitiveEnv", () => {
     })
     expect(result.HOME).toBe("/home/user")
     expect(result.NODE_ENV).toBe("test")
-    expect(result.GITHUB_TOKEN).toMatch(SHA256_HASH_RE)
-    expect(result.MY_API_KEY).toMatch(SHA256_HASH_RE)
+    expect(result.GITHUB_TOKEN).toMatch(FINGERPRINT_RE)
+    expect(result.MY_API_KEY).toMatch(FINGERPRINT_RE)
   })
 
   test("redacts values for keys containing CSC (code-signing certificate vars)", ({ expect }) => {
     const result = filterSensitiveEnv({ CSC_LINK: "https://example.com/cert.p12" })
-    expect(result.CSC_LINK).toMatch(SHA256_HASH_RE)
+    expect(result.CSC_LINK).toMatch(FINGERPRINT_RE)
   })
 
   test("redacts values for WIN_CSC_LINK", ({ expect }) => {
     const result = filterSensitiveEnv({ WIN_CSC_LINK: "/path/to/cert.pfx" })
-    expect(result.WIN_CSC_LINK).toMatch(SHA256_HASH_RE)
+    expect(result.WIN_CSC_LINK).toMatch(FINGERPRINT_RE)
   })
 
   test("redacts values for keys containing CREDENTIAL", ({ expect }) => {
     const result = filterSensitiveEnv({ DB_CREDENTIAL: "s3cr3t" })
-    expect(result.DB_CREDENTIAL).toMatch(SHA256_HASH_RE)
+    expect(result.DB_CREDENTIAL).toMatch(FINGERPRINT_RE)
   })
 
   test("does not redact unrelated LINK or CSC-free vars", ({ expect }) => {
@@ -278,21 +282,21 @@ describe("removePassword: multiple keys in one string", () => {
     const input = `--accessKey key1 --secretKey key2`
     const output = removePassword(input)
 
-    expect(output).toMatchSnapshot()
+    expect(withoutFingerprints(output)).toMatchSnapshot()
   })
 
   test("handles mixed quoted and unquoted keys (snapshot)", ({ expect }) => {
     const input = `-p 'quoted secret' -pass unquoted`
     const output = removePassword(input)
 
-    expect(output).toMatchSnapshot()
+    expect(withoutFingerprints(output)).toMatchSnapshot()
   })
 
   test("handles several keys and /b … /c block (snapshot)", ({ expect }) => {
     const input = `pass: val1 --accessKey "val two" /b blockpass /c`
     const output = removePassword(input)
 
-    expect(output).toMatchSnapshot()
+    expect(withoutFingerprints(output)).toMatchSnapshot()
   })
 })
 

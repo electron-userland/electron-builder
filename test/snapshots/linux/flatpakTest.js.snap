@@ -150,6 +150,18 @@ exports[`flatpak > installOrUpdateRefs null hands ["runtime","sdk","base"] to th
 }
 `;
 
+exports[`flatpak > linux.files does not corrupt the flatpak files option 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > linux.files leaves the flatpak files pairs as they are 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`flatpak > no MIME type file is written without a custom MIME type 1`] = `
 {
   "linux": [],
@@ -157,6 +169,18 @@ exports[`flatpak > no MIME type file is written without a custom MIME type 1`] =
 `;
 
 exports[`flatpak > runtimeVersion and baseVersion that are both set are not reported 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > single FileSet linux.files does not throw in FlatpakTarget 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > single-string linux.files does not throw in FlatpakTarget 1`] = `
 {
   "linux": [],
 }

@@ -4,6 +4,7 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../../../core.js"
 import { LinuxPackager } from "../../../linuxPackager.js"
+import { waitForPackWork } from "../../../platformPackager.js"
 import { AppImageOptions } from "../../../options/linuxOptions.js"
 import { getPackAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../../publish/PublishManager.js"
 import { getNotLocalizedLicenseFile } from "../../../util/license.js"
@@ -66,9 +67,11 @@ export default class AppImageTarget extends Target {
       arch,
     })
 
+    // afterPack already wrote the same app-update.yml into the app dir, except for a prepackaged app (doPack returns before it)
+    const isPrepackaged = packager.packagerOptions.prepackaged != null
     // Parallelize independent async operations
     const [publishConfig, stageDir, desktopEntry, icons, license] = await Promise.all([
-      getPackAppUpdatePublishConfiguration(packager, packager.getPackTargets(appOutDir, arch) ?? [this], arch, false),
+      isPrepackaged ? getPackAppUpdatePublishConfiguration(packager, packager.getPackTargets(appOutDir, arch) ?? [this], arch, false) : null,
       createStageDir(this, packager, arch),
       this.desktopEntry.value,
       this.helper.icons,
@@ -76,6 +79,8 @@ export default class AppImageTarget extends Target {
     ])
 
     if (publishConfig != null) {
+      // its only app-update.yml, written into the app dir that the zip/7z/tar.* of this pack may still be archiving
+      await waitForPackWork(packager, appOutDir, arch)
       await writeAppUpdateYaml(packager.getResourcesDir(appOutDir), publishConfig, appOutDir)
     }
 

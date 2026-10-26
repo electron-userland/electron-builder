@@ -1,5 +1,5 @@
 // if baseUrl path doesn't ends with /, this path will be not prepended to passed pathname for new URL(input, base)
-import { HttpExecutor } from "builder-util-runtime"
+import { CancellationError, CancellationToken, HttpExecutor } from "builder-util-runtime"
 import { URL } from "url"
 import type { Logger } from "./types.js"
 
@@ -58,4 +58,19 @@ export function nonThrowingLogger(logger: Logger): Logger {
     result.debug = message => ignoreErrors(() => logger.debug?.(message))
   }
   return result
+}
+
+/**
+ * A differential download that failed because the user cancelled it must surface as a cancellation, not fall back to a
+ * full download: rethrows a {@link CancellationError}, or throws one when the token was cancelled and the failure is a
+ * side effect of that (e.g. an aborted request). Returns normally for any other failure.
+ * @internal
+ */
+export function throwIfCancelled(error: unknown, cancellationToken: CancellationToken): void {
+  if (error instanceof CancellationError) {
+    throw error
+  }
+  if (cancellationToken.cancelled) {
+    throw new CancellationError()
+  }
 }

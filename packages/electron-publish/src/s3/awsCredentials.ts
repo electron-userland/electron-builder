@@ -493,7 +493,8 @@ export function validateS3CredentialsOptions(options: S3AwsCredentialsOptions | 
         `{ "source": "env" } to read AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_SESSION_TOKEN (or custom names via "env"), or to ` +
         `{ "source": "profile", "profile": "<name>" } to use a profile from the shared AWS config/credentials files (IAM Identity Center/SSO, credential_process, assume-role, static keys), or to ` +
         `{ "source": "sso-role-chain", "profile": "<name>" } for an assume-role profile whose source_profile chain starts at an IAM Identity Center (SSO) profile. ` +
-        `Since v27, S3 credentials are not read implicitly from the environment, AWS_PROFILE or ~/.aws.`
+        `Since v27, S3 credentials are not read implicitly from the environment, AWS_PROFILE or ~/.aws. ` +
+        `See https://www.electron.build/docs/migration/v27-build-changes#s3-publishing-requires-an-explicit-awscredentialssource`
     )
   }
   if (source === "env") {

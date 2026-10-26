@@ -1,4 +1,4 @@
-import { exec, loadCscLink, spawn } from "builder-util"
+import { exec, Executables, loadCscLink, spawn, stripSensitiveEnvVars } from "builder-util"
 import { SnapStoreOptions } from "builder-util-runtime"
 import * as path from "path"
 import { PublishContext, UploadTask } from "./index.js"
@@ -21,7 +21,9 @@ export class SnapStorePublisher extends Publisher {
   async upload(task: UploadTask): Promise<any> {
     this.createProgressBar(path.basename(task.file), -1)
 
-    await checkSnapcraft()
+    // by absolute path (toolsets.executables.snapcraft or its default install locations), never looked up on PATH
+    const snapcraft = Executables.resolve("snapcraft")
+    await checkSnapcraft(snapcraft)
 
     // Credentials are injected via SNAPCRAFT_STORE_CREDENTIALS so that the
     // snapcraft subprocess authenticates without an interactive login session.
@@ -45,15 +47,31 @@ export class SnapStorePublisher extends Publisher {
       args.push("--release", channels.join(","))
     }
 
-    return spawn("snapcraft", args, {
+    // the store credentials (from cscLink, or SNAPCRAFT_STORE_CREDENTIALS set directly) and their format (SNAPCRAFT_STORE_AUTH,
+    // e.g. "candid", which the credential filter would remove for its name), but no other secret of the publish environment
+    return spawn(snapcraft, args, {
       stdio: ["ignore", "inherit", "inherit"],
-      env: { ...process.env, ...credEnv },
+      env: { ...stripSensitiveEnvVars(process.env), ...snapStoreEnv(), ...credEnv },
     })
   }
 
   toString(): string {
     return "Snap Store"
   }
+}
+
+const SNAP_STORE_ENV_NAMES = ["SNAPCRAFT_STORE_CREDENTIALS", "SNAPCRAFT_STORE_AUTH"]
+
+// The store settings of the publish environment that snapcraft upload reads
+function snapStoreEnv(): Record<string, string> {
+  const env: Record<string, string> = {}
+  for (const name of SNAP_STORE_ENV_NAMES) {
+    const value = process.env[name]
+    if (value != null) {
+      env[name] = value
+    }
+  }
+  return env
 }
 
 // Resolves Snap Store credentials from cscLink / SNAP_CSC_LINK and returns
@@ -81,12 +99,12 @@ export async function resolveSnapCredentials(cscLink: string | undefined, resour
 // https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/authenticate/
 const REQUIRED_SNAPCRAFT_MAJOR = 7
 
-async function checkSnapcraft(): Promise<void> {
+async function checkSnapcraft(snapcraft: string): Promise<void> {
   const installMessage = process.platform === "darwin" ? "brew install snapcraft" : "sudo snap install snapcraft --classic"
 
   let versionOutput: string
   try {
-    versionOutput = await exec("snapcraft", ["--version"])
+    versionOutput = await exec(snapcraft, ["--version"])
   } catch {
     throw new Error(`snapcraft is not installed, please: ${installMessage}`)
   }

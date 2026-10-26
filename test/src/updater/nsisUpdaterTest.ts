@@ -4,7 +4,6 @@ import fsExtra from "fs-extra"
 import { createHash } from "crypto"
 import * as http from "http"
 import type { Socket } from "net"
-import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert.js"
 import { removeUnstableProperties } from "../helpers/packTester.js"
@@ -16,6 +15,7 @@ import {
   trackEvents,
   tuneTestUpdater,
   validateDownload,
+  writeRawUpdateConfig,
   writeUpdateConfig,
 } from "../helpers/updaterTestUtil.js"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
@@ -379,41 +379,10 @@ test.skip("test download progress", config, async ({ expect }) => {
   }
 })
 
-// On non-Windows platforms the built-in Authenticode verifier is a no-op, which is exactly what these
-// tests exercised before against externally hosted (signed) installers. Verifying a genuinely signed
-// installer requires a production code-signing certificate and is intentionally not reproducible
-// in-repo; the failure path of the real verifier is still covered by "invalid signature" below.
-test.ifNotWindows("valid signature", config, async ({ expect }) => {
-  const { url, close } = await serveDefaultUpdate()
-  try {
-    const updater = await createNsisUpdater("0.0.1")
-    updater.updateConfigPath = await writeUpdateConfig({
-      provider: "generic",
-      url,
-      publisherName: ["Vladimir Krivosheev"],
-    })
-    await validateDownload(expect, updater)
-  } finally {
-    await close()
-  }
-})
-
-test.ifNotWindows("valid signature - multiple publisher DNs", config, async ({ expect }) => {
-  const { url, close } = await serveDefaultUpdate()
-  try {
-    const updater = await createNsisUpdater("0.0.1")
-    updater.updateConfigPath = await writeUpdateConfig({
-      provider: "generic",
-      url,
-      publisherName: ["Foo Bar", "CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE", "Bar Foo"],
-    })
-    await validateDownload(expect, updater)
-  } finally {
-    await close()
-  }
-})
-
-test.ifNotWindows("valid signature using DN", config, async ({ expect }) => {
+// Without PowerShell (any non-Windows host), the built-in Authenticode verifier cannot verify the update, so it fails closed:
+// before v27 it skipped the verification with a warning and accepted the update. Verifying a genuinely signed installer is
+// covered by the real-certificate e2e tests in windowsExecutableCodeSignatureVerifierTest.
+test.ifNotWindows("fails closed when the signature cannot be verified (no PowerShell)", config, async ({ expect }) => {
   const { url, close } = await serveDefaultUpdate()
   try {
     const updater = await createNsisUpdater("0.0.1")
@@ -422,8 +391,13 @@ test.ifNotWindows("valid signature using DN", config, async ({ expect }) => {
       url,
       publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
     })
-
-    await validateDownload(expect, updater)
+    const actualEvents = trackEvents(updater)
+    const updateCheckResult = await updater.checkForUpdates()
+    await expect(updateCheckResult?.downloadPromise).rejects.toMatchObject({
+      code: "ERR_UPDATER_SIGNATURE_UNVERIFIABLE",
+      message: expect.stringContaining("Cannot verify the Authenticode signature of the update"),
+    })
+    expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])
   } finally {
     await close()
   }
@@ -437,7 +411,7 @@ test.ifWindows("invalid signature", config, async ({ expect }) => {
     updater.updateConfigPath = await writeUpdateConfig({
       provider: "generic",
       url,
-      publisherName: ["Foo Bar"],
+      publisherName: ["CN=Foo Bar, O=Foo Bar"],
     })
     const actualEvents = trackEvents(updater)
     await assertThat(
@@ -515,6 +489,45 @@ test("malformed custom signature verifier result fails closed", config, async ({
   }
 })
 
+// electron-updater 7 fails closed: an app-update.yml without publisherName rejects the downloaded update (even with a custom verifier,
+// which is not called), unless it opts out with verifyUpdateCodeSignature: false
+test("missing publisherName rejects the downloaded update", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const updater = await createNsisUpdater("1.0.2")
+    updater.updateConfigPath = await writeRawUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+    const verifier = vi.fn(async () => ({ response: "success" as const }))
+    updater.verifyUpdateFileAuthenticodeSignature = verifier
+    const actualEvents = trackEvents(updater)
+    const updateCheckResult = await updater.checkForUpdates()
+
+    await expect(updateCheckResult?.downloadPromise).rejects.toMatchObject({
+      code: "ERR_UPDATER_INVALID_SIGNATURE",
+      message: expect.stringContaining("v27-build-changes#missing-publishername-fails-update-verification"),
+    })
+    expect(verifier).not.toHaveBeenCalled()
+    expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])
+  } finally {
+    await close()
+  }
+})
+
+test("verifyUpdateCodeSignature: false in app-update.yml installs the update unverified", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const updater = await createNsisUpdater("1.0.2")
+    updater.updateConfigPath = await writeRawUpdateConfig<GenericServerOptions>({ provider: "generic", url, verifyUpdateCodeSignature: false })
+    const verifier = vi.fn(async () => ({ response: "failure" as const, message: "must not be called" }))
+    updater.verifyUpdateFileAuthenticodeSignature = verifier
+    const updateCheckResult = await updater.checkForUpdates()
+
+    await expect(updateCheckResult?.downloadPromise).resolves.toBeDefined()
+    expect(verifier).not.toHaveBeenCalled()
+  } finally {
+    await close()
+  }
+})
+
 // the s3 provider resolves to GenericProvider at runtime, so an explicit localhost endpoint exercises
 // the identical code path the real bucket did
 function s3UpdateConfig(url: string, channel: string): S3Options {
@@ -527,18 +540,27 @@ function s3UpdateConfig(url: string, channel: string): S3Options {
   }
 }
 
-test("90 staging percentage", config, async ({ expect }) => {
-  const userIdFile = path.join(tmpdir(), "electron-updater-test", "userData", ".updaterId")
-  // staging value of this user id is ≈0.878 — inside a 90% rollout
-  await fsExtra.outputFile(userIdFile, "1wa70172-80f8-5cc4-8131-28f5e0edd2a1")
+// staging value of this user id (bytes 12..15 of the UUID / 0xffffffff) is ≈0.878: inside a 90% rollout, outside a 1% one
+const STAGING_USER_ID = "12a70172-80f8-5cc4-8131-28f5e0edd2a1"
 
+// The updater reads its staging user id from `.updaterId` in the user data directory of its app adapter, so the id is
+// written there: anywhere else, the updater generates a random id and the rollout decision is left to chance.
+async function createStagedNsisUpdater(updateConfigPath: string) {
+  const appAdapter = await createTestAppAdapter("0.0.1")
+  await fsExtra.outputFile(path.join(appAdapter.userDataPath, ".updaterId"), STAGING_USER_ID)
+  const updater = new NsisUpdater(null, appAdapter)
+  tuneTestUpdater(updater)
+  updater.updateConfigPath = updateConfigPath
+  return updater
+}
+
+test("90 staging percentage", config, async ({ expect }) => {
   const { url, close } = await serveUpdate({
     "test-bucket/test/staging-percentage.yml": channelYml({ stagingPercentage: 90 }),
     [`test-bucket/test/${installerName(UPDATE_VERSION)}`]: INSTALLER_CONTENT,
   })
   try {
-    const updater = await createNsisUpdater("0.0.1")
-    updater.updateConfigPath = await writeUpdateConfig<S3Options>(s3UpdateConfig(url, "staging-percentage"))
+    const updater = await createStagedNsisUpdater(await writeUpdateConfig<S3Options>(s3UpdateConfig(url, "staging-percentage")))
     await validateDownload(expect, updater)
   } finally {
     await close()
@@ -546,17 +568,13 @@ test("90 staging percentage", config, async ({ expect }) => {
 })
 
 test("1 staging percentage", config, async ({ expect }) => {
-  const userIdFile = path.join(tmpdir(), "electron-updater-test", "userData", ".updaterId")
-  // staging value of this user id is ≈0.878 — outside a 1% rollout, so no download must happen
-  await fsExtra.outputFile(userIdFile, "12a70172-80f8-5cc4-8131-28f5e0edd2a1")
-
   const { url, close } = await serveUpdate({
     "test-bucket/test/staging-percentage-small.yml": channelYml({ stagingPercentage: 1 }),
     [`test-bucket/test/${installerName(UPDATE_VERSION)}`]: INSTALLER_CONTENT,
   })
   try {
-    const updater = await createNsisUpdater("0.0.1")
-    updater.updateConfigPath = await writeUpdateConfig<S3Options>(s3UpdateConfig(url, "staging-percentage-small"))
+    // outside the rollout, so no download must happen
+    const updater = await createStagedNsisUpdater(await writeUpdateConfig<S3Options>(s3UpdateConfig(url, "staging-percentage-small")))
     await validateDownload(expect, updater, false)
   } finally {
     await close()

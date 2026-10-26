@@ -5,6 +5,7 @@ import * as path from "path"
 import { describe, expect, test } from "vitest"
 import {
   FEED_QUERY_ADVISORY,
+  FORCE_CODE_SIGNING_ADVISORY,
   INCLUDE_PDB_CHANGES,
   includePdbManualStep,
   MAC_ENTITLEMENTS_ADVISORY,
@@ -14,6 +15,8 @@ import {
   pdbFilesPatternsAdvisory,
   platformExcludedExtsPdbChange,
   PORTABLE_DEBUG_LOGGING_DROPPED,
+  WIN_MISSING_PUBLISHER_NAME_ADVISORY,
+  WIN_PUBLISHER_NAME_DN_ADVISORY,
   WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
 } from "../../packages/electron-builder/src/cli/migrate-schema"
 
@@ -324,7 +327,7 @@ describe("migrateConfig — files patterns that name .pdb files", () => {
       'files patterns that name .pdb files detected: fileOptions.files "native/*.pdb", win.fileOptions.files "**/*.{node,pdb}". ' +
         "In v27 such a pattern ships the .pdb files it matches (v26 excluded .pdb files whatever files said, unless includePdb was true), also in configs that extend this one. " +
         'To keep them out, remove the pattern, or add a negation after it, such as "!native/*.pdb". ' +
-        "See https://www.electron.build/docs/migration/v27-breaking-changes#includepdb-fileoptionsexcludedexts"
+        "See https://www.electron.build/docs/migration/v27-config-changes#includepdb-fileoptionsexcludedexts"
     )
   })
 
@@ -986,14 +989,17 @@ describe("migrateConfig — nsis-web advisory", () => {
 describe("migrateConfig — updater advisories", () => {
   const advisoriesOf = (config: Record<string, any>) => migrateConfig(config).advisories
 
-  test.each<[string, string, string]>([
-    ["NSIS_WEB_ADVISORY", NSIS_WEB_ADVISORY, "disablewebinstaller-defaults-to-true"],
-    ["NSIS_PER_MACHINE_UPDATE_ADVISORY", NSIS_PER_MACHINE_UPDATE_ADVISORY, "nsis-per-machine-builds-set-isadminrightsrequired"],
-    ["WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY", WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY, "windows-publishername-is-validated-against-the-signing-certificate"],
-    ["FEED_QUERY_ADVISORY", FEED_QUERY_ADVISORY, "update-credentials-stay-on-the-feeds-origin"],
-  ])("%s links its v27 breaking-changes section", (_name, advisory, anchor) => {
-    expect(advisory.endsWith(` See https://www.electron.build/docs/migration/v27-breaking-changes#${anchor}`)).toBe(true)
-    const doc = readFileSync(path.join(import.meta.dirname, "../../website/docs/migration/v27-breaking-changes.md"), "utf8")
+  test.each<[string, string, string, string]>([
+    ["NSIS_WEB_ADVISORY", NSIS_WEB_ADVISORY, "v27-runtime-changes", "disablewebinstaller-defaults-to-true"],
+    ["NSIS_PER_MACHINE_UPDATE_ADVISORY", NSIS_PER_MACHINE_UPDATE_ADVISORY, "v27-runtime-changes", "nsis-per-machine-builds-set-isadminrightsrequired"],
+    ["WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY", WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY, "v27-build-changes", "windows-publishername-is-validated-against-the-signing-certificate"],
+    ["FEED_QUERY_ADVISORY", FEED_QUERY_ADVISORY, "v27-runtime-changes", "update-credentials-stay-on-the-feeds-origin"],
+    ["WIN_PUBLISHER_NAME_DN_ADVISORY", WIN_PUBLISHER_NAME_DN_ADVISORY, "v27-build-changes", "windows-publishername-must-be-a-distinguished-name"],
+    ["WIN_MISSING_PUBLISHER_NAME_ADVISORY", WIN_MISSING_PUBLISHER_NAME_ADVISORY, "v27-build-changes", "missing-publishername-fails-update-verification"],
+    ["FORCE_CODE_SIGNING_ADVISORY", FORCE_CODE_SIGNING_ADVISORY, "v27-build-changes", "forcecodesigning-covers-notarization-and-update-manifests"],
+  ])("%s links its v27 breaking-changes section", (_name, advisory, page, anchor) => {
+    expect(advisory.endsWith(` See https://www.electron.build/docs/migration/${page}#${anchor}`)).toBe(true)
+    const doc = readFileSync(path.join(import.meta.dirname, `../../website/docs/migration/${page}.md`), "utf8")
     expect(doc.includes(`(#${anchor})`) || doc.includes(`{#${anchor}}`)).toBe(true)
   })
 
@@ -1021,6 +1027,24 @@ describe("migrateConfig — updater advisories", () => {
     })
     expect(result.advisories).toEqual([NSIS_WEB_ADVISORY, MAC_ENTITLEMENTS_ADVISORY, NSIS_PER_MACHINE_UPDATE_ADVISORY, WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY, FEED_QUERY_ADVISORY])
     expect(result.modified).toBe(false)
+  })
+
+  describe("forceCodeSigning", () => {
+    test.each<[string, Record<string, any>]>([
+      ["root forceCodeSigning", { forceCodeSigning: true }],
+      ["win.forceCodeSigning", { win: { forceCodeSigning: true } }],
+      ["mac.forceCodeSigning", { mac: { forceCodeSigning: true } }],
+    ])("%s: true emits the advisory without changing the config", (_name, input) => {
+      const result = migrateConfig(input)
+      // a mac section also gets the default-entitlements advisory
+      expect(result.advisories).toContain(FORCE_CODE_SIGNING_ADVISORY)
+      expect(result.modified).toBe(false)
+      expect(result.migrated).toEqual(input)
+    })
+
+    test("forceCodeSigning: false emits nothing", () => {
+      expect(advisoriesOf({ forceCodeSigning: false, linux: { forceCodeSigning: false } })).toEqual([])
+    })
   })
 
   describe("per-machine NSIS", () => {
@@ -1058,13 +1082,14 @@ describe("migrateConfig — updater advisories", () => {
     })
 
     test("no advisory with publisherName (set or null), verifyUpdateCodeSignature: false, or no hook", () => {
+      // publisherName: null and win.sign: false get the missing publisherName advisory instead (see below)
       expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: "CN=Acme" } } })).toEqual([])
       expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: ["CN=Old", "CN=New"] } } })).toEqual([])
-      expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: null } } })).toEqual([])
+      expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: null } } })).toEqual([WIN_MISSING_PUBLISHER_NAME_ADVISORY])
       expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js" }, verifyUpdateCodeSignature: false } })).toEqual([])
       expect(advisoriesOf({ win: { sign: { type: "signtool" } } })).toEqual([])
       expect(advisoriesOf({ win: { sign: { type: "signtool", sign: null } } })).toEqual([])
-      expect(advisoriesOf({ win: { sign: false } })).toEqual([])
+      expect(advisoriesOf({ win: { sign: false } })).toEqual([WIN_MISSING_PUBLISHER_NAME_ADVISORY])
       expect(advisoriesOf({ win: { sign: { type: "azure", endpoint: "https://e/", certificateProfileName: "p", codeSigningAccountName: "a", publisherName: "CN=A" } } })).toEqual(
         []
       )
@@ -1092,7 +1117,83 @@ describe("migrateConfig — updater advisories", () => {
     test("a v26 hook whose signing was disabled (signExecutable: false) is dropped, so no advisory", () => {
       const result = migrateConfig({ win: { signExecutable: false, signtoolOptions: { sign: "./sign.js" } } })
       expect(result.migrated.win).toEqual({ sign: false })
-      expect(result.advisories).toEqual([])
+      // only the one about the missing publisherName of an unsigned build
+      expect(result.advisories).toEqual([WIN_MISSING_PUBLISHER_NAME_ADVISORY])
+    })
+  })
+
+  describe("Windows build without a publisherName (win.sign: false / null, publisherName: null)", () => {
+    test.each<[string, Record<string, any>]>([
+      ["win.sign: false", { win: { sign: false } }],
+      ["win.sign: null", { win: { sign: null } }],
+      ["win.sign.publisherName: null", { win: { sign: { type: "signtool", certificateFile: "c.pfx", publisherName: null } } }],
+      ["azure publisherName: null", { win: { sign: { type: "azure", endpoint: "https://e/", codeSigningAccountName: "a", certificateProfileName: "p", publisherName: null } } }],
+      ["v26 signAndEditExecutable: false", { win: { signAndEditExecutable: false } }],
+      ["v26 signtoolOptions.publisherName: null", { win: { signtoolOptions: { certificateFile: "c.pfx", publisherName: null } } }],
+      ["verifyUpdateCodeSignature: true", { win: { sign: false, verifyUpdateCodeSignature: true } }],
+    ])("%s emits the advisory, naming the opt-out and the migration guide", (_name, config) => {
+      expect(advisoriesOf(config)).toEqual([WIN_MISSING_PUBLISHER_NAME_ADVISORY])
+      expect(WIN_MISSING_PUBLISHER_NAME_ADVISORY).toContain("win.verifyUpdateCodeSignature: false")
+      expect(WIN_MISSING_PUBLISHER_NAME_ADVISORY).toContain("publisherName: null no longer opts out")
+      expect(WIN_MISSING_PUBLISHER_NAME_ADVISORY.endsWith("v27-build-changes#missing-publishername-fails-update-verification")).toBe(true)
+    })
+
+    test.each<[string, Record<string, any>]>([
+      ["win.sign: false with verifyUpdateCodeSignature: false", { win: { sign: false, verifyUpdateCodeSignature: false } }],
+      ["publisherName: null with verifyUpdateCodeSignature: false", { win: { sign: { type: "signtool", publisherName: null }, verifyUpdateCodeSignature: false } }],
+      ["no win section", {}],
+      ["win.sign unset", { win: { target: "nsis" } }],
+      ["a sign object with publisherName (signed outside electron-builder)", { win: { sign: { type: "signtool", publisherName: ["CN=Acme"] } } }],
+      ["a sign object without publisherName", { win: { sign: { type: "signtool", certificateFile: "c.pfx" } } }],
+    ])("%s emits nothing", (_name, config) => {
+      expect(advisoriesOf(config)).toEqual([])
+    })
+  })
+
+  describe("win.sign.publisherName that is not a distinguished name", () => {
+    test.each<[string, unknown]>([
+      ["a bare name", "Acme Corp"],
+      ["a bare name with a comma", "Acme, Inc"],
+      ["a DN with an empty value", "CN="],
+      ["a list with one invalid entry", ["CN=Acme Corp, O=Acme Corp", "Old Corp"]],
+      ["a value that is no string", 42],
+    ])("%s emits the advisory without changing the config", (_name, publisherName) => {
+      const input = { win: { sign: { type: "signtool", certificateFile: "c.pfx", publisherName } } }
+      const result = migrateConfig(input)
+      expect(result.advisories).toEqual([WIN_PUBLISHER_NAME_DN_ADVISORY])
+      expect(result.modified).toBe(false)
+      expect(result.migrated).toEqual(input)
+    })
+
+    test.each<[string, unknown]>([
+      ["a full DN", "CN=Acme Corp, O=Acme Corp, C=US"],
+      ["a CN-only DN", "CN=Acme Corp"],
+      ["a DN without CN", "O=Acme Corp, C=US"],
+      ["a list of DNs", ["CN=Old, O=Old Org", "CN=New"]],
+      ["no publisherName", undefined],
+    ])("%s emits nothing", (_name, publisherName) => {
+      expect(advisoriesOf({ win: { sign: { type: "signtool", certificateFile: "c.pfx", publisherName } } })).toEqual([])
+    })
+
+    test("a v26 signtoolOptions / azureSignOptions publisherName migrates into win.sign and then emits the advisory", () => {
+      expect(advisoriesOf({ win: { signtoolOptions: { certificateFile: "c.pfx", publisherName: "Acme" } } })).toEqual([WIN_PUBLISHER_NAME_DN_ADVISORY])
+      expect(advisoriesOf({ win: { azureSignOptions: { endpoint: "https://e/", codeSigningAccountName: "a", certificateProfileName: "p", publisherName: "Acme" } } })).toEqual([
+        WIN_PUBLISHER_NAME_DN_ADVISORY,
+      ])
+      // signing disabled: the options are dropped, nothing is validated (only the missing publisherName of the unsigned build is reported)
+      expect(advisoriesOf({ win: { signExecutable: false, signtoolOptions: { publisherName: "Acme" } } })).toEqual([WIN_MISSING_PUBLISHER_NAME_ADVISORY])
+    })
+
+    test("is emitted next to the sign hook advisory's position, after it", () => {
+      expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: "Acme" } }, publish: { provider: "generic", url: "https://u/?t=1" } })).toEqual([
+        WIN_PUBLISHER_NAME_DN_ADVISORY,
+        FEED_QUERY_ADVISORY,
+      ])
+    })
+
+    test("names electron-builder v27, the requirement and the migration guide", () => {
+      expect(WIN_PUBLISHER_NAME_DN_ADVISORY).toContain("In v27")
+      expect(WIN_PUBLISHER_NAME_DN_ADVISORY).toContain('must be in distinguished name (DN) format, e.g. "CN=My Company, O=My Company, C=US"')
     })
   })
 
@@ -1211,6 +1312,13 @@ describe("migrateConfig — toolsets", () => {
   test("leaves valid pins untouched", () => {
     const input = { toolsets: { appimage: "0.0.0", wine: "system", winCodeSign: "1.3.0" } }
     expect(migrateConfig(input).modified).toBe(false)
+  })
+
+  test("keeps toolsets.executables, for which null is valid", () => {
+    const input = { toolsets: { executables: null, wine: "system" } }
+    expect(migrateConfig(input).modified).toBe(false)
+    const withEntries = { toolsets: { executables: { mono: "file:///opt/homebrew/bin/mono", pwsh: null } } }
+    expect(migrateConfig(withEntries).modified).toBe(false)
   })
 })
 

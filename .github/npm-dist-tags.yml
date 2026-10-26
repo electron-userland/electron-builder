@@ -1,0 +1,13 @@
+# The npm dist-tags of electron-builder and the other packages of this repository, as electron-builder releases.
+#
+# Changing a line here and merging the pull request moves that dist-tag on npm: the npm dist-tag workflow
+# (.github/workflows/npm-dist-tag.yml) runs on the push to master and tags every package with the version it had in that
+# release (from the git tag electron-builder@<version>), so electron-updater, builder-util-runtime etc. move together
+# with electron-builder. Only packages whose tag differs are moved; a pull request that changes this file gets the
+# planned changes in the job summary of its "npm dist-tag" check.
+#
+# Promote a release to latest once it has had some adoption under its branch tag, or move latest back to an older
+# release (a rollback is a pull request as well). Releases are published under `next` (master) and `v<major>`
+# (release/v<major>) by the Release workflow, which moves those tags itself: they cannot be listed here. Removing a line
+# does not remove that dist-tag from npm. Format: one `<dist-tag>: <electron-builder version>` per line.
+latest: 26.18.0

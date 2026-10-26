@@ -6,6 +6,12 @@ const templatePath = path.join(__dirname, "../../../packages/app-builder-lib/tem
 const uninstallerPath = path.join(__dirname, "../../../packages/app-builder-lib/templates/nsis/uninstaller.nsh")
 
 let templateContent: string
+
+const withoutComments = (text: string) =>
+  text
+    .split("\n")
+    .filter(line => !line.trim().startsWith("#"))
+    .join("\n")
 let findProcessMacro: string
 
 describe("allowOnlyOneInstallerInstance.nsh", { concurrent: false }, () => {
@@ -15,6 +21,27 @@ describe("allowOnlyOneInstallerInstance.nsh", { concurrent: false }, () => {
     // Extract just the FIND_PROCESS macro body for targeted assertions
     const match = templateContent.match(/!macro FIND_PROCESS[\s\S]*?!macroend/)
     findProcessMacro = match ? match[0] : ""
+  })
+
+  describe("IS_POWERSHELL_AVAILABLE macro", () => {
+    let availabilityMacro: string
+
+    beforeAll(() => {
+      const match = templateContent.match(/!macro IS_POWERSHELL_AVAILABLE[\s\S]*?!macroend/)
+      expect(match).not.toBeNull()
+      availabilityMacro = withoutComments(match![0])
+    })
+
+    // Wine's powershell.exe runs nothing and exits with 0, which FIND_PROCESS reads as "the app is running"
+    // (runtime behavior: nsisPowerShellAvailabilityTest)
+    test("requires the sentinel exit code 37, which only a PowerShell that ran the probe returns", () => {
+      expect(availabilityMacro).toMatch(/Get-Command Get-CimInstance -ErrorAction SilentlyContinue\) \{ exit 37 \} else \{ exit 1 \}/)
+      expect(availabilityMacro).toMatch(/\$\{if\} \$0 == 37\s+nsExec::Exec [^\n]*Get-ExecutionPolicy -Scope Process/)
+    })
+
+    test("treats every other probe result, including 0, as unavailable", () => {
+      expect(availabilityMacro).toMatch(/\$\{if\} \$0 == 37[\s\S]*?\$\{else\}\s+StrCpy \$0 1\s+\$\{endIf\}/)
+    })
   })
 
   describe("FIND_PROCESS macro — PowerShell path", () => {
@@ -194,6 +221,23 @@ describe("allowOnlyOneInstallerInstance.nsh", { concurrent: false }, () => {
       const killMacro = templateContent.match(/!macro KILL_PROCESS[\s\S]*?!macroend/)
       expect(killMacro).not.toBeNull()
       expect(killMacro![0]).toContain("$$_.Path -and ($processPathFilter)")
+    })
+
+    test("starts taskkill by absolute path, with the force flag, in both install modes", () => {
+      const killMacro = templateContent.match(/!macro KILL_PROCESS[\s\S]*?!macroend/)
+      expect(killMacro).not.toBeNull()
+      const body = killMacro![0]
+      // a bare name is looked up in the installer's directory and the current directory first
+      expect(withoutComments(body)).not.toMatch(/[`\s]taskkill[\s`]/)
+      expect(body).toContain('nsExec::Exec `"$SYSDIR\\taskkill.exe" $0 /IM "${_FILE}" /FI "PID ne $pid"`')
+      expect(body).toContain('"$CmdPath" /S /C ""$SYSDIR\\taskkill.exe" $0 /IM')
+    })
+  })
+
+  describe("FIND_PROCESS macro — program paths", () => {
+    test("starts tasklist by absolute path inside cmd.exe, which keeps the quoted paths with /S", () => {
+      expect(withoutComments(findProcessMacro)).not.toMatch(/[`\s]tasklist[\s`]/)
+      expect(findProcessMacro.match(/"\$CmdPath" \/S \/C ""\$SYSDIR\\tasklist\.exe" /g)).toHaveLength(2)
     })
   })
 

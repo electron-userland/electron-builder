@@ -604,7 +604,12 @@ export class NsisTarget extends Target {
     const script = await readFile(customScriptPath || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
 
     if (customScriptPath != null) {
-      log.info({ reason: "custom NSIS script is used" }, "uninstaller is not signed by electron-builder")
+      // a custom script writes its own uninstaller at install time: honored under forceCodeSigning, but not silently
+      if (packager.forceCodeSigning) {
+        log.warn({ reason: "custom NSIS script is used" }, "uninstaller is not signed by electron-builder, although forceCodeSigning is enabled")
+      } else {
+        log.info({ reason: "custom NSIS script is used" }, "uninstaller is not signed by electron-builder")
+      }
       return { script, isCustomScript: true }
     }
 
@@ -972,7 +977,7 @@ export class NsisTarget extends Target {
       { progIds: examples, solution: "update any registry keys, shell verbs, or external tooling that references the old ProgID" },
       "NSIS file associations now register a generated ProgID instead of the association name or extension. " +
         "You ship a custom NSIS script (nsis.include / nsis.script), which may reference the old value. " +
-        "See https://www.electron.build/docs/migration/v27-breaking-changes#nsis-file-association-progid-format-changed"
+        "See https://www.electron.build/docs/migration/v27-runtime-changes#nsis-file-association-progid-format-changed"
     )
   }
 
