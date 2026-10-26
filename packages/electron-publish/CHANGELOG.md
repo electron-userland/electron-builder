@@ -1,5 +1,25 @@
 # electron-publish
 
+## 27.0.0-alpha.13
+### Patch Changes
+
+- Fix: secrets in logs and error messages (passwords, tokens and keys in redacted command lines, environments and request options) are shown as a fingerprint keyed with a random secret of the process, derived with scrypt: the same value has the same fingerprint within a run, but a fingerprint cannot be checked against guessed values offline. A value whose fingerprint cannot be computed is shown as `<redacted>`. _[`#10441`](https://github.com/electron-userland/electron-builder/pull/10441) [`955cd00`](https://github.com/electron-userland/electron-builder/commit/955cd00bd32f4dff0fd5f120b5c7bdad92ea1d7f)_
+- Docs: split the v27 breaking-changes page into config, build, runtime and developer pages, point the migration links in build and updater messages at the page each change moved to, and add links to the v27 messages that had none _[`#10421`](https://github.com/electron-userland/electron-builder/pull/10421) [`b5e144d`](https://github.com/electron-userland/electron-builder/commit/b5e144dfeea1e0e8eaa13aec151457227ee4d7d5)_
+- Electron-builder starts the host programs it uses only from an absolute path, never by looking up a name on `PATH`: PowerShell, Wine, Mono (Squirrel.Windows on macOS and Linux), `prlctl`, `productbuild`, `pkgbuild`, `codesign`, `hdiutil`, `tiffutil`, `sips`, `actool`, `zip`, `notarytool` (passed to `@electron/notarize` as `notarytoolPath`, located with `/usr/bin/xcrun` by default), `lzip`, `snapcraft`, `flatpak` and `flatpak-builder`. Each comes from its default install locations or from the new `toolsets.executables` map, whose entries are `file://` URIs, or lists of them, that replace the defaults for that program. Child processes started without an explicit environment get no credential variables on Windows either, and `snapcraft upload` gets the store credentials but no other secret. The NSIS installer starts `tasklist` and `taskkill` from `$SYSDIR` (and passes the force flag in per-machine mode), the AppImage launcher runs the dialog tool it checked by its absolute path, and electron-updater on macOS starts `/usr/sbin/sysctl` and `/usr/bin/uname`. _[`#10430`](https://github.com/electron-userland/electron-builder/pull/10430) [`b98e1f2`](https://github.com/electron-userland/electron-builder/commit/b98e1f2910edaa14b554e603d3ff509c8b04ccf2)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`ed05bd0`](https://github.com/electron-userland/electron-builder/commit/ed05bd0f734dd3b898b9c43c81abd56c08d242ef) [`6393d7a`](https://github.com/electron-userland/electron-builder/commit/6393d7ae75d15da5147691b135c5bcc7aa520f35) [`5028cb3`](https://github.com/electron-userland/electron-builder/commit/5028cb37a21b8bdd6d9447e858eacfb8e3834004) [`2d97c85`](https://github.com/electron-userland/electron-builder/commit/2d97c85e3e3e63aade6497923d3012ce0569e414) [`955cd00`](https://github.com/electron-userland/electron-builder/commit/955cd00bd32f4dff0fd5f120b5c7bdad92ea1d7f) [`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14) [`2d97c85`](https://github.com/electron-userland/electron-builder/commit/2d97c85e3e3e63aade6497923d3012ce0569e414) [`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14) [`ed05bd0`](https://github.com/electron-userland/electron-builder/commit/ed05bd0f734dd3b898b9c43c81abd56c08d242ef) [`ed05bd0`](https://github.com/electron-userland/electron-builder/commit/ed05bd0f734dd3b898b9c43c81abd56c08d242ef) [`046f936`](https://github.com/electron-userland/electron-builder/commit/046f9365cf923a22dc1504297702b3625ed473fb) [`8366dc6`](https://github.com/electron-userland/electron-builder/commit/8366dc690ba5bc453c45f6ebbb8f8ad3561521df) [`b98e1f2`](https://github.com/electron-userland/electron-builder/commit/b98e1f2910edaa14b554e603d3ff509c8b04ccf2) [`a7f005c`](https://github.com/electron-userland/electron-builder/commit/a7f005ce837df409cc7cf9049e3eff74a2d5a503)
+
+</small>
+
+- `builder-util@27.0.0-alpha.13`
+- `builder-util-runtime@10.0.0-alpha.12`
+
+</details>
+
 ## 27.0.0-alpha.12
 ### Major Changes
 

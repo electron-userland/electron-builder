@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { Platform } from "app-builder-lib"
 import { ArchiveTarget } from "app-builder-lib/src/targets/ArchiveTarget"
-import { Arch } from "builder-util"
+import { Arch, InvalidConfigurationError, log } from "builder-util"
 import SquirrelWindowsTarget from "electron-builder-squirrel-windows/src/SquirrelWindowsTarget"
 import { existsSync } from "fs"
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "fs/promises"
@@ -113,6 +113,17 @@ describe("SquirrelWindowsTarget.build", () => {
     await zipFinished
   })
 
+  test("fails before anything is built when msi: true meets forceCodeSigning", async ({ tmpDir }) => {
+    const root = await tmpDir.createTempDir()
+    const appOutDir = path.join(root, "win-unpacked")
+    const { squirrel } = await createBuild(root, appOutDir)
+    squirrel.options = { msi: true }
+    squirrel.packager.forceCodeSigning = true
+    await expect(squirrel.build(appOutDir, Arch.x64)).rejects.toThrow("squirrelWindows.msi is true")
+    expect(squirrel.generateStubExecutableExe).not.toHaveBeenCalled()
+    expect(squirrel.buildQueueManager.add).not.toHaveBeenCalled()
+  })
+
   test("waits for the archive of another arch when the app dir is shared (prepackaged)", async ({ tmpDir }) => {
     const root = await tmpDir.createTempDir()
     const appOutDir = path.join(root, "prepackaged")
@@ -138,4 +149,43 @@ describe("SquirrelWindowsTarget.build", () => {
     await squirrel.build(appOutDir, Arch.ia32)
     expect(events).toEqual(["stub written", "installer queued (Squirrel.exe in appOutDir)"])
   }, 5000)
+})
+
+// Squirrel.Windows builds the MSI around Setup.exe before electron-builder signs it
+describe("SquirrelWindowsTarget.checkMsiSigning", () => {
+  function target(msi: boolean | undefined, forceCodeSigning: boolean, platformOptions: any = {}): any {
+    const t: any = Object.create(SquirrelWindowsTarget.prototype)
+    t.options = { msi }
+    // a fresh packager per test: the warning is once per packager
+    t.packager = { forceCodeSigning, platformOptions, platform: { buildConfigurationKey: "win" } }
+    return t
+  }
+
+  afterEach(() => vi.restoreAllMocks())
+
+  test("msi: true warns that the MSI embeds an unsigned Setup.exe, once per build", () => {
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    const t = target(true, false)
+    t.checkMsiSigning()
+    t.checkMsiSigning()
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: expect.stringContaining("embeds Setup.exe before electron-builder signs it") }),
+      expect.stringContaining("add the msi target")
+    )
+  })
+
+  test("msi: true fails under forceCodeSigning, pointing at the msi target and the override", () => {
+    expect(() => target(true, true).checkMsiSigning()).toThrow(InvalidConfigurationError)
+    expect(() => target(true, true).checkMsiSigning()).toThrow(/forceCodeSigning is enabled, but squirrelWindows\.msi is true.*add the msi target.*-c\.forceCodeSigning=false/)
+    expect(() => target(true, true, { forceCodeSigning: true }).checkMsiSigning()).toThrow("-c.win.forceCodeSigning=false")
+  })
+
+  test("without msi: true there is nothing to check", () => {
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    for (const msi of [undefined, false]) {
+      expect(() => target(msi, true).checkMsiSigning()).not.toThrow()
+    }
+    expect(warn).not.toHaveBeenCalled()
+  })
 })

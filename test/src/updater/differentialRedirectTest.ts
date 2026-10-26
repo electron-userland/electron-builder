@@ -18,6 +18,9 @@ import { blockMapOf, FakeElectronHttpExecutor, FakeNetAnswer, FakeNetSentRequest
 const FILE_URL = "https://feed.example.com/updates/app-1.1.0.exe"
 const PRE_SIGNED_URL = "https://bucket.example.net/app-1.1.0.exe?X-Amz-Signature=abc"
 const SAME_ORIGIN_URL = "https://feed.example.com/files/app-1.1.0.exe"
+const FTP_URL = "ftp://files.example.net/app-1.1.0.exe"
+// without the fix, a redirect that cannot be followed leaves the download pending forever: fail fast instead
+const GUARD_TIMEOUT = 10_000
 
 // a changed block, an unchanged middle and a changed block, so the plan is: download the first block, copy the middle from the old file,
 // download the last block. The middle is as large as the gap that is still downloaded rather than copied (on any host), so the two
@@ -282,6 +285,34 @@ describe("differential download redirects", () => {
     expect(executor.sent).toHaveLength(11)
   })
 
+  for (const [label, isUseMultipleRangeRequest] of [
+    ["single", false],
+    ["multi", true],
+  ] as const) {
+    test(
+      `a redirect to a protocol other than http(s) fails a ${label}-range download`,
+      async ({ tmpDir, expect }) => {
+        const c: DownloadCase = { redirects: { [FILE_URL]: FTP_URL }, isUseMultipleRangeRequest }
+        const executor = createExecutor(c, NEW)
+        await expect(download(tmpDir, c, executor)).rejects.toThrow('Cannot follow the redirect to the "ftp:" protocol')
+        expect(executor.sent).toHaveLength(1)
+      },
+      GUARD_TIMEOUT
+    )
+
+    test(
+      `a redirect target that no request can be created for fails a ${label}-range download`,
+      async ({ tmpDir, expect }) => {
+        const c: DownloadCase = { redirects: { [FILE_URL]: PRE_SIGNED_URL }, isUseMultipleRangeRequest }
+        const executor = createExecutor(c, NEW)
+        executor.unrequestableUrls.add(PRE_SIGNED_URL)
+        await expect(download(tmpDir, c, executor)).rejects.toThrow(`Cannot create a request for ${PRE_SIGNED_URL}`)
+        expect(executor.sent).toHaveLength(1)
+      },
+      GUARD_TIMEOUT
+    )
+  }
+
   test("a redirect reported after a cancel is a cancellation, and the range is not requested again", async ({ tmpDir, expect }) => {
     const cancellationToken = new CancellationToken()
     const c: DownloadCase = { redirects: { [FILE_URL]: PRE_SIGNED_URL }, cancellationToken }
@@ -352,22 +383,25 @@ class RemoteBytesReader extends DifferentialDownloader {
 }
 
 describe("differential download redirects when reading remote bytes", () => {
+  function createReader(executor: FakeElectronHttpExecutor): RemoteBytesReader {
+    return new RemoteBytesReader(fileInfoOf(NEW), executor, {
+      newUrl: new URL(FILE_URL),
+      oldFile: "unused",
+      newFile: "unused",
+      logger: createLogger([], []),
+      requestHeaders: REQUEST_HEADERS,
+      cancellationToken: new CancellationToken(),
+    })
+  }
+
   for (const [label, target, isSent] of [
     ["another origin gets no credential headers", PRE_SIGNED_URL, false],
     ["the same origin keeps the credential headers", SAME_ORIGIN_URL, true],
   ] as const) {
     test(`a redirect to ${label}`, async ({ expect }) => {
       const executor = createExecutor({ redirects: { [FILE_URL]: target } }, NEW)
-      const reader = new RemoteBytesReader(fileInfoOf(NEW), executor, {
-        newUrl: new URL(FILE_URL),
-        oldFile: "unused",
-        newFile: "unused",
-        logger: createLogger([], []),
-        requestHeaders: REQUEST_HEADERS,
-        cancellationToken: new CancellationToken(),
-      })
 
-      expect(await reader.read(SECOND_START, SECOND_END)).toEqual(NEW.subarray(SECOND_START, SECOND_END + 1))
+      expect(await createReader(executor).read(SECOND_START, SECOND_END)).toEqual(NEW.subarray(SECOND_START, SECOND_END + 1))
       expect(urlsAndRanges(executor.sent)).toEqual([
         [FILE_URL, SECOND_RANGE],
         [target, SECOND_RANGE],
@@ -376,4 +410,14 @@ describe("differential download redirects when reading remote bytes", () => {
       expectCredentials(expect, executor.sent[1].headers, isSent)
     })
   }
+
+  test(
+    "a redirect to a protocol other than http(s) fails",
+    async ({ expect }) => {
+      const executor = createExecutor({ redirects: { [FILE_URL]: FTP_URL } }, NEW)
+      await expect(createReader(executor).read(32, 47)).rejects.toThrow('Cannot follow the redirect to the "ftp:" protocol')
+      expect(executor.sent).toHaveLength(1)
+    },
+    GUARD_TIMEOUT
+  )
 })

@@ -16,7 +16,9 @@ CWD=$(dirname "$0")
 DOCKERFILE="${1:-all}"
 TARGET="${2:-all}"
 
-export TEST_FILES="${TEST_FILES:-blackboxUpdateTest,linuxUpdaterTest,blackboxInstallTest}"
+# A caller (the CI e2e matrix) may pass TEST_FILES to run a subset; the default runs every Linux e2e suite.
+CALLER_TEST_FILES="${TEST_FILES:-}"
+export TEST_FILES="${TEST_FILES:-blackboxUpdateTest,linuxUpdaterTest,blackboxInstallTest,blackboxUpdateLinuxNextLaunch,blackboxUpdateLinuxSignedManifest,blackboxUpdateLinuxKeyRotation}"
 export TEST_SEQUENTIAL_FILES="${TEST_SEQUENTIAL_FILES:-true}"
 export DEBUG="${DEBUG:-electron-updater}"
 
@@ -63,10 +65,12 @@ run_appimage() {
   # appimage must match host arch — no --platform flag
   do_build appimage appimage-updater-test ""
   export ADDITIONAL_DOCKER_ARGS="${ADDITIONAL_DOCKER_ARGS:+$ADDITIONAL_DOCKER_ARGS }-e RUN_APP_IMAGE_TEST=true"
-  # Also run the generated per-toolset-version AppImage blackbox update suites
+  # Unless the caller picked the files, also run the generated per-toolset-version AppImage blackbox update suites
   # (test/src/generated/blackboxLinux/blackboxLinux__appimage-*.linux.Test.ts).
   # They gate on RUN_APP_IMAGE_TEST=true, so this job is the only place they execute.
-  export TEST_FILES="${TEST_FILES},blackboxLinux__appimage"
+  if [[ -z "$CALLER_TEST_FILES" ]]; then
+    export TEST_FILES="${TEST_FILES},blackboxLinux__appimage"
+  fi
   do_run appimage-updater-test
 }
 

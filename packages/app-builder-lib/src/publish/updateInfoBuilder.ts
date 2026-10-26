@@ -1,6 +1,7 @@
 import asyncPool from "tiny-async-pool"
-import { Arch, createUpdateManifestSignatures, log, safeStringifyJson, serializeToYaml } from "builder-util"
-import { deepAssign, GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import { Arch, createUpdateManifestSignatures, derivePublicKeyPem, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import { computeUpdateManifestKeyId, deepAssign, GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import type { KeyObject } from "crypto"
 import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -12,6 +13,7 @@ import { ArtifactCreated } from "../packagerApi.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { hashFile } from "../util/hash.js"
 import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager.js"
+import { verifyUpdateManifestContent } from "./updateManifestVerifier.js"
 
 async function getReleaseInfo(packager: PlatformPackager<any>) {
   const releaseInfo: ReleaseInfo = { ...(packager.platformOptions.releaseInfo || packager.config.releaseInfo) }
@@ -264,18 +266,11 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
 
   const tasks = Array.from(updateChannelFileToInfo.values())
 
-  // Resolve (and, when publishing, enforce) the signing keys before writing anything, so a missing key fails the
-  // build instead of leaving some manifests written and others not. MemoLazy and the one-shot warning make the
-  // per-task calls below free after this. Tasks with `publishAutoUpdate: false` are skipped for the same reason
-  // the loop skips them: they emit no manifest.
+  // Phase 1: resolve (and enforce) the signing keys, sign, serialize and read back every manifest before anything is
+  // written, so a missing key or a manifest that does not verify fails the build instead of leaving some manifests
+  // written - and uploaded - and others not.
+  const manifests: Array<{ task: UpdateInfoFileTask; fileContent: Buffer }> = []
   for (const task of tasks) {
-    if (task.publishConfiguration.publishAutoUpdate !== false) {
-      await task.packager.requireUpdateSigningKeys(isPublish)
-    }
-  }
-
-  const concurrency = 4
-  await asyncPool<UpdateInfoFileTask, void>(concurrency, tasks, async task => {
     const publishConfig = task.publishConfiguration
     if (publishConfig.publishAutoUpdate === false) {
       log.debug(
@@ -285,7 +280,7 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
         },
         "auto update metadata file not published"
       )
-      return
+      continue
     }
 
     if (task.info.releaseDate == null) {
@@ -302,7 +297,7 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
     const signingKeys = await task.packager.requireUpdateSigningKeys(isPublish)
     let info: UpdateInfo = task.info
     // empty only when signing is opted out of with `updateManifest: false`, or on a build without a publish
-    // policy that has no key configured - both of which have already warned
+    // policy or forceCodeSigning that has no key configured - both of which have already warned
     if (signingKeys.length > 0) {
       const signatures = createUpdateManifestSignatures(task.info, signingKeys)
       info = { ...task.info, signature: signatures[0].signature, signatures }
@@ -314,6 +309,13 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
     }
 
     const fileContent = Buffer.from(serializeToYaml(info, false, true))
+    verifySerializedManifest(task.file, fileContent, signingKeys)
+    manifests.push({ task, fileContent })
+  }
+
+  // Phase 2: write and emit (which schedules the upload of) exactly the bytes that were verified
+  const concurrency = 4
+  await asyncPool(concurrency, manifests, async ({ task, fileContent }) => {
     await fsExtra.outputFile(task.file, fileContent)
     await packager.emitArtifactCreated({
       file: task.file,
@@ -321,9 +323,33 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
       arch: null,
       packager: task.packager,
       target: null,
-      publishConfig,
+      publishConfig: task.publishConfiguration,
     })
   })
+}
+
+/**
+ * Reads a signed manifest back from the bytes about to be written, the way electron-updater parses it, and checks that
+ * every signing key verifies it. It is checked against the signing keys' own public keys, not `updateManifest.publicKey`,
+ * so a deliberate `allowSigningKeyOutsideTrustList` cutover keeps working. A failure means serialization changed what
+ * was signed, which is a bug: every install would reject the manifest.
+ */
+function verifySerializedManifest(file: string, fileContent: Buffer, signingKeys: ReadonlyArray<KeyObject>): void {
+  if (signingKeys.length === 0) {
+    return
+  }
+  const content = fileContent.toString("utf8")
+  for (const key of signingKeys) {
+    const publicKey = derivePublicKeyPem(key)
+    const result = verifyUpdateManifestContent(content, [publicKey])
+    if (!result.ok) {
+      throw new Error(
+        `Internal error: ${log.filePath(file)} does not verify with update-manifest signing key ${computeUpdateManifestKeyId(publicKey)} after serialization (${result.reason}). ` +
+          "No update manifest was written or uploaded (installers of a publishing build may already be uploaded). " +
+          "Please report it at https://github.com/electron-userland/electron-builder/issues"
+      )
+    }
+  }
 }
 
 // backward compatibility - write json file

@@ -1529,6 +1529,23 @@
           ],
           "description": "One file:// URI, or a list of them, of the `pkgbuild` executable on the build machine, such as `file:///opt/homebrew/bin/pkgbuild` or `file:///C:/Program%20Files/pkgbuild/pkgbuild.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
         },
+        "pkgutil": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `pkgutil` executable on the build machine, such as `file:///opt/homebrew/bin/pkgutil` or `file:///C:/Program%20Files/pkgutil/pkgutil.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
         "powershell": {
           "anyOf": [
             {
@@ -1630,6 +1647,23 @@
             }
           ],
           "description": "One file:// URI, or a list of them, of the `snapcraft` executable on the build machine, such as `file:///opt/homebrew/bin/snapcraft` or `file:///C:/Program%20Files/snapcraft/snapcraft.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "stapler": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `stapler` executable on the build machine, such as `file:///opt/homebrew/bin/stapler` or `file:///C:/Program%20Files/stapler/stapler.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
         },
         "tiffutil": {
           "anyOf": [
@@ -2908,7 +2942,7 @@
         },
         "forceCodeSigning": {
           "default": false,
-          "description": "Whether to fail if app will be not code signed.",
+          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -3059,7 +3093,7 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         },
         "vendor": {
           "description": "The vendor. Defaults to [author](https://www.electron.build/configuration#author).",
@@ -3507,7 +3541,7 @@
         },
         "forceCodeSigning": {
           "default": false,
-          "description": "Whether to fail if app will be not code signed.",
+          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -3579,7 +3613,7 @@
           ]
         },
         "notarize": {
-          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
+          "description": "Whether to notarize the app with [@electron/notarize](https://github.com/electron/notarize).\n\n- unset (the default): notarize when notarization credentials are set, otherwise skip it with a warning.\n- `true`: notarization is required: the build fails when no credentials are set, wherever notarization would run (a macOS host,\n  outside a pull-request build, with signing not turned off), at build start and when notarizing.\n- `false`: never notarize (for an ad-hoc or development-signed app, or one notarized in an `afterSign` hook).\n\nThe credentials are one of the following sets of environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
           "type": "boolean"
         },
         "protocols": {
@@ -3743,7 +3777,7 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         }
       },
       "type": "object"
@@ -3937,7 +3971,7 @@
         },
         "forceCodeSigning": {
           "default": false,
-          "description": "Whether to fail if app will be not code signed.",
+          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -4009,7 +4043,7 @@
           ]
         },
         "notarize": {
-          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
+          "description": "Whether to notarize the app with [@electron/notarize](https://github.com/electron/notarize).\n\n- unset (the default): notarize when notarization credentials are set, otherwise skip it with a warning.\n- `true`: notarization is required: the build fails when no credentials are set, wherever notarization would run (a macOS host,\n  outside a pull-request build, with signing not turned off), at build start and when notarizing.\n- `false`: never notarize (for an ad-hoc or development-signed app, or one notarized in an `afterSign` hook).\n\nThe credentials are one of the following sets of environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
           "type": "boolean"
         },
         "protocols": {
@@ -4173,7 +4207,7 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         }
       },
       "type": "object"
@@ -8752,7 +8786,7 @@
           ]
         },
         "msi": {
-          "description": "Whether to create an MSI installer. Defaults to `false` (MSI is not created).",
+          "description": "Whether to create an MSI installer. Defaults to `false` (MSI is not created).\n\nSquirrel.Windows builds the MSI around Setup.exe before electron-builder signs Setup.exe, so the installer inside the MSI is\nunsigned: the build warns, and fails with `forceCodeSigning`. For a signed MSI use the `msi` target instead.",
           "type": "boolean"
         },
         "name": {
@@ -9064,7 +9098,7 @@
       "properties": {
         "allowSigningKeyOutsideTrustList": {
           "default": false,
-          "description": "Allows a publishing build to sign its manifests only with keys that are not in `publicKey` - a deliberate\ncutover release that is verified by installs with the old key, but hands them over to the keys listed in\n`publicKey`. Every later release must then be signed by a listed key. Without it such a build fails; a build\nwithout a publish policy only warns. Has no effect when `publicKey` is not set.",
+          "description": "Allows a publishing build to sign its manifests only with keys that are not in `publicKey` - a deliberate\ncutover release that is verified by installs with the old key, but hands them over to the keys listed in\n`publicKey`. Every later release must then be signed by a listed key. Without it such a build fails; a build\nwithout a publish policy or `forceCodeSigning` only warns. Has no effect when `publicKey` is not set.",
           "type": [
             "null",
             "boolean"
@@ -9085,7 +9119,7 @@
               ]
             }
           ],
-          "description": "The Ed25519 public key(s) (PEM or base64 SPKI) embedded into `app-update.yml` as the updater's trust list.\nThe updater accepts a manifest when any listed key validates one of its signatures. Optional — when\nomitted the public key of every configured signing key is derived and embedded. Set it explicitly to trust\nadditional keys ahead of a rotation (for example `[current, next]`).\n\nA `publicKey` on its own does not satisfy the signing requirement — electron-builder still has no key to\nsign with. An external signer (HSM/KMS) that signs `latest*.yml` in a later step therefore either builds\nwithout a publish policy, where the requirement only warns and the unsigned manifest is written locally, or\nkeeps publishing with `publishAutoUpdate: false` on every publish provider - electron-builder then uploads the\nartifacts and embeds this key, but writes no `latest*.yml`, so the external step has to produce it too.\n\nWhen set, it must contain at least one of the signing keys: a publishing build signed only by keys outside this\nlist fails, since its installs would reject manifests signed with them. See `allowSigningKeyOutsideTrustList`."
+          "description": "The Ed25519 public key(s) (PEM or base64 SPKI) embedded into `app-update.yml` as the updater's trust list.\nThe updater accepts a manifest when any listed key validates one of its signatures. Optional — when\nomitted the public key of every configured signing key is derived and embedded. Set it explicitly to trust\nadditional keys ahead of a rotation (for example `[current, next]`).\n\nA `publicKey` on its own does not satisfy the signing requirement — electron-builder still has no key to\nsign with. An external signer (HSM/KMS) that signs `latest*.yml` in a later step therefore either builds\nwithout a publish policy and without `forceCodeSigning`, where the requirement only warns and the unsigned\nmanifest is written locally, or keeps publishing with `publishAutoUpdate: false` on every publish provider -\nelectron-builder then uploads the artifacts and embeds this key, but writes no `latest*.yml`, so the external\nstep has to produce it too.\n\nWhen set, it must contain at least one of the signing keys: a publishing (or `forceCodeSigning`) build signed only by\nkeys outside this list fails, since its installs would reject manifests signed with them. See `allowSigningKeyOutsideTrustList`."
         },
         "signingKey": {
           "anyOf": [
@@ -9309,7 +9343,7 @@
         },
         "forceCodeSigning": {
           "default": false,
-          "description": "Whether to fail if app will be not code signed.",
+          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -9493,7 +9527,7 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         },
         "verifyUpdateCodeSignature": {
           "default": true,
@@ -10310,7 +10344,7 @@
     },
     "forceCodeSigning": {
       "default": false,
-      "description": "Whether to throw an error and abort the build if the app could not be code-signed.\n\nSet to `true` in release pipelines to catch missing or misconfigured signing credentials\nbefore producing unsigned artifacts. When `false` (the default), missing signing credentials\nproduce a warning and the build continues unsigned.",
+      "description": "Whether to throw an error and abort the build if the app could not be code-signed, notarized, or have its\nauto-update manifests signed - and to verify the signatures the build produces.\n\nSet to `true` in release pipelines to catch missing or misconfigured signing credentials\nbefore producing unsigned artifacts. When `false` (the default), missing signing credentials\nproduce a warning and the build continues unsigned.\n\nWith `true`:\n- macOS: the app must be signed, which needs a macOS host, also in pull-request builds (set `CSC_FOR_PULL_REQUEST=true` to sign\n  them, or pass `-c.forceCodeSigning=false` there), and notarized: notarization credentials must be set when the build starts.\n  The output of a custom `mac.sign` signer is checked with `codesign --verify --deep --strict`, the stapled ticket with\n  `stapler validate`, a signed pkg with `pkgutil --check-signature`, and a DMG with `dmg.sign: true` must be signed.\n- Windows: every signed file is read back and must carry a valid Authenticode signature.\n- Every platform (the only effect on Linux): auto-update manifests must be signed, also by a build that does not publish.\n- A prepackaged app, which electron-builder does not sign, must already be signed (and, on macOS, notarized).\n\nExplicit opt-outs are honored with a warning: `mac.notarize: false`, `updateManifest: false`, `win.signExts` exclusions and a\ncustom `nsis.script` (whose uninstaller electron-builder does not sign). `win.sign: false` and `mac.sign: null` contradict it\nand fail the build. `electron-builder verify` checks the build output afterwards.",
       "type": "boolean"
     },
     "freebsd": {
@@ -10731,7 +10765,7 @@
           "type": "null"
         }
       ],
-      "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+      "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
     },
     "win": {
       "anyOf": [

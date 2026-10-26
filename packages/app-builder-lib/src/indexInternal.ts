@@ -1,8 +1,10 @@
 export { AsarFilesystem, readAsar, readAsarJson } from "./asar/asar.js"
 export { AsarIntegrity } from "./asar/integrity.js"
 export { _testingOnly, readCertInfo } from "./codeSign/certInfo.js"
-export { createKeychain, findIdentity, isSignAllowed, removeKeychain } from "./codeSign/mac/macCodeSign.js"
+export { createKeychain, findIdentity, isSignAllowed, macSigningUnavailableError, removeKeychain } from "./codeSign/mac/macCodeSign.js"
 export type { Identity } from "./codeSign/mac/macCodeSign.js"
+export { verifyMacCodeSignature } from "./codeSign/mac/macSignatureVerifier.js"
+export { forceCodeSigningError, forceCodeSigningOverrideHint, VERIFICATION_FAILED_ERROR_CODE } from "./codeSign/forceCodeSigning.js"
 export { CustomWindowsSign, WindowsSignTaskConfiguration } from "./codeSign/win/windowsSignToolManager.js"
 export { Configuration, DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES, ToolsetConfig, ToolsetCustom } from "./configuration.js"
 export { Publish } from "./core.js"
@@ -90,6 +92,9 @@ export {
   getCacheDirectoryInternal,
   resolveBuilderBinaryUrl,
 } from "./util/electronGet.js"
+export { checkUpdateManifestBeforeUpload } from "./publish/manifestUploadCheck.js"
+export { verifyBuildOutput } from "./util/buildOutputVerifier.js"
+export type { VerificationResult, VerificationStatus, VerifyBuildOutputOptions } from "./util/buildOutputVerifier.js"
 export { buildSourceCandidates, convertIcon, getPngSize } from "./util/iconConverter.js"
 export { getLicenseAssets, getLicenseFiles } from "./util/license.js"
 export { parsePlistFile, PlistObject } from "./util/mac/plist.js"

@@ -329,7 +329,9 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly electronLanguages?: Array<string> | string
 
   /**
-   * Whether to fail if app will be not code signed.
+   * Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,
+   * notarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for
+   * what is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.
    * @default false
    */
   readonly forceCodeSigning?: boolean
@@ -371,12 +373,12 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
    * logs a warning. `false` also short-circuits the environment variables, so a leftover
    * `ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.
    *
-   * The requirement is only enforced when a publish policy is in effect (`--publish`); a build without one
-   * warns instead, so local builds and pipelines that sign the manifest in a later step of their own are
+   * The requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other
+   * build warns instead, so local builds and pipelines that sign the manifest in a later step of their own are
    * unaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is
    * emitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,
-   * mas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed
-   * or uploaded.
+   * mas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before
+   * anything is packed or uploaded. Every signed manifest is read back and verified before it is written.
    *
    * See [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests).
    */
@@ -436,12 +438,13 @@ export interface UpdateManifestSigningOptions {
    *
    * A `publicKey` on its own does not satisfy the signing requirement — electron-builder still has no key to
    * sign with. An external signer (HSM/KMS) that signs `latest*.yml` in a later step therefore either builds
-   * without a publish policy, where the requirement only warns and the unsigned manifest is written locally, or
-   * keeps publishing with `publishAutoUpdate: false` on every publish provider - electron-builder then uploads the
-   * artifacts and embeds this key, but writes no `latest*.yml`, so the external step has to produce it too.
+   * without a publish policy and without `forceCodeSigning`, where the requirement only warns and the unsigned
+   * manifest is written locally, or keeps publishing with `publishAutoUpdate: false` on every publish provider -
+   * electron-builder then uploads the artifacts and embeds this key, but writes no `latest*.yml`, so the external
+   * step has to produce it too.
    *
-   * When set, it must contain at least one of the signing keys: a publishing build signed only by keys outside this
-   * list fails, since its installs would reject manifests signed with them. See `allowSigningKeyOutsideTrustList`.
+   * When set, it must contain at least one of the signing keys: a publishing (or `forceCodeSigning`) build signed only by
+   * keys outside this list fails, since its installs would reject manifests signed with them. See `allowSigningKeyOutsideTrustList`.
    */
   readonly publicKey?: string | Array<string> | null
 
@@ -449,7 +452,7 @@ export interface UpdateManifestSigningOptions {
    * Allows a publishing build to sign its manifests only with keys that are not in `publicKey` - a deliberate
    * cutover release that is verified by installs with the old key, but hands them over to the keys listed in
    * `publicKey`. Every later release must then be signed by a listed key. Without it such a build fails; a build
-   * without a publish policy only warns. Has no effect when `publicKey` is not set.
+   * without a publish policy or `forceCodeSigning` only warns. Has no effect when `publicKey` is not set.
    * @default false
    */
   readonly allowSigningKeyOutsideTrustList?: boolean | null

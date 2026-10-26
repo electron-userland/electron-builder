@@ -43,7 +43,7 @@ All Windows code signing is configured under a single `win.sign` key using a dis
 | `{ type: "azure", ... }` | Azure Trusted Signing cloud service — **Beta** | all (`signtool /dlib`, Wine on macOS/Linux) |
 | `false` or `null` | Disable signing (resedit resource editing still runs). No certificate is read, not even from `WIN_CSC_LINK` / `CSC_LINK`, so no `publisherName` is derived: a build that writes `app-update.yml` then fails unless you also set `win.verifyUpdateCodeSignature: false` (the update-verification opt-out, written into `app-update.yml`). If you sign the build outside electron-builder, use `{ type: "signtool", publisherName: [...] }` (or a custom `sign` hook with `publisherName`) instead, so `app-update.yml` carries the publisher electron-updater verifies updates against | all |
 
-Combining `win.sign: false` with `forceCodeSigning: true` is a configuration error and fails the build.
+Combining `win.sign: false` with `forceCodeSigning: true` is a configuration error and fails the build, also for a prepackaged app. With `forceCodeSigning`, every file a signing step reports as signed is read back and must carry a valid Authenticode signature — so a custom `sign` hook must sign the file at `configuration.path` in place — and the executable of a prepackaged app, which electron-builder does not sign, must already be signed.
 
 ### Publisher name and update verification
 

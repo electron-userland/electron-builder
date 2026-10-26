@@ -557,8 +557,8 @@ importers:
         specifier: 7.7.1
         version: 7.7.1
       electron:
-        specifier: 42.11.14
-        version: 42.11.14
+        specifier: 42.11.16
+        version: 42.11.16
 
   test:
     devDependencies:
@@ -5458,8 +5458,8 @@ packages:
   electron-to-chromium@1.5.459:
     resolution: {integrity: sha512-4SC9HHSFjO/liAhifpdOL5hG9b4BP7/5G3y3UPZVO8trlAXr1CaUEEJL0gWK3kOcYcZrOA5rkwG45Gra/lTIgg==}
 
-  electron@42.11.14:
-    resolution: {integrity: sha512-EHX0gpd/mV58ah08NOLCp5QbwoCWwAz+hlkdjHRX55lzoVJncUWJcy/gpIErE6T6HdViMaNAiO98f1IBtdvvaA==}
+  electron@42.11.16:
+    resolution: {integrity: sha512-CHCEsZbWm9zspEnYsro+g8FFllh0e82A1Jtofi/XqPs/XqlrpDPdLP0OhzfhG/IkxNXQ8iHEoYms+wVepZNzZA==}
     engines: {node: '>= 22.12.0'}
     hasBin: true
 
@@ -15345,7 +15345,7 @@ snapshots:
 
   electron-to-chromium@1.5.459: {}
 
-  electron@42.11.14:
+  electron@42.11.16:
     dependencies:
       '@electron-internal/extract-zip': 1.0.5
       '@electron/get': 5.1.0

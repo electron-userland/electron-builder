@@ -1,4 +1,4 @@
-import { asArray, Nullish, windowsPowerShellPath } from "builder-util-runtime"
+import { asArray, Nullish } from "builder-util-runtime"
 import { AsyncLocalStorage } from "async_hooks"
 import { accessSync, constants, statSync } from "fs"
 import { homedir } from "os"
@@ -26,6 +26,8 @@ export type ExecutableName =
   | "sips"
   | "zip"
   | "notarytool"
+  | "stapler"
+  | "pkgutil"
   | "lzip"
   | "snapcraft"
   | "flatpak"
@@ -50,16 +52,27 @@ export type ExecutablesConfig = { readonly [K in ExecutableName]?: ExecutableLoc
 
 type DefaultLocations = Partial<Record<NodeJS.Platform, () => ReadonlyArray<string>>>
 
-// %ProgramFiles%, accepted only as a drive-absolute path: a relative, drive-relative ("\Program Files") or UNC value would be
-// resolved against the current directory or drive, or reach out to another host
-function windowsProgramFiles(): string {
-  // process.env is case-insensitive on Windows
-  const value = process.env.ProgramFiles
-  if (!value) {
-    throw new Error("ProgramFiles is not set")
+// The value of an environment variable in any casing: a host can have SYSTEMROOT rather than SystemRoot, which only Windows' own
+// process.env finds by either name (off Windows, as in tests, the keys are case-sensitive)
+function windowsEnv(name: string): string | undefined {
+  const value = process.env[name]
+  if (value) {
+    return value
+  }
+  const lowerName = name.toLowerCase()
+  return Object.entries(process.env).find(([key, it]) => key.toLowerCase() === lowerName && it != null && it !== "")?.[1]
+}
+
+// A Windows directory from the first of `names` that is set (the first name is the one errors use), accepted only as a drive-absolute
+// path: a relative, drive-relative ("\Program Files") or UNC value would be resolved against the current directory or drive, or reach
+// out to another host
+function windowsDirectory(...names: [string, ...Array<string>]): string {
+  const value = names.map(windowsEnv).find(it => it != null)
+  if (value == null) {
+    throw new Error(`${names[0]} is not set`)
   }
   if (!/^[a-zA-Z]:[\\/]/.test(value)) {
-    throw new Error(`ProgramFiles is not an absolute path (${value})`)
+    throw new Error(`${names[0]} is not an absolute path (${value})`)
   }
   return value
 }
@@ -70,14 +83,15 @@ const inUsrBinOnLinux = (name: string): DefaultLocations => ({ linux: () => [`/u
 /**
  * The default install locations of each host program, in the order they are tried. Where a program has several, the order is that
  * of the default `PATH` (Homebrew's shellenv and MacPorts prepend their `bin`; /etc/paths puts /usr/local/bin first on macOS).
- * Windows locations come from `SystemRoot` and `ProgramFiles`, which must be drive-absolute.
+ * Windows locations come from `SystemRoot` (or `windir`) and `ProgramFiles`, which must be drive-absolute.
  */
 export const DEFAULT_EXECUTABLES: Readonly<Record<ExecutableName, DefaultLocations>> = {
-  // the in-box Windows PowerShell 5.1
-  powershell: { win32: () => [windowsPowerShellPath()] },
+  // the in-box Windows PowerShell 5.1, under SystemRoot (or windir, its legacy name). A 32-bit Node is redirected to SysWOW64, like any
+  // System32 path. electron-updater looks Windows PowerShell up on the end user's machine itself (builder-util-runtime).
+  powershell: { win32: () => [path.win32.join(windowsDirectory("SystemRoot", "windir"), "System32", "WindowsPowerShell", "v1.0", "powershell.exe")] },
   // PowerShell 7 from Microsoft's packages: the MSI installer on Windows, the pkg or Homebrew cask on macOS, deb/rpm or snap on Linux
   pwsh: {
-    win32: () => [path.win32.join(windowsProgramFiles(), "PowerShell", "7", "pwsh.exe")],
+    win32: () => [path.win32.join(windowsDirectory("ProgramFiles"), "PowerShell", "7", "pwsh.exe")],
     darwin: () => ["/usr/local/microsoft/powershell/7/pwsh"],
     linux: () => ["/opt/microsoft/powershell/7/pwsh", "/snap/bin/pwsh"],
   },
@@ -119,6 +133,9 @@ export const DEFAULT_EXECUTABLES: Readonly<Record<ExecutableName, DefaultLocatio
   zip: inUsrBinOnMac("zip"),
   // no fixed location: by default it is the notarytool of the selected Xcode, found with /usr/bin/xcrun (see Executables.notarytool)
   notarytool: {},
+  // likewise the stapler of the selected Xcode, found with /usr/bin/xcrun (see Executables.stapler)
+  stapler: {},
+  pkgutil: { darwin: () => ["/usr/sbin/pkgutil"] },
   // on macOS lzip comes from the linuxToolsMac toolset
   lzip: inUsrBinOnLinux("lzip"),
   snapcraft: {
@@ -343,33 +360,39 @@ export function resolveExecutable(
 
 const XCRUN = "/usr/bin/xcrun"
 
-async function findNotarytoolWithXcrun(): Promise<string> {
+/** The developer tools of the selected Xcode that have no fixed location, and are found with `/usr/bin/xcrun --find`. */
+type XcodeToolName = "notarytool" | "stapler"
+
+async function findWithXcrun(name: XcodeToolName): Promise<string> {
   const notFound = (reason: string) =>
     new InvalidConfigurationError(
-      `${XCRUN} --find notarytool ${reason}. electron-builder starts notarytool only from an absolute path, never from PATH: install Xcode or its command line tools, or set the file:// URI of its location, for example ${exampleEntry("notarytool", "darwin")}`
+      `${XCRUN} --find ${name} ${reason}. electron-builder starts ${name} only from an absolute path, never from PATH: install Xcode or its command line tools, or set the file:// URI of its location, for example ${exampleEntry(name, "darwin")}`
     )
   let found: string
   try {
-    found = (await exec(XCRUN, ["--find", "notarytool"])).trim()
+    found = (await exec(XCRUN, ["--find", name])).trim()
   } catch (e: any) {
     throw notFound(`failed: ${e.message}`)
   }
   if (!path.isAbsolute(found) || !isExecutableFile(found, process.platform)) {
     throw notFound(`did not return the absolute path of an executable file (it returned "${found}")`)
   }
-  log.debug({ program: "notarytool", path: found }, "using host program")
+  log.debug({ program: name, path: found }, "using host program")
   return found
 }
 
 interface Scope {
   readonly config: ExecutablesConfig | Nullish
   readonly resolved: ResolvedPaths
-  notarytool: Promise<string> | null
+  // what /usr/bin/xcrun --find found, by tool
+  readonly xcodeTools: Map<XcodeToolName, Promise<string>>
 }
+
+const newScope = (config: ExecutablesConfig | Nullish): Scope => ({ config, resolved: new Map(), xcodeTools: new Map() })
 
 const scopes = new AsyncLocalStorage<Scope>()
 // outside any Executables.run: the default locations
-const defaultScope: Scope = { config: null, resolved: new Map(), notarytool: null }
+const defaultScope: Scope = newScope(null)
 
 /**
  * The host programs electron-builder starts, from the `toolsets.executables` configuration of the current build. A build runs inside
@@ -385,7 +408,7 @@ export class Executables {
    */
   static run<T>(executables: ExecutablesConfig | Nullish, fn: () => T): T {
     validateExecutablesConfig(executables)
-    return scopes.run({ config: executables, resolved: new Map(), notarytool: null }, fn)
+    return scopes.run(newScope(executables), fn)
   }
 
   private static get scope(): Scope {
@@ -422,15 +445,31 @@ export class Executables {
    * `/usr/bin/xcrun --find notarytool` locates, so that notarytool never runs through an `xcrun` looked up on PATH.
    */
   static notarytool(): Promise<string> {
-    const scope = Executables.scope
-    if (Executables.isConfigured("notarytool")) {
-      return Promise.resolve(Executables.resolve("notarytool"))
+    return Executables.xcodeTool("notarytool")
+  }
+
+  /**
+   * stapler (`stapler validate` checks a stapled notarization ticket): its `toolsets.executables` entry when it is set, otherwise
+   * the stapler of the selected Xcode, which `/usr/bin/xcrun --find stapler` locates.
+   */
+  static stapler(): Promise<string> {
+    return Executables.xcodeTool("stapler")
+  }
+
+  private static xcodeTool(name: XcodeToolName): Promise<string> {
+    if (Executables.isConfigured(name)) {
+      return Promise.resolve(Executables.resolve(name))
     }
-    scope.notarytool ??= findNotarytoolWithXcrun().catch(e => {
-      // looked up again next time, after the developer tools may have been installed
-      scope.notarytool = null
-      throw e
-    })
-    return scope.notarytool
+    const { xcodeTools } = Executables.scope
+    let found = xcodeTools.get(name)
+    if (found == null) {
+      found = findWithXcrun(name).catch(e => {
+        // looked up again next time, after the developer tools may have been installed
+        xcodeTools.delete(name)
+        throw e
+      })
+      xcodeTools.set(name, found)
+    }
+    return found
   }
 }

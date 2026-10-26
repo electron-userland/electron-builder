@@ -210,6 +210,28 @@ describe("default locations", () => {
     expect(defaultExecutableLocations("powershell", "win32")).toEqual(["C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"])
   })
 
+  // process.env keeps the casing a variable was set with, which on some Windows hosts is SYSTEMROOT rather than SystemRoot
+  test("of Windows PowerShell and PowerShell 7 read SystemRoot and ProgramFiles in any casing", ({ expect }) => {
+    for (const name of ["SystemRoot", "windir", "ProgramFiles"]) {
+      vi.stubEnv(name, undefined)
+    }
+    vi.stubEnv("SYSTEMROOT", "E:\\WinNT")
+    vi.stubEnv("PROGRAMFILES", "F:\\Programs")
+    expect(defaultExecutableLocations("powershell", "win32")).toEqual(["E:\\WinNT\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"])
+    expect(defaultExecutableLocations("pwsh", "win32")).toEqual(["F:\\Programs\\PowerShell\\7\\pwsh.exe"])
+  })
+
+  test("of Windows PowerShell are unavailable without SystemRoot and windir, and a configured location does not need them", ({ expect }) => {
+    for (const name of ["SystemRoot", "SYSTEMROOT", "windir"]) {
+      vi.stubEnv(name, undefined)
+    }
+    expect(configError(() => resolveExecutable("powershell", null, "win32")).message).toContain("powershell has no default install location on win32 (SystemRoot is not set)")
+    // the configured location replaces the defaults, which are not computed: only its file is looked for
+    expect(configError(() => resolveExecutable("powershell", { powershell: "file:///D:/Tools/missing/powershell.exe" }, "win32")).message).toContain(
+      'none of the locations in toolsets.executables.powershell is an executable file on this machine (tried "D:\\Tools\\missing\\powershell.exe")'
+    )
+  })
+
   test("of a Windows program are unavailable when the environment variable is not absolute, which the error says", ({ expect }) => {
     for (const value of ["Program Files", "\\Program Files", "\\\\server\\share"]) {
       vi.stubEnv("ProgramFiles", value)
@@ -227,6 +249,16 @@ describe("default locations", () => {
       expect(defaultExecutableLocations(name, "darwin")).toEqual([`/usr/bin/${name}`])
       expect(defaultExecutableLocations(name, "linux")).toEqual([])
       expect(defaultExecutableLocations(name, "win32")).toEqual([])
+    }
+  })
+
+  test("of pkgutil is /usr/sbin/pkgutil, and stapler and notarytool have none (they are found with /usr/bin/xcrun)", ({ expect }) => {
+    expect(defaultExecutableLocations("pkgutil", "darwin")).toEqual(["/usr/sbin/pkgutil"])
+    expect(defaultExecutableLocations("pkgutil", "linux")).toEqual([])
+    for (const name of ["stapler", "notarytool"] as const) {
+      for (const platform of ["darwin", "linux", "win32"] as const) {
+        expect(defaultExecutableLocations(name, platform)).toEqual([])
+      }
     }
   })
 
@@ -323,6 +355,43 @@ describe.skipIf(process.platform === "win32")("Executables.notarytool", { concur
   })
 })
 
+describe.skipIf(process.platform === "win32")("Executables.stapler", { concurrent: false }, () => {
+  test("uses toolsets.executables.stapler without running xcrun", async ({ expect, tmpDir }) => {
+    const stapler = await makeFile(await tmpDir.getTempDir({ prefix: "executables-stapler" }), "stapler", 0o755)
+    expect(await Executables.run({ stapler: uri(stapler) }, () => Executables.stapler())).toBe(stapler)
+    expect(execFile).not.toHaveBeenCalled()
+  })
+
+  test("otherwise is the stapler that /usr/bin/xcrun finds, looked up once per run scope", async ({ expect, tmpDir }) => {
+    const stapler = await makeFile(await tmpDir.getTempDir({ prefix: "executables-xcrun" }), "Xcode.app/usr/bin/stapler", 0o755)
+    xcrun(`${stapler}\n`)
+    expect(await Executables.run(null, async () => [await Executables.stapler(), await Executables.stapler()])).toEqual([stapler, stapler])
+    expect(startedFiles()).toEqual([["/usr/bin/xcrun", ["--find", "stapler"]]])
+  })
+
+  test("is a configuration error when /usr/bin/xcrun cannot find it, and is looked up again after that", async ({ expect, tmpDir }) => {
+    const stapler = await makeFile(await tmpDir.getTempDir({ prefix: "executables-xcrun" }), "Xcode.app/usr/bin/stapler", 0o755)
+    await Executables.run(null, async () => {
+      xcrun(new Error('xcrun: error: unable to find utility "stapler"'))
+      const error = await Executables.stapler().catch((e: unknown) => e)
+      expect(error).toBeInstanceOf(InvalidConfigurationError)
+      expect((error as Error).message).toContain("/usr/bin/xcrun --find stapler failed")
+      expect((error as Error).message).toContain(`"toolsets": { "executables": { "stapler": "file:///path/to/stapler" } }`)
+      xcrun(`${stapler}\n`)
+      expect(await Executables.stapler()).toBe(stapler)
+    })
+  })
+
+  test("is cached separately from notarytool", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "executables-xcrun" })
+    const stapler = await makeFile(dir, "Xcode.app/usr/bin/stapler", 0o755)
+    const notarytool = await makeFile(dir, "Xcode.app/usr/bin/notarytool", 0o755)
+    xcrun(`${notarytool}\n`)
+    xcrun(`${stapler}\n`)
+    expect(await Executables.run(null, async () => [await Executables.notarytool(), await Executables.stapler()])).toEqual([notarytool, stapler])
+  })
+})
+
 describe("Executables", () => {
   test("outside any run scope uses the default locations, never PATH", ({ expect }) => {
     expect(Executables.configuration).toBeNull()
@@ -413,5 +482,32 @@ describe("Packager", () => {
     const build = vi.spyOn(packager as unknown as BuildStep, "buildWithValidatedConfig")
     await expect(packager.build()).rejects.toThrow(`"/opt/mono/bin/mono" is a plain path`)
     expect(build).not.toHaveBeenCalled()
+  })
+})
+
+// Windows PowerShell of the build machine comes from toolsets.executables (Executables), so that an explicit location is used as is;
+// windowsPowerShellPath (builder-util-runtime) locates it from SystemRoot on the end user's machine, for electron-updater only
+describe("windowsPowerShellPath", () => {
+  test("is used by builder-util-runtime and electron-updater only, not by the build-time packages", async ({ expect }) => {
+    const packagesDir = path.resolve(__dirname, "../../packages")
+    const runtimePackages = new Set(["builder-util-runtime", "electron-updater"])
+    const scanned: Array<string> = []
+    const users: Array<string> = []
+    for (const pkg of await fs.readdir(packagesDir, { withFileTypes: true })) {
+      if (!pkg.isDirectory() || runtimePackages.has(pkg.name)) {
+        continue
+      }
+      const srcDir = path.join(packagesDir, pkg.name, "src")
+      const files = await fs.readdir(srcDir, { recursive: true }).catch(() => [])
+      for (const file of files.filter(it => /\.[cm]?[jt]sx?$/.test(it))) {
+        scanned.push(path.join(pkg.name, "src", file))
+        if (/\bwindowsPowerShellPath\b/.test(await fs.readFile(path.join(srcDir, file), "utf8"))) {
+          users.push(path.join(pkg.name, "src", file))
+        }
+      }
+    }
+    expect(scanned).toContain(path.join("app-builder-lib", "src", "codeSign", "win", "authenticodeSignature.ts"))
+    expect(scanned).toContain(path.join("builder-util", "src", "executables.ts"))
+    expect(users).toEqual([])
   })
 })

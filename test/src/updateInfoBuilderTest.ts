@@ -489,6 +489,47 @@ test("a platform-level updateManifest: null is not an opt-out - it falls back to
   expect(publicKeysOf(await packager.requireUpdateSigningKeys(true))).toEqual([publicKeyPem])
 })
 
+test("requireUpdateSigningKeys enforces the key under forceCodeSigning even when the build is not publishing", async ({ expect }) => {
+  stubSigningEnv({})
+  const error = await new TestPackager({ forceCodeSigning: true }).requireUpdateSigningKeys(false).then(
+    () => null,
+    (e: Error) => e
+  )
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  // says why a build that does not publish fails, how to fix it, and how to turn forceCodeSigning off
+  expect(error!.message).toContain("because forceCodeSigning is enabled")
+  expect(error!.message).toContain("electron-builder create-update-key")
+  expect(error!.message).toContain("`updateManifest: false`")
+  expect(error!.message).toContain("-c.forceCodeSigning=false")
+  expect(error!.message).toContain("https://www.electron.build/docs/migration/v27-build-changes#forcecodesigning-covers-notarization-and-update-manifests")
+})
+
+test("a platform-level forceCodeSigning enforces the key for that platform only, and names the platform override", async ({ expect }) => {
+  stubSigningEnv({})
+  await expect(new TestPackager({ linux: { forceCodeSigning: true } }).requireUpdateSigningKeys(false)).rejects.toThrow("-c.linux.forceCodeSigning=false")
+  const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+  try {
+    // a platform-level false wins over a root true
+    expect(await new TestPackager({ forceCodeSigning: true, linux: { forceCodeSigning: false } }).requireUpdateSigningKeys(false)).toEqual([])
+    expect(warn).toHaveBeenCalledTimes(1)
+  } finally {
+    warn.mockRestore()
+  }
+})
+
+test("updateManifest: false stays an honored opt-out under forceCodeSigning, with a warning", async ({ expect }) => {
+  stubSigningEnv({})
+  const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+  try {
+    expect(await new TestPackager({ forceCodeSigning: true, updateManifest: false }).requireUpdateSigningKeys(false)).toEqual([])
+    expect(await new TestPackager({ forceCodeSigning: true, updateManifest: false }).requireUpdateSigningKeys(true)).toEqual([])
+    expect(warn).toHaveBeenCalledTimes(2)
+    expect(warn.mock.calls[0][0]).toMatchObject({ reason: expect.stringContaining("forceCodeSigning does not cover update manifests while updateManifest is false") })
+  } finally {
+    warn.mockRestore()
+  }
+})
+
 test("a publicKey-only block does not satisfy the requirement", async ({ expect }) => {
   stubSigningEnv({})
   const { publicKeyPem } = generateUpdateSigningKeypair()

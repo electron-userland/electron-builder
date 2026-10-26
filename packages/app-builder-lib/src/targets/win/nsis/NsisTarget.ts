@@ -615,7 +615,12 @@ export class NsisTarget extends Target {
     const script = await readFile(customScriptPath || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
 
     if (customScriptPath != null) {
-      log.info({ reason: "custom NSIS script is used" }, "uninstaller is not signed by electron-builder")
+      // a custom script writes its own uninstaller at install time: honored under forceCodeSigning, but not silently
+      if (packager.forceCodeSigning) {
+        log.warn({ reason: "custom NSIS script is used" }, "uninstaller is not signed by electron-builder, although forceCodeSigning is enabled")
+      } else {
+        log.info({ reason: "custom NSIS script is used" }, "uninstaller is not signed by electron-builder")
+      }
       return { script, isCustomScript: true }
     }
 
