@@ -1,9 +1,17 @@
-import { mkdir, writeFile } from "fs/promises"
+import { mkdir, readdir, writeFile } from "fs/promises"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { spawn, spawnSync } from "child_process"
+import type { TmpDir } from "builder-util"
 import { DebUpdater, NoOpLogger, PacmanUpdater, RpmUpdater } from "electron-updater"
 import { runInstallPlan, runInstallPlanAsync } from "electron-updater/src/LinuxUpdater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
+
+// pass-through: lets the spawn tests see how the command line reaches child_process
+vi.mock("child_process", async importOriginal => {
+  const actual = await importOriginal<typeof import("child_process")>()
+  return { ...actual, spawn: vi.fn(actual.spawn), spawnSync: vi.fn(actual.spawnSync) }
+})
 
 const stubApp: AppAdapter = {
   name: "TestApp",
@@ -431,39 +439,135 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
     const node = `"${process.execPath}"`
 
     function captureLogs() {
+      const warnings: string[] = []
       const errors: string[] = []
-      updater.logger = { info() {}, warn() {}, error: (m?: any) => errors.push(String(m)) }
-      return errors
+      updater.logger = { info() {}, warn: (m?: any) => warnings.push(String(m)), error: (m?: any) => errors.push(String(m)) }
+      return { warnings, errors }
     }
 
-    it("resolves when the command exits with code 0", async () => {
+    // the directory the stderr temp file is created in, so that the tests can check it is removed
+    async function captureStderrIn(tmpDir: TmpDir): Promise<string> {
+      const dir = await tmpDir.createTempDir({ prefix: "stderr-capture" })
+      vi.spyOn(updater as any, "commandStderrDir").mockReturnValue(dir)
+      return dir
+    }
+
+    it("resolves when the command exits with code 0, and removes the stderr temp file", async ({ tmpDir }) => {
       captureLogs()
-      await expect((updater as any).spawnAsyncLog(node, ["-e", '"process.exit(0)"'])).resolves.toBeUndefined()
+      const dir = await captureStderrIn(tmpDir)
+      await expect((updater as any).spawnAsyncLog(node, ["-e", "\"process.stderr.write('warning');process.exit(0)\""])).resolves.toBeUndefined()
+      expect(await readdir(dir)).toEqual([])
     })
 
-    it("rejects with the exit code and logs stderr when the command fails", async () => {
-      const errors = captureLogs()
+    it("rejects with the exit code and the command's stderr, and removes the stderr temp file", async ({ tmpDir }) => {
+      const { errors } = captureLogs()
+      const dir = await captureStderrIn(tmpDir)
+      await expect((updater as any).spawnAsyncLog(node, ["-e", `"process.stderr.write('boom\\n');process.exit(3)"`])).rejects.toThrow(/exited with code 3: boom$/)
+      expect(await readdir(dir)).toEqual([])
+      // reported once, by the error, not logged a second time
+      expect(errors).toEqual([])
+    })
+
+    it.skipIf(process.platform === "win32")("gives the command a file as stderr, already removed while the command runs", async ({ tmpDir }) => {
+      captureLogs()
+      const dir = await captureStderrIn(tmpDir)
+      // a pipe would tie the command to the app: SIGPIPE on its next write to stderr once the app quit
+      const script = `"const fs=require('fs');process.stderr.write(fs.fstatSync(2).isFile()+' '+fs.readdirSync('${dir}').length);process.exit(1)"`
+      await expect((updater as any).spawnAsyncLog(node, ["-e", script])).rejects.toThrow(/exited with code 1: true 0$/)
+    })
+
+    it("keeps only the end of a long stderr in the error message", async ({ tmpDir }) => {
+      captureLogs()
+      await captureStderrIn(tmpDir)
+      const script = `"process.stderr.write('HEAD'+'x'.repeat(100000)+'é'.repeat(5000)+'TAIL!');process.exit(2)"`
+      const error: Error = await (updater as any).spawnAsyncLog(node, ["-e", script]).then(
+        () => null,
+        (e: Error) => e
+      )
+      // 8 KiB from the end falls inside a two-byte "é": the partial character is dropped, not decoded as U+FFFD
+      expect(error.message).toMatch(/^Command .* exited with code 2: …é+TAIL!$/)
+      expect(error.message).not.toContain("HEAD")
+      expect(error.message).not.toContain("\uFFFD")
+      expect(Buffer.byteLength(error.message)).toBeLessThan(9 * 1024)
+    })
+
+    it("removes the stderr temp file when the command cannot be spawned", async ({ tmpDir }) => {
+      captureLogs()
+      const dir = await captureStderrIn(tmpDir)
+      await expect((updater as any).spawnAsyncLog("echo\0", [])).rejects.toThrow(/null bytes/)
+      expect(await readdir(dir)).toEqual([])
+    })
+
+    it("still runs the command when the stderr temp file cannot be created", async ({ tmpDir }) => {
+      const { warnings } = captureLogs()
+      vi.spyOn(updater as any, "commandStderrDir").mockReturnValue(path.join(await tmpDir.createTempDir({ prefix: "stderr-capture" }), "missing"))
       await expect((updater as any).spawnAsyncLog(node, ["-e", `"process.stderr.write('boom');process.exit(3)"`])).rejects.toThrow(/exited with code 3$/)
-      expect(errors).toEqual(["boom"])
+      expect(warnings).toEqual([expect.stringContaining("Cannot capture the command's stderr")])
     })
 
-    it.skipIf(process.platform === "win32")("names the signal when the command is killed by one", async () => {
+    it.skipIf(process.platform === "win32")("names the signal when the command is killed by one", async ({ tmpDir }) => {
       captureLogs()
+      await captureStderrIn(tmpDir)
       // `$$` is the shell itself, so the process spawnAsyncLog waits for is the one killed
       await expect((updater as any).spawnAsyncLog("kill", ["-TERM", "$$"])).rejects.toThrow("exited with code null, signal SIGTERM")
     })
 
-    it("still settles when the logger throws", async () => {
+    it("still settles when the logger throws", async ({ tmpDir }) => {
       updater.logger = {
         info: () => {
           throw new Error("logger failure")
         },
-        warn() {},
+        warn: () => {
+          throw new Error("logger failure")
+        },
         error: () => {
           throw new Error("logger failure")
         },
       }
+      const dir = await captureStderrIn(tmpDir)
+      await expect((updater as any).spawnAsyncLog(node, ["-e", `"process.stderr.write('boom');process.exit(4)"`])).rejects.toThrow(/exited with code 4: boom$/)
+      expect(await readdir(dir)).toEqual([])
+      // and when the stderr temp file cannot be created, which is logged as a warning
+      vi.spyOn(updater as any, "commandStderrDir").mockReturnValue(path.join(dir, "missing"))
       await expect((updater as any).spawnAsyncLog(node, ["-e", '"process.exit(4)"'])).rejects.toThrow(/exited with code 4$/)
+    })
+
+    // Node joins the arguments itself when given `shell: true` and an argv array, and warns that they are not escaped (DEP0190)
+    it("passes the shell one command line, as Node would have joined it, so that DEP0190 does not apply", async ({ tmpDir }) => {
+      captureLogs()
+      await captureStderrIn(tmpDir)
+      vi.mocked(spawn).mockClear()
+      await (updater as any).spawnAsyncLog(node, ["-e", '"process.exit(0)"'])
+      expect(vi.mocked(spawn)).toHaveBeenCalledWith(`${node} -e "process.exit(0)"`, [], expect.objectContaining({ shell: true }))
+    })
+
+    // argv mode (`useShell` false): the command and its arguments reach the program as they are, without a shell
+    it("captures stderr into the error message without a shell too, and removes the stderr temp file", async ({ tmpDir }) => {
+      captureLogs()
+      const dir = await captureStderrIn(tmpDir)
+      vi.mocked(spawn).mockClear()
+      const script = "process.stderr.write('argv $HOME a b');process.exit(5)"
+      await expect((updater as any).spawnAsyncLog(process.execPath, ["-e", script], {}, false)).rejects.toThrow(/exited with code 5: argv \$HOME a b$/)
+      expect(vi.mocked(spawn)).toHaveBeenCalledWith(process.execPath, ["-e", script], expect.objectContaining({ shell: false }))
+      expect(await readdir(dir)).toEqual([])
+    })
+
+    it("removes the stderr temp file when the program does not exist, without a shell", async ({ tmpDir }) => {
+      captureLogs()
+      const dir = await captureStderrIn(tmpDir)
+      await expect((updater as any).spawnAsyncLog(path.join(dir, "missing-program"), [], {}, false)).rejects.toThrow(/ENOENT/)
+      expect(await readdir(dir)).toEqual([])
+    })
+  })
+
+  describe("spawnSyncLog", () => {
+    it("passes the shell one command line, as Node would have joined it, so that DEP0190 does not apply", () => {
+      const realUpdater = new DebUpdater(null, stubApp)
+      realUpdater.logger = { info() {}, warn() {}, error() {} }
+      vi.mocked(spawnSync).mockClear()
+      const node = `"${process.execPath}"`
+      expect((realUpdater as any).spawnSyncLog(node, ["-e", `"process.stdout.write('a  b')"`])).toBe("a  b")
+      expect(vi.mocked(spawnSync)).toHaveBeenCalledWith(`${node} -e "process.stdout.write('a  b')"`, [], expect.objectContaining({ shell: true }))
     })
   })
 
