@@ -914,6 +914,7 @@ describe("HttpExecutor redirect limit", () => {
         statusMessage: "Found",
         headers: { location: "https://example.com/loop" },
         on() {},
+        resume() {},
         setEncoding() {},
       }
       // synchronous is fine at depth ~maxRedirects; exercises the recursion path directly
