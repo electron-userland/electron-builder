@@ -6,6 +6,7 @@ import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { DebUpdater, NsisUpdater } from "electron-updater"
 import type { AppAdapter, CancellableQuitEvent } from "electron-updater/src/AppAdapter"
+import { CommandExitError } from "electron-updater/src/BaseUpdater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
 import { ElectronAppAdapter } from "electron-updater/src/ElectronAppAdapter"
 import type { Logger } from "electron-updater/src/types"
@@ -114,7 +115,7 @@ describe("install on quit", { concurrent: false }, () => {
 
   /**
    * A DebUpdater whose update finished downloading, installing with dpkg through pkexec. `pkexecExitCode` is what every
-   * pkexec command exits with: 126 is the authentication dialog dismissed (or authorization denied).
+   * pkexec command exits with: 126 is the authentication dialog dismissed, 127 authorization not obtained, 1 a dpkg failure.
    */
   function createDebUpdater(app: StubApp, pkexecExitCode: number) {
     const updater = new DebUpdater(null, app)
@@ -131,7 +132,7 @@ describe("install on quit", { concurrent: false }, () => {
       if (cmd === "pkexec") {
         pkexecCalls.push(Array.isArray(cmdArgs) ? cmdArgs.map(String) : [])
         if (pkexecExitCode !== 0) {
-          throw new Error(`Command pkexec exited with code ${pkexecExitCode}`)
+          throw new CommandExitError(`Command pkexec exited with code ${pkexecExitCode}`, "pkexec", pkexecExitCode, null)
         }
       }
       return ""
@@ -148,14 +149,40 @@ describe("install on quit", { concurrent: false }, () => {
 
       expect(app.quitApp()).toBe(false)
 
-      // dpkg, then the apt-get repair: both through pkexec, both refused
-      expect(pkexecCalls.length).toBe(2)
-      expect(errors.map(it => it.message)).toEqual(["Command pkexec exited with code 126"])
+      // dpkg only: the apt-get repair would show the dismissed authentication dialog a second time
+      expect(pkexecCalls.length).toBe(1)
+      expect(errors.map(it => it.message)).toEqual(["Command pkexec exited with code 126 (the authentication dialog was dismissed), the update is not installed"])
       // visible in the log, since an "error" listener has no window left to show it in
       expect(log.errors.some(it => it.includes("Cannot install update: Command pkexec exited with code 126"))).toBe(true)
       expect(log.warns.some(it => it.includes("the quit is cancelled"))).toBe(true)
       // an explicit quitAndInstall() can still install
       expect((updater as any).quitAndInstallCalled).toBe(false)
+    })
+
+    test("does not repair with apt-get when authorization was not obtained (pkexec exit code 127)", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { errors, pkexecCalls } = createDebUpdater(app, 127)
+
+      expect(app.quitApp()).toBe(false)
+
+      expect(pkexecCalls.length).toBe(1)
+      expect(errors.map(it => it.message)).toEqual(["Command pkexec exited with code 127 (authorization was not obtained), the update is not installed"])
+    })
+
+    test("still repairs with apt-get when dpkg itself fails", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { errors, pkexecCalls } = createDebUpdater(app, 1)
+
+      expect(app.quitApp()).toBe(false)
+
+      expect(pkexecCalls.map(it => it.slice(1, 3))).toEqual([
+        ["/usr/bin/dpkg", "-i"],
+        ["/usr/bin/apt-get", "install"],
+      ])
+      expect(errors.map(it => it.message)).toEqual(["Command pkexec exited with code 1"])
+      expect(log.warns.some(it => it.includes("trying to fix broken dependencies with apt-get"))).toBe(true)
     })
 
     test("lets the next quit proceed without trying to install again", async () => {
@@ -305,7 +332,7 @@ describe("install on quit", { concurrent: false }, () => {
     const { errors, pkexecCalls } = createDebUpdater(app, 126)
 
     expect(app.quitApp()).toBe(true)
-    expect(pkexecCalls.length).toBe(2)
+    expect(pkexecCalls.length).toBe(1)
     expect(errors.length).toBe(1)
   })
 

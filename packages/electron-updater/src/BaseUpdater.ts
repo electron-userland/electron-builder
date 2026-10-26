@@ -26,6 +26,25 @@ function shellCommandLine(cmd: string, args: readonly string[]): string {
   return [cmd, ...args].join(" ")
 }
 
+/**
+ * A command that ran and did not succeed: it exited with a non-zero code, or was killed by a signal. Thrown by
+ * {@link BaseUpdater.spawnSyncLog} and {@link BaseUpdater.spawnAsyncLog}, so that callers can tell from the exit code
+ * why it failed without parsing the message. A command that could not be spawned at all fails with the spawn error.
+ */
+export class CommandExitError extends Error {
+  constructor(
+    message: string,
+    /** The program that was spawned. */
+    readonly command: string,
+    /** `null` when the command was killed by a signal. */
+    readonly exitCode: number | null,
+    readonly signal: NodeJS.Signals | null
+  ) {
+    super(message)
+    this.name = "CommandExitError"
+  }
+}
+
 async function removeQuietly(file: string): Promise<void> {
   try {
     await rm(file, { recursive: true, force: true })
@@ -626,7 +645,8 @@ export abstract class BaseUpdater extends AppUpdater {
   }
 
   /**
-   * Runs a command and returns its trimmed stdout; throws when it cannot be spawned or exits with a non-zero code.
+   * Runs a command and returns its trimmed stdout; throws when it cannot be spawned, or a {@link CommandExitError} when it
+   * exits with a non-zero code or is killed by a signal.
    *
    * With `useShell` (the default), the shell gets the command line Node would have joined from `cmd` and `args` (see
    * {@link shellCommandLine}), so the caller escapes them. Without it, the arguments are passed as an argv array and
@@ -648,7 +668,7 @@ export abstract class BaseUpdater extends AppUpdater {
     } else if (status !== 0) {
       // a command killed by a signal has no exit code, and did not succeed either
       this._logger.error(stderr)
-      throw new Error(`Command ${cmd} exited with code ${status}${signal == null ? "" : `, signal ${signal}`}`)
+      throw new CommandExitError(`Command ${cmd} exited with code ${status}${signal == null ? "" : `, signal ${signal}`}`, cmd, status, signal)
     }
 
     return stdout.trim()
@@ -682,8 +702,8 @@ export abstract class BaseUpdater extends AppUpdater {
 
   /**
    * {@link spawnSyncLog} without blocking the main process: same command, same environment, awaited instead.
-   * Rejects when the command exits with a non-zero code or is killed by a signal; the error message ends with what the
-   * command wrote to stderr (its last {@link STDERR_MESSAGE_BYTES}).
+   * Rejects with a {@link CommandExitError} when the command exits with a non-zero code or is killed by a signal; its
+   * message ends with what the command wrote to stderr (its last {@link STDERR_MESSAGE_BYTES}).
    *
    * Neither stdout nor stderr is a pipe, so a command still running when the app quits is not killed by SIGPIPE on its
    * next write: stdout is not read (as with {@link spawnSyncLog}, nothing uses it) and is discarded, stderr goes to a
@@ -712,7 +732,12 @@ export abstract class BaseUpdater extends AppUpdater {
         return
       }
       const output = stderr == null ? "" : await stderr.read()
-      throw new Error(`Command ${cmd} exited with code ${status}${signal == null ? "" : `, signal ${signal}`}${output.length === 0 ? "" : `: ${output}`}`)
+      throw new CommandExitError(
+        `Command ${cmd} exited with code ${status}${signal == null ? "" : `, signal ${signal}`}${output.length === 0 ? "" : `: ${output}`}`,
+        cmd,
+        status,
+        signal
+      )
     } finally {
       await stderr?.dispose()
     }

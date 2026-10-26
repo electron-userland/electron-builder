@@ -2,7 +2,7 @@ import { AllPublishOptions } from "builder-util-runtime"
 import { accessSync, constants as fsConstants, realpathSync, statSync } from "fs"
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter.js"
-import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
+import { BaseUpdater, CommandExitError, InstallOptions } from "./BaseUpdater.js"
 import { Logger } from "./types.js"
 import { nonThrowingLogger } from "./util.js"
 
@@ -69,7 +69,8 @@ export type Elevation = { readonly kind: "root" } | { readonly kind: "argv" | "w
  *
  * `execCommand` runs first. Only if it fails, the `recoveryChain` runs, step by step; each step is itself a plan that
  * can declare its own recovery. The install fails when `execCommand` fails without a recovery chain, or when a step of
- * the recovery chain fails.
+ * the recovery chain fails. A command the elevation helper refused to run ({@link ElevationDeniedError}) ends the
+ * install at once, without recovery.
  */
 export interface InstallPlan {
   /** The command and its arguments. */
@@ -78,6 +79,48 @@ export interface InstallPlan {
   readonly recoveryMessage?: string
   /** Run in order, only when {@link execCommand} failed. */
   readonly recoveryChain?: InstallPlan[]
+}
+
+/**
+ * A privileged command that did not run because the elevation helper refused to run it: the authentication dialog
+ * was dismissed, or authorization was not obtained. Ends the {@link InstallPlan} without its recovery chain, which would
+ * only show the authentication dialog again.
+ */
+export class ElevationDeniedError extends Error {
+  constructor(
+    /** The helper's failure, as {@link BaseUpdater.spawnSyncLog} or {@link BaseUpdater.spawnAsyncLog} reported it. */
+    readonly commandError: CommandExitError,
+    /** The helper's exit code: 126 or 127, see {@link elevationDenial}. */
+    readonly exitCode: number
+  ) {
+    super(`${commandError.message} (${exitCode === 126 ? "the authentication dialog was dismissed" : "authorization was not obtained"}), the update is not installed`)
+    this.name = "ElevationDeniedError"
+  }
+}
+
+/**
+ * The {@link ElevationDeniedError} that `error` stands for, or `null` when the command itself failed.
+ *
+ * Only pkexec, in the `argv` mode where it runs the package manager itself, reports a refusal with exit codes of its
+ * own (pkexec(1)): 126 when the authentication dialog was dismissed, 127 when the caller is not authorized, the
+ * authentication failed or pkexec failed itself. Otherwise it exits with the package manager's code, and none of the
+ * package managers installed with (dpkg, apt, apt-get, dnf, yum, zypper, rpm, pacman) exits with 126 or 127. The
+ * shell's 126/127 (not executable, command not found) cannot be mistaken for it: the command is a resolved absolute
+ * path, passed as argv without a shell.
+ *
+ * sudo exits with 1 when the authentication fails, the same code a failing dpkg exits with, and gksudo, kdesudo and
+ * beesu run the command through `/bin/bash -c`, where 126 and 127 are the shell's: neither tells a refusal apart from a
+ * failed command, so their failures keep running the recovery chain.
+ */
+function elevationDenial(error: unknown, elevation: Elevation): ElevationDeniedError | null {
+  if (elevation.kind !== "argv" || !(error instanceof CommandExitError)) {
+    return null
+  }
+  const [helper] = elevation.helper
+  if (helper == null || !/pkexec/i.test(helper)) {
+    return null
+  }
+  return error.exitCode === 126 || error.exitCode === 127 ? new ElevationDeniedError(error, error.exitCode) : null
 }
 
 function errorMessage(error: unknown): string {
@@ -94,7 +137,8 @@ function* installPlanCommands(plan: InstallPlan, logger: Logger): Generator<stri
     yield plan.execCommand
   } catch (error: unknown) {
     const recoveryChain = plan.recoveryChain ?? []
-    if (recoveryChain.length === 0) {
+    // the recovery steps are elevated as well: after a dismissed dialog, they would only show it again
+    if (recoveryChain.length === 0 || error instanceof ElevationDeniedError) {
       throw error
     }
     logger.warn(errorMessage(error))
@@ -193,7 +237,11 @@ export abstract class LinuxUpdater extends BaseUpdater {
    */
   protected runCommandWithSudoIfNeeded(commandWithArgs: string[], elevation: Elevation): void {
     const { cmd, args, useShell } = this.elevatedCommand(commandWithArgs, elevation)
-    this.spawnSyncLog(cmd, args, {}, useShell)
+    try {
+      this.spawnSyncLog(cmd, args, {}, useShell)
+    } catch (error: unknown) {
+      throw elevationDenial(error, elevation) ?? error
+    }
   }
 
   private installComment(): string {
@@ -279,7 +327,11 @@ export abstract class LinuxUpdater extends BaseUpdater {
   /** {@link runCommandWithSudoIfNeeded} without blocking the main process while the elevation dialog is open. */
   protected async runCommandWithSudoIfNeededAsync(commandWithArgs: string[], elevation: Elevation): Promise<void> {
     const { cmd, args, useShell } = this.elevatedCommand(commandWithArgs, elevation)
-    await this.spawnAsyncLog(cmd, args, {}, useShell)
+    try {
+      await this.spawnAsyncLog(cmd, args, {}, useShell)
+    } catch (error: unknown) {
+      throw elevationDenial(error, elevation) ?? error
+    }
   }
 
   /**
