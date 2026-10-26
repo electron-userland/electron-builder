@@ -1270,7 +1270,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         downloadOptions.onProgress = it => this.emitDownloadProgress(it)
       }
 
-      // the cached file is the block map as published (gzipped JSON for v1, the binary map for v2); its first bytes tell them apart
+      // the cached file is the block map as published (gzipped JSON for v2, the binary map for v3); its first bytes tell them apart
       const saveBlockMapToCacheDir = async (blockMap: LoadedBlockMap, cacheDir: string) => {
         await fsExtra.outputFile(path.join(cacheDir, "current.blockmap"), blockMap.data)
       }
@@ -1287,7 +1287,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return null
       }
 
-      // the cached old block map is read first (no request): when it is a v2 map, only the parts of the new map that changed are
+      // the cached old block map is read first (no request): when it is a v3 map, only the parts of the new map that changed are
       // fetched (Range requests), else the new map is downloaded in full
       let oldBlockMapData = await getBlockMapFromCacheDir(this.downloadedUpdateHelper!.cacheDir)
       if (oldBlockMapData != null && !(await isBlockMapOfFile(oldBlockMapData.map, downloadOptions.oldFile))) {
@@ -1300,7 +1300,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       }
       isOldBlockMapFromCache = oldBlockMapData != null
       let newBlockMapData: LoadedBlockMap | null = null
-      if (oldBlockMapData?.format === "v2") {
+      if (oldBlockMapData?.format === "v3") {
         try {
           const fetched = await fetchBlockMapV3({
             url: newBlockMapUrl,
@@ -1372,20 +1372,20 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 }
 
-/** A block map file as published (`data`) and decoded (`map`): `v1` is gzipped JSON, `v2` the binary range-fetchable map. */
+/** A block map file as published (`data`) and decoded (`map`): `v2` is gzipped JSON, `v3` the binary range-fetchable map. */
 interface LoadedBlockMap {
-  readonly format: "v1" | "v2"
+  readonly format: "v2" | "v3"
   readonly data: Buffer
   readonly map: BlockMap
 }
 
-/** Decodes a block map file in either format; the v2 map starts with its magic, anything else is read as gzipped JSON (v1). */
+/** Decodes a block map file in either format; the v3 map starts with its magic, anything else is read as gzipped JSON (v2). */
 function parseBlockMapData(data: Buffer, source: string): LoadedBlockMap {
   try {
     if (isBlockMapV3(data)) {
-      return { format: "v2", data, map: toBlockMap(decodeBlockMapV3(data)) }
+      return { format: "v3", data, map: toBlockMap(decodeBlockMapV3(data)) }
     }
-    return { format: "v1", data, map: JSON.parse(gunzipSync(data).toString()) }
+    return { format: "v2", data, map: JSON.parse(gunzipSync(data).toString()) }
   } catch (e: any) {
     throw new Error(`Cannot parse blockmap "${source}", error: ${e}`)
   }

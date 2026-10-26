@@ -20,6 +20,8 @@ import { resolveS3Credentials } from "electron-publish/src/s3/awsCredentials"
 import { S3Publisher } from "electron-publish/internal"
 import { SpacesPublisher } from "electron-publish/internal"
 import { getS3ContentType } from "electron-publish/src/s3/s3UploadHelper"
+import fsExtra from "fs-extra"
+import { gzipSync } from "zlib"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -91,6 +93,16 @@ describe("getS3ContentType — mirrors Go binary getContentType()", () => {
     ["file.unknownxyz", "application/octet-stream"],
   ])("%s → %s", (filename, expected) => {
     expect(getS3ContentType(filename)).toBe(expected)
+  })
+
+  it("a binary block map is application/octet-stream, a gzipped JSON one application/gzip", async ({ tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "s3-content-type" })
+    const binary = path.join(dir, "binary.exe.blockmap")
+    const json = path.join(dir, "json.exe.blockmap")
+    await fsExtra.outputFile(binary, Buffer.concat([Buffer.from("EBM3", "latin1"), Buffer.alloc(60)]))
+    await fsExtra.outputFile(json, gzipSync(Buffer.from('{"version":"2","files":[]}')))
+    expect(getS3ContentType(binary)).toBe("application/octet-stream")
+    expect(getS3ContentType(json)).toBe("application/gzip")
   })
 })
 

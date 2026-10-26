@@ -30,9 +30,11 @@ import { archive, ArchiveOptions } from "../../archive.js"
 import {
   appendBlockmap,
   asarContentBoundaries,
+  BINARY_BLOCK_MAP_FORMAT,
   configureDifferentialAwareArchiveOptions,
   createBlockmap,
   createNsisWebDifferentialUpdateInfo,
+  getBlockMapFormat,
   locateArchiveHeaderRegions,
   locateStoredMemberRegions,
   locateStoredMembers,
@@ -207,6 +209,8 @@ export class NsisTarget extends Target {
     const packager = this.packager
 
     const isBuildDifferentialAware = this.isBuildDifferentialAware
+    // the stored 7z header and its finer chunking only with binary block maps, so a JSON-format build stays as before
+    const isBinaryBlockMap = isBuildDifferentialAware && getBlockMapFormat(packager) === BINARY_BLOCK_MAP_FORMAT
     const format = this.isZipPayload ? "zip" : "7z"
     const archiveFile = path.join(this.outDir, `${packager.appInfo.sanitizedName}-${packager.appInfo.version}-${Arch[arch]}${fileNameSuffix}.nsis.${format}`)
     const preCompressedFileExtensions = this.getPreCompressedFileExtensions()
@@ -236,7 +240,7 @@ export class NsisTarget extends Target {
     archiveOptions.externalLinks = await packager.getExternalLinkPolicy()
 
     const timer = time(`nsis package, ${Arch[arch]}`)
-    await archive(format, archiveFile, appOutDir, isBuildDifferentialAware ? configureDifferentialAwareArchiveOptions(archiveOptions) : archiveOptions)
+    await archive(format, archiveFile, appOutDir, isBuildDifferentialAware ? configureDifferentialAwareArchiveOptions(archiveOptions, isBinaryBlockMap) : archiveOptions)
     timer.end()
 
     // Inject elevate.exe into the archive via a temp staging dir, never by mutating appOutDir
@@ -249,7 +253,10 @@ export class NsisTarget extends Target {
     }
 
     if (isBuildDifferentialAware && this.isWebInstaller) {
-      const regions = [...(await locateStoredMemberRegions(archiveFile, storedMemberFiles)), ...(await locateArchiveHeaderRegions(archiveFile, [archiveFile]))]
+      const regions = [
+        ...(await locateStoredMemberRegions(archiveFile, storedMemberFiles)),
+        ...(isBinaryBlockMap ? await locateArchiveHeaderRegions(archiveFile, [archiveFile]) : []),
+      ]
       const data = await appendBlockmap(archiveFile, toBlockMapOptions(regions))
       return {
         fileInfo: {
@@ -511,10 +518,12 @@ export class NsisTarget extends Target {
         const members = await locateStoredMembers(installerPath, storedMemberFiles)
         const regions = [
           ...members.map(it => it.region),
-          ...(await locateArchiveHeaderRegions(
-            installerPath,
-            Object.values(packageFiles).map(it => it.path)
-          )),
+          ...(getBlockMapFormat(packager) === BINARY_BLOCK_MAP_FORMAT
+            ? await locateArchiveHeaderRegions(
+                installerPath,
+                Object.values(packageFiles).map(it => it.path)
+              )
+            : []),
         ]
         updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName, primaryArch, toBlockMapOptions(regions, await asarContentBoundaries(members)))
       }

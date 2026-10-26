@@ -1,10 +1,13 @@
 import { Arch, exists, InvalidConfigurationError, log } from "builder-util"
 import { BlockMapDataHolder, PackageFileInfo } from "builder-util-runtime"
-import { open } from "fs/promises"
+import { open, stat } from "fs/promises"
 import * as path from "path"
+import * as semver from "semver"
+import * as zlib from "zlib"
 import { Node, readAsarHeader } from "../asar/asar.js"
 import { Target } from "../core.js"
 import { PlatformPackager } from "../platformPackager.js"
+import { BLOCK_MAP_FORMAT_DOCS_URL, resolveElectronUpdaterCompatibility } from "../util/electronUpdaterCompatibility.js"
 import { ArchiveOptions } from "./archive.js"
 import { BlockMapRegion, buildBlockMap, BuildBlockMapOptions, ChunkerParams } from "./blockmap/blockmap.js"
 import { buildBlockMapV3 } from "./blockmap/blockmapV3.js"
@@ -12,21 +15,72 @@ import { findPreparedVerbatimRange, prepareVerbatimNeedle, prepareVerbatimNeedle
 
 export const BLOCK_MAP_FILE_SUFFIX = ".blockmap"
 
-/** The `.blockmap` formats electron-builder writes (the `blockmap` option); `"latest"` resolves to {@link LATEST_BLOCK_MAP_FORMAT}. */
-export type BlockMapFormat = "v1" | "v2"
+/**
+ * The `.blockmap` formats electron-builder writes (the `blockmap` option), named after the format version they carry: `"v2"`
+ * is the gzipped JSON map (`"version": "2"`), `"v3"` the binary range-fetchable map (`EBM3` magic).
+ */
+export type BlockMapFormat = "v2" | "v3"
 
-/** What `blockmap: "latest"` (the default) writes. */
-export const LATEST_BLOCK_MAP_FORMAT: BlockMapFormat = "v2"
+/** The binary format: the default when `electronUpdaterCompatibility` allows it. */
+export const BINARY_BLOCK_MAP_FORMAT: BlockMapFormat = "v3"
 
-/** The format the `blockmap` option selects: `"v1"` (gzipped JSON) or `"v2"` (binary, range-fetchable); unset means `"latest"`. */
-export function resolveBlockMapFormat(value: unknown): BlockMapFormat {
-  if (value == null || value === "latest") {
-    return LATEST_BLOCK_MAP_FORMAT
+/** The newest format electron-builder writes, what `blockmap: "latest"` selects when `electronUpdaterCompatibility` allows it. */
+export const LATEST_BLOCK_MAP_FORMAT: BlockMapFormat = "v3"
+
+/** electron-updater versions before this one cannot read the binary format. */
+const BINARY_BLOCK_MAP_MIN_UPDATER = "7.0.0"
+
+/**
+ * The format of the `.blockmap` files of a build. The map is read by the updater already installed in the users' apps, which
+ * `electronUpdaterCompatibility` describes, so:
+ *
+ * - unset: the binary format when the range allows only electron-updater 7 and later, else the JSON format (with a warning);
+ * - `"latest"`: the newest format the range allows (today the same; unlike unset, it follows future formats);
+ * - `"v2"`: the JSON format;
+ * - `"v3"`: the binary format, which fails the build when the range includes electron-updater versions that cannot read it.
+ */
+export function resolveBlockMapFormat(value: unknown, electronUpdaterCompatibility: string): BlockMapFormat {
+  if (value != null && value !== "latest" && value !== "v2" && value !== "v3") {
+    throw new InvalidConfigurationError(`"blockmap" must be "v2", "v3" or "latest", got ${JSON.stringify(value)}`)
   }
-  if (value === "v1" || value === "v2") {
-    return value
+  // no includePrerelease: it would make ">=7" intersect "<7.0.0" at the 7.0.0-0 prerelease point
+  const binarySupported = !semver.intersects(electronUpdaterCompatibility, `<${BINARY_BLOCK_MAP_MIN_UPDATER}`)
+  if (value === "v2") {
+    return "v2"
   }
-  throw new InvalidConfigurationError(`"blockmap" must be "v1", "v2" or "latest", got ${JSON.stringify(value)}`)
+  if (value === "v3") {
+    if (!binarySupported) {
+      throw new InvalidConfigurationError(
+        `blockmap "v3" (the binary block map) needs electron-updater ${BINARY_BLOCK_MAP_MIN_UPDATER} or later in the installed apps, but electronUpdaterCompatibility ` +
+          `"${electronUpdaterCompatibility}" includes earlier versions. Raise electronUpdaterCompatibility to ">=7" once your installed apps ship electron-updater 7, ` +
+          `or set blockmap to "v2". See ${BLOCK_MAP_FORMAT_DOCS_URL}`
+      )
+    }
+    return "v3"
+  }
+  if (!binarySupported) {
+    warnAboutJsonBlockMap(electronUpdaterCompatibility)
+    return "v2"
+  }
+  return value === "latest" ? LATEST_BLOCK_MAP_FORMAT : BINARY_BLOCK_MAP_FORMAT
+}
+
+/** The format of the `.blockmap` files `packager` writes. */
+export function getBlockMapFormat(packager: PlatformPackager<any>): BlockMapFormat {
+  return resolveBlockMapFormat(packager.config.blockmap, resolveElectronUpdaterCompatibility(packager.platformOptions, packager.config))
+}
+
+function warnAboutJsonBlockMap(electronUpdaterCompatibility: string): void {
+  // once per process — a build resolves the format per artifact
+  log.once("json-block-map").warn(
+    {
+      electronUpdaterCompatibility,
+      solution: `raise electronUpdaterCompatibility to ">=7" once your installed apps ship electron-updater ${BINARY_BLOCK_MAP_MIN_UPDATER}`,
+      docs: BLOCK_MAP_FORMAT_DOCS_URL,
+    },
+    `electron-builder v27 writes binary block maps, which electron-updater fetches in parts, but electronUpdaterCompatibility includes electron-updater ` +
+      `versions before ${BINARY_BLOCK_MAP_MIN_UPDATER}, which cannot read them: this build writes JSON block maps, downloaded in full on every update`
+  )
 }
 
 /**
@@ -43,7 +97,7 @@ export function resolveBlockMapFormat(value: unknown): BlockMapFormat {
 export const STORED_MEMBER_CHUNKER: ChunkerParams = { min: 4096, avg: 8192, max: 16384 }
 
 /**
- * `STORED_MEMBER_CHUNKER` counterpart for the `blockmap: "v2"` format (the v3 map of `blockMapV3.ts`). A v3 map costs
+ * `STORED_MEMBER_CHUNKER` counterpart for the `blockmap: "v3"` format (the v3 map of `blockMapV3.ts`). A v3 map costs
  * ~10 B per block in the file but an updater fetches only the super-groups, groups and records that
  * changed, so the v2 trade-off (a finer chunker inflating a map that is re-downloaded in full) no longer
  * applies and the stored member can be chunked at 512 B / 1 KiB / 2 KiB: a one-line change then costs
@@ -95,6 +149,18 @@ export async function locateArchiveHeaderRegions(artifact: string, archiveFiles:
       log.debug({ artifact: log.filePath(artifact), archive: log.filePath(archiveFile) }, "not a 7z archive; no block map region for its header")
       continue
     }
+    // StartHeaderCRC (bytes 8-11) covers the next header's offset, size and CRC (bytes 12-31): an archive that fails it is not
+    // what 7-Zip wrote, and its offset and size must not become a block map region
+    if (zlib.crc32(signature.subarray(12, SEVEN_ZIP_SIGNATURE_HEADER_SIZE)) !== signature.readUInt32LE(8)) {
+      log.warn(
+        {
+          artifact: log.filePath(artifact),
+          archive: log.filePath(archiveFile),
+        },
+        "7z start header CRC mismatch; no block map region for the archive header"
+      )
+      continue
+    }
     const headerOffset = SEVEN_ZIP_SIGNATURE_HEADER_SIZE + Number(signature.readBigUInt64LE(12))
     const headerSize = Number(signature.readBigUInt64LE(20))
     if (headerSize === 0) {
@@ -114,6 +180,19 @@ export async function locateArchiveHeaderRegions(artifact: string, archiveFiles:
       start = range.offset
     }
 
+    // a region past the end of the artifact would fail the whole block map; without it, only the header's finer chunking is lost
+    if (start + headerOffset + headerSize > (await stat(artifact)).size) {
+      log.warn(
+        {
+          artifact: log.filePath(artifact),
+          archive: log.filePath(archiveFile),
+          offset: start + headerOffset,
+          size: headerSize,
+        },
+        "7z header extends past the end of the artifact; no block map region for it"
+      )
+      continue
+    }
     const first = await readBytes(artifact, start + headerOffset, 1)
     if (first == null || first[0] !== SEVEN_ZIP_HEADER_ID) {
       log.debug({ artifact: log.filePath(artifact), archive: log.filePath(archiveFile) }, "archive header is compressed; no block map region for it")
@@ -246,10 +325,10 @@ async function findUnclaimedVerbatimRange(artifact: string, needle: VerbatimNeed
   }
 }
 
-/** `BuildBlockMapOptions` for the `blockmap: "v1"` format, plus what only the `"v2"` format uses. */
+/** `BuildBlockMapOptions` for the `blockmap: "v2"` format, plus what only the `"v3"` format uses. */
 export interface DifferentialBlockMapOptions extends BuildBlockMapOptions {
   /**
-   * Forced block boundaries for the `"v2"` format only (`BuildBlockMapV3Options.boundaries`); a `"v1"` map keeps
+   * Forced block boundaries for the `"v3"` format only (`BuildBlockMapV3Options.boundaries`); a `"v2"` map keeps
    * its chunking byte-for-byte, since every updater downloads it in full.
    */
   v3Boundaries?: Array<number> | null
@@ -304,7 +383,11 @@ export function createNsisWebDifferentialUpdateInfo(artifactPath: string, packag
   return { packages }
 }
 
-export function configureDifferentialAwareArchiveOptions(archiveOptions: ArchiveOptions): ArchiveOptions {
+/**
+ * `storeArchiveHeader`: whether the 7z header is stored as is, for a build whose block map chunks it finely (the binary format,
+ * see `locateArchiveHeaderRegions`). With the JSON format the package stays byte-for-byte what earlier versions wrote.
+ */
+export function configureDifferentialAwareArchiveOptions(archiveOptions: ArchiveOptions, storeArchiveHeader: boolean): ArchiveOptions {
   /*
    * dict size 64 MB: Full: 33,744.88 KB, To download: 17,630.3 KB (52%)
    * dict size 16 MB: Full: 33,936.84 KB, To download: 16,175.9 KB (48%)
@@ -338,7 +421,9 @@ export function configureDifferentialAwareArchiveOptions(archiveOptions: Archive
   // store the archive header as is: a compressed header re-encodes entirely when a single CRC changes,
   // so every update re-downloaded the trailing block of the package; stored, only the changed CRCs and
   // sizes differ and `locateArchiveHeaderRegions` chunks the header finely (ARCHIVE_HEADER_CHUNKER)
-  archiveOptions.isArchiveHeaderCompressed = false
+  if (storeArchiveHeader) {
+    archiveOptions.isArchiveHeaderCompressed = false
+  }
   return archiveOptions
 }
 
@@ -355,11 +440,11 @@ export async function createBlockmap(
   arch: Arch | null = null,
   options?: DifferentialBlockMapOptions
 ): Promise<BlockMapDataHolder> {
-  const format = resolveBlockMapFormat(packager.config.blockmap)
+  const format = getBlockMapFormat(packager)
   const blockMapFile = `${file}${BLOCK_MAP_FILE_SUFFIX}`
   log.info({ blockMapFile: log.filePath(blockMapFile), format }, "building block map")
   let updateInfo: BlockMapDataHolder
-  if (format === "v1") {
+  if (format === "v2") {
     updateInfo = await buildBlockMap(file, "gzip", blockMapFile, options == null ? undefined : { regions: options.regions })
   } else {
     // the stored members get the finer v2 chunker, and a stored asar a block boundary at every packed file

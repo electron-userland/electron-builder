@@ -302,7 +302,11 @@ describe("chunkFile (shared v2/v3 chunker loop)", () => {
 
 describe("createBlockmap — one .blockmap, in the `blockmap` format", () => {
   // the PlatformPackager surface createBlockmap touches
-  const blockMapPackager = (blockmap?: unknown) => ({ config: blockmap === undefined ? {} : { blockmap }, emitArtifactBuildCompleted: vi.fn().mockResolvedValue(undefined) })
+  const blockMapPackager = (blockmap?: unknown, electronUpdaterCompatibility?: string, platformCompatibility?: string) => ({
+    config: { ...(blockmap === undefined ? {} : { blockmap }), ...(electronUpdaterCompatibility == null ? {} : { electronUpdaterCompatibility }) },
+    platformOptions: platformCompatibility == null ? {} : { electronUpdaterCompatibility: platformCompatibility },
+    emitArtifactBuildCompleted: vi.fn().mockResolvedValue(undefined),
+  })
 
   it("toV3Regions swaps the stored-member chunker and keeps everything else", ({ expect }) => {
     const custom: ChunkerParams = { min: 2048, avg: 4096, max: 8192 }
@@ -318,23 +322,83 @@ describe("createBlockmap — one .blockmap, in the `blockmap` format", () => {
     ])
     expect(toV3Regions(null)).toEqual([])
     expect(toV3Regions(undefined)).toEqual([])
-    // the v1 regions are not mutated
+    // the JSON-format regions are not mutated
     expect(regions[0].chunker).toBe(STORED_MEMBER_CHUNKER)
     expect(STORED_MEMBER_CHUNKER_V3.max).toBeLessThanOrEqual(0xffff)
   })
 
-  it('resolves the option: unset and "latest" mean the newest format; anything else is a configuration error', ({ expect }) => {
-    expect(LATEST_BLOCK_MAP_FORMAT).toBe("v2")
-    expect(resolveBlockMapFormat(undefined)).toBe("v2")
-    expect(resolveBlockMapFormat(null)).toBe("v2")
-    expect(resolveBlockMapFormat("latest")).toBe("v2")
-    expect(resolveBlockMapFormat("v1")).toBe("v1")
-    expect(resolveBlockMapFormat("v2")).toBe("v2")
-    expect(() => resolveBlockMapFormat("v3")).toThrow(InvalidConfigurationError)
-    expect(() => resolveBlockMapFormat(2)).toThrow(/"blockmap" must be "v1", "v2" or "latest"/)
+  it("resolves the option from electronUpdaterCompatibility: binary when the range allows only electron-updater 7+, JSON otherwise", ({ expect }) => {
+    expect(LATEST_BLOCK_MAP_FORMAT).toBe("v3")
+    for (const range of [">=7", ">=7.0.0", "^7.1.0", ">=8"]) {
+      expect(resolveBlockMapFormat(undefined, range)).toBe("v3")
+      expect(resolveBlockMapFormat(null, range)).toBe("v3")
+      expect(resolveBlockMapFormat("latest", range)).toBe("v3")
+      expect(resolveBlockMapFormat("v3", range)).toBe("v3")
+      expect(resolveBlockMapFormat("v2", range)).toBe("v2")
+    }
+    for (const range of [">=2.16", ">=6", ">=6.8.10", "*", "<7"]) {
+      expect(resolveBlockMapFormat(undefined, range)).toBe("v2")
+      expect(resolveBlockMapFormat("latest", range)).toBe("v2")
+      expect(resolveBlockMapFormat("v2", range)).toBe("v2")
+      expect(() => resolveBlockMapFormat("v3", range)).toThrow(InvalidConfigurationError)
+    }
+    expect(() => resolveBlockMapFormat("v3", ">=6")).toThrow(
+      /blockmap "v3" .* electronUpdaterCompatibility ">=6" includes earlier versions.*v27-build-changes#block-map-format-follows-electronupdatercompatibility/
+    )
+    expect(() => resolveBlockMapFormat("v1", ">=7")).toThrow(/"blockmap" must be "v2", "v3" or "latest"/)
+    expect(() => resolveBlockMapFormat(2, ">=7")).toThrow(/"blockmap" must be "v2", "v3" or "latest"/)
   })
 
-  it("writes the v2 format by default: one .blockmap artifact, carrying the artifact's size and sha512", async ({ expect, tmpDir }) => {
+  it("warns once per process, naming v27, the reason and the fix, when the range makes the build write JSON block maps", async ({ expect }) => {
+    const { log } = await import("builder-util")
+    const warnings: Array<{ fields: any; message: string }> = []
+    const once = vi.spyOn(log, "once").mockImplementation(((key: string) => {
+      const seen = (once as any).seen ?? ((once as any).seen = new Set<string>())
+      return {
+        warn: (fields: any, message: string) => {
+          if (!seen.has(key)) {
+            seen.add(key)
+            warnings.push({ fields, message })
+          }
+        },
+      }
+    }) as any)
+    try {
+      resolveBlockMapFormat(undefined, ">=6")
+      resolveBlockMapFormat("latest", ">=6")
+      resolveBlockMapFormat(undefined, ">=7")
+      resolveBlockMapFormat("v2", ">=6")
+      expect(once).toHaveBeenCalledTimes(2)
+      expect(once.mock.calls.every(([key]) => key === "json-block-map")).toBe(true)
+      expect(warnings).toHaveLength(1)
+      expect(warnings[0].message).toMatch(
+        /electron-builder v27 writes binary block maps.*electronUpdaterCompatibility includes electron-updater versions before 7\.0\.0.*JSON block maps/
+      )
+      expect(warnings[0].fields).toEqual({
+        electronUpdaterCompatibility: ">=6",
+        solution: 'raise electronUpdaterCompatibility to ">=7" once your installed apps ship electron-updater 7.0.0',
+        docs: "https://www.electron.build/docs/migration/v27-build-changes#block-map-format-follows-electronupdatercompatibility",
+      })
+    } finally {
+      once.mockRestore()
+    }
+  })
+
+  it("a platform's electronUpdaterCompatibility overrides the root one, which overrides the >=7 default", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir()
+    const build = async (name: string, root?: string, platform?: string) => {
+      const file = path.join(dir, name)
+      await writeFile(file, makeTestData(20_000, 7))
+      await createBlockmap(file, {} as any, blockMapPackager(undefined, root, platform) as any, null)
+      return isBlockMapV3(await readFile(`${file}${BLOCK_MAP_FILE_SUFFIX}`))
+    }
+    expect(await build("default.exe")).toBe(true)
+    expect(await build("root.exe", ">=6")).toBe(false)
+    expect(await build("platform.exe", ">=6", ">=7")).toBe(true)
+    expect(await build("platform-json.exe", ">=7", ">=6")).toBe(false)
+  })
+
+  it("writes the v3 format by default: one .blockmap artifact, carrying the artifact's size and sha512", async ({ expect, tmpDir }) => {
     const dir = await tmpDir.createTempDir()
     const data = makeTestData(600_000, 4321)
     const file = path.join(dir, "App Setup 1.0.0.exe")
@@ -361,7 +425,7 @@ describe("createBlockmap — one .blockmap, in the `blockmap` format", () => {
     expectWithinParams(sizes.slice(region.first, region.last), STORED_MEMBER_CHUNKER_V3)
   })
 
-  it('blockmap: "v1" writes the gzipped JSON map with the 4/8/16 KiB stored-member chunker; same size and sha512', async ({ expect, tmpDir }) => {
+  it('blockmap: "v2" writes the gzipped JSON map with the 4/8/16 KiB stored-member chunker; same size and sha512', async ({ expect, tmpDir }) => {
     const dir = await tmpDir.createTempDir()
     const data = makeTestData(600_000, 4321)
     const regions: Array<BlockMapRegion> = [{ offset: 120_000, size: 300_000, chunker: STORED_MEMBER_CHUNKER }]
@@ -373,24 +437,24 @@ describe("createBlockmap — one .blockmap, in the `blockmap` format", () => {
       expect(packager.emitArtifactBuildCompleted).toHaveBeenCalledTimes(1)
       return { updateInfo, bytes: await readFile(`${file}${BLOCK_MAP_FILE_SUFFIX}`) }
     }
-    const v1 = await build("v1.exe", "v1")
-    const v2 = await build("v2.exe", "v2")
+    const jsonMap = await build("v2.exe", "v2")
+    const binaryMap = await build("v3.exe", "v3")
     const latest = await build("latest.exe", "latest")
 
-    expect(isBlockMapV3(v1.bytes)).toBe(false)
-    expect(v1.updateInfo).toEqual(v2.updateInfo)
-    expect(latest.bytes.equals(v2.bytes)).toBe(true)
+    expect(isBlockMapV3(jsonMap.bytes)).toBe(false)
+    expect(jsonMap.updateInfo).toEqual(binaryMap.updateInfo)
+    expect(latest.bytes.equals(binaryMap.bytes)).toBe(true)
 
-    // the v1 map is the v1 build of buildBlockMap (STORED_MEMBER_CHUNKER inside the region)
-    const json = JSON.parse(zlib.gunzipSync(v1.bytes).toString())
-    const v1Region = blocksInRange(json.files[0].sizes, regions[0].offset, regions[0].size)
-    expectWithinParams(json.files[0].sizes.slice(v1Region.first, v1Region.last), STORED_MEMBER_CHUNKER)
-    // outside the region both formats are chunked identically; inside it v2 has more, smaller blocks
-    const v2Sizes = decodeBlockMapV3(v2.bytes).records.map(r => r.size)
-    const v2Region = blocksInRange(v2Sizes, regions[0].offset, regions[0].size)
-    expect(v2Region.last - v2Region.first).toBeGreaterThan(v1Region.last - v1Region.first)
-    expect(v2Sizes.slice(0, v2Region.first)).toEqual(json.files[0].sizes.slice(0, v1Region.first))
-    expect(v2Sizes.slice(v2Region.last)).toEqual(json.files[0].sizes.slice(v1Region.last))
+    // the JSON map is buildBlockMap's (STORED_MEMBER_CHUNKER inside the region)
+    const json = JSON.parse(zlib.gunzipSync(jsonMap.bytes).toString())
+    const jsonRegion = blocksInRange(json.files[0].sizes, regions[0].offset, regions[0].size)
+    expectWithinParams(json.files[0].sizes.slice(jsonRegion.first, jsonRegion.last), STORED_MEMBER_CHUNKER)
+    // outside the region both formats are chunked identically; inside it the binary map has more, smaller blocks
+    const binarySizes = decodeBlockMapV3(binaryMap.bytes).records.map(r => r.size)
+    const binaryRegion = blocksInRange(binarySizes, regions[0].offset, regions[0].size)
+    expect(binaryRegion.last - binaryRegion.first).toBeGreaterThan(jsonRegion.last - jsonRegion.first)
+    expect(binarySizes.slice(0, binaryRegion.first)).toEqual(json.files[0].sizes.slice(0, jsonRegion.first))
+    expect(binarySizes.slice(binaryRegion.last)).toEqual(json.files[0].sizes.slice(jsonRegion.last))
   })
 
   it("passes a null safeArtifactName through and builds without regions", async ({ expect, tmpDir }) => {
@@ -409,7 +473,7 @@ describe("createBlockmap — one .blockmap, in the `blockmap` format", () => {
     const dir = await tmpDir.createTempDir()
     const file = path.join(dir, "App Setup 1.0.0.exe")
     await writeFile(file, makeTestData(10_000, 5))
-    const packager = blockMapPackager("v3")
+    const packager = blockMapPackager("v1")
     await expect(createBlockmap(file, {} as any, packager as any, null)).rejects.toThrow(InvalidConfigurationError)
     expect(packager.emitArtifactBuildCompleted).not.toHaveBeenCalled()
   })
@@ -478,7 +542,7 @@ describe("buildBlockMapV3 — boundaries", () => {
 })
 
 describe("createBlockmap — v3Boundaries", () => {
-  it("applies the boundaries to the v2 format only; a v1 map is byte-identical without them", async ({ expect, tmpDir }) => {
+  it("applies the boundaries to the v3 format only; a v2 map is byte-identical without them", async ({ expect, tmpDir }) => {
     const dir = await tmpDir.createTempDir()
     const data = makeTestData(300_000, 12)
     const target = { name: "nsis" }
@@ -487,16 +551,16 @@ describe("createBlockmap — v3Boundaries", () => {
     const build = async (name: string, blockmap: string, withBoundaries: boolean) => {
       const file = path.join(dir, name)
       await writeFile(file, data)
-      const packager = { config: { blockmap }, emitArtifactBuildCompleted: vi.fn().mockResolvedValue(undefined) }
+      const packager = { config: { blockmap }, platformOptions: {}, emitArtifactBuildCompleted: vi.fn().mockResolvedValue(undefined) }
       await createBlockmap(file, target as any, packager as any, null, null, withBoundaries ? { regions, v3Boundaries } : { regions })
       return readFileSyncAsBuffer(`${file}${BLOCK_MAP_FILE_SUFFIX}`)
     }
 
-    const v1 = (bytes: Buffer) => zlib.gunzipSync(bytes).toString()
-    expect(v1(await build("v1-bounded.exe", "v1", true))).toBe(v1(await build("v1-plain.exe", "v1", false)))
+    const json = (bytes: Buffer) => zlib.gunzipSync(bytes).toString()
+    expect(json(await build("v2-bounded.exe", "v2", true))).toBe(json(await build("v2-plain.exe", "v2", false)))
 
-    const bounded = decodeBlockMapV3(await build("v2-bounded.exe", "v2", true))
-    const plain = decodeBlockMapV3(await build("v2-plain.exe", "v2", false))
+    const bounded = decodeBlockMapV3(await build("v3-bounded.exe", "v3", true))
+    const plain = decodeBlockMapV3(await build("v3-plain.exe", "v3", false))
     const startsOf = (map: BlockMapV3) => {
       const starts = new Set<number>()
       let offset = 0
@@ -509,7 +573,7 @@ describe("createBlockmap — v3Boundaries", () => {
     const boundedStarts = startsOf(bounded)
     const plainStarts = startsOf(plain)
     for (const boundary of v3Boundaries) {
-      expect(boundedStarts.has(boundary), `v2 block starts at ${boundary}`).toBe(true)
+      expect(boundedStarts.has(boundary), `v3 block starts at ${boundary}`).toBe(true)
     }
     expect(v3Boundaries.some(it => plainStarts.has(it))).toBe(false)
     expect(bounded.header.regions).toEqual(plain.header.regions)

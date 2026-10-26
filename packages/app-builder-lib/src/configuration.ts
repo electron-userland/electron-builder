@@ -105,21 +105,26 @@ export interface CommonConfiguration {
 
   /**
    * Format of the `<artifact>.blockmap` file published next to installers and update archives, which electron-updater reads for
-   * differential downloads.
+   * differential downloads. The map is read by the updater already installed in your users' apps, so the format follows
+   * `electronUpdaterCompatibility` (default `">=7"`):
    *
-   * - `"v1"`: the gzipped JSON block map every electron-updater version reads. It is downloaded in full on every update.
-   * - `"v2"`: a binary block map that electron-updater fetches in parts with HTTP `Range` requests (only the parts that changed
-   *   since the installed version), with finer blocks for stored members such as an uncompressed `app.asar`. electron-updater
-   *   before 7.0 cannot read it: those apps fall back to a full download once, and the update they install brings an updater
-   *   that can. From electron-updater 6.8.10 the next update is differential again; 6.8.9 and earlier leave the old block map
-   *   in their cache, which can make the next update a full download too.
-   * - `"latest"`: the newest format this electron-builder writes (currently `"v2"`). A future format change then costs one full
-   *   download per user again, the same way.
+   * - unset: `"v3"` when `electronUpdaterCompatibility` includes only electron-updater 7 and later, else `"v2"`, with a build
+   *   warning.
+   * - `"v3"`: a binary block map that electron-updater fetches in parts with HTTP `Range` requests (only the parts that changed
+   *   since the installed version), with finer blocks for stored members such as an uncompressed `app.asar`. Needs electron-updater
+   *   7 or later: with an `electronUpdaterCompatibility` that includes earlier versions, the build fails.
+   * - `"v2"`: the gzipped JSON block map every electron-updater version reads, downloaded in full on every update; the package and
+   *   block map are the same as electron-builder 26 wrote.
+   * - `"latest"`: the newest format the `electronUpdaterCompatibility` range supports (currently the same as unset). A future
+   *   format then costs one full download per user, as below.
    *
-   * Block maps embedded in an artifact (AppImage, the NSIS web installer's app package) are always `"v1"`.
-   * @default latest
+   * Apps whose electron-updater cannot read a release's format, or whose cached map is in another format, download that update
+   * in full once; the next one is differential again.
+   *
+   * Block maps embedded in an artifact (AppImage, the NSIS web installer's app package) are always `"v2"`.
+   * See [the v27 notes](https://www.electron.build/docs/migration/v27-build-changes#block-map-format-follows-electronupdatercompatibility).
    */
-  readonly blockmap?: "v1" | "v2" | "latest" | null
+  readonly blockmap?: "v2" | "v3" | "latest" | null
 
   /**
    * macOS-specific build options (signing, entitlements, notarization, target categories, etc.).

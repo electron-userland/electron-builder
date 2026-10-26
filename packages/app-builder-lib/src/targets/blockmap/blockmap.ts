@@ -1,6 +1,7 @@
-import { createHash } from "crypto"
+import { createHash, randomBytes } from "crypto"
 import { createReadStream } from "fs"
-import { appendFile, stat, writeFile } from "fs/promises"
+import { appendFile, rename, stat, unlink, writeFile } from "fs/promises"
+import * as path from "path"
 import * as zlib from "zlib"
 import { blake2b } from "@noble/hashes/blake2.js"
 import { BlockMapDataHolder } from "builder-util-runtime"
@@ -415,9 +416,27 @@ export async function buildBlockMap(inFile: string, compressionFormat: Compressi
     }
   }
 
-  await writeFile(outFile, compressed)
+  await writeBlockMapFile(outFile, compressed)
   return {
     size: totalSize,
     sha512: fileHash.digest("base64"),
+  }
+}
+
+/**
+ * Writes `data` to `file` through a new temporary file in the same directory, renamed into place: `writeFile` would follow
+ * a symlink already at `file` and write wherever it points, while a rename replaces the link itself.
+ */
+export async function writeBlockMapFile(file: string, data: Buffer): Promise<void> {
+  const tempFile = path.join(path.dirname(file), `.${path.basename(file)}.${randomBytes(6).toString("hex")}.tmp`)
+  // "wx": the temporary name must not exist yet, so it cannot be a link planted in advance
+  await writeFile(tempFile, data, { flag: "wx" })
+  try {
+    await rename(tempFile, file)
+  } catch (e: any) {
+    await unlink(tempFile).catch(() => {
+      // ignore
+    })
+    throw e
   }
 }

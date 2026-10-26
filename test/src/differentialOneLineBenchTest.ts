@@ -406,7 +406,7 @@ function locateAsar(pkg: Buffer, asar: Buffer): number {
 
 function nsisArchiveOptions(stored: boolean): ArchiveOptions {
   // exactly NsisTarget.buildAppPackage for a differential-aware build (elevate.exe injection aside)
-  return configureDifferentialAwareArchiveOptions(createAppPackageArchiveOptions("normal", null, stored ? [STORED_ASAR_PATH] : null))
+  return configureDifferentialAwareArchiveOptions(createAppPackageArchiveOptions("normal", null, stored ? [STORED_ASAR_PATH] : null), true)
 }
 
 async function readBlockMap(file: string): Promise<BlockMap> {

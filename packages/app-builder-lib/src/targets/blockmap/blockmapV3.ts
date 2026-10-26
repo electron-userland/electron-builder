@@ -1,8 +1,7 @@
 import { createHash } from "crypto"
-import { writeFile } from "fs/promises"
 import { blake2b } from "@noble/hashes/blake2.js"
 import { BlockInput, BlockMapV3Region, encodeBlockMapV3, parseBlockMapV3Header } from "builder-util-runtime/internal"
-import { BlockMapRegion, chunkFile, DEFAULT_CHUNKER } from "./blockmap.js"
+import { BlockMapRegion, chunkFile, DEFAULT_CHUNKER, writeBlockMapFile } from "./blockmap.js"
 
 export interface BuildBlockMapV3Options {
   /**
@@ -34,7 +33,7 @@ export interface BuildBlockMapV3Result {
 const MAX_V3_BLOCK_SIZE = 0xffff
 
 /**
- * Builds the v3 block map (the `blockmap: "v2"` format, see `builder-util-runtime/blockMapV3`) of `inFile`
+ * Builds the v3 block map (the `blockmap: "v3"` format, see `builder-util-runtime/blockMapV3`) of `inFile`
  * and writes it to `outFile`.
  *
  * The blocks come from the same region-aware Rabin chunker as the v2 map (`chunkFile`): the default
@@ -71,6 +70,6 @@ export async function buildBlockMapV3(inFile: string, outFile: string, options: 
     max: region.chunker.max,
   }))
   const encoded = encodeBlockMapV3(blocks, { fileSize, defaultChunker: DEFAULT_CHUNKER, regions: v3Regions })
-  await writeFile(outFile, encoded)
+  await writeBlockMapFile(outFile, encoded)
   return { size: fileSize, sha512: fileHash.digest("base64"), groupCount: parseBlockMapV3Header(encoded).groupCount, blockCount: blocks.length }
 }

@@ -14,6 +14,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 import { describe } from "vitest"
+import * as zlib from "zlib"
 
 const KiB = 1024
 
@@ -41,7 +42,7 @@ async function buildPackage(dir: string, name: string, headerCompressed: boolean
   await fs.writeFile(path.join(src, "LICENSE"), "license ".repeat(500))
   await fs.writeFile(path.join(src, "resources", "app.asar"), pseudoRandom(100 * KiB, 2))
   const out = path.join(dir, `${name}.7z`)
-  const options = configureDifferentialAwareArchiveOptions({ withoutDir: true, compression: "normal", storedPaths: ["resources/app.asar"] })
+  const options = configureDifferentialAwareArchiveOptions({ withoutDir: true, compression: "normal", storedPaths: ["resources/app.asar"] }, true)
   if (headerCompressed) {
     options.isArchiveHeaderCompressed = true
   }
@@ -57,8 +58,10 @@ async function blockStarts(file: string, options: Parameters<typeof chunkFile>[1
 }
 
 describe("configureDifferentialAwareArchiveOptions", () => {
-  test("stores the archive header as is", ({ expect }) => {
-    expect(configureDifferentialAwareArchiveOptions({}).isArchiveHeaderCompressed).toBe(false)
+  test("stores the archive header as is only for a build that writes binary block maps", ({ expect }) => {
+    expect(configureDifferentialAwareArchiveOptions({}, true).isArchiveHeaderCompressed).toBe(false)
+    // a JSON block map build packages exactly as before (7-Zip's default: a compressed header)
+    expect(configureDifferentialAwareArchiveOptions({}, false).isArchiveHeaderCompressed).toBeUndefined()
   })
 })
 
@@ -116,6 +119,27 @@ describe("locateArchiveHeaderRegions", () => {
     await fs.writeFile(text, "not an archive at all, just text that is long enough to read 32 bytes from")
     expect(await locateArchiveHeaderRegions(text, [text])).toEqual([])
     expect(await locateArchiveHeaderRegions(text, [path.join(dir, "missing.7z")])).toEqual([])
+  })
+
+  test("a start header that fails its CRC, or names a header past the end of the artifact, yields no region instead of failing the block map", async ({ expect, tmpDir }) => {
+    const dir = await makeTempDir(tmpDir, "hdr-invalid")
+    const pkg = await buildPackage(dir, "pkg", false)
+    const bytes = await fs.readFile(pkg)
+    expect(await locateArchiveHeaderRegions(pkg, [pkg])).toHaveLength(1)
+
+    const badCrc = path.join(dir, "bad-crc.7z")
+    const corrupted = Buffer.from(bytes)
+    corrupted[8] ^= 0xff
+    await fs.writeFile(badCrc, corrupted)
+    expect(await locateArchiveHeaderRegions(badCrc, [badCrc])).toEqual([])
+
+    // a consistent start header (valid CRC) whose next header extends past the end of the file
+    const pastEnd = path.join(dir, "past-end.7z")
+    const truncated = Buffer.from(bytes)
+    truncated.writeBigUInt64LE(BigInt(bytes.length), 20)
+    truncated.writeUInt32LE(zlib.crc32(truncated.subarray(12, 32)), 8)
+    await fs.writeFile(pastEnd, truncated)
+    expect(await locateArchiveHeaderRegions(pastEnd, [pastEnd])).toEqual([])
   })
 
   test("an archive that is not in the artifact yields no region", async ({ expect, tmpDir }) => {

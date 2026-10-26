@@ -38,7 +38,7 @@ export interface BlockMapV3FetchOptions {
 
 export interface BlockMapV3FetchResult {
   /**
-   * the complete NEW block map, byte-identical to the remote file. Normally a v3 map; when the remote file turns out to be a v1
+   * the complete NEW block map, byte-identical to the remote file. Normally a v3 map; when the remote file turns out to be a v2
    * (gzipped JSON) map it is downloaded whole and returned unverified — telling the formats apart is the caller's job (`isBlockMapV3`)
    */
   readonly buffer: Buffer
@@ -84,8 +84,8 @@ interface DecodedOldMap {
  * 4. Assemble and verify every super-group and group hash before returning.
  *
  * Any HTTP error, 416, missing range support that cannot be recovered by a full GET, parse error or verification
- * mismatch throws — the caller (AppUpdater) falls back to a full download. A remote file that is not a v3 map (a v1
- * map published under the same name, e.g. by a release built with `blockmap: "v1"`) is downloaded whole and returned
+ * mismatch throws — the caller (AppUpdater) falls back to a full download. A remote file that is not a v3 map (a v2
+ * map published under the same name, e.g. by a release built with `blockmap: "v2"`) is downloaded whole and returned
  * as is, for the caller to detect.
  */
 export async function fetchBlockMapV3(options: BlockMapV3FetchOptions): Promise<BlockMapV3FetchResult> {

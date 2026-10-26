@@ -28,8 +28,8 @@ export const BLOCK_MAP_V3_MAGIC = "EBM3"
 export const BLOCK_MAP_V3_VERSION = 2
 
 /**
- * Whether `data` is a block map in this binary, range-fetchable format (the `blockmap: "v2"` format) rather than the gzipped JSON
- * block map (`"v1"`). Both are published as `<file>.blockmap`; the first bytes tell them apart.
+ * Whether `data` is a block map in this binary, range-fetchable format (the `blockmap: "v3"` format) rather than the gzipped JSON
+ * block map (`"v2"`). Both are published as `<file>.blockmap`; the first bytes tell them apart.
  */
 export function isBlockMapV3(data: Buffer): boolean {
   return data.length >= BLOCK_MAP_V3_MAGIC.length && data.toString("latin1", 0, BLOCK_MAP_V3_MAGIC.length) === BLOCK_MAP_V3_MAGIC
