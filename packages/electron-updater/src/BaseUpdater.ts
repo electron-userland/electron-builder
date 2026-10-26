@@ -165,6 +165,8 @@ export abstract class BaseUpdater extends AppUpdater {
   }
 
   protected executeDownload(taskOptions: DownloadExecutorTask): Promise<DownloadExecutorResult> {
+    // registered when the download starts, not when it ends: an app quitting before then is told why nothing is installed
+    this.addQuitHandler()
     return super.executeDownload({
       ...taskOptions,
       done: event => {
@@ -398,9 +400,14 @@ export abstract class BaseUpdater extends AppUpdater {
     return isMarked
   }
 
+  /**
+   * Registers, once, the handler that installs (or defers) the downloaded update when the app quits. It is registered
+   * whatever `autoInstallEvent` is, and reads it when the app quits: an app may set it after the download, e.g. switch
+   * from `"manual"` to `"onQuit"`.
+   */
   protected addQuitHandler(): void {
     this.addSessionEndHandler()
-    if (this.quitHandlerAdded || this.autoInstallEvent === "manual") {
+    if (this.quitHandlerAdded) {
       return
     }
 
@@ -409,6 +416,11 @@ export abstract class BaseUpdater extends AppUpdater {
     this.app.onQuit(exitCode => {
       if (this.quitAndInstallCalled) {
         this._logger.info("Update installer has already been triggered. Quitting application.")
+        return
+      }
+
+      if (this.installerPath == null) {
+        this._logger.info("No update is installed on quit: no update has finished downloading")
         return
       }
 
@@ -466,22 +478,30 @@ export abstract class BaseUpdater extends AppUpdater {
       .join(path.delimiter)
   }
 
-  protected spawnSyncLog(cmd: string, args: string[] = [], env = {}): string {
+  /**
+   * Runs a command and returns its trimmed stdout; throws when it cannot be spawned or exits with a non-zero code.
+   *
+   * With `useShell` (the default), the shell gets the command line Node would have joined from `cmd` and `args` (see
+   * {@link shellCommandLine}), so the caller escapes them. Without it, the arguments are passed as an argv array and
+   * nothing has to be escaped.
+   */
+  protected spawnSyncLog(cmd: string, args: string[] = [], env = {}, useShell = true): string {
     this._logger.info(`Executing: ${cmd} with args: ${args}`)
     const mergedEnv: NodeJS.ProcessEnv = { ...process.env, ...env }
-    const response = spawnSync(shellCommandLine(cmd, args), [], {
+    const response = spawnSync(useShell ? shellCommandLine(cmd, args) : cmd, useShell ? [] : args, {
       env: { ...mergedEnv, PATH: this.sanitizeEnvPath(mergedEnv.PATH ?? "") },
       encoding: "utf-8",
-      shell: true,
+      shell: useShell,
     })
 
-    const { error, status, stdout, stderr } = response
+    const { error, status, signal, stdout, stderr } = response
     if (error != null) {
       this._logger.error(stderr)
       throw error
-    } else if (status != null && status !== 0) {
+    } else if (status !== 0) {
+      // a command killed by a signal has no exit code, and did not succeed either
       this._logger.error(stderr)
-      throw new Error(`Command ${cmd} exited with code ${status}`)
+      throw new Error(`Command ${cmd} exited with code ${status}${signal == null ? "" : `, signal ${signal}`}`)
     }
 
     return stdout.trim()
