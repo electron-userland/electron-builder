@@ -269,13 +269,11 @@ export default class MsiTarget extends Target {
       if (isMainExecutable) {
         result += ' Id="mainExecutable"'
       } else if (directoryId === null) {
-        // file names in the app dir are not trusted input, so the id is escaped like the name (candle rejects an id that isn't a
-        // valid identifier, but the project must stay well-formed XML)
-        result += ` Id="${escapeForXml(path.basename(packagePath))}_f"`
+        result += ` Id="${getRootFileId(packagePath, isWix3)}"`
       } else if (isWix3) {
         // WiX 3 derives an omitted File/@Id (and so the Component/@Id) from the file name alone, which collides for files of the same
         // name in different directories (LGHT0091). The component GUID is derived from the install path, not from this id.
-        result += ` Id="f${createHash("sha256").update(packagePath).digest("hex").slice(0, 16)}"`
+        result += ` Id="${getHashedFileId(packagePath)}"`
       }
 
       const isCreateDesktopShortcut = commonOptions.isCreateDesktopShortcut !== DesktopShortcutCreationPolicy.NEVER
@@ -370,6 +368,28 @@ function getCompanyDirectories(menuCategory: string | null, isWix3: boolean): Ar
     id: index === segments.length - 1 ? "COMPANYDIR" : getDirectoryId(`company:${segments.slice(0, index + 1).join("/")}`),
     name,
   }))
+}
+
+// what WiX 3 candle accepts as an identifier (CNDL0014), and its length limit (CNDL1026, an error with -wx)
+const WIX3_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_.]*$/
+const WIX3_IDENTIFIER_MAX_LENGTH = 72
+
+function getHashedFileId(packagePath: string): string {
+  return "f" + createHash("sha256").update(packagePath).digest("hex").slice(0, 16)
+}
+
+/**
+ * The `File/@Id` of a file at the root of the app dir: the file name with `_f`. WiX 3 rejects an id with other characters than
+ * letters, digits, `_` and `.` (Electron ships `vulkan-1.dll`), or longer than 72 characters, so such a file gets an id derived
+ * from its name there, like the files in subdirectories. The legacy bundle accepts these ids. File names in the app dir are not
+ * trusted input, so the id is XML-escaped like the name.
+ */
+function getRootFileId(packagePath: string, isWix3: boolean): string {
+  const id = `${path.basename(packagePath)}_f`
+  if (isWix3 && (!WIX3_IDENTIFIER.test(id) || id.length > WIX3_IDENTIFIER_MAX_LENGTH)) {
+    return getHashedFileId(packagePath)
+  }
+  return escapeForXml(id)
 }
 
 function getDirectoryId(dirName: string): string {

@@ -225,22 +225,70 @@ describe("MSI project (.wxs)", () => {
   })
 
   describe("file ids", () => {
-    test("a root-level file id is XML-escaped, like the file name", async ({ expect, tmpDir }) => {
-      // app-tree file names are not trusted input; `"`, `<`, `>` and `&` are valid in POSIX file names
-      const name = `a"b<c>&d.txt`
-      for (const schema of ["v3", "v4-preview"] as const) {
-        const project = await renderProject(tmpDir, { schema, files: [`${PRODUCT_NAME}.exe`, name] })
-        expect(XMLValidator.validate(project), schema).toBe(true)
-        expect(project).toContain(`<File Name="a&quot;b&lt;c&gt;&amp;d.txt"`)
-        expect(project).toContain(` Id="a&quot;b&lt;c&gt;&amp;d.txt_f"`)
+    // what WiX 3 candle accepts as a File/@Id: CNDL0014 for other characters, CNDL1026 (an error with -wx) over 72 characters
+    const wix3Identifier = /^[A-Za-z_][A-Za-z0-9_.]{0,71}$/
+    const fileIds = (project: string) => Array.from(project.matchAll(/<File [^>]* Id="([^"]*)"/g), it => it[1])
+    const hashedId = (packagePath: string) => `f${createHash("sha256").update(packagePath).digest("hex").slice(0, 16)}`
+
+    // app-tree file names are not trusted input; `'` and `&` are valid in file names on every OS (`"`, `<` and `>` are not on Windows)
+    const untrustedName = "a'b&c.txt"
+
+    test("a root-level file id is XML-escaped, like the file name, with the legacy bundle", async ({ expect, tmpDir }) => {
+      const project = await renderProject(tmpDir, { schema: "v4-preview", files: [`${PRODUCT_NAME}.exe`, untrustedName] })
+      expect(XMLValidator.validate(project)).toBe(true)
+      expect(project).toContain(`<File Name="a&apos;b&amp;c.txt"`)
+      expect(project).toContain(` Id="a&apos;b&amp;c.txt_f"`)
+    })
+
+    test("the legacy bundle keeps the file name as the root-level file id", async ({ expect, tmpDir }) => {
+      // WiX 4 accepts `-` in an id; the ids, and so the component ids, of an existing legacy installer stay the same
+      const project = await renderProject(tmpDir, { schema: "v4-preview", files: [`${PRODUCT_NAME}.exe`, "vulkan-1.dll"] })
+      expect(project).toContain(` Id="vulkan-1.dll_f"`)
+    })
+
+    test("with WiX 3, a root-level file name that is not an identifier gets a hashed id", async ({ expect, tmpDir }) => {
+      // Electron ships vulkan-1.dll at the root of the app dir: CNDL0014 for `vulkan-1.dll_f`
+      const longName = `${"a".repeat(70)}.dll`
+      const names = ["vulkan-1.dll", "1st.dll", untrustedName, longName]
+      const project = await renderProject(tmpDir, { schema: "v3", files: [`${PRODUCT_NAME}.exe`, ...names] })
+      expect(XMLValidator.validate(project)).toBe(true)
+      for (const name of names) {
+        expect(project, name).toContain(`<File Name="${name.replace("&", "&amp;").replace("'", "&apos;")}" Source="$(var.appDir)${path.sep}`)
+        expect(project, name).toContain(` Id="${hashedId(name)}"`)
       }
+      expect(project).not.toContain("vulkan-1.dll_f")
+    })
+
+    test("with WiX 3, every file id is an identifier, and unique", async ({ expect, tmpDir }) => {
+      const files = [
+        `${PRODUCT_NAME}.exe`,
+        "vulkan-1.dll",
+        "LICENSE.electron.txt",
+        "resources/app.asar",
+        "locales/en-US.pak",
+        "locales/de/en-US.pak",
+        `${"b".repeat(68)}.d`,
+        `${"b".repeat(69)}.d`,
+        untrustedName,
+      ]
+      const ids = fileIds(await renderProject(tmpDir, { schema: "v3", files }))
+      expect(ids).toHaveLength(files.length)
+      for (const id of ids) {
+        expect(id).toMatch(wix3Identifier)
+      }
+      expect(new Set(ids).size).toBe(ids.length)
+      // 72 characters is still an identifier, so the name is kept
+      expect(ids).toContain(`${"b".repeat(68)}.d_f`)
+      expect(ids).toContain(hashedId(`${"b".repeat(69)}.d`))
     })
 
     test("ordinary root-level file ids are unchanged", async ({ expect, tmpDir }) => {
-      const project = await renderProject(tmpDir, { schema: "v3", files: [`${PRODUCT_NAME}.exe`, "LICENSE.electron.txt", "d3dcompiler_47.dll"] })
-      expect(project).toContain(` Id="LICENSE.electron.txt_f"`)
-      expect(project).toContain(` Id="d3dcompiler_47.dll_f"`)
-      expect(project).toContain(` Id="mainExecutable"`)
+      for (const schema of ["v3", "v4-preview"] as const) {
+        const project = await renderProject(tmpDir, { schema, files: [`${PRODUCT_NAME}.exe`, "LICENSE.electron.txt", "d3dcompiler_47.dll"] })
+        expect(project, schema).toContain(` Id="LICENSE.electron.txt_f"`)
+        expect(project, schema).toContain(` Id="d3dcompiler_47.dll_f"`)
+        expect(project, schema).toContain(` Id="mainExecutable"`)
+      }
     })
   })
 
