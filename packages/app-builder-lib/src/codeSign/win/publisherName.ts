@@ -3,9 +3,9 @@ import { isValidPublisherNameDn } from "builder-util-runtime"
 import { isWindowsSigningDisabled, resolveWindowsSigningConfiguration, WindowsConfiguration } from "../../options/winOptions.js"
 import { quoteWindowsDnValue } from "./authenticodeSignature.js"
 
-export const PUBLISHER_NAME_DN_DOCS_URL = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
+export const PUBLISHER_NAME_DN_DOCS_URL = "https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name"
 
-export const MISSING_PUBLISHER_NAME_DOCS_URL = "https://www.electron.build/docs/migration/v27-breaking-changes#missing-publishername-fails-update-verification"
+export const MISSING_PUBLISHER_NAME_DOCS_URL = "https://www.electron.build/docs/migration/v27-build-changes#missing-publishername-fails-update-verification"
 
 /** What electron-updater 7 requires of a publisher name, for the error messages of the build. */
 export const PUBLISHER_NAME_DN_REQUIREMENT =

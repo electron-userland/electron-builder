@@ -30,7 +30,7 @@ function warnAboutDesktopFieldCodes(executableArgs: Array<string> | Nullish): vo
     { fieldCodes: fieldCodes.join(", "), solution: "remove the field code from executableArgs and set linux.desktop.entry.Exec if you need a custom Exec line" },
     "linux.executableArgs contains desktop-entry field codes, which are no longer expanded. " +
       "In v27 executableArgs are injected into the generated *-launcher script and quoted, so these reach your app as literal arguments. " +
-      "See https://www.electron.build/docs/migration/v27-breaking-changes#linux-launcher-entrypoint"
+      "See https://www.electron.build/docs/migration/v27-runtime-changes#linux-launcher-entrypoint"
   )
 }
 

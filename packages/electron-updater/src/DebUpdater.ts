@@ -21,7 +21,7 @@ export class DebUpdater extends LinuxUpdater {
       downloadUpdateOptions,
       task: async (updateFile, downloadOptions) => {
         if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
-          downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+          downloadOptions.onProgress = it => this.emitDownloadProgress(it)
         }
         await this.httpExecutor.download(fileInfo.url, updateFile, downloadOptions)
       },

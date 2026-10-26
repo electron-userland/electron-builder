@@ -8,7 +8,7 @@ import { createNsisUpdater, writeRawUpdateConfig, writeUpdateConfig } from "../h
 // for win.verifyUpdateCodeSignature: false). An app without any update config file (dev mode, or a feed set only with setFeedURL)
 // is not verified, as before: its feed is configured by the developer.
 
-const MISSING_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#missing-publishername-fails-update-verification"
+const MISSING_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#missing-publishername-fails-update-verification"
 const DISABLED_FRAGMENT = "disabled by configuration"
 
 function mockLogger() {
@@ -38,7 +38,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
 
     expect(result.response).toBe("failure")
     const message = result.response === "failure" ? result.message : ""
-    expect(message).toContain("electron-updater 7 (electron-builder v27) rejects the update: app-update.yml has no publisherName")
+    expect(message).toContain("The update is rejected: app-update.yml has no publisherName")
     expect(message).toContain("win.sign.publisherName")
     expect(message).toContain("win.verifyUpdateCodeSignature: false")
     expect(message.endsWith(MISSING_DOCS)).toBe(true)
@@ -194,7 +194,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
   // (the certificate's CN), a dev-app-update.yml or a publisherName passed to the verifier may still carry other entries.
   describe("default verifier: publisherName that is not a distinguished name", () => {
     const DN_WARNING = "electron-updater 7 (electron-builder v27)"
-    const DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
+    const DOCS = "https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name"
     const dnWarnings = (logger: ReturnType<typeof mockLogger>) => logger.warn.mock.calls.map(call => String(call[0])).filter(message => message.includes(DN_WARNING))
     // The real verifier runs after the warning: on Windows Get-AuthenticodeSignature fails for the missing file, elsewhere there is no
     // PowerShell. The outcome is not what these tests are about.

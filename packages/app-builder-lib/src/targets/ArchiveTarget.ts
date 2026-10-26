@@ -2,7 +2,7 @@ import { Arch, defaultArchFromString } from "builder-util"
 import * as path from "path"
 import { Platform, Target, TargetSpecificOptions } from "../core.js"
 import { copyFiles, getFileMatchers } from "../fileMatcher.js"
-import { PlatformPackager } from "../platformPackager.js"
+import { PlatformPackager, trackPackWork } from "../platformPackager.js"
 import { archive, shouldPreserveSymlinks, tar } from "./archive.js"
 import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder.js"
 import { getTrustedSourceRoots } from "../util/trustedSourceRoots.js"
@@ -39,7 +39,7 @@ export class ArchiveTarget extends Target {
       defaultPattern = "${productName}-${version}" + (arch === defaultArch ? "" : "-${arch}") + "-${os}.${ext}"
     }
 
-    this.buildQueueManager.add(async () => {
+    const work = (async () => {
       const artifactName = packager.expandArtifactNamePattern(this.options, format, arch, defaultPattern, false)
       const artifactPath = path.join(this.outDir, artifactName)
 
@@ -112,7 +112,10 @@ export class ArchiveTarget extends Target {
         packager,
         isWriteUpdateInfo: this.isWriteUpdateInfo,
       })
-    })
+    })()
+    this.buildQueueManager.addTask(work)
+    // a target writing into appOutDir (Squirrel.Windows) waits for the archive
+    trackPackWork(packager, appOutDir, work)
     return Promise.resolve()
   }
 }

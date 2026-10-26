@@ -1,4 +1,4 @@
-import { assertNoSymlinkLeaves, exec, exists, ExternalLinkPolicy, log, prepareFixedNameWrite } from "builder-util"
+import { assertNoSymlinkLeaves, exec, Executables, exists, ExternalLinkPolicy, prepareFixedNameWrite } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
 
@@ -61,6 +61,14 @@ export interface InstallerOptions {
   externalLinks?: ExternalLinkPolicy | null
 }
 
+/** Squirrel.exe must live in the app directory so the nuspec can reference it: call before `createWindowsInstaller` */
+export async function copySquirrelExe(appDirectory: string, vendorDirectory: string): Promise<void> {
+  // into the app output directory, which untrusted files were copied into: replace, never follow, a symlink at the name
+  const squirrelExe = path.join(appDirectory, "Squirrel.exe")
+  await prepareFixedNameWrite(appDirectory, squirrelExe, "Squirrel.exe")
+  await fs.copyFile(path.join(vendorDirectory, "Squirrel.exe"), squirrelExe)
+}
+
 export async function createWindowsInstaller(options: InstallerOptions): Promise<void> {
   const {
     appDirectory,
@@ -81,16 +89,8 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
     externalLinks,
   } = options
 
-  const useMono = process.platform !== "win32"
-  if (useMono) {
-    log.warn("building Squirrel.Windows on non-Windows requires mono in PATH; spawn will fail if it is missing")
-  }
-
-  // Squirrel.exe must live in the app directory so the nuspec can reference it
-  // into the app output directory, which untrusted files were copied into: replace, never follow, a symlink at the name
-  const squirrelExe = path.join(appDirectory, "Squirrel.exe")
-  await prepareFixedNameWrite(appDirectory, squirrelExe, "Squirrel.exe")
-  await fs.copyFile(path.join(vendorDirectory, "Squirrel.exe"), squirrelExe)
+  // On macOS and Linux the vendor tools run under Mono, started by absolute path (toolsets.executables.mono or its default locations)
+  const mono = process.platform === "win32" ? null : Executables.resolve("mono")
 
   const nugetVersion = convertVersion(version)
   const authors = options.authors || ""
@@ -125,7 +125,7 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
   // NuGet stores what a symlink points to: one that leaves the app would package files from elsewhere on the build machine
   await assertNoSymlinkLeaves(appDirectory, "the Squirrel.Windows NuGet package", externalLinks)
   const nugetArgs = ["pack", nuspecPath, "-BasePath", appDirectory, "-OutputDirectory", nugetOutput, "-NoDefaultExcludes"]
-  await (useMono ? exec("mono", [nugetExe, ...nugetArgs]) : exec(nugetExe, nugetArgs))
+  await (mono == null ? exec(nugetExe, nugetArgs) : exec(mono, [nugetExe, ...nugetArgs]))
 
   const nupkgPath = path.join(nugetOutput, `${name}.${nugetVersion}.nupkg`)
 
@@ -135,7 +135,7 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
     if (remoteToken) {
       syncArgs.push("-t", remoteToken)
     }
-    await (useMono ? exec("mono", [syncReleasesExe, ...syncArgs]) : exec(syncReleasesExe, syncArgs))
+    await (mono == null ? exec(syncReleasesExe, syncArgs) : exec(mono, [syncReleasesExe, ...syncArgs]))
   }
 
   const releasifyArgs = ["--releasify", nupkgPath, "--releaseDir", outputDirectory]
@@ -146,10 +146,10 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
     releasifyArgs.push("--no-msi")
   }
 
-  if (useMono) {
-    await exec("mono", [path.join(vendorDirectory, "Squirrel-Mono.exe"), ...releasifyArgs])
-  } else {
+  if (mono == null) {
     await exec(path.join(vendorDirectory, "Squirrel.exe"), releasifyArgs)
+  } else {
+    await exec(mono, [path.join(vendorDirectory, "Squirrel-Mono.exe"), ...releasifyArgs])
   }
 
   if (fixUpPaths) {

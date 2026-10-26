@@ -155,7 +155,7 @@ describe("verifyUpdateInstallerPublisher", () => {
     expect(message).toContain("win.verifyUpdateCodeSignature: false")
     // "Old Corp" is no DN, so the v27 requirement is explained
     expect(message).toContain("Since electron-builder v27, each publisherName entry must be in distinguished name (DN) format")
-    expect(message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name")
+    expect(message).toContain("https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name")
   })
 
   test("a mismatch with only DNs configured does not explain the DN requirement", async ({ expect, tmpDir }) => {

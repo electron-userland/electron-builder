@@ -14,6 +14,8 @@ export const APPIMAGE_VERSIONS: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.3",
 
 export const WIN_CODE_SIGN_VERSIONS: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0", "1.2.1", "1.3.1"]
 export const NSIS_VERSIONS: ToolsetConfig["nsis"][] = ["0.0.0", "1.2.1"]
+// MSI suites: the legacy WiX 4 preview bundle and WiX 3.14.1 (latest), which builds native arm64 MSIs
+export const WIX_VERSIONS: ToolsetConfig["wix"][] = ["0.0.0", "2.0.0"]
 
 /**
  * Highest dotted version of a toolset version list, compared numerically (custom, non-string toolset entries are ignored). Shared by

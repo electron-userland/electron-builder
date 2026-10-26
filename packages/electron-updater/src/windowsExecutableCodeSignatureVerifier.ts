@@ -4,7 +4,7 @@ import type { VerifyUpdateFileResult } from "./types.js"
 import { Logger } from "./types.js"
 import * as path from "path"
 
-const PUBLISHER_NAME_DN_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
+const PUBLISHER_NAME_DN_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name"
 
 /**
  * Explains why some publisherName entries can never match the signer of an update, or returns null when every entry is
@@ -29,7 +29,7 @@ export function publisherNameDnNote(publisherNames: ReadonlyArray<unknown>): str
   )
 }
 
-const MISSING_PUBLISHER_NAME_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#missing-publishername-fails-update-verification"
+const MISSING_PUBLISHER_NAME_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#missing-publishername-fails-update-verification"
 
 /**
  * The publisher names of an update config (app-update.yml, dev-app-update.yml or the updateConfigPath file), or null when it has
@@ -63,10 +63,10 @@ export function isUpdateCodeSignatureVerificationDisabled(config: unknown): bool
  */
 export function missingPublisherNameMessage(): string {
   return (
-    "electron-updater 7 (electron-builder v27) rejects the update: app-update.yml has no publisherName to verify its Authenticode signature against (verification used to be skipped). " +
-    "Build the app with electron-builder v27 and a publish configuration, so that app-update.yml carries the publisherName: sign the build so electron-builder writes it " +
-    "(CN=<common name> of the certificate), set win.sign.publisherName to the subject of the certificate that signs your updates, " +
-    "or set win.verifyUpdateCodeSignature: false at build time to opt out explicitly (in a dev-app-update.yml or updateConfigPath file: verifyUpdateCodeSignature: false). " +
+    "The update is rejected: app-update.yml has no publisherName to verify its Authenticode signature against. " +
+    "Configure one at build time so that electron-builder writes it to app-update.yml: sign the build (electron-builder writes CN=<common name> of the certificate), " +
+    "or set win.sign.publisherName to the subject of the certificate that signs your updates. " +
+    "To opt out of update signature verification, set win.verifyUpdateCodeSignature: false at build time (in a dev-app-update.yml or updateConfigPath file: verifyUpdateCodeSignature: false). " +
     MISSING_PUBLISHER_NAME_DOCS
   )
 }
@@ -88,7 +88,7 @@ const CUSTOM_VERIFIER_HINT =
 // was verified (win.allowCatalogSignature): the catalog signer must then match publisherName like an embedded one.
 const CATALOG_SIGNATURE_TYPE = 2
 
-const SIGNATURE_UNVERIFIABLE_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-update-signature-verification-fails-closed"
+const SIGNATURE_UNVERIFIABLE_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#windows-update-signature-verification-fails-closed"
 
 /**
  * Options of the default Authenticode verification of an update.

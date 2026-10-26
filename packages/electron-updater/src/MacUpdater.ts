@@ -73,7 +73,8 @@ export class MacUpdater extends AppUpdater {
     let isRosetta = false
     try {
       this.debug("Checking for macOS Rosetta environment")
-      const result = execFileSync("sysctl", [sysctlRosettaInfoKey], { encoding: "utf8" })
+      // by absolute path, like uname below: a bare name would be looked up on the PATH the app was started with
+      const result = execFileSync("/usr/sbin/sysctl", [sysctlRosettaInfoKey], { encoding: "utf8" })
       isRosetta = result.includes(`${sysctlRosettaInfoKey}: 1`)
       log.info(`Checked for macOS Rosetta environment (isRosetta=${isRosetta})`)
     } catch (e: any) {
@@ -83,7 +84,7 @@ export class MacUpdater extends AppUpdater {
     let isArm64Mac = false
     try {
       this.debug("Checking for arm64 in uname")
-      const result = execFileSync("uname", ["-a"], { encoding: "utf8" })
+      const result = execFileSync("/usr/bin/uname", ["-a"], { encoding: "utf8" })
       const isArm = result.includes("ARM")
       log.info(`Checked 'uname -a': arm64=${isArm}`)
       isArm64Mac = isArm64Mac || isArm

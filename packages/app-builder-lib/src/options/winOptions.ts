@@ -147,7 +147,7 @@ interface WindowsSigningSharedOptions {
    * `CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;
    * attributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,
    * because electron-updater 7 never matches it — see
-   * [the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).
+   * [the migration guide](https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name).
    * May be a single string or an array — an array is useful when rotating certificates, so updates
    * signed by either the old or the new certificate still verify.
    *
@@ -404,7 +404,7 @@ export interface WindowsAzureSigningConfig {
    * [update verification](#verifyUpdateCodeSignature) (embedded in `app-update.yml` and checked by
    * electron-updater) and must match the certificate subject. A bare name fails the build since
    * v27 — see
-   * [the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).
+   * [the migration guide](https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name).
    *
    * @see https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073
    */
@@ -477,4 +477,25 @@ export function resolveWindowsSigningConfiguration(config: WindowsConfiguration)
 /** Whether Windows code signing has been explicitly disabled via `sign: false | null`. */
 export function isWindowsSigningDisabled(config: WindowsConfiguration): boolean {
   return config.sign === false || config.sign === null
+}
+
+/**
+ * Whether `file` is signed according to `signExts`: a listed extension is signed, a `!`-negated one is not, and
+ * otherwise `.exe` files (or every file, with `fallbackValue`) are.
+ */
+export function shouldSignWindowsFile(file: string, signExts: ReadonlyArray<string> | null | undefined, fallbackValue = false): boolean {
+  const isExe = file.endsWith(".exe")
+  if (!signExts?.length) {
+    return isExe || fallbackValue
+  }
+  // process patterns ( !exe => exclude .exe, .dll => include .dll )
+  // we process first to allow literal negatives in case a filename matches "help!.txt" or similar
+  if (signExts.some(ext => file.endsWith(ext))) {
+    return true
+  }
+  // process negative patterns
+  if (signExts.some(ext => ext.startsWith("!") && file.endsWith(ext.substring(1)))) {
+    return false
+  }
+  return isExe || fallbackValue
 }

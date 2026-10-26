@@ -542,9 +542,9 @@ async function pollUntilNewVersionInstalled(
       log.info({ installedVersion: newVersion, expected: expectedVersion, stdout: probe.stdout, stderr: probe.stderr }, "Installer still in progress, retrying...")
     } catch (err: any) {
       // NSIS replaces the exe non-atomically: it deletes the old binary before writing the new one,
-      // so there is a brief window where TestApp.exe does not exist on disk.
-      if (err.code === "ENOENT" && (err.syscall === "spawn" || err.syscall?.startsWith("spawn "))) {
-        log.info({ appPath }, "Binary temporarily unavailable (NSIS installer in progress), retrying...")
+      // so there is a brief window where TestApp.exe does not exist on disk (ENOENT), or is still held open (EBUSY).
+      if ((err.code === "ENOENT" || err.code === "EBUSY") && (err.syscall === "spawn" || err.syscall?.startsWith("spawn "))) {
+        log.info({ appPath, code: err.code }, "Binary temporarily unavailable (NSIS installer in progress), retrying...")
       } else if (typeof err.message === "string" && err.message.startsWith("Timeout after")) {
         // A single probe launch stalled (no APP_VERSION printed before the timeout). Surface
         // exactly what the app emitted (the message embeds STDOUT/STDERR) and keep polling

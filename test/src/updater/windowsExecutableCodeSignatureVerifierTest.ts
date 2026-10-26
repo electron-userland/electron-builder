@@ -13,7 +13,7 @@ import * as path from "path"
 import type { TmpDir } from "temp-file"
 import type { VerifyUpdateFileResult } from "electron-updater/src/index"
 import type { Logger } from "electron-updater/src/types"
-import { publisherNameDnNote, verifySignature } from "electron-updater/src/windowsExecutableCodeSignatureVerifier"
+import { missingPublisherNameMessage, publisherNameDnNote, verifySignature } from "electron-updater/src/windowsExecutableCodeSignatureVerifier"
 import { cleanupWindowsSignedFixture, createSignedExecutable, getWindowsSignedFixture } from "../helpers/windowsSignedFixture"
 import { createNsisUpdater, writeRawUpdateConfig } from "../helpers/updaterTestUtil.js"
 import { CancellationToken, type GenericServerOptions } from "builder-util-runtime"
@@ -23,10 +23,11 @@ import { CancellationToken, type GenericServerOptions } from "builder-util-runti
 // =============================================================================
 
 const DEFAULT_SUBJECT = "CN=Test Publisher, O=Test Org, C=US"
-const DN_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
+const DN_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name"
+const MISSING_PUBLISHER_NAME_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#missing-publishername-fails-update-verification"
 // the environment variable that carries the update path into the PowerShell script
 const FILE_ENV = "ELECTRON_BUILDER_AUTHENTICODE_FILE"
-const UNVERIFIABLE_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-update-signature-verification-fails-closed"
+const UNVERIFIABLE_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#windows-update-signature-verification-fails-closed"
 const POWERSHELL = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
 // the start of the warning logged when allowCatalogSignature accepts a catalog signature
 const CATALOG_ACCEPTED = "is accepted via a signature Windows reports from a security catalog"
@@ -148,6 +149,24 @@ describe("publisherNameDnNote", () => {
     }
     expect(publisherNameDnNote([42, null, throwingToString, Symbol("s")])).toContain("publisherName (number), (object), (object), (symbol) can never match")
     expect(publisherNameDnNote("Acme Corp" as any)).toContain('publisherName "Acme Corp" can never match')
+  })
+})
+
+describe("missingPublisherNameMessage", () => {
+  test("states the rejection, how to configure publisherName, the opt-out and the migration guide", () => {
+    const message = missingPublisherNameMessage()
+    expect(message.startsWith("The update is rejected: app-update.yml has no publisherName to verify its Authenticode signature against.")).toBe(true)
+    expect(message).toContain("sign the build")
+    expect(message).toContain("set win.sign.publisherName to the subject of the certificate that signs your updates")
+    expect(message).toContain("win.verifyUpdateCodeSignature: false")
+    expect(message.endsWith(MISSING_PUBLISHER_NAME_DOCS)).toBe(true)
+  })
+
+  test("states the current rule only, without contrasting it with earlier behavior", () => {
+    const message = missingPublisherNameMessage()
+    for (const contrast of ["used to", "previously", "no longer", "skipped", "v26"]) {
+      expect(message).not.toContain(contrast)
+    }
   })
 })
 
@@ -412,6 +431,29 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       mockPsSuccess(makeJson({ subject: "CN=Test, O=Test Org, L=City, C=US" }))
       // Publisher spec only specifies CN and C — L and O in the cert are beyond the spec, ignored
       expectVerificationSuccess(await verifySignature(["CN=Test, C=US"], defaultFile, logger))
+    })
+
+    test("escaped characters in a publisherName DN match the subject", async ({ tmpDir }) => {
+      const { defaultFile, logger, makeJson } = await setup(tmpDir)
+      mockPsSuccess(makeJson({ subject: 'CN="Acme+Bolt Café", O=Acme, C=FR' }))
+      // a "\\+" escape followed by a hex digit, and UTF-8 hex pairs as `openssl x509 -nameopt RFC2253` prints them
+      expectVerificationSuccess(await verifySignature(["CN=Acme\\+Bolt Caf\\C3\\A9, O=Acme, C=FR"], defaultFile, logger))
+    })
+
+    test("single-byte hex escapes that are not UTF-8 in a publisherName DN are decoded as Latin-1", async ({ tmpDir }) => {
+      const { defaultFile, logger, makeJson } = await setup(tmpDir)
+      mockPsSuccess(makeJson({ subject: "CN=Müller Café, O=Acme, C=DE" }))
+      expectVerificationSuccess(await verifySignature(["CN=M\\FCller Caf\\E9, O=Acme, C=DE"], defaultFile, logger))
+    })
+
+    test.for([
+      ["CN=Caf\\C3\\A9\\FC, O=Acme, C=DE", "CN=Caféü, O=Acme, C=DE"],
+      ["CN=\\FC\\C3\\A9, O=Acme, C=DE", "CN=üé, O=Acme, C=DE"],
+      ["CN=\\C3, O=Acme, C=DE", "CN=Ã, O=Acme, C=DE"],
+    ] as const)("a hex escape run mixing UTF-8 and Latin-1 decodes per sequence: %s", async ([publisherName, subject], { tmpDir }) => {
+      const { defaultFile, logger, makeJson } = await setup(tmpDir)
+      mockPsSuccess(makeJson({ subject }))
+      expectVerificationSuccess(await verifySignature([publisherName], defaultFile, logger))
     })
 
     test("a non-ASCII subject and path escaped as \\uXXXX by the script match", async ({ tmpDir }) => {

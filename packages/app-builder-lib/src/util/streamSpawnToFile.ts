@@ -1,5 +1,6 @@
 import * as childProcess from "child_process"
 import { createWriteStream } from "node:fs"
+import { Executables } from "builder-util"
 
 export interface StreamSpawnResult {
   /** The child's exit code (null if it was killed by a signal). */
@@ -20,7 +21,9 @@ export interface StreamSpawnResult {
  * which emits the DEP0190 "args with shell" deprecation warning and forces manual metacharacter
  * escaping — wrap the invocation in a single PowerShell `-EncodedCommand`. The base64 (UTF-16LE)
  * payload sidesteps every shell-quoting layer, and `powershell.exe` is a real executable we spawn
- * directly with no shell. See buildPowerShellEncodedArgs for the UTF-8 / exit-code handling. This
+ * directly with no shell, by its absolute path (`toolsets.executables.powershell` or its default location;
+ * never looked up in the current directory or on PATH).
+ * See buildPowerShellEncodedArgs for the UTF-8 / exit-code handling. This
  * also avoids the cmd.exe "The batch file cannot be found." re-open race that plagues `.cmd` shims.
  *
  * Resolves with `{ code, stderr }` for ANY exit code — interpreting a non-zero code is the caller's
@@ -34,9 +37,10 @@ export interface StreamSpawnResult {
  * @param env - The environment for the child process (callers are responsible for stripping secrets)
  */
 export function streamSpawnToFile(command: string, args: string[], cwd: string, outputFile: string, env: NodeJS.ProcessEnv): Promise<StreamSpawnResult> {
-  const [spawnCommand, spawnArgs] = process.platform === "win32" ? (["powershell.exe", buildPowerShellEncodedArgs(command, args)] as const) : ([command, args] as const)
-
   return new Promise<StreamSpawnResult>((resolve, reject) => {
+    // inside the executor, so a SystemRoot that cannot locate PowerShell rejects like any other spawn failure
+    const [spawnCommand, spawnArgs] =
+      process.platform === "win32" ? ([Executables.resolve("powershell"), buildPowerShellEncodedArgs(command, args)] as const) : ([command, args] as const)
     const outStream = createWriteStream(outputFile)
 
     const child = childProcess.spawn(spawnCommand, spawnArgs, { cwd, env })

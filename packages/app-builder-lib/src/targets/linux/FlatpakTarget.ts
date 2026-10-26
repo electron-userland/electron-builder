@@ -6,7 +6,7 @@ import * as semver from "semver"
 import { Target } from "../../core.js"
 import { LinuxPackager } from "../../linuxPackager.js"
 import { FlatpakOptions } from "../../options/linuxOptions.js"
-import { BREAKING_CHANGES_URL } from "../../util/config/legacyOptions.js"
+import { BUILD_CHANGES_URL, RUNTIME_CHANGES_URL } from "../../util/config/legacyOptions.js"
 import { getNotLocalizedLicenseFile } from "../../util/license.js"
 import { buildFlatpakBundle, FlatpakBuilderManifest, FlatpakBundleOptions, FlatpakRefKind } from "./flatpakBundle.js"
 import { LinuxTargetHelper } from "./LinuxTargetHelper.js"
@@ -160,7 +160,7 @@ export default class FlatpakTarget extends Target {
         .warn(
           { electronVersion, docs: WAYLAND_DOCS },
           `electron-builder v27 no longer adds ${USE_OZONE_PLATFORM_FLAG} with flatpak.useWaylandFlags for Electron 16 and later, where Ozone is on by default: in a Wayland session the wrapper now passes only --ozone-platform=wayland. ` +
-            `If the app needs the flag, add it to flatpak.executableArgs. See ${BREAKING_CHANGES_URL}#flatpak-wayland-flags`
+            `If the app needs the flag, add it to flatpak.executableArgs. See ${RUNTIME_CHANGES_URL}#flatpak-wayland-flags`
         )
     }
     const electronWrapperPath = stageDir.getTempFile(path.join("bin", "electron-wrapper"))
@@ -224,7 +224,7 @@ export default class FlatpakTarget extends Target {
           { reason: "flatpak.finishArgs is not set", docs: "https://www.electron.build/docs/flatpak#finish-args-permissions" },
           "electron-builder v27 narrowed the default flatpak.finishArgs: --filesystem=home -> --filesystem=xdg-download, and --talk-name=org.freedesktop.Notifications only for the base app org.electronjs.Electron2.BaseApp before 23.08. " +
             "The app can no longer reach the home directory outside Downloads. Set flatpak.finishArgs to grant more (the v26 list is in the migration guide). " +
-            `See ${BREAKING_CHANGES_URL}#flatpak-default-permissions`
+            `See ${RUNTIME_CHANGES_URL}#flatpak-default-permissions`
         )
     }
     if (!this.options.runtimeVersion || !this.options.baseVersion) {
@@ -233,7 +233,7 @@ export default class FlatpakTarget extends Target {
         .warn(
           { runtimeVersion, baseVersion },
           `electron-builder v27 changed the default flatpak.runtimeVersion and flatpak.baseVersion from 20.08 to 26.08: each of them that is not set is now 26.08, and the 26.08 runtime, SDK and base app are installed if they are missing. ` +
-            `Set both to "20.08" to keep the previous runtime, or both to the version to build for. See ${BREAKING_CHANGES_URL}#flatpak-tooling-requirements`
+            `Set both to "20.08" to keep the previous runtime, or both to the version to build for. See ${BUILD_CHANGES_URL}#flatpak-tooling-requirements`
         )
     }
 
@@ -388,7 +388,7 @@ function warnAboutFlatpakBundlerDebug() {
       .warn(
         { envVar: "DEBUG" },
         `electron-builder v27 no longer uses @malept/flatpak-bundler, so DEBUG=@malept/flatpak-bundler has no effect: a failed flatpak or flatpak-builder command prints its own output in the build error. ` +
-          `Set DEBUG=electron-builder to log every command that is run. See ${BREAKING_CHANGES_URL}#flatpak-tooling-requirements`
+          `Set DEBUG=electron-builder to log every command that is run. See ${BUILD_CHANGES_URL}#flatpak-tooling-requirements`
       )
   }
 }
