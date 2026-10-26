@@ -13,7 +13,7 @@ import * as path from "path"
 import type { TmpDir } from "temp-file"
 import type { VerifyUpdateFileResult } from "electron-updater/src/index"
 import type { Logger } from "electron-updater/src/types"
-import { publisherNameDnNote, verifySignature } from "electron-updater/src/windowsExecutableCodeSignatureVerifier"
+import { missingPublisherNameMessage, publisherNameDnNote, verifySignature } from "electron-updater/src/windowsExecutableCodeSignatureVerifier"
 import { cleanupWindowsSignedFixture, createSignedExecutable, getWindowsSignedFixture } from "../helpers/windowsSignedFixture"
 import { createNsisUpdater, writeRawUpdateConfig } from "../helpers/updaterTestUtil.js"
 import { CancellationToken, type GenericServerOptions } from "builder-util-runtime"
@@ -24,6 +24,7 @@ import { CancellationToken, type GenericServerOptions } from "builder-util-runti
 
 const DEFAULT_SUBJECT = "CN=Test Publisher, O=Test Org, C=US"
 const DN_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name"
+const MISSING_PUBLISHER_NAME_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#missing-publishername-fails-update-verification"
 // the environment variable that carries the update path into the PowerShell script
 const FILE_ENV = "ELECTRON_BUILDER_AUTHENTICODE_FILE"
 const UNVERIFIABLE_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#windows-update-signature-verification-fails-closed"
@@ -148,6 +149,24 @@ describe("publisherNameDnNote", () => {
     }
     expect(publisherNameDnNote([42, null, throwingToString, Symbol("s")])).toContain("publisherName (number), (object), (object), (symbol) can never match")
     expect(publisherNameDnNote("Acme Corp" as any)).toContain('publisherName "Acme Corp" can never match')
+  })
+})
+
+describe("missingPublisherNameMessage", () => {
+  test("states the rejection, how to configure publisherName, the opt-out and the migration guide", () => {
+    const message = missingPublisherNameMessage()
+    expect(message.startsWith("The update is rejected: app-update.yml has no publisherName to verify its Authenticode signature against.")).toBe(true)
+    expect(message).toContain("sign the build")
+    expect(message).toContain("set win.sign.publisherName to the subject of the certificate that signs your updates")
+    expect(message).toContain("win.verifyUpdateCodeSignature: false")
+    expect(message.endsWith(MISSING_PUBLISHER_NAME_DOCS)).toBe(true)
+  })
+
+  test("states the current rule only, without contrasting it with earlier behavior", () => {
+    const message = missingPublisherNameMessage()
+    for (const contrast of ["used to", "previously", "no longer", "skipped", "v26"]) {
+      expect(message).not.toContain(contrast)
+    }
   })
 })
 
