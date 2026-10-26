@@ -3,6 +3,7 @@ import { open, readdir, readFile } from "fs/promises"
 import * as path from "path"
 import { AsarFilesystem, Node, readAsar } from "../asar/asar.js"
 import { archToNodeCpu, isPackageCompatible, PackagePlatformFields } from "./archCompatibility.js"
+import { BUILD_CHANGES_URL } from "./config/legacyOptions.js"
 
 /** Container format of a native binary, as identified by its magic bytes. */
 export type NativeBinaryFormat = "elf" | "macho" | "pe"
@@ -443,7 +444,8 @@ export async function verifyNativeBinaries({ resourcesDir, platform, arch, mode 
         fatal.map(it => `  ${formatMismatch(it, platform, cpu)}`).join("\n") +
         "\nThe app would fail to load them at runtime. This usually means a binary built for another target (often the build host) was left in node_modules " +
         "because the native rebuild was skipped or reused a cached result. Rebuild native dependencies for the target, " +
-        'or set `nativeModules.verifyNativeBinaries` to "warn" (or false) to package anyway.'
+        'or set `nativeModules.verifyNativeBinaries` to "warn" (or false) to package anyway. ' +
+        `See ${BUILD_CHANGES_URL}#native-binaries-are-verified-against-the-target`
     )
   }
 }

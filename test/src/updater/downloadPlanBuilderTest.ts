@@ -1,11 +1,7 @@
-import { BlockMap } from "builder-util-runtime/internal"
 import { computeOperations, OperationKind } from "electron-updater/src/differentialDownloader/downloadPlanBuilder"
 import { describe, expect, test } from "vitest"
 import type { Logger } from "electron-updater/src/types"
-
-function makeBlockMap(checksums: string[], sizes: number[], offset = 0, name = "file"): BlockMap {
-  return { version: "2", files: [{ name, offset, checksums, sizes }] }
-}
+import { blockMap } from "../helpers/updaterTestUtil.js"
 
 const noopLogger: Logger = {
   info: () => {},
@@ -29,7 +25,7 @@ function captureLogger(): Logger & { warns: string[]; debugs: string[] } {
 
 describe("computeOperations", () => {
   test("all blocks match produces a single merged COPY operation", () => {
-    const bm = makeBlockMap(["a", "b", "c"], [100, 100, 100])
+    const bm = blockMap(["a", "b", "c"], [100, 100, 100])
     const ops = computeOperations(bm, bm, noopLogger)
     expect(ops).toHaveLength(1)
     expect(ops[0].kind).toBe(OperationKind.COPY)
@@ -38,8 +34,8 @@ describe("computeOperations", () => {
   })
 
   test("no blocks match produces a single merged DOWNLOAD operation", () => {
-    const old = makeBlockMap(["a", "b", "c"], [100, 100, 100])
-    const next = makeBlockMap(["x", "y", "z"], [100, 100, 100])
+    const old = blockMap(["a", "b", "c"], [100, 100, 100])
+    const next = blockMap(["x", "y", "z"], [100, 100, 100])
     const ops = computeOperations(old, next, noopLogger)
     expect(ops).toHaveLength(1)
     expect(ops[0].kind).toBe(OperationKind.DOWNLOAD)
@@ -48,9 +44,9 @@ describe("computeOperations", () => {
   })
 
   test("alternating match / no-match produces interleaved COPY and DOWNLOAD ops", () => {
-    const old = makeBlockMap(["a", "b", "c", "d"], [100, 100, 100, 100])
+    const old = blockMap(["a", "b", "c", "d"], [100, 100, 100, 100])
     // blocks "a" and "c" match; "x" and "y" do not
-    const next = makeBlockMap(["a", "x", "c", "y"], [100, 100, 100, 100])
+    const next = blockMap(["a", "x", "c", "y"], [100, 100, 100, 100])
     const ops = computeOperations(old, next, noopLogger)
     expect(ops).toHaveLength(4)
     expect(ops[0]).toMatchObject({ kind: OperationKind.COPY, start: 0, end: 100 })
@@ -60,16 +56,16 @@ describe("computeOperations", () => {
   })
 
   test("consecutive matching blocks are merged into one COPY op", () => {
-    const old = makeBlockMap(["a", "b"], [100, 200])
-    const next = makeBlockMap(["a", "b"], [100, 200])
+    const old = blockMap(["a", "b"], [100, 200])
+    const next = blockMap(["a", "b"], [100, 200])
     const ops = computeOperations(old, next, noopLogger)
     expect(ops).toHaveLength(1)
     expect(ops[0]).toMatchObject({ kind: OperationKind.COPY, start: 0, end: 300 })
   })
 
   test("consecutive non-matching blocks are merged into one DOWNLOAD op", () => {
-    const old = makeBlockMap(["a", "b"], [100, 200])
-    const next = makeBlockMap(["x", "y"], [100, 200])
+    const old = blockMap(["a", "b"], [100, 200])
+    const next = blockMap(["x", "y"], [100, 200])
     const ops = computeOperations(old, next, noopLogger)
     expect(ops).toHaveLength(1)
     expect(ops[0]).toMatchObject({ kind: OperationKind.DOWNLOAD, start: 0, end: 300 })
@@ -77,8 +73,8 @@ describe("computeOperations", () => {
 
   test("checksum match with different block size logs warning and forces DOWNLOAD", () => {
     const log = captureLogger()
-    const old = makeBlockMap(["a"], [100])
-    const next = makeBlockMap(["a"], [200]) // same checksum, different size
+    const old = blockMap(["a"], [100])
+    const next = blockMap(["a"], [200]) // same checksum, different size
     const ops = computeOperations(old, next, log)
     expect(ops).toHaveLength(1)
     expect(ops[0].kind).toBe(OperationKind.DOWNLOAD)
@@ -86,21 +82,21 @@ describe("computeOperations", () => {
   })
 
   test("missing file name in old blockmap throws", () => {
-    const old = makeBlockMap(["a"], [100], 0, "file")
-    const next = makeBlockMap(["a"], [100], 0, "other-file")
+    const old = blockMap(["a"], [100], 0, "file")
+    const next = blockMap(["a"], [100], 0, "other-file")
     expect(() => computeOperations(old, next, noopLogger)).toThrow("no file other-file in old blockmap")
   })
 
   test("single-block file that matches is a COPY", () => {
-    const bm = makeBlockMap(["abc123"], [512])
+    const bm = blockMap(["abc123"], [512])
     const ops = computeOperations(bm, bm, noopLogger)
     expect(ops).toHaveLength(1)
     expect(ops[0]).toMatchObject({ kind: OperationKind.COPY, start: 0, end: 512 })
   })
 
   test("single-block file that doesn't match is a DOWNLOAD", () => {
-    const old = makeBlockMap(["abc123"], [512])
-    const next = makeBlockMap(["xyz999"], [512])
+    const old = blockMap(["abc123"], [512])
+    const next = blockMap(["xyz999"], [512])
     const ops = computeOperations(old, next, noopLogger)
     expect(ops).toHaveLength(1)
     expect(ops[0]).toMatchObject({ kind: OperationKind.DOWNLOAD, start: 0, end: 512 })
@@ -108,8 +104,8 @@ describe("computeOperations", () => {
 
   test("non-zero blockmap file offset is respected in COPY start position", () => {
     // Old file starts at byte offset 1000 in its container
-    const old = makeBlockMap(["a", "b"], [100, 100], 1000)
-    const next = makeBlockMap(["a", "b"], [100, 100], 0)
+    const old = blockMap(["a", "b"], [100, 100], 1000)
+    const next = blockMap(["a", "b"], [100, 100], 0)
     const ops = computeOperations(old, next, noopLogger)
     // new offset starts at 0; COPY refers to OLD positions (1000, 1200)
     expect(ops).toHaveLength(1)
@@ -121,9 +117,9 @@ describe("buildChecksumMap (via computeOperations duplicate-checksum behavior)",
   test("duplicate checksum in old blockmap uses first occurrence offset", () => {
     const log = captureLogger()
     // Old: two blocks with same checksum "dup" at offsets 0 and 100
-    const old = makeBlockMap(["dup", "dup"], [100, 100])
+    const old = blockMap(["dup", "dup"], [100, 100])
     // New: one block with checksum "dup" — should copy from offset 0 (first occurrence)
-    const next = makeBlockMap(["dup"], [100])
+    const next = blockMap(["dup"], [100])
     const ops = computeOperations(old, next, log)
     expect(ops).toHaveLength(1)
     expect(ops[0]).toMatchObject({ kind: OperationKind.COPY, start: 0, end: 100 })
@@ -133,8 +129,8 @@ describe("buildChecksumMap (via computeOperations duplicate-checksum behavior)",
 
   test("duplicate checksum with same size logs same-size note", () => {
     const log = captureLogger()
-    const old = makeBlockMap(["dup", "dup"], [100, 100])
-    const next = makeBlockMap(["dup"], [100])
+    const old = blockMap(["dup", "dup"], [100, 100])
+    const next = blockMap(["dup"], [100])
     computeOperations(old, next, log)
     expect(log.debugs.some(d => d.includes("same size"))).toBe(true)
   })
@@ -142,8 +138,8 @@ describe("buildChecksumMap (via computeOperations duplicate-checksum behavior)",
   test("duplicate checksum with different sizes logs different-size note", () => {
     const log = captureLogger()
     // Two blocks with same checksum but different sizes (unusual but possible)
-    const old = makeBlockMap(["dup", "dup"], [100, 200])
-    const next = makeBlockMap(["dup"], [100])
+    const old = blockMap(["dup", "dup"], [100, 200])
+    const next = blockMap(["dup"], [100])
     computeOperations(old, next, log)
     expect(log.debugs.some(d => d.includes("size:"))).toBe(true)
   })

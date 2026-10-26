@@ -1,9 +1,9 @@
 import { InvalidConfigurationError, log } from "builder-util"
 import { DEFAULT_KEYWORD, resolveDefaultKeywordList } from "builder-util/internal"
 import { Nullish } from "builder-util-runtime"
-import { ALL_PLATFORM_KEYS, BREAKING_CHANGES_URL, FILE_OPTION_KEYS, FILE_OPTIONS_ANCHOR } from "./legacyOptions.js"
+import { ALL_PLATFORM_KEYS, CONFIG_CHANGES_URL, FILE_OPTION_KEYS, FILE_OPTIONS_ANCHOR } from "./legacyOptions.js"
 
-const FILE_OPTIONS_URL = `${BREAKING_CHANGES_URL}#${FILE_OPTIONS_ANCHOR}`
+const FILE_OPTIONS_URL = `${CONFIG_CHANGES_URL}#${FILE_OPTIONS_ANCHOR}`
 
 export function isPlainObject(value: unknown): value is Record<string, any> {
   return value != null && typeof value === "object" && !Array.isArray(value)

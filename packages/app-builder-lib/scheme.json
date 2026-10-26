@@ -557,6 +557,17 @@
             "null",
             "string"
           ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -644,6 +655,17 @@
           "type": [
             "null",
             "string"
+          ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       },
@@ -1350,6 +1372,353 @@
       },
       "type": "object"
     },
+    "ExecutablesConfig": {
+      "additionalProperties": false,
+      "description": "The locations of host programs, by {@link ExecutableName}. An unset or `null` entry uses the built-in default locations.",
+      "properties": {
+        "actool": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `actool` executable on the build machine, such as `file:///opt/homebrew/bin/actool` or `file:///C:/Program%20Files/actool/actool.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "codesign": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `codesign` executable on the build machine, such as `file:///opt/homebrew/bin/codesign` or `file:///C:/Program%20Files/codesign/codesign.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "flatpak": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `flatpak` executable on the build machine, such as `file:///opt/homebrew/bin/flatpak` or `file:///C:/Program%20Files/flatpak/flatpak.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "flatpak-builder": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `flatpak-builder` executable on the build machine, such as `file:///opt/homebrew/bin/flatpak-builder` or `file:///C:/Program%20Files/flatpak-builder/flatpak-builder.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "hdiutil": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `hdiutil` executable on the build machine, such as `file:///opt/homebrew/bin/hdiutil` or `file:///C:/Program%20Files/hdiutil/hdiutil.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "lzip": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `lzip` executable on the build machine, such as `file:///opt/homebrew/bin/lzip` or `file:///C:/Program%20Files/lzip/lzip.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "mono": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `mono` executable on the build machine, such as `file:///opt/homebrew/bin/mono` or `file:///C:/Program%20Files/mono/mono.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "notarytool": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `notarytool` executable on the build machine, such as `file:///opt/homebrew/bin/notarytool` or `file:///C:/Program%20Files/notarytool/notarytool.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "pkgbuild": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `pkgbuild` executable on the build machine, such as `file:///opt/homebrew/bin/pkgbuild` or `file:///C:/Program%20Files/pkgbuild/pkgbuild.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "pkgutil": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `pkgutil` executable on the build machine, such as `file:///opt/homebrew/bin/pkgutil` or `file:///C:/Program%20Files/pkgutil/pkgutil.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "powershell": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `powershell` executable on the build machine, such as `file:///opt/homebrew/bin/powershell` or `file:///C:/Program%20Files/powershell/powershell.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "prlctl": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `prlctl` executable on the build machine, such as `file:///opt/homebrew/bin/prlctl` or `file:///C:/Program%20Files/prlctl/prlctl.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "productbuild": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `productbuild` executable on the build machine, such as `file:///opt/homebrew/bin/productbuild` or `file:///C:/Program%20Files/productbuild/productbuild.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "pwsh": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `pwsh` executable on the build machine, such as `file:///opt/homebrew/bin/pwsh` or `file:///C:/Program%20Files/pwsh/pwsh.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "sips": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `sips` executable on the build machine, such as `file:///opt/homebrew/bin/sips` or `file:///C:/Program%20Files/sips/sips.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "snapcraft": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `snapcraft` executable on the build machine, such as `file:///opt/homebrew/bin/snapcraft` or `file:///C:/Program%20Files/snapcraft/snapcraft.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "stapler": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `stapler` executable on the build machine, such as `file:///opt/homebrew/bin/stapler` or `file:///C:/Program%20Files/stapler/stapler.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "tiffutil": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `tiffutil` executable on the build machine, such as `file:///opt/homebrew/bin/tiffutil` or `file:///C:/Program%20Files/tiffutil/tiffutil.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "wine": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `wine` executable on the build machine, such as `file:///opt/homebrew/bin/wine` or `file:///C:/Program%20Files/wine/wine.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "zip": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `zip` executable on the build machine, such as `file:///opt/homebrew/bin/zip` or `file:///C:/Program%20Files/zip/zip.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        }
+      },
+      "type": "object"
+    },
     "FileAssociation": {
       "additionalProperties": false,
       "description": "File associations.\n\nmacOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)), NSIS, and MSI only.\n\nOn Windows (NSIS) works only if [nsis.perMachine](https://www.electron.build/nsis) is set to `true`.",
@@ -1446,7 +1815,7 @@
     },
     "FilesBuildOptions": {
       "additionalProperties": false,
-      "description": "Which files are copied into the packaged app, which file extensions are excluded from it, and which symlinks among them may lead outside it,\nset under `fileOptions` at the configuration root or per platform (e.g. `mac.fileOptions`). A platform's file lists are added to the root\nones; a platform's `excludedExts` and `allowExternalLinks` replace the root ones.\nSee [file options](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).",
+      "description": "Which files are copied into the packaged app, which file extensions are excluded from it, and which symlinks among them may lead outside it,\nset under `fileOptions` at the configuration root or per platform (e.g. `mac.fileOptions`). A platform's file lists are added to the root\nones; a platform's `excludedExts` and `allowExternalLinks` replace the root ones.\nSee [file options](https://www.electron.build/docs/migration/v27-config-changes#file-options-fileoptions).",
       "properties": {
         "allowExternalLinks": {
           "anyOf": [
@@ -1977,6 +2346,17 @@
         "useMultipleRangeRequest": {
           "description": "Whether to use multiple range requests for differential update. Defaults to `true` if `url` doesn't contain `s3.amazonaws.com`.",
           "type": "boolean"
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -2128,6 +2508,17 @@
             "null",
             "string"
           ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -2248,6 +2639,17 @@
           "default": true,
           "description": "Whether to use `v`-prefixed tag name.",
           "type": "boolean"
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -2354,6 +2756,17 @@
           "type": [
             "null",
             "string"
+          ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       },
@@ -2529,7 +2942,7 @@
         },
         "forceCodeSigning": {
           "default": false,
-          "description": "Whether to fail if app will be not code signed.",
+          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -2680,7 +3093,7 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         },
         "vendor": {
           "description": "The vendor. Defaults to [author](https://www.electron.build/configuration#author).",
@@ -3128,7 +3541,7 @@
         },
         "forceCodeSigning": {
           "default": false,
-          "description": "Whether to fail if app will be not code signed.",
+          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -3200,7 +3613,7 @@
           ]
         },
         "notarize": {
-          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
+          "description": "Whether to notarize the app with [@electron/notarize](https://github.com/electron/notarize).\n\n- unset (the default): notarize when notarization credentials are set, otherwise skip it with a warning.\n- `true`: notarization is required: the build fails when no credentials are set, wherever notarization would run (a macOS host,\n  outside a pull-request build, with signing not turned off), at build start and when notarizing.\n- `false`: never notarize (for an ad-hoc or development-signed app, or one notarized in an `afterSign` hook).\n\nThe credentials are one of the following sets of environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
           "type": "boolean"
         },
         "protocols": {
@@ -3364,7 +3777,7 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         }
       },
       "type": "object"
@@ -3558,7 +3971,7 @@
         },
         "forceCodeSigning": {
           "default": false,
-          "description": "Whether to fail if app will be not code signed.",
+          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -3630,7 +4043,7 @@
           ]
         },
         "notarize": {
-          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
+          "description": "Whether to notarize the app with [@electron/notarize](https://github.com/electron/notarize).\n\n- unset (the default): notarize when notarization credentials are set, otherwise skip it with a warning.\n- `true`: notarization is required: the build fails when no credentials are set, wherever notarization would run (a macOS host,\n  outside a pull-request build, with signing not turned off), at build start and when notarizing.\n- `false`: never notarize (for an ad-hoc or development-signed app, or one notarized in an `afterSign` hook).\n\nThe credentials are one of the following sets of environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
           "type": "boolean"
         },
         "protocols": {
@@ -3794,7 +4207,7 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         }
       },
       "type": "object"
@@ -6318,6 +6731,17 @@
             "null",
             "string"
           ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -6928,6 +7352,17 @@
           "type": [
             "null",
             "string"
+          ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       },
@@ -7801,6 +8236,17 @@
             "null",
             "string"
           ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -8295,6 +8741,17 @@
             "null",
             "string"
           ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -8329,7 +8786,7 @@
           ]
         },
         "msi": {
-          "description": "Whether to create an MSI installer. Defaults to `false` (MSI is not created).",
+          "description": "Whether to create an MSI installer. Defaults to `false` (MSI is not created).\n\nSquirrel.Windows builds the MSI around Setup.exe before electron-builder signs Setup.exe, so the installer inside the MSI is\nunsigned: the build warns, and fails with `forceCodeSigning`. For a signed MSI use the `msi` target instead.",
           "type": "boolean"
         },
         "name": {
@@ -8460,6 +8917,18 @@
           "default": "latest",
           "description": "Version of the AppImage toolset bundle used for building `.AppImage` files.\n\nThe bundle ships:\n- **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage. It also packs legacy-base (core18/core20/core22) snaps built from the snap template app.\n- **`desktop-file-validate`** — validates the generated `.desktop` entry.\n- **AppImage runtime** — the self-executing stub that mounts the SquashFS at launch.\n\nAvailable versions:\n| Version | Runtime date | Notes |\n|---------|-------------|-------|\n| `\"0.0.0\"` | Legacy | FUSE2-based AppImage runtime (pre-v27) |\n| `\"1.0.3\"` | 20251108 | Introduces static AppImage runtime |\n| `\"1.1.0\"` | 20251108 | Adds `unsquashfs` support |\n\nAn explicit version pin always selects exactly that release.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/appimage/CHANGELOG.md"
         },
+        "executables": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ExecutablesConfig",
+              "description": "The locations of host programs, by {@link ExecutableName}. An unset or `null` entry uses the built-in default locations."
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Where the host programs that electron-builder starts are installed on the build machine, by program name.\n\nelectron-builder starts these programs only from an absolute path, never by looking up a name on `PATH`. For each one it\nuses the first location that is an executable file: from this entry when it is set, otherwise from a built-in list of\ndefault install locations for the host operating system (see https://www.electron.build/docs/toolsets#executables).\nAn entry replaces the default list for that program; it is not merged with it."
+        },
         "fpm": {
           "anyOf": [
             {
@@ -8572,13 +9041,14 @@
                 "1.1.1",
                 "1.2.1",
                 "1.3.0",
+                "1.3.1",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the `win-codesign` bundle used for Windows code signing and resource editing.\n\nThe bundle ships:\n- **`signtool.exe`** (Windows) / **`osslsigncode`** (macOS & Linux) — used to sign `.exe`,\n  `.dll`, and `.msix` artifacts.\n- **`rcedit`** — embeds version metadata and icons into `.exe` files (legacy usage, migrated to npm `resedit` package).\n- **Windows Kits** — used by AppX/MSIX packaging (`makeappx`, `signtool`).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"0.0.0\"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27) |\n| `\"1.0.0\"` | Windows Kits 10.0.26100.0, `osslsigncode` v2.9 |\n| `\"1.1.1\"` | Updates `osslsigncode` to v2.11 |\n| `\"1.2.1\"` | Adds native `osslsigncode` arm64 |\n| `\"1.3.0\"` | Includes support for Azure Trusted Signing `signtool` via dlib and .NET 8 runtime |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md"
+          "description": "Version of the `win-codesign` bundle used for Windows code signing and resource editing.\n\nThe bundle ships:\n- **`signtool.exe`** (Windows) / **`osslsigncode`** (macOS & Linux) — used to sign `.exe`,\n  `.dll`, and `.msix` artifacts.\n- **`rcedit`** — embeds version metadata and icons into `.exe` files (legacy usage, migrated to npm `resedit` package).\n- **Windows Kits** — used by AppX/MSIX packaging (`makeappx`, `signtool`).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"0.0.0\"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27) |\n| `\"1.0.0\"` | Windows Kits 10.0.26100.0, `osslsigncode` v2.9 |\n| `\"1.1.1\"` | Updates `osslsigncode` to v2.11 |\n| `\"1.2.1\"` | Adds native `osslsigncode` arm64 |\n| `\"1.3.0\"` | Includes support for Azure Trusted Signing `signtool` via dlib and .NET 8 runtime |\n| `\"1.3.1\"` | macOS `osslsigncode` bundles its own OpenSSL (no Homebrew `openssl@3` needed) and libp11's PKCS#11 provider |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md"
         },
         "wine": {
           "anyOf": [
@@ -8596,7 +9066,7 @@
             }
           ],
           "default": "latest",
-          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |\n| `\"1.0.1\"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |\n| `\"system\"` | host install | macOS, Linux | Uses the `wine` binary on `PATH` instead of a bundle |\n\n`\"system\"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and\nis what `\"latest\"` (the default) currently resolves to on every platform: the published `\"1.0.1\"`\nbundles ship no PE builtins, so a host Wine installation is required to build Windows targets on\nmacOS or Linux.\n\nTo use a custom Wine binary, use a `ToolsetCustom` object.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md"
+          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |\n| `\"1.0.1\"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |\n| `\"system\"` | host install | macOS, Linux | Uses the host Wine at a fixed install location instead of a bundle |\n\n`\"system\"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and\nis what `\"latest\"` (the default) currently resolves to on every platform: the published `\"1.0.1\"`\nbundles ship no PE builtins, so a host Wine installation is required to build Windows targets on\nmacOS or Linux.\n\nThe host Wine (`\"system\"`) is started by absolute path, never looked up on `PATH`: it is the `wine` entry of\n{@link executables}, which lists its default install locations and is where a Wine installed elsewhere is set.\nSetting both a bundle that would be used (a `ToolsetCustom` object, or a version on macOS; on Linux a version selects no\nbundle) and `executables.wine` is a configuration error.\n\nTo use a custom Wine bundle, use a `ToolsetCustom` object.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md"
         }
       },
       "type": "object"
@@ -8628,7 +9098,7 @@
       "properties": {
         "allowSigningKeyOutsideTrustList": {
           "default": false,
-          "description": "Allows a publishing build to sign its manifests only with keys that are not in `publicKey` - a deliberate\ncutover release that is verified by installs with the old key, but hands them over to the keys listed in\n`publicKey`. Every later release must then be signed by a listed key. Without it such a build fails; a build\nwithout a publish policy only warns. Has no effect when `publicKey` is not set.",
+          "description": "Allows a publishing build to sign its manifests only with keys that are not in `publicKey` - a deliberate\ncutover release that is verified by installs with the old key, but hands them over to the keys listed in\n`publicKey`. Every later release must then be signed by a listed key. Without it such a build fails; a build\nwithout a publish policy or `forceCodeSigning` only warns. Has no effect when `publicKey` is not set.",
           "type": [
             "null",
             "boolean"
@@ -8649,7 +9119,7 @@
               ]
             }
           ],
-          "description": "The Ed25519 public key(s) (PEM or base64 SPKI) embedded into `app-update.yml` as the updater's trust list.\nThe updater accepts a manifest when any listed key validates one of its signatures. Optional — when\nomitted the public key of every configured signing key is derived and embedded. Set it explicitly to trust\nadditional keys ahead of a rotation (for example `[current, next]`).\n\nA `publicKey` on its own does not satisfy the signing requirement — electron-builder still has no key to\nsign with. An external signer (HSM/KMS) that signs `latest*.yml` in a later step therefore either builds\nwithout a publish policy, where the requirement only warns and the unsigned manifest is written locally, or\nkeeps publishing with `publishAutoUpdate: false` on every publish provider - electron-builder then uploads the\nartifacts and embeds this key, but writes no `latest*.yml`, so the external step has to produce it too.\n\nWhen set, it must contain at least one of the signing keys: a publishing build signed only by keys outside this\nlist fails, since its installs would reject manifests signed with them. See `allowSigningKeyOutsideTrustList`."
+          "description": "The Ed25519 public key(s) (PEM or base64 SPKI) embedded into `app-update.yml` as the updater's trust list.\nThe updater accepts a manifest when any listed key validates one of its signatures. Optional — when\nomitted the public key of every configured signing key is derived and embedded. Set it explicitly to trust\nadditional keys ahead of a rotation (for example `[current, next]`).\n\nA `publicKey` on its own does not satisfy the signing requirement — electron-builder still has no key to\nsign with. An external signer (HSM/KMS) that signs `latest*.yml` in a later step therefore either builds\nwithout a publish policy and without `forceCodeSigning`, where the requirement only warns and the unsigned\nmanifest is written locally, or keeps publishing with `publishAutoUpdate: false` on every publish provider -\nelectron-builder then uploads the artifacts and embeds this key, but writes no `latest*.yml`, so the external\nstep has to produce it too.\n\nWhen set, it must contain at least one of the signing keys: a publishing (or `forceCodeSigning`) build signed only by\nkeys outside this list fails, since its installs would reject manifests signed with them. See `allowSigningKeyOutsideTrustList`."
         },
         "signingKey": {
           "anyOf": [
@@ -8714,7 +9184,7 @@
           "type": "string"
         },
         "publisherName": {
-          "description": "The publisher name to associate with the signature, exactly as it appears in the certificate\nissued by your Trusted Signing certificate profile. Required. Used for\n[update verification](#verifyUpdateCodeSignature) (embedded in `app-update.yml` and checked by\nelectron-updater) and must match the certificate subject.",
+          "description": "The publisher name to associate with the signature: a Distinguished Name (DN) of the subject of\nthe certificate issued by your Trusted Signing certificate profile (e.g.\n`CN=My Company, O=My Company, C=US`). Required. Used for\n[update verification](#verifyUpdateCodeSignature) (embedded in `app-update.yml` and checked by\nelectron-updater) and must match the certificate subject. A bare name fails the build since\nv27 — see\n[the migration guide](https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name).",
           "type": "string"
         },
         "timestampDigest": {
@@ -8745,6 +9215,11 @@
     "WindowsConfiguration": {
       "additionalProperties": false,
       "properties": {
+        "allowCatalogSignature": {
+          "default": false,
+          "description": "Whether electron-updater accepts an update installer whose signature Windows reports from a security catalog (a signed list of\nfile hashes) instead of one embedded in the installer — for update installers that are catalog-signed on purpose, such as an\nenterprise deployment that adds their hashes to a catalog. The catalog signer must still match the [publisher name](#publisherName).\n\nWhen `true`, the `latest.yml` written for the `nsis` and `nsis-web` targets carries `allowCatalogSignature: true`. electron-updater\nhonors it only when the [signature of that update manifest](https://www.electron.build/docs/features/signed-update-manifests)\nwas verified against a trusted key; in an unsigned manifest (or one signed by an untrusted key) it is ignored with a warning, and\ncatalog signatures stay rejected unless the app sets `autoUpdater.allowCatalogSignature = true`. Since it is covered by the manifest\nsignature, changing it for a published release means signing `latest.yml` again or republishing it.\n\nInstalls running electron-updater 7.0.0-alpha.8 to alpha.11 with an update key configured reject a signed manifest that sets it\n(`ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`).",
+          "type": "boolean"
+        },
         "appId": {
           "default": "com.electron.${name}",
           "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
@@ -8868,7 +9343,7 @@
         },
         "forceCodeSigning": {
           "default": false,
-          "description": "Whether to fail if app will be not code signed.",
+          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -8995,7 +9470,7 @@
               "type": "null"
             }
           ],
-          "description": "Code signing configuration. Code signing stamps every installer and executable\nelectron-builder produces with an Authenticode signature, so that Windows (SmartScreen / UAC)\nand your auto-updater can verify the publisher and that the files were not tampered with.\n\nHow this option behaves:\n- Leave **unset** to sign using credentials discovered from the environment — primarily a\n  certificate supplied via `WIN_CSC_LINK` (or `CSC_LINK`) with its password in\n  `WIN_CSC_KEY_PASSWORD` (or `CSC_KEY_PASSWORD`). `WIN_CSC_LINK` accepts a file path, an\n  `https://` URL, or a base64-encoded certificate. This is the recommended setup for CI.\n- Set to `false` or `null` to **disable** code signing entirely (executable resources such as\n  the icon and metadata are still edited).\n- Set to an **object** to configure signing explicitly. The **required** `type` field selects the\n  signing backend (`signtool`, `hsm`, `pkcs11`, or `azure`) and dispatches to a dedicated sign\n  manager; provide exactly one of the modes below. When `win.sign` is left unset, the `signtool`\n  backend is used with env-discovered credentials. Each output artifact is signed individually,\n  and by default executables are dual-signed (see `signingHashAlgorithms`).\n\n- `{ type: \"signtool\", ... }` — Sign with a local certificate file (.pfx/.p12) or a\n  certificate from the Windows certificate store. Uses Microsoft `signtool.exe` on Windows and\n  `osslsigncode` on macOS/Linux.\n- `{ type: \"hsm\", ... }` — Sign using a Hardware Security Module (HSM) or FIPS-compliant\n  hardware token via signtool's `/csp` (cryptographic service provider) and `/kc` (key\n  container) flags. Requires a modern `winCodeSign` toolset (the default — only the legacy\n  `\"0.0.0\"` pin is unsupported). Windows-only.\n- `{ type: \"pkcs11\", ... }` — Sign using a PKCS#11 hardware token via osslsigncode.\n  Available on macOS and Linux CI without a Windows VM.\n- `{ type: \"azure\", ... }` — Sign via Azure Trusted Signing (cloud service). Requires\n  Azure Entra ID environment variables for authentication.\n\nSee [Code Signing](https://www.electron.build/docs/features/code-signing)."
+          "description": "Code signing configuration. Code signing stamps every installer and executable\nelectron-builder produces with an Authenticode signature, so that Windows (SmartScreen / UAC)\nand your auto-updater can verify the publisher and that the files were not tampered with.\n\nHow this option behaves:\n- Leave **unset** to sign using credentials discovered from the environment — primarily a\n  certificate supplied via `WIN_CSC_LINK` (or `CSC_LINK`) with its password in\n  `WIN_CSC_KEY_PASSWORD` (or `CSC_KEY_PASSWORD`). `WIN_CSC_LINK` accepts a file path, an\n  `https://` URL, or a base64-encoded certificate. This is the recommended setup for CI.\n- Set to `false` or `null` to **disable** code signing entirely (executable resources such as\n  the icon and metadata are still edited). A build that writes `app-update.yml` then also needs\n  [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) set to `false`, since no publisher\n  name is derived; if you sign outside electron-builder, use `{ type: \"signtool\", publisherName: [...] }`\n  instead.\n- Set to an **object** to configure signing explicitly. The **required** `type` field selects the\n  signing backend (`signtool`, `hsm`, `pkcs11`, or `azure`) and dispatches to a dedicated sign\n  manager; provide exactly one of the modes below. When `win.sign` is left unset, the `signtool`\n  backend is used with env-discovered credentials. Each output artifact is signed individually,\n  and by default executables are dual-signed (see `signingHashAlgorithms`).\n\n- `{ type: \"signtool\", ... }` — Sign with a local certificate file (.pfx/.p12) or a\n  certificate from the Windows certificate store. Uses Microsoft `signtool.exe` on Windows and\n  `osslsigncode` on macOS/Linux.\n- `{ type: \"hsm\", ... }` — Sign using a Hardware Security Module (HSM) or FIPS-compliant\n  hardware token via signtool's `/csp` (cryptographic service provider) and `/kc` (key\n  container) flags. Requires a modern `winCodeSign` toolset (the default — only the legacy\n  `\"0.0.0\"` pin is unsupported). Windows-only.\n- `{ type: \"pkcs11\", ... }` — Sign using a PKCS#11 hardware token via osslsigncode.\n  Available on macOS and Linux CI without a Windows VM.\n- `{ type: \"azure\", ... }` — Sign via Azure Trusted Signing (cloud service). Requires\n  Azure Entra ID environment variables for authentication.\n\nSee [Code Signing](https://www.electron.build/docs/features/code-signing)."
         },
         "signExts": {
           "anyOf": [
@@ -9052,11 +9527,11 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         },
         "verifyUpdateCodeSignature": {
           "default": true,
-          "description": "Whether the NSIS auto-updater should verify the Authenticode signature of a downloaded update\nbefore installing it. The verification itself runs in your app, via electron-updater.\n\nWhen enabled (the default), the resolved [publisher name](#publisherName) is embedded into\n`app-update.yml` at build time. At update time electron-updater inspects the certificate that\nsigned the downloaded installer and compares its subject (Distinguished Name / Common Name)\nagainst that publisher name, refusing to install on a mismatch. This prevents a tampered or\nmaliciously substituted update from being installed.\n\nWhile enabled, electron-builder also checks at build time that the signed NSIS installer (or\nnsis-web stub) is signed by a certificate matching that publisher name, using the same matching\nrules, and fails the build otherwise.\n\nSet to `false` to skip verification — in which case the publisher name is **not** embedded.\nDisable this only if your updates are not Authenticode-signed.",
+          "description": "Whether the NSIS auto-updater should verify the Authenticode signature of a downloaded update\nbefore installing it. The verification itself runs in your app, via electron-updater.\n\nWhen enabled (the default), the resolved [publisher name](#publisherName) is embedded into\n`app-update.yml` at build time. At update time electron-updater inspects the certificate that\nsigned the downloaded installer and compares its subject (Distinguished Name) against that\npublisher name, refusing to install on a mismatch or when the signature cannot be verified.\nThis prevents a tampered or maliciously substituted update from being installed.\n\nWhile enabled, electron-builder also checks at build time that the signed NSIS installer (or\nnsis-web stub) is signed by a certificate matching that publisher name, using the same matching\nrules, and fails the build otherwise.\n\nSince v27 a build that writes `app-update.yml` (an `nsis`, `nsis-web` or `electronUpdaterAware`\n`appx` target with a publish configuration) fails while this is enabled and no publisher name\nresolves (`sign: false` / `null`, no certificate, `publisherName: null`): electron-updater 7\nrejects every update of an app whose `app-update.yml` has no publisher name. Sign the build, set\n[publisherName](#publisherName), or set this to `false`.\n\nSet to `false` to skip verification explicitly — the publisher name is then **not** embedded, and\n`app-update.yml` carries `verifyUpdateCodeSignature: false` instead, which tells electron-updater\nto install updates without verifying their signature. This is the only opt-out.\nDisable this only if your updates are not Authenticode-signed.",
           "type": "boolean"
         }
       },
@@ -9116,7 +9591,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. **Required**\n(while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom\n[sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —\notherwise the build fails. Set to `null` to opt out."
+          "description": "The publisher name(s) to associate with the signature: a Distinguished Name (DN) of your code\nsigning certificate's subject, written with the attribute names Windows uses (e.g.\n`CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;\nattributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,\nbecause electron-updater 7 never matches it — see\n[the migration guide](https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name).\nMay be a single string or an array — an array is useful when rotating certificates, so updates\nsigned by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to `CN=<common name>` of your code signing certificate, so a renewed certificate with the\nsame common name keeps updates working even when its other subject attributes change. For a stricter\npin, set a fuller DN explicitly (a renewal that changes a configured attribute then needs a release,\nsigned with the old certificate, that lists both DNs).\n**Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) whenever\nno certificate supplies it: with a custom [sign](#sign) hook, even if a certificate is configured,\nfor a certificate without a CN, and when no certificate is configured (e.g. the build is signed\noutside electron-builder) — otherwise the build fails. `null` is no opt-out since v27: a build that\nwrites `app-update.yml` with it fails; set [verifyUpdateCodeSignature](#verifyUpdateCodeSignature)\nto `false` instead."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9221,7 +9696,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. **Required**\n(while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom\n[sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —\notherwise the build fails. Set to `null` to opt out."
+          "description": "The publisher name(s) to associate with the signature: a Distinguished Name (DN) of your code\nsigning certificate's subject, written with the attribute names Windows uses (e.g.\n`CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;\nattributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,\nbecause electron-updater 7 never matches it — see\n[the migration guide](https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name).\nMay be a single string or an array — an array is useful when rotating certificates, so updates\nsigned by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to `CN=<common name>` of your code signing certificate, so a renewed certificate with the\nsame common name keeps updates working even when its other subject attributes change. For a stricter\npin, set a fuller DN explicitly (a renewal that changes a configured attribute then needs a release,\nsigned with the old certificate, that lists both DNs).\n**Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) whenever\nno certificate supplies it: with a custom [sign](#sign) hook, even if a certificate is configured,\nfor a certificate without a CN, and when no certificate is configured (e.g. the build is signed\noutside electron-builder) — otherwise the build fails. `null` is no opt-out since v27: a build that\nwrites `app-update.yml` with it fails; set [verifyUpdateCodeSignature](#verifyUpdateCodeSignature)\nto `false` instead."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9339,7 +9814,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. **Required**\n(while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom\n[sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —\notherwise the build fails. Set to `null` to opt out."
+          "description": "The publisher name(s) to associate with the signature: a Distinguished Name (DN) of your code\nsigning certificate's subject, written with the attribute names Windows uses (e.g.\n`CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;\nattributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,\nbecause electron-updater 7 never matches it — see\n[the migration guide](https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name).\nMay be a single string or an array — an array is useful when rotating certificates, so updates\nsigned by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to `CN=<common name>` of your code signing certificate, so a renewed certificate with the\nsame common name keeps updates working even when its other subject attributes change. For a stricter\npin, set a fuller DN explicitly (a renewal that changes a configured attribute then needs a release,\nsigned with the old certificate, that lists both DNs).\n**Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) whenever\nno certificate supplies it: with a custom [sign](#sign) hook, even if a certificate is configured,\nfor a certificate without a CN, and when no certificate is configured (e.g. the build is signed\noutside electron-builder) — otherwise the build fails. `null` is no opt-out since v27: a build that\nwrites `app-update.yml` with it fails; set [verifyUpdateCodeSignature](#verifyUpdateCodeSignature)\nto `false` instead."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9852,7 +10327,7 @@
     },
     "forceCodeSigning": {
       "default": false,
-      "description": "Whether to throw an error and abort the build if the app could not be code-signed.\n\nSet to `true` in release pipelines to catch missing or misconfigured signing credentials\nbefore producing unsigned artifacts. When `false` (the default), missing signing credentials\nproduce a warning and the build continues unsigned.",
+      "description": "Whether to throw an error and abort the build if the app could not be code-signed, notarized, or have its\nauto-update manifests signed - and to verify the signatures the build produces.\n\nSet to `true` in release pipelines to catch missing or misconfigured signing credentials\nbefore producing unsigned artifacts. When `false` (the default), missing signing credentials\nproduce a warning and the build continues unsigned.\n\nWith `true`:\n- macOS: the app must be signed, which needs a macOS host, also in pull-request builds (set `CSC_FOR_PULL_REQUEST=true` to sign\n  them, or pass `-c.forceCodeSigning=false` there), and notarized: notarization credentials must be set when the build starts.\n  The output of a custom `mac.sign` signer is checked with `codesign --verify --deep --strict`, the stapled ticket with\n  `stapler validate`, a signed pkg with `pkgutil --check-signature`, and a DMG with `dmg.sign: true` must be signed.\n- Windows: every signed file is read back and must carry a valid Authenticode signature.\n- Every platform (the only effect on Linux): auto-update manifests must be signed, also by a build that does not publish.\n- A prepackaged app, which electron-builder does not sign, must already be signed (and, on macOS, notarized).\n\nExplicit opt-outs are honored with a warning: `mac.notarize: false`, `updateManifest: false`, `win.signExts` exclusions and a\ncustom `nsis.script` (whose uninstaller electron-builder does not sign). `win.sign: false` and `mac.sign: null` contradict it\nand fail the build. `electron-builder verify` checks the build output afterwards.",
       "type": "boolean"
     },
     "freebsd": {
@@ -10273,7 +10748,7 @@
           "type": "null"
         }
       ],
-      "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+      "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
     },
     "win": {
       "anyOf": [

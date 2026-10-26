@@ -1,4 +1,4 @@
-import { Configuration, FlatpakOptions } from "app-builder-lib"
+import { Configuration, FilesBuildOptions, FlatpakOptions } from "app-builder-lib"
 import { FlatpakBundleOptions } from "app-builder-lib/src/targets/linux/flatpakBundle"
 import { InvalidConfigurationError, log } from "builder-util"
 import { Arch, Platform } from "electron-builder"
@@ -30,7 +30,8 @@ const isNoSandboxWarning = ([, message]: ReadonlyArray<unknown>) => typeof messa
 const NO_SANDBOX_DOCS = "https://www.electron.build/docs/flatpak#executable-args"
 const isFlatpakIdWarning = ([fields]: ReadonlyArray<unknown>) => typeof fields === "object" && fields != null && "flatpakId" in fields
 const FLATPAK_ID_DOCS = "https://www.electron.build/docs/flatpak#application-id"
-const MIGRATION_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes"
+const BUILD_CHANGES_DOCS = "https://www.electron.build/docs/migration/v27-build-changes"
+const RUNTIME_CHANGES_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes"
 const messageStartsWith =
   (prefix: string) =>
   ([, message]: ReadonlyArray<unknown>) =>
@@ -45,10 +46,14 @@ interface Computed {
 }
 
 async function computeOptions(expect: ExpectStatic, flatpak: FlatpakOptions): Promise<Computed> {
+  return computeOptionsForConfig(expect, { flatpak })
+}
+
+async function computeOptionsForConfig(expect: ExpectStatic, config: Configuration): Promise<Computed> {
   const calls: Computed[] = []
   await app(expect, {
     targets: flatpakTarget,
-    config: { flatpak },
+    config,
     effectiveOptionComputed: async (options: FlatpakBundleOptions) => {
       // checked here because the working directory is removed when the build finishes
       calls.push({ options, tempDirExisted: existsSync(options.tempDir) })
@@ -175,7 +180,7 @@ describe.heavy.ifNotWindows("flatpak", { concurrent: false, timeout: EXTENDED_TI
     expect(reported[0][1]).toBe(
       "electron-builder v27 narrowed the default flatpak.finishArgs: --filesystem=home -> --filesystem=xdg-download, and --talk-name=org.freedesktop.Notifications only for the base app org.electronjs.Electron2.BaseApp before 23.08. " +
         "The app can no longer reach the home directory outside Downloads. Set flatpak.finishArgs to grant more (the v26 list is in the migration guide). " +
-        `See ${MIGRATION_DOCS}#flatpak-default-permissions`
+        `See ${RUNTIME_CHANGES_DOCS}#flatpak-default-permissions`
     )
   })
 
@@ -193,7 +198,7 @@ describe.heavy.ifNotWindows("flatpak", { concurrent: false, timeout: EXTENDED_TI
     expect(reported[0][0]).toEqual({ runtimeVersion: "26.08", baseVersion: "26.08" })
     expect(reported[0][1]).toBe(
       "electron-builder v27 changed the default flatpak.runtimeVersion and flatpak.baseVersion from 20.08 to 26.08: each of them that is not set is now 26.08, and the 26.08 runtime, SDK and base app are installed if they are missing. " +
-        `Set both to "20.08" to keep the previous runtime, or both to the version to build for. See ${MIGRATION_DOCS}#flatpak-tooling-requirements`
+        `Set both to "20.08" to keep the previous runtime, or both to the version to build for. See ${BUILD_CHANGES_DOCS}#flatpak-tooling-requirements`
     )
   })
 
@@ -282,7 +287,7 @@ describe.heavy.ifNotWindows("flatpak", { concurrent: false, timeout: EXTENDED_TI
     expect(reported[0][0]).toEqual({ electronVersion: "37.0.0", docs: "https://www.electron.build/docs/flatpak#wayland-support" })
     expect(reported[0][1]).toBe(
       "electron-builder v27 no longer adds --enable-features=UseOzonePlatform with flatpak.useWaylandFlags for Electron 16 and later, where Ozone is on by default: in a Wayland session the wrapper now passes only --ozone-platform=wayland. " +
-        `If the app needs the flag, add it to flatpak.executableArgs. See ${MIGRATION_DOCS}#flatpak-wayland-flags`
+        `If the app needs the flag, add it to flatpak.executableArgs. See ${RUNTIME_CHANGES_DOCS}#flatpak-wayland-flags`
     )
   })
 
@@ -297,7 +302,7 @@ describe.heavy.ifNotWindows("flatpak", { concurrent: false, timeout: EXTENDED_TI
       expect(reported[0][0]).toEqual({ envVar: "DEBUG" })
       expect(reported[0][1]).toBe(
         "electron-builder v27 no longer uses @malept/flatpak-bundler, so DEBUG=@malept/flatpak-bundler has no effect: a failed flatpak or flatpak-builder command prints its own output in the build error. " +
-          `Set DEBUG=electron-builder to log every command that is run. See ${MIGRATION_DOCS}#flatpak-tooling-requirements`
+          `Set DEBUG=electron-builder to log every command that is run. See ${BUILD_CHANGES_DOCS}#flatpak-tooling-requirements`
       )
       const second = await buildFlatpak(expect, { flatpak: {} })
       expect(second.warnings.filter(isFlatpakBundlerDebugWarning)).toHaveLength(0)
@@ -558,6 +563,33 @@ describe.heavy.ifNotWindows("flatpak", { concurrent: false, timeout: EXTENDED_TI
 
   test("additionalArgs with a key that is not a tool is rejected by the configuration schema", async ({ expect }) => {
     await expect(computeOptions(expect, { additionalArgs: { export: ["--disable-sandbox"] } as any })).rejects.toThrow(/additionalArgs/)
+  })
+
+  // Regression tests: `linux.files` (a string[] of glob patterns, used by most real-world Linux configs) used to get merged into
+  // FlatpakOptions.files (a [string, string][] of copy tuples) by getOptionsForTarget's deepAssign, which concatenates arrays
+  // instead of replacing them. The copy step of buildFlatpakBundle then destructured each glob string as [src, dest], producing a
+  // bogus path and crashing the build with ENOENT. `linux.files` may also be a single glob string or a single FileSet object;
+  // the merged target options then hold a string or an object under `files`, which is not filterable, so FlatpakTarget threw.
+  // FlatpakTarget computes the copy pairs before the bundle step, so these check the pairs it hands to buildFlatpakBundle.
+  test.for<[string, FilesBuildOptions["files"]]>([
+    ["linux.files does not corrupt the flatpak files option", ["**/*", "!**/*.ts"]],
+    ["single-string linux.files does not throw in FlatpakTarget", "**/*"],
+    ["single FileSet linux.files does not throw in FlatpakTarget", { from: ".", filter: ["**/*"] }],
+  ])("%s", async ([, files], { expect }) => {
+    const { options } = await computeOptionsForConfig(expect, { linux: { fileOptions: { files } } })
+    const outDir = path.dirname(options.artifactPath)
+    expect(options.files).toEqual([
+      [path.join(outDir, "__flatpak-x86_64"), "/"],
+      [path.join(outDir, "linux-unpacked"), `/lib/${APP_ID}`],
+    ])
+  })
+
+  test("linux.files leaves the flatpak files pairs as they are", async ({ expect }) => {
+    const { options } = await computeOptionsForConfig(expect, {
+      linux: { fileOptions: { files: ["**/*", "!**/*.ts"] } },
+      flatpak: { files: [["build/extra.txt", "/share/extra.txt"]] },
+    })
+    expect(options.files.slice(2)).toEqual([["build/extra.txt", "/share/extra.txt"]])
   })
 
   test("custom manifest options, files and symlinks", async ({ expect }) => {

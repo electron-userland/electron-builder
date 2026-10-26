@@ -1,6 +1,6 @@
 // Adapted from https://github.com/electron/packager/pull/1806
 
-import { spawn, TmpDir } from "builder-util"
+import { Executables, spawn, TmpDir } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "node:path"
 import plist from "plist"
@@ -15,7 +15,7 @@ const INVALID_ACTOOL_VERSION_ERROR = new Error(
   "Failed to check actool version. Is Xcode 26 or higher installed? See output of the `actool --version` CLI command for more details."
 )
 
-async function checkActoolVersion(tmpDir: string) {
+async function checkActoolVersion(actool: string, tmpDir: string) {
   const acToolOutputFileName = path.resolve(tmpDir, "actool.log")
 
   let versionInfo: Record<string, Record<string, string>> | undefined = undefined
@@ -24,7 +24,7 @@ async function checkActoolVersion(tmpDir: string) {
   let errorQueued: Error | null = null
   try {
     acToolOutputFile = await fs.open(acToolOutputFileName, "w")
-    await spawn("actool", ["--version"], { stdio: ["ignore", acToolOutputFile.fd, acToolOutputFile.fd] })
+    await spawn(actool, ["--version"], { stdio: ["ignore", acToolOutputFile.fd, acToolOutputFile.fd] })
     const acToolVersionOutput = await fs.readFile(acToolOutputFileName, "utf8")
     versionInfo = plist.parse(acToolVersionOutput) as Record<string, Record<string, string>>
   } catch (e: any) {
@@ -51,9 +51,10 @@ async function checkActoolVersion(tmpDir: string) {
  * @returns The asset catalog and extra assets
  */
 export async function generateAssetCatalogForIcon(tmpDir: TmpDir, inputPath: string): Promise<AssetCatalogResult> {
+  const actool = Executables.resolve("actool")
   const tmpDirPath = await tmpDir.createTempDir({ prefix: "macos-icon-composer" })
 
-  await checkActoolVersion(tmpDirPath)
+  await checkActoolVersion(actool, tmpDirPath)
 
   const iconPath = path.resolve(tmpDirPath, "Icon.icon")
   const outputPath = path.resolve(tmpDirPath, "out")
@@ -66,7 +67,7 @@ export async function generateAssetCatalogForIcon(tmpDir: TmpDir, inputPath: str
     recursive: true,
   })
 
-  await spawn("actool", [
+  await spawn(actool, [
     iconPath,
     "--compile",
     outputPath,

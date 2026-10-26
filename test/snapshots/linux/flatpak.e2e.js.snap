@@ -1,17 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Linux Flatpak Test > custom finishArgs 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0-x86_64.flatpak",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.flatpak",
-    },
-  ],
-}
-`;
-
 exports[`Linux Flatpak Test > custom runtime and base app version 1`] = `
 {
   "linux": [
@@ -24,7 +12,7 @@ exports[`Linux Flatpak Test > custom runtime and base app version 1`] = `
 }
 `;
 
-exports[`Linux Flatpak Test > enable Wayland flags 1`] = `
+exports[`Linux Flatpak Test > enable Wayland flags and custom finishArgs 1`] = `
 {
   "linux": [
     {
@@ -37,42 +25,6 @@ exports[`Linux Flatpak Test > enable Wayland flags 1`] = `
 `;
 
 exports[`Linux Flatpak Test > flatpak 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0-x86_64.flatpak",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.flatpak",
-    },
-  ],
-}
-`;
-
-exports[`Linux Flatpak Test > linux.files does not corrupt the flatpak files option 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0-x86_64.flatpak",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.flatpak",
-    },
-  ],
-}
-`;
-
-exports[`Linux Flatpak Test > single FileSet linux.files does not throw in FlatpakTarget 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0-x86_64.flatpak",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.flatpak",
-    },
-  ],
-}
-`;
-
-exports[`Linux Flatpak Test > single-string linux.files does not throw in FlatpakTarget 1`] = `
 {
   "linux": [
     {

@@ -108,14 +108,17 @@
 
 !macro IS_POWERSHELL_AVAILABLE
   Var /GLOBAL IsPowerShellAvailable ; 0 = available, 1 = not available
-  # Try running PowerShell with a simple command to check if it's available
-  nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"`
-  Pop $0  # Return code (0 = success, other = error)
+  # Require a sentinel exit code to ensure PowerShell actually executes the command.
+  # Wine's PowerShell stub ignores the command and exits with 0.
+  nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) { exit 37 } else { exit 1 }"`
+  Pop $0  # Return code (37 = command executed successfully)
 
-  ${if} $0 == 0
+  ${if} $0 == 37
     # PowerShell is available, check if it's not blocked by policies
     nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "if ((Get-ExecutionPolicy -Scope Process) -eq 'Restricted') { exit 1 } else { exit 0 }"`
     Pop $0
+  ${else}
+    StrCpy $0 1
   ${endIf}
 
   ${if} $0 != 0
@@ -131,12 +134,13 @@
     Pop ${_RETURN}
   ${else}
     !ifdef INSTALL_MODE_PER_ALL_USERS
-      # exact match via findstr anchored to the start of each CSV line
-      nsExec::Exec `"$CmdPath" /C tasklist /FI "IMAGENAME eq ${_FILE}" /FO CSV /NH | "$SYSDIR\findstr.exe" /B /I /C:"\"${_FILE}\""`
+      # exact match via findstr anchored to the start of each CSV line. tasklist by absolute path: cmd.exe would look for a bare name in
+      # the current directory first. /S: cmd.exe removes only the outer quotes, so the quoted program paths stay intact
+      nsExec::Exec `"$CmdPath" /S /C ""$SYSDIR\tasklist.exe" /FI "IMAGENAME eq ${_FILE}" /FO CSV /NH | "$SYSDIR\findstr.exe" /B /I /C:"\"${_FILE}\"""`
       Pop ${_RETURN}
     !else
       # find process owned by current user — anchored exact match
-      nsExec::Exec `"$CmdPath" /C tasklist /FI "USERNAME eq %USERNAME%" /FI "IMAGENAME eq ${_FILE}" /FO CSV /NH | "$SYSDIR\findstr.exe" /B /I /C:"\"${_FILE}\""`
+      nsExec::Exec `"$CmdPath" /S /C ""$SYSDIR\tasklist.exe" /FI "USERNAME eq %USERNAME%" /FI "IMAGENAME eq ${_FILE}" /FO CSV /NH | "$SYSDIR\findstr.exe" /B /I /C:"\"${_FILE}\"""`
       Pop ${_RETURN}
     !endif
   ${endIf}
@@ -157,10 +161,11 @@
   ${if} $IsPowerShellAvailable == 0
     nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and ($processPathFilter)} | % { Stop-Process -Id $$_.ProcessId $0 }"`
   ${else}
+    # taskkill by absolute path: a bare name is looked up in the installer's directory and the current directory first
     !ifdef INSTALL_MODE_PER_ALL_USERS
-      nsExec::Exec `taskkill /IM "${_FILE}" /FI "PID ne $pid"`
+      nsExec::Exec `"$SYSDIR\taskkill.exe" $0 /IM "${_FILE}" /FI "PID ne $pid"`
     !else
-      nsExec::Exec `"$CmdPath" /C taskkill $0 /IM "${_FILE}" /FI "PID ne $pid" /FI "USERNAME eq %USERNAME%"`
+      nsExec::Exec `"$CmdPath" /S /C ""$SYSDIR\taskkill.exe" $0 /IM "${_FILE}" /FI "PID ne $pid" /FI "USERNAME eq %USERNAME%""`
     !endif
   ${endIf}
   Pop $0

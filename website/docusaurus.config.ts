@@ -104,6 +104,9 @@ const config: Config = {
     locales: ["en"],
   },
 
+  // forwards old v27-breaking-changes#<anchor> links to the category page the section moved to
+  clientModules: ["./src/clientModules/v27-breaking-changes-redirects.ts"],
+
   plugins: [
     "./scripts/docusaurus-plugin-prebuild.ts",
     // the /changelog page, built from ../CHANGELOG.md

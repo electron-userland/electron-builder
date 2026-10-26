@@ -25,12 +25,13 @@ export class Pkcs11SignManager extends SigntoolBaseSignManager {
 
     // publisherName == null means "auto-discover", but for PKCS#11 without a certificateFile
     // the cert lives inside the hardware token and cannot be read at build time. The result would be
-    // a null publisherName in app-update.yml, silently disabling updater signature verification.
+    // a null publisherName in app-update.yml, with which electron-updater 7 rejects every update.
     if (signing.publisherName == null && !signing.certificateFile) {
       throw new InvalidConfigurationError(
         "PKCS#11 signing requires either `win.sign.publisherName` or `win.sign.certificateFile` to be set. " +
-          "Without one of these the publisher name cannot be determined at build time, and auto-updater signature verification will be silently skipped. " +
-          "Set publisherName to the CN from your signing certificate, or provide certificateFile pointing to a certificate chain file (.crt / .cer)."
+          "Without one of these the publisher name cannot be determined at build time, and electron-updater rejects every update of an app whose app-update.yml has no publisherName. " +
+          'Set publisherName to the subject of your signing certificate, as a distinguished name (e.g. "CN=My Company, O=My Company, C=US"), ' +
+          "or provide certificateFile pointing to a certificate chain file (.crt / .cer)."
       )
     }
   }
