@@ -1,5 +1,6 @@
 import { blake2b } from "@noble/hashes/blake2.js"
-import { BlockInput, BlockMap, CancellationToken, encodeBlockMapV3, GenericServerOptions, UpdateInfo } from "builder-util-runtime"
+import { BlockMap, CancellationToken, GenericServerOptions, UpdateInfo } from "builder-util-runtime"
+import { BlockInput, encodeBlockMapV3 } from "builder-util-runtime/internal"
 import { AppUpdater } from "electron-updater"
 import type { DownloadUpdateOptions } from "electron-updater/src/AppUpdater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
@@ -7,7 +8,9 @@ import { GenericDifferentialDownloader } from "electron-updater/src/differential
 import { createClient } from "electron-updater/src/providerFactory"
 import { Provider } from "electron-updater/src/providers/Provider"
 import fsExtra from "fs-extra"
+import * as http from "http"
 import type { IncomingHttpHeaders, IncomingMessage, Server } from "http"
+import type { AddressInfo } from "net"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
 import { afterEach, describe, test, vi } from "vitest"
@@ -58,6 +61,8 @@ describe("block map format detection", () => {
   const NEW_V1 = v1Map(NEW_BLOCKS)
   const OLD_V2 = v2Map(OLD_BLOCKS)
   const NEW_V2 = v2Map(NEW_BLOCKS)
+  // the update's `size` in the manifest: a v2 map describing another size is rejected
+  const NEW_SIZE = NEW_BLOCKS.reduce((sum, b) => sum + b.size, 0)
 
   const servers: Array<Server> = []
   afterEach(() => {
@@ -80,6 +85,32 @@ describe("block map format detection", () => {
       requests.push({ pathname: new URL(request.url!, "http://localhost").pathname, headers: request.headers })
     })
     return { url: `http://127.0.0.1:${port}/`, requests }
+  }
+
+  /** A host that answers every Range request with 416 and a plain GET with the file. */
+  async function serveRejectingRanges(files: Record<string, Buffer>) {
+    const requests: Array<{ pathname: string; range: string | null; status: number }> = []
+    const server = http.createServer((req, res) => {
+      const pathname = new URL(req.url!, "http://localhost").pathname
+      const file = files[pathname.substring(1)]
+      const status = file == null ? 404 : req.headers.range == null ? 200 : 416
+      requests.push({ pathname, range: req.headers.range ?? null, status })
+      res.writeHead(status, status === 200 ? { "Content-Length": file.length } : {})
+      res.end(status === 200 ? file : undefined)
+    })
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    servers.push(server)
+    return { url: `http://127.0.0.1:${(server.address() as AddressInfo).port}/`, requests }
+  }
+
+  function captureLog(updater: AppUpdater) {
+    const messages: Record<"info" | "warn" | "error", Array<string>> = { info: [], warn: [], error: [] }
+    updater.logger = {
+      info: (message?: any) => messages.info.push(String(message)),
+      warn: (message?: any) => messages.warn.push(String(message)),
+      error: (message?: any) => messages.error.push(String(message)),
+    }
+    return messages
   }
 
   async function setUp(tmpDir: TmpDir, cached: Buffer | null) {
@@ -106,7 +137,7 @@ describe("block map format detection", () => {
       platform: "win32",
       executor: {} as any,
     })
-    const info: UpdateInfo = { version: "1.1.0", files: [{ url: "app-1.1.0.exe", sha512: "x", size: 10 }], releaseDate: "2024-01-01T00:00:00.000Z" }
+    const info: UpdateInfo = { version: "1.1.0", files: [{ url: "app-1.1.0.exe", sha512: "x", size: NEW_SIZE }], releaseDate: "2024-01-01T00:00:00.000Z" }
     const downloadOptions: DownloadUpdateOptions = {
       updateInfoAndProvider: { info, provider },
       requestHeaders: (updater as any).computeRequestHeaders(provider),
@@ -172,10 +203,56 @@ describe("block map format detection", () => {
     const server = await serve(tmpDir, { new: published })
     const { updater, helper, maps } = await setUp(tmpDir, cached)
 
+    const log = captureLog(updater)
+
     // outside test mode this is the fallback to a full download (`differentialDownloadInstaller` returns true)
     await expect(run(updater, server.url, tmpDir)).rejects.toMatchObject({ code: "ERR_UPDATER_BLOCKMAP_FORMAT_CHANGED" })
 
     expect(maps).toHaveLength(0)
     expect((await pending(helper)).equals(published)).toBe(true)
+    // an expected one-time event: one info line without a stack, not the error a failed differential download logs
+    const formatChanged = log.info.filter(it => it.includes("Block map format changed"))
+    expect(formatChanged).toHaveLength(1)
+    expect(formatChanged[0]).toContain("downloading this update in full; the next one is differential again")
+    expect(formatChanged[0]).not.toMatch(/\n\s+at /)
+    expect(log.error).toEqual([])
+  })
+
+  test("v2 cached, Range fetch of the new map fails: the new map is downloaded whole and the update is still differential", async ({ tmpDir, expect }) => {
+    const server = await serveRejectingRanges({ "app-1.1.0.exe.blockmap": NEW_V2 })
+    const { updater, helper, maps } = await setUp(tmpDir, OLD_V2)
+    const log = captureLog(updater)
+
+    await expect(run(updater, server.url, tmpDir)).resolves.toBe(false)
+
+    expect(server.requests).toEqual([
+      { pathname: "/app-1.1.0.exe.blockmap", range: expect.stringMatching(/^bytes=0-/), status: 416 },
+      { pathname: "/app-1.1.0.exe.blockmap", range: null, status: 200 },
+    ])
+    expect(log.warn).toEqual([expect.stringContaining("Cannot fetch the changed parts of the block map")])
+    expect(maps).toHaveLength(1)
+    expect(maps[0].new.files[0].sizes).toEqual(NEW_BLOCKS.map(b => b.size))
+    expect((await pending(helper)).equals(NEW_V2)).toBe(true)
+  })
+
+  test("a cached v2 map of another release (it does not end at the cached installer's size) is ignored, and the installed release's map is downloaded", async ({
+    tmpDir,
+    expect,
+  }) => {
+    const server = await serve(tmpDir, { old: OLD_V2, new: NEW_V2 })
+    // the pending release's map was promoted, but installer.exe is still the installed release
+    const STALE_V2 = v2Map(makeBlocks(2000, 9))
+    const { updater, helper, maps } = await setUp(tmpDir, STALE_V2)
+    await fsExtra.outputFile(path.join(helper.cacheDir, "installer.exe"), Buffer.alloc(OLD_BLOCKS.reduce((sum, b) => sum + b.size, 0)))
+
+    await expect(run(updater, server.url, tmpDir)).resolves.toBe(false)
+
+    // no cached map to compare against: the new map whole, then the installed release's map
+    expect(server.requests.map(it => [it.pathname, it.headers.range ?? null])).toEqual([
+      ["/app-1.1.0.exe.blockmap", null],
+      ["/app-1.0.0.exe.blockmap", null],
+    ])
+    expect(maps).toHaveLength(1)
+    expect(maps[0].old.files[0].sizes).toEqual(OLD_BLOCKS.map(b => b.size))
   })
 })

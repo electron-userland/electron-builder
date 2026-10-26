@@ -1,27 +1,6 @@
 import { createRequire } from "node:module"
-import { LogLimiter } from "builder-util-runtime/internal"
-import {
-  AllPublishOptions,
-  asArray,
-  CancellationToken,
-  newError,
-  PublishConfiguration,
-  UpdateInfo,
-  UUID,
-  DownloadOptions,
-  CancellationError,
-  HttpExecutor,
-  ProgressInfo,
-  BlockMap,
-  retry,
-  collectManifestSignatures,
-  normalizePublicKeyList,
-  verifyManifestSignatures,
-  type LimitedLogger,
-  decodeBlockMapV3,
-  isBlockMapV3,
-  toBlockMap,
-} from "builder-util-runtime"
+import { decodeBlockMapV3, isBlockMapV3, LogLimiter, toBlockMap } from "builder-util-runtime/internal"
+import { AllPublishOptions, asArray, CancellationToken, newError, PublishConfiguration, UpdateInfo, UUID, DownloadOptions, CancellationError, HttpExecutor, ProgressInfo, BlockMap, retry, collectManifestSignatures, normalizePublicKeyList, verifyManifestSignatures, type LimitedLogger } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { release } from "os"
 import { EventEmitter } from "events"
@@ -1320,21 +1299,28 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         oldBlockMapData = null
       }
       isOldBlockMapFromCache = oldBlockMapData != null
-      let newBlockMapData: LoadedBlockMap
+      let newBlockMapData: LoadedBlockMap | null = null
       if (oldBlockMapData?.format === "v2") {
-        const fetched = await fetchBlockMapV3({
-          url: newBlockMapUrl,
-          oldMap: oldBlockMapData.data,
-          httpExecutor: this.httpExecutor,
-          requestHeaders: this.downloadRequestHeaders(newBlockMapUrl, downloadUpdateOptions),
-          cancellationToken: downloadUpdateOptions.cancellationToken,
-          isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
-          logger: this._logger,
-        })
-        newBlockMapData = parseBlockMapData(fetched.buffer, newBlockMapUrl.href)
-      } else {
-        newBlockMapData = await downloadBlockMap(newBlockMapUrl)
+        try {
+          const fetched = await fetchBlockMapV3({
+            url: newBlockMapUrl,
+            oldMap: oldBlockMapData.data,
+            expectedFileSize: fileInfo.info.size,
+            httpExecutor: this.httpExecutor,
+            requestHeaders: this.downloadRequestHeaders(newBlockMapUrl, downloadUpdateOptions),
+            cancellationToken: downloadUpdateOptions.cancellationToken,
+            isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
+            logger: this._logger,
+          })
+          newBlockMapData = parseBlockMapData(fetched.buffer, newBlockMapUrl.href)
+        } catch (e: unknown) {
+          // a host or CDN that mishandles Range requests, or a map that fails verification: a plain GET of the new map still
+          // allows a differential update
+          throwIfCancelled(e, downloadUpdateOptions.cancellationToken)
+          nonThrowingLogger(this._logger).warn(`Cannot fetch the changed parts of the block map "${newBlockMapUrl.href}", downloading it whole: ${e instanceof Error ? e.message : String(e)}`)
+        }
       }
+      newBlockMapData ??= await downloadBlockMap(newBlockMapUrl)
       await saveBlockMapToCacheDir(newBlockMapData, this.downloadedUpdateHelper!.cacheDirForPendingUpdate)
 
       if (oldBlockMapData == null) {
@@ -1371,7 +1357,12 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
           }): cached "${oldInstallerFileName}" is likely out of sync with the old blockmap, e.g. because one of them was replaced or evicted independently of the other`
         )
       }
-      this.logDifferentialDownloadFallback(e)
+      if (e?.code === "ERR_UPDATER_BLOCKMAP_FORMAT_CHANGED") {
+        // expected once, for the first update after the format changed: not a failure
+        nonThrowingLogger(this._logger).info(`${e.message}: downloading this update in full; the next one is differential again`)
+      } else {
+        this.logDifferentialDownloadFallback(e)
+      }
       if (this._testOnlyOptions != null) {
         // test mode
         throw e

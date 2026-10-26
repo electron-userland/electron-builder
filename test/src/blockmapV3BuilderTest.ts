@@ -19,7 +19,8 @@ import {
   toV3Regions,
 } from "app-builder-lib/src/targets/differentialUpdateInfoBuilder.js"
 import { Arch, InvalidConfigurationError } from "builder-util"
-import { BlockMapV3, BlockMapV3Group, decodeBlockMapV3, GenericServerOptions, GROUP_MAX, GROUP_MIN, HASH_LEN, isBlockMapV3 } from "builder-util-runtime"
+import { GenericServerOptions } from "builder-util-runtime"
+import { BlockMapV3, BlockMapV3Group, decodeBlockMapV3, GROUP_MAX, GROUP_MIN, HASH_LEN, isBlockMapV3 } from "builder-util-runtime/internal"
 
 // Reproducible deterministic test data (same LCG as blockmapTest.ts)
 function makeTestData(size: number, seed = 12345): Buffer {

@@ -9,7 +9,6 @@ export {
 } from "./authenticodeSignature.js"
 export type { AuthenticodeSignerCertificateData } from "./authenticodeSignature.js"
 export { BlockMap } from "./blockMapApi.js"
-export * from "./blockMapV3.js"
 export { CancellationError, CancellationToken } from "./CancellationToken.js"
 export { newError } from "./error.js"
 export { hashFile } from "./hash.js"

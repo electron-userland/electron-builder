@@ -1,29 +1,5 @@
 import { blake2b } from "@noble/hashes/blake2.js"
-import {
-  BlockInput,
-  decodeBlockMapV3,
-  encodeBlockMapV3,
-  GROUP_MAX,
-  GROUP_MIN,
-  GROUP_SIZE,
-  groupBlocks,
-  groupEntryRanges,
-  groupSupers,
-  HEADER_FIXED_SIZE,
-  parseBlockMapV3Groups,
-  parseBlockMapV3Header,
-  parseBlockMapV3Records,
-  parseBlockMapV3Supers,
-  RECORD_SIZE,
-  recordRangeOfGroup,
-  recordsStart,
-  REGION_SIZE,
-  SUPER_MAX,
-  SUPER_MIN,
-  SUPER_SIZE,
-  superHashOfGroups,
-  toBlockMap,
-} from "builder-util-runtime"
+import { BlockInput, decodeBlockMapV3, encodeBlockMapV3, GROUP_MAX, GROUP_MIN, GROUP_SIZE, groupBlocks, groupEntryRanges, groupSupers, HEADER_FIXED_SIZE, parseBlockMapV3Groups, parseBlockMapV3Header, parseBlockMapV3Records, parseBlockMapV3Supers, RECORD_SIZE, recordRangeOfGroup, recordsStart, REGION_SIZE, SUPER_MAX, SUPER_MIN, SUPER_SIZE, superHashOfGroups, toBlockMap } from "builder-util-runtime/internal"
 
 // Deterministic synthetic blocks: content-derived digests, sizes around a mean.
 function makeBlocks(count: number, seed: number, avgSize = 4096, startOffset = 0): Array<BlockInput> {
@@ -175,11 +151,26 @@ describe("block map v3 format", () => {
 
   test("rejects bad magic, oversize blocks and truncated input", ({ expect }) => {
     const blocks = makeBlocks(20, 1)
-    const buf = encodeBlockMapV3(blocks, { fileSize: 1, defaultChunker: DEFAULT })
+    const buf = encodeBlockMapV3(blocks, { fileSize: blocks.reduce((s, b) => s + b.size, 0), defaultChunker: DEFAULT })
     const bad = Buffer.from(buf)
     bad.write("NOPE", 0, 4, "latin1")
     expect(() => decodeBlockMapV3(bad)).toThrow("bad magic")
     expect(() => decodeBlockMapV3(buf.subarray(0, buf.length - 5))).toThrow("truncated")
     expect(() => encodeBlockMapV3([{ digest: blocks[0].digest, size: 70000, offset: 0 }], { fileSize: 70000, defaultChunker: DEFAULT })).toThrow("16-bit")
+  })
+
+  test("rejects counts that cannot fit the file: more blocks than bytes, more groups than blocks, more super-groups than groups", ({ expect }) => {
+    const blocks = makeBlocks(20, 1)
+    const buf = encodeBlockMapV3(blocks, { fileSize: blocks.reduce((s, b) => s + b.size, 0), defaultChunker: DEFAULT })
+    const header = parseBlockMapV3Header(buf)
+    const withCount = (offset: number, value: number) => {
+      const result = Buffer.from(buf)
+      result.writeUInt32LE(value, offset)
+      return result
+    }
+    // blockCount @20, groupCount @16, superCount @42
+    expect(() => parseBlockMapV3Header(withCount(20, header.fileSize + 1))).toThrow("inconsistent counts")
+    expect(() => parseBlockMapV3Header(withCount(16, header.blockCount + 1))).toThrow("inconsistent counts")
+    expect(() => parseBlockMapV3Header(withCount(42, header.groupCount + 1))).toThrow("inconsistent counts")
   })
 })

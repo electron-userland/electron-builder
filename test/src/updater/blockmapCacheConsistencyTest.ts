@@ -1,4 +1,6 @@
+import { blake2b } from "@noble/hashes/blake2.js"
 import { CancellationToken } from "builder-util-runtime"
+import { encodeBlockMapV3 } from "builder-util-runtime/internal"
 import { AppImageUpdater } from "electron-updater"
 import type { DownloadExecutorResult } from "electron-updater"
 import { AppUpdater, isBlockMapOfFile } from "electron-updater/src/AppUpdater"
@@ -50,7 +52,7 @@ describe("executeDownload blockmap cache consistency", { concurrent: false }, ()
     ;(updater as any).downloadedUpdateHelper = helper
   })
 
-  function executeDownload(options: { disableDifferentialDownload?: boolean; writePendingBlockMap?: string } = {}): Promise<DownloadExecutorResult> {
+  function executeDownload(options: { disableDifferentialDownload?: boolean; writePendingBlockMap?: string | Buffer } = {}): Promise<DownloadExecutorResult> {
     const disableDifferentialDownload = options.disableDifferentialDownload === true
     const taskOptions: DownloadExecutorTask = {
       fileExtension: "zip",
@@ -112,6 +114,16 @@ describe("executeDownload blockmap cache consistency", { concurrent: false }, ()
     await executeDownload({ writePendingBlockMap: "blockmap of 2.0.0" })
 
     expect((await readFile(cachedBlockMapFile())).toString()).toBe("blockmap of 2.0.0")
+  })
+
+  test("a binary (v2) blockmap produced by this download round is promoted byte for byte", async () => {
+    const blocks = [0, 1, 2].map(i => ({ digest: blake2b(Buffer.from(`block-${i}`), { dkLen: 18 }), size: 1000, offset: i * 1000 }))
+    const binary = encodeBlockMapV3(blocks, { fileSize: 3000, defaultChunker: { min: 8192, avg: 16384, max: 32768 } })
+    await outputFile(cachedBlockMapFile(), "stale blockmap describing an old release")
+
+    await executeDownload({ writePendingBlockMap: binary })
+
+    expect((await readFile(cachedBlockMapFile())).equals(binary)).toBe(true)
   })
 
   test("cached blockmap is kept when differential download is disabled", async () => {

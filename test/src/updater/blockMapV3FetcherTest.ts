@@ -1,5 +1,6 @@
 import { blake2b } from "@noble/hashes/blake2.js"
-import { BlockInput, CancellationToken, decodeBlockMapV3, encodeBlockMapV3, isBlockMapV3, RECORD_SIZE, SUPER_SIZE } from "builder-util-runtime"
+import { CancellationToken } from "builder-util-runtime"
+import { BlockInput, decodeBlockMapV3, encodeBlockMapV3, isBlockMapV3, RECORD_SIZE, recordsStart, SUPER_SIZE } from "builder-util-runtime/internal"
 import {
   coalesce,
   fetchBlockMapV3,
@@ -7,6 +8,7 @@ import {
   firstRangeSize,
   MIN_FIRST_RANGE_SIZE,
   parseMultipartByteRanges,
+  verifyBlockMapV3,
 } from "electron-updater/src/differentialDownloader/blockMapV3Fetcher"
 import * as http from "http"
 import { AddressInfo } from "net"
@@ -53,8 +55,14 @@ interface RequestLog {
 interface TestServer {
   url: URL
   requests: Array<RequestLog>
+  /** request headers, in the order of `requests` */
+  headers: Array<http.IncomingHttpHeaders>
   rangeSupport: boolean
   files: Map<string, Buffer>
+  /** name → Location of a 302 answer */
+  redirects: Map<string, string>
+  /** answers the request instead of the file server when it returns true */
+  override: ((req: http.IncomingMessage, res: http.ServerResponse) => boolean) | null
   close(): Promise<void>
 }
 
@@ -78,17 +86,27 @@ function parseRanges(header: string, size: number): Array<[number, number]> | nu
 
 /** In-memory file server with single- and multi-range support (206 + Content-Range, 416 when unsatisfiable) and a switch to disable Range support. */
 function startServer(): Promise<TestServer> {
-  const state: TestServer = { url: null as any, requests: [], rangeSupport: true, files: new Map(), close: null as any }
+  const state: TestServer = { url: null as any, requests: [], headers: [], rangeSupport: true, files: new Map(), redirects: new Map(), override: null, close: null as any }
   const server = http.createServer((req, res) => {
     const name = new URL(req.url!, "http://localhost").pathname.replace(/^\/+/, "")
     const file = state.files.get(name)
     const rangeHeader = req.headers["range"] ?? null
     const log: RequestLog = { method: req.method!, range: rangeHeader, status: 0 }
     state.requests.push(log)
+    state.headers.push(req.headers)
     const send = (status: number, headers: http.OutgoingHttpHeaders, body?: Buffer) => {
       log.status = status
       res.writeHead(status, headers)
       res.end(body)
+    }
+    if (state.override?.(req, res) === true) {
+      log.status = res.statusCode
+      return
+    }
+    const location = state.redirects.get(name)
+    if (location != null) {
+      send(302, { Location: location })
+      return
     }
     if (file == null) {
       send(404, {}, Buffer.from("Not found"))
@@ -129,11 +147,15 @@ function startServer(): Promise<TestServer> {
 
 describe("blockMapV3Fetcher", () => {
   let server: TestServer
+  /** a second origin (another port), e.g. the CDN a feed redirects to */
+  let cdn: TestServer
   beforeAll(async () => {
     server = await startServer()
+    cdn = await startServer()
   })
   afterAll(async () => {
     await server.close()
+    await cdn.close()
   })
 
   // ~400 groups of ~32 blocks in ~25 super-groups
@@ -141,15 +163,32 @@ describe("blockMapV3Fetcher", () => {
   const OLD = encode(OLD_BLOCKS)
   const oldMap = decodeBlockMapV3(OLD)
 
-  function fetchWith(name: string, old: Buffer | null, isUseMultipleRangeRequest?: boolean) {
-    server.requests.length = 0
+  function fetchWith(name: string, old: Buffer | null, isUseMultipleRangeRequest?: boolean, extra: { expectedFileSize?: number; requestHeaders?: http.OutgoingHttpHeaders; setUp?: () => void } = {}) {
+    for (const it of [server, cdn]) {
+      it.requests.length = 0
+      it.headers.length = 0
+      it.redirects.clear()
+      it.override = null
+    }
+    const { setUp, ...options } = extra
+    setUp?.()
     return fetchBlockMapV3({
       url: new URL(name, server.url),
       oldMap: old,
       httpExecutor,
       cancellationToken: new CancellationToken(),
       isUseMultipleRangeRequest,
+      ...options,
     })
+  }
+
+  /** NEW map with a few edited groups, so a fetch against OLD issues several Range requests */
+  function editedMap(tag: string): Buffer {
+    const blocks = OLD_BLOCKS.map(b => ({ ...b }))
+    for (const groupIndex of [40, 200]) {
+      edit(blocks, firstBlockOf(groupIndex) + 1, tag)
+    }
+    return encode(reoffset(blocks))
   }
 
   /** first block index of group `groupIndex` */
@@ -401,10 +440,113 @@ describe("blockMapV3Fetcher", () => {
       Buffer.from("z"),
       Buffer.from(`\r\n--${boundary}--\r\n`),
     ])
-    const parts = parseMultipartByteRanges(body, boundary)
+    const parts = parseMultipartByteRanges(body, boundary, [
+      { start: 10, end: 13 },
+      { start: 50, end: 51 },
+    ])
     expect(parts.map(it => [it.start, it.end, it.data.toString()])).toEqual([
       [10, 13, "abc"],
       [50, 51, "z"],
     ])
+  })
+  test("parseMultipartByteRanges rejects a part that ends before it starts, an unexpected part and a repeated part", () => {
+    const part = (range: string, data: string) => Buffer.from(`--b\r\nContent-Range: bytes ${range}/2000\r\n\r\n${data}\r\n`)
+    const end = Buffer.from("--b--\r\n")
+    // `bytes 1000-10` once made the parser find the same delimiter again and loop forever
+    expect(() => parseMultipartByteRanges(Buffer.concat([part("1000-10", ""), end]), "b", [{ start: 1000, end: 1011 }])).toThrow(/unexpected part 1000-10/)
+    expect(() => parseMultipartByteRanges(Buffer.concat([part("0-2", "abc"), end]), "b", [{ start: 0, end: 2 }])).toThrow(/unexpected part 0-2/)
+    expect(() => parseMultipartByteRanges(Buffer.concat([part("0-2", "abc"), part("0-2", "abc"), end]), "b", [{ start: 0, end: 3 }])).toThrow(/unexpected part 0-2/)
+  })
+
+  test("a cross-origin redirect drops the credential headers for that and every later request; a relative Location resolves against the current URL", async () => {
+    const NEW = editedMap("redirect")
+    cdn.files.set("cdn/new.blockmap", NEW)
+    const result = await fetchWith("new.blockmap", OLD, false, {
+      requestHeaders: { authorization: "token secret", "x-custom": "kept" },
+      setUp: () => {
+        server.redirects.set("new.blockmap", new URL("redirect/hop.blockmap", cdn.url).href)
+        cdn.redirects.set("redirect/hop.blockmap", "../cdn/new.blockmap")
+      },
+    })
+    expect(result.buffer.equals(NEW)).toBe(true)
+
+    // the feed's origin got the credentials once, then every range went to the CDN without them
+    expect(server.requests).toHaveLength(1)
+    expect(server.headers[0].authorization).toBe("token secret")
+    expect(cdn.requests.length).toBeGreaterThan(2)
+    expect(cdn.requests.filter(it => it.status === 302)).toHaveLength(1)
+    for (const headers of cdn.headers) {
+      expect(headers.authorization).toBeUndefined()
+      expect(headers["x-custom"]).toBe("kept")
+    }
+  })
+
+  test("a malformed Location rejects the fetch instead of throwing from the response listener", async () => {
+    const pending = fetchWith("new.blockmap", OLD, false, { setUp: () => server.redirects.set("new.blockmap", "http://[::1") })
+    await expect(pending).rejects.toThrow(/Invalid URL/)
+  })
+
+  test("a redirect to another protocol is rejected", async () => {
+    const pending = fetchWith("new.blockmap", OLD, false, { setUp: () => server.redirects.set("new.blockmap", "file:///etc/passwd") })
+    await expect(pending).rejects.toThrow(/"file:" protocol/)
+  })
+
+  test("a map for a file of another size than the update is rejected before anything else is requested", async () => {
+    server.files.set("new.blockmap", OLD)
+    await expect(fetchWith("new.blockmap", OLD, false, { expectedFileSize: oldMap.header.fileSize + 1 })).rejects.toThrow(/describes a \d+-byte file, the update is/)
+    expect(server.requests).toHaveLength(1)
+    await expect(fetchWith("new.blockmap", null, false, { expectedFileSize: oldMap.header.fileSize + 1 })).rejects.toThrow(/describes a/)
+    await expect(fetchWith("new.blockmap", OLD, false, { expectedFileSize: oldMap.header.fileSize })).resolves.toMatchObject({ requests: 1 })
+  })
+
+  test("a header whose counts cannot fit the file is rejected before its tables are requested or allocated", async () => {
+    const corrupt = Buffer.from(OLD)
+    // 2^32 - 1 blocks would make the map ~40 GB
+    corrupt.writeUInt32LE(0xffffffff, 20)
+    server.files.set("corrupt.blockmap", corrupt)
+    await expect(fetchWith("corrupt.blockmap", OLD, false)).rejects.toThrow(/inconsistent counts/)
+    expect(server.requests).toHaveLength(1)
+  })
+
+  test("a single-range answer must name the requested range in Content-Range", async () => {
+    const NEW = editedMap("content-range")
+    server.files.set("new.blockmap", NEW)
+    let count = 0
+    // answer the second range request with the right length from the wrong offset
+    const wrongOffset = (req: http.IncomingMessage, res: http.ServerResponse) => {
+      if (++count !== 2) {
+        return false
+      }
+      const [start, end] = /bytes=(\d+)-(\d+)/.exec(req.headers.range!)!.slice(1).map(it => parseInt(it, 10))
+      const shifted = start + 10
+      res.writeHead(206, { "Content-Range": `bytes ${shifted}-${end + 10}/${NEW.length}` })
+      res.end(NEW.subarray(shifted, end + 11))
+      return true
+    }
+    await expect(fetchWith("new.blockmap", OLD, false, { setUp: () => (server.override = wrongOffset) })).rejects.toThrow(/Content-Range of the answer is/)
+  })
+
+  test("a 206 body larger than the requested range is cut off at the limit", async () => {
+    server.files.set("big.blockmap", OLD)
+    // claims the requested range, then streams far more
+    const oversized = (_req: http.IncomingMessage, res: http.ServerResponse) => {
+      res.writeHead(206, { "Content-Range": `bytes 0-${firstRangeSize(oldMap.header) - 1}/${OLD.length}` })
+      res.end(Buffer.alloc(4 * 1024 * 1024))
+      return true
+    }
+    await expect(fetchWith("big.blockmap", OLD, false, { setUp: () => (server.override = oversized) })).rejects.toThrow(/response exceeds \d+ bytes/)
+  })
+
+  test("verification rejects empty super-groups, groups and blocks", () => {
+    const map = decodeBlockMapV3(OLD)
+    const zeroSize = Buffer.from(OLD)
+    zeroSize.writeUInt16LE(0, recordsStart(map.header) + 8)
+    expect(() => verifyBlockMapV3(zeroSize, map.header, map.supers, map.groups)).toThrow(/empty block/)
+    expect(() => decodeBlockMapV3(zeroSize)).toThrow(/empty block/)
+
+    const groups = map.groups.map((it, i) => (i === 0 ? { ...it, blockCount: 0 } : it))
+    expect(() => verifyBlockMapV3(OLD, map.header, map.supers, groups)).toThrow(/group 0 is empty/)
+    const supers = map.supers.map((it, i) => (i === 0 ? { ...it, groupCount: 0 } : it))
+    expect(() => verifyBlockMapV3(OLD, map.header, supers, map.groups)).toThrow(/super-group 0 is empty/)
   })
 })

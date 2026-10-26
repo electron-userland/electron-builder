@@ -1,32 +1,5 @@
-import {
-  BlockMapV3,
-  BlockMapV3Group,
-  BlockMapV3Header,
-  BlockMapV3Super,
-  blockMapV3Size,
-  CancellationToken,
-  configureRequestOptions,
-  configureRequestUrl,
-  createHttpError,
-  decodeBlockMapV3,
-  GROUP_SIZE,
-  groupEntryRanges,
-  groupHashOfRecords,
-  groupTableStart,
-  HttpExecutor,
-  isBlockMapV3,
-  IndexRange,
-  parseBlockMapV3Groups,
-  parseBlockMapV3Header,
-  parseBlockMapV3Records,
-  parseBlockMapV3Supers,
-  RECORD_SIZE,
-  recordRanges,
-  recordsStart,
-  safeGetHeader,
-  SUPER_SIZE,
-  superHashOfGroups,
-} from "builder-util-runtime"
+import { CancellationToken, configureRequestOptions, configureRequestUrl, createHttpError, HttpExecutor, safeGetHeader } from "builder-util-runtime"
+import { BlockMapV3, BlockMapV3Group, BlockMapV3Header, BlockMapV3Super, blockMapV3Size, decodeBlockMapV3, GROUP_SIZE, groupEntryRanges, groupHashOfRecords, groupTableStart, isBlockMapV3, IndexRange, parseBlockMapV3Groups, parseBlockMapV3Header, parseBlockMapV3Records, parseBlockMapV3Supers, RECORD_SIZE, recordRanges, recordsStart, SUPER_SIZE, superHashOfGroups } from "builder-util-runtime/internal"
 import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
 import { Logger } from "../types.js"
@@ -39,6 +12,13 @@ export const MIN_FIRST_RANGE_SIZE = 2 * 1024
 export const COALESCE_GAP_BYTES = 1024
 /** Apache's default MaxRanges is 200 and header buffers are 8 KB; stay under both. */
 export const MAX_RANGES_PER_REQUEST = 200
+/**
+ * Largest block map accepted (whole downloads, and the size a header declares): a 2 GB installer at 1 KiB blocks needs ~22 MB,
+ * so this leaves ample room while keeping a corrupt or hostile header from allocating or requesting gigabytes.
+ */
+export const MAX_BLOCK_MAP_SIZE = 128 * 1024 * 1024
+/** per-part allowance for the boundary and part headers of a `multipart/byteranges` response */
+const MULTIPART_PART_OVERHEAD = 256
 const MAX_REDIRECTS = 10
 
 export interface BlockMapV3FetchOptions {
@@ -46,6 +26,8 @@ export interface BlockMapV3FetchOptions {
   readonly url: URL
   /** the cached OLD v3 map (complete file), or null when there is none — then the whole new map is downloaded with a plain GET */
   readonly oldMap: Buffer | null
+  /** size of the file the new map describes (the update's `size` in the manifest), when known: a map for another size is rejected */
+  readonly expectedFileSize?: number | null
   readonly httpExecutor: HttpExecutor<any>
   readonly requestHeaders?: OutgoingHttpHeaders | null
   readonly cancellationToken: CancellationToken
@@ -80,8 +62,15 @@ interface RangeResponse {
   status: number
   body: Buffer
   contentType: string | null
+  /** the range from `Content-Range: bytes a-b/size` (end exclusive), or null */
+  range: ByteRange | null
   /** total size from `Content-Range: bytes a-b/size`, or null */
   totalSize: number | null
+}
+
+interface DecodedOldMap {
+  data: Buffer
+  map: BlockMapV3
 }
 
 /**
@@ -107,19 +96,23 @@ export async function fetchBlockMapV3(options: BlockMapV3FetchOptions): Promise<
 class BlockMapV3Fetcher {
   private wireBytes = 0
   private requests = 0
-  private readonly requestOptions: RequestOptions
+  /** options of the current target: retargeted by every redirect (later ranges go directly to e.g. the CDN a feed redirects to) */
+  private requestOptions: RequestOptions
+  private currentUrl: URL
 
   constructor(private readonly options: BlockMapV3FetchOptions) {
-    const requestOptions: RequestOptions = {
+    // Electron's net reports redirects as events instead of following them, so they can be followed without the credentials
+    const requestOptions: RequestOptions & { redirect?: "manual" } = {
       headers: {
         ...options.requestHeaders,
         accept: "*/*",
       },
+      redirect: "manual",
     }
     configureRequestUrl(options.url, requestOptions)
     configureRequestOptions(requestOptions)
-    ;(requestOptions as any).redirect = "manual"
     this.requestOptions = requestOptions
+    this.currentUrl = options.url
   }
 
   private result(buffer: Buffer, matched: { supers: number; groups: number }, fetched: { supers: number; groups: number }): BlockMapV3FetchResult {
@@ -135,11 +128,12 @@ class BlockMapV3Fetcher {
   }
 
   async fetch(): Promise<BlockMapV3FetchResult> {
-    const oldMap = this.decodeOldMap()
-    if (oldMap == null) {
+    const old = this.decodeOldMap()
+    if (old == null) {
       const buffer = await this.fetchWhole()
       return this.verifiedWhole(buffer)
     }
+    const oldMap = old.map
 
     // 1. header + super-group table (+ whatever group entries / records fit into the first request)
     const first = await this.rangeRequest([{ start: 0, end: firstRangeSize(oldMap.header) }], true)
@@ -151,6 +145,7 @@ class BlockMapV3Fetcher {
       return await this.otherFormat(first)
     }
     const header = parseBlockMapV3Header(first.body)
+    this.checkHeader(header)
     const fileSize = blockMapV3Size(header)
     if (first.totalSize != null && first.totalSize !== fileSize) {
       throw new Error(`block map v3: remote size ${first.totalSize} does not match header (expected ${fileSize})`)
@@ -180,7 +175,7 @@ class BlockMapV3Fetcher {
     superStage.superMatch.forEach((oldIndex, index) => {
       if (oldIndex >= 0) {
         const from = oldGroupEntryRanges[oldIndex]
-        this.options.oldMap!.copy(buffer, newGroupEntryRanges[index].start, from.start, from.end)
+        old.data.copy(buffer, newGroupEntryRanges[index].start, from.start, from.end)
       }
     })
     const groupRanges = coalesce(superStage.fetch)
@@ -199,7 +194,7 @@ class BlockMapV3Fetcher {
     recordStage.groupMatch.forEach((oldIndex, index) => {
       if (oldIndex >= 0) {
         const from = oldRecordRanges[oldIndex]
-        this.options.oldMap!.copy(buffer, newRecordRanges[index].start, from.start, from.end)
+        old.data.copy(buffer, newRecordRanges[index].start, from.start, from.end)
       }
     })
     const ranges = coalesce(recordStage.fetch)
@@ -222,16 +217,31 @@ class BlockMapV3Fetcher {
     return this.result(buffer, matched, fetched)
   }
 
-  private decodeOldMap() {
-    const oldMap = this.options.oldMap
-    if (oldMap == null || oldMap.length === 0) {
+  private decodeOldMap(): DecodedOldMap | null {
+    const data = this.options.oldMap
+    if (data == null || data.length === 0) {
       return null
     }
     try {
-      return decodeBlockMapV3(oldMap)
+      return { data, map: decodeBlockMapV3(data) }
     } catch (e: any) {
       this.options.logger?.warn?.(`Cannot parse cached block map v3, downloading the whole new map: ${e.message || e}`)
       return null
+    }
+  }
+
+  /**
+   * Rejects a header that does not describe the expected file, or declares a map larger than MAX_BLOCK_MAP_SIZE, before any size
+   * derived from its counts is requested or allocated (the counts themselves are bounded by `parseBlockMapV3Header`).
+   */
+  private checkHeader(header: BlockMapV3Header): void {
+    const expectedFileSize = this.options.expectedFileSize
+    if (expectedFileSize != null && header.fileSize !== expectedFileSize) {
+      throw new Error(`block map v3: the map describes a ${header.fileSize}-byte file, the update is ${expectedFileSize} bytes`)
+    }
+    const size = blockMapV3Size(header)
+    if (size > MAX_BLOCK_MAP_SIZE) {
+      throw new Error(`block map v3: the header declares a ${size}-byte map, more than the ${MAX_BLOCK_MAP_SIZE}-byte limit`)
     }
   }
 
@@ -241,6 +251,7 @@ class BlockMapV3Fetcher {
       return this.result(body, { supers: 0, groups: 0 }, { supers: 0, groups: 0 })
     }
     const map = decodeBlockMapV3(body)
+    this.checkHeader(map.header)
     const expected = blockMapV3Size(map.header)
     if (body.length !== expected) {
       throw new Error(`block map v3: file size ${body.length} does not match header (expected ${expected})`)
@@ -254,6 +265,8 @@ class BlockMapV3Fetcher {
     let body = first.body
     if (first.totalSize == null) {
       body = await this.fetchWhole()
+    } else if (first.totalSize > MAX_BLOCK_MAP_SIZE) {
+      throw new Error(`Blockmap "${this.options.url.href}" is ${first.totalSize} bytes, more than the ${MAX_BLOCK_MAP_SIZE}-byte limit`)
     } else if (body.length < first.totalSize) {
       const rest = await this.rangeRequest([{ start: body.length, end: first.totalSize }])
       body = rest.status === 200 ? rest.body : Buffer.concat([body, rest.body])
@@ -262,7 +275,7 @@ class BlockMapV3Fetcher {
   }
 
   private async fetchWhole(): Promise<Buffer> {
-    const response = await this.doRequest(null)
+    const response = await this.doRequest(null, MAX_BLOCK_MAP_SIZE)
     if (response.status !== 200 && response.status !== 206) {
       throw new Error(`block map v3: unexpected status ${response.status} for a full download`)
     }
@@ -303,36 +316,27 @@ class BlockMapV3Fetcher {
       if (m == null) {
         throw new Error(`Content-Type "multipart/byteranges" is expected, but got "${contentType}"`)
       }
-      const parts = parseMultipartByteRanges(response.body, m[1] || m[2])
-      const expected = new Map<number, number>(batch.map(it => [it.start, it.end]))
-      for (const part of parts) {
-        const end = expected.get(part.start)
-        if (end == null || part.end !== end) {
-          throw new Error(`block map v3: unexpected part ${part.start}-${part.end - 1} in a multipart response`)
-        }
-        part.data.copy(target, part.start)
-        expected.delete(part.start)
+      const parts = parseMultipartByteRanges(response.body, m[1] || m[2], batch)
+      if (parts.length !== batch.length) {
+        throw new Error(`block map v3: multipart response is missing ${batch.length - parts.length} of ${batch.length} requested ranges`)
       }
-      if (expected.size !== 0) {
-        throw new Error(`block map v3: multipart response is missing ${expected.size} of ${batch.length} requested ranges`)
+      for (const part of parts) {
+        part.data.copy(target, part.start)
       }
     }
     return null
   }
 
   /**
-   * Issues one Range request. A 206 body of a single range must have the requested length, unless `allowShort`
-   * (the first request, which may exceed a small file and is then answered with the file's tail).
+   * Issues one Range request. A 206 answer to a single range must name exactly that range in `Content-Range` and carry its
+   * bytes, unless `allowShort` (the first request, which may exceed a small file and is then answered up to the file's end).
    */
   private async rangeRequest(ranges: Array<ByteRange>, allowShort = false): Promise<RangeResponse> {
-    const response = await this.doRequest(ranges)
+    const requested = ranges.reduce((sum, it) => sum + it.end - it.start, 0)
+    const response = await this.doRequest(ranges, ranges.length === 1 ? requested : requested + ranges.length * MULTIPART_PART_OVERHEAD)
     if (response.status === 206) {
       if (ranges.length === 1) {
-        const requested = ranges[0].end - ranges[0].start
-        const received = response.body.length
-        if (received > requested || (received < requested && !allowShort)) {
-          throw new Error(`Received data length ${received} is not equal to expected ${requested}`)
-        }
+        checkSingleRange(ranges[0], response, allowShort)
       }
       return response
     }
@@ -343,14 +347,23 @@ class BlockMapV3Fetcher {
     throw new Error(`block map v3: unexpected status ${response.status} for a Range request`)
   }
 
-  private doRequest(ranges: Array<ByteRange> | null, redirectCount = 0): Promise<RangeResponse> {
+  /**
+   * Sends one GET (of `ranges`, or of the whole file when null) and buffers the body, failing once a 206 body exceeds
+   * `maxPartialBytes` or any other body (the whole file) exceeds MAX_BLOCK_MAP_SIZE.
+   */
+  private doRequest(ranges: Array<ByteRange> | null, maxPartialBytes: number, redirectCount = 0): Promise<RangeResponse> {
     const { cancellationToken, httpExecutor } = this.options
     return cancellationToken.createPromise<RangeResponse>((resolve, reject, onCancel) => {
-      const requestOptions: RequestOptions = { ...this.requestOptions, headers: { ...this.requestOptions.headers } }
+      const headers: OutgoingHttpHeaders = { ...this.requestOptions.headers }
       if (ranges == null) {
-        delete requestOptions.headers!.range
+        delete headers.range
       } else {
-        requestOptions.headers!.range = `bytes=${ranges.map(it => `${it.start}-${it.end - 1}`).join(", ")}`
+        headers.range = `bytes=${ranges.map(it => `${it.start}-${it.end - 1}`).join(", ")}`
+      }
+      const requestOptions: RequestOptions = { ...this.requestOptions, headers }
+      const followRedirect = (redirectOptions: RequestOptions) => {
+        this.retarget(redirectOptions)
+        this.doRequest(ranges, maxPartialBytes, redirectCount + 1).then(resolve, reject)
       }
       this.requests++
       const request = httpExecutor.createRequest(requestOptions, (response: IncomingMessage) => {
@@ -366,8 +379,15 @@ class BlockMapV3Fetcher {
             reject(new Error(`Too many redirects (> ${MAX_REDIRECTS})`))
             return
           }
-          this.followRedirect(location)
-          this.doRequest(ranges, redirectCount + 1).then(resolve, reject)
+          // a response listener: a throw (a malformed Location) would escape as an uncaught exception and never settle the request
+          let redirectOptions: RequestOptions
+          try {
+            redirectOptions = prepareRedirect(new URL(location, this.currentUrl), requestOptions)
+          } catch (e: unknown) {
+            reject(e instanceof Error ? e : new Error(`Cannot follow the redirect: ${String(e)}`))
+            return
+          }
+          followRedirect(redirectOptions)
           return
         }
         if (status >= 400) {
@@ -376,8 +396,18 @@ class BlockMapV3Fetcher {
           return
         }
 
+        const maxBytes = status === 206 ? maxPartialBytes : MAX_BLOCK_MAP_SIZE
         const chunks: Array<Buffer> = []
+        let received = 0
         response.on("data", (chunk: Buffer) => {
+          received += chunk.length
+          if (received > maxBytes) {
+            // rejected first: aborting makes the request report its own error, which must not win
+            reject(new Error(`block map v3: response exceeds ${maxBytes} bytes`))
+            response.destroy()
+            request.abort()
+            return
+          }
           this.wireBytes += chunk.length
           chunks.push(chunk)
         })
@@ -388,24 +418,53 @@ class BlockMapV3Fetcher {
             status,
             body: Buffer.concat(chunks),
             contentType: safeGetHeader(response, "content-type"),
+            range: m == null ? null : { start: parseInt(m[1], 10), end: parseInt(m[2], 10) + 1 },
             totalSize: m != null && m[3] !== "*" ? parseInt(m[3], 10) : null,
           })
         })
       })
-      request.on("redirect", (_statusCode: number, _method: string, redirectUrl: string) => {
-        this.followRedirect(redirectUrl)
-        request.followRedirect()
-      })
+      // Electron's net: the redirect arrives as an event; the executor aborts the request, strips credentials on a cross-origin
+      // target, counts the redirect against its limit and hands over the options of the new request
+      httpExecutor.addRedirectHandlers(request, requestOptions, reject, redirectCount, followRedirect)
       httpExecutor.addErrorAndTimeoutHandlers(request, reject)
       onCancel(() => request.abort())
       request.end()
     })
   }
 
-  private followRedirect(redirectUrl: string) {
-    this.options.logger?.info?.(`Redirect to ${redirectUrl.replace(/\?.*$/, "")}`)
-    // later ranges go directly to the redirected location (e.g. GitHub → CDN)
-    configureRequestUrl(new URL(redirectUrl), this.requestOptions)
+  /** Later ranges go directly to the redirect target (e.g. GitHub → CDN), with the credentials already stripped if it is cross-origin. */
+  private retarget(redirectOptions: RequestOptions): void {
+    const headers: OutgoingHttpHeaders = { ...redirectOptions.headers }
+    delete headers.range
+    this.requestOptions = { ...redirectOptions, headers }
+    this.currentUrl = urlOf(redirectOptions)
+    this.options.logger?.info?.(`Redirect to ${this.currentUrl.origin}${this.currentUrl.pathname}`)
+  }
+}
+
+/** Options for a request to `target`, redirected from `options`: credential headers are left out when `target` is on another origin. */
+function prepareRedirect(target: URL, options: RequestOptions): RequestOptions {
+  if (target.protocol !== "http:" && target.protocol !== "https:") {
+    throw new Error(`Cannot follow the redirect to the "${target.protocol}" protocol`)
+  }
+  return HttpExecutor.prepareRedirectUrlOptions(target.href, options)
+}
+
+function urlOf(options: RequestOptions): URL {
+  const port = options.port == null ? "" : `:${options.port}`
+  return new URL(`${options.protocol ?? "https:"}//${options.hostname ?? ""}${port}${options.path ?? "/"}`)
+}
+
+/** A 206 answer to the single range `requested` must name it in `Content-Range` (or, if `allowShort`, its start up to the file's end) and carry exactly its bytes. */
+function checkSingleRange(requested: ByteRange, response: RangeResponse, allowShort: boolean): void {
+  const range = response.range
+  const ok = range != null && range.start === requested.start && (range.end === requested.end || (allowShort && range.end < requested.end && range.end === response.totalSize))
+  if (!ok) {
+    const actual = range == null ? "none" : `${range.start}-${range.end - 1}`
+    throw new Error(`block map v3: requested range ${requested.start}-${requested.end - 1}, Content-Range of the answer is ${actual}`)
+  }
+  if (response.body.length !== range.end - range.start) {
+    throw new Error(`Received data length ${response.body.length} is not equal to expected ${range.end - range.start}`)
   }
 }
 
@@ -552,6 +611,15 @@ export function verifyBlockMapV3(buffer: Buffer, header: BlockMapV3Header, super
   if (buffer.length !== blockMapV3Size(header)) {
     throw new Error(`block map v3: file size ${buffer.length} does not match header (expected ${blockMapV3Size(header)})`)
   }
+  // the encoder never writes an empty super-group, group or block; an empty block would become an empty operation in the plan
+  const emptySuper = supers.findIndex(it => it.groupCount === 0)
+  if (emptySuper >= 0) {
+    throw new Error(`block map v3: super-group ${emptySuper} is empty`)
+  }
+  const emptyGroup = groups.findIndex(it => it.blockCount === 0)
+  if (emptyGroup >= 0) {
+    throw new Error(`block map v3: group ${emptyGroup} is empty`)
+  }
   let entryOffset = groupTableStart(header)
   let groupIndex = 0
   supers.forEach((sup, index) => {
@@ -577,12 +645,15 @@ export function verifyBlockMapV3(buffer: Buffer, header: BlockMapV3Header, super
   groups.forEach((group, index) => {
     const end = offset + group.blockCount * RECORD_SIZE
     const recordBytes = buffer.subarray(offset, end)
-    if (groupHashOfRecords(recordBytes) !== group.hash) {
-      throw new Error(`block map v3: group ${index} hash mismatch`)
-    }
     let byteLength = 0
     for (const record of parseBlockMapV3Records(recordBytes, 0, group.blockCount)) {
+      if (record.size === 0) {
+        throw new Error(`block map v3: group ${index} has an empty block`)
+      }
       byteLength += record.size
+    }
+    if (groupHashOfRecords(recordBytes) !== group.hash) {
+      throw new Error(`block map v3: group ${index} hash mismatch`)
     }
     if (byteLength !== group.byteLength) {
       throw new Error(`block map v3: group ${index} byte length ${byteLength} does not match ${group.byteLength}`)
@@ -606,9 +677,13 @@ interface MultipartPart {
   data: Buffer
 }
 
-/** Parses a buffered `multipart/byteranges` body; parts are located by their Content-Range headers. */
-export function parseMultipartByteRanges(body: Buffer, boundary: string): Array<MultipartPart> {
+/**
+ * Parses a buffered `multipart/byteranges` body; parts are located by their Content-Range headers. Every part must be one of
+ * `expected` (each at most once), so a malformed or unexpected part fails here instead of being copied anywhere.
+ */
+export function parseMultipartByteRanges(body: Buffer, boundary: string, expected: Array<ByteRange>): Array<MultipartPart> {
   const delimiter = Buffer.from(`--${boundary}`, "latin1")
+  const expectedEnds = new Map<number, number>(expected.map(it => [it.start, it.end]))
   const parts: Array<MultipartPart> = []
   let position = body.indexOf(delimiter)
   while (position !== -1) {
@@ -628,6 +703,11 @@ export function parseMultipartByteRanges(body: Buffer, boundary: string): Array<
     }
     const start = parseInt(m[1], 10)
     const end = parseInt(m[2], 10) + 1
+    // also guarantees progress: a part ends after it starts, so the next delimiter is searched past this one
+    if (end <= start || expectedEnds.get(start) !== end) {
+      throw new Error(`block map v3: unexpected part ${m[1]}-${m[2]} in a multipart response`)
+    }
+    expectedEnds.delete(start)
     const dataStart = headerEnd + 4
     const dataEnd = dataStart + (end - start)
     if (dataEnd > body.length) {

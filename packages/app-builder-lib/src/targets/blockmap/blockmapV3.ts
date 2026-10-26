@@ -1,7 +1,7 @@
 import { createHash } from "crypto"
 import { writeFile } from "fs/promises"
 import { blake2b } from "@noble/hashes/blake2.js"
-import { BlockInput, BlockMapV3Region, encodeBlockMapV3, parseBlockMapV3Header } from "builder-util-runtime"
+import { BlockInput, BlockMapV3Region, encodeBlockMapV3, parseBlockMapV3Header } from "builder-util-runtime/internal"
 import { BlockMapRegion, chunkFile, DEFAULT_CHUNKER } from "./blockmap.js"
 
 export interface BuildBlockMapV3Options {

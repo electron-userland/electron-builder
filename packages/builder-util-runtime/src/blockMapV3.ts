@@ -302,12 +302,21 @@ export function parseBlockMapV3Header(buf: Buffer): BlockMapV3Header {
     })
     p += REGION_SIZE
   }
+  const fileSize = Number(buf.readBigUInt64LE(8))
+  const superCount = buf.readUInt32LE(42)
+  const groupCount = buf.readUInt32LE(16)
+  const blockCount = buf.readUInt32LE(20)
+  // every block, group and super-group is non-empty, so the counts are bounded by the file size; checked before any table
+  // size derived from them is allocated or requested
+  if (blockCount > fileSize || groupCount > blockCount || superCount > groupCount) {
+    throw new Error(`block map v3: inconsistent counts (fileSize ${fileSize}, blocks ${blockCount}, groups ${groupCount}, super-groups ${superCount})`)
+  }
   return {
     version,
-    fileSize: Number(buf.readBigUInt64LE(8)),
-    superCount: buf.readUInt32LE(42),
-    groupCount: buf.readUInt32LE(16),
-    blockCount: buf.readUInt32LE(20),
+    fileSize,
+    superCount,
+    groupCount,
+    blockCount,
     headerLen,
     defaultChunker: { min: buf.readUInt32LE(28), avg: buf.readUInt32LE(32), max: buf.readUInt32LE(36) },
     regions,
@@ -406,6 +415,9 @@ export function decodeBlockMapV3(buf: Buffer): BlockMapV3 {
   let groupsCounted = 0
   let blocksCounted = 0
   for (const sup of supers) {
+    if (sup.groupCount === 0) {
+      throw new Error("block map v3: empty super-group")
+    }
     groupsCounted += sup.groupCount
     blocksCounted += sup.blockCount
   }
@@ -414,10 +426,16 @@ export function decodeBlockMapV3(buf: Buffer): BlockMapV3 {
   }
   let counted = 0
   for (const group of groups) {
+    if (group.blockCount === 0) {
+      throw new Error("block map v3: empty group")
+    }
     counted += group.blockCount
   }
   if (counted !== header.blockCount) {
     throw new Error("block map v3: group block counts do not sum to blockCount")
+  }
+  if (records.some(record => record.size === 0)) {
+    throw new Error("block map v3: empty block")
   }
   return { header, supers, groups, records }
 }
