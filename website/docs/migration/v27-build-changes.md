@@ -100,7 +100,7 @@ These flags are removed (they have thrown since v22).
 
 ### Toolset defaults resolve to `"latest"` (newest bundle) {#toolset-defaults-resolve-to-latest-newest-bundle}
 
-**How you'll find out:** **Info log only.** The build logs which toolset version it uses, with a link here, but not that the default changed. Without Wine installed, a macOS build that needs it fails with a bare `spawn wine ENOENT`.
+**How you'll find out:** **Info log only.** The build logs which toolset version it uses, with a link here, but not that the default changed. Without Wine installed, a macOS build that needs it fails with a bare `spawn wine ENOENT`. An `msiProjectCreated` hook that adds a WiX 4 namespace fails the MSI build with an error that links here.
 
 In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset property or the literal `"latest"` resolves to the **newest published bundle** for that toolset. (Earlier v27 prereleases pinned a fixed default per toolset; those fixed defaults are gone.) (In v26 an unset or `null` toolset resolved to the legacy `"0.0.0"` bundle, so pin `"0.0.0"` if you need to stay on it.) A `null` value and the retired `appimage: "1.0.2"` pin are config changes: see [`toolsets.*: null` rejected](./v27-config-changes.md#toolsets-null-rejected).
 
@@ -115,11 +115,12 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 | `linuxToolsMac` | `1.0.0` | `1.0.1` | Same tools rebuilt to run on macOS 15+ (1.0.0 required macOS 26) |
 | `sevenZip` | `1.0.0` | `1.0.1` | Correct per-arch Windows `7za.exe` (x64, ia32, arm64) |
 | `squirrel` | *(electron-winstaller npm package)* | `1.1.1` | New toolset — Squirrel.Windows vendor bundle, replaces the `electron-winstaller` dependency |
+| `wix` | *(fixed, WiX 4.0.0.5512 preview)* — now `0.0.0` | `2.0.0` | WiX 3.14.1: an `arm64` build gets a native `Arm64` MSI (the preview packaged the arm64 app in an x64 MSI). The generated `.wxs` uses the WiX 3 schema, so an `msiProjectCreated` hook that inserts WiX 4-namespace elements needs the WiX 3 namespace (e.g. `http://schemas.microsoft.com/wix/UtilExtension`) or `wix: "0.0.0"`; the build fails with an error naming the namespace otherwise |
 
-**No action required** for most projects — the new bundles are drop-in replacements and produce identical output. **`wine` is the exception:** its default is no longer a bundle at all, so a macOS host that builds Windows targets now needs Wine installed (`brew install --cask wine-stable`). If you hit a regression introduced by a newer bundle, pin back by setting the toolset version to `"0.0.0"`:
+**No action required** for most projects — the new bundles are drop-in replacements and produce identical output. For `wix`, the x64 and ia32 MSIs keep the upgrade code, install paths and file layout, but are built from a WiX 3 project; an `arm64` MSI is now an `Arm64` package, and `msiProjectCreated` hooks that edit the project can notice the schema. **`wine` is the exception:** its default is no longer a bundle at all, so a macOS host that builds Windows targets now needs Wine installed (`brew install --cask wine-stable`). If you hit a regression introduced by a newer bundle, pin back by setting the toolset version to `"0.0.0"`:
 
 ```json5
-{ "build": { "toolsets": { "winCodeSign": "0.0.0", "nsis": "0.0.0", "appimage": "0.0.0", "wine": "0.0.0" } } }
+{ "build": { "toolsets": { "winCodeSign": "0.0.0", "nsis": "0.0.0", "appimage": "0.0.0", "wine": "0.0.0", "wix": "0.0.0" } } }
 ```
 
 This escape hatch is intended as a short-term workaround. The `"0.0.0"` alias may be removed in a future major release.

@@ -748,6 +748,30 @@ export interface ToolsetConfig {
   readonly nsis?: "0.0.0" | "1.2.1" | ToolsetCustom | "latest"
 
   /**
+   * Version of the WiX Toolset bundle used to build `msi` and `msiWrapped` installers.
+   *
+   * The bundle ships **`candle.exe`** and **`light.exe`** (compile and link the generated `.wxs` project) and the WiX
+   * extensions (`WixUIExtension` for assisted installers). On macOS and Linux they run under Wine with wine-mono.
+   *
+   * Available versions:
+   * | Version | WiX version | Notes |
+   * |---------|-------------|-------|
+   * | `"0.0.0"` | 4.0.0.5512 (preview) | Legacy bundle (pre-v27). An `arm64` app is packaged in an `x64` MSI, because this toolset has no `arm64` |
+   * | `"2.0.0"` | 3.14.1 | Builds a native `arm64` MSI for `arm64` |
+   *
+   * The `.wxs` project uses the WiX 3 schema with `"2.0.0"`: an `msiProjectCreated` hook that inserts elements of a WiX 4
+   * extension namespace must use the WiX 3 one (for example `http://schemas.microsoft.com/wix/UtilExtension`), or pin `"0.0.0"`.
+   *
+   * A custom bundle (a {@link ToolsetCustom} object) must have the WiX v3 layout: `candle.exe`, `light.exe` and the
+   * extensions at its root.
+   *
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wix/CHANGELOG.md
+   *
+   * @default "latest"
+   */
+  readonly wix?: "0.0.0" | "2.0.0" | ToolsetCustom | "latest"
+
+  /**
    * Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on
    * non-Windows hosts (macOS and Linux).
    *

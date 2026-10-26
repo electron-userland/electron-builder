@@ -1,5 +1,17 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`msi > arm64 1`] = `
+{
+  "win": [
+    {
+      "arch": "arm64",
+      "file": "Test MSI arm64 1.1.0 arm64.msi",
+      "safeArtifactName": "Test-MSI-arm64-1.1.0-arm64.msi",
+    },
+  ],
+}
+`;
+
 exports[`msi > msi 1`] = `
 {
   "win": [
@@ -31,6 +43,18 @@ exports[`msi > per-user 1`] = `
       "arch": "x64",
       "file": "Test MSI Per User 1.1.0.msi",
       "safeArtifactName": "Test-MSI-Per-User-1.1.0.msi",
+    },
+  ],
+}
+`;
+
+exports[`msi > same file name in two directories 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test MSI Same Name 1.1.0.msi",
+      "safeArtifactName": "Test-MSI-Same-Name-1.1.0.msi",
     },
   ],
 }
