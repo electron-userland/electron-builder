@@ -1,7 +1,7 @@
+import { mkdir, readdir, writeFile } from "fs/promises"
+import * as path from "path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { spawn, spawnSync } from "child_process"
-import { readdir } from "fs/promises"
-import * as path from "path"
 import type { TmpDir } from "builder-util"
 import { DebUpdater, NoOpLogger, PacmanUpdater, RpmUpdater } from "electron-updater"
 import { runInstallPlan, runInstallPlanAsync } from "electron-updater/src/LinuxUpdater"
@@ -169,6 +169,74 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
     })
   })
 
+  describe("determineSudoCommand", () => {
+    it("prefers pkexec over the unmaintained helpers when both are installed", () => {
+      vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => {
+        const cmd = args[0] as string
+        return cmd === "pkexec" || cmd === "gksudo"
+      })
+
+      expect((updater as any).determineSudoCommand()).toBe("pkexec")
+    })
+
+    it("falls back to a legacy helper when polkit is not available", () => {
+      vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => (args[0] as string) === "gksudo")
+
+      expect((updater as any).determineSudoCommand()).toBe("gksudo")
+    })
+
+    it("falls back to sudo when no graphical helper is installed", () => {
+      vi.spyOn(updater as any, "hasCommand").mockReturnValue(false)
+
+      expect((updater as any).determineSudoCommand()).toBe("sudo")
+    })
+
+    it("says once that pkexec is used when a legacy helper is installed too", () => {
+      vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => ["pkexec", "kdesudo"].includes(args[0] as string))
+      const info = vi.fn()
+      updater.logger = { info, warn() {}, error() {} }
+
+      ;(updater as any).determineSudoCommand()
+      ;(updater as any).determineSudoCommand()
+
+      const announcements = info.mock.calls.filter(([message]) => String(message).includes("polkit"))
+      expect(announcements).toEqual([["Elevating the install with pkexec (polkit); kdesudo is only used on systems without polkit"]])
+    })
+
+    it("does not announce anything when pkexec is the only helper", () => {
+      vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === "pkexec")
+      const info = vi.fn()
+      updater.logger = { info, warn() {}, error() {} }
+
+      ;(updater as any).determineSudoCommand()
+
+      expect(info.mock.calls.filter(([message]) => String(message).includes("polkit"))).toEqual([])
+    })
+  })
+
+  describe("resolveTrustedCommand", () => {
+    it("keeps an absolute path", () => {
+      expect((updater as any).resolveTrustedCommand("/opt/bin/dpkg")).toBe("/opt/bin/dpkg")
+    })
+
+    it.skipIf(process.platform === "win32")("finds a command in the system directories", () => {
+      expect(["/usr/bin/sh", "/bin/sh", "/usr/sbin/sh", "/sbin/sh"]).toContain((updater as any).resolveTrustedCommand("sh"))
+    })
+
+    it.skipIf(process.platform === "win32")("ignores the caller's PATH, which can hold user-writable directories", async ({ tmpDir }) => {
+      const dir = await tmpDir.getTempDir({ prefix: "user-bin" })
+      await mkdir(dir, { recursive: true })
+      const name = "electron-updater-test-package-manager"
+      await writeFile(path.join(dir, name), "#!/bin/sh\n", { mode: 0o755 })
+      vi.stubEnv("PATH", `${dir}${path.delimiter}${process.env.PATH ?? ""}`)
+      try {
+        expect(() => (updater as any).resolveTrustedCommand(name)).toThrow(`${name} not found in /usr/sbin:/usr/bin:/sbin:/bin`)
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    })
+  })
+
   describe("async install", () => {
     const setRawPath = (rawPath: string) => {
       ;(updater as any).downloadedUpdateHelper = { file: rawPath }
@@ -180,15 +248,58 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
         const cmd = args[0] as string
         return cmd === "dpkg" || cmd === "pkexec"
       })
+      // independent of where the test machine has its package managers
+      vi.spyOn(updater as any, "resolveTrustedCommand").mockImplementation((...args: unknown[]) => `/usr/bin/${args[0] as string}`)
     })
 
-    it("runs the same command as the synchronous path, awaited instead of blocking", async () => {
-      setRawPath("/tmp/update-1.0.2.deb")
+    it("passes the command to pkexec as argv, without a shell and without escaping the path", async () => {
+      setRawPath("/tmp/a b/update-1.0.2.deb")
       const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue(undefined)
 
       await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
 
-      expect(spawnAsyncLog).toHaveBeenCalledWith("pkexec", ["--disable-internal-agent", "/bin/bash", "-c", "'dpkg -i /tmp/update-1.0.2.deb'"])
+      // the dialog shows `/usr/bin/dpkg -i …` instead of `/bin/bash -c '…'`, and the space is not backslash-escaped
+      expect(spawnAsyncLog).toHaveBeenCalledWith("pkexec", ["--disable-internal-agent", "/usr/bin/dpkg", "-i", "/tmp/a b/update-1.0.2.deb"], {}, false)
+    })
+
+    it("keeps the wrapped command string and the escaped path for helpers that cannot take argv", async () => {
+      setRawPath("/tmp/a b/update-1.0.2.deb")
+      vi.spyOn(updater as any, "determineSudoCommand").mockReturnValue("gksudo")
+      const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue(undefined)
+
+      await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
+
+      // gksudo takes a single command string, so the bash wrapper, the shell and the escaping stay
+      expect(spawnAsyncLog).toHaveBeenCalledWith("gksudo", ["--message", expect.any(String), `"/bin/bash`, "-c", `'dpkg -i /tmp/a\\ b/update-1.0.2.deb'"`], {}, true)
+    })
+
+    it("resolves the elevation helper once per install, for every command of the plan", async () => {
+      setRawPath("/tmp/update-1.0.2.deb")
+      const determineSudoCommand = vi.spyOn(updater as any, "determineSudoCommand")
+      const spawnAsyncLog = vi
+        .spyOn(updater as any, "spawnAsyncLog")
+        .mockRejectedValueOnce(new Error("Command pkexec exited with code 1"))
+        .mockResolvedValue(undefined)
+
+      await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
+
+      // dpkg, then the apt-get repair: two privileged commands, one helper resolution
+      expect(spawnAsyncLog).toHaveBeenCalledTimes(2)
+      expect(determineSudoCommand).toHaveBeenCalledTimes(1)
+    })
+
+    it("does not run a command that is not in the system directories", async () => {
+      setRawPath("/tmp/update-1.0.2.deb")
+      vi.spyOn(updater as any, "resolveTrustedCommand").mockImplementation((...args: unknown[]) => {
+        throw new Error(`${args[0] as string} not found in /usr/sbin:/usr/bin:/sbin:/bin`)
+      })
+      const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue(undefined)
+      const dispatchError = vi.spyOn(updater as any, "dispatchError").mockReturnValue(undefined)
+
+      expect(await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })).toBe(false)
+      expect(spawnAsyncLog).not.toHaveBeenCalled()
+      // like the wrapped form's `command not found`, a missing dpkg leads to the apt-get repair, which is not found either
+      expect(dispatchError).toHaveBeenCalledWith(expect.objectContaining({ message: "apt-get not found in /usr/sbin:/usr/bin:/sbin:/bin" }))
     })
 
     it("never falls back to the blocking spawnSync path", async () => {
@@ -213,7 +324,10 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
       await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
 
-      expect(spawnAsyncLog.mock.calls.map(([, argv]: any) => argv[argv.length - 1])).toEqual(["'dpkg -i /tmp/update-1.0.2.deb'", "'apt-get install -f -y'"])
+      expect(spawnAsyncLog.mock.calls.map(([, argv]: any) => argv.slice(1))).toEqual([
+        ["/usr/bin/dpkg", "-i", "/tmp/update-1.0.2.deb"],
+        ["/usr/bin/apt-get", "install", "-f", "-y"],
+      ])
     })
 
     it("reports the failure instead of relaunching when every command fails", async () => {
@@ -267,10 +381,11 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       const installed = await (pacman as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
 
       expect(installed).toBe(true)
+      // running as root: argv, no shell, no escaping
       expect(spawnAsyncLog.mock.calls).toEqual([
-        ["pacman", ["-U", "--noconfirm", "/tmp/update-1.0.2.pacman"]],
-        ["pacman", ["-Sy", "--noconfirm"]],
-        ["pacman", ["-U", "--noconfirm", "/tmp/update-1.0.2.pacman"]],
+        ["pacman", ["-U", "--noconfirm", "/tmp/update-1.0.2.pacman"], {}, false],
+        ["pacman", ["-Sy", "--noconfirm"], {}, false],
+        ["pacman", ["-U", "--noconfirm", "/tmp/update-1.0.2.pacman"], {}, false],
       ])
     })
   })
@@ -316,6 +431,109 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       expect(quit).not.toHaveBeenCalled()
       expect((updater as any).quitAndInstallCalled).toBe(false)
       expect(updater.logger?.error).toHaveBeenCalledWith(expect.stringContaining("Cannot install update"))
+    })
+  })
+
+  describe("on-quit install", () => {
+    const options = { isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false }
+
+    function prepareDownloadedUpdate(rawPath: string) {
+      ;(updater as any).downloadedUpdateHelper = { file: rawPath, downloadedFileInfo: { isAdminRightsRequired: false } }
+    }
+
+    function quitHandlerOf(target: DebUpdater): (exitCode: number) => void {
+      let handler: ((exitCode: number) => void) | null = null
+      ;(target as any).app = {
+        ...stubApp,
+        onQuit: (it: (exitCode: number) => void) => {
+          handler = it
+        },
+      }
+      ;(target as any).addQuitHandler()
+      if (handler == null) {
+        throw new Error("no quit handler registered")
+      }
+      return handler
+    }
+
+    beforeEach(() => {
+      updater.logger = new NoOpLogger()
+      vi.spyOn(updater as any, "isRunningAsRoot").mockReturnValue(false)
+      vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => {
+        const cmd = args[0] as string
+        return cmd === "dpkg" || cmd === "pkexec"
+      })
+      vi.spyOn(updater as any, "resolveTrustedCommand").mockImplementation((...args: unknown[]) => `/usr/bin/${args[0] as string}`)
+    })
+
+    it("passes the command to pkexec as argv when the app quits, without a shell and without escaping the path", () => {
+      prepareDownloadedUpdate("/tmp/a b/update-1.0.2.deb")
+      const spawnSyncLog = vi.spyOn(updater as any, "spawnSyncLog").mockReturnValue("")
+      const doInstall = vi.spyOn(updater as any, "doInstall")
+
+      quitHandlerOf(updater)(0)
+
+      // the quit handler cannot await: the install stays synchronous, so the app exits only once pkexec returned
+      expect(doInstall).toHaveBeenCalledTimes(1)
+      const privileged = spawnSyncLog.mock.calls.filter(([cmd]) => cmd !== "command")
+      expect(privileged).toEqual([["pkexec", ["--disable-internal-agent", "/usr/bin/dpkg", "-i", "/tmp/a b/update-1.0.2.deb"], {}, false]])
+      expect(JSON.stringify(privileged)).not.toContain("/bin/bash")
+    })
+
+    it("spawns exactly what the async install spawns, for every command of the plan", async () => {
+      prepareDownloadedUpdate("/tmp/a b/update-1.0.2.deb")
+      const spawnSyncLog = vi.spyOn(updater as any, "spawnSyncLog").mockImplementation((...args: unknown[]) => {
+        if (args[0] !== "command" && (args[1] as string[]).includes("-i")) {
+          throw new Error("Command pkexec exited with code 1")
+        }
+        return ""
+      })
+      const spawnAsyncLog = vi
+        .spyOn(updater as any, "spawnAsyncLog")
+        .mockRejectedValueOnce(new Error("Command pkexec exited with code 1"))
+        .mockResolvedValue(undefined)
+
+      expect((updater as any).doInstall(options)).toBe(true)
+      expect(await (updater as any).doInstallAsync(options)).toBe(true)
+
+      const privileged = spawnSyncLog.mock.calls.filter(([cmd]) => cmd !== "command")
+      expect(privileged).toHaveLength(2)
+      expect(privileged).toEqual(spawnAsyncLog.mock.calls)
+    })
+
+    it("keeps the wrapped command string and the escaped path for helpers that cannot take argv", () => {
+      prepareDownloadedUpdate("/tmp/a b/update-1.0.2.deb")
+      vi.spyOn(updater as any, "determineSudoCommand").mockReturnValue("gksudo")
+      const spawnSyncLog = vi.spyOn(updater as any, "spawnSyncLog").mockReturnValue("")
+
+      expect((updater as any).doInstall(options)).toBe(true)
+
+      expect(spawnSyncLog.mock.calls.filter(([cmd]) => cmd !== "command")).toEqual([
+        ["gksudo", ["--message", expect.any(String), `"/bin/bash`, "-c", `'dpkg -i /tmp/a\\ b/update-1.0.2.deb'"`], {}, true],
+      ])
+    })
+
+    it("runs the command as argv, without a shell, when running as root", () => {
+      prepareDownloadedUpdate("/tmp/a b/update-1.0.2.deb")
+      vi.spyOn(updater as any, "isRunningAsRoot").mockReturnValue(true)
+      const spawnSyncLog = vi.spyOn(updater as any, "spawnSyncLog").mockReturnValue("")
+
+      expect((updater as any).doInstall(options)).toBe(true)
+
+      expect(spawnSyncLog.mock.calls.filter(([cmd]) => cmd !== "command")).toEqual([["dpkg", ["-i", "/tmp/a b/update-1.0.2.deb"], {}, false]])
+    })
+
+    it("does not run a command that is not in the system directories", () => {
+      prepareDownloadedUpdate("/tmp/update-1.0.2.deb")
+      vi.spyOn(updater as any, "resolveTrustedCommand").mockImplementation((...args: unknown[]) => {
+        throw new Error(`${args[0] as string} not found in /usr/sbin:/usr/bin:/sbin:/bin`)
+      })
+      const spawnSyncLog = vi.spyOn(updater as any, "spawnSyncLog").mockReturnValue("")
+      const dispatchError = vi.spyOn(updater as any, "dispatchError").mockReturnValue(undefined)
+
+      expect((updater as any).doInstall(options)).toBe(false)
+      expect(spawnSyncLog.mock.calls.filter(([cmd]) => cmd !== "command")).toEqual([])
+      expect(dispatchError).toHaveBeenCalledWith(expect.objectContaining({ message: "apt-get not found in /usr/sbin:/usr/bin:/sbin:/bin" }))
     })
   })
 
@@ -425,16 +643,51 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       await (updater as any).spawnAsyncLog(node, ["-e", '"process.exit(0)"'])
       expect(vi.mocked(spawn)).toHaveBeenCalledWith(`${node} -e "process.exit(0)"`, [], expect.objectContaining({ shell: true }))
     })
+
+    // argv mode (`useShell` false): the command and its arguments reach the program as they are, without a shell
+    it("captures stderr into the error message without a shell too, and removes the stderr temp file", async ({ tmpDir }) => {
+      captureLogs()
+      const dir = await captureStderrIn(tmpDir)
+      vi.mocked(spawn).mockClear()
+      const script = "process.stderr.write('argv $HOME a b');process.exit(5)"
+      await expect((updater as any).spawnAsyncLog(process.execPath, ["-e", script], {}, false)).rejects.toThrow(/exited with code 5: argv \$HOME a b$/)
+      expect(vi.mocked(spawn)).toHaveBeenCalledWith(process.execPath, ["-e", script], expect.objectContaining({ shell: false }))
+      expect(await readdir(dir)).toEqual([])
+    })
+
+    it("removes the stderr temp file when the program does not exist, without a shell", async ({ tmpDir }) => {
+      captureLogs()
+      const dir = await captureStderrIn(tmpDir)
+      await expect((updater as any).spawnAsyncLog(path.join(dir, "missing-program"), [], {}, false)).rejects.toThrow(/ENOENT/)
+      expect(await readdir(dir)).toEqual([])
+    })
   })
 
   describe("spawnSyncLog", () => {
-    it("passes the shell one command line, as Node would have joined it, so that DEP0190 does not apply", () => {
+    function createRealUpdater(): DebUpdater {
       const realUpdater = new DebUpdater(null, stubApp)
       realUpdater.logger = { info() {}, warn() {}, error() {} }
       vi.mocked(spawnSync).mockClear()
+      return realUpdater
+    }
+
+    it("passes the shell one command line, as Node would have joined it, so that DEP0190 does not apply", () => {
+      const realUpdater = createRealUpdater()
       const node = `"${process.execPath}"`
       expect((realUpdater as any).spawnSyncLog(node, ["-e", `"process.stdout.write('a  b')"`])).toBe("a  b")
       expect(vi.mocked(spawnSync)).toHaveBeenCalledWith(`${node} -e "process.stdout.write('a  b')"`, [], expect.objectContaining({ shell: true }))
+    })
+
+    it("passes the arguments as argv without a shell, so nothing in them is interpreted", () => {
+      const realUpdater = createRealUpdater()
+      const script = "process.stdout.write(process.argv.slice(1).join('|'))"
+      expect((realUpdater as any).spawnSyncLog(process.execPath, ["-e", script, "a b", "$HOME", "'q'"], {}, false)).toBe("a b|$HOME|'q'")
+      expect(vi.mocked(spawnSync)).toHaveBeenCalledWith(process.execPath, ["-e", script, "a b", "$HOME", "'q'"], expect.objectContaining({ shell: false }))
+    })
+
+    it("fails when the command is killed by a signal", () => {
+      const realUpdater = createRealUpdater()
+      expect(() => (realUpdater as any).spawnSyncLog(process.execPath, ["-e", "process.kill(process.pid, 'SIGTERM')"], {}, false)).toThrow(/exited with code null, signal SIGTERM$/)
     })
   })
 
@@ -516,7 +769,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
     })
   })
 
-  describe("runCommandWithSudoIfNeeded app name handling", () => {
+  describe("resolveElevation app name handling", () => {
     beforeEach(() => {
       vi.spyOn(updater as any, "isRunningAsRoot").mockReturnValue(false)
     })
@@ -524,7 +777,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
     it("strips double-quote from app name so it cannot break shell quoting", () => {
       ;(updater as any).app = { ...stubApp, name: 'Evil"App' }
       const sudoWithArgsSpy = vi.spyOn(updater as any, "sudoWithArgs")
-      ;(updater as any).runCommandWithSudoIfNeeded(["dpkg", "-i", "/tmp/test.deb"])
+      ;(updater as any).resolveElevation()
       const installComment = sudoWithArgsSpy.mock.calls[0][0] as string
       // Only the two wrapping double-quotes from the template should remain
       expect((installComment.match(/"/g) ?? []).length).toBe(2)
@@ -534,7 +787,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
     it("strips backtick from app name to prevent command substitution", () => {
       ;(updater as any).app = { ...stubApp, name: "Evil`whoami`App" }
       const sudoWithArgsSpy = vi.spyOn(updater as any, "sudoWithArgs")
-      ;(updater as any).runCommandWithSudoIfNeeded(["dpkg", "-i", "/tmp/test.deb"])
+      ;(updater as any).resolveElevation()
       const installComment = sudoWithArgsSpy.mock.calls[0][0] as string
       expect(installComment).not.toContain("`")
     })
@@ -542,7 +795,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
     it("strips dollar sign from app name to prevent variable expansion", () => {
       ;(updater as any).app = { ...stubApp, name: "Evil$HOMEApp" }
       const sudoWithArgsSpy = vi.spyOn(updater as any, "sudoWithArgs")
-      ;(updater as any).runCommandWithSudoIfNeeded(["dpkg", "-i", "/tmp/test.deb"])
+      ;(updater as any).resolveElevation()
       const installComment = sudoWithArgsSpy.mock.calls[0][0] as string
       expect(installComment).not.toContain("$")
     })
@@ -550,7 +803,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
     it("preserves benign characters in app name", () => {
       ;(updater as any).app = { ...stubApp, name: "My App 2.0" }
       const sudoWithArgsSpy = vi.spyOn(updater as any, "sudoWithArgs")
-      ;(updater as any).runCommandWithSudoIfNeeded(["dpkg", "-i", "/tmp/test.deb"])
+      ;(updater as any).resolveElevation()
       const installComment = sudoWithArgsSpy.mock.calls[0][0] as string
       expect(installComment).toContain("My App 2.0")
     })

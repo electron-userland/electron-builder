@@ -124,6 +124,7 @@ describe("install on quit", { concurrent: false }, () => {
     updater.on("error", (error: Error) => errors.push(error))
     vi.spyOn(updater as any, "isRunningAsRoot").mockReturnValue(false)
     vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === "dpkg" || args[0] === "pkexec")
+    vi.spyOn(updater as any, "resolveTrustedCommand").mockImplementation((...args: unknown[]) => `/usr/bin/${String(args[0])}`)
     const pkexecCalls: string[][] = []
     vi.spyOn(updater as any, "spawnSyncLog").mockImplementation((...args: unknown[]) => {
       const [cmd, cmdArgs] = args
@@ -219,7 +220,7 @@ describe("install on quit", { concurrent: false }, () => {
 
     expect(app.quitApp()).toBe(true)
 
-    expect(pkexecCalls).toEqual([["--disable-internal-agent", "/bin/bash", "-c", `'dpkg -i ${path.join(helper.cacheDirForPendingUpdate, "TestApp-1.0.1.deb")}'`]])
+    expect(pkexecCalls).toEqual([["--disable-internal-agent", "/usr/bin/dpkg", "-i", path.join(helper.cacheDirForPendingUpdate, "TestApp-1.0.1.deb")]])
     expect(errors).toEqual([])
   })
 
@@ -230,6 +231,17 @@ describe("install on quit", { concurrent: false }, () => {
 
       expect(app.quitApp()).toBe(true)
       expect(pkexecCalls).toEqual([])
+    })
+
+    test("while the update is downloading and verifying", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { updater, pkexecCalls } = createDebUpdater(app, 126)
+      ;(updater as any).isDownloadInProgress = true
+
+      expect(app.quitApp()).toBe(true)
+      expect(pkexecCalls).toEqual([])
+      expect(log.infos.some(it => it.includes("has not finished downloading and verifying"))).toBe(true)
     })
 
     test("when autoInstallEvent is 'manual'", async () => {
