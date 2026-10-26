@@ -8,7 +8,15 @@ vi.mock("child_process", async importOriginal => {
 
 import { AuthenticodeSignatureStatus, authenticodeSignatureStatusName, readAuthenticodeSignerWithPowerShell } from "app-builder-lib/src/codeSign/win/authenticodeSignature"
 import { Executables, InvalidConfigurationError } from "builder-util"
-import { parseAuthenticodeSignatureOutput, prepareAuthenticodeSignatureExec, preparePowerShellExec } from "builder-util-runtime"
+import { findExecutable } from "builder-util/src/executables"
+import {
+  matchPublisherName,
+  parseAuthenticodeSignatureOutput,
+  POWERSHELL_ASCII_ESCAPE_FUNCTION,
+  prepareAuthenticodeSignatureExec,
+  preparePowerShellExec,
+  windowsPowerShellPath,
+} from "builder-util-runtime"
 import { execFile } from "child_process"
 import { promises as fs } from "fs"
 import * as path from "path"
@@ -359,5 +367,157 @@ describe("readAuthenticodeSignerWithPowerShell (electron-builder adapter)", () =
   test("stderr next to a parsed signature does not make it unreadable (as before, the build only fails on an exit error)", async ({ expect }) => {
     mockExecFile(null, signatureJson(), "WARNING: something")
     await expect(readAuthenticodeSignerWithPowerShell(FILE)).resolves.toMatchObject({ type: "signed", subject: SUBJECT })
+  })
+})
+
+// ─── ConvertTo-AsciiEscaped (POWERSHELL_ASCII_ESCAPE_FUNCTION) ───────────────
+//
+// The function prints every UTF-16 code unit above 127 of a text as \uXXXX (4 lower-case hex digits) and leaves ASCII as it is, so
+// the output survives any console code page. Applied to ConvertTo-Json output, where non-ASCII characters only occur inside strings
+// and backslashes are already escaped, the result is JSON that JSON.parse decodes back to the original text: a character outside the
+// BMP is a surrogate pair, two escapes that JSON.parse joins again.
+
+/** What ConvertTo-AsciiEscaped prints for `text`: each code unit above 127 as \uXXXX (a regex without the u flag matches code units). */
+function asciiEscaped(text: string): string {
+  return text.replace(/[\u0080-\uffff]/g, c => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`)
+}
+
+// written as code points: the formatter would turn their escapes into the (invisible or look-alike) characters themselves
+const NO_BREAK_SPACE = String.fromCharCode(0xa0)
+const NONCHARACTER = String.fromCharCode(0xffff)
+const KELVIN_SIGN = String.fromCharCode(0x212a)
+const LONE_SURROGATE = `lone ${String.fromCharCode(0xd800)} surrogate`
+const DN_SUBJECT = 'CN="Pálfi, Ünal", O=Ёлка 你好 😀, L=Zürich, C=CH'
+const ASTRAL = "😀 👍🏽 𝄞"
+const CASE_FOLDING = `İlker ${KELVIN_SIGN}`
+
+// The texts the function is run on: ASCII (also characters that matter to JSON and DN parsing, and control characters), non-ASCII
+// from the BMP, characters outside it, characters that case-fold to ASCII (İ, the Kelvin sign) and a lone surrogate
+const ESCAPE_CASES: ReadonlyArray<string> = [
+  "CN=Acme Corp, O=Acme Corporation, C=US",
+  "",
+  ` "quoted" back\\slash, comma + plus = equals; semicolon <angle> #hash 'single' \`tick\` $(dollar) `,
+  "nul\u0000 soh\u0001 us\u001f tab\t cr\r lf\n del\u007f",
+  "\\u00e9 is six ASCII characters, not é",
+  `é ü ß Ж Ёлка 你好 ’ ${NO_BREAK_SPACE} \u0080 ÿ Ā ${NONCHARACTER}`,
+  ASTRAL,
+  CASE_FOLDING,
+  LONE_SURROGATE,
+  DN_SUBJECT,
+]
+
+describe("ConvertTo-AsciiEscaped output (POWERSHELL_ASCII_ESCAPE_FUNCTION), decoded on the Node side", () => {
+  test("ASCII passes through unchanged, every other code unit becomes a lower-case \\uXXXX escape", ({ expect }) => {
+    expect(asciiEscaped("CN=Acme Corp, O=Acme Corporation, C=US")).toBe("CN=Acme Corp, O=Acme Corporation, C=US")
+    expect(asciiEscaped("nul\u0000 del\u007f")).toBe("nul\u0000 del\u007f")
+    expect(asciiEscaped("é Ж 你")).toBe("\\u00e9 \\u0416 \\u4f60")
+    expect(asciiEscaped("😀")).toBe("\\ud83d\\ude00")
+    expect(asciiEscaped(`İ${KELVIN_SIGN}`)).toBe("\\u0130\\u212a")
+  })
+
+  test("escaped JSON decodes losslessly, whatever the text", ({ expect }) => {
+    for (const text of ESCAPE_CASES) {
+      // what ConvertTo-Json -Compress prints for a signature with this subject (it escapes quotes, backslashes and control characters)
+      const escapedJson = asciiEscaped(JSON.stringify({ SignerCertificate: { Subject: text }, Status: 0 }))
+      expect(
+        [...escapedJson].every(c => c.charCodeAt(0) < 128),
+        JSON.stringify(text)
+      ).toBe(true)
+      expect(parseAuthenticodeSignatureOutput(escapedJson).SignerCertificate.Subject, JSON.stringify(text)).toBe(text)
+    }
+  })
+
+  test("a subject decoded from the escaped output matches a non-ASCII publisherName, and a near miss does not", ({ expect }) => {
+    // as Windows PowerShell 5.1 prints it, which escapes the double quotes of the quoted CN
+    const output =
+      '{"SignerCertificate":{"Subject":"CN=\\"P\\u00e1lfi, \\u00dcnal\\", O=\\u0401\\u043b\\u043a\\u0430 \\u4f60\\u597d \\ud83d\\ude00, L=Z\\u00fcrich, C=CH"},"Status":0}'
+    const data = parseAuthenticodeSignatureOutput(output)
+    expect(data.SignerCertificate.Subject).toBe(DN_SUBJECT)
+    expect(matchPublisherName(data, ['CN="Pálfi, Ünal", O=Ёлка 你好 😀'])).toBe(true)
+    expect(matchPublisherName(data, [DN_SUBJECT])).toBe(true)
+    for (const nearMiss of [
+      'CN="Palfi, Unal", O=Ёлка 你好 😀',
+      // á decomposed (a + U+0301 combining acute): the same text to a reader, other code units
+      'CN="Pálfi, Ünal", O=Ёлка 你好 😀',
+      'CN="Pálfi, Ünal", O=Елка 你好 😀',
+      'CN="Pálfi, Ünal", O=Ёлка 你好',
+      'CN="Pálfi, Ünal", L=Zurich',
+      "CN=Pálfi",
+    ]) {
+      expect(matchPublisherName(data, [nearMiss]), nearMiss).toBe(false)
+    }
+  })
+
+  test("a signature without a signer, or with an empty subject, decodes as such", ({ expect }) => {
+    expect(parseAuthenticodeSignatureOutput('{"SignerCertificate":null,"Status":2}').SignerCertificate).toBeNull()
+    const empty = parseAuthenticodeSignatureOutput('{"SignerCertificate":{"Subject":""},"Status":0}')
+    expect(empty.SignerCertificate.Subject).toBe("")
+    expect(matchPublisherName(empty, ["CN=Acme Corp"])).toBe(false)
+    expect(() => matchPublisherName(parseAuthenticodeSignatureOutput('{"SignerCertificate":null,"Status":2}'), ["CN=Acme Corp"])).toThrow(TypeError)
+  })
+})
+
+// The PowerShell to run the function in: the in-box Windows PowerShell on Windows (where electron-updater runs it), elsewhere
+// PowerShell 7 when it is installed at its default location. Located before the tests stub SystemRoot.
+function escapeTestPowerShell(): string | null {
+  try {
+    return process.platform === "win32" ? windowsPowerShellPath() : findExecutable("pwsh", null)
+  } catch {
+    return null
+  }
+}
+const ESCAPE_POWERSHELL = escapeTestPowerShell()
+
+/**
+ * Runs ConvertTo-AsciiEscaped in `powershell` on `$null`, on a lone surrogate and on each text, and on the ConvertTo-Json output of a
+ * signature with each text as its subject, the way the production scripts print it. Returns stdout as bytes (latin1) and the results.
+ */
+async function runAsciiEscaped(powershell: string, texts: ReadonlyArray<string>) {
+  // the texts reach the script as base64 UTF-16LE JSON, so no character of them is ever parsed as PowerShell code. Decoding replaces a
+  // lone surrogate with U+FFFD, so that one is made in the script.
+  const textsBase64 = Buffer.from(JSON.stringify(texts), "utf16le").toString("base64")
+  // each result is printed as ConvertTo-Json of the escaped text, which only adds ASCII escapes, so stdout is one line per result
+  const command =
+    `${POWERSHELL_ASCII_ESCAPE_FUNCTION}; ` +
+    `ConvertTo-Json -Compress -InputObject (ConvertTo-AsciiEscaped $null); ` +
+    `ConvertTo-Json -Compress -InputObject (ConvertTo-AsciiEscaped ('lone ' + [char]0xD800 + ' surrogate')); ` +
+    `foreach ($text in ([Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('${textsBase64}')) | ConvertFrom-Json)) { ` +
+    `$json = @{ SignerCertificate = @{ Subject = $text }; Status = 0 } | ConvertTo-Json -Compress; ` +
+    `ConvertTo-Json -Compress -InputObject @((ConvertTo-AsciiEscaped $text), (ConvertTo-AsciiEscaped $json)) }`
+  const [file, args, options] = preparePowerShellExec(command, 120_000, {}, powershell)
+  const { execFile: realExecFile } = await vi.importActual<typeof import("child_process")>("child_process")
+  const stdout = await new Promise<string>((resolve, reject) => {
+    realExecFile(file, args, { ...options, encoding: "latin1" }, (error, out, stderr) => (error == null ? resolve(out) : reject(new Error(`${error.message}\n${stderr}`))))
+  })
+  const [nullResult, loneSurrogateResult, ...results] = stdout
+    .split(/\r?\n/)
+    .filter(it => it.length > 0)
+    .map(line => JSON.parse(line))
+  return { stdout, nullResult, loneSurrogateResult, results: results.map(([raw, json]: [string, string]) => ({ raw, json })) }
+}
+
+describe.runIf(ESCAPE_POWERSHELL != null)("ConvertTo-AsciiEscaped (POWERSHELL_ASCII_ESCAPE_FUNCTION) run in PowerShell", () => {
+  test("prints ASCII only, escaping each non-ASCII code unit, and its escaped JSON decodes losslessly", { timeout: 120_000 }, async ({ expect }) => {
+    const texts = ESCAPE_CASES.filter(it => it !== LONE_SURROGATE)
+    const { stdout, nullResult, loneSurrogateResult, results } = await runAsciiEscaped(ESCAPE_POWERSHELL ?? "", texts)
+    expect([...stdout].filter(c => c.charCodeAt(0) >= 128)).toEqual([])
+    // [string]$null is the empty string
+    expect(nullResult).toBe("")
+    // each code unit is escaped on its own, so even half a surrogate pair is
+    expect(loneSurrogateResult).toBe(asciiEscaped(LONE_SURROGATE))
+    expect(results).toHaveLength(texts.length)
+    texts.forEach((text, index) => {
+      const { raw, json } = results[index]
+      expect(raw, JSON.stringify(text)).toBe(asciiEscaped(text))
+      expect(parseAuthenticodeSignatureOutput(json).SignerCertificate.Subject, JSON.stringify(text)).toBe(text)
+    })
+    // the hex digits are lower case, and a character outside the BMP is a surrogate pair of escapes
+    expect(results[texts.indexOf(ASTRAL)].raw).toBe("\\ud83d\\ude00 \\ud83d\\udc4d\\ud83c\\udffd \\ud834\\udd1e")
+    // matched case-sensitively: İ and the Kelvin sign, which fold to ASCII, are escaped too
+    expect(results[texts.indexOf(CASE_FOLDING)].raw).toBe("\\u0130lker \\u212a")
+    // the subject PowerShell decoded from the escaped JSON matches the publisherName it was signed for
+    const signed = parseAuthenticodeSignatureOutput(results[texts.indexOf(DN_SUBJECT)].json)
+    expect(matchPublisherName(signed, ['CN="Pálfi, Ünal", O=Ёлка 你好 😀'])).toBe(true)
+    expect(matchPublisherName(signed, ['CN="Palfi, Unal", O=Ёлка 你好 😀'])).toBe(false)
   })
 })
