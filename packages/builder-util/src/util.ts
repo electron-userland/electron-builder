@@ -24,6 +24,7 @@ export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames,
 export { AsyncTaskManager } from "./asyncTaskManager.js"
 export { DebugLogger } from "./DebugLogger.js"
 export * from "./envUtil.js"
+export { Executables, ExecutableLocation, ExecutableName, ExecutablesConfig } from "./executables.js"
 export { parseValidEnvVarUrl } from "./envUtil.js"
 export * from "./log.js"
 export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor.js"
@@ -146,14 +147,15 @@ export function filterSensitiveEnv(env: Record<string, string | undefined>): Rec
 }
 
 function getProcessEnv(env: Record<string, string | undefined> | Nullish): NodeJS.ProcessEnv | undefined {
-  // Windows: passing a filtered env to execFile drops critical system vars (PATH, SYSTEMROOT, TEMP)
-  // that many tools require. Credential stripping is therefore not applied on Windows.
+  // When no explicit env is provided, strip credential env vars so child processes
+  // (package managers, signing tools, etc.) don't inherit secrets they don't need. A caller that
+  // starts a tool which needs a credential passes the environment explicitly.
   if (process.platform === "win32") {
-    return env == null ? undefined : env
+    // Only credentials are removed: the system variables that Windows tools need (PATH, SystemRoot, TEMP, …) are kept.
+    // The locale variables below are a POSIX convention and are not set on Windows.
+    return env == null ? stripSensitiveEnvVars(process.env) : env
   }
 
-  // When no explicit env is provided, strip credential env vars so child processes
-  // (package managers, signing tools, etc.) don't inherit secrets they don't need.
   const finalEnv = {
     ...(env == null ? stripSensitiveEnvVars(process.env) : env),
   }
@@ -205,13 +207,14 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
 
   const attempt = () =>
     new Promise<string>((resolve, reject) => {
+      // codeql[js/shell-command-injection-from-environment] - `file` is an absolute path from toolsets.executables (trusted config) or a default location built from SystemRoot/ProgramFiles (see Executables); execFile array args (no shell); env filtered via getProcessEnv/stripSensitiveEnvVars
       execFile(
         file,
         args,
         {
           ...options,
           maxBuffer: 1000 * 1024 * 1024,
-          env: getProcessEnv(options == null ? null : options.env), // codeql[js/shell-command-injection-from-environment] - env filtered via getProcessEnv/stripSensitiveEnvVars; execFile array args (no shell)
+          env: getProcessEnv(options == null ? null : options.env),
         },
         (error, stdout, stderr) => {
           if (error == null) {

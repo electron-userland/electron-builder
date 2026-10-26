@@ -6,13 +6,20 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-permissions:
-  contents: read
-  statuses: write
+# one deploy per release tag at a time (a manual re-run waits for the one in progress); deploys of different
+# releases are not serialized or cancelled, so none is skipped
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
 
 jobs:
   deploy:
     name: 'Deploy Release'
+    permissions:
+      contents: read  # actions/checkout
+      statuses: write  # the "Netlify Documentation Site preview" commit status
     runs-on: ubuntu-24.04
     # No release-line guard, deliberately: every `published` event that reaches THIS
     # copy of the file should prod-deploy, master's `next` prereleases included. A

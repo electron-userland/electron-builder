@@ -1,7 +1,9 @@
-import { validateConfiguration } from "app-builder-lib/internal"
+import { getConfig, validateConfiguration } from "app-builder-lib/internal"
 import { Arch, DebugLogger } from "builder-util"
 import { CliOptions, Configuration, DIR_TARGET, Platform } from "electron-builder"
 import { configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/src/builder"
+import { writeFile } from "fs/promises"
+import * as path from "path"
 import { app, appThrows, linuxDirTarget } from "./helpers/packTester.js"
 import { ElectronSignOptions } from "app-builder-lib/src/options/macOptions.js"
 
@@ -124,6 +126,42 @@ test("repeated `-c.fileOptions.excludedExts` flags form one list also next to a 
   expect(parse(["-c", "build.yml", "-c.fileOptions.excludedExts=null"]).fileOptions!.excludedExts).toBeNull()
   // a later flag that makes fileOptions a scalar is left for validateConfiguration to report, not a crash
   expect(() => parse(["-c", "build.yml", ...flags, "-c.fileOptions=null"])).not.toThrow()
+})
+
+test("an electron-builder.toml config is parsed by the toml package and passes schema validation", async ({ expect, tmpDir }) => {
+  // TOML is the one config format read by a parser that is only a devDependency here, so this is the only coverage
+  // of that path: dotted keys, tables and arrays of tables must come back as the same config object as other formats.
+  const projectDir = await tmpDir.createTempDir({ prefix: "toml-config" })
+  await writeFile(path.join(projectDir, "package.json"), JSON.stringify({ name: "app", version: "1.0.0" }))
+  await writeFile(
+    path.join(projectDir, "electron-builder.toml"),
+    [
+      'appId = "com.example.toml"',
+      'directories.output = "dist-toml"',
+      "",
+      "[mac]",
+      'category = "public.app-category.developer-tools"',
+      "",
+      "[[fileAssociations]]",
+      'ext = "foo"',
+      'name = "Foo File"',
+      "",
+      "[[fileAssociations]]",
+      'ext = ["bar", "baz"]',
+      'name = "Bar File"',
+      "",
+    ].join("\n")
+  )
+
+  const config = await getConfig(projectDir, null, null)
+  expect(config.appId).toBe("com.example.toml")
+  expect(config.directories?.output).toBe("dist-toml")
+  expect(config.mac?.category).toBe("public.app-category.developer-tools")
+  expect(config.fileAssociations).toEqual([
+    { ext: "foo", name: "Foo File" },
+    { ext: ["bar", "baz"], name: "Bar File" },
+  ])
+  await validateConfiguration(config, new DebugLogger())
 })
 
 test("`-c.updateManifest=false` is coerced to a boolean and passes schema validation", async ({ expect }) => {

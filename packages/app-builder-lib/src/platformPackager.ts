@@ -34,6 +34,7 @@ import type { UpdateManifestSigningOptions } from "./options/PlatformSpecificBui
 import type { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
 import { AppInfo } from "./appInfo.js"
 import { isSignResultSigned, SigningResult } from "./codeSign/signResult.js"
+import { FORCE_CODE_SIGNING_DOCS, forceCodeSigningOverrideHint } from "./codeSign/forceCodeSigning.js"
 import { checkFileInArchive } from "./asar/asarFileChecker.js"
 import { AsarPackager } from "./asar/asarUtil.js"
 import { AsarIntegrity, computeData } from "./asar/integrity.js"
@@ -188,11 +189,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
    * signed: an unsigned `latest*.yml` lets anyone who can write to the update feed point every install at an
    * arbitrary installer.
    *
-   * `required` is the publish gate - only a build with a publish policy fails. A build that merely writes a
-   * manifest (which includes any GitHub-hosted project, since the publish config is inferred from `repository`)
-   * gets an advisory warning instead, so local builds and external-signer pipelines keep working. The warning is
-   * emitted at most once per packager; the throw stays re-derivable, since the call sites run per arch and per
-   * manifest task.
+   * `required` is the publish gate - a build with a publish policy fails - and `forceCodeSigning` enforces it for every
+   * build, publishing or not (pull-request builds included). Any other build that merely writes a manifest (which
+   * includes any GitHub-hosted project, since the publish config is inferred from `repository`) gets an advisory
+   * warning instead, so local builds and external-signer pipelines keep working. `updateManifest: false` stays an
+   * explicit opt-out that only warns, also under `forceCodeSigning`. The warning is emitted at most once per packager;
+   * the throw stays re-derivable, since the call sites run per arch and per manifest task.
    */
   async requireUpdateSigningKeys(required: boolean): Promise<Array<KeyObject>> {
     const optedOut = this.updateManifestOptions === false
@@ -201,27 +203,34 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return keys
     }
 
-    if (!optedOut && required) {
+    const forced = !required && this.forceCodeSigning
+    if (!optedOut && (required || forced)) {
       throw new InvalidConfigurationError(
-        `auto-update manifests must be signed, but no Ed25519 signing key was found for ${this.platform.name}. ` +
+        `auto-update manifests must be signed${forced ? " because forceCodeSigning is enabled (also for builds that do not publish, including pull-request builds)" : ""}, ` +
+          `but no Ed25519 signing key was found for ${this.platform.name}. ` +
           "Generate one with `electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded PEM file) " +
           "or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey / " +
           "updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out explicitly with " +
-          "`updateManifest: false`. See https://www.electron.build/features/signed-update-manifests"
+          (forced
+            ? `\`updateManifest: false\`, or pass ${forceCodeSigningOverrideHint(this)} to build without forceCodeSigning. See ${FORCE_CODE_SIGNING_DOCS}`
+            : "`updateManifest: false`. See https://www.electron.build/features/signed-update-manifests")
       )
     }
 
-    log
-      .once("unsigned-update-manifest", this)
-      .warn(
-        { platform: this.platform.name, reason: optedOut ? "updateManifest is set to false" : "no Ed25519 signing key is configured" },
-        "auto-update manifests will be unsigned: anyone who can overwrite latest*.yml on your update server can point installs at an arbitrary payload. " +
-          (optedOut
-            ? "Remove `updateManifest: false` and provide a key with `electron-builder create-update-key` to enable signing. "
-            : "Publishing this configuration will fail until you provide a key with `electron-builder create-update-key`, or opt out explicitly with `updateManifest: false`. ") +
-          "Note that installs which already embed a public key reject unsigned manifests (ERR_UPDATER_MANIFEST_NOT_SIGNED). " +
-          "See https://www.electron.build/features/signed-update-manifests"
-      )
+    log.once("unsigned-update-manifest", this).warn(
+      {
+        platform: this.platform.name,
+        reason: optedOut
+          ? `updateManifest is set to false${this.forceCodeSigning ? " (forceCodeSigning does not cover update manifests while updateManifest is false)" : ""}`
+          : "no Ed25519 signing key is configured",
+      },
+      "auto-update manifests will be unsigned: anyone who can overwrite latest*.yml on your update server can point installs at an arbitrary payload. " +
+        (optedOut
+          ? "Remove `updateManifest: false` and provide a key with `electron-builder create-update-key` to enable signing. "
+          : "Publishing this configuration will fail (and so will a build with forceCodeSigning) until you provide a key with `electron-builder create-update-key`, or opt out explicitly with `updateManifest: false`. ") +
+        "Note that installs which already embed a public key reject unsigned manifests (ERR_UPDATER_MANIFEST_NOT_SIGNED). " +
+        "See https://www.electron.build/features/signed-update-manifests"
+    )
     return keys
   }
 
@@ -328,6 +337,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.info.emitAppxManifestCreated(path)
   }
 
+  emitPkgDistributionCreated(path: string): Promise<void> {
+    return this.info.emitPkgDistributionCreated(path)
+  }
+
   abstract get defaultTarget(): Array<string>
 
   // eslint-disable-next-line
@@ -395,6 +408,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   // Keyed by arch too: a prepackaged app dir is the same for every arch, and each arch may have other targets, whose
   // builds can still be running when the next arch is packaged.
   private readonly packToTargets = new Map<string, ReadonlyArray<Target>>()
+
+  /**
+   * @internal queued work still reading an app dir (e.g. zip/7z archiving it), by the resolved dir - see trackPackWork.
+   * Kept apart from `Target.buildQueueManager`, which `finishBuild()` may drain before that work is done.
+   */
+  readonly pendingPackWork = new Map<string, Set<Promise<any>>>()
 
   /** @internal the targets packaged from `appOutDir` for `arch`, as passed to their `build()` */
   getPackTargets(appOutDir: string, arch: Arch): ReadonlyArray<Target> | undefined {
@@ -1176,6 +1195,25 @@ export function chooseNotNull<T>(v1: T | Nullish, v2: T | Nullish): T | Nullish 
 
 function capitalizeFirstLetter(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+/** Registers queued `work` that still reads `appOutDir`, see waitForPackWork */
+export function trackPackWork(packager: PlatformPackager<any>, appOutDir: string, work: Promise<any>): void {
+  const key = path.resolve(appOutDir)
+  const pending = packager.pendingPackWork.get(key) ?? new Set<Promise<any>>()
+  packager.pendingPackWork.set(key, pending)
+  pending.add(work)
+  const settle = () => pending.delete(work)
+  void work.then(settle, settle)
+}
+
+/**
+ * Waits for the work tracked so far on `appOutDir`, so the caller can then write into it. Keyed by the dir alone, not by
+ * `_arch` (the pack the caller writes for): a prepackaged dir is shared by every arch, any other arch has its own dir.
+ * A failure of that work is left to its target's `finishBuild()` to report.
+ */
+export async function waitForPackWork(packager: PlatformPackager<any>, appOutDir: string, _arch: Arch): Promise<void> {
+  await Promise.allSettled(Array.from(packager.pendingPackWork.get(path.resolve(appOutDir)) ?? []))
 }
 
 function packKey(appOutDir: string, arch: Arch) {

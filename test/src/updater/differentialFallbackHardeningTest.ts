@@ -9,9 +9,8 @@ import type { Socket } from "net"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
 import { describe, test } from "vitest"
-import { gzipSync } from "zlib"
 import { TestAppAdapter } from "../helpers/TestAppAdapter.js"
-import { writeUpdateConfig } from "../helpers/updaterTestUtil.js"
+import { gzippedBlockMapOf, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
 // The full download goes through configurePipes, like ElectronHttpExecutor.download, so its sha512 is verified too.
 class VerifyingNodeHttpExecutor extends NodeHttpExecutor {
@@ -34,16 +33,6 @@ function bytes(seed: number, length: number): Buffer {
     hash = createHash("sha256").update(hash).digest()
   }
   return out
-}
-function blockMapOf(data: Buffer) {
-  const checksums: Array<string> = []
-  const sizes: Array<number> = []
-  for (let i = 0; i < data.length; i += BLOCK) {
-    const block = data.subarray(i, i + BLOCK)
-    checksums.push(createHash("sha256").update(block).digest("base64"))
-    sizes.push(block.length)
-  }
-  return gzipSync(JSON.stringify({ version: "2", files: [{ name: "file", offset: 0, checksums, sizes }] }))
 }
 
 // 1.0.0 is installed (and cached as installer.exe); 2.0.0 changes 8 blocks and appends 4
@@ -128,10 +117,10 @@ async function update(tmpDir: TmpDir, c: Case): Promise<Outcome> {
       serveRanges(request, response)
     } else if (pathname === `/${NEW_FILE}.blockmap`) {
       response.writeHead(200)
-      response.end(blockMapOf(NEW))
+      response.end(gzippedBlockMapOf(NEW, BLOCK))
     } else if (pathname === "/TestApp-Setup-1.0.0.exe.blockmap") {
       response.writeHead(200)
-      response.end(blockMapOf(OLD))
+      response.end(gzippedBlockMapOf(OLD, BLOCK))
     } else {
       response.writeHead(404)
       response.end()
@@ -163,7 +152,7 @@ async function update(tmpDir: TmpDir, c: Case): Promise<Outcome> {
     if (c.cacheOldInstaller !== false) {
       await fsExtra.outputFile(path.join(cacheDir, "installer.exe"), OLD)
     }
-    await fsExtra.outputFile(path.join(cacheDir, "current.blockmap"), blockMapOf(OLD))
+    await fsExtra.outputFile(path.join(cacheDir, "current.blockmap"), gzippedBlockMapOf(OLD, BLOCK))
 
     const check = await updater.checkForUpdates()
     if (check?.isUpdateAvailable !== true) {

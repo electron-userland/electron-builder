@@ -11,6 +11,7 @@ import { createUpdateKey } from "./create-update-key.js"
 import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps.js"
 import { configureMigrateSchemaCommand, migrateSchema } from "./migrate-schema.js"
 import { start } from "./start.js"
+import { configureVerifyCommand, verify } from "./verify.js"
 
 // tslint:disable:no-unused-expression
 void createYargs()
@@ -57,6 +58,7 @@ void createYargs()
     wrap(argv => createUpdateKey(argv.out))
   )
   .command("migrate-schema", "Migrate build config from v26 to v27 format", configureMigrateSchemaCommand, wrap(migrateSchema))
+  .command("verify [dir]", "Verify code signatures, notarization and update-manifest signatures of built artifacts", configureVerifyCommand, wrap(verify))
   .help()
   .epilog(`See ${chalk.underline("https://electron.build")} for more documentation.`)
   .strict()

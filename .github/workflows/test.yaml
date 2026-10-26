@@ -36,6 +36,7 @@ env:
 
 jobs:
   check-if-docker-build:
+    name: Check for Docker image changes
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
@@ -70,6 +71,7 @@ jobs:
   # -------------------------
 
   validate-and-shard:
+    name: Validate and plan shards
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     outputs:
@@ -117,9 +119,9 @@ jobs:
           MACOS_SHARDS=$(echo "$SHARD_JSON" | jq -c '.darwin')
 
           # Set outputs
-          echo "linux=$LINUX_SHARDS" >> $GITHUB_OUTPUT
-          echo "windows=$WINDOWS_SHARDS" >> $GITHUB_OUTPUT
-          echo "macos=$MACOS_SHARDS" >> $GITHUB_OUTPUT
+          echo "linux=$LINUX_SHARDS" >> "$GITHUB_OUTPUT"
+          echo "windows=$WINDOWS_SHARDS" >> "$GITHUB_OUTPUT"
+          echo "macos=$MACOS_SHARDS" >> "$GITHUB_OUTPUT"
 
           # Debug output
           echo "Planned shards:"
@@ -177,19 +179,19 @@ jobs:
       - name: Load test runner image if needed
         if: needs.run-docker-build.result == 'success'
         run: |
-          docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
+          docker image load --input "$RUNNER_TEMP/electron-builder-all-$TEST_IMAGE_NODE_MAJOR_VERSION.tar"
           docker image ls -a
 
       - name: Write Docker secrets env file
         run: |
-          printf 'CSC_KEY_PASSWORD=%s\n' "$CSC_KEY_PASSWORD_SECRET" > "${{ runner.temp }}/docker-secrets.env"
-          chmod 600 "${{ runner.temp }}/docker-secrets.env"
+          printf 'CSC_KEY_PASSWORD=%s\n' "$CSC_KEY_PASSWORD_SECRET" > "$RUNNER_TEMP/docker-secrets.env"
+          chmod 600 "$RUNNER_TEMP/docker-secrets.env"
         env:
           CSC_KEY_PASSWORD_SECRET: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
 
       - name: Run shard in docker
         run: |
-          echo $TEST_RUNNER_IMAGE_TAG
+          echo "$TEST_RUNNER_IMAGE_TAG"
           pnpm test:linux
         env:
           ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SHARD_INDEX=${{ matrix.shard }} -e VITEST_EXPECTED_SHARD_COUNT=${{ strategy.job-total }} -e VITEST_SMART_CACHE_SOURCE=${{ needs.validate-and-shard.outputs.smart-cache-source }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }} -e VITEST_COVERAGE=${{ inputs.collect-coverage }}"
@@ -291,6 +293,30 @@ jobs:
           brew install rpm
           brew install snapcraft
 
+      # The published win-codesign darwin bundles (1.0.0 through 1.3.0) link osslsigncode dynamically against
+      # $(brew --prefix)/opt/openssl@3/lib/libcrypto.3.dylib and were built against OpenSSL 3.6 (they import
+      # _OPENSSL_sk_set_thunks, which first shipped in 3.6). Homebrew's `openssl@3` formula now tracks the 3.5 LTS line
+      # (runner image macos-26-arm64 20261021.0445 ships 3.5.9), so dyld aborts with "Symbol not found". Point the
+      # openssl@3 opt link at the keg-only `openssl@3.6` formula; 3.6 stays ABI-compatible with anything built
+      # against 3.5. Must run after every other `brew install` so nothing relinks openssl@3 afterwards.
+      # Remove once the darwin bundles link OpenSSL statically and the older toolset versions are no longer tested here.
+      - name: Provide OpenSSL 3.6 for bundled osslsigncode
+        run: |
+          OPT="$(brew --prefix)/opt/openssl@3"
+          has_symbol() { nm -gU "$1/lib/libcrypto.3.dylib" 2>/dev/null | grep '_OPENSSL_sk_set_thunks$' >/dev/null; }
+          if has_symbol "$OPT"; then
+            # Older images still ship openssl@3 3.6.x, where `openssl@3.6` resolves to openssl@3 itself.
+            echo "openssl@3 at $OPT already provides OpenSSL 3.6+"
+          else
+            brew install openssl@3.6
+            # Resolve to the real Cellar keg so the opt link can never point back at itself.
+            KEG="$(cd "$(brew --prefix openssl@3.6)" && pwd -P)"
+            has_symbol "$KEG" || { echo "::error::openssl@3.6 keg $KEG does not export _OPENSSL_sk_set_thunks"; exit 1; }
+            ln -sfn "$KEG" "$OPT"
+          fi
+          "$OPT/bin/openssl" version
+          has_symbol "$OPT" || { echo "::error::libcrypto at $OPT does not export _OPENSSL_sk_set_thunks"; exit 1; }
+
       - name: Run shard
         run: pnpm ci:test
         env:
@@ -351,7 +377,7 @@ jobs:
       - name: Load test runner image if needed
         if: needs.run-docker-build.result == 'success'
         run: |
-          docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
+          docker image load --input "$RUNNER_TEMP/electron-builder-all-$TEST_IMAGE_NODE_MAJOR_VERSION.tar"
           docker image ls -a
 
       # The updater tests no longer hit live provider endpoints, so no provider tokens are injected.
@@ -359,8 +385,8 @@ jobs:
       # and the R2 append step below is skipped on forks.
       - name: Create Docker secrets env file
         run: |
-          : > "${{ runner.temp }}/docker-secrets.env"
-          chmod 600 "${{ runner.temp }}/docker-secrets.env"
+          : > "$RUNNER_TEMP/docker-secrets.env"
+          chmod 600 "$RUNNER_TEMP/docker-secrets.env"
 
       # Gated on the upstream repository so forks cannot substitute their own R2 credentials;
       # without these vars the R2 live smoke test is skipped (test.ifEnv).
@@ -369,7 +395,7 @@ jobs:
         run: |
           printf 'CF_R2_ACCESS_KEY_ID=%s\nCF_R2_SECRET_ACCESS_KEY=%s\nCF_R2_ACCOUNT_ID=%s\nCF_R2_BUCKET=%s\nCF_R2_PUBLIC_URL=%s\n' \
             "$CF_R2_ACCESS_KEY_ID_SECRET" "$CF_R2_SECRET_ACCESS_KEY_SECRET" "$CF_R2_ACCOUNT_ID_SECRET" "$CF_R2_BUCKET_SECRET" "$CF_R2_PUBLIC_URL_SECRET" \
-            >> "${{ runner.temp }}/docker-secrets.env"
+            >> "$RUNNER_TEMP/docker-secrets.env"
         env:
           CF_R2_ACCESS_KEY_ID_SECRET: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
           CF_R2_SECRET_ACCESS_KEY_SECRET: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
@@ -379,7 +405,7 @@ jobs:
 
       - name: Test
         run: |
-          echo $TEST_RUNNER_IMAGE_TAG
+          echo "$TEST_RUNNER_IMAGE_TAG"
           pnpm test:linux
         env:
           TEST_FILES: nsisUpdaterTest,PublishManager,differentialUpdateTest,GitlabPublisherTest,R2PublisherTest
@@ -414,8 +440,9 @@ jobs:
           collect-coverage: ${{ inputs.collect-coverage }}
 
       - name: Test snap ${{ matrix.core }} (Docker)
-        run: SNAP_CORE=${{ matrix.core }} ./test/src/linux/test-snap.sh
+        run: ./test/src/linux/test-snap.sh
         env:
+          SNAP_CORE: ${{ matrix.core }}
           VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
           RESET_VITEST_SHARD_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
@@ -461,27 +488,43 @@ jobs:
   # being able to create namespaces (canRunFlatpak in test/src/updater/blackboxInstallLinux.ts), so it skips inside the docker shards,
   # whose image includes flatpak but which run unprivileged, and on every other runner. It needs FUSE
   # (flatpak-builder's rofiles-fuse) and user namespaces (the bubblewrap sandbox of flatpak build-export's
-  # icon validator), which are painful inside Docker, so it runs natively here.
+  # icon validator), so this job runs it where both work.
   # The flatpak case of the blackbox install suite (test/src/updater/blackboxInstallTest.ts) runs here too: it
   # installs the bundle and starts the app with `flatpak run`, which needs bubblewrap again, plus an X display.
   # The flatpak target installs missing refs with `flatpak install --user` (no explicit remote), so
   # the runtimes are pre-installed into the same user installation from a user-level flathub remote.
-  # It runs with the stock packages of two runners: ubuntu-24.04, and ubuntu-22.04, which has the oldest tools of any current
-  # distribution release: flatpak-builder 1.2.2, the target's minimum, and flatpak 1.12.7 (the minimum is 1.12.4). The ubuntu-22.04
-  # image is deprecated: GitHub's brownouts in March and April 2027 fail that leg, and the image is removed on 2027-04-17
-  # (actions/runner-images#14254), so the leg has to move, for example into a 22.04 container, before then.
+  # It runs in a privileged container of the electronuserland/builder image built from docker/ (flatpak and flatpak-builder from
+  # the Flatpak team's PPA, plus Xvfb in the -wine-chrome variant), so nothing is installed with apt on the runner, whose
+  # package mirror at times serves the ~100 MB of flatpak, flatpak-builder and their dependencies at ~50 kB/s. The flatpak user
+  # installation is a directory on the runner, mounted into the container.
   test-flatpak:
-    name: Test Flatpak (${{ matrix.runner }})
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        runner: [ubuntu-24.04, ubuntu-22.04]
+    name: Test Flatpak
+    needs: [check-if-docker-build, run-docker-build]
+    if: |
+      always() &&
+      needs.check-if-docker-build.result == 'success' &&
+      (needs.run-docker-build.result == 'success' || needs.run-docker-build.result == 'skipped')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      # Every ref the suite needs, pre-installed so the flatpak target's own `flatpak install` inside a test does not eat the
+      # test timeout. 26.08 is the FlatpakTarget default runtime/base version; 25.08 is what the "custom runtime and base app
+      # version" test asks for. Both are supported on flathub.
+      FLATPAK_REFS: >-
+        org.freedesktop.Platform//26.08
+        org.freedesktop.Sdk//26.08
+        org.electronjs.Electron2.BaseApp//26.08
+        org.freedesktop.Platform//25.08
+        org.freedesktop.Sdk//25.08
+        org.electronjs.Electron2.BaseApp//25.08
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
+
+      # The image and the flatpak user installation take several GB each
+      - name: Cleanup runner
+        uses: $/.github/actions/cleanup-runner
 
       - name: Setup Tests
         uses: $/.github/actions/pretest
@@ -491,104 +534,141 @@ jobs:
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
 
-      - name: Install flatpak and flatpak-builder
-        run: |
-          # Disable background apt services (prevent apt lock contention)
-          sudo systemctl stop unattended-upgrades apt-daily.service apt-daily-upgrade.service || true
-          sudo systemctl disable apt-daily.timer apt-daily-upgrade.timer || true
-          sudo systemctl kill --kill-who=all apt-daily.service apt-daily-upgrade.service || true
-          while sudo fuser /var/lib/apt/lists/lock /var/lib/dpkg/lock /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
-            echo "Waiting for apt lock to be released…"
-            sleep 2
-          done
-          sudo apt-get update
-          # fuse3 has the fusermount3 that rofiles-fuse needs; nothing pulls it in on Ubuntu 22.04
-          sudo apt-get install -y flatpak flatpak-builder fuse3 xvfb
-          # Ubuntu 24.04 restricts unprivileged user namespaces via AppArmor; the bubblewrap sandbox of
-          # flatpak build-export's icon validator needs them. The apparmor package ships a profile that allows
-          # them for /usr/bin/flatpak, but lift the restriction too so a runner image without that profile
-          # does not fail the build with "setting up uid map: Permission denied".
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
-          flatpak --version
-          flatpak-builder --version
-          # The suite skips itself where bubblewrap cannot create namespaces. Fail here instead, so that this job
-          # cannot pass without having run it.
-          bwrap --ro-bind / / true
-
-      # The flatpak user installation (remote config + installed runtimes/SDKs/base app). An SDK alone
-      # is well over a GB, so restoring it beats re-downloading from flathub every run. Bump the
-      # -vN suffix whenever the ref list in the install step below changes.
-      # The key includes run_id so it never exactly matches: the job restores the newest entry via
-      # restore-keys and re-saves at the end. With a static key, actions/cache never saves after an exact
-      # hit, so an incomplete first save would be re-downloaded forever. The ubuntu-22.04 leg is the exception: it
-      # keeps one entry, with a static key, so that the two legs do not both save several GB on every run.
-      - name: Cache flatpak runtimes
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      - name: Download test-runner if exists
+        if: needs.run-docker-build.result == 'success'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          path: ~/.local/share/flatpak
-          key: flatpak-user-${{ matrix.runner }}-fdo-26.08-25.08-electron2-v1${{ matrix.runner != 'ubuntu-22.04' && format('-{0}', github.run_id) || '' }}
-          restore-keys: |
-            flatpak-user-${{ matrix.runner }}-fdo-26.08-25.08-electron2-v1
+          name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
+          path: ${{ runner.temp }}
 
-      # Pre-install every ref the suite needs so the flatpak target's own `flatpak install` inside a test
-      # does not eat the test timeout. `flatpak install` is a no-op for refs already restored from the cache.
-      # 26.08 is the FlatpakTarget default runtime/base version; 25.08 is what the
-      # "custom runtime and base app version" test asks for. Both are supported on flathub.
+      - name: Load test runner image if needed
+        if: needs.run-docker-build.result == 'success'
+        run: |
+          docker image load --input "$RUNNER_TEMP/electron-builder-all-$TEST_IMAGE_NODE_MAJOR_VERSION.tar"
+          docker image ls -a
+
+      # The tests run in the container as the runner's user, whose bubblewrap needs the unprivileged user namespaces that
+      # Ubuntu 24.04 restricts via AppArmor: lift that on the host. See test/src/linux/flatpak-docker.sh.
+      - name: Prepare flatpak test image
+        run: |
+          IMAGE="electronuserland/builder:${TEST_IMAGE_NODE_MAJOR_VERSION}-wine-chrome"
+          echo "FLATPAK_TEST_IMAGE=$IMAGE" >> "$GITHUB_ENV"
+          if ! docker image inspect "$IMAGE" > /dev/null 2>&1; then
+            for i in 1 2 3; do
+              docker pull "$IMAGE" && break
+              if [ "$i" -eq 3 ]; then exit 1; fi
+              echo "docker pull failed (attempt $i/3), retrying in 30s…" >&2
+              sleep 30
+            done
+          fi
+          docker run --rm "$IMAGE" sh -c 'flatpak --version && flatpak-builder --version'
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      # Into the runner user's flatpak user installation (~/.local/share/flatpak), which test/src/linux/flatpak-docker.sh mounts
+      # into the container, in the container as that user: as root, flatpak refuses to install into a user installation that
+      # another user owns. The image adds the flathub remote for root only, hence the remote-add. The refs are not cached: they
+      # are several GB, and an entry that size was evicted from the repository's 10 GB cache before later runs could restore it.
+      # `flatpak update` is a no-op after a fresh install; it keeps the refs current should the directory ever be restored.
       - name: Install flatpak runtimes
         run: |
-          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y --noninteractive flathub \
-            org.freedesktop.Platform//26.08 \
-            org.freedesktop.Sdk//26.08 \
-            org.electronjs.Electron2.BaseApp//26.08 \
-            org.freedesktop.Platform//25.08 \
-            org.freedesktop.Sdk//25.08 \
-            org.electronjs.Electron2.BaseApp//25.08
-          flatpak list --user --columns=ref,size
+          test/src/linux/flatpak-docker.sh sh -c '
+            flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo &&
+            flatpak install --user -y --noninteractive flathub "$@" &&
+            flatpak update --user -y --noninteractive "$@" &&
+            flatpak list --user --columns=ref,size' sh $FLATPAK_REFS
 
+      # The suite fails fast here if bubblewrap cannot create namespaces, rather than skipping itself
       - name: Test flatpak
-        run: pnpm ci:test
+        run: test/src/linux/flatpak-docker.sh sh -c 'bwrap --ro-bind / / true && pnpm ci:test'
         env:
           TEST_FILES: flatpak,blackboxInstallTest
-          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
+          VITEST_SMART_CACHE_FILE: ./test/vitest-scripts/vitest-config/_vitest-smart-cache.json
           RESET_VITEST_SHARD_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
       - name: Upload test artifacts
         if: always()
         uses: $/.github/actions/upload-test-artifacts
         with:
-          name: flatpak-${{ matrix.runner }}
+          name: flatpak
 
   test-e2e:
-    name: Test e2e Auto Updater Linux
+    name: Test e2e Auto Updater Linux (${{ matrix.test_config.id }})
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
+        # One job per entry. Without test_files a job runs every Linux e2e suite (the default TEST_FILES in
+        # test/src/updater/test-specific-platforms.sh). Every package manager runs every update case, but the rpm
+        # cases are too long for one job (4-7 min each, almost all of it rpm builds), so each rpm package manager is
+        # split into an "update" and a "signing" job. blackboxInstallTest installs with a fixed command per distro and
+        # ignores PACKAGE_MANAGER_TO_TEST, so it runs once per image (rpm-install, debian-apt, archlinux-pacman,
+        # appimage-install) instead of in every package-manager job.
         test_config:
-          - stem: archlinux
+          - id: archlinux-pacman
+            stem: archlinux
             env:
               PACKAGE_MANAGER_TO_TEST: pacman
-          - stem: rpm
-            env:
-              PACKAGE_MANAGER_TO_TEST: dnf
-          - stem: rpm
-            env:
-              PACKAGE_MANAGER_TO_TEST: zypper
-          - stem: rpm
-            env:
-              PACKAGE_MANAGER_TO_TEST: yum
-          - stem: rpm
-            env:
-              PACKAGE_MANAGER_TO_TEST: rpm
-          - stem: debian
+          - id: debian-apt
+            stem: debian
             env:
               PACKAGE_MANAGER_TO_TEST: apt
-          - stem: debian
+          - id: debian-dpkg
+            stem: debian
+            test_files: blackboxUpdateTest,linuxUpdaterTest,blackboxUpdateLinuxNextLaunch,blackboxUpdateLinuxSignedManifest,blackboxUpdateLinuxKeyRotation
             env:
               PACKAGE_MANAGER_TO_TEST: dpkg
-          - stem: appimage
+          - id: rpm-zypper-update
+            stem: rpm
+            test_files: blackboxUpdateTest,linuxUpdaterTest,blackboxUpdateLinuxNextLaunch
+            env:
+              PACKAGE_MANAGER_TO_TEST: zypper
+          - id: rpm-zypper-signing
+            stem: rpm
+            test_files: blackboxUpdateLinuxSignedManifest,blackboxUpdateLinuxKeyRotation
+            env:
+              PACKAGE_MANAGER_TO_TEST: zypper
+          - id: rpm-dnf-update
+            stem: rpm
+            test_files: blackboxUpdateTest,linuxUpdaterTest,blackboxUpdateLinuxNextLaunch
+            env:
+              PACKAGE_MANAGER_TO_TEST: dnf
+          - id: rpm-dnf-signing
+            stem: rpm
+            test_files: blackboxUpdateLinuxSignedManifest,blackboxUpdateLinuxKeyRotation
+            env:
+              PACKAGE_MANAGER_TO_TEST: dnf
+          - id: rpm-yum-update
+            stem: rpm
+            test_files: blackboxUpdateTest,linuxUpdaterTest,blackboxUpdateLinuxNextLaunch
+            env:
+              PACKAGE_MANAGER_TO_TEST: yum
+          - id: rpm-yum-signing
+            stem: rpm
+            test_files: blackboxUpdateLinuxSignedManifest,blackboxUpdateLinuxKeyRotation
+            env:
+              PACKAGE_MANAGER_TO_TEST: yum
+          - id: rpm-rpm-update
+            stem: rpm
+            test_files: blackboxUpdateTest,linuxUpdaterTest,blackboxUpdateLinuxNextLaunch
+            env:
+              PACKAGE_MANAGER_TO_TEST: rpm
+          - id: rpm-rpm-signing
+            stem: rpm
+            test_files: blackboxUpdateLinuxSignedManifest,blackboxUpdateLinuxKeyRotation
+            env:
+              PACKAGE_MANAGER_TO_TEST: rpm
+          - id: rpm-install
+            stem: rpm
+            test_files: blackboxInstallTest
+          - id: appimage-install
+            stem: appimage
+            test_files: blackboxInstallTest
+            env:
+              RUN_APP_IMAGE_TEST: true
+          - id: appimage-update
+            stem: appimage
+            test_files: blackboxLinux__appimage
             env:
               RUN_APP_IMAGE_TEST: true
     steps:
@@ -606,11 +686,16 @@ jobs:
           collect-coverage: ${{ inputs.collect-coverage }}
 
       - name: docker build
-        run: ./test/src/updater/test-specific-platforms.sh ${{ matrix.test_config.stem }} build
+        run: ./test/src/updater/test-specific-platforms.sh "$TEST_STEM" build
+        env:
+          TEST_STEM: ${{ matrix.test_config.stem }}
 
       - name: e2e Linux Updater tests (install, auto-update, uninstall)
-        run: ./test/src/updater/test-specific-platforms.sh ${{ matrix.test_config.stem }} run
+        run: ./test/src/updater/test-specific-platforms.sh "$TEST_STEM" run
         env:
+          TEST_STEM: ${{ matrix.test_config.stem }}
+          # empty → the script's default (every Linux e2e suite)
+          TEST_FILES: ${{ matrix.test_config.test_files || '' }}
           ADDITIONAL_DOCKER_ARGS: >-
             -e PACKAGE_MANAGER_TO_TEST=${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST || '' }}
             -e RUN_APP_IMAGE_TEST=${{ matrix.test_config.env.RUN_APP_IMAGE_TEST || false }}
@@ -621,13 +706,14 @@ jobs:
         if: always()
         uses: $/.github/actions/upload-test-artifacts
         with:
-          name: e2e-${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST || matrix.test_config.stem }}
+          name: e2e-${{ matrix.test_config.id }}
 
   # -------------------------
   # Merge Smart Cache Artifacts
   # -------------------------
 
   merge-smart-cache:
+    name: Merge smart cache and test reports
     needs: [test-linux, test-windows, test-macos, test-e2e, test-updater, test-snap, test-flatpak]
     if: always()
     runs-on: ubuntu-24.04
@@ -717,8 +803,9 @@ jobs:
 
       - name: Compute Vitest smart cache ref
         if: always()
+        env:
+          PR_NUM: ${{ github.event.pull_request.number }}
         run: |
-          PR_NUM="${{ github.event.pull_request.number }}"
           if [ -n "$PR_NUM" ]; then
             echo "VITEST_CACHE_REF=PR-${PR_NUM}" >> "$GITHUB_ENV"
           else

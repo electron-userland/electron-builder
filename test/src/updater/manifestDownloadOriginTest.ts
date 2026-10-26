@@ -424,7 +424,7 @@ describe("differential downloads use the per-download headers", () => {
 
   describe("cross-origin download notices", () => {
     const SECRET_FEED_URL = "https://feed.example.com/updates/?token=feed-secret-value&tenant=tenant-secret-value"
-    const DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
+    const DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
 
     async function setUp(tmpDir: TmpDir, options: { feedUrl?: string; auth?: boolean } = {}) {
       const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
@@ -556,7 +556,7 @@ describe("a custom provider must declare feedBaseUrl to send credentials", () =>
     await expect(updater.downloadUpdate()).rejects.toMatchObject({
       code: "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED",
       message: expect.stringMatching(
-        /^The custom update provider UndeclaredProvider does not declare feedBaseUrl.*https:\/\/www\.electron\.build\/docs\/migration\/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin$/
+        /^The custom update provider UndeclaredProvider does not declare feedBaseUrl.*https:\/\/www\.electron\.build\/docs\/migration\/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin$/
       ),
     })
     expect(doDownloadUpdate).not.toHaveBeenCalled()

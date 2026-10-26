@@ -1,5 +1,38 @@
 # electron-forge-maker-nsis-web
 
+## 27.0.0-alpha.13
+### Patch Changes
+
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`169c5bb`](https://github.com/electron-userland/electron-builder/commit/169c5bbcbac1f25254381ee8016a958602f3af2a) [`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14) [`ed05bd0`](https://github.com/electron-userland/electron-builder/commit/ed05bd0f734dd3b898b9c43c81abd56c08d242ef) [`0fa7237`](https://github.com/electron-userland/electron-builder/commit/0fa7237a3d68ecc91025d9c748fbf856362605e4) [`046f936`](https://github.com/electron-userland/electron-builder/commit/046f9365cf923a22dc1504297702b3625ed473fb) [`4329ef6`](https://github.com/electron-userland/electron-builder/commit/4329ef6ffd96d4029db7d234377295b0eec8e944) [`862437f`](https://github.com/electron-userland/electron-builder/commit/862437ff62e30d88c29ba112dd2f6b5a16c42183) [`145b373`](https://github.com/electron-userland/electron-builder/commit/145b373ec18228f0bf531880f81577ff17c2fa28) [`b086ae7`](https://github.com/electron-userland/electron-builder/commit/b086ae79116b793c90a1ca785ca17628e5d064dc) [`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14) [`145b373`](https://github.com/electron-userland/electron-builder/commit/145b373ec18228f0bf531880f81577ff17c2fa28) [`145b373`](https://github.com/electron-userland/electron-builder/commit/145b373ec18228f0bf531880f81577ff17c2fa28) [`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14) [`046f936`](https://github.com/electron-userland/electron-builder/commit/046f9365cf923a22dc1504297702b3625ed473fb) [`b5e144d`](https://github.com/electron-userland/electron-builder/commit/b5e144dfeea1e0e8eaa13aec151457227ee4d7d5) [`9cc8cd6`](https://github.com/electron-userland/electron-builder/commit/9cc8cd65b4f487ee30c2fd40324307d7c10c3a4f) [`145b373`](https://github.com/electron-userland/electron-builder/commit/145b373ec18228f0bf531880f81577ff17c2fa28) [`8366dc6`](https://github.com/electron-userland/electron-builder/commit/8366dc690ba5bc453c45f6ebbb8f8ad3561521df) [`b98e1f2`](https://github.com/electron-userland/electron-builder/commit/b98e1f2910edaa14b554e603d3ff509c8b04ccf2) [`a7f005c`](https://github.com/electron-userland/electron-builder/commit/a7f005ce837df409cc7cf9049e3eff74a2d5a503)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.13`
+
+</details>
+
+## 27.0.0-alpha.12
+### Patch Changes
+
+- Fix(forge): make the electron-forge-maker-\* packages loadable by Electron Forge 6+ (`MakerBase`-compatible default export class, also exported by name, with the maker `config` applied as the target's options); calling the default export as an Electron Forge 5 maker function still works _[`#10351`](https://github.com/electron-userland/electron-builder/pull/10351) [`1e32919`](https://github.com/electron-userland/electron-builder/commit/1e32919ec0bd9e5948376836ce26acb1fdc43655)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`f8a6719`](https://github.com/electron-userland/electron-builder/commit/f8a6719bded7b02881f7b88778f1645a53321825) [`f8a6719`](https://github.com/electron-userland/electron-builder/commit/f8a6719bded7b02881f7b88778f1645a53321825) [`e9c5ae6`](https://github.com/electron-userland/electron-builder/commit/e9c5ae6ac326216c21c8690e1f2f970711b7a405) [`0b508ab`](https://github.com/electron-userland/electron-builder/commit/0b508abc19243c7309931c693f7b91bc66d62fb9) [`1e32919`](https://github.com/electron-userland/electron-builder/commit/1e32919ec0bd9e5948376836ce26acb1fdc43655) [`4cd8a92`](https://github.com/electron-userland/electron-builder/commit/4cd8a921efb5e05f1b54489a02a7c2e5df54677e) [`f1e4a45`](https://github.com/electron-userland/electron-builder/commit/f1e4a4519e1172da023a8de031aa4a6bb319aa03) [`cf3f5db`](https://github.com/electron-userland/electron-builder/commit/cf3f5db080fe28989c96f9ccab402f48d5e5ef75) [`f0833ea`](https://github.com/electron-userland/electron-builder/commit/f0833ea0f4db96b7cfee7a1caba5cde24addbbde) [`09dae73`](https://github.com/electron-userland/electron-builder/commit/09dae73bf312ddcca5234ab302c11a0f95f01478) [`46be1f4`](https://github.com/electron-userland/electron-builder/commit/46be1f48e51a59b846ca76e631fc9e4e33348fb5) [`38fba92`](https://github.com/electron-userland/electron-builder/commit/38fba920cb951122150ab8d41c58b6994bdd6f49) [`6e3153b`](https://github.com/electron-userland/electron-builder/commit/6e3153bc6453dfa9ee01899fcd7de58f94d3763c) [`f8a6719`](https://github.com/electron-userland/electron-builder/commit/f8a6719bded7b02881f7b88778f1645a53321825) [`60e3708`](https://github.com/electron-userland/electron-builder/commit/60e3708955724138009f157cf0ad3f80a36ddeae) [`5d84f91`](https://github.com/electron-userland/electron-builder/commit/5d84f91231a9853752e14b35f71dd8374dc97de9) [`0bef576`](https://github.com/electron-userland/electron-builder/commit/0bef5767fad365941747c88d01e31931e35960d9)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.12`
+
+</details>
+
 ## 27.0.0-alpha.11
 ### Patch Changes
 

@@ -56,7 +56,7 @@ export const SMART_REPORTER_VERBOSE = process.env.SMART_REPORTER_VERBOSE !== "fa
 export const DEFAULT_FILE_MS = 2 * 60 * 1000
 export const DEFAULT_TARGET_MS = 20 * 60 * 1000
 export const TARGET_MS = Number(process.env.VITEST_TARGET_MS) || DEFAULT_TARGET_MS
-export const SAFEGUARD_MAX_SHARDS = 14
+export const SAFEGUARD_MAX_SHARDS = 20
 
 export const SHARD_INDEX = process.env.VITEST_SHARD_INDEX != null ? Number(process.env.VITEST_SHARD_INDEX) : null
 
@@ -93,9 +93,9 @@ export const UNSTABLE_FAIL_RATIO = 0.2
 export const skippedTests = process.env.SKIPPED_TESTS?.split(",")
   .map(s => s.trim())
   .filter(Boolean) || [
-  // Runs natively in the "Test Flatpak" job (TEST_FILES=flatpak, which bypasses this list — see collectTests in
+  // Runs in the "Test Flatpak" job (TEST_FILES=flatpak, which bypasses this list — see collectTests in
   // file-discovery.ts). Kept out of the docker Linux shards, where it would only `describe.ifEnv`-skip: that skip
-  // still records a ~0 ms run for linux/flatpak.e2e.ts under the same `linux` cache key as the real native run, and
+  // still records a ~0 ms run for linux/flatpak.e2e.ts under the same `linux` cache key as the real run, and
   // merge-smart-cache.ts keeps whichever equal-runs artifact it reads first, making shard estimates nondeterministic.
   "flatpak.e2e",
   // These tests are run separately due to different docker images used for testing, and they are currently unstable in the CI environment
@@ -107,6 +107,19 @@ export const skippedTests = process.env.SKIPPED_TESTS?.split(",")
 ]
 export const skipPerOSTests: Record<SupportedPlatforms, string[]> = {
   darwin: ["fpm.e2e"],
-  linux: [],
+  // Linux e2e suites that only do work in the distro/AppImage images of the "Test e2e Auto Updater Linux" jobs (and,
+  // for blackboxInstallTest's flatpak case, the "Test Flatpak" job), which select them by TEST_FILES (bypassing this
+  // list — see collectTests in file-discovery.ts). In the docker Linux shards every test skips in milliseconds, yet the
+  // shards were budgeted the e2e jobs' recorded durations under the same `linux` cache key (~30 min in total). File
+  // tokens, not the `linux-pm` directory: the skip check also runs on directory names, and would hide the files from
+  // TEST_FILES runs too.
+  linux: [
+    "blackboxInstallTest",
+    "blackboxUpdateTest",
+    "blackboxUpdateLinuxNextLaunch",
+    "blackboxUpdateLinuxSignedManifest",
+    "blackboxUpdateLinuxKeyRotation",
+    "blackboxLinux__appimage",
+  ],
   win32: [],
 }

@@ -4,6 +4,7 @@ import {
   readAuthenticodeSignerWithPowerShell,
   readEmbeddedAuthenticodeSigner,
 } from "app-builder-lib/src/codeSign/win/authenticodeSignature"
+import { derivePublisherName } from "app-builder-lib/src/codeSign/win/publisherName"
 import { verifyUpdateInstallerPublisher } from "app-builder-lib/src/codeSign/win/verifyUpdatePublisher"
 import type { SigningResult } from "app-builder-lib/src/codeSign/signResult"
 import { InvalidConfigurationError, log } from "builder-util"
@@ -152,6 +153,19 @@ describe("verifyUpdateInstallerPublisher", () => {
     expect(message).toContain(`Signer certificate subject: ${SUBJECT}`)
     expect(message).toContain("win.sign.publisherName")
     expect(message).toContain("win.verifyUpdateCodeSignature: false")
+    // "Old Corp" is no DN, so the v27 requirement is explained
+    expect(message).toContain("Since electron-builder v27, each publisherName entry must be in distinguished name (DN) format")
+    expect(message).toContain("https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name")
+  })
+
+  test("a mismatch with only DNs configured does not explain the DN requirement", async ({ expect, tmpDir }) => {
+    const appOutDir = await createAppOutDir(tmpDir, ["CN=Other Corp, O=Other Corporation", "CN=Other Corp"])
+    const error = await verify([appOutDir], signedBy(SUBJECT)).then(
+      () => null,
+      (e: unknown) => e
+    )
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect((error as Error).message).not.toContain("v27-breaking-changes")
   })
 
   test("passes when publisherName matches the full DN", async ({ expect, tmpDir }) => {
@@ -160,25 +174,21 @@ describe("verifyUpdateInstallerPublisher", () => {
     expect(readSigner).toHaveBeenCalledWith(INSTALLER)
   })
 
-  test("passes with a CN-only publisherName and warns, as electron-updater does", async ({ expect, tmpDir }) => {
-    const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
-    try {
-      await expect(verify([await createAppOutDir(tmpDir, "Acme Corp")], signedBy(SUBJECT))).resolves.toBeUndefined()
-      expect(warn).toHaveBeenCalledWith(
-        expect.objectContaining({ subject: SUBJECT }),
-        "Signature validated using only CN Acme Corp. Please add your full Distinguished Name (DN) to publisherNames configuration"
-      )
-    } finally {
-      warn.mockRestore()
-    }
+  test("passes with a partial DN (attributes it leaves out are not compared), a CN-only one included", async ({ expect, tmpDir }) => {
+    await expect(verify([await createAppOutDir(tmpDir, "CN=Acme Corp, O=Acme Corporation, C=US")], signedBy(SUBJECT))).resolves.toBeUndefined()
+    await expect(verify([await createAppOutDir(tmpDir, "CN=Acme Corp")], signedBy(SUBJECT))).resolves.toBeUndefined()
+  })
+
+  test("fails with a bare name that equals the signer's CN, as electron-updater 7 rejects it", async ({ expect, tmpDir }) => {
+    await expect(verify([await createAppOutDir(tmpDir, "Acme Corp")], signedBy(SUBJECT))).rejects.toThrow(/Since electron-builder v27/)
   })
 
   test("a DN with an OpenSSL-style ST key fails: Windows reports the state as S", async ({ expect, tmpDir }) => {
-    await expect(verify([await createAppOutDir(tmpDir, "CN=Acme Corp, ST=California")], signedBy(SUBJECT))).rejects.toThrow(InvalidConfigurationError)
+    await expect(verify([await createAppOutDir(tmpDir, "CN=Acme Corp, O=Acme Corporation, ST=California")], signedBy(SUBJECT))).rejects.toThrow(InvalidConfigurationError)
   })
 
   test("checks a file signed by a custom win.sign.sign hook", async ({ expect, tmpDir }) => {
-    const appOutDir = await createAppOutDir(tmpDir, "CN=Other Corp")
+    const appOutDir = await createAppOutDir(tmpDir, "CN=Other Corp, O=Other Corporation")
     await expect(verify([appOutDir], signedBy(SUBJECT), { signResult: "signed:custom" })).rejects.toThrow(InvalidConfigurationError)
     await expect(verify([await createAppOutDir(tmpDir, SUBJECT)], signedBy(SUBJECT), { signResult: "signed:custom" })).resolves.toBeUndefined()
   })
@@ -207,8 +217,8 @@ describe("verifyUpdateInstallerPublisher", () => {
 
   test("checks the publisherName of every arch's app-update.yml", async ({ expect, tmpDir }) => {
     const matching = await createAppOutDir(tmpDir, SUBJECT)
-    const mismatching = await createAppOutDir(tmpDir, "CN=Other Corp")
-    await expect(verify([matching, mismatching], signedBy(SUBJECT))).rejects.toThrow(/Configured publisherName: CN=Other Corp\n/)
+    const mismatching = await createAppOutDir(tmpDir, "CN=Other Corp, O=Other Corporation")
+    await expect(verify([matching, mismatching], signedBy(SUBJECT))).rejects.toThrow(/Configured publisherName: CN=Other Corp, O=Other Corporation\n/)
   })
 
   test("fails when signing reported success but the file carries no signature", async ({ expect, tmpDir }) => {
@@ -259,6 +269,25 @@ describe("readEmbeddedAuthenticodeSigner", () => {
   test("quotes values with special characters, doubling embedded quotes", async ({ expect, tmpDir }) => {
     const file = await signedPe(tmpDir, '/C=US/O=Acme\\, Inc./OU=say "hi"/CN=A\\+B')
     await expect(readEmbeddedAuthenticodeSigner(file)).resolves.toMatchObject({ subject: 'CN="A+B", OU="say ""hi""", O="Acme, Inc.", C=US' })
+  })
+
+  // electron-builder derives `CN=<common name>` without a configured publisherName: it must match the signer subject the updater reads,
+  // also when the CN needs quoting, and keep matching a renewed certificate with the same CN and other attributes changed
+  test("the derived CN=<common name> of a CN that needs quoting passes the installer check, also after a renewal", async ({ expect, tmpDir }) => {
+    const derived = derivePublisherName('Acme, Inc. + "Partners"')
+    expect(derived).toBe('CN="Acme, Inc. + ""Partners"""')
+    const appOutDir = await createAppOutDir(tmpDir, [derived])
+    for (const subject of ['/C=US/O=Acme Corporation/CN=Acme\\, Inc. \\+ "Partners"', '/C=DE/L=Berlin/O=Acme GmbH/CN=Acme\\, Inc. \\+ "Partners"']) {
+      const file = await signedPe(tmpDir, subject)
+      const signer = await readEmbeddedAuthenticodeSigner(file)
+      expect(signer).toMatchObject({ type: "signed", subject: expect.stringMatching(/^CN="Acme, Inc\. \+ ""Partners""", /) })
+      await expect(verifyUpdateInstallerPublisher(stubPackager(), file, "signed", [appOutDir], { readSigner: readEmbeddedAuthenticodeSigner })).resolves.toBeUndefined()
+    }
+    // a renewal that changes the CN is a rotation: the derived name does not match it
+    const renamed = await signedPe(tmpDir, "/C=US/O=Acme Corporation/CN=Acme Partners")
+    await expect(verifyUpdateInstallerPublisher(stubPackager(), renamed, "signed", [appOutDir], { readSigner: readEmbeddedAuthenticodeSigner })).rejects.toThrow(
+      InvalidConfigurationError
+    )
   })
 
   test("writes e-mail as E and unknown attributes as OID.<oid>, like EV certificate subjects", async ({ expect, tmpDir }) => {
