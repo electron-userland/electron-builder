@@ -1,15 +1,106 @@
 import { createRequire } from "node:module"
 import { AllPublishOptions, newError } from "builder-util-runtime"
 import { spawn, SpawnOptions, spawnSync, StdioOptions } from "child_process"
+import { mkdtemp, open, rm } from "fs/promises"
+import type { FileHandle } from "fs/promises"
+import { tmpdir } from "os"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion } from "semver"
 import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask, UpdateInfoAndProvider } from "./AppUpdater.js"
-import type { VerifyUpdateFileResult } from "./types.js"
+import type { Logger, VerifyUpdateFileResult } from "./types.js"
 import { QuitAndInstallOptions, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
 import { nonThrowingLogger } from "./util.js"
 
 const require = createRequire(import.meta.url)
+
+/** How much of a failed command's stderr goes into the error message, at most: its end, where the error is. */
+const STDERR_MESSAGE_BYTES = 8 * 1024
+
+/**
+ * The command line a shell runs for `cmd` and `args`. Given `shell: true` and an argv array, Node joins them with spaces
+ * and warns (DEP0190) that nothing is escaped; passing the joined line itself runs exactly the same command, without the
+ * warning. The escaping is the caller's, as before.
+ */
+function shellCommandLine(cmd: string, args: readonly string[]): string {
+  return [cmd, ...args].join(" ")
+}
+
+async function removeQuietly(file: string): Promise<void> {
+  try {
+    await rm(file, { recursive: true, force: true })
+  } catch (_ignored) {
+    // a temp file left behind must not change how the install ends
+  }
+}
+
+/**
+ * A command's stderr, written to a temp file rather than piped. A pipe ties the command to this process: when the app
+ * quits while the command still runs, its next write to stderr kills it with SIGPIPE (or fails with EPIPE), half way
+ * through an install. A file stays writable.
+ *
+ * The file is removed as soon as it is open: the descriptor keeps it readable here and writable for the command, and
+ * nothing is left behind if the app quits before the command exits. {@link dispose} removes it on every other path.
+ */
+class StderrCapture {
+  private constructor(
+    private readonly dir: string,
+    private readonly handle: FileHandle
+  ) {}
+
+  get fd(): number {
+    return this.handle.fd
+  }
+
+  /** Never throws: resolves to `null` when no temp file can be created, and the command's stderr is then discarded. */
+  static async open(parentDir: string, logger: Logger): Promise<StderrCapture | null> {
+    let dir: string | null = null
+    try {
+      dir = await mkdtemp(path.join(parentDir, "electron-updater-stderr-"))
+      const handle = await open(path.join(dir, "stderr.log"), "w+", 0o600)
+      // on Windows an open file may not be removable yet; dispose() tries again
+      await removeQuietly(dir)
+      return new StderrCapture(dir, handle)
+    } catch (error: unknown) {
+      if (dir != null) {
+        await removeQuietly(dir)
+      }
+      logger.warn(`Cannot capture the command's stderr, it is discarded: ${error instanceof Error ? error.message : String(error)}`)
+      return null
+    }
+  }
+
+  /** The last {@link STDERR_MESSAGE_BYTES} the command wrote, trimmed. Never throws: resolves to "" when it cannot be read. */
+  async read(): Promise<string> {
+    try {
+      const { size } = await this.handle.stat()
+      const length = Math.min(size, STDERR_MESSAGE_BYTES)
+      const buffer = Buffer.alloc(length)
+      const { bytesRead } = await this.handle.read(buffer, 0, length, size - length)
+      let start = 0
+      if (length < size) {
+        // the cut can fall inside a multi-byte character: skip its continuation bytes
+        while (start < bytesRead && (buffer[start] & 0xc0) === 0x80) {
+          start++
+        }
+      }
+      const text = buffer.toString("utf8", start, bytesRead).trim()
+      return length < size && text.length !== 0 ? `…${text}` : text
+    } catch (_ignored) {
+      return ""
+    }
+  }
+
+  /** Never throws. */
+  async dispose(): Promise<void> {
+    try {
+      await this.handle.close()
+    } catch (_ignored) {
+      // already closed, nothing else to release
+    }
+    await removeQuietly(this.dir)
+  }
+}
 
 export abstract class BaseUpdater extends AppUpdater {
   protected quitAndInstallCalled = false
@@ -378,7 +469,7 @@ export abstract class BaseUpdater extends AppUpdater {
   protected spawnSyncLog(cmd: string, args: string[] = [], env = {}): string {
     this._logger.info(`Executing: ${cmd} with args: ${args}`)
     const mergedEnv: NodeJS.ProcessEnv = { ...process.env, ...env }
-    const response = spawnSync(cmd, args, {
+    const response = spawnSync(shellCommandLine(cmd, args), [], {
       env: { ...mergedEnv, PATH: this.sanitizeEnvPath(mergedEnv.PATH ?? "") },
       encoding: "utf-8",
       shell: true,
@@ -424,37 +515,42 @@ export abstract class BaseUpdater extends AppUpdater {
 
   /**
    * {@link spawnSyncLog} without blocking the main process: same command, same environment, awaited instead.
-   * Rejects when the command exits with a non-zero code or is killed by a signal.
+   * Rejects when the command exits with a non-zero code or is killed by a signal; the error message ends with what the
+   * command wrote to stderr (its last {@link STDERR_MESSAGE_BYTES}).
    *
-   * stdout is not read (as with {@link spawnSyncLog}, nothing uses it), so it is discarded instead of piped: a command
-   * still running when the app quits would otherwise be killed by SIGPIPE on its next write to stdout.
+   * Neither stdout nor stderr is a pipe, so a command still running when the app quits is not killed by SIGPIPE on its
+   * next write: stdout is not read (as with {@link spawnSyncLog}, nothing uses it) and is discarded, stderr goes to a
+   * temp file (see {@link StderrCapture}) that is read once the command exited.
    */
-  protected spawnAsyncLog(cmd: string, args: string[] = [], env = {}): Promise<void> {
+  protected async spawnAsyncLog(cmd: string, args: string[] = [], env = {}): Promise<void> {
     // logging runs in child-process callbacks, where a throwing logger would escape as an uncaught exception
     const logger = nonThrowingLogger(this._logger)
     logger.info(`Executing: ${cmd} with args: ${args}`)
     const mergedEnv: NodeJS.ProcessEnv = { ...process.env, ...env }
-    return new Promise<void>((resolve, reject) => {
-      const child = spawn(cmd, args, {
-        env: { ...mergedEnv, PATH: this.sanitizeEnvPath(mergedEnv.PATH ?? "") },
-        shell: true,
-        stdio: ["ignore", "ignore", "pipe"],
+    const stderr = await StderrCapture.open(this.commandStderrDir(), logger)
+    try {
+      const { status, signal } = await new Promise<{ status: number | null; signal: NodeJS.Signals | null }>((resolve, reject) => {
+        const child = spawn(shellCommandLine(cmd, args), [], {
+          env: { ...mergedEnv, PATH: this.sanitizeEnvPath(mergedEnv.PATH ?? "") },
+          shell: true,
+          stdio: ["ignore", "ignore", stderr == null ? "ignore" : stderr.fd],
+        })
+        child.on("error", error => reject(error))
+        child.on("close", (status, signal) => resolve({ status, signal }))
       })
+      if (status === 0) {
+        return
+      }
+      const output = stderr == null ? "" : await stderr.read()
+      throw new Error(`Command ${cmd} exited with code ${status}${signal == null ? "" : `, signal ${signal}`}${output.length === 0 ? "" : `: ${output}`}`)
+    } finally {
+      await stderr?.dispose()
+    }
+  }
 
-      let stderr = ""
-      child.stderr?.setEncoding("utf8")
-      child.stderr?.on("data", (chunk: string) => (stderr += chunk))
-
-      child.on("error", error => reject(error))
-      child.on("close", (status, signal) => {
-        if (status === 0) {
-          resolve()
-          return
-        }
-        reject(new Error(`Command ${cmd} exited with code ${status}${signal == null ? "" : `, signal ${signal}`}`))
-        logger.error(stderr)
-      })
-    })
+  /** Where {@link spawnAsyncLog} creates the temp file that captures a command's stderr. */
+  protected commandStderrDir(): string {
+    return tmpdir()
   }
 }
 
