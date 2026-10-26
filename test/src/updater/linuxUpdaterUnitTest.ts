@@ -1,6 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { DebUpdater, NoOpLogger, RpmUpdater } from "electron-updater"
+import { spawn, spawnSync } from "child_process"
+import { readdir } from "fs/promises"
+import * as path from "path"
+import type { TmpDir } from "builder-util"
+import { DebUpdater, NoOpLogger, PacmanUpdater, RpmUpdater } from "electron-updater"
+import { runInstallPlan, runInstallPlanAsync } from "electron-updater/src/LinuxUpdater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
+
+// pass-through: lets the spawn tests see how the command line reaches child_process
+vi.mock("child_process", async importOriginal => {
+  const actual = await importOriginal<typeof import("child_process")>()
+  return { ...actual, spawn: vi.fn(actual.spawn), spawnSync: vi.fn(actual.spawnSync) }
+})
 
 const stubApp: AppAdapter = {
   name: "TestApp",
@@ -155,6 +166,353 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
     it("strips carriage return characters", () => {
       setRawPath("/tmp/update\rdeb")
       expect((updater as any).installerPath).toBe("/tmp/updatedeb")
+    })
+  })
+
+  describe("async install", () => {
+    const setRawPath = (rawPath: string) => {
+      ;(updater as any).downloadedUpdateHelper = { file: rawPath }
+    }
+
+    beforeEach(() => {
+      vi.spyOn(updater as any, "isRunningAsRoot").mockReturnValue(false)
+      vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => {
+        const cmd = args[0] as string
+        return cmd === "dpkg" || cmd === "pkexec"
+      })
+    })
+
+    it("runs the same command as the synchronous path, awaited instead of blocking", async () => {
+      setRawPath("/tmp/update-1.0.2.deb")
+      const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue(undefined)
+
+      await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
+
+      expect(spawnAsyncLog).toHaveBeenCalledWith("pkexec", ["--disable-internal-agent", "/bin/bash", "-c", "'dpkg -i /tmp/update-1.0.2.deb'"])
+    })
+
+    it("never falls back to the blocking spawnSync path", async () => {
+      setRawPath("/tmp/update-1.0.2.deb")
+      const spawnSyncLog = vi.spyOn(updater as any, "spawnSyncLog").mockReturnValue("")
+      vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue(undefined)
+
+      await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
+
+      // only the non-privileged `command -v` probes may be synchronous
+      const privileged = spawnSyncLog.mock.calls.filter(([cmd]) => cmd !== "command")
+      expect(privileged).toEqual([])
+    })
+
+    it("repairs dependencies with apt-get when dpkg fails, as a separate authenticated command", async () => {
+      setRawPath("/tmp/update-1.0.2.deb")
+      // first call is dpkg, second is the apt-get repair
+      const spawnAsyncLog = vi
+        .spyOn(updater as any, "spawnAsyncLog")
+        .mockRejectedValueOnce(new Error("Command pkexec exited with code 1"))
+        .mockResolvedValue(undefined)
+
+      await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
+
+      expect(spawnAsyncLog.mock.calls.map(([, argv]: any) => argv[argv.length - 1])).toEqual(["'dpkg -i /tmp/update-1.0.2.deb'", "'apt-get install -f -y'"])
+    })
+
+    it("reports the failure instead of relaunching when every command fails", async () => {
+      setRawPath("/tmp/update-1.0.2.deb")
+      vi.spyOn(updater as any, "spawnAsyncLog").mockRejectedValue(new Error("Command pkexec exited with code 126"))
+      const dispatchError = vi.spyOn(updater as any, "dispatchError").mockReturnValue(undefined)
+      const relaunch = vi.spyOn((updater as any).app, "relaunch")
+
+      const installed = await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: true, isAdminRightsRequired: false })
+
+      expect(installed).toBe(false)
+      expect(dispatchError).toHaveBeenCalled()
+      expect(relaunch).not.toHaveBeenCalled()
+    })
+
+    it("relaunches after a successful install when isForceRunAfter is set", async () => {
+      setRawPath("/tmp/update-1.0.2.deb")
+      vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue(undefined)
+      const relaunch = vi.spyOn((updater as any).app, "relaunch")
+
+      const installed = await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: true, isAdminRightsRequired: false })
+
+      expect(installed).toBe(true)
+      expect(relaunch).toHaveBeenCalledTimes(1)
+    })
+
+    it("reports an unsupported package manager override instead of running anything", async () => {
+      setRawPath("/tmp/update-1.0.2.deb")
+      process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = "zypper"
+      vi.spyOn(updater as any, "hasCommand").mockReturnValue(true)
+      const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue(undefined)
+      const dispatchError = vi.spyOn(updater as any, "dispatchError").mockReturnValue(undefined)
+
+      const installed = await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
+
+      expect(installed).toBe(false)
+      expect(spawnAsyncLog).not.toHaveBeenCalled()
+      expect(dispatchError).toHaveBeenCalledWith(expect.objectContaining({ message: "Package manager zypper not supported" }))
+    })
+
+    it("refreshes the pacman database and retries, like the synchronous path", async () => {
+      const pacman = new PacmanUpdater(null, stubApp)
+      pacman.logger = new NoOpLogger()
+      ;(pacman as any).downloadedUpdateHelper = { file: "/tmp/update-1.0.2.pacman" }
+      vi.spyOn(pacman as any, "isRunningAsRoot").mockReturnValue(true)
+      const spawnAsyncLog = vi
+        .spyOn(pacman as any, "spawnAsyncLog")
+        .mockRejectedValueOnce(new Error("Command pacman exited with code 1"))
+        .mockResolvedValue(undefined)
+
+      const installed = await (pacman as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
+
+      expect(installed).toBe(true)
+      expect(spawnAsyncLog.mock.calls).toEqual([
+        ["pacman", ["-U", "--noconfirm", "/tmp/update-1.0.2.pacman"]],
+        ["pacman", ["-Sy", "--noconfirm"]],
+        ["pacman", ["-U", "--noconfirm", "/tmp/update-1.0.2.pacman"]],
+      ])
+    })
+  })
+
+  describe("quitAndInstall with the async install", () => {
+    function prepareDownloadedUpdate() {
+      updater.logger = { info() {}, warn() {}, error: vi.fn() }
+      ;(updater as any).downloadedUpdateHelper = { file: "/tmp/update-1.0.2.deb", downloadedFileInfo: { isAdminRightsRequired: false } }
+    }
+
+    const flush = () => new Promise(resolve => setImmediate(resolve))
+
+    it("does not quit before the install finished", async () => {
+      prepareDownloadedUpdate()
+      let finishInstall: (isInstalled: boolean) => void = () => {}
+      vi.spyOn(updater as any, "doInstallAsync").mockReturnValue(new Promise<boolean>(resolve => (finishInstall = resolve)))
+      const quit = vi.spyOn((updater as any).app, "quit")
+
+      updater.quitAndInstall({ isSilent: true })
+      await flush()
+
+      expect(quit).not.toHaveBeenCalled()
+      expect((updater as any).quitAndInstallCalled).toBe(true)
+
+      finishInstall(false)
+      await flush()
+      expect(quit).not.toHaveBeenCalled()
+      expect((updater as any).quitAndInstallCalled).toBe(false)
+    })
+
+    it("is not left stuck when reporting the install failure throws", async () => {
+      prepareDownloadedUpdate()
+      vi.spyOn(updater as any, "doInstallAsync").mockRejectedValue(new Error("boom"))
+      // an "error" listener that throws makes dispatchError throw, which installAsync cannot catch
+      vi.spyOn(updater as any, "dispatchError").mockImplementation(() => {
+        throw new Error("error listener failure")
+      })
+      const quit = vi.spyOn((updater as any).app, "quit")
+
+      updater.quitAndInstall({ isSilent: true })
+      await flush()
+
+      expect(quit).not.toHaveBeenCalled()
+      expect((updater as any).quitAndInstallCalled).toBe(false)
+      expect(updater.logger?.error).toHaveBeenCalledWith(expect.stringContaining("Cannot install update"))
+    })
+  })
+
+  describe("spawnAsyncLog", () => {
+    // quoted: the command line goes through a shell, and the path may contain spaces
+    const node = `"${process.execPath}"`
+
+    function captureLogs() {
+      const warnings: string[] = []
+      const errors: string[] = []
+      updater.logger = { info() {}, warn: (m?: any) => warnings.push(String(m)), error: (m?: any) => errors.push(String(m)) }
+      return { warnings, errors }
+    }
+
+    // the directory the stderr temp file is created in, so that the tests can check it is removed
+    async function captureStderrIn(tmpDir: TmpDir): Promise<string> {
+      const dir = await tmpDir.createTempDir({ prefix: "stderr-capture" })
+      vi.spyOn(updater as any, "commandStderrDir").mockReturnValue(dir)
+      return dir
+    }
+
+    it("resolves when the command exits with code 0, and removes the stderr temp file", async ({ tmpDir }) => {
+      captureLogs()
+      const dir = await captureStderrIn(tmpDir)
+      await expect((updater as any).spawnAsyncLog(node, ["-e", "\"process.stderr.write('warning');process.exit(0)\""])).resolves.toBeUndefined()
+      expect(await readdir(dir)).toEqual([])
+    })
+
+    it("rejects with the exit code and the command's stderr, and removes the stderr temp file", async ({ tmpDir }) => {
+      const { errors } = captureLogs()
+      const dir = await captureStderrIn(tmpDir)
+      await expect((updater as any).spawnAsyncLog(node, ["-e", `"process.stderr.write('boom\\n');process.exit(3)"`])).rejects.toThrow(/exited with code 3: boom$/)
+      expect(await readdir(dir)).toEqual([])
+      // reported once, by the error, not logged a second time
+      expect(errors).toEqual([])
+    })
+
+    it.skipIf(process.platform === "win32")("gives the command a file as stderr, already removed while the command runs", async ({ tmpDir }) => {
+      captureLogs()
+      const dir = await captureStderrIn(tmpDir)
+      // a pipe would tie the command to the app: SIGPIPE on its next write to stderr once the app quit
+      const script = `"const fs=require('fs');process.stderr.write(fs.fstatSync(2).isFile()+' '+fs.readdirSync('${dir}').length);process.exit(1)"`
+      await expect((updater as any).spawnAsyncLog(node, ["-e", script])).rejects.toThrow(/exited with code 1: true 0$/)
+    })
+
+    it("keeps only the end of a long stderr in the error message", async ({ tmpDir }) => {
+      captureLogs()
+      await captureStderrIn(tmpDir)
+      const script = `"process.stderr.write('HEAD'+'x'.repeat(100000)+'é'.repeat(5000)+'TAIL!');process.exit(2)"`
+      const error: Error = await (updater as any).spawnAsyncLog(node, ["-e", script]).then(
+        () => null,
+        (e: Error) => e
+      )
+      // 8 KiB from the end falls inside a two-byte "é": the partial character is dropped, not decoded as U+FFFD
+      expect(error.message).toMatch(/^Command .* exited with code 2: …é+TAIL!$/)
+      expect(error.message).not.toContain("HEAD")
+      expect(error.message).not.toContain("\uFFFD")
+      expect(Buffer.byteLength(error.message)).toBeLessThan(9 * 1024)
+    })
+
+    it("removes the stderr temp file when the command cannot be spawned", async ({ tmpDir }) => {
+      captureLogs()
+      const dir = await captureStderrIn(tmpDir)
+      await expect((updater as any).spawnAsyncLog("echo\0", [])).rejects.toThrow(/null bytes/)
+      expect(await readdir(dir)).toEqual([])
+    })
+
+    it("still runs the command when the stderr temp file cannot be created", async ({ tmpDir }) => {
+      const { warnings } = captureLogs()
+      vi.spyOn(updater as any, "commandStderrDir").mockReturnValue(path.join(await tmpDir.createTempDir({ prefix: "stderr-capture" }), "missing"))
+      await expect((updater as any).spawnAsyncLog(node, ["-e", `"process.stderr.write('boom');process.exit(3)"`])).rejects.toThrow(/exited with code 3$/)
+      expect(warnings).toEqual([expect.stringContaining("Cannot capture the command's stderr")])
+    })
+
+    it.skipIf(process.platform === "win32")("names the signal when the command is killed by one", async ({ tmpDir }) => {
+      captureLogs()
+      await captureStderrIn(tmpDir)
+      // `$$` is the shell itself, so the process spawnAsyncLog waits for is the one killed
+      await expect((updater as any).spawnAsyncLog("kill", ["-TERM", "$$"])).rejects.toThrow("exited with code null, signal SIGTERM")
+    })
+
+    it("still settles when the logger throws", async ({ tmpDir }) => {
+      updater.logger = {
+        info: () => {
+          throw new Error("logger failure")
+        },
+        warn: () => {
+          throw new Error("logger failure")
+        },
+        error: () => {
+          throw new Error("logger failure")
+        },
+      }
+      const dir = await captureStderrIn(tmpDir)
+      await expect((updater as any).spawnAsyncLog(node, ["-e", `"process.stderr.write('boom');process.exit(4)"`])).rejects.toThrow(/exited with code 4: boom$/)
+      expect(await readdir(dir)).toEqual([])
+      // and when the stderr temp file cannot be created, which is logged as a warning
+      vi.spyOn(updater as any, "commandStderrDir").mockReturnValue(path.join(dir, "missing"))
+      await expect((updater as any).spawnAsyncLog(node, ["-e", '"process.exit(4)"'])).rejects.toThrow(/exited with code 4$/)
+    })
+
+    // Node joins the arguments itself when given `shell: true` and an argv array, and warns that they are not escaped (DEP0190)
+    it("passes the shell one command line, as Node would have joined it, so that DEP0190 does not apply", async ({ tmpDir }) => {
+      captureLogs()
+      await captureStderrIn(tmpDir)
+      vi.mocked(spawn).mockClear()
+      await (updater as any).spawnAsyncLog(node, ["-e", '"process.exit(0)"'])
+      expect(vi.mocked(spawn)).toHaveBeenCalledWith(`${node} -e "process.exit(0)"`, [], expect.objectContaining({ shell: true }))
+    })
+  })
+
+  describe("spawnSyncLog", () => {
+    it("passes the shell one command line, as Node would have joined it, so that DEP0190 does not apply", () => {
+      const realUpdater = new DebUpdater(null, stubApp)
+      realUpdater.logger = { info() {}, warn() {}, error() {} }
+      vi.mocked(spawnSync).mockClear()
+      const node = `"${process.execPath}"`
+      expect((realUpdater as any).spawnSyncLog(node, ["-e", `"process.stdout.write('a  b')"`])).toBe("a  b")
+      expect(vi.mocked(spawnSync)).toHaveBeenCalledWith(`${node} -e "process.stdout.write('a  b')"`, [], expect.objectContaining({ shell: true }))
+    })
+  })
+
+  describe("install plans", () => {
+    const pacmanPlan = PacmanUpdater.planInstall("/tmp/u.pacman")
+
+    function failingRunner(failing: (command: string[], index: number) => boolean) {
+      const calls: string[][] = []
+      const runner = (command: string[]) => {
+        calls.push(command)
+        if (failing(command, calls.length - 1)) {
+          throw new Error(`${command[0]} failed`)
+        }
+      }
+      return { calls, runner }
+    }
+
+    it("does not run the recovery chain when the command succeeds", () => {
+      const { calls, runner } = failingRunner(() => false)
+      runInstallPlan(pacmanPlan, runner, new NoOpLogger())
+      expect(calls).toEqual([["pacman", "-U", "--noconfirm", "/tmp/u.pacman"]])
+    })
+
+    it("runs the recovery chain in order after a failure and logs why", () => {
+      const warnings: string[] = []
+      const { calls, runner } = failingRunner((_command, index) => index === 0)
+      runInstallPlan(pacmanPlan, runner, { info() {}, warn: (m?: any) => warnings.push(String(m)), error() {} })
+      expect(calls).toEqual([
+        ["pacman", "-U", "--noconfirm", "/tmp/u.pacman"],
+        ["pacman", "-Sy", "--noconfirm"],
+        ["pacman", "-U", "--noconfirm", "/tmp/u.pacman"],
+      ])
+      expect(warnings).toEqual(["pacman failed", "pacman installation failed, attempting to update package database and retry"])
+    })
+
+    it("fails with the recovery step's error and skips the rest of the chain", () => {
+      const errors: string[] = []
+      const { calls, runner } = failingRunner((_command, index) => index <= 1)
+      expect(() => runInstallPlan(pacmanPlan, runner, { info() {}, warn() {}, error: (m?: any) => errors.push(String(m)) })).toThrow("pacman failed")
+      expect(calls).toHaveLength(2)
+      expect(errors).toEqual(["Recovery after pacman failed"])
+    })
+
+    it("fails with the command's error when the plan has no recovery chain", () => {
+      const { runner } = failingRunner(() => true)
+      expect(() => runInstallPlan({ execCommand: ["zypper", "install"] }, runner, new NoOpLogger())).toThrow("zypper failed")
+    })
+
+    it("recovers even when the logger throws", () => {
+      const throwing = () => {
+        throw new Error("logger failure")
+      }
+      const { calls, runner } = failingRunner((_command, index) => index === 0)
+      runInstallPlan(pacmanPlan, runner, { info: throwing, warn: throwing, error: throwing })
+      expect(calls).toHaveLength(3)
+    })
+
+    it("runs the same commands asynchronously as synchronously", async () => {
+      const failFirst = (_command: string[], index: number) => index === 0
+      const sync = failingRunner(failFirst)
+      runInstallPlan(pacmanPlan, sync.runner, new NoOpLogger())
+
+      const asyncCalls: string[][] = []
+      await runInstallPlanAsync(
+        pacmanPlan,
+        command => {
+          asyncCalls.push(command)
+          return failFirst(command, asyncCalls.length - 1) ? Promise.reject(new Error("failed")) : Promise.resolve()
+        },
+        new NoOpLogger()
+      )
+      expect(asyncCalls).toEqual(sync.calls)
+    })
+
+    it("fails asynchronously with the recovery step's error", async () => {
+      await expect(
+        runInstallPlanAsync(DebUpdater.planInstall("dpkg", "/tmp/u.deb", new NoOpLogger()), command => Promise.reject(new Error(`${command[0]} failed`)), new NoOpLogger())
+      ).rejects.toThrow("apt-get failed")
     })
   })
 

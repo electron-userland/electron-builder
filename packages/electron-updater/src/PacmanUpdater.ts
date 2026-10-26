@@ -1,10 +1,9 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter.js"
 import { DownloadUpdateOptions } from "./AppUpdater.js"
-import { InstallOptions } from "./BaseUpdater.js"
 import { DOWNLOAD_PROGRESS, Logger, DownloadExecutorResult } from "./types.js"
 import { findFile } from "./providers/Provider.js"
-import { LinuxUpdater } from "./LinuxUpdater.js"
+import { InstallPlan, LinuxUpdater, runInstallPlan } from "./LinuxUpdater.js"
 
 export class PacmanUpdater extends LinuxUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
@@ -28,40 +27,21 @@ export class PacmanUpdater extends LinuxUpdater {
     })
   }
 
-  protected doInstall(options: InstallOptions): boolean {
-    const installerPath = this.installerPath
-    if (installerPath == null) {
-      this.dispatchError(new Error("No update filepath provided, can't quit and install"))
-      return false
-    }
-    try {
-      PacmanUpdater.installWithCommandRunner(installerPath, this.runCommandWithSudoIfNeeded.bind(this), this._logger)
-    } catch (error: any) {
-      this.dispatchError(error)
-      return false
-    }
-    if (options.isForceRunAfter) {
-      this.app.relaunch() // note: `app` is undefined in tests since vite doesn't run in electron
-    }
-    return true
+  protected resolveInstallPlan(installerPath: string): InstallPlan {
+    return PacmanUpdater.planInstall(installerPath)
   }
 
   static installWithCommandRunner(installerPath: string, commandRunner: (commandWithArgs: string[]) => void, logger: Logger) {
-    try {
-      commandRunner(["pacman", "-U", "--noconfirm", installerPath])
-    } catch (error: any) {
-      logger.warn(error.message ?? error)
-      logger.warn("pacman installation failed, attempting to update package database and retry")
+    runInstallPlan(PacmanUpdater.planInstall(installerPath), commandRunner, logger)
+  }
 
-      try {
-        // Update package database (not a full upgrade, just sync)
-        commandRunner(["pacman", "-Sy", "--noconfirm"])
-        // Retry installation
-        commandRunner(["pacman", "-U", "--noconfirm", installerPath])
-      } catch (retryError: any) {
-        logger.error("Retry after pacman -Sy failed")
-        throw retryError
-      }
+  static planInstall(installerPath: string): InstallPlan {
+    const install = ["pacman", "-U", "--noconfirm", installerPath]
+    return {
+      execCommand: install,
+      recoveryMessage: "pacman installation failed, attempting to update package database and retry",
+      // refresh the package database (not a full upgrade, just sync), then retry the install once
+      recoveryChain: [{ execCommand: ["pacman", "-Sy", "--noconfirm"] }, { execCommand: install }],
     }
   }
 }
