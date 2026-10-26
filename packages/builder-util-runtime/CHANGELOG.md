@@ -1,5 +1,13 @@
 # builder-util-runtime
 
+## 9.7.1
+
+### Patch Changes
+
+- Fix: escaped characters in a Windows `publisherName` distinguished name are decoded correctly. Before, a hex pair was decoded as a single Latin-1 character (`Caf\C3\A9` became `CafÃ©` instead of `Café`), and a `\+` or `\ ` escape followed by a hex digit was read as a hex pair (`Acme\+Bolt` lost the `B`), so such a publisher name never matched the signing certificate and electron-updater rejected the update _[`#10445`](https://github.com/electron-userland/electron-builder/pull/10445) [`ed8990b`](https://github.com/electron-userland/electron-builder/commit/ed8990b0ac163add8aab74ceda11935304b3f237) [@claude](https://github.com/apps/claude)_
+- Fix(runtime): `HttpExecutor.prepareRedirectUrlOptions` leaves out `host`, so a redirected request goes to the redirect target even when the original request set `host` (ElectronHttpExecutor sets it from a `Host` header) _[`#10447`](https://github.com/electron-userland/electron-builder/pull/10447) [`99e0dc5`](https://github.com/electron-userland/electron-builder/commit/99e0dc523c8613f172be75e5fc91d643a277e2e2) [@claude](https://github.com/apps/claude)_
+- Fix: count redirects so redirect loops fail with "Too many redirects" instead of looping forever _[`#10451`](https://github.com/electron-userland/electron-builder/pull/10451) [`02d65d5`](https://github.com/electron-userland/electron-builder/commit/02d65d5aa08e551697539e532ed50063ce27331e) [@claude](https://github.com/apps/claude)_
+
 ## 9.7.0
 
 ### Minor Changes
