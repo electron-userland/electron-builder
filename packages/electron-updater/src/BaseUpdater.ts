@@ -107,6 +107,11 @@ export abstract class BaseUpdater extends AppUpdater {
   private quitHandlerAdded = false
   private sessionEndHandlerAdded = false
   private isSessionEnding = false
+  /**
+   * Set while {@link executeDownload} runs. The downloaded update helper can already point at an installer then, e.g. one
+   * cached by an earlier launch that the app's `verifyUpdateFile` has not accepted yet, so the quit handler must not install it.
+   */
+  private isDownloadInProgress = false
 
   protected constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
@@ -167,14 +172,21 @@ export abstract class BaseUpdater extends AppUpdater {
   protected executeDownload(taskOptions: DownloadExecutorTask): Promise<DownloadExecutorResult> {
     // registered when the download starts, not when it ends: an app quitting before then is told why nothing is installed
     this.addQuitHandler()
-    return super.executeDownload({
-      ...taskOptions,
-      done: event => {
-        this.dispatchUpdateDownloaded(event)
-        this.addQuitHandler()
-        return Promise.resolve()
-      },
-    })
+    this.isDownloadInProgress = true
+    return super
+      .executeDownload({
+        ...taskOptions,
+        done: event => {
+          // the update is downloaded and verified: from now on, quitting installs it
+          this.isDownloadInProgress = false
+          this.dispatchUpdateDownloaded(event)
+          this.addQuitHandler()
+          return Promise.resolve()
+        },
+      })
+      .finally(() => {
+        this.isDownloadInProgress = false
+      })
   }
 
   protected get installerPath(): string | null {
@@ -416,6 +428,11 @@ export abstract class BaseUpdater extends AppUpdater {
     this.app.onQuit(exitCode => {
       if (this.quitAndInstallCalled) {
         this._logger.info("Update installer has already been triggered. Quitting application.")
+        return
+      }
+
+      if (this.isDownloadInProgress) {
+        this._logger.info("No update is installed on quit: the update has not finished downloading and verifying")
         return
       }
 

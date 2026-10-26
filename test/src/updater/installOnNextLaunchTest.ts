@@ -1,4 +1,4 @@
-import { hashFile } from "builder-util-runtime"
+import { CancellationToken, hashFile } from "builder-util-runtime"
 import type { UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { outputFile, pathExists, readJson } from "fs-extra"
 import * as path from "path"
@@ -284,6 +284,53 @@ describe("install on next launch", { concurrent: false }, () => {
       await expect((updater as any).executeDownload({})).rejects.toThrow()
 
       expect(registered).toBe(1)
+    })
+
+    test("does not install an update cached by an earlier launch while the app's verifier still checks it", async () => {
+      const { updater, app, doInstall } = createUpdater()
+      const { fileInfo, updateInfo } = await seedDownloadedUpdate(helper)
+      // as on a new launch: the cached update is only known from disk
+      const launchHelper = new DownloadedUpdateHelper(cacheDir)
+      ;(updater as any).downloadedUpdateHelper = launchHelper
+      let enterVerifier: () => void = () => {}
+      const isVerifying = new Promise<void>(resolve => (enterVerifier = resolve))
+      let finishVerifier: () => void = () => {}
+      const verified = new Promise<void>(resolve => (finishVerifier = resolve))
+      updater.verifyUpdateFile = async () => {
+        enterVerifier()
+        await verified
+        return { response: "success" }
+      }
+
+      const download = (updater as any).executeDownload({
+        fileExtension: "deb",
+        fileInfo,
+        downloadUpdateOptions: { updateInfoAndProvider: { info: updateInfo, provider: { feedBaseUrl: null } }, cancellationToken: new CancellationToken(), requestHeaders: {} },
+        task: () => Promise.reject(new Error("the cached update must not be downloaded again")),
+      })
+      await isVerifying
+      // the helper already points at the cached installer, which the verifier has not accepted yet
+      expect(launchHelper.file).not.toBeNull()
+      app.emitQuit(0)
+
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(log.infos).toContain("No update is installed on quit: the update has not finished downloading and verifying")
+
+      finishVerifier()
+      await download
+      app.emitQuit(0)
+
+      expect(doInstall).toHaveBeenCalledTimes(1)
+    })
+
+    test("installs the downloaded update on quit after a later download failed before it touched it", async () => {
+      const { updater, app, doInstall } = createUpdater()
+      await seedDownloadedUpdate(helper)
+
+      await expect((updater as any).executeDownload({})).rejects.toThrow()
+      app.emitQuit(0)
+
+      expect(doInstall).toHaveBeenCalledTimes(1)
     })
   })
 
