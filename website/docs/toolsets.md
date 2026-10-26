@@ -324,7 +324,7 @@ Each entry is one `file://` URI or a list of them. A list can serve several host
 | `snapcraft` | Building and publishing snaps | macOS: `/opt/homebrew/bin/snapcraft`, `/usr/local/bin/snapcraft`; Linux: `/snap/bin/snapcraft`, `/usr/bin/snapcraft` |
 | `flatpak`, `flatpak-builder` | Building flatpaks | Linux: `/usr/bin/<name>`, `/usr/local/bin/<name>` |
 
-Where a program has several default locations they are tried in the order of the default `PATH`. `SystemRoot` and `ProgramFiles` must be drive-absolute paths such as `C:\Windows`.
+Where a program has several default locations they are tried in the order of the default `PATH`. `SystemRoot` (or `windir`) and `ProgramFiles` must be drive-absolute paths such as `C:\Windows`; they are read only for the default locations, so a program whose entry is set does not need them.
 
 `toolsets.executables` describes the build machine only: inside a Parallels Windows VM, electron-builder runs Windows PowerShell from `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`, the location of a default Windows installation. Package managers (`npm`, `pnpm`, `yarn`, `bun`) and `node-gyp` are not configured here.
 

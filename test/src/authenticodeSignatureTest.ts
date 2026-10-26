@@ -10,6 +10,9 @@ import { AuthenticodeSignatureStatus, authenticodeSignatureStatusName, readAuthe
 import { Executables, InvalidConfigurationError } from "builder-util"
 import { parseAuthenticodeSignatureOutput, prepareAuthenticodeSignatureExec, preparePowerShellExec } from "builder-util-runtime"
 import { execFile } from "child_process"
+import { promises as fs } from "fs"
+import * as path from "path"
+import { pathToFileURL } from "url"
 
 // The Get-AuthenticodeSignature helpers shared by electron-updater (runtime update verification) and electron-builder
 // (build-time check of the signed installer). execFile is stubbed: no PowerShell is spawned, so this runs on any host.
@@ -68,7 +71,13 @@ beforeEach(() => {
   vi.stubEnv("SystemRoot", "C:\\Windows")
 })
 
+const originalPlatform = process.platform
+function setPlatform(platform: NodeJS.Platform) {
+  Object.defineProperty(process, "platform", { value: platform, configurable: true })
+}
+
 afterEach(() => {
+  setPlatform(originalPlatform)
   vi.mocked(execFile).mockReset()
   vi.unstubAllEnvs()
 })
@@ -113,6 +122,19 @@ describe("PowerShell script construction", () => {
       vi.stubEnv("SystemRoot", relative)
       expect(() => preparePowerShellExec("Write-Output 1")).toThrow("not an absolute path")
     }
+  })
+
+  // electron-builder passes the PowerShell of toolsets.executables: SystemRoot, which locates the updater's PowerShell, is not read
+  test("runs the PowerShell it is given without reading SystemRoot", ({ expect }) => {
+    vi.stubEnv("SystemRoot", undefined)
+    vi.stubEnv("windir", undefined)
+    const [file, args, options] = preparePowerShellExec("Write-Output 1", 1234, {}, "D:\\Tools\\powershell.exe")
+    expect(file).toBe("D:\\Tools\\powershell.exe")
+    expect(decodeScript(args)).toContain("Write-Output 1")
+    expect(options).toMatchObject({ shell: false, timeout: 1234, windowsHide: true })
+    expect(prepareAuthenticodeSignatureExec("C:\\update.exe", 1, "D:\\Tools\\powershell.exe")[0]).toBe("D:\\Tools\\powershell.exe")
+    // without one, the absolute path still comes from SystemRoot
+    expect(() => prepareAuthenticodeSignatureExec("C:\\update.exe", 1)).toThrow("SystemRoot is not set")
   })
 
   test("the file is passed verbatim in an environment variable, never in the script", ({ expect }) => {
@@ -204,7 +226,10 @@ describe("readAuthenticodeSignerWithPowerShell (electron-builder adapter)", () =
   })
 
   afterEach(() => {
-    vi.mocked(Executables.resolve).mockRestore()
+    // a test that resolves PowerShell through toolsets.executables restores it itself
+    if (vi.isMockFunction(Executables.resolve)) {
+      vi.mocked(Executables.resolve).mockRestore()
+    }
   })
 
   test("takes PowerShell from toolsets.executables, never from PATH", async ({ expect }) => {
@@ -249,12 +274,29 @@ describe("readAuthenticodeSignerWithPowerShell (electron-builder adapter)", () =
     await expect(readAuthenticodeSignerWithPowerShell(FILE)).resolves.toEqual({ type: "signed", subject: "CN=Äcme 你好", status: 0 })
   })
 
+  // forceCodeSigning reads every signature back: with an explicit toolsets.executables.powershell it does not depend on SystemRoot
+  test("a configured toolsets.executables.powershell is used without reading SystemRoot", async ({ expect, tmpDir }) => {
+    vi.mocked(Executables.resolve).mockRestore()
+    vi.stubEnv("SystemRoot", undefined)
+    vi.stubEnv("windir", undefined)
+    // a file URI of this host (a drive letter on Windows, none elsewhere), which is all toolsets.executables accepts
+    const powershell = path.join(await tmpDir.createTempDir(), "powershell.exe")
+    await fs.writeFile(powershell, "")
+    await fs.chmod(powershell, 0o755)
+    mockExecFile(null, signatureJson())
+    const signer = await Executables.run({ powershell: pathToFileURL(powershell).href }, () => readAuthenticodeSignerWithPowerShell(FILE))
+    expect(signer).toEqual({ type: "signed", subject: SUBJECT, status: 0 })
+    expect(lastExecFileCall().file).toBe(powershell)
+  })
+
   test("PowerShell that cannot be located is unreadable", async ({ expect }) => {
+    vi.mocked(Executables.resolve).mockRestore()
+    setPlatform("win32")
     vi.stubEnv("SystemRoot", undefined)
     vi.stubEnv("windir", undefined)
     await expect(readAuthenticodeSignerWithPowerShell(FILE)).resolves.toEqual({
       type: "unreadable",
-      reason: "Get-AuthenticodeSignature failed: cannot locate Windows PowerShell: SystemRoot is not set",
+      reason: expect.stringMatching(/^Get-AuthenticodeSignature failed: powershell has no default install location on win32 \(SystemRoot is not set\)\. /),
     })
     expect(execFile).not.toHaveBeenCalled()
   })

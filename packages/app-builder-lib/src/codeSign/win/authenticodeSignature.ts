@@ -94,8 +94,9 @@ export function readAuthenticodeSignerWithPowerShell(file: string): Promise<Auth
   return new Promise<AuthenticodeSignerInfo>(resolve => {
     try {
       // a busy build machine may still be preparing the PowerShell modules on first use, and a timeout here fails the build
-      const [, args, options] = prepareAuthenticodeSignatureExec(file, 60 * 1000)
-      execFile(Executables.resolve("powershell"), args, { ...options, env: withoutInheritedCredentials(options.env ?? {}) }, (error, stdout, stderr) => {
+      // like every PowerShell the build starts: from toolsets.executables, or its default location when that has none
+      const [powershell, args, options] = prepareAuthenticodeSignatureExec(file, 60 * 1000, Executables.resolve("powershell"))
+      execFile(powershell, args, { ...options, env: withoutInheritedCredentials(options.env ?? {}) }, (error, stdout, stderr) => {
         if (error != null) {
           const stderrText = String(stderr ?? "").trim()
           // the message of a non-zero exit is "Command failed: <the whole command line, the encoded script included>\n<stderr>"
@@ -121,7 +122,7 @@ export function readAuthenticodeSignerWithPowerShell(file: string): Promise<Auth
         resolve({ type: "signed", subject, status: numericStatus })
       })
     } catch (e: any) {
-      // PowerShell cannot be located (no SystemRoot, or no executable at its toolsets.executables locations) or started at all
+      // PowerShell cannot be located (no executable at its toolsets.executables locations, or no default location) or started at all
       resolve({ type: "unreadable", reason: `Get-AuthenticodeSignature failed: ${e.message}` })
     }
   })
