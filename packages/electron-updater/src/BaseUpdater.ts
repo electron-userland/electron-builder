@@ -136,8 +136,11 @@ export abstract class BaseUpdater extends AppUpdater {
     // quitting earlier would cut that wait short.
     void this.installAsync(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall)
       .catch((error: unknown) => {
-        // installAsync reports install failures itself; this is a failure to report one (an "error" listener that throws)
+        // installAsync reports install failures itself and releases the latch for each one it reports (see
+        // releaseLatchUnlessInstalled); this is a failure to report one (an "error" listener that throws), which skipped
+        // that release, so the latch is released here instead of staying stuck for the rest of the session
         nonThrowingLogger(this._logger).error(`Cannot install update: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
+        this.quitAndInstallCalled = false
         return false
       })
       .then(isInstalled => {
@@ -147,10 +150,10 @@ export abstract class BaseUpdater extends AppUpdater {
             require("electron").autoUpdater.emit("before-quit-for-update")
             this.app.quit()
           })
-        } else {
-          // a reported failure already released the latch (see releaseLatchUnlessInstalled); this covers an unreported one
-          this.quitAndInstallCalled = false
         }
+        // `false` needs nothing here: a reported failure has already released the latch, and a call that beginInstall
+        // ignored because an install is in flight (a second quitAndInstall() during the per-machine UAC wait) must not
+        // release that attempt's latch — the on-quit handler would otherwise launch the installer a second time
       })
   }
 

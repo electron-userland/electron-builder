@@ -19,6 +19,7 @@ import {
 } from "electron-updater/src/windowsElevation"
 import { buildPowerShellArgs, decodePowerShellEncodedCommand, getWindowsPowerShellPath } from "electron-updater/src/windowsPowerShell"
 import { createNsisUpdater } from "../helpers/updaterTestUtil"
+import { mockForNodeRequire } from "vitest-mock-commonjs"
 
 const INSTALLER_PATH = "C:\\Users\\me\\AppData\\Local\\test-updater-app\\pending\\installer.exe"
 const RESOURCES_PATH = "C:\\Program Files\\Test App\\resources"
@@ -449,6 +450,86 @@ describe("NsisUpdater.doInstall elevation", () => {
       expect(errors.map(it => it.code)).toEqual(["ERR_UPDATER_ELEVATION_CANCELLED"])
       expect(quit).not.toHaveBeenCalled()
       expect((updater as any).quitAndInstallCalled).toBe(false)
+    })
+
+    test("a second quitAndInstall() while the first elevation is still pending is ignored and keeps the latch, so the on-quit install does not launch the installer again", async ({
+      expect,
+    }) => {
+      const { updater, spawnLog, quit, errors } = await createInstallableUpdater()
+      const warn = vi.spyOn((updater as any)._logger, "warn")
+      const info = vi.spyOn((updater as any)._logger, "info")
+      // the quit handler ElectronAppAdapter registers on the Electron app (ignored by the test app), captured so the test can fire it
+      const captured: { onQuit?: (exitCode: number) => void } = {}
+      vi.spyOn((updater as any).app, "onQuit").mockImplementation((handler: any) => {
+        captured.onQuit = handler
+      })
+      ;(updater as any).addQuitHandler()
+      // quitAndInstall emits before-quit-for-update on Electron's native autoUpdater, which does not exist under vitest
+      const nativeAutoUpdater = new EventEmitter()
+      const beforeQuitForUpdate = vi.fn()
+      nativeAutoUpdater.on("before-quit-for-update", beforeQuitForUpdate)
+      mockForNodeRequire("electron", { autoUpdater: nativeAutoUpdater })
+      const child = mockSpawn()
+
+      updater.quitAndInstall({ isSilent: true })
+      expect(spawnMock).toHaveBeenCalledOnce()
+      expect((updater as any).quitAndInstallCalled).toBe(true)
+
+      // the UAC prompt is still open: the second call is ignored and must not release the first attempt's latch
+      updater.quitAndInstall({ isSilent: true })
+      await nextTick()
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("install call ignored"))
+      expect((updater as any).quitAndInstallCalled).toBe(true)
+      expect(spawnMock).toHaveBeenCalledOnce()
+      expect(quit).not.toHaveBeenCalled()
+      // neither may an install() in that window
+      expect(updater.install(true, false)).toBe(false)
+      expect((updater as any).quitAndInstallCalled).toBe(true)
+      expect(spawnMock).toHaveBeenCalledOnce()
+
+      // the trampoline reports the installer running: the first attempt quits the app, once
+      child.emit("exit", 0, null)
+      await nextTick()
+      await nextTick()
+      expect(beforeQuitForUpdate).toHaveBeenCalledOnce()
+      expect(quit).toHaveBeenCalledOnce()
+      expect((updater as any).quitAndInstallCalled).toBe(true)
+
+      // the on-quit install (default autoInstallEvent "onQuit") sees the held latch and does not launch the detached trampoline
+      expect(captured.onQuit).toBeDefined()
+      captured.onQuit!(0)
+      expect(info).toHaveBeenCalledWith(expect.stringContaining("Update installer has already been triggered"))
+      expect(spawnLog).not.toHaveBeenCalled()
+      expect(spawnMock).toHaveBeenCalledOnce()
+      expect(errors).toEqual([])
+    })
+
+    test("quitAndInstall() still releases the latch when reporting the declined UAC prompt throws, so install() can be retried", async ({ expect }) => {
+      const { updater, quit, errors } = await createInstallableUpdater()
+      const errorLog = vi.spyOn((updater as any)._logger, "error")
+      // an "error" listener that throws makes dispatchError throw, so installAsync rejects instead of reporting `false`
+      updater.on("error", () => {
+        throw new Error("error listener failure")
+      })
+      const child = mockSpawn()
+
+      updater.quitAndInstall({ isSilent: true })
+      expect((updater as any).quitAndInstallCalled).toBe(true)
+      child.emit("exit", UAC_CANCELLED_EXIT_CODE, null)
+      await nextTick()
+
+      expect(errors[0]?.code).toBe("ERR_UPDATER_ELEVATION_CANCELLED")
+      expect(errorLog).toHaveBeenCalledWith(expect.stringContaining("Cannot install update"))
+      expect(quit).not.toHaveBeenCalled()
+      expect((updater as any).quitAndInstallCalled).toBe(false)
+
+      // not wedged: the user accepts the prompt on the retry
+      const retryChild = mockSpawn()
+      expect(updater.install(true, false)).toBe(true)
+      expect(spawnMock).toHaveBeenCalledTimes(2)
+      retryChild.emit("exit", 0, null)
+      await nextTick()
+      expect((updater as any).quitAndInstallCalled).toBe(true)
     })
   })
 })
