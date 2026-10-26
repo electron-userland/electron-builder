@@ -4,7 +4,8 @@ import { ASAR_INTEGRITY_DIGEST_SENTINEL, computeAsarIntegrityDigest } from "app-
 import { computeUpdateManifestKeyId, GenericServerOptions, hashFile, Nullish, UpdateInfo, verifyManifestSignatures, WindowsUpdateInfo } from "builder-util-runtime"
 import { archFromString, deepAssign, DebugLogger, generateUpdateSigningKeypair, log, serializeToYaml, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
-import { copy, emptyDir, existsSync, move, outputFile, readFile, readJson, readJsonSync, remove } from "fs-extra"
+import { copy, emptyDir, existsSync, move, outputFile, readdir, readFile, readJson, readJsonSync, remove, stat } from "fs-extra"
+import { open } from "fs/promises"
 import { homedir } from "os"
 import path from "path"
 import { randomUUID } from "crypto"
@@ -41,7 +42,16 @@ export const THIRD_VERSION_NUMBER = "1.0.2"
  * A version to build, optionally with configuration that applies to that build only (e.g. its `updateManifest` keys) and a
  * target other than the one of the scenario (e.g. an nsis-web update of an nsis install).
  */
-export type VersionBuild = { version: string; target?: string; extraConfig?: Partial<Configuration> | Nullish }
+export type VersionBuild = {
+  version: string
+  target?: string
+  extraConfig?: Partial<Configuration> | Nullish
+  /**
+   * electron-updater version from the npm registry for this build, instead of this repository's (e.g. the last 6.x release, for an
+   * update from an app that ships an older updater)
+   */
+  electronUpdater?: string
+}
 
 // Resolve only to a ParallelsVmManager — PwshVmManager (used for code-signing on Linux/Mac via Wine)
 // is not capable of installing or running Windows executables and must not be treated as a Windows VM.
@@ -73,12 +83,14 @@ export async function doBuild(
     target,
     arch,
     extraConfig,
+    electronUpdater,
     packed,
   }: {
     version: string
     target: string
     arch: Arch
     extraConfig: Partial<Configuration> | Nullish
+    electronUpdater: string | undefined
     packed: (context: PackedContext) => Promise<any>
   }) {
     await assertPack(
@@ -163,6 +175,11 @@ export async function doBuild(
                 electron: ELECTRON_VERSION,
                 "node-addon-api": "^8",
               }
+              if (electronUpdater != null) {
+                // a released updater with its own builder-util-runtime, as the app would install it
+                data.dependencies = { ...data.dependencies, sqlite3: "5.1.7", "@electron/remote": "2.1.3", "electron-updater": electronUpdater }
+                return
+              }
               const electronUpdaterPath = (pkg: string) => path.resolve(__dirname, "../../../packages", pkg)
               const updaterPath = electronUpdaterPath("electron-updater")
               const utilPath = electronUpdaterPath("builder-util-runtime")
@@ -183,12 +200,13 @@ export async function doBuild(
     )
   }
 
-  const build = (version: string, extraConfig: Configuration | Nullish, buildTarget: string) =>
+  const build = (version: string, extraConfig: Configuration | Nullish, buildTarget: string, electronUpdater: string | undefined) =>
     buildApp({
       version,
       target: buildTarget,
       arch,
       extraConfig,
+      electronUpdater,
       packed: async context => {
         if (isMacBuild) {
           await assertAsarIntegrityDigestEmbedded(expect, context.getContent(Platform.MAC, arch), arch)
@@ -207,10 +225,10 @@ export async function doBuild(
     // first build uses "store", later builds use "maximum" — validates both compressions work while we're at it
     let isFirstBuild = true
     for (const entry of versions) {
-      const { version, extraConfig, target: entryTarget }: VersionBuild = typeof entry === "string" ? { version: entry, extraConfig: null } : entry
+      const { version, extraConfig, target: entryTarget, electronUpdater }: VersionBuild = typeof entry === "string" ? { version: entry, extraConfig: null } : entry
       // shallow merge on purpose: a per-version block (e.g. `updateManifest`) replaces the shared one wholesale
       // (deepAssign would union arrays such as signingKey lists)
-      await build(version, { ...extraConfiguration, ...extraConfig, compression: isFirstBuild ? "store" : "maximum" }, entryTarget ?? target)
+      await build(version, { ...extraConfiguration, ...extraConfig, compression: isFirstBuild ? "store" : "maximum" }, entryTarget ?? target, electronUpdater)
       isFirstBuild = false
     }
   } catch (e: any) {
@@ -251,6 +269,42 @@ function updateFilesDir(target: string, distDir: string): string {
 }
 
 const isNsisTarget = (target: string) => target === "nsis" || target === "nsis-web"
+
+/**
+ * Targets whose first update hop downloads differentially: the NSIS installer is compared with the copy of itself the installer
+ * left in the updater cache, an AppImage with its own embedded block map. A mac zip has nothing cached before its first update
+ * (the first hop is a full download), and deb/rpm/pacman always download in full.
+ */
+export const isDifferentialOnFirstHop = (target: string) => target === "nsis" || target === "AppImage"
+
+/** Logged by DifferentialDownloader once it has planned the download (`Full: 42 MB, To download: 1.2 MB (3%)`). */
+export const DIFFERENTIAL_PLAN_MARKER = /\[updater\] Full: [^\n]+, To download: [^\n]+ \(\d+%\)/
+/** Logged by AppUpdater.logDifferentialDownloadFallback before a differential failure turns into a full download. */
+export const DIFFERENTIAL_FALLBACK_MARKER = "Cannot download differentially, fallback to full download"
+
+/**
+ * The update launch took the differential path and completed it: a silent fallback to a full download installs the update all the
+ * same, so only the updater log tells the two apart.
+ */
+export function assertDifferentialDownload(expect: ExpectStatic, stdout: string): void {
+  expect(stdout, "the updater fell back to a full download").not.toContain(DIFFERENTIAL_FALLBACK_MARKER)
+  expect(stdout, "the updater did not plan a differential download").toMatch(DIFFERENTIAL_PLAN_MARKER)
+}
+
+/**
+ * The runtime update config a blackbox launch is given replaces the app's embedded app-update.yml, so it must carry the embedded
+ * `updaterCacheDirName`: without it the updater looks for its cache (the NSIS installer's own copy, the cached block map) under the
+ * app name instead of where the installer put it, and every differential download falls back to a full one.
+ */
+export async function embeddedCacheDirConfig(distDir: string): Promise<Partial<GenericServerOptions>> {
+  try {
+    const { updaterCacheDirName } = await readEmbeddedUpdateConfig(distDir)
+    return updaterCacheDirName == null ? {} : { updaterCacheDirName }
+  } catch {
+    // no unpacked app-update.yml in the dist dir (e.g. only an AppImage, which embeds it): the updater does not need the cache to find the old file
+    return {}
+  }
+}
 
 const LINUX_TARGETS = ["AppImage", "deb", "rpm", "pacman"]
 
@@ -376,7 +430,9 @@ export async function runTest(
   toolsets: ToolsetConfig = {},
   extraConfig?: Partial<Configuration>,
   /** checks the stdout of the launch that downloads and installs the update (e.g. updater log lines) */
-  assertLaunch?: (stdout: string) => void
+  assertLaunch?: (stdout: string) => void,
+  /** whether the update must be downloaded differentially; defaults to {@link isDifferentialOnFirstHop} */
+  expectDifferential: boolean = isDifferentialOnFirstHop(target)
 ) {
   const { expect } = context
   const vm = await windowsVmPromise
@@ -419,17 +475,27 @@ export async function runTest(
     }
     await assertPackageType?.()
 
-    await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
-      // Move app update to the root directory of the server
-      await copy(updateFilesDir(target, newAppDir.dir), rootDirectory, { recursive: true, overwrite: true })
-
-      await updateHop(expect, { appPath, vm, updateConfigPath, packageManager, fromVersion: OLD_VERSION_NUMBER, toVersion: NEW_VERSION_NUMBER, assertLaunch })
-      if (assertPackageType != null) {
-        // the version probe can see the new app before the installer has written the marker
-        await waitForWindowsProcessExit(NSIS_INSTALLER_IMAGE_NAME)
-        await assertPackageType()
+    const assertUpdateLaunch = (stdout: string) => {
+      if (expectDifferential) {
+        assertDifferentialDownload(expect, stdout)
       }
-    }, vm)
+      assertLaunch?.(stdout)
+    }
+    await runTestWithinServer(
+      async (rootDirectory: string, updateConfigPath: string) => {
+        // Move app update to the root directory of the server
+        await copy(updateFilesDir(target, newAppDir.dir), rootDirectory, { recursive: true, overwrite: true })
+
+        await updateHop(expect, { appPath, vm, updateConfigPath, packageManager, fromVersion: OLD_VERSION_NUMBER, toVersion: NEW_VERSION_NUMBER, assertLaunch: assertUpdateLaunch })
+        if (assertPackageType != null) {
+          // the version probe can see the new app before the installer has written the marker
+          await waitForWindowsProcessExit(NSIS_INSTALLER_IMAGE_NAME)
+          await assertPackageType()
+        }
+      },
+      vm,
+      await embeddedCacheDirConfig(dirPath)
+    )
   } catch (error: any) {
     log.error({ error: error.message }, "Blackbox Updater Test failed to run")
     queuedError = error
@@ -940,7 +1006,7 @@ async function runUpdateScenario(
   const targetOf = (index: number) => builds[index].target ?? target
   const perMachine = extraConfig?.nsis?.perMachine
 
-  const extraUpdateConfig = await initialUpdateConfig(outDirs)
+  const extraUpdateConfig = { ...(await embeddedCacheDirConfig(outDirs[0].dir)), ...(await initialUpdateConfig(outDirs)) }
 
   // Setup tests by installing the previous version
   const appPath = await handleInitialInstallPerOS({ target: targetOf(0), dirPath: outDirs[0].dir, arch, vm, perMachine })
@@ -1169,6 +1235,185 @@ export async function runKeyRotationTest(context: TestContext, target: string, p
           expect(stdout).not.toContain(MANIFEST_VERIFICATION_DISABLED_MARKER)
         },
       })
+    },
+  })
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Updates from an app that ships an older electron-updater, and recovery from an update that cannot be installed
+// ---------------------------------------------------------------------------------------------------------
+
+/**
+ * electron-updater of the apps built with electron-builder 26 for {@link runCrossVersionUpdateTest}: 6.8.10 is the first 6.x release
+ * whose next update after a block map format change is differential again (earlier ones keep the old map in their cache).
+ */
+export const LEGACY_ELECTRON_UPDATER_VERSION = "6.8.10"
+
+/** Targets whose update after the first one downloads differentially: a mac zip has a cached update.zip only from the first update on. */
+const isDifferentialAfterFirstUpdate = (target: string) => isDifferentialOnFirstHop(target) || target === "zip"
+
+/** Whether the `.blockmap` published next to the update files is the binary format (`EBM3` magic) rather than gzipped JSON. */
+async function publishesBinaryBlockMap(filesDir: string): Promise<boolean> {
+  for (const name of await readdir(filesDir)) {
+    if (name.endsWith(".blockmap") && (await readFile(path.join(filesDir, name))).subarray(0, 4).toString("latin1") === "EBM3") {
+      return true
+    }
+  }
+  return false
+}
+
+/**
+ * An app on electron-updater 6 updates to a build of this repository (with this repository's electron-updater), and from there once
+ * more. The first hop reads the update metadata and the block map the current electron-builder publishes with an updater that predates
+ * them: a binary block map it cannot read must end in a full download, not a failed update. The second hop runs the current updater and
+ * must be differential again.
+ */
+export async function runCrossVersionUpdateTest(context: TestContext, target: string, packageManager: string, arch: Arch = Arch.x64, toolsets: ToolsetConfig = {}): Promise<void> {
+  // the updated builds declare that the installed apps ship electron-updater 7 or later, so a build that can write a binary block map writes it
+  const currentUpdaterBuild = { electronUpdaterCompatibility: ">=7" }
+  await runUpdateScenario(context, {
+    target,
+    packageManager,
+    arch,
+    toolsets,
+    tmpDirPrefix: "cross-version",
+    builds: [
+      { version: OLD_VERSION_NUMBER, electronUpdater: LEGACY_ELECTRON_UPDATER_VERSION },
+      { version: NEW_VERSION_NUMBER, extraConfig: currentUpdaterBuild },
+      { version: THIRD_VERSION_NUMBER, extraConfig: currentUpdaterBuild },
+    ],
+    initialUpdateConfig: () => Promise.resolve({}),
+    scenario: async ctx => {
+      const { expect, outDirs, rootDirectory } = ctx
+      const isBinaryBlockMap = await publishesBinaryBlockMap(updateFilesDir(target, outDirs[1].dir))
+
+      // Hop 1: electron-updater 6 → this build
+      await updateHop(expect, {
+        ...ctx,
+        fromVersion: OLD_VERSION_NUMBER,
+        toVersion: NEW_VERSION_NUMBER,
+        assertLaunch: stdout => {
+          if (isBinaryBlockMap) {
+            // electron-updater 6 cannot read the binary block map: one full download, which installs all the same
+            expect(stdout).toContain(DIFFERENTIAL_FALLBACK_MARKER)
+          } else if (isDifferentialOnFirstHop(target)) {
+            assertDifferentialDownload(expect, stdout)
+          }
+        },
+      })
+
+      // Hop 2: the installed app now ships this repository's electron-updater. Reset the served root first (see runKeyRotationTest).
+      await emptyDir(rootDirectory)
+      await copy(updateFilesDir(target, outDirs[2].dir), rootDirectory, { recursive: true, overwrite: true })
+      await updateHop(expect, {
+        ...ctx,
+        fromVersion: NEW_VERSION_NUMBER,
+        toVersion: THIRD_VERSION_NUMBER,
+        assertLaunch: stdout => {
+          if (isDifferentialAfterFirstUpdate(target)) {
+            assertDifferentialDownload(expect, stdout)
+          }
+        },
+      })
+    },
+  })
+}
+
+/** Logged by AppUpdater once a download has passed verification. */
+const DOWNLOADED_TO_PATTERN = /New version \S+ has been downloaded to (.+)/
+
+/** Overwrites bytes in the middle of `file` without changing its size, so only its checksum tells it from the original. */
+async function corruptInPlace(file: string): Promise<void> {
+  const { size } = await stat(file)
+  const length = Math.min(4096, size)
+  const handle = await open(file, "r+")
+  try {
+    await handle.write(Buffer.alloc(length, 0x5a), 0, length, Math.floor((size - length) / 2))
+  } finally {
+    await handle.close()
+  }
+}
+
+/**
+ * An update that was downloaded and queued for the next launch is damaged on disk before it is installed (a disk error, an
+ * antivirus quarantine that leaves a truncated file, a cache cleaner). The next launch must refuse to install it and keep the
+ * installed version running, and the next update check must download it again and install it:
+ *   1. launch the old version with AUTO_UPDATER_TEST_NEXT_LAUNCH=true — the update is downloaded and queued, nothing is installed
+ *   2. overwrite part of the queued file (same size, wrong sha512)
+ *   3. relaunch with AUTO_UPDATER_TEST_INSTALL_PENDING=true — installPendingUpdateIfAvailable() must report false
+ *   4. probe: the installed binary still reports the old version
+ *   5. an ordinary update cycle downloads the update again and installs it
+ * Needs the queued file on this machine's file system, so it does not run through a Windows VM.
+ */
+export async function runCorruptedPendingUpdateTest(
+  context: TestContext,
+  target: string,
+  packageManager: string,
+  arch: Arch = Arch.x64,
+  toolsets: ToolsetConfig = {}
+): Promise<void> {
+  await runUpdateScenario(context, {
+    target,
+    packageManager,
+    arch,
+    toolsets,
+    tmpDirPrefix: "corrupted-pending-update",
+    builds: [{ version: OLD_VERSION_NUMBER }, { version: NEW_VERSION_NUMBER }],
+    initialUpdateConfig: () => Promise.resolve({}),
+    scenario: async ctx => {
+      const { expect, vm, appPath, updateConfigPath, packageManager } = ctx
+      if (vm != null) {
+        throw new Error("The corrupted pending update test changes the queued file on this machine and cannot run through a VM")
+      }
+
+      // 1. Download the update and queue it for the next launch.
+      const queueResult = await launchAndWaitForQuit({
+        appPath,
+        timeoutMs: 5 * 60 * 1000,
+        updateConfigPath,
+        expectedVersion: OLD_VERSION_NUMBER,
+        packageManagerToTest: packageManager,
+        waitForExit: true,
+        env: { AUTO_UPDATER_TEST_NEXT_LAUNCH: "true" },
+      })
+      const queuedFile = DOWNLOADED_TO_PATTERN.exec(queueResult.stdout)?.[1]?.trim()
+      await queueResult.assert(() => {
+        expect(queueResult.stdout).toContain("Update is marked for install on next launch")
+        expect(queuedFile, "the updater did not log where it downloaded the update").toBeDefined()
+      })
+
+      // 2. Damage the queued update.
+      await corruptInPlace(queuedFile!)
+
+      // 3. The pending install must be refused.
+      const installResult = await launchAndWaitForQuit({
+        appPath,
+        timeoutMs: 5 * 60 * 1000,
+        updateConfigPath,
+        expectedVersion: OLD_VERSION_NUMBER,
+        packageManagerToTest: packageManager,
+        waitForExit: true,
+        env: { AUTO_UPDATER_TEST_INSTALL_PENDING: "true" },
+      })
+      await installResult.assert(() => {
+        expect(installResult.stdout).toContain("Pending update failed validation and will not be installed")
+        expect(installResult.stdout).toContain("INSTALL_PENDING_RESULT: false")
+        expect(installResult.stdout).not.toContain("Installing pending update")
+      })
+
+      // 4. The installed app is untouched.
+      const probe = await launchAndWaitForQuit({
+        appPath,
+        timeoutMs: 60 * 1000,
+        updateConfigPath,
+        packageManagerToTest: packageManager,
+        env: { AUTO_UPDATER_TEST: "" },
+        waitForExit: true,
+      })
+      await probe.assert(() => expect(probe.version).toMatch(OLD_VERSION_NUMBER))
+
+      // 5. The next update check downloads the update again and installs it.
+      await updateHop(expect, { ...ctx, fromVersion: OLD_VERSION_NUMBER, toVersion: NEW_VERSION_NUMBER })
     },
   })
 }
