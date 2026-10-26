@@ -1,5 +1,29 @@
 import { blake2b } from "@noble/hashes/blake2.js"
-import { BlockInput, decodeBlockMapV3, encodeBlockMapV3, GROUP_MAX, GROUP_MIN, GROUP_SIZE, groupBlocks, groupEntryRanges, groupSupers, HEADER_FIXED_SIZE, parseBlockMapV3Groups, parseBlockMapV3Header, parseBlockMapV3Records, parseBlockMapV3Supers, RECORD_SIZE, recordRangeOfGroup, recordsStart, REGION_SIZE, SUPER_MAX, SUPER_MIN, SUPER_SIZE, superHashOfGroups, toBlockMap } from "builder-util-runtime/internal"
+import {
+  BlockInput,
+  decodeBlockMapV3,
+  encodeBlockMapV3,
+  GROUP_MAX,
+  GROUP_MIN,
+  GROUP_SIZE,
+  groupBlocks,
+  groupEntryRanges,
+  groupSupers,
+  HEADER_FIXED_SIZE,
+  parseBlockMapV3Groups,
+  parseBlockMapV3Header,
+  parseBlockMapV3Records,
+  parseBlockMapV3Supers,
+  RECORD_SIZE,
+  recordRangeOfGroup,
+  recordsStart,
+  REGION_SIZE,
+  SUPER_MAX,
+  SUPER_MIN,
+  SUPER_SIZE,
+  superHashOfGroups,
+  toBlockMap,
+} from "builder-util-runtime/internal"
 
 // Deterministic synthetic blocks: content-derived digests, sizes around a mean.
 function makeBlocks(count: number, seed: number, avgSize = 4096, startOffset = 0): Array<BlockInput> {

@@ -397,13 +397,14 @@ function warnAboutLegacyUpdaterCompatibility(electronUpdaterCompatibility: strin
     return
   }
   // once per process — createUpdateInfoTasks runs per artifact
-  log
-    .once("legacy-updater-compatibility")
-    .warn(
-      { electronUpdaterCompatibility, solution: `drop the pin (the default is "${DEFAULT_ELECTRON_UPDATER_COMPATIBILITY}") unless you still ship apps embedding electron-updater 1.x-2.15` },
-      "electronUpdaterCompatibility includes electron-updater versions below 2.16.0, so the deprecated top-level path/sha512 descriptor is still written to latest*.yml " +
-        "(and, on Windows, the legacy SHA-256 sha2 checksum). Metadata validated only by sha2 is deprecated and v28 will reject it. " +
-        "Every electron-updater since 2.16.0 reads files[] and ignores these fields. " +
-        "See https://www.electron.build/docs/migration/v27-build-changes#latestyml-drops-legacy-top-level-pathsha512"
-    )
+  log.once("legacy-updater-compatibility").warn(
+    {
+      electronUpdaterCompatibility,
+      solution: `drop the pin (the default is "${DEFAULT_ELECTRON_UPDATER_COMPATIBILITY}") unless you still ship apps embedding electron-updater 1.x-2.15`,
+    },
+    "electronUpdaterCompatibility includes electron-updater versions below 2.16.0, so the deprecated top-level path/sha512 descriptor is still written to latest*.yml " +
+      "(and, on Windows, the legacy SHA-256 sha2 checksum). Metadata validated only by sha2 is deprecated and v28 will reject it. " +
+      "Every electron-updater since 2.16.0 reads files[] and ignores these fields. " +
+      "See https://www.electron.build/docs/migration/v27-build-changes#latestyml-drops-legacy-top-level-pathsha512"
+  )
 }

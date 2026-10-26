@@ -163,7 +163,12 @@ describe("blockMapV3Fetcher", () => {
   const OLD = encode(OLD_BLOCKS)
   const oldMap = decodeBlockMapV3(OLD)
 
-  function fetchWith(name: string, old: Buffer | null, isUseMultipleRangeRequest?: boolean, extra: { expectedFileSize?: number; requestHeaders?: http.OutgoingHttpHeaders; setUp?: () => void } = {}) {
+  function fetchWith(
+    name: string,
+    old: Buffer | null,
+    isUseMultipleRangeRequest?: boolean,
+    extra: { expectedFileSize?: number; requestHeaders?: http.OutgoingHttpHeaders; setUp?: () => void } = {}
+  ) {
     for (const it of [server, cdn]) {
       it.requests.length = 0
       it.headers.length = 0
@@ -517,7 +522,10 @@ describe("blockMapV3Fetcher", () => {
       if (++count !== 2) {
         return false
       }
-      const [start, end] = /bytes=(\d+)-(\d+)/.exec(req.headers.range!)!.slice(1).map(it => parseInt(it, 10))
+      const [start, end] = /bytes=(\d+)-(\d+)/
+        .exec(req.headers.range!)!
+        .slice(1)
+        .map(it => parseInt(it, 10))
       const shifted = start + 10
       res.writeHead(206, { "Content-Range": `bytes ${shifted}-${end + 10}/${NEW.length}` })
       res.end(NEW.subarray(shifted, end + 11))

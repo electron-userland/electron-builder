@@ -1,6 +1,24 @@
 import { createRequire } from "node:module"
 import { decodeBlockMapV3, isBlockMapV3, LogLimiter, toBlockMap } from "builder-util-runtime/internal"
-import { AllPublishOptions, asArray, CancellationToken, newError, PublishConfiguration, UpdateInfo, UUID, DownloadOptions, CancellationError, HttpExecutor, ProgressInfo, BlockMap, retry, collectManifestSignatures, normalizePublicKeyList, verifyManifestSignatures, type LimitedLogger } from "builder-util-runtime"
+import {
+  AllPublishOptions,
+  asArray,
+  CancellationToken,
+  newError,
+  PublishConfiguration,
+  UpdateInfo,
+  UUID,
+  DownloadOptions,
+  CancellationError,
+  HttpExecutor,
+  ProgressInfo,
+  BlockMap,
+  retry,
+  collectManifestSignatures,
+  normalizePublicKeyList,
+  verifyManifestSignatures,
+  type LimitedLogger,
+} from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { release } from "os"
 import { EventEmitter } from "events"
@@ -1317,7 +1335,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
           // a host or CDN that mishandles Range requests, or a map that fails verification: a plain GET of the new map still
           // allows a differential update
           throwIfCancelled(e, downloadUpdateOptions.cancellationToken)
-          nonThrowingLogger(this._logger).warn(`Cannot fetch the changed parts of the block map "${newBlockMapUrl.href}", downloading it whole: ${e instanceof Error ? e.message : String(e)}`)
+          nonThrowingLogger(this._logger).warn(
+            `Cannot fetch the changed parts of the block map "${newBlockMapUrl.href}", downloading it whole: ${e instanceof Error ? e.message : String(e)}`
+          )
         }
       }
       newBlockMapData ??= await downloadBlockMap(newBlockMapUrl)
