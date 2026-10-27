@@ -107,6 +107,11 @@ export abstract class BaseUpdater extends AppUpdater {
   private quitHandlerAdded = false
   private sessionEndHandlerAdded = false
   private isSessionEnding = false
+  /**
+   * Set while {@link executeDownload} runs. The downloaded update helper can already point at an installer then, e.g. one
+   * cached by an earlier launch that the app's `verifyUpdateFile` has not accepted yet, so the quit handler must not install it.
+   */
+  private isDownloadInProgress = false
 
   protected constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
@@ -165,14 +170,23 @@ export abstract class BaseUpdater extends AppUpdater {
   }
 
   protected executeDownload(taskOptions: DownloadExecutorTask): Promise<DownloadExecutorResult> {
-    return super.executeDownload({
-      ...taskOptions,
-      done: event => {
-        this.dispatchUpdateDownloaded(event)
-        this.addQuitHandler()
-        return Promise.resolve()
-      },
-    })
+    // registered when the download starts, not when it ends: an app quitting before then is told why nothing is installed
+    this.addQuitHandler()
+    this.isDownloadInProgress = true
+    return super
+      .executeDownload({
+        ...taskOptions,
+        done: event => {
+          // the update is downloaded and verified: from now on, quitting installs it
+          this.isDownloadInProgress = false
+          this.dispatchUpdateDownloaded(event)
+          this.addQuitHandler()
+          return Promise.resolve()
+        },
+      })
+      .finally(() => {
+        this.isDownloadInProgress = false
+      })
   }
 
   protected get installerPath(): string | null {
@@ -398,9 +412,14 @@ export abstract class BaseUpdater extends AppUpdater {
     return isMarked
   }
 
+  /**
+   * Registers, once, the handler that installs (or defers) the downloaded update when the app quits. It is registered
+   * whatever `autoInstallEvent` is, and reads it when the app quits: an app may set it after the download, e.g. switch
+   * from `"manual"` to `"onQuit"`.
+   */
   protected addQuitHandler(): void {
     this.addSessionEndHandler()
-    if (this.quitHandlerAdded || this.autoInstallEvent === "manual") {
+    if (this.quitHandlerAdded) {
       return
     }
 
@@ -409,6 +428,16 @@ export abstract class BaseUpdater extends AppUpdater {
     this.app.onQuit(exitCode => {
       if (this.quitAndInstallCalled) {
         this._logger.info("Update installer has already been triggered. Quitting application.")
+        return
+      }
+
+      if (this.isDownloadInProgress) {
+        this._logger.info("No update is installed on quit: the update has not finished downloading and verifying")
+        return
+      }
+
+      if (this.installerPath == null) {
+        this._logger.info("No update is installed on quit: no update has finished downloading")
         return
       }
 
@@ -466,22 +495,30 @@ export abstract class BaseUpdater extends AppUpdater {
       .join(path.delimiter)
   }
 
-  protected spawnSyncLog(cmd: string, args: string[] = [], env = {}): string {
+  /**
+   * Runs a command and returns its trimmed stdout; throws when it cannot be spawned or exits with a non-zero code.
+   *
+   * With `useShell` (the default), the shell gets the command line Node would have joined from `cmd` and `args` (see
+   * {@link shellCommandLine}), so the caller escapes them. Without it, the arguments are passed as an argv array and
+   * nothing has to be escaped.
+   */
+  protected spawnSyncLog(cmd: string, args: string[] = [], env = {}, useShell = true): string {
     this._logger.info(`Executing: ${cmd} with args: ${args}`)
     const mergedEnv: NodeJS.ProcessEnv = { ...process.env, ...env }
-    const response = spawnSync(shellCommandLine(cmd, args), [], {
+    const response = spawnSync(useShell ? shellCommandLine(cmd, args) : cmd, useShell ? [] : args, {
       env: { ...mergedEnv, PATH: this.sanitizeEnvPath(mergedEnv.PATH ?? "") },
       encoding: "utf-8",
-      shell: true,
+      shell: useShell,
     })
 
-    const { error, status, stdout, stderr } = response
+    const { error, status, signal, stdout, stderr } = response
     if (error != null) {
       this._logger.error(stderr)
       throw error
-    } else if (status != null && status !== 0) {
+    } else if (status !== 0) {
+      // a command killed by a signal has no exit code, and did not succeed either
       this._logger.error(stderr)
-      throw new Error(`Command ${cmd} exited with code ${status}`)
+      throw new Error(`Command ${cmd} exited with code ${status}${signal == null ? "" : `, signal ${signal}`}`)
     }
 
     return stdout.trim()
@@ -521,8 +558,11 @@ export abstract class BaseUpdater extends AppUpdater {
    * Neither stdout nor stderr is a pipe, so a command still running when the app quits is not killed by SIGPIPE on its
    * next write: stdout is not read (as with {@link spawnSyncLog}, nothing uses it) and is discarded, stderr goes to a
    * temp file (see {@link StderrCapture}) that is read once the command exited.
+   *
+   * `useShell` is opt-out: without a shell the arguments are passed as an argv array, so nothing has to be
+   * escaped. With a shell, the shell gets the command line Node would have joined from them (see {@link shellCommandLine}).
    */
-  protected async spawnAsyncLog(cmd: string, args: string[] = [], env = {}): Promise<void> {
+  protected async spawnAsyncLog(cmd: string, args: string[] = [], env = {}, useShell = true): Promise<void> {
     // logging runs in child-process callbacks, where a throwing logger would escape as an uncaught exception
     const logger = nonThrowingLogger(this._logger)
     logger.info(`Executing: ${cmd} with args: ${args}`)
@@ -530,9 +570,9 @@ export abstract class BaseUpdater extends AppUpdater {
     const stderr = await StderrCapture.open(this.commandStderrDir(), logger)
     try {
       const { status, signal } = await new Promise<{ status: number | null; signal: NodeJS.Signals | null }>((resolve, reject) => {
-        const child = spawn(shellCommandLine(cmd, args), [], {
+        const child = spawn(useShell ? shellCommandLine(cmd, args) : cmd, useShell ? [] : args, {
           env: { ...mergedEnv, PATH: this.sanitizeEnvPath(mergedEnv.PATH ?? "") },
-          shell: true,
+          shell: useShell,
           stdio: ["ignore", "ignore", stderr == null ? "ignore" : stderr.fd],
         })
         child.on("error", error => reject(error))
