@@ -1,10 +1,11 @@
-import { mkdir, readdir, writeFile } from "fs/promises"
+import { mkdir, readdir, symlink, writeFile } from "fs/promises"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { spawn, spawnSync } from "child_process"
 import type { TmpDir } from "builder-util"
 import { DebUpdater, NoOpLogger, PacmanUpdater, RpmUpdater } from "electron-updater"
-import { runInstallPlan, runInstallPlanAsync } from "electron-updater/src/LinuxUpdater"
+import { CommandExitError } from "electron-updater/src/BaseUpdater"
+import { ElevationDeniedError, runInstallPlan, runInstallPlanAsync } from "electron-updater/src/LinuxUpdater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 
 // pass-through: lets the spawn tests see how the command line reaches child_process
@@ -234,6 +235,68 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       } finally {
         vi.unstubAllEnvs()
       }
+    })
+
+    // file modes and symlinks are POSIX: Windows has no execute bit (X_OK checks only that the file exists), and creating a
+    // symlink there needs a privilege, so only the tests that rely on neither run on Windows
+    describe("in trusted directories", () => {
+      const posixIt = it.skipIf(process.platform === "win32")
+
+      let trustedDir: string
+      let outsideDir: string
+
+      beforeEach(async ({ tmpDir }) => {
+        trustedDir = await tmpDir.getTempDir({ prefix: "trusted-bin" })
+        outsideDir = await tmpDir.getTempDir({ prefix: "user-bin" })
+        await mkdir(trustedDir, { recursive: true })
+        await mkdir(outsideDir, { recursive: true })
+        vi.spyOn(updater as any, "trustedCommandDirs", "get").mockReturnValue([trustedDir])
+      })
+
+      const resolve = (command: string): string => (updater as any).resolveTrustedCommand(command)
+
+      it("finds an executable file", async () => {
+        await writeFile(path.join(trustedDir, "dpkg"), "#!/bin/sh\n", { mode: 0o755 })
+        expect(resolve("dpkg")).toBe(path.join(trustedDir, "dpkg"))
+      })
+
+      posixIt("follows a symlink to an executable file in a trusted directory", async () => {
+        await writeFile(path.join(trustedDir, "dnf5"), "#!/bin/sh\n", { mode: 0o755 })
+        await symlink("dnf5", path.join(trustedDir, "dnf"))
+        expect(resolve("dnf")).toBe(path.join(trustedDir, "dnf"))
+      })
+
+      it.each(["sub/dpkg", "../dpkg", "./dpkg", "..", ".", ""])("rejects %j, which is not a bare command name", async command => {
+        // a file the name would reach, if it were joined with the trusted directory
+        await mkdir(path.join(trustedDir, "sub"), { recursive: true })
+        await writeFile(path.join(trustedDir, "sub", "dpkg"), "#!/bin/sh\n", { mode: 0o755 })
+        expect(() => resolve(command)).toThrow(`${JSON.stringify(command)} is not a command name`)
+      })
+
+      it("rejects a directory", async () => {
+        await mkdir(path.join(trustedDir, "dpkg"))
+        expect(() => resolve("dpkg")).toThrow(`dpkg not found in ${trustedDir}`)
+      })
+
+      posixIt("rejects a file that is not executable", async () => {
+        await writeFile(path.join(trustedDir, "dpkg"), "#!/bin/sh\n", { mode: 0o644 })
+        expect(() => resolve("dpkg")).toThrow(`dpkg not found in ${trustedDir}`)
+      })
+
+      it("rejects a missing command", () => {
+        expect(() => resolve("dpkg")).toThrow(`dpkg not found in ${trustedDir}`)
+      })
+
+      posixIt("rejects a symlink to an executable outside the trusted directories", async () => {
+        await writeFile(path.join(outsideDir, "dpkg"), "#!/bin/sh\n", { mode: 0o755 })
+        await symlink(path.join(outsideDir, "dpkg"), path.join(trustedDir, "dpkg"))
+        expect(() => resolve("dpkg")).toThrow(`dpkg not found in ${trustedDir}`)
+      })
+
+      posixIt("rejects a dangling symlink", async () => {
+        await symlink(path.join(outsideDir, "missing"), path.join(trustedDir, "dpkg"))
+        expect(() => resolve("dpkg")).toThrow(`dpkg not found in ${trustedDir}`)
+      })
     })
   })
 
@@ -537,6 +600,108 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
     })
   })
 
+  describe("an elevation the user refused", () => {
+    const options = { isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false }
+
+    function exitError(cmd: string, exitCode: number): CommandExitError {
+      return new CommandExitError(`Command ${cmd} exited with code ${exitCode}`, cmd, exitCode, null)
+    }
+
+    /**
+     * Installs /tmp/update-1.0.2.deb with dpkg, elevated by `helper`, synchronously (on quit) or asynchronously; every
+     * privileged command fails with `exitCode`. Returns the privileged commands run and the errors dispatched.
+     */
+    async function install(mode: "sync" | "async", exitCode: number, helper = "pkexec") {
+      ;(updater as any).downloadedUpdateHelper = { file: "/tmp/update-1.0.2.deb", downloadedFileInfo: { isAdminRightsRequired: false } }
+      vi.spyOn(updater as any, "determineSudoCommand").mockReturnValue(helper)
+      const spawnSyncLog = vi.spyOn(updater as any, "spawnSyncLog").mockImplementation((...args: unknown[]) => {
+        const [cmd] = args
+        if (cmd === "command") {
+          return ""
+        }
+        throw exitError(String(cmd), exitCode)
+      })
+      const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockRejectedValue(exitError(helper, exitCode))
+      const dispatchError = vi.spyOn(updater as any, "dispatchError").mockReturnValue(undefined)
+      const installed = mode === "sync" ? (updater as any).doInstall(options) : await (updater as any).doInstallAsync(options)
+      const calls = mode === "sync" ? spawnSyncLog.mock.calls.filter(([cmd]) => cmd !== "command") : spawnAsyncLog.mock.calls
+      const privileged = calls.map(([, argv]) => (Array.isArray(argv) ? argv.map(String) : []))
+      return { installed, privileged, dispatchError }
+    }
+
+    beforeEach(() => {
+      updater.logger = new NoOpLogger()
+      vi.spyOn(updater as any, "isRunningAsRoot").mockReturnValue(false)
+      vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === "dpkg")
+      vi.spyOn(updater as any, "resolveTrustedCommand").mockImplementation((...args: unknown[]) => `/usr/bin/${String(args[0])}`)
+    })
+
+    describe.each(["sync", "async"] as const)("%s install", mode => {
+      it.each([
+        [126, "the authentication dialog was dismissed"],
+        [127, "authorization was not obtained"],
+      ])("stops at pkexec exit code %i, without the apt-get repair, and reports it once", async (exitCode, reason) => {
+        const { installed, privileged, dispatchError } = await install(mode, exitCode)
+
+        expect(installed).toBe(false)
+        // a second authentication dialog for the repair would follow the dismissed one
+        expect(privileged).toEqual([["--disable-internal-agent", "/usr/bin/dpkg", "-i", "/tmp/update-1.0.2.deb"]])
+        expect(dispatchError).toHaveBeenCalledTimes(1)
+        const [[error]] = dispatchError.mock.calls
+        expect(error).toBeInstanceOf(ElevationDeniedError)
+        expect(error).toMatchObject({ exitCode, message: `Command pkexec exited with code ${exitCode} (${reason}), the update is not installed` })
+      })
+
+      it("still repairs with apt-get when dpkg itself fails under pkexec", async () => {
+        const { installed, privileged, dispatchError } = await install(mode, 1)
+
+        expect(installed).toBe(false)
+        expect(privileged.map(argv => argv.slice(1))).toEqual([
+          ["/usr/bin/dpkg", "-i", "/tmp/update-1.0.2.deb"],
+          ["/usr/bin/apt-get", "install", "-f", "-y"],
+        ])
+        expect(dispatchError).toHaveBeenCalledTimes(1)
+        expect(dispatchError.mock.calls[0][0]).not.toBeInstanceOf(ElevationDeniedError)
+      })
+
+      // sudo exits with 1 for a failed authentication, like dpkg; the wrapped helpers' 126 and 127 are /bin/bash's
+      it.each([
+        ["sudo", 126],
+        ["gksudo", 126],
+        ["kdesudo", 127],
+        ["beesu", 127],
+      ])("keeps the apt-get repair with %s, whose exit code %i cannot tell a refusal from a failed command", async (helper, exitCode) => {
+        const { privileged, dispatchError } = await install(mode, exitCode, helper)
+
+        expect(privileged).toHaveLength(2)
+        expect(dispatchError.mock.calls[0][0]).not.toBeInstanceOf(ElevationDeniedError)
+      })
+
+      it("keeps the apt-get repair when running as root, where 126 is dpkg's own exit code", async () => {
+        vi.spyOn(updater as any, "isRunningAsRoot").mockReturnValue(true)
+        const { privileged, dispatchError } = await install(mode, 126)
+
+        expect(privileged).toHaveLength(2)
+        expect(dispatchError.mock.calls[0][0]).not.toBeInstanceOf(ElevationDeniedError)
+      })
+    })
+
+    it("stops the pacman retry as well", async () => {
+      const pacman = new PacmanUpdater(null, stubApp)
+      pacman.logger = new NoOpLogger()
+      ;(pacman as any).downloadedUpdateHelper = { file: "/tmp/update-1.0.2.pacman" }
+      vi.spyOn(pacman as any, "isRunningAsRoot").mockReturnValue(false)
+      vi.spyOn(pacman as any, "determineSudoCommand").mockReturnValue("pkexec")
+      vi.spyOn(pacman as any, "resolveTrustedCommand").mockImplementation((...args: unknown[]) => `/usr/bin/${String(args[0])}`)
+      const spawnAsyncLog = vi.spyOn(pacman as any, "spawnAsyncLog").mockRejectedValue(exitError("pkexec", 126))
+      const dispatchError = vi.spyOn(pacman as any, "dispatchError").mockReturnValue(undefined)
+
+      expect(await (pacman as any).doInstallAsync(options)).toBe(false)
+      expect(spawnAsyncLog).toHaveBeenCalledTimes(1)
+      expect(dispatchError).toHaveBeenCalledWith(expect.any(ElevationDeniedError))
+    })
+  })
+
   describe("spawnAsyncLog", () => {
     // quoted: the command line goes through a shell, and the path may contain spaces
     const node = `"${process.execPath}"`
@@ -655,6 +820,17 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       expect(await readdir(dir)).toEqual([])
     })
 
+    it("rejects with a CommandExitError that carries the exit code", async ({ tmpDir }) => {
+      captureLogs()
+      await captureStderrIn(tmpDir)
+      const error: unknown = await (updater as any).spawnAsyncLog(process.execPath, ["-e", "process.exit(126)"], {}, false).then(
+        () => null,
+        (e: unknown) => e
+      )
+      expect(error).toBeInstanceOf(CommandExitError)
+      expect(error).toMatchObject({ command: process.execPath, exitCode: 126, signal: null })
+    })
+
     it("removes the stderr temp file when the program does not exist, without a shell", async ({ tmpDir }) => {
       captureLogs()
       const dir = await captureStderrIn(tmpDir)
@@ -691,11 +867,30 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       expect(() => (realUpdater as any).spawnSyncLog(process.execPath, ["-e", "process.kill(process.pid, 'SIGTERM')"], {}, false)).toThrow(/exited with code null, signal SIGTERM$/)
     })
 
+    it("throws a CommandExitError that carries the exit code", () => {
+      const realUpdater = createRealUpdater()
+      let error: unknown = null
+      try {
+        ;(realUpdater as any).spawnSyncLog(process.execPath, ["-e", "process.exit(127)"], {}, false)
+      } catch (e: unknown) {
+        error = e
+      }
+      expect(error).toBeInstanceOf(CommandExitError)
+      expect(error).toMatchObject({ command: process.execPath, exitCode: 127, signal: null })
+    })
+
     // what spawnSync returns for a command killed by a signal, so that the check also runs where signals do not exist
     it("fails when spawnSync reports no exit code and a signal", () => {
       const realUpdater = createRealUpdater()
       vi.mocked(spawnSync).mockReturnValueOnce({ pid: 1, output: [], stdout: "", stderr: "", status: null, signal: "SIGTERM" })
-      expect(() => (realUpdater as any).spawnSyncLog("pkexec", ["dpkg", "-i", "/tmp/u.deb"], {}, false)).toThrow(/^Command pkexec exited with code null, signal SIGTERM$/)
+      let error: unknown = null
+      try {
+        ;(realUpdater as any).spawnSyncLog("pkexec", ["dpkg", "-i", "/tmp/u.deb"], {}, false)
+      } catch (e: unknown) {
+        error = e
+      }
+      expect(error).toBeInstanceOf(CommandExitError)
+      expect(error).toMatchObject({ message: "Command pkexec exited with code null, signal SIGTERM", command: "pkexec", exitCode: null, signal: "SIGTERM" })
       expect(vi.mocked(spawnSync)).toHaveBeenCalledTimes(1)
     })
   })
@@ -769,6 +964,38 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
         new NoOpLogger()
       )
       expect(asyncCalls).toEqual(sync.calls)
+    })
+
+    it("does not run the recovery chain after a refused elevation, synchronously or asynchronously", async () => {
+      const denied = new ElevationDeniedError(new CommandExitError("Command pkexec exited with code 126", "pkexec", 126, null), 126)
+      const warnings: string[] = []
+      const logger = { info() {}, warn: (m?: any) => warnings.push(String(m)), error() {} }
+      const { calls, runner } = failingRunner(() => false)
+      expect(() =>
+        runInstallPlan(
+          pacmanPlan,
+          command => {
+            runner(command)
+            throw denied
+          },
+          logger
+        )
+      ).toThrow(denied)
+      expect(calls).toHaveLength(1)
+
+      const asyncCalls: string[][] = []
+      await expect(
+        runInstallPlanAsync(
+          pacmanPlan,
+          command => {
+            asyncCalls.push(command)
+            return Promise.reject(denied)
+          },
+          logger
+        )
+      ).rejects.toBe(denied)
+      expect(asyncCalls).toHaveLength(1)
+      expect(warnings).toEqual([])
     })
 
     it("fails asynchronously with the recovery step's error", async () => {

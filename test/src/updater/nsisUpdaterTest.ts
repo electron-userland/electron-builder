@@ -872,8 +872,8 @@ describe("NsisUpdater — disableWebInstaller", () => {
       expect(spawnLog).not.toHaveBeenCalled()
       expect(errors).toEqual([expect.objectContaining({ code: "ERR_UPDATER_WEB_INSTALLER_DISABLED" })])
 
-      // a refused install() leaves quitAndInstallCalled set (only quitAndInstall() resets it)
-      ;(updater as any).quitAndInstallCalled = false
+      // a refused install() returns to idle: a later install() tries again without any reset
+      expect((updater as any).installState).toEqual({ kind: "idle" })
       updater.disableWebInstaller = false
       expect(updater.install(true, false)).toBe(true)
       expect(spawnLog).toHaveBeenCalledWith(updateFile, expect.arrayContaining([`--package-file=${packageFile}`]))
