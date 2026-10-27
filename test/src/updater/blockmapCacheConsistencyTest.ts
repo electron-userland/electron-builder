@@ -50,7 +50,7 @@ describe("executeDownload blockmap cache consistency", { concurrent: false }, ()
     ;(updater as any).downloadedUpdateHelper = helper
   })
 
-  function executeDownload(options: { disableDifferentialDownload?: boolean; writePendingBlockMap?: string } = {}): Promise<DownloadExecutorResult> {
+  function executeDownload(options: { disableDifferentialDownload?: boolean; writePendingBlockMap?: string; onDone?: () => Promise<void> } = {}): Promise<DownloadExecutorResult> {
     const disableDifferentialDownload = options.disableDifferentialDownload === true
     const taskOptions: DownloadExecutorTask = {
       fileExtension: "zip",
@@ -80,6 +80,7 @@ describe("executeDownload blockmap cache consistency", { concurrent: false }, ()
         if (!disableDifferentialDownload) {
           await copyFile(event.downloadedFile, cachedBinaryFile())
         }
+        await options.onDone?.()
       },
     }
     // call AppUpdater's implementation directly — BaseUpdater.executeDownload would replace `done`
@@ -112,6 +113,19 @@ describe("executeDownload blockmap cache consistency", { concurrent: false }, ()
     await executeDownload({ writePendingBlockMap: "blockmap of 2.0.0" })
 
     expect((await readFile(cachedBlockMapFile())).toString()).toBe("blockmap of 2.0.0")
+  })
+
+  test("blockmap is cached before update-downloaded is announced", async () => {
+    // `done` emits update-downloaded; an app that calls quitAndInstall() from that listener exits before anything after it runs
+    let cachedAtDone: string | null = null
+    await executeDownload({
+      writePendingBlockMap: "blockmap of 2.0.0",
+      onDone: async () => {
+        cachedAtDone = (await pathExists(cachedBlockMapFile())) ? (await readFile(cachedBlockMapFile())).toString() : null
+      },
+    })
+
+    expect(cachedAtDone).toBe("blockmap of 2.0.0")
   })
 
   test("cached blockmap is kept when differential download is disabled", async () => {

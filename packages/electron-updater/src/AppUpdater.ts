@@ -1110,20 +1110,22 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const cachedBlockMapFile = path.join(downloadedUpdateHelper.cacheDir, "current.blockmap")
     const done = async (isSaveCache: boolean) => {
       await downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo, updateFileName, isSaveCache)
-      await taskOptions.done!({
-        ...updateInfo,
-        downloadedFile: updateFile,
-        ...(packageFile == null ? {} : { packageFile }),
-      })
+      // before `taskOptions.done`: it emits `update-downloaded`, and an app that calls quitAndInstall() from that listener exits
+      // before anything after it runs, which would leave the next update without the blockmap of the installed version
       if (await fsExtra.pathExists(pendingBlockMapFile)) {
         await fsExtra.copyFile(pendingBlockMapFile, cachedBlockMapFile)
       } else if (!taskOptions.downloadUpdateOptions.disableDifferentialDownload) {
-        // this download did not produce a blockmap, but `taskOptions.done` above refreshes the cached installer —
+        // this download did not produce a blockmap, but `taskOptions.done` below refreshes the cached installer —
         // remove the cached blockmap too, so a stale one cannot sit next to a fresh file and poison the next
         // differential download with a wrong copy plan (https://github.com/electron-userland/electron-builder/issues/10097).
         // The differential downloader re-fetches the old blockmap from the server when no cached one exists.
         await fsExtra.remove(cachedBlockMapFile)
       }
+      await taskOptions.done!({
+        ...updateInfo,
+        downloadedFile: updateFile,
+        ...(packageFile == null ? {} : { packageFile }),
+      })
       return withLegacyArrayCompat(packageFile == null ? { updateFile } : { updateFile, packageFile }, this._logger)
     }
 
