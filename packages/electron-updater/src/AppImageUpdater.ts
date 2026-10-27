@@ -19,9 +19,9 @@ export class AppImageUpdater extends BaseUpdater {
   public isUpdaterActive(): boolean {
     if (process.env["APPIMAGE"] == null && !this.forceDevUpdateConfig) {
       if (process.env["SNAP"] == null) {
-        this.logger.warn("APPIMAGE env is not defined, current application is not an AppImage")
+        this.log.warn("APPIMAGE env is not defined, current application is not an AppImage")
       } else {
-        this.logger.info("SNAP env is defined, updater is disabled")
+        this.log.info("SNAP env is defined, updater is disabled")
       }
       return false
     }
@@ -62,7 +62,7 @@ export class AppImageUpdater extends BaseUpdater {
       const downloadOptions: DifferentialDownloaderOptions = {
         newUrl: fileInfo.url,
         oldFile,
-        logger: this.logger,
+        logger: this.log,
         newFile: updateFile,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
         requestHeaders: this.downloadRequestHeaders(fileInfo.url, downloadUpdateOptions),
@@ -155,7 +155,7 @@ export class AppImageUpdater extends BaseUpdater {
     try {
       rmSync(file, { force: true })
     } catch (e: any) {
-      this.logger.warn(`Cannot remove ${file} after install: ${e.message || e}`)
+      this.log.warn(`Cannot remove ${file} after install: ${e.message || e}`)
     }
   }
 }

@@ -26,12 +26,12 @@ export class MacUpdater extends AppUpdater {
     super(options, app)
 
     this.nativeUpdater.on("error", it => {
-      this.logger.warn(it)
+      this.log.warn(it)
       this.emit("error", it)
     })
     this.nativeUpdater.on("update-downloaded", () => {
       this.squirrelDownloadedUpdate = true
-      this.logger.debug("nativeUpdater.update-downloaded")
+      this.log.debug("nativeUpdater.update-downloaded")
     })
   }
 
@@ -48,10 +48,10 @@ export class MacUpdater extends AppUpdater {
 
   private closeServerIfExists() {
     if (this.server) {
-      this.logger.debug("Closing proxy server")
+      this.log.debug("Closing proxy server")
       this.server.close(err => {
         if (err) {
-          this.logger.debug("proxy server wasn't already open, probably attempted closing again as a safety check before quit")
+          this.log.debug("proxy server wasn't already open, probably attempted closing again as a safety check before quit")
         }
       })
     }
@@ -64,24 +64,24 @@ export class MacUpdater extends AppUpdater {
     const sysctlRosettaInfoKey = "sysctl.proc_translated"
     let isRosetta = false
     try {
-      this.logger.debug("Checking for macOS Rosetta environment")
+      this.log.debug("Checking for macOS Rosetta environment")
       // by absolute path, like uname below: a bare name would be looked up on the PATH the app was started with
       const result = execFileSync("/usr/sbin/sysctl", [sysctlRosettaInfoKey], { encoding: "utf8" })
       isRosetta = result.includes(`${sysctlRosettaInfoKey}: 1`)
-      this.logger.info(`Checked for macOS Rosetta environment (isRosetta=${isRosetta})`)
+      this.log.info(`Checked for macOS Rosetta environment (isRosetta=${isRosetta})`)
     } catch (e: any) {
-      this.logger.warn(`sysctl shell command to check for macOS Rosetta environment failed: ${e}`)
+      this.log.warn(`sysctl shell command to check for macOS Rosetta environment failed: ${e}`)
     }
 
     let isArm64Mac = false
     try {
-      this.logger.debug("Checking for arm64 in uname")
+      this.log.debug("Checking for arm64 in uname")
       const result = execFileSync("/usr/bin/uname", ["-a"], { encoding: "utf8" })
       const isArm = result.includes("ARM")
-      this.logger.info(`Checked 'uname -a': arm64=${isArm}`)
+      this.log.info(`Checked 'uname -a': arm64=${isArm}`)
       isArm64Mac = isArm64Mac || isArm
     } catch (e: any) {
-      this.logger.warn(`uname shell command to check for arm64 failed: ${e}`)
+      this.log.warn(`uname shell command to check for arm64 failed: ${e}`)
     }
 
     isArm64Mac = isArm64Mac || process.arch === "arm64" || isRosetta
@@ -106,7 +106,7 @@ export class MacUpdater extends AppUpdater {
         const cachedUpdateFilePath = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
         const canDifferentialDownload = () => {
           if (!fsExtra.pathExistsSync(cachedUpdateFilePath)) {
-            this.logger.info("Unable to locate previous update.zip for differential download (is this first install?), falling back to full download")
+            this.log.info("Unable to locate previous update.zip for differential download (is this first install?), falling back to full download")
             return false
           }
           return !downloadUpdateOptions.disableDifferentialDownload
@@ -115,7 +115,7 @@ export class MacUpdater extends AppUpdater {
         if (canDifferentialDownload()) {
           differentialDownloadFailed = await this.differentialDownloadInstaller(zipFileInfo, downloadUpdateOptions, destinationFile, provider, CURRENT_MAC_APP_ZIP_FILE_NAME)
         }
-        this.logger.info(`Differential download ${differentialDownloadFailed ? "failed" : "succeeded"}`)
+        this.log.info(`Differential download ${differentialDownloadFailed ? "failed" : "succeeded"}`)
 
         if (differentialDownloadFailed) {
           await this.httpExecutor.download(zipFileInfo.url, destinationFile, downloadOptions)
@@ -127,7 +127,7 @@ export class MacUpdater extends AppUpdater {
             const cachedUpdateFilePath = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
             await fsExtra.copyFile(event.downloadedFile, cachedUpdateFilePath)
           } catch (error: any) {
-            this.logger.warn(`Unable to copy file for caching for future differential downloads: ${error.message}`)
+            this.log.warn(`Unable to copy file for caching for future differential downloads: ${error.message}`)
           }
         }
         return this.updateDownloaded(zipFileInfo, event)
@@ -141,11 +141,11 @@ export class MacUpdater extends AppUpdater {
 
     const logContext = `fileToProxy=${zipFileInfo.url.href}`
     this.closeServerIfExists()
-    this.logger.debug(`Creating proxy server for native Squirrel.Mac (${logContext})`)
+    this.log.debug(`Creating proxy server for native Squirrel.Mac (${logContext})`)
     this.server = createServer()
-    this.logger.debug(`Proxy server for native Squirrel.Mac is created (${logContext})`)
+    this.log.debug(`Proxy server for native Squirrel.Mac is created (${logContext})`)
     this.server.on("close", () => {
-      this.logger.info(`Proxy server for native Squirrel.Mac is closed (${logContext})`)
+      this.log.info(`Proxy server for native Squirrel.Mac is closed (${logContext})`)
     })
 
     // must be called after server is listening, otherwise address is null
@@ -165,14 +165,14 @@ export class MacUpdater extends AppUpdater {
       const fileUrl = `/${randomBytes(64).toString("hex")}.zip`
       this.server!.on("request", (request: IncomingMessage, response: ServerResponse) => {
         const requestUrl = request.url!
-        this.logger.info(`${requestUrl} requested`)
+        this.log.info(`${requestUrl} requested`)
         if (requestUrl === "/") {
           // check for basic auth header
           if (!request.headers.authorization || request.headers.authorization.indexOf("Basic ") === -1) {
             response.statusCode = 401
             response.statusMessage = "Invalid Authentication Credentials"
             response.end()
-            this.logger.warn("No authenthication info")
+            this.log.warn("No authenthication info")
             return
           }
 
@@ -184,7 +184,7 @@ export class MacUpdater extends AppUpdater {
             response.statusCode = 401
             response.statusMessage = "Invalid Authentication Credentials"
             response.end()
-            this.logger.warn("Invalid authenthication credentials")
+            this.log.warn("Invalid authenthication credentials")
             return
           }
 
@@ -195,13 +195,13 @@ export class MacUpdater extends AppUpdater {
         }
 
         if (!requestUrl.startsWith(fileUrl)) {
-          this.logger.warn(`${requestUrl} requested, but not supported`)
+          this.log.warn(`${requestUrl} requested, but not supported`)
           response.writeHead(404)
           response.end()
           return
         }
 
-        this.logger.info(`${fileUrl} requested by Squirrel.Mac, pipe ${downloadedFile}`)
+        this.log.info(`${fileUrl} requested by Squirrel.Mac, pipe ${downloadedFile}`)
 
         let errorOccurred = false
         response.on("finish", () => {
@@ -216,7 +216,7 @@ export class MacUpdater extends AppUpdater {
           try {
             response.end()
           } catch (e: any) {
-            this.logger.warn(`cannot end response: ${e}`)
+            this.log.warn(`cannot end response: ${e}`)
           }
           errorOccurred = true
           this.nativeUpdater.removeListener("error", reject)
@@ -230,10 +230,10 @@ export class MacUpdater extends AppUpdater {
         readStream.pipe(response)
       })
 
-      this.logger.debug(`Proxy server for native Squirrel.Mac is starting to listen (${logContext})`)
+      this.log.debug(`Proxy server for native Squirrel.Mac is starting to listen (${logContext})`)
 
       this.server!.listen(0, "127.0.0.1", () => {
-        this.logger.debug(`Proxy server for native Squirrel.Mac is listening (address=${getServerUrl(this.server!)}, ${logContext})`)
+        this.log.debug(`Proxy server for native Squirrel.Mac is listening (address=${getServerUrl(this.server!)}, ${logContext})`)
         this.nativeUpdater.setFeedURL({
           url: getServerUrl(this.server!),
           headers: {
@@ -273,7 +273,7 @@ export class MacUpdater extends AppUpdater {
       // no deferred-install state is needed on macOS: Squirrel.Mac already stages the downloaded update natively
       // (ShipIt) and applies it when the app is relaunched after a normal quit, without spawning a killable
       // detached installer process. Quitting the app is the closest equivalent behavior.
-      this.logger.info("quitAndInstall called with waitUntilNextLaunch: Squirrel.Mac stages updates natively, the staged update is applied on relaunch after quit")
+      this.log.info("quitAndInstall called with waitUntilNextLaunch: Squirrel.Mac stages updates natively, the staged update is applied on relaunch after quit")
       this.app.quit()
       return
     }
