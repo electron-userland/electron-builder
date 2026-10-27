@@ -130,31 +130,61 @@ interface InstallOnQuitSkip {
   readonly message: string
 }
 
-/** An install {@link BaseUpdater.runInstallAsync} waits for. */
-interface InFlightInstall {
-  /** The update it installs, should the download helper move on to another one meanwhile. */
-  readonly sha512: string | null
-  /** A quit was cancelled to let it finish: the app quits once it settled. */
-  isQuitDeferred: boolean
-}
+/**
+ * Where the update install is in this session. {@link BaseUpdater.beginInstall} and {@link BaseUpdater.endInstall} move
+ * it; a `quitAndInstall({ waitUntilNextLaunch: true })` that marked the update for the next launch hands it off directly.
+ * - `idle`: no install runs, one can start.
+ * - `installing`: an install runs. `sha512` is the update it installs, should the download helper move on to another
+ *   one meanwhile; `isQuitDeferred`: a quit was cancelled to let it finish, and the app quits once it settled.
+ * - `handedOff`: the update is installed, its installer started, or it is marked for the next launch, and the app
+ *   quits: no other install starts in this session.
+ */
+type InstallState = { readonly kind: "idle" } | { readonly kind: "installing"; readonly sha512: string | null; isQuitDeferred: boolean } | { readonly kind: "handedOff" }
+
+type Installing = Extract<InstallState, { readonly kind: "installing" }>
+
+const IDLE: InstallState = { kind: "idle" }
+const HANDED_OFF: InstallState = { kind: "handedOff" }
+
+/**
+ * What started an install: `install()` or `installAsync()` (the app's own call, or the install on quit),
+ * `quitAndInstall()`, or the install on launch. The last two quit by themselves once the install succeeded.
+ */
+type InstallTrigger = "install" | "quitAndInstall" | "launch"
 
 export abstract class BaseUpdater extends AppUpdater {
-  protected quitAndInstallCalled = false
+  private installState: InstallState = IDLE
   /** The app lifecycle events whose handler is registered: each one is registered once. */
   private readonly registeredHooks = new Set<LifecycleHook>()
   private isSessionEnding = false
-  /** The install {@link runInstallAsync} waits for, `null` when none runs. */
-  private inFlightInstall: InFlightInstall | null = null
   /**
-   * The sha512 of the downloaded update whose install failed while the app was quitting: no later quit in this session
-   * tries to install that update on quit again. A different update downloaded later is installed on quit.
+   * The sha512 of a downloaded update that no later quit in this session tries to install: installing it failed while
+   * the app was quitting, or, on a target whose install shows an elevation dialog, when `install()` or `installAsync()`
+   * installed it. A different update downloaded later is installed on quit, and an explicit install can still install
+   * this one.
    */
-  private failedInstallOnQuitSha512: string | null = null
+  private skipInstallOnQuitSha512: string | null = null
   /**
    * Set while {@link executeDownload} runs. The downloaded update helper can already point at an installer then, e.g. one
    * cached by an earlier launch that the app's `verifyUpdateFile` has not accepted yet, so the quit handler must not install it.
    */
   private isDownloadInProgress = false
+
+  /**
+   * Whether an install started in this session: it runs, or it handed the update off (installed it, started its
+   * installer, or marked it for the next launch). Setting it to `true` stops every later install in this session,
+   * setting it to `false` lets one start again.
+   *
+   * @deprecated Kept for subclasses until the next major version: the install lifecycle is tracked in one private state
+   * now, and a failed install no longer leaves this set. Do not set it: an install that failed can be retried as is.
+   */
+  protected get quitAndInstallCalled(): boolean {
+    return this.installState.kind !== "idle"
+  }
+
+  protected set quitAndInstallCalled(value: boolean) {
+    this.installState = value ? HANDED_OFF : IDLE
+  }
 
   protected constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
@@ -171,7 +201,7 @@ export abstract class BaseUpdater extends AppUpdater {
     if (waitUntilNextLaunch) {
       this._logger.info(`Deferring install to next launch on explicit quitAndInstall (waitUntilNextLaunch)`)
       if (this.markPendingInstallOnNextLaunch()) {
-        this.quitAndInstallCalled = true
+        this.installState = HANDED_OFF
         setImmediate(() => this.app.quit())
       }
       return
@@ -180,7 +210,7 @@ export abstract class BaseUpdater extends AppUpdater {
     // If NOT in silent mode use `autoRunAppAfterInstall` to determine whether to force run the app
     // the install runs asynchronously on targets whose install shows an elevation dialog (see installAsync), so the
     // app quits once it finished instead of right after this call returns
-    void this.runInstallAsync(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall, true)
+    void this.runInstallAsync(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall, "quitAndInstall")
       .catch((error: unknown) => {
         // installAsync reports install failures itself; this is a failure to report one (an "error" listener that throws)
         nonThrowingLogger(this._logger).error(`Cannot install update: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
@@ -193,8 +223,6 @@ export abstract class BaseUpdater extends AppUpdater {
             require("electron").autoUpdater.emit("before-quit-for-update")
             this.app.quit()
           })
-        } else {
-          this.quitAndInstallCalled = false
         }
       })
   }
@@ -258,8 +286,12 @@ export abstract class BaseUpdater extends AppUpdater {
     return Promise.resolve(this.doInstall(options))
   }
 
-  private beginInstall(isSilent: boolean, isForceRunAfter: boolean): InstallOptions | null {
-    if (this.quitAndInstallCalled) {
+  /**
+   * `idle` → `installing`. Refused, returning `null`, while an install runs or once one handed the update off, and when
+   * no update finished downloading (an `error` event is emitted then). {@link endInstall} ends the install it begins.
+   */
+  private beginInstall(isSilent: boolean, isForceRunAfter: boolean): { readonly install: Installing; readonly options: InstallOptions } | null {
+    if (this.installState.kind !== "idle") {
       this._logger.warn("install call ignored: quitAndInstallCalled is set to true")
       return null
     }
@@ -273,28 +305,61 @@ export abstract class BaseUpdater extends AppUpdater {
     }
 
     // prevent calling several times
-    this.quitAndInstallCalled = true
+    const install: Installing = { kind: "installing", sha512: this.downloadedUpdateSha512, isQuitDeferred: false }
+    this.installState = install
 
     this._logger.info(`Install: isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter}`)
     return {
-      isSilent,
-      isForceRunAfter,
-      isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
+      install,
+      options: {
+        isSilent,
+        isForceRunAfter,
+        isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
+      },
     }
+  }
+
+  /**
+   * `installing` → `handedOff` when `install` installed the update, → `idle` when it failed, so that a later install
+   * can try again; unless the state moved on meanwhile (the deprecated {@link quitAndInstallCalled} was set).
+   *
+   * A failed install is not tried again on quit (see {@link skipInstallOnQuitSha512}) when a quit waited for it, or
+   * when `install()` or `installAsync()` ran it on a target whose install shows an elevation dialog ({@link isQuitCancellable}):
+   * a quit must not show the dialog the user just dismissed again. A quit that waited for the install happens now,
+   * unless the install succeeded and its trigger quits by itself.
+   */
+  private endInstall(install: Installing, isInstalled: boolean, trigger: InstallTrigger): void {
+    if (this.installState === install) {
+      this.installState = isInstalled ? HANDED_OFF : IDLE
+    }
+    if (!isInstalled && (install.isQuitDeferred || (trigger === "install" && this.isQuitCancellable))) {
+      // the user cancelled the authentication dialog, for example: quitting must not show it again for this update
+      this.skipInstallOnQuitSha512 = install.sha512
+    }
+    if (!install.isQuitDeferred || (isInstalled && trigger !== "install")) {
+      // quitAndInstall and the install on launch quit once the install succeeded
+      return
+    }
+    nonThrowingLogger(this._logger).info("The update install finished, quitting")
+    setImmediate(() => this.app.quit())
   }
 
   // must be sync (because quit even handler is not async)
   install(isSilent = false, isForceRunAfter = false): boolean {
-    const options = this.beginInstall(isSilent, isForceRunAfter)
-    if (options == null) {
+    const started = this.beginInstall(isSilent, isForceRunAfter)
+    if (started == null) {
       return false
     }
 
+    let isInstalled = false
     try {
-      return this.doInstall(options)
+      isInstalled = this.doInstall(started.options)
+      return isInstalled
     } catch (e: any) {
       this.dispatchError(e)
       return false
+    } finally {
+      this.endInstall(started.install, isInstalled, "install")
     }
   }
 
@@ -305,49 +370,30 @@ export abstract class BaseUpdater extends AppUpdater {
    * installing synchronously, so their timing is unchanged.
    */
   installAsync(isSilent = false, isForceRunAfter = false): Promise<boolean> {
-    return this.runInstallAsync(isSilent, isForceRunAfter, false)
+    return this.runInstallAsync(isSilent, isForceRunAfter, "install")
   }
 
   /**
    * {@link installAsync}. A quit while the install runs waits for it (see {@link handleWillQuit}) and happens once it
-   * settled; `isQuitOnSuccess` tells that the caller quits by itself once the install succeeded, so that quit is its own.
+   * settled; `quitAndInstall` and the install on launch quit by themselves once the install succeeded, so that quit is theirs.
    */
-  private async runInstallAsync(isSilent: boolean, isForceRunAfter: boolean, isQuitOnSuccess: boolean): Promise<boolean> {
-    const options = this.beginInstall(isSilent, isForceRunAfter)
-    if (options == null) {
+  private async runInstallAsync(isSilent: boolean, isForceRunAfter: boolean, trigger: InstallTrigger): Promise<boolean> {
+    const started = this.beginInstall(isSilent, isForceRunAfter)
+    if (started == null) {
       return false
     }
 
     this.addWillQuitHandler()
-    const install: InFlightInstall = { sha512: this.downloadedUpdateSha512, isQuitDeferred: false }
     let isInstalled = false
-    this.inFlightInstall = install
     try {
-      isInstalled = await this.doInstallAsync(options)
+      isInstalled = await this.doInstallAsync(started.options)
       return isInstalled
     } catch (e: any) {
       this.dispatchError(e)
       return false
     } finally {
-      this.inFlightInstall = null
-      this.quitIfDeferred(install, isInstalled, isQuitOnSuccess)
+      this.endInstall(started.install, isInstalled, trigger)
     }
-  }
-
-  private quitIfDeferred(install: InFlightInstall, isInstalled: boolean, isQuitOnSuccess: boolean): void {
-    if (!install.isQuitDeferred) {
-      return
-    }
-    if (isInstalled && isQuitOnSuccess) {
-      // quitAndInstall and the install on launch quit once the install succeeded
-      return
-    }
-    if (!isInstalled) {
-      // the user cancelled the authentication dialog, for example: quitting must not show it again for this update
-      this.failedInstallOnQuitSha512 = install.sha512
-    }
-    nonThrowingLogger(this._logger).info("The update install finished, quitting")
-    setImmediate(() => this.app.quit())
   }
 
   /**
@@ -458,15 +504,11 @@ export abstract class BaseUpdater extends AppUpdater {
     await downloadedUpdateHelper.clearPendingInstallMarker(this._logger)
     this.updateInfoAndProvider = updateInfoAndProvider
     this._logger.info(`Installing pending update ${latestInfo.version} on launch`)
-    const isInstalled = await this.runInstallAsync(true, true, true)
+    // a failed install returns to idle (see endInstall): with the pending marker cleared above, autoInstallEvent: "onQuit"
+    // or an explicit quitAndInstall can still install the cached update
+    const isInstalled = await this.runInstallAsync(true, true, "launch")
     if (isInstalled) {
       setImmediate(() => this.app.quit())
-    } else {
-      // install() sets quitAndInstallCalled = true before doInstall; a failed/throwing install (e.g. AppImage's
-      // sync unlink+mv) would otherwise leave it stuck true and short-circuit every later install this session,
-      // while the pending marker has already been cleared above. Reset it so autoInstallEvent: "onQuit" / an explicit
-      // quitAndInstall can still install the cached update (matches the reset in quitAndInstall).
-      this.quitAndInstallCalled = false
     }
     return isInstalled
   }
@@ -531,7 +573,7 @@ export abstract class BaseUpdater extends AppUpdater {
    * Checked before the exit code, see {@link handleQuit}.
    */
   private get installOnQuitUnavailableReason(): InstallOnQuitSkip | null {
-    if (this.quitAndInstallCalled) {
+    if (this.installState.kind !== "idle") {
       return { level: "info", message: "Update installer has already been triggered. Quitting application." }
     }
     if (this.isDownloadInProgress) {
@@ -559,7 +601,7 @@ export abstract class BaseUpdater extends AppUpdater {
           "Update will not be installed on quit because the OS session is ending — the OS would kill the installer before it finishes and can leave the app in a broken state (https://github.com/electron-userland/electron-builder/issues/7807). The downloaded update stays cached and will be installed on the next quit. Set autoInstallEvent to 'onNextLaunch' (planned default in v28) to install it on the next launch instead.",
       }
     }
-    if (this.isDownloadedUpdateFailedOnQuit) {
+    if (this.isDownloadedUpdateSkippedOnQuit) {
       return { level: "info", message: "Update will not be installed on quit because installing it failed earlier in this session" }
     }
     return null
@@ -610,10 +652,10 @@ export abstract class BaseUpdater extends AppUpdater {
     return this.downloadedUpdateHelper?.downloadedFileInfo?.sha512 ?? null
   }
 
-  /** Whether installing the downloaded update failed while the app was quitting earlier in this session. */
-  private get isDownloadedUpdateFailedOnQuit(): boolean {
+  /** Whether no quit in this session installs the downloaded update, see {@link skipInstallOnQuitSha512}. */
+  private get isDownloadedUpdateSkippedOnQuit(): boolean {
     const sha512 = this.downloadedUpdateSha512
-    return sha512 != null && sha512 === this.failedInstallOnQuitSha512
+    return sha512 != null && sha512 === this.skipInstallOnQuitSha512
   }
 
   /** Whether the quit handler would install the downloaded update now; it logs why not, when not. */
@@ -648,17 +690,17 @@ export abstract class BaseUpdater extends AppUpdater {
 
     // a custom app adapter may not tell: then the quit is taken as not cancelled
     if (event.defaultPrevented === true) {
-      if (this.inFlightInstall != null || this.isInstallOnQuitDue) {
+      if (this.installState.kind === "installing" || this.isInstallOnQuitDue) {
         logger.info("The quit was cancelled by another will-quit listener: the update is installed on a quit that proceeds")
       }
       return
     }
 
-    const inFlightInstall = this.inFlightInstall
-    if (inFlightInstall != null) {
+    const installState = this.installState
+    if (installState.kind === "installing") {
       event.preventDefault()
-      if (!inFlightInstall.isQuitDeferred) {
-        inFlightInstall.isQuitDeferred = true
+      if (!installState.isQuitDeferred) {
+        installState.isQuitDeferred = true
         logger.info("Waiting for the update install to finish before quitting")
       }
       return
@@ -681,9 +723,8 @@ export abstract class BaseUpdater extends AppUpdater {
       return
     }
 
-    this.failedInstallOnQuitSha512 = sha512
-    // install() leaves it set; an explicit quitAndInstall() must still be able to install
-    this.quitAndInstallCalled = false
+    // the failed install returned to idle, so an explicit quitAndInstall() can still install the update; a quit cannot
+    this.skipInstallOnQuitSha512 = sha512
     if (!this.cancelQuitOnInstallFailure) {
       logger.warn(
         'The update was not installed on quit, and an "error" event is emitted: the app quits without it. Set cancelQuitOnInstallFailure to keep the app running instead.'

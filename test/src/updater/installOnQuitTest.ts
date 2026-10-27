@@ -596,7 +596,7 @@ describe("install on quit", { concurrent: false }, () => {
 
       const installed = updater.installPendingUpdateIfAvailable()
       // validating the cached installer takes a few file reads
-      await vi.waitFor(() => expect((updater as any).inFlightInstall).not.toBeNull())
+      await vi.waitFor(() => expect((updater as any).installState.kind).toBe("installing"))
       expect(app.quitApp()).toBe(false)
 
       finish(true)
@@ -636,6 +636,200 @@ describe("install on quit", { concurrent: false }, () => {
 
       expect(app.quitApp()).toBe(true)
       expect(app.quitCalls).toBe(0)
+    })
+  })
+
+  describe("the install state", () => {
+    type Trigger = "install" | "quitAndInstall" | "launch"
+
+    function createNsisUpdater(app: StubApp) {
+      const updater = new NsisUpdater(null, app)
+      updater.logger = log
+      ;(updater as any).downloadedUpdateHelper = helper
+      const errors: Error[] = []
+      updater.on("error", (error: Error) => errors.push(error))
+      ;(updater as any).addQuitHandler()
+      return { updater, errors }
+    }
+
+    function stateOf(updater: DebUpdater | NsisUpdater): { kind: string; sha512?: string | null; isQuitDeferred?: boolean } {
+      return (updater as any).installState
+    }
+
+    test("beginInstall moves idle to installing, and refuses while an install runs or once it handed off", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { updater } = createDebUpdater(app, 0)
+      expect(stateOf(updater)).toEqual({ kind: "idle" })
+
+      const started = (updater as any).beginInstall(true, false)
+      expect(started.options).toEqual({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
+      expect(stateOf(updater)).toEqual({ kind: "installing", sha512: helper.downloadedFileInfo?.sha512, isQuitDeferred: false })
+      expect(stateOf(updater)).toBe(started.install)
+
+      expect((updater as any).beginInstall(true, false)).toBeNull()
+      expect(stateOf(updater)).toBe(started.install)
+      expect(log.warns).toContain("install call ignored: quitAndInstallCalled is set to true")
+
+      ;(updater as any).endInstall(started.install, true, "install")
+      expect(stateOf(updater)).toEqual({ kind: "handedOff" })
+      expect((updater as any).beginInstall(true, false)).toBeNull()
+      expect(stateOf(updater)).toEqual({ kind: "handedOff" })
+    })
+
+    test("beginInstall stays idle and emits error when no update finished downloading", () => {
+      const app = makeStubApp()
+      const { updater, errors } = createDebUpdater(app, 0)
+
+      expect((updater as any).beginInstall(true, false)).toBeNull()
+      expect(stateOf(updater)).toEqual({ kind: "idle" })
+      expect(errors.map(it => it.message)).toEqual(["No update filepath provided, can't quit and install"])
+    })
+
+    // target, trigger, installed, quit deferred → state, update skipped on quit, quit scheduled
+    test.each<[string, Trigger, boolean, boolean, string, boolean, boolean]>([
+      ["deb", "install", true, false, "handedOff", false, false],
+      ["deb", "install", false, false, "idle", true, false],
+      ["nsis", "install", true, false, "handedOff", false, false],
+      ["nsis", "install", false, false, "idle", false, false],
+      ["deb", "quitAndInstall", false, false, "idle", false, false],
+      ["nsis", "quitAndInstall", false, false, "idle", false, false],
+      ["deb", "launch", false, false, "idle", false, false],
+      ["deb", "install", true, true, "handedOff", false, true],
+      ["deb", "install", false, true, "idle", true, true],
+      ["deb", "quitAndInstall", true, true, "handedOff", false, false],
+      ["deb", "launch", true, true, "handedOff", false, false],
+      ["deb", "quitAndInstall", false, true, "idle", true, true],
+      ["deb", "launch", false, true, "idle", true, true],
+    ])("endInstall: %s, %s, installed %s, quit deferred %s → %s, skipped on quit %s, quits %s", async (target, trigger, isInstalled, isQuitDeferred, kind, isSkipped, isQuit) => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const updater = target === "deb" ? createDebUpdater(app, 0).updater : createNsisUpdater(app).updater
+      const started = (updater as any).beginInstall(true, false)
+      started.install.isQuitDeferred = isQuitDeferred
+
+      ;(updater as any).endInstall(started.install, isInstalled, trigger)
+      await flush()
+
+      expect(stateOf(updater).kind).toBe(kind)
+      expect((updater as any).skipInstallOnQuitSha512).toBe(isSkipped ? helper.downloadedFileInfo?.sha512 : null)
+      expect(app.quitCalls).toBe(isQuit ? 1 : 0)
+    })
+
+    test("endInstall leaves a state that moved on meanwhile", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { updater } = createDebUpdater(app, 0)
+      const started = (updater as any).beginInstall(true, false)
+      ;(updater as any).quitAndInstallCalled = false
+
+      ;(updater as any).endInstall(started.install, true, "install")
+
+      expect(stateOf(updater)).toEqual({ kind: "idle" })
+    })
+
+    describe.each(["install", "installAsync"] as const)("a failed %s()", method => {
+      test("returns to idle, and the next quit installs the update (NSIS)", async () => {
+        await seedDownloadedUpdate("TestApp-Setup-1.0.1.exe")
+        const app = makeStubApp()
+        const { updater } = createNsisUpdater(app)
+        const doInstall = vi
+          .spyOn(updater as any, "doInstall")
+          .mockReturnValueOnce(false)
+          .mockReturnValue(true)
+
+        expect(await updater[method](true, false)).toBe(false)
+        expect(stateOf(updater)).toEqual({ kind: "idle" })
+
+        expect(app.quitApp()).toBe(true)
+        expect(doInstall).toHaveBeenCalledTimes(2)
+        expect(log.infos).toContain("Auto install update on quit")
+        expect(log.infos).not.toContain("Update installer has already been triggered. Quitting application.")
+        expect(stateOf(updater)).toEqual({ kind: "handedOff" })
+      })
+
+      test("returns to idle; the next quit does not show the authentication dialog again for that update (deb)", async () => {
+        await seedDownloadedUpdate()
+        const app = makeStubApp()
+        const { updater, pkexecCalls, setPkexecExitCode } = createDebUpdater(app, 126)
+        // the async install's spawns are covered by linuxUpdaterUnitTest: here it fails as a dismissed dialog would
+        const doInstallAsync = vi.spyOn(updater as any, "doInstallAsync").mockResolvedValue(false)
+
+        expect(await updater[method](true, false)).toBe(false)
+        expect(stateOf(updater)).toEqual({ kind: "idle" })
+        const installCount = pkexecCalls.length + doInstallAsync.mock.calls.length
+        setPkexecExitCode(0)
+
+        expect(app.quitApp()).toBe(true)
+        expect(pkexecCalls.length + doInstallAsync.mock.calls.length).toBe(installCount)
+        expect(log.infos).toContain("Update will not be installed on quit because installing it failed earlier in this session")
+        expect(log.infos).not.toContain("Update installer has already been triggered. Quitting application.")
+
+        // the app can still install it itself
+        expect(updater.install(true, false)).toBe(true)
+        expect(stateOf(updater)).toEqual({ kind: "handedOff" })
+      })
+
+      test("lets the next quit install a different update downloaded later (deb)", async () => {
+        await seedDownloadedUpdate()
+        const app = makeStubApp()
+        const { updater, pkexecCalls, setPkexecExitCode } = createDebUpdater(app, 126)
+        vi.spyOn(updater as any, "doInstallAsync").mockResolvedValue(false)
+
+        expect(await updater[method](true, false)).toBe(false)
+        await seedDownloadedUpdate("TestApp-1.0.2.deb", "1.0.2")
+        setPkexecExitCode(0)
+        const pkexecCallCount = pkexecCalls.length
+
+        expect(app.quitApp()).toBe(true)
+        expect(pkexecCalls.slice(pkexecCallCount)).toEqual([["--disable-internal-agent", "/usr/bin/dpkg", "-i", path.join(helper.cacheDirForPendingUpdate, "TestApp-1.0.2.deb")]])
+      })
+    })
+
+    describe("the deprecated quitAndInstallCalled", () => {
+      test("reads whether an install started: running or handed off", async () => {
+        await seedDownloadedUpdate()
+        const app = makeStubApp()
+        const { updater } = createDebUpdater(app, 0)
+        let finish: (isInstalled: boolean) => void = () => {}
+        vi.spyOn(updater as any, "doInstallAsync").mockReturnValue(new Promise<boolean>(resolve => (finish = resolve)))
+        expect((updater as any).quitAndInstallCalled).toBe(false)
+
+        const installed = updater.installAsync(true, false)
+        expect((updater as any).quitAndInstallCalled).toBe(true)
+
+        finish(true)
+        await expect(installed).resolves.toBe(true)
+        expect((updater as any).quitAndInstallCalled).toBe(true)
+        expect(stateOf(updater)).toEqual({ kind: "handedOff" })
+      })
+
+      test("set to true, stops every later install, also on quit", async () => {
+        await seedDownloadedUpdate()
+        const app = makeStubApp()
+        const { updater, pkexecCalls } = createDebUpdater(app, 0)
+
+        ;(updater as any).quitAndInstallCalled = true
+
+        expect(stateOf(updater)).toEqual({ kind: "handedOff" })
+        expect(updater.install(true, false)).toBe(false)
+        expect(app.quitApp()).toBe(true)
+        expect(pkexecCalls).toEqual([])
+        expect(log.infos).toContain("Update installer has already been triggered. Quitting application.")
+      })
+
+      test("set to false, lets an install start again", async () => {
+        await seedDownloadedUpdate()
+        const app = makeStubApp()
+        const { updater, pkexecCalls } = createDebUpdater(app, 0)
+        ;(updater as any).quitAndInstallCalled = true
+
+        ;(updater as any).quitAndInstallCalled = false
+
+        expect(stateOf(updater)).toEqual({ kind: "idle" })
+        expect(updater.install(true, false)).toBe(true)
+        expect(pkexecCalls.length).toBe(1)
+      })
     })
   })
 
