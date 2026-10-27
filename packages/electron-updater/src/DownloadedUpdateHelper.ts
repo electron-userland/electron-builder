@@ -1,10 +1,29 @@
-import { hashFile, UpdateInfo } from "builder-util-runtime"
+import { hashFile, UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
 import isEqual from "lodash.isequal"
 import { ResolvedUpdateFileInfo } from "./types.js"
 import { Logger } from "./types.js"
 import fsExtra from "fs-extra"
 import * as path from "path"
 import { eq as isVersionsEqual, parse as parseVersion } from "semver"
+
+/**
+ * What identifies the update in `file`: the checksum it was verified with. A re-check that finds the same update (cached
+ * by this or an earlier launch) has the same one, and a newer update a different one, even when its installer has the
+ * same file name. Update info with only a legacy `sha2` checksum has no `sha512`, so `sha2` is used then; with neither,
+ * the installer path and the version.
+ */
+function updateFileId(info: UpdateFileInfo, file: string, version: string | null): string {
+  // typed as required, but missing from update info that only has the legacy sha2 checksum
+  const sha512: string | undefined = info.sha512
+  if (typeof sha512 === "string" && sha512.length !== 0) {
+    return `sha512:${sha512}`
+  }
+  const sha2 = "sha2" in info ? info.sha2 : undefined
+  if (typeof sha2 === "string" && sha2.length !== 0) {
+    return `sha2:${sha2}`
+  }
+  return `file:${JSON.stringify([file, version])}`
+}
 
 /** @private **/
 export class DownloadedUpdateHelper {
@@ -13,6 +32,7 @@ export class DownloadedUpdateHelper {
 
   private versionInfo: UpdateInfo | null = null
   private fileInfo: ResolvedUpdateFileInfo | null = null
+  private _downloadedUpdateId: string | null = null
 
   constructor(readonly cacheDir: string) {}
 
@@ -23,6 +43,14 @@ export class DownloadedUpdateHelper {
 
   get file(): string | null {
     return this._file
+  }
+
+  /**
+   * Identifies the downloaded update (see {@link updateFileId}), `null` when there is none. Unlike
+   * `downloadedFileInfo.sha512`, it is set for every downloaded update, also one with only a legacy `sha2` checksum.
+   */
+  get downloadedUpdateId(): string | null {
+    return this._file == null ? null : this._downloadedUpdateId
   }
 
   get packageFile(): string | null {
@@ -66,6 +94,7 @@ export class DownloadedUpdateHelper {
     this._packageFile = packageFile
     this.versionInfo = versionInfo
     this.fileInfo = fileInfo
+    this._downloadedUpdateId = updateFileId(fileInfo.info, downloadedFile, versionInfo.version)
     this._downloadedFileInfo = {
       fileName: updateFileName,
       sha512: fileInfo.info.sha512,
@@ -188,6 +217,7 @@ export class DownloadedUpdateHelper {
     this._packageFile = null
     this.versionInfo = null
     this.fileInfo = null
+    this._downloadedUpdateId = null
     await this.cleanCacheDirForPendingUpdate()
   }
 
@@ -269,6 +299,7 @@ export class DownloadedUpdateHelper {
       }
     }
     this._downloadedFileInfo = cachedInfo
+    this._downloadedUpdateId = updateFileId(fileInfo.info, updateFile, cachedInfo.version ?? null)
     this._packageFile = packageFile
     return updateFile
   }

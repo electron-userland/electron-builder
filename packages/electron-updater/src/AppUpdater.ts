@@ -85,7 +85,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   /**
    * When a downloaded update is automatically installed (if `quitAndInstall` was not called before).
    *
-   * - `"onQuit"` (default) — install on app quit by spawning the installer while the app exits.
+   * - `"onQuit"` (default) — install on app quit by spawning the installer while the app exits. Linux package targets
+   *   (deb, rpm, pacman) run the whole install in the quit: when it fails, for example because the user dismissed the
+   *   authentication dialog, an `error` event is emitted and logged, and the app exits without the update (see
+   *   {@link cancelQuitOnInstallFailure} to keep it running instead). A quit while an update install runs (`quitAndInstall()`)
+   *   waits for it to finish.
    * - `"onNextLaunch"` — defer the install: any app quit persists an install-on-next-launch marker for the downloaded
    *   update; on the next launch the updater re-validates the cached installer against freshly fetched update info and
    *   installs it (see `installPendingUpdateIfAvailable`). This avoids the class of failures where the on-quit installer
@@ -102,6 +106,27 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * @default "onQuit"
    */
   autoInstallEvent: AutoInstallEvent = "onQuit"
+
+  /**
+   * Whether a failed install on quit cancels the quit, so that the app keeps running instead of exiting without the
+   * update. Linux package targets (deb, rpm, pacman) only, with `autoInstallEvent` `"onQuit"`: with this option, the
+   * install on quit runs from `will-quit` rather than `quit`, so that it can still cancel the quit, and knows whether it
+   * succeeded. It fails, for example, when the user dismissed the authentication dialog; an `error` event is emitted
+   * first, while the quit can still be cancelled. A quit while an update install runs that then fails stays cancelled too.
+   *
+   * The updater can only see that the quit was cancelled by a `will-quit` listener registered before its own, which it
+   * registers once the first update download (or install) starts: a listener registered later that cancels the quit runs
+   * after the install. Apps that set this option should register their own `will-quit` listeners before checking for
+   * updates. (Without the option, the install runs from `quit`, which is only emitted once every listener let the quit
+   * through.)
+   *
+   * The app keeps running with its windows already closed, so without a tray it is left windowless: listen for `error`
+   * to reopen a window, or to quit from a later tick (`setImmediate(() => app.quit())`; Electron ignores `app.quit()`
+   * while the quit is still in progress). The next quit is not cancelled and does not try to install that update
+   * again; a different update downloaded later is installed on quit, and `quitAndInstall()` can still install it.
+   * @default false
+   */
+  cancelQuitOnInstallFailure = false
 
   /**
    * @deprecated Removed in v27 — use {@link autoInstallEvent}. This accessor is a compatibility shim
@@ -1110,20 +1135,22 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const cachedBlockMapFile = path.join(downloadedUpdateHelper.cacheDir, "current.blockmap")
     const done = async (isSaveCache: boolean) => {
       await downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo, updateFileName, isSaveCache)
-      await taskOptions.done!({
-        ...updateInfo,
-        downloadedFile: updateFile,
-        ...(packageFile == null ? {} : { packageFile }),
-      })
+      // before `taskOptions.done`: it emits `update-downloaded`, and an app that calls quitAndInstall() from that listener exits
+      // before anything after it runs, which would leave the next update without the blockmap of the installed version
       if (await fsExtra.pathExists(pendingBlockMapFile)) {
         await fsExtra.copyFile(pendingBlockMapFile, cachedBlockMapFile)
       } else if (!taskOptions.downloadUpdateOptions.disableDifferentialDownload) {
-        // this download did not produce a blockmap, but `taskOptions.done` above refreshes the cached installer —
+        // this download did not produce a blockmap, but `taskOptions.done` below refreshes the cached installer —
         // remove the cached blockmap too, so a stale one cannot sit next to a fresh file and poison the next
         // differential download with a wrong copy plan (https://github.com/electron-userland/electron-builder/issues/10097).
         // The differential downloader re-fetches the old blockmap from the server when no cached one exists.
         await fsExtra.remove(cachedBlockMapFile)
       }
+      await taskOptions.done!({
+        ...updateInfo,
+        downloadedFile: updateFile,
+        ...(packageFile == null ? {} : { packageFile }),
+      })
       return withLegacyArrayCompat(packageFile == null ? { updateFile } : { updateFile, packageFile }, this._logger)
     }
 
@@ -1332,9 +1359,28 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
           )
           return true
         }
+        if (oldBlockMapUrl.href === newBlockMapUrl.href) {
+          // The old URL is the new one with the new version replaced by the installed one: an artifact name without the version (e.g.
+          // "${productName} Setup.${ext}") gives both releases the same URL, which serves the new blockmap. Planned against it, the
+          // download copies the installed installer unchanged and fails the sha512 check. The new blockmap downloaded above is cached
+          // with the update, so the next update can be differential.
+          this._logger.info(
+            `No cached blockmap for the old installer, and the URL of the installed version's blockmap is the update's own ("${newBlockMapUrl}") because the ` +
+              "artifact name has no version: downloading the full update (add ${version} to the artifact name, or set previousBlockmapBaseUrlOverride, " +
+              "to make the first update after an install differential)"
+          )
+          return true
+        }
         this._logger.info(`No cached blockmap for the old installer, downloading it from "${oldBlockMapUrl}"`)
         // the old blockmap comes from previousBlockmapBaseUrlOverride when the app sets it, so that origin gets the credentials
         oldBlockMapData = await downloadBlockMap(oldBlockMapUrl, override ? new URL(override) : undefined)
+        if (!(await isBlockMapOfFile(oldBlockMapData, downloadOptions.oldFile))) {
+          // e.g. a server that serves another release's blockmap under the derived name: planned against it, the download fails the sha512 check
+          this._logger.info(
+            `The blockmap downloaded from "${oldBlockMapUrl}" does not describe the cached "${oldInstallerFileName}" (malformed, or its blocks do not end at the file size): downloading the full update`
+          )
+          return true
+        }
       }
 
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)
