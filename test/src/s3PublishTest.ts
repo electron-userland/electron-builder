@@ -214,7 +214,7 @@ describe("SpacesPublisher — getS3UploadConfig", { concurrent: false }, () => {
 
   it("throws with DO_KEY_ID mention when DO_KEY_ID is missing", () => {
     delete process.env.DO_KEY_ID
-    expect(() => makeSpacesPublisher().getS3UploadConfig()).toThrow(/DO_KEY_ID/)
+    expect(() => makeSpacesPublisher().getS3UploadConfig()).toThrow(/DO_KEY_ID.*https:\/\/www\.electron\.build\/docs\/publish#spaces/)
   })
 
   it("throws with DO_SECRET_KEY mention when DO_SECRET_KEY is missing", () => {
