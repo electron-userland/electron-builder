@@ -1332,9 +1332,28 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
           )
           return true
         }
+        if (oldBlockMapUrl.href === newBlockMapUrl.href) {
+          // The old URL is the new one with the new version replaced by the installed one: an artifact name without the version (e.g.
+          // "${productName} Setup.${ext}") gives both releases the same URL, which serves the new blockmap. Planned against it, the
+          // download copies the installed installer unchanged and fails the sha512 check. The new blockmap downloaded above is cached
+          // with the update, so the next update can be differential.
+          this._logger.info(
+            `No cached blockmap for the old installer, and the URL of the installed version's blockmap is the update's own ("${newBlockMapUrl}") because the ` +
+              "artifact name has no version: downloading the full update (add ${version} to the artifact name, or set previousBlockmapBaseUrlOverride, " +
+              "to make the first update after an install differential)"
+          )
+          return true
+        }
         this._logger.info(`No cached blockmap for the old installer, downloading it from "${oldBlockMapUrl}"`)
         // the old blockmap comes from previousBlockmapBaseUrlOverride when the app sets it, so that origin gets the credentials
         oldBlockMapData = await downloadBlockMap(oldBlockMapUrl, override ? new URL(override) : undefined)
+        if (!(await isBlockMapOfFile(oldBlockMapData, downloadOptions.oldFile))) {
+          // e.g. a server that serves another release's blockmap under the derived name: planned against it, the download fails the sha512 check
+          this._logger.info(
+            `The blockmap downloaded from "${oldBlockMapUrl}" does not describe the cached "${oldInstallerFileName}" (malformed, or its blocks do not end at the file size): downloading the full update`
+          )
+          return true
+        }
       }
 
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)

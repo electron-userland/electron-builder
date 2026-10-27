@@ -142,6 +142,9 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
 
   const blockMap = (sizes: Array<number>, tag: string) => ({ version: "2" as const, files: [{ name: "file", offset: 0, checksums: sizes.map((_, i) => `${tag}-${i}`), sizes }] })
   const serverOldBlockMap = blockMap([600, 400], "server-1.0.0")
+  const serverNewBlockMap = blockMap([700, 400], "server-2.0.0")
+  // what the server answers for the old blockmap URL (a test may serve another release's map there)
+  let servedOldBlockMap: ReturnType<typeof blockMap>
 
   beforeEach(async context => {
     cacheDir = await context.tmpDir.createTempDir({ prefix: "blockmap-pairing" })
@@ -151,10 +154,11 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
     ;(updater as any).downloadedUpdateHelper = new DownloadedUpdateHelper(cacheDir)
     requestedUrls = []
     plannedOldBlockMap = null
+    servedOldBlockMap = serverOldBlockMap
     ;(updater as any).httpExecutor = {
       downloadToBuffer: (url: URL) => {
         requestedUrls.push(url.href)
-        const data = url.href === OLD_BLOCKMAP_URL ? serverOldBlockMap : blockMap([700, 400], "server-2.0.0")
+        const data = url.href === OLD_BLOCKMAP_URL ? servedOldBlockMap : serverNewBlockMap
         return Promise.resolve(gzipSync(JSON.stringify(data)))
       },
     }
@@ -172,8 +176,11 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
 
   const ignoredMessage = `Cached blockmap does not describe the cached "${OLD_INSTALLER_FILE_NAME}" (malformed, or its blocks do not end at the file size): ignoring it`
 
-  function differentialDownloadInstaller(options: { blockMapUrlInManifest?: boolean } = {}): Promise<boolean> {
-    const provider = { getBlockMapFiles: () => Promise.resolve([new URL(OLD_BLOCKMAP_URL), new URL(NEW_BLOCKMAP_URL)]), isUseMultipleRangeRequest: true } as any
+  function differentialDownloadInstaller(options: { blockMapUrlInManifest?: boolean; oldBlockMapUrl?: string } = {}): Promise<boolean> {
+    const provider = {
+      getBlockMapFiles: () => Promise.resolve([new URL(options.oldBlockMapUrl ?? OLD_BLOCKMAP_URL), new URL(NEW_BLOCKMAP_URL)]),
+      isUseMultipleRangeRequest: true,
+    } as any
     const fileInfo = {
       url: new URL("https://example.com/TestApp-Setup-2.0.0.exe"),
       info: { url: "TestApp-Setup-2.0.0.exe", sha512: "sha512-of-2.0.0", size: 1100 },
@@ -226,6 +233,30 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
     expect(requestedUrls).not.toContain(OLD_BLOCKMAP_URL)
     expect(plannedOldBlockMap).toBeNull()
     expect(infoMessages).toContain(ignoredMessage)
+  })
+
+  test("without a cached blockmap, an old blockmap URL equal to the new one (artifact name without version) leads to a full download without requesting it", async () => {
+    // "TestApp Setup.exe": replacing the version in the new URL changes nothing
+    expect(await differentialDownloadInstaller({ oldBlockMapUrl: NEW_BLOCKMAP_URL })).toBe(true)
+
+    expect(requestedUrls).toEqual([NEW_BLOCKMAP_URL])
+    expect(plannedOldBlockMap).toBeNull()
+    expect(infoMessages.some(it => it.includes("because the artifact name has no version: downloading the full update"))).toBe(true)
+    // the new blockmap is cached with the update, so the next update can be differential
+    expect(await pathExists(path.join(cacheDir, "pending", "current.blockmap"))).toBe(true)
+  })
+
+  test("without a cached blockmap, a downloaded old blockmap that does not describe the cached installer leads to a full download", async () => {
+    // the server answers the derived old URL with another release's map (1100 bytes, the installed installer is 1000)
+    servedOldBlockMap = serverNewBlockMap
+
+    expect(await differentialDownloadInstaller()).toBe(true)
+
+    expect(requestedUrls).toContain(OLD_BLOCKMAP_URL)
+    expect(plannedOldBlockMap).toBeNull()
+    expect(infoMessages).toContain(
+      `The blockmap downloaded from "${OLD_BLOCKMAP_URL}" does not describe the cached "${OLD_INSTALLER_FILE_NAME}" (malformed, or its blocks do not end at the file size): downloading the full update`
+    )
   })
 
   test("a cached blockmap that matches the cached installer is used without downloading the old blockmap", async () => {
