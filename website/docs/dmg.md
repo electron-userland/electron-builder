@@ -21,12 +21,10 @@ The `window` option controls the Finder window that appears when the DMG is moun
 ```yaml
 dmg:
   window:
-    position:
-      x: 130
-      y: 220
-    size:
-      width: 540
-      height: 380
+    x: 130
+    y: 220
+    width: 540
+    height: 380
 ```
 
 Standard DMG windows are 540×380 pixels. The position coordinates place the window on screen — `x: 130, y: 220` is a common convention.
@@ -42,7 +40,7 @@ dmg:
 
 **Requirements:**
 - Format: PNG (recommended for quality and transparency support)
-- Size: match your `window.size` — typically 540×380 pixels
+- Size: match your `window.width` and `window.height` — typically 540×380 pixels
 - For Retina displays: provide a `@2x` version at 1080×760 and name it `background@2x.png`. electron-builder will automatically use the high-resolution version on Retina screens.
 
 If no background image is set, use `backgroundColor` to set a solid color:
@@ -243,12 +241,10 @@ Name the file `licenseButtons_en.json` for English, `licenseButtons_de.json` for
 dmg:
   background: build/dmg-background.png
   window:
-    position:
-      x: 130
-      y: 220
-    size:
-      width: 540
-      height: 380
+    x: 130
+    y: 220
+    width: 540
+    height: 380
   contents:
     - x: 130
       y: 220
@@ -275,17 +271,16 @@ dmg:
     de_DE: "build/license_de.txt"
     fr_FR: "build/license_fr.txt"
   window:
-    size:
-      width: 540
-      height: 380
+    width: 540
+    height: 380
   format: UDZO
 ```
 
 ## Troubleshooting
 
-**Icons appear in wrong positions:** The `x` and `y` values in `contents` are absolute pixels from the top-left of the DMG window. Double-check that your coordinates are within the `window.size` bounds.
+**Icons appear in wrong positions:** The `x` and `y` values in `contents` are absolute pixels from the top-left of the DMG window. Double-check that your coordinates are within the `window.width` × `window.height` bounds.
 
-**Background not appearing:** Ensure the background image exactly matches the `window.size` dimensions. For Retina support, provide a `@2x` version at double the resolution.
+**Background not appearing:** Ensure the background image exactly matches the `window.width` × `window.height` dimensions. For Retina support, provide a `@2x` version at double the resolution.
 
 **DMG too large:** The default `UDZO` format compresses well. If size is critical, try `UDBZ` for better (slower) compression.
 
