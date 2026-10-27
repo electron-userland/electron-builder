@@ -1,6 +1,7 @@
 import _aws4 from "aws4"
 const { sign } = _aws4
 import { InvalidConfigurationError } from "builder-util"
+import { BLOCK_MAP_V3_MAGIC } from "builder-util-runtime/internal"
 import * as fs from "fs"
 import * as http from "http"
 import * as https from "https"
@@ -242,7 +243,7 @@ export function getS3ContentType(file: string): string {
   return overrides[ext] ?? mime.getType(file) ?? "application/octet-stream"
 }
 
-const BINARY_BLOCK_MAP_MAGIC = Buffer.from("EBM3", "latin1")
+const BINARY_BLOCK_MAP_MAGIC = Buffer.from(BLOCK_MAP_V3_MAGIC, "latin1")
 
 function startsWithBinaryBlockMapMagic(file: string): boolean {
   let fd: number

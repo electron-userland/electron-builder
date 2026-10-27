@@ -15,6 +15,7 @@ vi.mock("electron-publish/src/s3/awsCredentials", async importOriginal => ({
 import * as https from "https"
 import { Arch, InvalidConfigurationError } from "builder-util"
 import { CancellationToken, S3Options, SpacesOptions } from "builder-util-runtime"
+import { BLOCK_MAP_V3_MAGIC } from "builder-util-runtime/internal"
 import { PublishContext, UploadTask } from "electron-publish"
 import { resolveS3Credentials } from "electron-publish/src/s3/awsCredentials"
 import { S3Publisher } from "electron-publish/internal"
@@ -99,7 +100,7 @@ describe("getS3ContentType — mirrors Go binary getContentType()", () => {
     const dir = await tmpDir.getTempDir({ prefix: "s3-content-type" })
     const binary = path.join(dir, "binary.exe.blockmap")
     const json = path.join(dir, "json.exe.blockmap")
-    await fsExtra.outputFile(binary, Buffer.concat([Buffer.from("EBM3", "latin1"), Buffer.alloc(60)]))
+    await fsExtra.outputFile(binary, Buffer.concat([Buffer.from(BLOCK_MAP_V3_MAGIC, "latin1"), Buffer.alloc(60)]))
     await fsExtra.outputFile(json, gzipSync(Buffer.from('{"version":"2","files":[]}')))
     expect(getS3ContentType(binary)).toBe("application/octet-stream")
     expect(getS3ContentType(json)).toBe("application/gzip")

@@ -70,6 +70,6 @@
 
   <rect x="40" y="712" width="1520" height="86" rx="8" fill="#f3f4f6" stroke="#d1d5db"/>
   <text x="56" y="738" class="lbl" font-weight="700">Compatibility</text>
-  <text x="56" y="762" class="lbl">• One .blockmap per artifact, either format; electron-updater tells them apart by the first bytes (<tspan class="m">EBM3</tspan> vs gzip).   • latest.yml is unchanged.</text>
+  <text x="56" y="762" class="lbl">• One .blockmap per artifact, either format; electron-updater tells them apart by the first bytes (<tspan class="m">EBB3</tspan> vs gzip).   • latest.yml is unchanged.</text>
   <text x="56" y="784" class="lbl">• electron-updater before 7.0 cannot read v3 → one full download, and the update it installs can.   • Same blake2b digests as v2, just 8 bytes; the final sha512 of the installer is still the safety net.</text>
 </svg>

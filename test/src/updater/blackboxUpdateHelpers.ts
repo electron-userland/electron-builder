@@ -2,6 +2,7 @@ import { ToolsetConfig } from "app-builder-lib"
 import { AsarIntegrity, getWindowsVm, parsePlistFile, ParallelsVmManager, PM, VmManager } from "app-builder-lib/internal"
 import { ASAR_INTEGRITY_DIGEST_SENTINEL, computeAsarIntegrityDigest } from "app-builder-lib/src/electron/mac/asarIntegrityDigest"
 import { computeUpdateManifestKeyId, GenericServerOptions, hashFile, Nullish, UpdateInfo, verifyManifestSignatures, WindowsUpdateInfo } from "builder-util-runtime"
+import { BLOCK_MAP_V3_MAGIC } from "builder-util-runtime/internal"
 import { archFromString, deepAssign, DebugLogger, generateUpdateSigningKeypair, log, serializeToYaml, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { copy, emptyDir, existsSync, move, outputFile, readdir, readFile, readJson, readJsonSync, remove, stat } from "fs-extra"
@@ -1262,10 +1263,10 @@ export async function runKeyRotationTest(context: TestContext, target: string, p
  */
 export const LEGACY_ELECTRON_UPDATER_VERSION = "6.8.10"
 
-/** Whether the `.blockmap` published next to the update files is the binary format (`EBM3` magic) rather than gzipped JSON. */
+/** Whether the `.blockmap` published next to the update files is the binary format (`EBB3` magic) rather than gzipped JSON. */
 async function publishesBinaryBlockMap(filesDir: string): Promise<boolean> {
   for (const name of await readdir(filesDir)) {
-    if (name.endsWith(".blockmap") && (await readFile(path.join(filesDir, name))).subarray(0, 4).toString("latin1") === "EBM3") {
+    if (name.endsWith(".blockmap") && (await readFile(path.join(filesDir, name))).subarray(0, 4).toString("latin1") === BLOCK_MAP_V3_MAGIC) {
       return true
     }
   }

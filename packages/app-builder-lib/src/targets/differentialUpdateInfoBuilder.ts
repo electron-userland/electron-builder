@@ -17,7 +17,7 @@ export const BLOCK_MAP_FILE_SUFFIX = ".blockmap"
 
 /**
  * The `.blockmap` formats electron-builder writes (the `blockmap` option), named after the format version they carry: `"v2"`
- * is the gzipped JSON map (`"version": "2"`), `"v3"` the binary range-fetchable map (`EBM3` magic).
+ * is the gzipped JSON map (`"version": "2"`), `"v3"` the binary range-fetchable map (`EBB3` magic).
  */
 export type BlockMapFormat = "v2" | "v3"
 

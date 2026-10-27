@@ -24,7 +24,7 @@ import { BlockMap } from "./blockMapApi.js"
  * group's worth of records per changed spot.
  */
 
-export const BLOCK_MAP_V3_MAGIC = "EBM3"
+export const BLOCK_MAP_V3_MAGIC = "EBB3"
 export const BLOCK_MAP_V3_VERSION = 2
 
 /**
