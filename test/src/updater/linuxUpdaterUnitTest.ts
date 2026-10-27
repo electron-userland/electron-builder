@@ -237,7 +237,11 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       }
     })
 
-    describe.skipIf(process.platform === "win32")("in trusted directories", () => {
+    // file modes and symlinks are POSIX: Windows has no execute bit (X_OK checks only that the file exists), and creating a
+    // symlink there needs a privilege, so only the tests that rely on neither run on Windows
+    describe("in trusted directories", () => {
+      const posixIt = it.skipIf(process.platform === "win32")
+
       let trustedDir: string
       let outsideDir: string
 
@@ -256,7 +260,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
         expect(resolve("dpkg")).toBe(path.join(trustedDir, "dpkg"))
       })
 
-      it("follows a symlink to an executable file in a trusted directory", async () => {
+      posixIt("follows a symlink to an executable file in a trusted directory", async () => {
         await writeFile(path.join(trustedDir, "dnf5"), "#!/bin/sh\n", { mode: 0o755 })
         await symlink("dnf5", path.join(trustedDir, "dnf"))
         expect(resolve("dnf")).toBe(path.join(trustedDir, "dnf"))
@@ -274,7 +278,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
         expect(() => resolve("dpkg")).toThrow(`dpkg not found in ${trustedDir}`)
       })
 
-      it("rejects a file that is not executable", async () => {
+      posixIt("rejects a file that is not executable", async () => {
         await writeFile(path.join(trustedDir, "dpkg"), "#!/bin/sh\n", { mode: 0o644 })
         expect(() => resolve("dpkg")).toThrow(`dpkg not found in ${trustedDir}`)
       })
@@ -283,13 +287,13 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
         expect(() => resolve("dpkg")).toThrow(`dpkg not found in ${trustedDir}`)
       })
 
-      it("rejects a symlink to an executable outside the trusted directories", async () => {
+      posixIt("rejects a symlink to an executable outside the trusted directories", async () => {
         await writeFile(path.join(outsideDir, "dpkg"), "#!/bin/sh\n", { mode: 0o755 })
         await symlink(path.join(outsideDir, "dpkg"), path.join(trustedDir, "dpkg"))
         expect(() => resolve("dpkg")).toThrow(`dpkg not found in ${trustedDir}`)
       })
 
-      it("rejects a dangling symlink", async () => {
+      posixIt("rejects a dangling symlink", async () => {
         await symlink(path.join(outsideDir, "missing"), path.join(trustedDir, "dpkg"))
         expect(() => resolve("dpkg")).toThrow(`dpkg not found in ${trustedDir}`)
       })
