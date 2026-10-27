@@ -3,7 +3,7 @@ import * as path from "path"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 import { generateTests } from "../vitest-scripts/generate-tests"
 import { GENERATED_TESTS_DIR } from "../vitest-scripts/runtime-tests/generate-toolset-tests-shared"
-import { latestToolsetVersion, NSIS_VERSIONS, WINE_VERSIONS, WIN_CODE_SIGN_VERSIONS } from "../vitest-scripts/runtime-tests/generate-toolset-versions"
+import { latestToolsetVersion, NSIS_VERSIONS, WINE_VERSIONS, WIN_CODE_SIGN_VERSIONS, WIX_VERSIONS } from "../vitest-scripts/runtime-tests/generate-toolset-versions"
 import { detectFilePlatforms, getAllTestFiles, isE2eTestFile, platformAllowed } from "../vitest-scripts/vitest-config/file-discovery"
 import { resolveCachedMs, shardPlanMismatchError } from "../vitest-scripts/vitest-config/shard-builder"
 import type { FileStats } from "../vitest-scripts/vitest-config/cache"
@@ -122,6 +122,45 @@ describe("Generated toolset test filenames", () => {
           .replace(/\.ts$/, ".js.snap")
       )
       expect(fs.existsSync(snapshot), `hand-written snapshot of ${path.basename(file)}: ${snapshot}`).toBe(true)
+    }
+  })
+
+  // The msi suite runs once per WiX bundle, and msiWrapped once more with the legacy bundle. They run on Windows only and CI doesn't
+  // write missing snapshots, so each generated file needs a hand-written snapshot with an entry for every msiTestSuite test.
+  it("msi suites generate one file per WiX bundle, each with a snapshot entry for every test", () => {
+    const versions = (list: ReadonlyArray<unknown>) => list.filter((it): it is string => typeof it === "string")
+    const files = collectGeneratedFiles(GENERATED_TESTS_DIR)
+    const msiFiles = files.filter(f => f.includes("/msi/"))
+    expect(msiFiles.map(f => path.basename(f)).sort()).toEqual(versions(WIX_VERSIONS).map(wix => `msi__wix-${wix}.win.e2e.ts`))
+    const wcs = latestToolsetVersion(versions(WIN_CODE_SIGN_VERSIONS))
+    const nsis = latestToolsetVersion(versions(NSIS_VERSIONS))
+    const legacyWrappedFiles = files.filter(f => f.includes("/msiWrappedLegacyWix/"))
+    expect(legacyWrappedFiles.map(f => path.basename(f)).sort()).toEqual(
+      versions(WINE_VERSIONS).map(wine => `msiWrappedLegacyWix__wcs-${wcs}__nsis-${nsis}__wine-${wine}__wix-0.0.0.win.e2e.ts`)
+    )
+
+    const snapshotPath = (file: string) =>
+      path.join(
+        path.resolve(GENERATED_TESTS_DIR, "../../snapshots/generated"),
+        path.basename(path.dirname(file)),
+        path
+          .basename(file)
+          .replace(/__wine-\d+(?:\.\d+)*/, "")
+          .replace(/\.ts$/, ".js.snap")
+      )
+    // the tests msiTestSuite registers, without the skipped ones
+    const msiTests = [...fs.readFileSync(path.resolve(GENERATED_TESTS_DIR, "../windows/msiTestSuite.ts"), "utf8").matchAll(/^\s*test\("([^"]+)"/gm)].map(it => it[1])
+    expect(msiTests).toEqual(expect.arrayContaining(["msi", "arm64", "same file name in two directories"]))
+    for (const file of msiFiles) {
+      const snapshot = snapshotPath(file)
+      expect(fs.existsSync(snapshot), `hand-written snapshot of ${path.basename(file)}: ${snapshot}`).toBe(true)
+      const content = fs.readFileSync(snapshot, "utf8")
+      for (const name of msiTests) {
+        expect(content, `${path.basename(snapshot)} has an entry for "${name}"`).toContain(`exports[\`msi > ${name} 1\`]`)
+      }
+    }
+    for (const file of legacyWrappedFiles) {
+      expect(fs.existsSync(snapshotPath(file)), `hand-written snapshot of ${path.basename(file)}: ${snapshotPath(file)}`).toBe(true)
     }
   })
 

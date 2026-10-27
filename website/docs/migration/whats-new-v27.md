@@ -33,7 +33,7 @@ These are the runtime and default changes that `migrate-schema` **does not** rew
 | Change | One-line impact | Details |
 |---|---|---|
 | **Node.js >=22.12.0 required** | The build fails on older Node — bump your local runtime, CI, and Docker images. | [→](./v27-build-changes.md#nodejs-22120-required) |
-| **Toolsets resolve to `"latest"`** | Unset / `"latest"` now fetch the newest bundle (winCodeSign 1.3.1, FUSE3 AppImage, NSIS 3.12); pin `"0.0.0"` to restore a legacy bundle. | [→](./v27-build-changes.md#toolset-defaults-resolve-to-latest-newest-bundle) |
+| **Toolsets resolve to `"latest"`** | Unset / `"latest"` now fetch the newest bundle (winCodeSign 1.3.1, FUSE3 AppImage, NSIS 3.12, WiX 3.14.1 with native arm64 MSIs); pin `"0.0.0"` to restore a legacy bundle. | [→](./v27-build-changes.md#toolset-defaults-resolve-to-latest-newest-bundle) |
 | **Wine is the host install** | `toolsets.wine` defaults to `"system"`: building Windows targets on macOS now needs Wine installed (`brew install --cask wine-stable`). | [→](./v27-build-changes.md#toolset-defaults-resolve-to-latest-newest-bundle) |
 | **macOS default entitlements tightened** | The bundled default grants only `allow-jit`; apps loading native modules or frameworks signed by another Team ID (or unsigned) must add `disable-library-validation` back in `build/entitlements.mac.plist`. | [→](./v27-runtime-changes.md#macos-default-entitlements-tightened) |
 | **Missing production dependencies fail the build** | An unresolvable production dependency is now an error instead of a warning; `allowMissingDependencies: true` restores warn-only. | [→](./v27-build-changes.md#allowmissingdependencies-now-fails-the-build) |

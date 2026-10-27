@@ -25,12 +25,14 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 | `sevenZip` | Extracting `.7z` and `.tar.xz` archives internally | `1.0.1` |
 | `icons` | Converting source images to `.icns`, `.ico`, and PNG icon sets | `1.2.3` |
 | `squirrel` | Building Squirrel.Windows installers (`Squirrel.exe`, `SyncReleases.exe`, `nuget.exe`, `7z`) — requires `electron-builder-squirrel-windows` | `1.1.1` |
+| `wix` | Building `msi` and `msiWrapped` installers (`candle.exe`, `light.exe`, WiX extensions) | `2.0.0` (WiX 3.14.1) |
 
 :::note[Platform notes]
 - **`wine`** is only needed to build **Windows targets on a non-Windows machine**. On Windows it has no effect. It defaults to the **host-installed `wine`** (`"system"`) on both macOS and Linux, so a macOS host that builds Windows targets needs Wine installed (`brew install --cask wine-stable`). See [Host Wine](#host-wine) for where it is looked for. `toolsets.wine: "1.0.1"` still downloads the Wine 11.0 bundle on macOS when pinned explicitly, but the published bundle ships no PE builtins, so it cannot run Windows tools on its own.
 - **`winCodeSign`** is used on all platforms (`signtool.exe` on Windows, `osslsigncode` on macOS/Linux).
 - **`squirrel`** is only used by the `squirrelWindows` target. It runs natively on Windows; on macOS/Linux it needs a host-installed `mono` (see [`executables`](#executables)), and `rcedit` (from `winCodeSign`) runs under Wine.
 - **`fpm`**, **`icons`**, and **`squirrel`** each have only one published version today, so `"latest"` and the listed version are equivalent.
+- **`wix`** `"latest"` is WiX 3.14.1, which builds a native **arm64** MSI for `arm64`; `"0.0.0"` is the legacy WiX 4.0.0.5512 preview bundle, which packages an arm64 app in an x64 MSI. On macOS/Linux, `candle.exe` and `light.exe` run under Wine with [wine-mono](https://gitlab.winehq.org/wine-mono/wine-mono). If an `msiProjectCreated` hook adds elements in a WiX 4 namespace (for example `http://wixtoolset.org/schemas/v4/wxs/util`), switch it to the WiX 3 one (`http://schemas.microsoft.com/wix/UtilExtension`), or pin `"0.0.0"`; with WiX 3 the build fails with an error that names the namespace.
 :::
 
 For the full version-by-version breakdown of what each `"latest"` bundle upgrades from — and which are drop-in replacements versus behavior changes — see the migration table in [Toolset defaults resolve to `"latest"`](./migration/v27-build-changes.md#toolset-defaults-resolve-to-latest-newest-bundle).
