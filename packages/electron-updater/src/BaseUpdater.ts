@@ -6,7 +6,7 @@ import type { FileHandle } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion } from "semver"
-import { AppAdapter } from "./AppAdapter.js"
+import { AppAdapter, CancellableQuitEvent } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask, UpdateInfoAndProvider } from "./AppUpdater.js"
 import type { Logger, VerifyUpdateFileResult } from "./types.js"
 import { QuitAndInstallOptions, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
@@ -24,6 +24,25 @@ const STDERR_MESSAGE_BYTES = 8 * 1024
  */
 function shellCommandLine(cmd: string, args: readonly string[]): string {
   return [cmd, ...args].join(" ")
+}
+
+/**
+ * A command that ran and did not succeed: it exited with a non-zero code, or was killed by a signal. Thrown by
+ * {@link BaseUpdater.spawnSyncLog} and {@link BaseUpdater.spawnAsyncLog}, so that callers can tell from the exit code
+ * why it failed without parsing the message. A command that could not be spawned at all fails with the spawn error.
+ */
+export class CommandExitError extends Error {
+  constructor(
+    message: string,
+    /** The program that was spawned. */
+    readonly command: string,
+    /** `null` when the command was killed by a signal. */
+    readonly exitCode: number | null,
+    readonly signal: NodeJS.Signals | null
+  ) {
+    super(message)
+    this.name = "CommandExitError"
+  }
 }
 
 async function removeQuietly(file: string): Promise<void> {
@@ -102,11 +121,35 @@ class StderrCapture {
   }
 }
 
+/** An app lifecycle event the updater listens to, see {@link BaseUpdater.registerHookOnce}. */
+type LifecycleHook = "quit" | "willQuit" | "sessionEnd"
+
+/** Why the quit handler does not install the downloaded update, and how loudly it says so. */
+interface InstallOnQuitSkip {
+  readonly level: "info" | "warn"
+  readonly message: string
+}
+
+/** An install {@link BaseUpdater.runInstallAsync} waits for. */
+interface InFlightInstall {
+  /** The update it installs ({@link BaseUpdater.downloadedUpdateId}), should the download helper move on to another one meanwhile. */
+  readonly updateId: string | null
+  /** A quit was cancelled to let it finish: the app quits once it settled. */
+  isQuitDeferred: boolean
+}
+
 export abstract class BaseUpdater extends AppUpdater {
   protected quitAndInstallCalled = false
-  private quitHandlerAdded = false
-  private sessionEndHandlerAdded = false
+  /** The app lifecycle events whose handler is registered: each one is registered once. */
+  private readonly registeredHooks = new Set<LifecycleHook>()
   private isSessionEnding = false
+  /** The install {@link runInstallAsync} waits for, `null` when none runs. */
+  private inFlightInstall: InFlightInstall | null = null
+  /**
+   * The {@link downloadedUpdateId} of the downloaded update whose install failed while the app was quitting: no later quit
+   * in this session tries to install that update on quit again. A different update downloaded later is installed on quit.
+   */
+  private failedInstallOnQuitUpdateId: string | null = null
   /**
    * Set while {@link executeDownload} runs. The downloaded update helper can already point at an installer then, e.g. one
    * cached by an earlier launch that the app's `verifyUpdateFile` has not accepted yet, so the quit handler must not install it.
@@ -137,7 +180,7 @@ export abstract class BaseUpdater extends AppUpdater {
     // If NOT in silent mode use `autoRunAppAfterInstall` to determine whether to force run the app
     // the install runs asynchronously on targets whose install shows an elevation dialog (see installAsync), so the
     // app quits once it finished instead of right after this call returns
-    void this.installAsync(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall)
+    void this.runInstallAsync(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall, true)
       .catch((error: unknown) => {
         // installAsync reports install failures itself; this is a failure to report one (an "error" listener that throws)
         nonThrowingLogger(this._logger).error(`Cannot install update: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
@@ -166,6 +209,17 @@ export abstract class BaseUpdater extends AppUpdater {
    * so they keep the pending update for an explicit `installPendingUpdateIfAvailable()` call instead.
    */
   protected get isAutoInstallOnNextLaunchSupported(): boolean {
+    return false
+  }
+
+  /**
+   * Whether a quit can be cancelled for this target (see {@link handleWillQuit}): a quit waits for an install that is
+   * running, and with {@link cancelQuitOnInstallFailure} the install on quit runs while the quit can still be cancelled,
+   * which a failed install then does. Only for targets whose {@link doInstall} has finished, and knows whether it
+   * succeeded, when it returns: the Linux package targets. The others always install in the quit itself, which cannot
+   * be cancelled; NSIS, for one, only starts an installer that runs once the app exited.
+   */
+  protected get isQuitCancellable(): boolean {
     return false
   }
 
@@ -250,18 +304,67 @@ export abstract class BaseUpdater extends AppUpdater {
    * and the desktop reports it as not responding. Targets that do not override {@link doInstallAsync} keep
    * installing synchronously, so their timing is unchanged.
    */
-  async installAsync(isSilent = false, isForceRunAfter = false): Promise<boolean> {
+  installAsync(isSilent = false, isForceRunAfter = false): Promise<boolean> {
+    return this.runInstallAsync(isSilent, isForceRunAfter, false)
+  }
+
+  /**
+   * {@link installAsync}. A quit while the install runs waits for it (see {@link handleWillQuit}) and happens once it
+   * settled; `isQuitOnSuccess` tells that the caller quits by itself once the install succeeded, so that quit is its own.
+   */
+  private async runInstallAsync(isSilent: boolean, isForceRunAfter: boolean, isQuitOnSuccess: boolean): Promise<boolean> {
     const options = this.beginInstall(isSilent, isForceRunAfter)
     if (options == null) {
       return false
     }
 
+    this.addWillQuitHandler()
+    const install: InFlightInstall = { updateId: this.downloadedUpdateId, isQuitDeferred: false }
+    let isInstalled = false
+    this.inFlightInstall = install
     try {
-      return await this.doInstallAsync(options)
+      isInstalled = await this.doInstallAsync(options)
+      return isInstalled
     } catch (e: any) {
       this.dispatchError(e)
       return false
+    } finally {
+      this.inFlightInstall = null
+      this.quitIfDeferred(install, isInstalled, isQuitOnSuccess)
     }
+  }
+
+  /**
+   * The quit that waited for `install` (see {@link handleWillQuit}) happens now that it settled: once, with one
+   * `app.quit()`, which emits `will-quit` again, so a `will-quit` listener that cancelled the deferred quit as well can
+   * cancel this one too. Not when the install succeeded and its caller quits by itself, nor when it failed and
+   * {@link cancelQuitOnInstallFailure} is set: the quit stays cancelled then.
+   */
+  private quitIfDeferred(install: InFlightInstall, isInstalled: boolean, isQuitOnSuccess: boolean): void {
+    if (!install.isQuitDeferred) {
+      return
+    }
+    if (isInstalled && isQuitOnSuccess) {
+      // quitAndInstall and the install on launch quit once the install succeeded
+      return
+    }
+    const logger = nonThrowingLogger(this._logger)
+    if (isInstalled) {
+      logger.info("The update install finished, quitting")
+      setImmediate(() => this.app.quit())
+      return
+    }
+
+    // the user cancelled the authentication dialog, for example: quitting must not show it again for this update
+    this.failedInstallOnQuitUpdateId = install.updateId
+    if (this.cancelQuitOnInstallFailure) {
+      logger.warn(
+        'The update was not installed, so the quit that waited for the install stays cancelled (cancelQuitOnInstallFailure): the app keeps running (its windows are already closed) and an "error" event was emitted. The next quit is not cancelled and does not try to install this update again; call quitAndInstall() to retry.'
+      )
+      return
+    }
+    logger.warn('The update was not installed, and an "error" event was emitted: the quit that waited for the install proceeds without it')
+    setImmediate(() => this.app.quit())
   }
 
   /**
@@ -372,7 +475,7 @@ export abstract class BaseUpdater extends AppUpdater {
     await downloadedUpdateHelper.clearPendingInstallMarker(this._logger)
     this.updateInfoAndProvider = updateInfoAndProvider
     this._logger.info(`Installing pending update ${latestInfo.version} on launch`)
-    const isInstalled = await this.installAsync(true, true)
+    const isInstalled = await this.runInstallAsync(true, true, true)
     if (isInstalled) {
       setImmediate(() => this.app.quit())
     } else {
@@ -419,67 +522,225 @@ export abstract class BaseUpdater extends AppUpdater {
    */
   protected addQuitHandler(): void {
     this.addSessionEndHandler()
-    if (this.quitHandlerAdded) {
-      return
-    }
-
-    this.quitHandlerAdded = true
-
-    this.app.onQuit(exitCode => {
-      if (this.quitAndInstallCalled) {
-        this._logger.info("Update installer has already been triggered. Quitting application.")
-        return
-      }
-
-      if (this.isDownloadInProgress) {
-        this._logger.info("No update is installed on quit: the update has not finished downloading and verifying")
-        return
-      }
-
-      if (this.installerPath == null) {
-        this._logger.info("No update is installed on quit: no update has finished downloading")
-        return
-      }
-
-      if (exitCode !== 0) {
-        this._logger.info(`Update will be not installed on quit because application is quitting with exit code ${exitCode}`)
-        return
-      }
-
-      if (this.autoInstallEvent === "onNextLaunch") {
-        this._logger.info("Deferring update install to next launch because autoInstallEvent is 'onNextLaunch'")
-        this.markPendingInstallOnNextLaunch()
-        return
-      }
-
-      // autoInstallEvent may have been changed to "manual" after the quit handler was registered
-      if (this.autoInstallEvent !== "onQuit") {
-        this._logger.info("Update will not be installed on quit because autoInstallEvent is not 'onQuit'.")
-        return
-      }
-
-      if (this.isSessionEnding) {
-        this._logger.warn(
-          "Update will not be installed on quit because the OS session is ending — the OS would kill the installer before it finishes and can leave the app in a broken state (https://github.com/electron-userland/electron-builder/issues/7807). The downloaded update stays cached and will be installed on the next quit. Set autoInstallEvent to 'onNextLaunch' (planned default in v28) to install it on the next launch instead."
-        )
-        return
-      }
-
-      this._logger.info("Auto install update on quit")
-      this.install(true, false)
+    this.registerHookOnce("quit", () => {
+      this.addWillQuitHandler()
+      this.app.onQuit(exitCode => this.handleQuit(exitCode))
+      return true
     })
   }
 
-  private addSessionEndHandler(): void {
-    if (this.sessionEndHandlerAdded || this.app.onSessionEnd == null) {
+  /**
+   * Registers the handler of `hook` unless it is registered already. `register` returns whether it registered it: when
+   * it could not (the app adapter or the target does not support it), a later call tries again.
+   */
+  private registerHookOnce(hook: LifecycleHook, register: () => boolean): void {
+    if (this.registeredHooks.has(hook)) {
+      return
+    }
+    this.registeredHooks.add(hook)
+    if (!register()) {
+      this.registeredHooks.delete(hook)
+    }
+  }
+
+  /**
+   * Why the quit handler has nothing to install: an install was triggered already, or no update finished downloading.
+   * Checked before the exit code, see {@link handleQuit}.
+   */
+  private get installOnQuitUnavailableReason(): InstallOnQuitSkip | null {
+    if (this.quitAndInstallCalled) {
+      return { level: "info", message: "Update installer has already been triggered. Quitting application." }
+    }
+    if (this.isDownloadInProgress) {
+      return { level: "info", message: "No update is installed on quit: the update has not finished downloading and verifying" }
+    }
+    if (this.installerPath == null) {
+      return { level: "info", message: "No update is installed on quit: no update has finished downloading" }
+    }
+    return null
+  }
+
+  /**
+   * Why the downloaded update is not installed on quit although there is one: it is not to be, or not now. Checked after
+   * the exit code and the `"onNextLaunch"` deferral, see {@link handleQuit}.
+   */
+  private get installOnQuitSkipReason(): InstallOnQuitSkip | null {
+    // autoInstallEvent may have been changed to "manual" after the quit handler was registered
+    if (this.autoInstallEvent !== "onQuit") {
+      return { level: "info", message: "Update will not be installed on quit because autoInstallEvent is not 'onQuit'." }
+    }
+    if (this.isSessionEnding) {
+      return {
+        level: "warn",
+        message:
+          "Update will not be installed on quit because the OS session is ending — the OS would kill the installer before it finishes and can leave the app in a broken state (https://github.com/electron-userland/electron-builder/issues/7807). The downloaded update stays cached and will be installed on the next quit. Set autoInstallEvent to 'onNextLaunch' (planned default in v28) to install it on the next launch instead.",
+      }
+    }
+    if (this.isDownloadedUpdateFailedOnQuit) {
+      return { level: "info", message: "Update will not be installed on quit because installing it failed earlier in this session" }
+    }
+    return null
+  }
+
+  private handleQuit(exitCode: number): void {
+    // it runs after a failed install on quit too, when the quit proceeds: logging must not throw
+    const logger = nonThrowingLogger(this._logger)
+    const unavailableReason = this.installOnQuitUnavailableReason
+    if (unavailableReason != null) {
+      logger[unavailableReason.level](unavailableReason.message)
       return
     }
 
-    this.sessionEndHandlerAdded = true
+    if (exitCode !== 0) {
+      logger.info(`Update will be not installed on quit because application is quitting with exit code ${exitCode}`)
+      return
+    }
 
-    this.app.onSessionEnd(() => {
-      this.isSessionEnding = true
-      this._logger.info("OS session is ending (shutdown/reboot/log off), install of the downloaded update on quit will be skipped")
+    if (this.autoInstallEvent === "onNextLaunch") {
+      logger.info("Deferring update install to next launch because autoInstallEvent is 'onNextLaunch'")
+      this.markPendingInstallOnNextLaunch()
+      return
+    }
+
+    const skipReason = this.installOnQuitSkipReason
+    if (skipReason != null) {
+      logger[skipReason.level](skipReason.message)
+      return
+    }
+
+    // with cancelQuitOnInstallFailure, will-quit installed already, unless the app adapter does not support it or the
+    // app called app.exit(), which skips will-quit
+    if (this.installOnQuit(logger) || !this.isQuitCancellable) {
+      return
+    }
+    logger.warn(
+      this.cancelQuitOnInstallFailure
+        ? 'The update was not installed on quit, and an "error" event is emitted: the app quits without it, since this quit cannot be cancelled anymore (cancelQuitOnInstallFailure needs will-quit).'
+        : 'The update was not installed on quit, and an "error" event is emitted: the app quits without it. Set cancelQuitOnInstallFailure to keep the app running instead.'
+    )
+  }
+
+  /**
+   * Installs the downloaded update on quit; returns whether it is installed. Never throws. When the install fails, no
+   * later quit in this session tries to install that update again, and an explicit `quitAndInstall()` still can.
+   */
+  private installOnQuit(logger: Logger): boolean {
+    logger.info("Auto install update on quit")
+    const updateId = this.downloadedUpdateId
+    let isInstalled = false
+    try {
+      isInstalled = this.install(true, false)
+    } catch (error: unknown) {
+      // install() reports a failed install itself; this is a failure to report it (an "error" listener that throws)
+      logger.error(`Cannot install update on quit: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
+    }
+    if (!isInstalled) {
+      this.failedInstallOnQuitUpdateId = updateId
+      // install() leaves it set
+      this.quitAndInstallCalled = false
+    }
+    return isInstalled
+  }
+
+  private addWillQuitHandler(): void {
+    this.registerHookOnce("willQuit", () => {
+      if (!this.isQuitCancellable || this.app.onWillQuit == null) {
+        return false
+      }
+      this.app.onWillQuit(event => this.handleWillQuit(event))
+      return true
+    })
+  }
+
+  /**
+   * Tells the downloaded update from another one (see `DownloadedUpdateHelper.downloadedUpdateId`): its sha512, or
+   * the legacy sha2 checksum of update info that has no sha512.
+   */
+  private get downloadedUpdateId(): string | null {
+    return this.downloadedUpdateHelper?.downloadedUpdateId ?? null
+  }
+
+  /** Whether installing the downloaded update failed while the app was quitting earlier in this session. */
+  private get isDownloadedUpdateFailedOnQuit(): boolean {
+    const updateId = this.downloadedUpdateId
+    return updateId != null && updateId === this.failedInstallOnQuitUpdateId
+  }
+
+  /** Whether the quit handler would install the downloaded update now; it logs why not, when not. */
+  private get isInstallOnQuitDue(): boolean {
+    return (
+      // the quit handler is registered once a download started in this session
+      this.registeredHooks.has("quit") && this.installOnQuitUnavailableReason == null && this.installOnQuitSkipReason == null
+    )
+  }
+
+  /**
+   * Runs on every quit that can still be cancelled (Electron's `will-quit`: after all windows closed, not for
+   * `app.exit()`), for targets where {@link isQuitCancellable}. It never throws.
+   * - While an install runs (an explicit `quitAndInstall()`, the install on launch), the quit waits for it: when it is
+   *   cancelled, the update would be left half installed, and the app would not be relaunched. Once the install settled,
+   *   the quit happens (see {@link quitIfDeferred}).
+   * - With {@link cancelQuitOnInstallFailure}, the install on quit runs here rather than in the quit handler, which cannot
+   *   cancel the quit. When it fails (the user dismissed the authentication dialog, for example), an `error` event is
+   *   emitted and logged, and the quit is cancelled: the app keeps running, with its windows closed. No later quit in this
+   *   session tries to install that update again; an explicit `quitAndInstall()` still can, and a different update
+   *   downloaded later is installed on quit.
+   *
+   * Without that option, the install on quit runs in the quit handler ({@link handleQuit}), as on the other targets:
+   * `quit` is only emitted once every `will-quit` listener let the quit through, while here only the listeners that ran
+   * before this one can be seen to have cancelled it. With the option, a listener registered after this one (that is,
+   * after the first update download or install started) that cancels the quit runs after the install.
+   *
+   * When the OS session ends, the quit proceeds as before. A quit that a `will-quit` listener called before this one
+   * already cancelled (an app finishing async cleanup before it quits again, for example) is left alone: nothing is
+   * installed and no quit is scheduled, the quit that follows does that.
+   */
+  private handleWillQuit(event: CancellableQuitEvent): void {
+    const logger = nonThrowingLogger(this._logger)
+    if (this.isSessionEnding) {
+      return
+    }
+
+    const inFlightInstall = this.inFlightInstall
+    const isInstallOnQuitHere = this.cancelQuitOnInstallFailure && inFlightInstall == null && this.isInstallOnQuitDue
+    // a custom app adapter may not tell: then the quit is taken as not cancelled
+    if (event.defaultPrevented === true) {
+      if (inFlightInstall != null || isInstallOnQuitHere) {
+        logger.info("The quit was cancelled by another will-quit listener: the update is installed on a quit that proceeds")
+      }
+      return
+    }
+
+    if (inFlightInstall != null) {
+      event.preventDefault()
+      if (!inFlightInstall.isQuitDeferred) {
+        inFlightInstall.isQuitDeferred = true
+        logger.info("Waiting for the update install to finish before quitting")
+      }
+      return
+    }
+
+    if (!isInstallOnQuitHere || this.installOnQuit(logger)) {
+      return
+    }
+
+    // the "error" event was emitted already, while this quit can still be cancelled
+    event.preventDefault()
+    logger.warn(
+      'The update was not installed on quit, so the quit is cancelled (cancelQuitOnInstallFailure): the app keeps running (its windows are already closed) and an "error" event is emitted. The next quit is not cancelled and does not try to install this update again; call quitAndInstall() to retry.'
+    )
+  }
+
+  private addSessionEndHandler(): void {
+    this.registerHookOnce("sessionEnd", () => {
+      if (this.app.onSessionEnd == null) {
+        return false
+      }
+      this.app.onSessionEnd(() => {
+        this.isSessionEnding = true
+        this._logger.info("OS session is ending (shutdown/reboot/log off), install of the downloaded update on quit will be skipped")
+      })
+      return true
     })
   }
 
@@ -496,7 +757,8 @@ export abstract class BaseUpdater extends AppUpdater {
   }
 
   /**
-   * Runs a command and returns its trimmed stdout; throws when it cannot be spawned or exits with a non-zero code.
+   * Runs a command and returns its trimmed stdout; throws when it cannot be spawned, or a {@link CommandExitError} when it
+   * exits with a non-zero code or is killed by a signal.
    *
    * With `useShell` (the default), the shell gets the command line Node would have joined from `cmd` and `args` (see
    * {@link shellCommandLine}), so the caller escapes them. Without it, the arguments are passed as an argv array and
@@ -518,7 +780,7 @@ export abstract class BaseUpdater extends AppUpdater {
     } else if (status !== 0) {
       // a command killed by a signal has no exit code, and did not succeed either
       this._logger.error(stderr)
-      throw new Error(`Command ${cmd} exited with code ${status}${signal == null ? "" : `, signal ${signal}`}`)
+      throw new CommandExitError(`Command ${cmd} exited with code ${status}${signal == null ? "" : `, signal ${signal}`}`, cmd, status, signal)
     }
 
     return stdout.trim()
@@ -552,8 +814,8 @@ export abstract class BaseUpdater extends AppUpdater {
 
   /**
    * {@link spawnSyncLog} without blocking the main process: same command, same environment, awaited instead.
-   * Rejects when the command exits with a non-zero code or is killed by a signal; the error message ends with what the
-   * command wrote to stderr (its last {@link STDERR_MESSAGE_BYTES}).
+   * Rejects with a {@link CommandExitError} when the command exits with a non-zero code or is killed by a signal; its
+   * message ends with what the command wrote to stderr (its last {@link STDERR_MESSAGE_BYTES}).
    *
    * Neither stdout nor stderr is a pipe, so a command still running when the app quits is not killed by SIGPIPE on its
    * next write: stdout is not read (as with {@link spawnSyncLog}, nothing uses it) and is discarded, stderr goes to a
@@ -582,7 +844,12 @@ export abstract class BaseUpdater extends AppUpdater {
         return
       }
       const output = stderr == null ? "" : await stderr.read()
-      throw new Error(`Command ${cmd} exited with code ${status}${signal == null ? "" : `, signal ${signal}`}${output.length === 0 ? "" : `: ${output}`}`)
+      throw new CommandExitError(
+        `Command ${cmd} exited with code ${status}${signal == null ? "" : `, signal ${signal}`}${output.length === 0 ? "" : `: ${output}`}`,
+        cmd,
+        status,
+        signal
+      )
     } finally {
       await stderr?.dispose()
     }

@@ -1,8 +1,8 @@
 import { AllPublishOptions } from "builder-util-runtime"
-import { accessSync, constants as fsConstants } from "fs"
+import { accessSync, constants as fsConstants, realpathSync, statSync } from "fs"
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter.js"
-import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
+import { BaseUpdater, CommandExitError, InstallOptions } from "./BaseUpdater.js"
 import { Logger } from "./types.js"
 import { nonThrowingLogger } from "./util.js"
 
@@ -15,7 +15,44 @@ const SAFE_PM_REGEX = /^[a-zA-Z0-9_-]+$/
  * caller's PATH, which can hold user-writable directories (`~/.local/bin`): a program planted there would run as root
  * once the user authenticates. A relative name is resolved in these system directories instead.
  */
-const TRUSTED_COMMAND_DIRS = ["/usr/sbin", "/usr/bin", "/sbin", "/bin"]
+const TRUSTED_COMMAND_DIRS: readonly string[] = ["/usr/sbin", "/usr/bin", "/sbin", "/bin"]
+
+/** The directories that `dirs` resolve to, following symlinks (`/bin` is `/usr/bin` on merged-/usr systems). */
+function realDirs(dirs: readonly string[]): string[] {
+  const result: string[] = []
+  for (const dir of dirs) {
+    try {
+      result.push(realpathSync(dir))
+    } catch {
+      // a directory this system does not have
+    }
+  }
+  return result
+}
+
+function isWithin(file: string, dir: string): boolean {
+  const relative = path.relative(dir, file)
+  return relative.length !== 0 && !relative.startsWith("..") && !path.isAbsolute(relative)
+}
+
+/**
+ * Whether `candidate` is an executable regular file that, symlinks followed, still lies in one of `trustedRealDirs`.
+ * Symlinks are allowed: package managers are commonly reached through one (`/bin` → `/usr/bin` on merged-/usr systems,
+ * `/usr/bin/dnf` → `dnf5`), and only root can create one in a trusted directory; the target has to be trusted as well.
+ */
+function isTrustedExecutable(candidate: string, trustedRealDirs: readonly string[]): boolean {
+  try {
+    const real = realpathSync(candidate)
+    if (!trustedRealDirs.some(dir => isWithin(real, dir)) || !statSync(real).isFile()) {
+      return false
+    }
+    accessSync(real, fsConstants.X_OK)
+    return true
+  } catch {
+    // missing, or not executable
+    return false
+  }
+}
 
 /**
  * How an install runs a privileged command, resolved once per install so that the installer path
@@ -32,7 +69,8 @@ export type Elevation = { readonly kind: "root" } | { readonly kind: "argv" | "w
  *
  * `execCommand` runs first. Only if it fails, the `recoveryChain` runs, step by step; each step is itself a plan that
  * can declare its own recovery. The install fails when `execCommand` fails without a recovery chain, or when a step of
- * the recovery chain fails.
+ * the recovery chain fails. A command the elevation helper refused to run ({@link ElevationDeniedError}) ends the
+ * install at once, without recovery.
  */
 export interface InstallPlan {
   /** The command and its arguments. */
@@ -41,6 +79,48 @@ export interface InstallPlan {
   readonly recoveryMessage?: string
   /** Run in order, only when {@link execCommand} failed. */
   readonly recoveryChain?: InstallPlan[]
+}
+
+/**
+ * A privileged command that did not run because the elevation helper refused to run it: the authentication dialog
+ * was dismissed, or authorization was not obtained. Ends the {@link InstallPlan} without its recovery chain, which would
+ * only show the authentication dialog again.
+ */
+export class ElevationDeniedError extends Error {
+  constructor(
+    /** The helper's failure, as {@link BaseUpdater.spawnSyncLog} or {@link BaseUpdater.spawnAsyncLog} reported it. */
+    readonly commandError: CommandExitError,
+    /** The helper's exit code: 126 or 127, see {@link elevationDenial}. */
+    readonly exitCode: number
+  ) {
+    super(`${commandError.message} (${exitCode === 126 ? "the authentication dialog was dismissed" : "authorization was not obtained"}), the update is not installed`)
+    this.name = "ElevationDeniedError"
+  }
+}
+
+/**
+ * The {@link ElevationDeniedError} that `error` stands for, or `null` when the command itself failed.
+ *
+ * Only pkexec, in the `argv` mode where it runs the package manager itself, reports a refusal with exit codes of its
+ * own (pkexec(1)): 126 when the authentication dialog was dismissed, 127 when the caller is not authorized, the
+ * authentication failed or pkexec failed itself. Otherwise it exits with the package manager's code, and none of the
+ * package managers installed with (dpkg, apt, apt-get, dnf, yum, zypper, rpm, pacman) exits with 126 or 127. The
+ * shell's 126/127 (not executable, command not found) cannot be mistaken for it: the command is a resolved absolute
+ * path, passed as argv without a shell.
+ *
+ * sudo exits with 1 when the authentication fails, the same code a failing dpkg exits with, and gksudo, kdesudo and
+ * beesu run the command through `/bin/bash -c`, where 126 and 127 are the shell's: neither tells a refusal apart from a
+ * failed command, so their failures keep running the recovery chain.
+ */
+function elevationDenial(error: unknown, elevation: Elevation): ElevationDeniedError | null {
+  if (elevation.kind !== "argv" || !(error instanceof CommandExitError)) {
+    return null
+  }
+  const [helper] = elevation.helper
+  if (helper == null || !/pkexec/i.test(helper)) {
+    return null
+  }
+  return error.exitCode === 126 || error.exitCode === 127 ? new ElevationDeniedError(error, error.exitCode) : null
 }
 
 function errorMessage(error: unknown): string {
@@ -57,7 +137,8 @@ function* installPlanCommands(plan: InstallPlan, logger: Logger): Generator<stri
     yield plan.execCommand
   } catch (error: unknown) {
     const recoveryChain = plan.recoveryChain ?? []
-    if (recoveryChain.length === 0) {
+    // the recovery steps are elevated as well: after a dismissed dialog, they would only show it again
+    if (recoveryChain.length === 0 || error instanceof ElevationDeniedError) {
       throw error
     }
     logger.warn(errorMessage(error))
@@ -113,6 +194,11 @@ export abstract class LinuxUpdater extends BaseUpdater {
     super(options, app)
   }
 
+  // doInstall runs the install plan to its end before it returns, so the install on quit can run from will-quit
+  protected get isQuitCancellable(): boolean {
+    return true
+  }
+
   /**
    * Returns true if the current process is running as root.
    */
@@ -151,7 +237,11 @@ export abstract class LinuxUpdater extends BaseUpdater {
    */
   protected runCommandWithSudoIfNeeded(commandWithArgs: string[], elevation: Elevation): void {
     const { cmd, args, useShell } = this.elevatedCommand(commandWithArgs, elevation)
-    this.spawnSyncLog(cmd, args, {}, useShell)
+    try {
+      this.spawnSyncLog(cmd, args, {}, useShell)
+    } catch (error: unknown) {
+      throw elevationDenial(error, elevation) ?? error
+    }
   }
 
   private installComment(): string {
@@ -181,24 +271,33 @@ export abstract class LinuxUpdater extends BaseUpdater {
     return { kind: this.takesArgv(helper[0]) ? "argv" : "wrapped", helper }
   }
 
+  /** Where {@link resolveTrustedCommand} looks up a command name: {@link TRUSTED_COMMAND_DIRS}. Overridden by tests only. */
+  protected get trustedCommandDirs(): readonly string[] {
+    return TRUSTED_COMMAND_DIRS
+  }
+
   /**
-   * Resolves a relative command name in {@link TRUSTED_COMMAND_DIRS}, for a command passed as argv to an elevation
-   * helper. Throws when it is not found there; the install plan treats that as a failed command.
+   * Resolves a relative command name in {@link trustedCommandDirs}, for a command passed as argv to an elevation
+   * helper: the first executable regular file of that name, which, symlinks followed, lies in a trusted directory as
+   * well. Only a bare name is looked up: one with a `/`, `.` and `..` would reach outside those directories. Throws when
+   * it is not found there; the install plan treats that as a failed command.
    */
   protected resolveTrustedCommand(command: string): string {
     if (path.isAbsolute(command)) {
       return command
     }
-    for (const dir of TRUSTED_COMMAND_DIRS) {
+    const dirs = this.trustedCommandDirs
+    if (command.length === 0 || command === "." || command === ".." || command.includes("/") || command.includes("\0")) {
+      throw new Error(`${JSON.stringify(command)} is not a command name, it cannot be looked up in ${dirs.join(":")}`)
+    }
+    const trustedRealDirs = realDirs(dirs)
+    for (const dir of dirs) {
       const candidate = path.join(dir, command)
-      try {
-        accessSync(candidate, fsConstants.X_OK)
+      if (isTrustedExecutable(candidate, trustedRealDirs)) {
         return candidate
-      } catch {
-        // not in this directory
       }
     }
-    throw new Error(`${command} not found in ${TRUSTED_COMMAND_DIRS.join(":")}`)
+    throw new Error(`${command} not found in ${dirs.join(":")}`)
   }
 
   /**
@@ -228,7 +327,11 @@ export abstract class LinuxUpdater extends BaseUpdater {
   /** {@link runCommandWithSudoIfNeeded} without blocking the main process while the elevation dialog is open. */
   protected async runCommandWithSudoIfNeededAsync(commandWithArgs: string[], elevation: Elevation): Promise<void> {
     const { cmd, args, useShell } = this.elevatedCommand(commandWithArgs, elevation)
-    await this.spawnAsyncLog(cmd, args, {}, useShell)
+    try {
+      await this.spawnAsyncLog(cmd, args, {}, useShell)
+    } catch (error: unknown) {
+      throw elevationDenial(error, elevation) ?? error
+    }
   }
 
   /**
@@ -268,6 +371,8 @@ export abstract class LinuxUpdater extends BaseUpdater {
       const { elevation, plan } = this.prepareInstall()
       runInstallPlan(plan, commandWithArgs => this.runCommandWithSudoIfNeeded(commandWithArgs, elevation), this._logger)
     } catch (error: unknown) {
+      // on quit, an "error" listener that shows the error has no window left to show it in: the updater's own "error"
+      // listener logs it, as for the async install
       this.dispatchError(error instanceof Error ? error : new Error(String(error)))
       return false
     }
