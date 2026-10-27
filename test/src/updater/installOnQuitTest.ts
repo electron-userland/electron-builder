@@ -856,7 +856,7 @@ describe("install on quit", { concurrent: false }, () => {
       expect(stateOf(updater)).toEqual({ kind: "idle" })
 
       const started = (updater as any).beginInstall(true, false)
-      expect(started.options).toEqual({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
+      expect(started.options).toEqual({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false, isAppQuitting: false })
       expect(stateOf(updater)).toEqual({ kind: "installing", updateId: helper.downloadedUpdateId, isQuitDeferred: false })
       expect(stateOf(updater)).toBe(started.install)
 

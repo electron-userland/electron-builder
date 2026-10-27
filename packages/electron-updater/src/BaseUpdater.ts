@@ -209,10 +209,13 @@ export abstract class BaseUpdater extends AppUpdater {
     this._logger.info(`Install on explicit quitAndInstall`)
     // If NOT in silent mode use `autoRunAppAfterInstall` to determine whether to force run the app
     // the install runs asynchronously on targets whose install shows an elevation dialog (see installAsync), so the
-    // app quits once it finished instead of right after this call returns
+    // app quits once it finished instead of right after this call returns. A per-machine NSIS install first waits for
+    // its elevation trampoline (see NsisUpdater), so the quit is deferred until the installer is known to be running —
+    // quitting earlier would cut that wait short.
     void this.runInstallAsync(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall, "quitAndInstall")
       .catch((error: unknown) => {
-        // installAsync reports install failures itself; this is a failure to report one (an "error" listener that throws)
+        // installAsync reports install failures itself, and ends the install (see endInstall) whether or not reporting
+        // one succeeds; this is a failure to report one (an "error" listener that throws)
         nonThrowingLogger(this._logger).error(`Cannot install update: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
         return false
       })
@@ -224,6 +227,9 @@ export abstract class BaseUpdater extends AppUpdater {
             this.app.quit()
           })
         }
+        // `false` needs nothing here: a failed install has already returned to idle, and a call that beginInstall
+        // ignored because an install is in flight (a second quitAndInstall() during the per-machine UAC wait) must not
+        // end that attempt — the on-quit handler would otherwise launch the installer a second time
       })
   }
 
@@ -275,12 +281,16 @@ export abstract class BaseUpdater extends AppUpdater {
     return this.downloadedUpdateHelper == null ? null : this.downloadedUpdateHelper.file
   }
 
-  // must be sync
-  protected abstract doInstall(options: InstallOptions): boolean
+  /**
+   * Launches the installer. Must start the installer synchronously when `options.isAppQuitting` is set (the app `quit`
+   * handler is not async). May return a Promise when the launch has to be awaited before the app quits — the per-machine
+   * NSIS path waits for its UAC elevation trampoline to report whether the installer is running.
+   */
+  protected abstract doInstall(options: InstallOptions): boolean | Promise<boolean>
 
   /**
-   * Installs without blocking the main process. Defaults to the synchronous {@link doInstall}; targets whose
-   * install shows an elevation dialog override it.
+   * {@link doInstall} without blocking the main process. Defaults to {@link doInstall} itself (a Promise it returns is
+   * awaited as-is); targets whose install shows an elevation dialog override it.
    */
   protected doInstallAsync(options: InstallOptions): Promise<boolean> {
     return Promise.resolve(this.doInstall(options))
@@ -289,8 +299,9 @@ export abstract class BaseUpdater extends AppUpdater {
   /**
    * `idle` → `installing`. Refused, returning `null`, while an install runs or once one handed the update off, and when
    * no update finished downloading (an `error` event is emitted then). {@link endInstall} ends the install it begins.
+   * `isAppQuitting` is passed on to {@link doInstall}: the install on quit cannot wait for the installer launch.
    */
-  private beginInstall(isSilent: boolean, isForceRunAfter: boolean): { readonly install: Installing; readonly options: InstallOptions } | null {
+  private beginInstall(isSilent: boolean, isForceRunAfter: boolean, isAppQuitting = false): { readonly install: Installing; readonly options: InstallOptions } | null {
     if (this.installState.kind !== "idle") {
       this._logger.warn("install call ignored: quitAndInstallCalled is set to true")
       return null
@@ -315,6 +326,7 @@ export abstract class BaseUpdater extends AppUpdater {
         isSilent,
         isForceRunAfter,
         isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
+        isAppQuitting,
       },
     }
   }
@@ -358,30 +370,94 @@ export abstract class BaseUpdater extends AppUpdater {
     setImmediate(() => this.app.quit())
   }
 
-  // must be sync (because quit even handler is not async)
+  /**
+   * Launches the downloaded installer. Synchronous (the quit event handler is not async): `true` means the installer
+   * launch was started, `false` means nothing was started (no update downloaded, an install already in flight, or the
+   * launch failed synchronously). A launch whose outcome is only known later — the per-machine NSIS install waits for its
+   * UAC elevation trampoline — reports `true` here; if it then turns out not to have started the installer (e.g. the UAC
+   * prompt was declined, `ERR_UPDATER_ELEVATION_CANCELLED`), the failure is dispatched as an `error` event, like every
+   * other asynchronous failure, the install returns to idle (see {@link endInstall}) and {@link install} may be called again.
+   */
   install(isSilent = false, isForceRunAfter = false): boolean {
-    const started = this.beginInstall(isSilent, isForceRunAfter)
+    return this.isInstallStarted(this.startInstall(isSilent, isForceRunAfter, false))
+  }
+
+  /**
+   * Whether a {@link startInstall} result means that the installer launch was started: a Promise is a launch under way,
+   * whose outcome ends the install by itself (see {@link settleInstall}); a failure to report that outcome (an `error`
+   * listener that throws) is logged here, the way {@link quitAndInstall} logs one, since no caller waits for it.
+   */
+  private isInstallStarted(result: boolean | Promise<boolean>): boolean {
+    if (typeof result === "boolean") {
+      return result
+    }
+    result.catch((error: unknown) => {
+      nonThrowingLogger(this._logger).error(`Cannot install update: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
+    })
+    return true
+  }
+
+  /**
+   * {@link install} with the outcome exposed: a Promise when the launch has to be awaited before the app may quit (see
+   * {@link doInstall}). Used by {@link install} and by the install on quit ({@link installOnQuit}), which has to start
+   * the installer synchronously (`isAppQuitting`). A failed launch is dispatched as an `error` event and reported as
+   * `false`, after which the install returns to idle and may be attempted again (the declined-UAC retry case); like
+   * {@link install}, it throws (or the Promise rejects) only when reporting the failure itself throws.
+   */
+  private startInstall(isSilent: boolean, isForceRunAfter: boolean, isAppQuitting: boolean): boolean | Promise<boolean> {
+    const started = this.beginInstall(isSilent, isForceRunAfter, isAppQuitting)
     if (started == null) {
       return false
     }
 
-    let isInstalled = false
+    let result: boolean | Promise<boolean> = false
     try {
-      isInstalled = this.doInstall(started.options)
-      return isInstalled
+      result = this.doInstall(started.options)
+      if (typeof result !== "boolean") {
+        // the outcome is only known later: the install ends once it is (see settleInstall), not in the finally below
+        return this.settleInstall(started.install, result, "install")
+      }
+      return result
     } catch (e: any) {
       this.dispatchError(e)
       return false
     } finally {
-      this.endInstall(started.install, isInstalled, "install")
+      if (typeof result === "boolean") {
+        this.endInstall(started.install, result, "install")
+      }
     }
+  }
+
+  /**
+   * Ends `install` once the launch `result` of its {@link doInstall} settles: a rejection is dispatched as an `error`
+   * event and treated as "not installed", like a `false` result (e.g. a declined UAC prompt). The install ends even when
+   * reporting the failure throws (an `error` listener that throws), so that it can be retried; only then does it reject.
+   */
+  private settleInstall(install: Installing, result: Promise<boolean>, trigger: InstallTrigger): Promise<boolean> {
+    return result.then(
+      isInstalled => {
+        this.endInstall(install, isInstalled, trigger)
+        return isInstalled
+      },
+      (e: Error) => {
+        try {
+          this.dispatchError(e)
+        } finally {
+          this.endInstall(install, false, trigger)
+        }
+        return false
+      }
+    )
   }
 
   /**
    * Same as {@link install}, without blocking the main process while the install runs. Targets whose install
    * shows an elevation dialog need it: a synchronous spawn freezes the app for as long as the dialog is open,
    * and the desktop reports it as not responding. Targets that do not override {@link doInstallAsync} keep
-   * installing synchronously, so their timing is unchanged.
+   * installing synchronously, so their timing is unchanged. Used by {@link quitAndInstall} and the
+   * install-on-next-launch path, which must not quit before the installer is known to be running. Resolves to whether
+   * the installer was launched; a failure is dispatched as an `error` event and the install returns to idle (see
+   * {@link endInstall}). Rejects only when reporting the failure itself throws (an `error` listener that throws).
    */
   installAsync(isSilent = false, isForceRunAfter = false): Promise<boolean> {
     return this.runInstallAsync(isSilent, isForceRunAfter, "install")
@@ -403,6 +479,7 @@ export abstract class BaseUpdater extends AppUpdater {
       isInstalled = await this.doInstallAsync(started.options)
       return isInstalled
     } catch (e: any) {
+      // thrown before a Promise was returned, or the Promise rejected (e.g. the elevation trampoline could not report)
       this.dispatchError(e)
       return false
     } finally {
@@ -668,9 +745,11 @@ export abstract class BaseUpdater extends AppUpdater {
     const updateId = this.downloadedUpdateId
     let isInstalled = false
     try {
-      isInstalled = this.install(true, false)
+      // the process is exiting: the installer is launched fire-and-forget (isAppQuitting), nothing can wait for a launch
+      // whose outcome is only known later (see doInstall), so one counts as started
+      isInstalled = this.isInstallStarted(this.startInstall(true, false, true))
     } catch (error: unknown) {
-      // install() reports a failed install itself; this is a failure to report it (an "error" listener that throws)
+      // startInstall reports a failed install itself; this is a failure to report it (an "error" listener that throws)
       logger.error(`Cannot install update on quit: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
     }
     if (!isInstalled) {
@@ -904,4 +983,9 @@ export interface InstallOptions {
   readonly isSilent: boolean
   readonly isForceRunAfter: boolean
   readonly isAdminRightsRequired: boolean
+  /**
+   * Set when the install is triggered from the app `quit` handler (`autoInstallEvent: "onQuit"`): the process is
+   * exiting, so the installer has to be launched detached, fire-and-forget, and nothing can wait for the result.
+   */
+  readonly isAppQuitting?: boolean
 }
