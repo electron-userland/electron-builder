@@ -1110,20 +1110,22 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const cachedBlockMapFile = path.join(downloadedUpdateHelper.cacheDir, "current.blockmap")
     const done = async (isSaveCache: boolean) => {
       await downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo, updateFileName, isSaveCache)
-      await taskOptions.done!({
-        ...updateInfo,
-        downloadedFile: updateFile,
-        ...(packageFile == null ? {} : { packageFile }),
-      })
+      // before `taskOptions.done`: it emits `update-downloaded`, and an app that calls quitAndInstall() from that listener exits
+      // before anything after it runs, which would leave the next update without the blockmap of the installed version
       if (await fsExtra.pathExists(pendingBlockMapFile)) {
         await fsExtra.copyFile(pendingBlockMapFile, cachedBlockMapFile)
       } else if (!taskOptions.downloadUpdateOptions.disableDifferentialDownload) {
-        // this download did not produce a blockmap, but `taskOptions.done` above refreshes the cached installer —
+        // this download did not produce a blockmap, but `taskOptions.done` below refreshes the cached installer —
         // remove the cached blockmap too, so a stale one cannot sit next to a fresh file and poison the next
         // differential download with a wrong copy plan (https://github.com/electron-userland/electron-builder/issues/10097).
         // The differential downloader re-fetches the old blockmap from the server when no cached one exists.
         await fsExtra.remove(cachedBlockMapFile)
       }
+      await taskOptions.done!({
+        ...updateInfo,
+        downloadedFile: updateFile,
+        ...(packageFile == null ? {} : { packageFile }),
+      })
       return withLegacyArrayCompat(packageFile == null ? { updateFile } : { updateFile, packageFile }, this._logger)
     }
 
@@ -1332,9 +1334,28 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
           )
           return true
         }
+        if (oldBlockMapUrl.href === newBlockMapUrl.href) {
+          // The old URL is the new one with the new version replaced by the installed one: an artifact name without the version (e.g.
+          // "${productName} Setup.${ext}") gives both releases the same URL, which serves the new blockmap. Planned against it, the
+          // download copies the installed installer unchanged and fails the sha512 check. The new blockmap downloaded above is cached
+          // with the update, so the next update can be differential.
+          this._logger.info(
+            `No cached blockmap for the old installer, and the URL of the installed version's blockmap is the update's own ("${newBlockMapUrl}") because the ` +
+              "artifact name has no version: downloading the full update (add ${version} to the artifact name, or set previousBlockmapBaseUrlOverride, " +
+              "to make the first update after an install differential)"
+          )
+          return true
+        }
         this._logger.info(`No cached blockmap for the old installer, downloading it from "${oldBlockMapUrl}"`)
         // the old blockmap comes from previousBlockmapBaseUrlOverride when the app sets it, so that origin gets the credentials
         oldBlockMapData = await downloadBlockMap(oldBlockMapUrl, override ? new URL(override) : undefined)
+        if (!(await isBlockMapOfFile(oldBlockMapData, downloadOptions.oldFile))) {
+          // e.g. a server that serves another release's blockmap under the derived name: planned against it, the download fails the sha512 check
+          this._logger.info(
+            `The blockmap downloaded from "${oldBlockMapUrl}" does not describe the cached "${oldInstallerFileName}" (malformed, or its blocks do not end at the file size): downloading the full update`
+          )
+          return true
+        }
       }
 
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)

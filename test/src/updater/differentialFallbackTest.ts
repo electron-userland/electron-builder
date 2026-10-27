@@ -528,7 +528,18 @@ describe("differential download failures fall back to a verified full download, 
     test("cached old installer missing", ({ tmpDir }) => expectFallback(tmpDir, () => false, { cacheOldInstaller: null }, false))
     test("cached old installer out of sync with the old blockmap", ({ tmpDir }) =>
       expectFallback(tmpDir, () => false, { cacheOldInstaller: Buffer.concat([blocks.Y, blocks.Y, blocks.Y, blocks.Y]) }))
-    test("cached old installer shorter than the blockmap says", ({ tmpDir }) => expectFallback(tmpDir, () => false, { cacheOldInstaller: blocks.A }))
+    test("cached old installer shorter than the blockmap says", async ({ tmpDir }) => {
+      // caught before any range request: the downloaded old blockmap does not end at the cached installer's size
+      const url = await startServer()
+      const { updater, logs } = await createUpdater(tmpDir, url, { cacheOldInstaller: blocks.A })
+      await updater.checkForUpdates()
+      const { updateFile } = await updater.downloadUpdate()
+      expect((await fsExtra.readFile(updateFile)).equals(NEW)).toBe(true)
+      expect(fullDownloads()).toHaveLength(1)
+      expect(rangeRequests()).toEqual([])
+      expect(logs.some(it => it.startsWith("info: The blockmap downloaded from") && it.endsWith("downloading the full update"))).toBe(true)
+      expect(logs.filter(it => it.startsWith("error:"))).toEqual([])
+    })
   })
 
   // f. synchronous throws in callbacks: an app's download-progress listener that throws runs inside a stream callback or a
