@@ -685,9 +685,18 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       expect(vi.mocked(spawnSync)).toHaveBeenCalledWith(process.execPath, ["-e", script, "a b", "$HOME", "'q'"], expect.objectContaining({ shell: false }))
     })
 
-    it("fails when the command is killed by a signal", () => {
+    // Windows has no signals: there, a process "killing itself with SIGTERM" is terminated with exit code 1
+    it.skipIf(process.platform === "win32")("fails when the command is killed by a signal", () => {
       const realUpdater = createRealUpdater()
       expect(() => (realUpdater as any).spawnSyncLog(process.execPath, ["-e", "process.kill(process.pid, 'SIGTERM')"], {}, false)).toThrow(/exited with code null, signal SIGTERM$/)
+    })
+
+    // what spawnSync returns for a command killed by a signal, so that the check also runs where signals do not exist
+    it("fails when spawnSync reports no exit code and a signal", () => {
+      const realUpdater = createRealUpdater()
+      vi.mocked(spawnSync).mockReturnValueOnce({ pid: 1, output: [], stdout: "", stderr: "", status: null, signal: "SIGTERM" })
+      expect(() => (realUpdater as any).spawnSyncLog("pkexec", ["dpkg", "-i", "/tmp/u.deb"], {}, false)).toThrow(/^Command pkexec exited with code null, signal SIGTERM$/)
+      expect(vi.mocked(spawnSync)).toHaveBeenCalledTimes(1)
     })
   })
 
