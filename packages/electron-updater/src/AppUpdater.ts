@@ -394,9 +394,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   private _log: NonThrowableLogger = nonThrowingLogger(console)
 
   /**
-   * The current logger wrapped so that it never throws and always has `debug`: all updater logging goes through it,
-   * so a throwing logger cannot interrupt the update logic.
-   * @internal
+   * The app's logger (see {@link logger}) wrapped so that logging never throws and `debug` is always present.
+   * Use this, not `logger`, for logging inside updater code (including subclasses), so a throwing logger cannot interrupt the update logic.
    */
   protected get log(): NonThrowableLogger {
     return this._log
