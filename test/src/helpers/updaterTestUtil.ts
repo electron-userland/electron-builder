@@ -341,7 +341,7 @@ export class FakeElectronHttpExecutor extends ElectronHttpExecutor {
   }
 }
 
-export function makeLogger(): NonThrowableLogger & { infos: string[]; warns: string[], errors: string[] }  {
+export function makeLogger(): NonThrowableLogger & { infos: string[]; warns: string[]; errors: string[] } {
   const infos: string[] = []
   const warns: string[] = []
   const errors: string[] = []
@@ -349,7 +349,7 @@ export function makeLogger(): NonThrowableLogger & { infos: string[]; warns: str
     info: (msg: string) => infos.push(msg),
     warn: (msg: string) => warns.push(msg),
     error: (msg: string) => errors.push(msg),
-    debug: () => { },
+    debug: () => {},
     infos,
     warns,
     errors,

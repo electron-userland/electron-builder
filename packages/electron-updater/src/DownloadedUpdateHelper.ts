@@ -34,7 +34,10 @@ export class DownloadedUpdateHelper {
   private fileInfo: ResolvedUpdateFileInfo | null = null
   private _downloadedUpdateId: string | null = null
 
-  constructor(readonly cacheDir: string, private readonly logger: NonThrowableLogger) {}
+  constructor(
+    readonly cacheDir: string,
+    private readonly logger: NonThrowableLogger
+  ) {}
 
   private _downloadedFileInfo: CachedUpdateInfo | null = null
   get downloadedFileInfo(): CachedUpdateInfo | null {
