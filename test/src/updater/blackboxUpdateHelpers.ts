@@ -292,6 +292,8 @@ export const isDifferentialAfterFirstUpdate = (target: string) => target === "Ap
 export const DIFFERENTIAL_PLAN_MARKER = /\[updater\] Full: [^\n]+, To download: [^\n]+ \(\d+%\)/
 /** Logged by AppUpdater.logDifferentialDownloadFallback before a differential failure turns into a full download. */
 export const DIFFERENTIAL_FALLBACK_MARKER = "Cannot download differentially, fallback to full download"
+/** Logged instead of a differential attempt when no block map of the installed version is cached and its URL is the update's own. */
+export const UNVERSIONED_OLD_BLOCK_MAP_MARKER = "because the artifact name has no version: downloading the full update"
 
 /**
  * The update launch took the differential path and completed it: a silent fallback to a full download installs the update all the
@@ -1321,7 +1323,13 @@ export async function runCrossVersionUpdateTest(context: TestContext, target: st
         fromVersion: NEW_VERSION_NUMBER,
         toVersion: THIRD_VERSION_NUMBER,
         assertLaunch: stdout => {
-          if (isDifferentialAfterFirstUpdate(target)) {
+          if (isBinaryBlockMap && !isDifferentialOnFirstHop(target)) {
+            // electron-updater 6 cached no block map for the version it installed (it cannot read the binary one), and the test app's
+            // artifact name has no version, so the installed version's map cannot be fetched either: a full download, without a failed
+            // differential attempt. The map of this update is cached, so the next one is differential again.
+            expect(stdout).not.toContain(DIFFERENTIAL_FALLBACK_MARKER)
+            expect(stdout).toContain(UNVERSIONED_OLD_BLOCK_MAP_MARKER)
+          } else if (isDifferentialAfterFirstUpdate(target)) {
             assertDifferentialDownload(expect, stdout)
           }
         },
