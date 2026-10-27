@@ -596,7 +596,7 @@ describe("install on quit", { concurrent: false }, () => {
 
       const installed = updater.installPendingUpdateIfAvailable()
       // validating the cached installer takes a few file reads
-      await vi.waitFor(() => expect((updater as any).isInstallInFlight).toBe(true))
+      await vi.waitFor(() => expect((updater as any).inFlightInstall).not.toBeNull())
       expect(app.quitApp()).toBe(false)
 
       finish(true)

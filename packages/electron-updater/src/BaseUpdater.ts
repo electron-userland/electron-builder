@@ -121,16 +121,30 @@ class StderrCapture {
   }
 }
 
+/** An app lifecycle event the updater listens to, see {@link BaseUpdater.registerHookOnce}. */
+type LifecycleHook = "quit" | "willQuit" | "sessionEnd"
+
+/** Why the quit handler does not install the downloaded update, and how loudly it says so. */
+interface InstallOnQuitSkip {
+  readonly level: "info" | "warn"
+  readonly message: string
+}
+
+/** An install {@link BaseUpdater.runInstallAsync} waits for. */
+interface InFlightInstall {
+  /** The update it installs, should the download helper move on to another one meanwhile. */
+  readonly sha512: string | null
+  /** A quit was cancelled to let it finish: the app quits once it settled. */
+  isQuitDeferred: boolean
+}
+
 export abstract class BaseUpdater extends AppUpdater {
   protected quitAndInstallCalled = false
-  private quitHandlerAdded = false
-  private sessionEndHandlerAdded = false
+  /** The app lifecycle events whose handler is registered: each one is registered once. */
+  private readonly registeredHooks = new Set<LifecycleHook>()
   private isSessionEnding = false
-  private willQuitHandlerAdded = false
-  /** Set while {@link runInstallAsync} waits for the install. */
-  private isInstallInFlight = false
-  /** A quit was cancelled to let the running install finish: the app quits once it settled. */
-  private isQuitDeferredUntilInstalled = false
+  /** The install {@link runInstallAsync} waits for, `null` when none runs. */
+  private inFlightInstall: InFlightInstall | null = null
   /**
    * The sha512 of the downloaded update whose install failed while the app was quitting: no later quit in this session
    * tries to install that update on quit again. A different update downloaded later is installed on quit.
@@ -304,11 +318,10 @@ export abstract class BaseUpdater extends AppUpdater {
       return false
     }
 
-    // the update this install is for, should the download helper move on to another one meanwhile
-    const sha512 = this.downloadedUpdateSha512
     this.addWillQuitHandler()
+    const install: InFlightInstall = { sha512: this.downloadedUpdateSha512, isQuitDeferred: false }
     let isInstalled = false
-    this.isInstallInFlight = true
+    this.inFlightInstall = install
     try {
       isInstalled = await this.doInstallAsync(options)
       return isInstalled
@@ -316,23 +329,22 @@ export abstract class BaseUpdater extends AppUpdater {
       this.dispatchError(e)
       return false
     } finally {
-      this.isInstallInFlight = false
-      this.quitIfDeferred(isInstalled, isQuitOnSuccess, sha512)
+      this.inFlightInstall = null
+      this.quitIfDeferred(install, isInstalled, isQuitOnSuccess)
     }
   }
 
-  private quitIfDeferred(isInstalled: boolean, isQuitOnSuccess: boolean, sha512: string | null): void {
-    if (!this.isQuitDeferredUntilInstalled) {
+  private quitIfDeferred(install: InFlightInstall, isInstalled: boolean, isQuitOnSuccess: boolean): void {
+    if (!install.isQuitDeferred) {
       return
     }
-    this.isQuitDeferredUntilInstalled = false
     if (isInstalled && isQuitOnSuccess) {
       // quitAndInstall and the install on launch quit once the install succeeded
       return
     }
     if (!isInstalled) {
       // the user cancelled the authentication dialog, for example: quitting must not show it again for this update
-      this.failedInstallOnQuitSha512 = sha512
+      this.failedInstallOnQuitSha512 = install.sha512
     }
     nonThrowingLogger(this._logger).info("The update install finished, quitting")
     setImmediate(() => this.app.quit())
@@ -493,72 +505,104 @@ export abstract class BaseUpdater extends AppUpdater {
    */
   protected addQuitHandler(): void {
     this.addSessionEndHandler()
-    if (this.quitHandlerAdded) {
-      return
-    }
-
-    this.quitHandlerAdded = true
-    this.addWillQuitHandler()
-
-    this.app.onQuit(exitCode => {
-      // it runs after a failed install on quit too, when the quit proceeds: logging must not throw
-      const logger = nonThrowingLogger(this._logger)
-      if (this.quitAndInstallCalled) {
-        logger.info("Update installer has already been triggered. Quitting application.")
-        return
-      }
-
-      if (this.isDownloadInProgress) {
-        logger.info("No update is installed on quit: the update has not finished downloading and verifying")
-        return
-      }
-
-      if (this.installerPath == null) {
-        logger.info("No update is installed on quit: no update has finished downloading")
-        return
-      }
-
-      if (exitCode !== 0) {
-        logger.info(`Update will be not installed on quit because application is quitting with exit code ${exitCode}`)
-        return
-      }
-
-      if (this.autoInstallEvent === "onNextLaunch") {
-        logger.info("Deferring update install to next launch because autoInstallEvent is 'onNextLaunch'")
-        this.markPendingInstallOnNextLaunch()
-        return
-      }
-
-      // autoInstallEvent may have been changed to "manual" after the quit handler was registered
-      if (this.autoInstallEvent !== "onQuit") {
-        logger.info("Update will not be installed on quit because autoInstallEvent is not 'onQuit'.")
-        return
-      }
-
-      if (this.isSessionEnding) {
-        logger.warn(
-          "Update will not be installed on quit because the OS session is ending — the OS would kill the installer before it finishes and can leave the app in a broken state (https://github.com/electron-userland/electron-builder/issues/7807). The downloaded update stays cached and will be installed on the next quit. Set autoInstallEvent to 'onNextLaunch' (planned default in v28) to install it on the next launch instead."
-        )
-        return
-      }
-
-      if (this.isDownloadedUpdateFailedOnQuit) {
-        logger.info("Update will not be installed on quit because installing it failed earlier in this session")
-        return
-      }
-
-      logger.info("Auto install update on quit")
-      this.install(true, false)
+    this.registerHookOnce("quit", () => {
+      this.addWillQuitHandler()
+      this.app.onQuit(exitCode => this.handleQuit(exitCode))
+      return true
     })
   }
 
-  private addWillQuitHandler(): void {
-    if (this.willQuitHandlerAdded || !this.isQuitCancellable || this.app.onWillQuit == null) {
+  /**
+   * Registers the handler of `hook` unless it is registered already. `register` returns whether it registered it: when
+   * it could not (the app adapter or the target does not support it), a later call tries again.
+   */
+  private registerHookOnce(hook: LifecycleHook, register: () => boolean): void {
+    if (this.registeredHooks.has(hook)) {
+      return
+    }
+    this.registeredHooks.add(hook)
+    if (!register()) {
+      this.registeredHooks.delete(hook)
+    }
+  }
+
+  /**
+   * Why the quit handler has nothing to install: an install was triggered already, or no update finished downloading.
+   * Checked before the exit code, see {@link handleQuit}.
+   */
+  private get installOnQuitUnavailableReason(): InstallOnQuitSkip | null {
+    if (this.quitAndInstallCalled) {
+      return { level: "info", message: "Update installer has already been triggered. Quitting application." }
+    }
+    if (this.isDownloadInProgress) {
+      return { level: "info", message: "No update is installed on quit: the update has not finished downloading and verifying" }
+    }
+    if (this.installerPath == null) {
+      return { level: "info", message: "No update is installed on quit: no update has finished downloading" }
+    }
+    return null
+  }
+
+  /**
+   * Why the downloaded update is not installed on quit although there is one: it is not to be, or not now. Checked after
+   * the exit code and the `"onNextLaunch"` deferral, see {@link handleQuit}.
+   */
+  private get installOnQuitSkipReason(): InstallOnQuitSkip | null {
+    // autoInstallEvent may have been changed to "manual" after the quit handler was registered
+    if (this.autoInstallEvent !== "onQuit") {
+      return { level: "info", message: "Update will not be installed on quit because autoInstallEvent is not 'onQuit'." }
+    }
+    if (this.isSessionEnding) {
+      return {
+        level: "warn",
+        message:
+          "Update will not be installed on quit because the OS session is ending — the OS would kill the installer before it finishes and can leave the app in a broken state (https://github.com/electron-userland/electron-builder/issues/7807). The downloaded update stays cached and will be installed on the next quit. Set autoInstallEvent to 'onNextLaunch' (planned default in v28) to install it on the next launch instead.",
+      }
+    }
+    if (this.isDownloadedUpdateFailedOnQuit) {
+      return { level: "info", message: "Update will not be installed on quit because installing it failed earlier in this session" }
+    }
+    return null
+  }
+
+  private handleQuit(exitCode: number): void {
+    // it runs after a failed install on quit too, when the quit proceeds: logging must not throw
+    const logger = nonThrowingLogger(this._logger)
+    const unavailableReason = this.installOnQuitUnavailableReason
+    if (unavailableReason != null) {
+      logger[unavailableReason.level](unavailableReason.message)
       return
     }
 
-    this.willQuitHandlerAdded = true
-    this.app.onWillQuit(event => this.handleWillQuit(event))
+    if (exitCode !== 0) {
+      logger.info(`Update will be not installed on quit because application is quitting with exit code ${exitCode}`)
+      return
+    }
+
+    if (this.autoInstallEvent === "onNextLaunch") {
+      logger.info("Deferring update install to next launch because autoInstallEvent is 'onNextLaunch'")
+      this.markPendingInstallOnNextLaunch()
+      return
+    }
+
+    const skipReason = this.installOnQuitSkipReason
+    if (skipReason != null) {
+      logger[skipReason.level](skipReason.message)
+      return
+    }
+
+    logger.info("Auto install update on quit")
+    this.install(true, false)
+  }
+
+  private addWillQuitHandler(): void {
+    this.registerHookOnce("willQuit", () => {
+      if (!this.isQuitCancellable || this.app.onWillQuit == null) {
+        return false
+      }
+      this.app.onWillQuit(event => this.handleWillQuit(event))
+      return true
+    })
   }
 
   /** The sha512 of the downloaded update, which tells one update from another. */
@@ -575,13 +619,8 @@ export abstract class BaseUpdater extends AppUpdater {
   /** Whether the quit handler would install the downloaded update now; it logs why not, when not. */
   private get isInstallOnQuitDue(): boolean {
     return (
-      this.quitHandlerAdded &&
-      !this.quitAndInstallCalled &&
-      !this.isDownloadedUpdateFailedOnQuit &&
-      !this.isSessionEnding &&
-      !this.isDownloadInProgress &&
-      this.installerPath != null &&
-      this.autoInstallEvent === "onQuit"
+      // the quit handler is registered once a download started in this session
+      this.registeredHooks.has("quit") && this.installOnQuitUnavailableReason == null && this.installOnQuitSkipReason == null
     )
   }
 
@@ -609,16 +648,17 @@ export abstract class BaseUpdater extends AppUpdater {
 
     // a custom app adapter may not tell: then the quit is taken as not cancelled
     if (event.defaultPrevented === true) {
-      if (this.isInstallInFlight || this.isInstallOnQuitDue) {
+      if (this.inFlightInstall != null || this.isInstallOnQuitDue) {
         logger.info("The quit was cancelled by another will-quit listener: the update is installed on a quit that proceeds")
       }
       return
     }
 
-    if (this.isInstallInFlight) {
+    const inFlightInstall = this.inFlightInstall
+    if (inFlightInstall != null) {
       event.preventDefault()
-      if (!this.isQuitDeferredUntilInstalled) {
-        this.isQuitDeferredUntilInstalled = true
+      if (!inFlightInstall.isQuitDeferred) {
+        inFlightInstall.isQuitDeferred = true
         logger.info("Waiting for the update install to finish before quitting")
       }
       return
@@ -659,15 +699,15 @@ export abstract class BaseUpdater extends AppUpdater {
   }
 
   private addSessionEndHandler(): void {
-    if (this.sessionEndHandlerAdded || this.app.onSessionEnd == null) {
-      return
-    }
-
-    this.sessionEndHandlerAdded = true
-
-    this.app.onSessionEnd(() => {
-      this.isSessionEnding = true
-      this._logger.info("OS session is ending (shutdown/reboot/log off), install of the downloaded update on quit will be skipped")
+    this.registerHookOnce("sessionEnd", () => {
+      if (this.app.onSessionEnd == null) {
+        return false
+      }
+      this.app.onSessionEnd(() => {
+        this.isSessionEnding = true
+        this._logger.info("OS session is ending (shutdown/reboot/log off), install of the downloaded update on quit will be skipped")
+      })
+      return true
     })
   }
 
