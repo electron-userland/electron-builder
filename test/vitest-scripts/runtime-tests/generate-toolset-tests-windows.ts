@@ -24,12 +24,14 @@ import {
   resolveImportPath,
   TEST_SRC_DIR,
 } from "./generate-toolset-tests-shared.js"
-import { latestToolsetVersion, NSIS_VERSIONS, WINE_VERSIONS, WIN_CODE_SIGN_VERSIONS } from "./generate-toolset-versions.js"
+import { latestToolsetVersion, NSIS_VERSIONS, WINE_VERSIONS, WIN_CODE_SIGN_VERSIONS, WIX_VERSIONS } from "./generate-toolset-versions.js"
 
 interface WindowsSuiteConfig extends SuiteConfig {
   readonly winCodeSignVersions?: ToolsetConfig["winCodeSign"][]
   readonly nsisVersions?: ToolsetConfig["nsis"][]
   readonly wineVersions?: ToolsetConfig["wine"][]
+  /** One generated file per WiX bundle, on top of the other dimensions; unset leaves `toolsets.wix` unset. */
+  readonly wixVersions?: ToolsetConfig["wix"][]
 }
 
 /** The newest version of a toolset version list as a one-element list, e.g. for a suite that is built with the newest toolset only. */
@@ -91,9 +93,10 @@ const SUITES: WindowsSuiteConfig[] = [
     importPath: "windows/msiTestSuite",
     describeConfig: { name: "msi", chain: ["ifWindows"] },
     describeOptions: { concurrent: false },
-    // MSI does not vary by winCodeSign or WiX version — a single test file suffices.
+    // MSI does not vary by winCodeSign version — one file per WiX bundle suffices.
     // winCodeSignVersions: [] triggers the single-file path in the generator.
     winCodeSignVersions: [],
+    wixVersions: WIX_VERSIONS,
   },
   {
     name: "msiWrapped",
@@ -104,6 +107,20 @@ const SUITES: WindowsSuiteConfig[] = [
     describeOptions: { concurrent: false },
     nsisVersions: NSIS_VERSIONS,
     wineVersions: WINE_VERSIONS,
+  },
+  {
+    // the wrapper MSI with the legacy WiX bundle, once, on the newest NSIS and winCodeSign (the msiWrapped suite above leaves toolsets.wix
+    // unset, which is WiX 3)
+    name: "msiWrappedLegacyWix",
+    e2e: true,
+    registerFn: namedFn("registerMsiWrappedTests" satisfies keyof typeof _MsiWrappedSuite),
+    importPath: "windows/msiWrappedTestSuite",
+    describeConfig: { name: "msiWrapped", chain: ["ifWindows"] },
+    describeOptions: { concurrent: false },
+    winCodeSignVersions: newestVersion(WIN_CODE_SIGN_VERSIONS),
+    nsisVersions: newestVersion(NSIS_VERSIONS),
+    wineVersions: WINE_VERSIONS,
+    wixVersions: ["0.0.0"],
   },
   {
     name: "squirrelWindows",
@@ -170,11 +187,13 @@ function renderFile({
   winCodeSign,
   nsis,
   wine,
+  wix,
 }: {
   suite: WindowsSuiteConfig
   winCodeSign: ToolsetConfig["winCodeSign"] | undefined
   nsis?: ToolsetConfig["nsis"]
   wine?: ToolsetConfig["wine"]
+  wix?: ToolsetConfig["wix"]
 }): string {
   const fnName = suite.registerFn.name
   const toolsets: Record<string, unknown> = {}
@@ -186,6 +205,9 @@ function renderFile({
   }
   if (wine !== undefined) {
     toolsets.wine = wine
+  }
+  if (wix !== undefined) {
+    toolsets.wix = wix
   }
   const toolsetsArg = JSON.stringify(toolsets)
   const describeCall = buildDescribeCall(suite.describeConfig.chain)
@@ -216,28 +238,29 @@ export function generateWindowsToolsetTests(): void {
     const wcsVersions = suite.winCodeSignVersions ?? WIN_CODE_SIGN_VERSIONS
     const nsisVersions = suite.nsisVersions
     const wineVersions = suite.wineVersions
-    if (nsisVersions) {
-      for (const nsis of nsisVersions) {
-        for (const wcs of wcsVersions) {
-          if (wineVersions) {
-            for (const wine of wineVersions) {
-              const filename = `${suite.name}__wcs-${wcs}__nsis-${nsis}__wine-${wine}${platformSuffix}${fileSuffix}`
-              fs.writeFileSync(path.join(generatedDir, filename), renderFile({ suite, winCodeSign: wcs, nsis, wine }), "utf8")
+    for (const wix of suite.wixVersions ?? [undefined]) {
+      const wixPart = wix === undefined ? "" : `__wix-${String(wix)}`
+      const write = (name: string, toolsets: Omit<Parameters<typeof renderFile>[0], "suite" | "wix">) =>
+        fs.writeFileSync(path.join(generatedDir, `${name}${wixPart}${platformSuffix}${fileSuffix}`), renderFile({ suite, wix, ...toolsets }), "utf8")
+      if (nsisVersions) {
+        for (const nsis of nsisVersions) {
+          for (const wcs of wcsVersions) {
+            if (wineVersions) {
+              for (const wine of wineVersions) {
+                write(`${suite.name}__wcs-${wcs}__nsis-${nsis}__wine-${wine}`, { winCodeSign: wcs, nsis, wine })
+              }
+            } else {
+              write(`${suite.name}__wcs-${wcs}__nsis-${nsis}`, { winCodeSign: wcs, nsis })
             }
-          } else {
-            const filename = `${suite.name}__wcs-${wcs}__nsis-${nsis}${platformSuffix}${fileSuffix}`
-            fs.writeFileSync(path.join(generatedDir, filename), renderFile({ suite, winCodeSign: wcs, nsis }), "utf8")
           }
         }
-      }
-    } else if (wcsVersions.length === 0) {
-      // No version dimensions — generate a single file with empty toolsets (e.g. msi suite)
-      const filename = `${suite.name}${platformSuffix}${fileSuffix}`
-      fs.writeFileSync(path.join(generatedDir, filename), renderFile({ suite, winCodeSign: undefined }), "utf8")
-    } else {
-      for (const wcs of wcsVersions) {
-        const filename = `${suite.name}__wcs-${wcs}${platformSuffix}${fileSuffix}`
-        fs.writeFileSync(path.join(generatedDir, filename), renderFile({ suite, winCodeSign: wcs }), "utf8")
+      } else if (wcsVersions.length === 0) {
+        // No winCodeSign/NSIS dimensions — a single file per WiX version (or one with empty toolsets), e.g. the msi suite
+        write(suite.name, { winCodeSign: undefined })
+      } else {
+        for (const wcs of wcsVersions) {
+          write(`${suite.name}__wcs-${wcs}`, { winCodeSign: wcs })
+        }
       }
     }
   }

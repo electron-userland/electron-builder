@@ -1,20 +1,117 @@
 import { createRequire } from "node:module"
 import { AllPublishOptions, newError } from "builder-util-runtime"
 import { spawn, SpawnOptions, spawnSync, StdioOptions } from "child_process"
+import { mkdtemp, open, rm } from "fs/promises"
+import type { FileHandle } from "fs/promises"
+import { tmpdir } from "os"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion } from "semver"
 import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask, UpdateInfoAndProvider } from "./AppUpdater.js"
-import type { VerifyUpdateFileResult } from "./types.js"
+import type { Logger, VerifyUpdateFileResult } from "./types.js"
 import { QuitAndInstallOptions, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
+import { nonThrowingLogger } from "./util.js"
 
 const require = createRequire(import.meta.url)
+
+/** How much of a failed command's stderr goes into the error message, at most: its end, where the error is. */
+const STDERR_MESSAGE_BYTES = 8 * 1024
+
+/**
+ * The command line a shell runs for `cmd` and `args`. Given `shell: true` and an argv array, Node joins them with spaces
+ * and warns (DEP0190) that nothing is escaped; passing the joined line itself runs exactly the same command, without the
+ * warning. The escaping is the caller's, as before.
+ */
+function shellCommandLine(cmd: string, args: readonly string[]): string {
+  return [cmd, ...args].join(" ")
+}
+
+async function removeQuietly(file: string): Promise<void> {
+  try {
+    await rm(file, { recursive: true, force: true })
+  } catch (_ignored) {
+    // a temp file left behind must not change how the install ends
+  }
+}
+
+/**
+ * A command's stderr, written to a temp file rather than piped. A pipe ties the command to this process: when the app
+ * quits while the command still runs, its next write to stderr kills it with SIGPIPE (or fails with EPIPE), half way
+ * through an install. A file stays writable.
+ *
+ * The file is removed as soon as it is open: the descriptor keeps it readable here and writable for the command, and
+ * nothing is left behind if the app quits before the command exits. {@link dispose} removes it on every other path.
+ */
+class StderrCapture {
+  private constructor(
+    private readonly dir: string,
+    private readonly handle: FileHandle
+  ) {}
+
+  get fd(): number {
+    return this.handle.fd
+  }
+
+  /** Never throws: resolves to `null` when no temp file can be created, and the command's stderr is then discarded. */
+  static async open(parentDir: string, logger: Logger): Promise<StderrCapture | null> {
+    let dir: string | null = null
+    try {
+      dir = await mkdtemp(path.join(parentDir, "electron-updater-stderr-"))
+      const handle = await open(path.join(dir, "stderr.log"), "w+", 0o600)
+      // on Windows an open file may not be removable yet; dispose() tries again
+      await removeQuietly(dir)
+      return new StderrCapture(dir, handle)
+    } catch (error: unknown) {
+      if (dir != null) {
+        await removeQuietly(dir)
+      }
+      logger.warn(`Cannot capture the command's stderr, it is discarded: ${error instanceof Error ? error.message : String(error)}`)
+      return null
+    }
+  }
+
+  /** The last {@link STDERR_MESSAGE_BYTES} the command wrote, trimmed. Never throws: resolves to "" when it cannot be read. */
+  async read(): Promise<string> {
+    try {
+      const { size } = await this.handle.stat()
+      const length = Math.min(size, STDERR_MESSAGE_BYTES)
+      const buffer = Buffer.alloc(length)
+      const { bytesRead } = await this.handle.read(buffer, 0, length, size - length)
+      let start = 0
+      if (length < size) {
+        // the cut can fall inside a multi-byte character: skip its continuation bytes
+        while (start < bytesRead && (buffer[start] & 0xc0) === 0x80) {
+          start++
+        }
+      }
+      const text = buffer.toString("utf8", start, bytesRead).trim()
+      return length < size && text.length !== 0 ? `…${text}` : text
+    } catch (_ignored) {
+      return ""
+    }
+  }
+
+  /** Never throws. */
+  async dispose(): Promise<void> {
+    try {
+      await this.handle.close()
+    } catch (_ignored) {
+      // already closed, nothing else to release
+    }
+    await removeQuietly(this.dir)
+  }
+}
 
 export abstract class BaseUpdater extends AppUpdater {
   protected quitAndInstallCalled = false
   private quitHandlerAdded = false
   private sessionEndHandlerAdded = false
   private isSessionEnding = false
+  /**
+   * Set while {@link executeDownload} runs. The downloaded update helper can already point at an installer then, e.g. one
+   * cached by an earlier launch that the app's `verifyUpdateFile` has not accepted yet, so the quit handler must not install it.
+   */
+  private isDownloadInProgress = false
 
   protected constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
@@ -38,16 +135,25 @@ export abstract class BaseUpdater extends AppUpdater {
     }
     this._logger.info(`Install on explicit quitAndInstall`)
     // If NOT in silent mode use `autoRunAppAfterInstall` to determine whether to force run the app
-    const isInstalled = this.install(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall)
-    if (isInstalled) {
-      setImmediate(() => {
-        // this event is normally emitted when calling quitAndInstall, this emulates that
-        require("electron").autoUpdater.emit("before-quit-for-update")
-        this.app.quit()
+    // the install runs asynchronously on targets whose install shows an elevation dialog (see installAsync), so the
+    // app quits once it finished instead of right after this call returns
+    void this.installAsync(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall)
+      .catch((error: unknown) => {
+        // installAsync reports install failures itself; this is a failure to report one (an "error" listener that throws)
+        nonThrowingLogger(this._logger).error(`Cannot install update: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
+        return false
       })
-    } else {
-      this.quitAndInstallCalled = false
-    }
+      .then(isInstalled => {
+        if (isInstalled) {
+          setImmediate(() => {
+            // this event is normally emitted when calling quitAndInstall, this emulates that
+            require("electron").autoUpdater.emit("before-quit-for-update")
+            this.app.quit()
+          })
+        } else {
+          this.quitAndInstallCalled = false
+        }
+      })
   }
 
   installPendingUpdateIfAvailable(): Promise<boolean> {
@@ -64,14 +170,23 @@ export abstract class BaseUpdater extends AppUpdater {
   }
 
   protected executeDownload(taskOptions: DownloadExecutorTask): Promise<DownloadExecutorResult> {
-    return super.executeDownload({
-      ...taskOptions,
-      done: event => {
-        this.dispatchUpdateDownloaded(event)
-        this.addQuitHandler()
-        return Promise.resolve()
-      },
-    })
+    // registered when the download starts, not when it ends: an app quitting before then is told why nothing is installed
+    this.addQuitHandler()
+    this.isDownloadInProgress = true
+    return super
+      .executeDownload({
+        ...taskOptions,
+        done: event => {
+          // the update is downloaded and verified: from now on, quitting installs it
+          this.isDownloadInProgress = false
+          this.dispatchUpdateDownloaded(event)
+          this.addQuitHandler()
+          return Promise.resolve()
+        },
+      })
+      .finally(() => {
+        this.isDownloadInProgress = false
+      })
   }
 
   protected get installerPath(): string | null {
@@ -81,11 +196,18 @@ export abstract class BaseUpdater extends AppUpdater {
   // must be sync
   protected abstract doInstall(options: InstallOptions): boolean
 
-  // must be sync (because quit even handler is not async)
-  install(isSilent = false, isForceRunAfter = false): boolean {
+  /**
+   * Installs without blocking the main process. Defaults to the synchronous {@link doInstall}; targets whose
+   * install shows an elevation dialog override it.
+   */
+  protected doInstallAsync(options: InstallOptions): Promise<boolean> {
+    return Promise.resolve(this.doInstall(options))
+  }
+
+  private beginInstall(isSilent: boolean, isForceRunAfter: boolean): InstallOptions | null {
     if (this.quitAndInstallCalled) {
       this._logger.warn("install call ignored: quitAndInstallCalled is set to true")
-      return false
+      return null
     }
 
     const downloadedUpdateHelper = this.downloadedUpdateHelper
@@ -93,19 +215,49 @@ export abstract class BaseUpdater extends AppUpdater {
     const downloadedFileInfo = downloadedUpdateHelper == null ? null : downloadedUpdateHelper.downloadedFileInfo
     if (installerPath == null || downloadedFileInfo == null) {
       this.dispatchError(new Error("No update filepath provided, can't quit and install"))
-      return false
+      return null
     }
 
     // prevent calling several times
     this.quitAndInstallCalled = true
 
+    this._logger.info(`Install: isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter}`)
+    return {
+      isSilent,
+      isForceRunAfter,
+      isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
+    }
+  }
+
+  // must be sync (because quit even handler is not async)
+  install(isSilent = false, isForceRunAfter = false): boolean {
+    const options = this.beginInstall(isSilent, isForceRunAfter)
+    if (options == null) {
+      return false
+    }
+
     try {
-      this._logger.info(`Install: isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter}`)
-      return this.doInstall({
-        isSilent,
-        isForceRunAfter,
-        isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
-      })
+      return this.doInstall(options)
+    } catch (e: any) {
+      this.dispatchError(e)
+      return false
+    }
+  }
+
+  /**
+   * Same as {@link install}, without blocking the main process while the install runs. Targets whose install
+   * shows an elevation dialog need it: a synchronous spawn freezes the app for as long as the dialog is open,
+   * and the desktop reports it as not responding. Targets that do not override {@link doInstallAsync} keep
+   * installing synchronously, so their timing is unchanged.
+   */
+  async installAsync(isSilent = false, isForceRunAfter = false): Promise<boolean> {
+    const options = this.beginInstall(isSilent, isForceRunAfter)
+    if (options == null) {
+      return false
+    }
+
+    try {
+      return await this.doInstallAsync(options)
     } catch (e: any) {
       this.dispatchError(e)
       return false
@@ -220,7 +372,7 @@ export abstract class BaseUpdater extends AppUpdater {
     await downloadedUpdateHelper.clearPendingInstallMarker(this._logger)
     this.updateInfoAndProvider = updateInfoAndProvider
     this._logger.info(`Installing pending update ${latestInfo.version} on launch`)
-    const isInstalled = this.install(true, true)
+    const isInstalled = await this.installAsync(true, true)
     if (isInstalled) {
       setImmediate(() => this.app.quit())
     } else {
@@ -260,9 +412,14 @@ export abstract class BaseUpdater extends AppUpdater {
     return isMarked
   }
 
+  /**
+   * Registers, once, the handler that installs (or defers) the downloaded update when the app quits. It is registered
+   * whatever `autoInstallEvent` is, and reads it when the app quits: an app may set it after the download, e.g. switch
+   * from `"manual"` to `"onQuit"`.
+   */
   protected addQuitHandler(): void {
     this.addSessionEndHandler()
-    if (this.quitHandlerAdded || this.autoInstallEvent === "manual") {
+    if (this.quitHandlerAdded) {
       return
     }
 
@@ -271,6 +428,16 @@ export abstract class BaseUpdater extends AppUpdater {
     this.app.onQuit(exitCode => {
       if (this.quitAndInstallCalled) {
         this._logger.info("Update installer has already been triggered. Quitting application.")
+        return
+      }
+
+      if (this.isDownloadInProgress) {
+        this._logger.info("No update is installed on quit: the update has not finished downloading and verifying")
+        return
+      }
+
+      if (this.installerPath == null) {
+        this._logger.info("No update is installed on quit: no update has finished downloading")
         return
       }
 
@@ -328,22 +495,30 @@ export abstract class BaseUpdater extends AppUpdater {
       .join(path.delimiter)
   }
 
-  protected spawnSyncLog(cmd: string, args: string[] = [], env = {}): string {
+  /**
+   * Runs a command and returns its trimmed stdout; throws when it cannot be spawned or exits with a non-zero code.
+   *
+   * With `useShell` (the default), the shell gets the command line Node would have joined from `cmd` and `args` (see
+   * {@link shellCommandLine}), so the caller escapes them. Without it, the arguments are passed as an argv array and
+   * nothing has to be escaped.
+   */
+  protected spawnSyncLog(cmd: string, args: string[] = [], env = {}, useShell = true): string {
     this._logger.info(`Executing: ${cmd} with args: ${args}`)
     const mergedEnv: NodeJS.ProcessEnv = { ...process.env, ...env }
-    const response = spawnSync(cmd, args, {
+    const response = spawnSync(useShell ? shellCommandLine(cmd, args) : cmd, useShell ? [] : args, {
       env: { ...mergedEnv, PATH: this.sanitizeEnvPath(mergedEnv.PATH ?? "") },
       encoding: "utf-8",
-      shell: true,
+      shell: useShell,
     })
 
-    const { error, status, stdout, stderr } = response
+    const { error, status, signal, stdout, stderr } = response
     if (error != null) {
       this._logger.error(stderr)
       throw error
-    } else if (status != null && status !== 0) {
+    } else if (status !== 0) {
+      // a command killed by a signal has no exit code, and did not succeed either
       this._logger.error(stderr)
-      throw new Error(`Command ${cmd} exited with code ${status}`)
+      throw new Error(`Command ${cmd} exited with code ${status}${signal == null ? "" : `, signal ${signal}`}`)
     }
 
     return stdout.trim()
@@ -373,6 +548,49 @@ export abstract class BaseUpdater extends AppUpdater {
         reject(error)
       }
     })
+  }
+
+  /**
+   * {@link spawnSyncLog} without blocking the main process: same command, same environment, awaited instead.
+   * Rejects when the command exits with a non-zero code or is killed by a signal; the error message ends with what the
+   * command wrote to stderr (its last {@link STDERR_MESSAGE_BYTES}).
+   *
+   * Neither stdout nor stderr is a pipe, so a command still running when the app quits is not killed by SIGPIPE on its
+   * next write: stdout is not read (as with {@link spawnSyncLog}, nothing uses it) and is discarded, stderr goes to a
+   * temp file (see {@link StderrCapture}) that is read once the command exited.
+   *
+   * `useShell` is opt-out: without a shell the arguments are passed as an argv array, so nothing has to be
+   * escaped. With a shell, the shell gets the command line Node would have joined from them (see {@link shellCommandLine}).
+   */
+  protected async spawnAsyncLog(cmd: string, args: string[] = [], env = {}, useShell = true): Promise<void> {
+    // logging runs in child-process callbacks, where a throwing logger would escape as an uncaught exception
+    const logger = nonThrowingLogger(this._logger)
+    logger.info(`Executing: ${cmd} with args: ${args}`)
+    const mergedEnv: NodeJS.ProcessEnv = { ...process.env, ...env }
+    const stderr = await StderrCapture.open(this.commandStderrDir(), logger)
+    try {
+      const { status, signal } = await new Promise<{ status: number | null; signal: NodeJS.Signals | null }>((resolve, reject) => {
+        const child = spawn(useShell ? shellCommandLine(cmd, args) : cmd, useShell ? [] : args, {
+          env: { ...mergedEnv, PATH: this.sanitizeEnvPath(mergedEnv.PATH ?? "") },
+          shell: useShell,
+          stdio: ["ignore", "ignore", stderr == null ? "ignore" : stderr.fd],
+        })
+        child.on("error", error => reject(error))
+        child.on("close", (status, signal) => resolve({ status, signal }))
+      })
+      if (status === 0) {
+        return
+      }
+      const output = stderr == null ? "" : await stderr.read()
+      throw new Error(`Command ${cmd} exited with code ${status}${signal == null ? "" : `, signal ${signal}`}${output.length === 0 ? "" : `: ${output}`}`)
+    } finally {
+      await stderr?.dispose()
+    }
+  }
+
+  /** Where {@link spawnAsyncLog} creates the temp file that captures a command's stderr. */
+  protected commandStderrDir(): string {
+    return tmpdir()
   }
 }
 
