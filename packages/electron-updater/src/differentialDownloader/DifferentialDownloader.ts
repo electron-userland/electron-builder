@@ -101,7 +101,7 @@ export abstract class DifferentialDownloader {
     }
 
     const operations = computeOperations(oldBlockMap, newBlockMap, this.logger)
-      this.logger.debug(JSON.stringify(operations, null, 2))
+    this.logger.debug(JSON.stringify(operations, null, 2))
 
     let downloadSize = 0
     let copySize = 0

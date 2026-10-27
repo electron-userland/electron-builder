@@ -53,7 +53,7 @@ export function nonThrowingLogger(logger: Logger): NonThrowableLogger {
     info: message => ignoreErrors(() => logger.info(message)),
     warn: message => ignoreErrors(() => logger.warn(message)),
     error: message => ignoreErrors(() => logger.error(message)),
-    debug: message => ignoreErrors(() => logger.debug?.(message))
+    debug: message => ignoreErrors(() => logger.debug?.(message)),
   }
   return result
 }

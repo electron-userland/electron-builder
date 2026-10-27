@@ -1088,7 +1088,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         this.logger.error("updaterCacheDirName is not specified in app-update.yml Was app build using at least electron-builder 20.34.0?")
       }
       const cacheDir = path.join(this.app.baseCachePath, dirName || this.app.name)
-        this.logger.debug(`updater cache dir: ${cacheDir}`)
+      this.logger.debug(`updater cache dir: ${cacheDir}`)
 
       result = new DownloadedUpdateHelper(cacheDir)
       this.downloadedUpdateHelper = result
