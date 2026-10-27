@@ -6,19 +6,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { DebUpdater, NsisUpdater } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
-import type { Logger, ResolvedUpdateFileInfo } from "electron-updater/src/types"
-
-function makeLogger(): Logger & { infos: string[]; warns: string[] } {
-  const infos: string[] = []
-  const warns: string[] = []
-  return {
-    info: (msg: string) => infos.push(msg),
-    warn: (msg: string) => warns.push(msg),
-    error: () => {},
-    infos,
-    warns,
-  }
-}
+import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
+import { makeLogger } from "../helpers/updaterTestUtil"
 
 function makeStubApp(overrides: Partial<AppAdapter> = {}): AppAdapter & { quitCalls: number; emitQuit: (exitCode: number) => void; emitSessionEnd: () => void } {
   let quitHandler: ((exitCode: number) => void) | null = null
@@ -102,8 +91,8 @@ describe("install on next launch", { concurrent: false }, () => {
 
   beforeEach(async context => {
     cacheDir = await context.tmpDir.createTempDir()
-    helper = new DownloadedUpdateHelper(cacheDir)
     log = makeLogger()
+    helper = new DownloadedUpdateHelper(cacheDir, log)
   })
 
   afterEach(() => {
@@ -148,10 +137,10 @@ describe("install on next launch", { concurrent: false }, () => {
       const { installerPath, fileInfo } = await seedDownloadedUpdate(helper)
       helper.markInstallOnNextLaunchSync(log)
 
-      expect(await helper.validateCachedPendingInstall(fileInfo, log)).toBe(installerPath)
+      expect(await helper.validateCachedPendingInstall(fileInfo)).toBe(installerPath)
       expect(helper.file).toBe(installerPath)
 
-      expect(await helper.validateCachedPendingInstall(makeResolvedFileInfo("different-sha512"), log)).toBeNull()
+      expect(await helper.validateCachedPendingInstall(makeResolvedFileInfo("different-sha512"))).toBeNull()
     })
   })
 
@@ -290,7 +279,7 @@ describe("install on next launch", { concurrent: false }, () => {
       const { updater, app, doInstall } = createUpdater()
       const { fileInfo, updateInfo } = await seedDownloadedUpdate(helper)
       // as on a new launch: the cached update is only known from disk
-      const launchHelper = new DownloadedUpdateHelper(cacheDir)
+      const launchHelper = new DownloadedUpdateHelper(cacheDir, log)
       ;(updater as any).downloadedUpdateHelper = launchHelper
       let enterVerifier: () => void = () => {}
       const isVerifying = new Promise<void>(resolve => (enterVerifier = resolve))
@@ -603,7 +592,7 @@ describe("install on next launch", { concurrent: false }, () => {
     test("passes the re-verified web-installer package to the installer via --package-file", async () => {
       const seeded = await seedDownloadedWebUpdate(helper, { version: "1.0.1" })
       // next launch: a fresh helper knows the package only from the persisted update-info.json, not from the download
-      helper = new DownloadedUpdateHelper(cacheDir)
+      helper = new DownloadedUpdateHelper(cacheDir, log)
       const { updater, app, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
       updater.disableWebInstaller = false
       vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
@@ -629,7 +618,7 @@ describe("install on next launch", { concurrent: false }, () => {
 
     test("does not install a pending web-installer update whose package verifyUpdateFile rejects", async () => {
       const seeded = await seedDownloadedWebUpdate(helper, { version: "1.0.1" })
-      helper = new DownloadedUpdateHelper(cacheDir)
+      helper = new DownloadedUpdateHelper(cacheDir, log)
       const { updater, app, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
       updater.disableWebInstaller = false
       vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })

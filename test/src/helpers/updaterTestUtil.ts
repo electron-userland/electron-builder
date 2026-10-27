@@ -1,6 +1,6 @@
 import { NodeHttpExecutor, serializeToYaml, TmpDir } from "builder-util"
 import { AllPublishOptions, BlockMap, DownloadOptions } from "builder-util-runtime"
-import { AppUpdater, NsisUpdater, type VerifyUpdateFile, type VerifyUpdateFileResult } from "electron-updater"
+import { AppUpdater, NsisUpdater, type NonThrowableLogger, type VerifyUpdateFile, type VerifyUpdateFileResult } from "electron-updater"
 import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/src/AppUpdater"
 import { ElectronHttpExecutor } from "electron-updater/src/electronHttpExecutor"
 import { createHash } from "crypto"
@@ -338,5 +338,20 @@ export class FakeElectronHttpExecutor extends ElectronHttpExecutor {
     const request = new FakeNetRequest({ url, headers: options.headers, redirect, answer: this.answer, sent: this.sent })
     request.on("response", callback)
     return request
+  }
+}
+
+export function makeLogger(): NonThrowableLogger & { infos: string[]; warns: string[], errors: string[] }  {
+  const infos: string[] = []
+  const warns: string[] = []
+  const errors: string[] = []
+  return {
+    info: (msg: string) => infos.push(msg),
+    warn: (msg: string) => warns.push(msg),
+    error: (msg: string) => errors.push(msg),
+    debug: () => { },
+    infos,
+    warns,
+    errors,
   }
 }

@@ -73,9 +73,9 @@ export class NsisUpdater extends BaseUpdater {
         if (dirName == null) {
           return
         }
-        downloadedUpdateHelper = new DownloadedUpdateHelper(path.join(this.app.baseCachePath, dirName))
+        downloadedUpdateHelper = new DownloadedUpdateHelper(path.join(this.app.baseCachePath, dirName), this.log)
       }
-      await downloadedUpdateHelper.removeInstalledWebPackage(this.currentVersion.version, this.log)
+      await downloadedUpdateHelper.removeInstalledWebPackage(this.currentVersion.version)
     } catch (e: any) {
       // best effort: no readable app-update.yml (e.g. forceDevUpdateConfig without dev-app-update.yml) means no cache to clean, and an
       // unusable config is reported by the update check itself

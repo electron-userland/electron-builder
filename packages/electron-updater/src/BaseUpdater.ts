@@ -476,7 +476,7 @@ export abstract class BaseUpdater extends AppUpdater {
       return false
     }
 
-    const installerPath = await downloadedUpdateHelper.validateCachedPendingInstall(fileInfo, this.log)
+    const installerPath = await downloadedUpdateHelper.validateCachedPendingInstall(fileInfo)
     if (installerPath == null) {
       // validation already logged the reason and cleaned the pending cache
       this.log.warn("Pending update failed validation and will not be installed")

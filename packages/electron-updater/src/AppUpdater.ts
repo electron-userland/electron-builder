@@ -397,7 +397,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * The app's logger (see {@link logger}) wrapped so that logging never throws and `debug` is always present.
    * Use this, not `logger`, for logging inside updater code (including subclasses), so a throwing logger cannot interrupt the update logic.
    */
-  protected get log(): NonThrowableLogger {
+  get log(): NonThrowableLogger {
     return this._log
   }
 
@@ -1103,7 +1103,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       const cacheDir = path.join(this.app.baseCachePath, dirName || this.app.name)
       this.log.debug(`updater cache dir: ${cacheDir}`)
 
-      result = new DownloadedUpdateHelper(cacheDir)
+      result = new DownloadedUpdateHelper(cacheDir, this.log)
       this.downloadedUpdateHelper = result
     }
     return result
@@ -1189,7 +1189,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       }
     }
 
-    const cachedUpdateFile = await downloadedUpdateHelper.validateDownloadedPath(updateFile, updateInfo, fileInfo, this.log)
+    const cachedUpdateFile = await downloadedUpdateHelper.validateDownloadedPath(updateFile, updateInfo, fileInfo)
     if (cachedUpdateFile != null) {
       updateFile = cachedUpdateFile
       // an update downloaded by an earlier session is about to be announced as ready to install without being
@@ -1483,7 +1483,7 @@ function hasPrereleaseComponents(version: SemVer) {
 }
 
 /** @private */
-export class NoOpLogger implements Logger {
+export class NoOpLogger implements NonThrowableLogger {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   info(message?: any) {
     // ignore
@@ -1496,6 +1496,11 @@ export class NoOpLogger implements Logger {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   error(message?: any) {
+    // ignore
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  debug(message?: any) {
     // ignore
   }
 }
