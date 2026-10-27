@@ -45,7 +45,8 @@ export interface AppAdapter {
    * Called on every quit (`app.quit()`, the quit after the last window closed, the app menu), once all windows have
    * closed and before {@link onQuit}; `event.preventDefault()` cancels that quit (Electron's `will-quit`). Not called
    * for `app.exit()`. All handlers of a quit get the same event, so `event.defaultPrevented` tells whether one that ran
-   * earlier cancelled it. Optional: without it, an install on quit cannot cancel the quit when it fails.
+   * earlier cancelled it. Optional: without it, the Linux install on quit runs in {@link onQuit}, which cannot wait for
+   * an install that is running, nor cancel the quit when the install fails (`cancelQuitOnInstallFailure`).
    */
   onWillQuit?(handler: (event: CancellableQuitEvent) => void): void
 

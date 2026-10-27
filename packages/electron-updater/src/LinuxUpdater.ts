@@ -194,7 +194,7 @@ export abstract class LinuxUpdater extends BaseUpdater {
     super(options, app)
   }
 
-  // doInstall runs the install plan to its end before it returns, so a failed install on quit can cancel the quit
+  // doInstall runs the install plan to its end before it returns, so the install on quit can run from will-quit
   protected get isQuitCancellable(): boolean {
     return true
   }

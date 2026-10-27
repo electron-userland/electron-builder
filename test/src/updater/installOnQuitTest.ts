@@ -96,6 +96,13 @@ function makeStubApp(options: { isWillQuitSupported?: boolean } = {}): StubApp {
 
 const flush = () => new Promise(resolve => setImmediate(resolve))
 
+function throwingLogger(): Logger {
+  const fail = () => {
+    throw new Error("logger failure")
+  }
+  return { info: fail, warn: fail, error: fail }
+}
+
 describe("install on quit", { concurrent: false }, () => {
   let helper: DownloadedUpdateHelper
   let log: ReturnType<typeof makeLogger>
@@ -128,9 +135,10 @@ describe("install on quit", { concurrent: false }, () => {
    * A DebUpdater whose update finished downloading, installing with dpkg through pkexec. `pkexecExitCode` is what every
    * pkexec command exits with: 126 is the authentication dialog dismissed, 127 authorization not obtained, 1 a dpkg failure.
    */
-  function createDebUpdater(app: StubApp, pkexecExitCode: number) {
+  function createDebUpdater(app: StubApp, pkexecExitCode: number, options: { cancelQuitOnInstallFailure?: boolean } = {}) {
     const updater = new DebUpdater(null, app)
     updater.logger = log
+    updater.cancelQuitOnInstallFailure = options.cancelQuitOnInstallFailure ?? false
     ;(updater as any).downloadedUpdateHelper = helper
     const errors: Error[] = []
     updater.on("error", (error: Error) => errors.push(error))
@@ -154,20 +162,30 @@ describe("install on quit", { concurrent: false }, () => {
   }
 
   describe("a failed install on quit (deb, pkexec)", () => {
-    test("cancels the quit, emits error and logs it", async () => {
+    test("lets the quit proceed, emits error and logs it: the app exits without the update", async () => {
       await seedDownloadedUpdate()
       const app = makeStubApp()
       const { updater, errors, pkexecCalls } = createDebUpdater(app, 126)
+      const isCancelledOnError: boolean[] = []
+      updater.on("error", (error: Error) => {
+        expect(error).toBeInstanceOf(ElevationDeniedError)
+        isCancelledOnError.push(app.lastWillQuitEvent?.defaultPrevented ?? true)
+      })
 
-      expect(app.quitApp()).toBe(false)
+      // the quit handlers ran: the app quits
+      expect(app.quitApp()).toBe(true)
 
+      expect(app.lastWillQuitEvent?.defaultPrevented).toBe(false)
+      expect(isCancelledOnError).toEqual([false])
       // dpkg only: the apt-get repair would show the dismissed authentication dialog a second time
       expect(pkexecCalls.length).toBe(1)
       expect(errors.map(it => it.message)).toEqual(["Command pkexec exited with code 126 (the authentication dialog was dismissed), the update is not installed"])
       // visible in the log, since an "error" listener has no window left to show it in
       expect(log.errors.some(it => it.includes("Cannot install update: Command pkexec exited with code 126"))).toBe(true)
-      expect(log.warns.some(it => it.includes("the quit is cancelled"))).toBe(true)
-      // an explicit quitAndInstall() can still install
+      expect(log.warns.some(it => it.includes("the app quits without it"))).toBe(true)
+      expect(log.warns.some(it => it.includes("the quit is cancelled"))).toBe(false)
+      // the quit handler that runs next does not install either
+      expect(log.infos.some(it => it.includes("installing it failed earlier in this session"))).toBe(true)
       expect((updater as any).quitAndInstallCalled).toBe(false)
     })
 
@@ -176,7 +194,7 @@ describe("install on quit", { concurrent: false }, () => {
       const app = makeStubApp()
       const { errors, pkexecCalls } = createDebUpdater(app, 127)
 
-      expect(app.quitApp()).toBe(false)
+      expect(app.quitApp()).toBe(true)
 
       expect(pkexecCalls.length).toBe(1)
       expect(errors.map(it => it.message)).toEqual(["Command pkexec exited with code 127 (authorization was not obtained), the update is not installed"])
@@ -187,7 +205,7 @@ describe("install on quit", { concurrent: false }, () => {
       const app = makeStubApp()
       const { errors, pkexecCalls } = createDebUpdater(app, 1)
 
-      expect(app.quitApp()).toBe(false)
+      expect(app.quitApp()).toBe(true)
 
       expect(pkexecCalls.map(it => it.slice(1, 3))).toEqual([
         ["/usr/bin/dpkg", "-i"],
@@ -197,10 +215,79 @@ describe("install on quit", { concurrent: false }, () => {
       expect(log.warns.some(it => it.includes("trying to fix broken dependencies with apt-get"))).toBe(true)
     })
 
-    test("lets the next quit proceed without trying to install again", async () => {
+    test("does not show the dialog again on a later quit, should the app keep running", async () => {
       await seedDownloadedUpdate()
       const app = makeStubApp()
       const { errors, pkexecCalls } = createDebUpdater(app, 126)
+      expect(app.quitApp()).toBe(true)
+
+      expect(app.quitApp()).toBe(true)
+
+      expect(pkexecCalls.length).toBe(1)
+      expect(errors.length).toBe(1)
+    })
+
+    test("lets the quit proceed when an 'error' listener throws", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { updater, pkexecCalls } = createDebUpdater(app, 126)
+      updater.on("error", () => {
+        throw new Error("error listener failure")
+      })
+
+      expect(app.quitApp()).toBe(true)
+      expect(log.errors.some(it => it.includes("Cannot install update on quit") && it.includes("error listener failure"))).toBe(true)
+      expect(pkexecCalls.length).toBe(1)
+    })
+
+    test("lets the quit proceed when a throwing logger is set", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { updater, errors } = createDebUpdater(app, 126)
+      updater.logger = throwingLogger()
+
+      let isQuit = false
+      expect(() => (isQuit = app.quitApp())).not.toThrow()
+      expect(isQuit).toBe(true)
+      expect(errors.length).toBeLessThanOrEqual(1)
+    })
+  })
+
+  describe("a failed install on quit with cancelQuitOnInstallFailure (deb, pkexec)", () => {
+    test("is off by default", () => {
+      expect(new DebUpdater(null, makeStubApp()).cancelQuitOnInstallFailure).toBe(false)
+    })
+
+    test("cancels the quit, emits error and logs it", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { updater, errors, pkexecCalls } = createDebUpdater(app, 126, { cancelQuitOnInstallFailure: true })
+
+      expect(app.quitApp()).toBe(false)
+
+      expect(pkexecCalls.length).toBe(1)
+      expect(errors.map(it => it.message)).toEqual(["Command pkexec exited with code 126 (the authentication dialog was dismissed), the update is not installed"])
+      expect(log.errors.some(it => it.includes("Cannot install update: Command pkexec exited with code 126"))).toBe(true)
+      expect(log.warns.some(it => it.includes("the quit is cancelled"))).toBe(true)
+      // an explicit quitAndInstall() can still install
+      expect((updater as any).quitAndInstallCalled).toBe(false)
+    })
+
+    test("does not repair with apt-get when authorization was not obtained (pkexec exit code 127)", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { errors, pkexecCalls } = createDebUpdater(app, 127, { cancelQuitOnInstallFailure: true })
+
+      expect(app.quitApp()).toBe(false)
+
+      expect(pkexecCalls.length).toBe(1)
+      expect(errors.map(it => it.message)).toEqual(["Command pkexec exited with code 127 (authorization was not obtained), the update is not installed"])
+    })
+
+    test("lets the next quit proceed without trying to install again", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { errors, pkexecCalls } = createDebUpdater(app, 126, { cancelQuitOnInstallFailure: true })
       expect(app.quitApp()).toBe(false)
       const pkexecCallCount = pkexecCalls.length
 
@@ -216,7 +303,7 @@ describe("install on quit", { concurrent: false }, () => {
     test("emits error while the quit can still be cancelled, before cancelling it", async () => {
       await seedDownloadedUpdate()
       const app = makeStubApp()
-      const { updater } = createDebUpdater(app, 126)
+      const { updater } = createDebUpdater(app, 126, { cancelQuitOnInstallFailure: true })
       const isCancelledOnError: boolean[] = []
       updater.on("error", (error: Error) => {
         expect(error).toBeInstanceOf(ElevationDeniedError)
@@ -232,7 +319,7 @@ describe("install on quit", { concurrent: false }, () => {
     test("does not show the dialog again when the cached re-check announces the same update again", async () => {
       await seedDownloadedUpdate()
       const app = makeStubApp()
-      const { errors, pkexecCalls, setPkexecExitCode } = createDebUpdater(app, 126)
+      const { errors, pkexecCalls, setPkexecExitCode } = createDebUpdater(app, 126, { cancelQuitOnInstallFailure: true })
       expect(app.quitApp()).toBe(false)
       const pkexecCallCount = pkexecCalls.length
 
@@ -248,7 +335,7 @@ describe("install on quit", { concurrent: false }, () => {
     test("installs a different update downloaded later on the next quit", async () => {
       await seedDownloadedUpdate()
       const app = makeStubApp()
-      const { errors, pkexecCalls, setPkexecExitCode } = createDebUpdater(app, 126)
+      const { errors, pkexecCalls, setPkexecExitCode } = createDebUpdater(app, 126, { cancelQuitOnInstallFailure: true })
       expect(app.quitApp()).toBe(false)
       expect(pkexecCalls.length).toBe(1)
 
@@ -263,7 +350,7 @@ describe("install on quit", { concurrent: false }, () => {
     test("lets an explicit quitAndInstall install the same update", async () => {
       await seedDownloadedUpdate()
       const app = makeStubApp()
-      const { updater } = createDebUpdater(app, 126)
+      const { updater } = createDebUpdater(app, 126, { cancelQuitOnInstallFailure: true })
       expect(app.quitApp()).toBe(false)
       // left running: once it succeeds, quitAndInstall emits before-quit-for-update on Electron's autoUpdater
       const doInstallAsync = vi.spyOn(updater as any, "doInstallAsync").mockReturnValue(new Promise<boolean>(() => {}))
@@ -278,7 +365,7 @@ describe("install on quit", { concurrent: false }, () => {
     test("cancels the quit when an 'error' listener throws", async () => {
       await seedDownloadedUpdate()
       const app = makeStubApp()
-      const { updater, pkexecCalls } = createDebUpdater(app, 126)
+      const { updater, pkexecCalls } = createDebUpdater(app, 126, { cancelQuitOnInstallFailure: true })
       updater.on("error", () => {
         throw new Error("error listener failure")
       })
@@ -294,18 +381,8 @@ describe("install on quit", { concurrent: false }, () => {
     test("cancels the quit when a throwing logger is set", async () => {
       await seedDownloadedUpdate()
       const app = makeStubApp()
-      const { updater, errors } = createDebUpdater(app, 126)
-      updater.logger = {
-        info: () => {
-          throw new Error("logger failure")
-        },
-        warn: () => {
-          throw new Error("logger failure")
-        },
-        error: () => {
-          throw new Error("logger failure")
-        },
-      }
+      const { updater, errors } = createDebUpdater(app, 126, { cancelQuitOnInstallFailure: true })
+      updater.logger = throwingLogger()
 
       let isQuit = true
       expect(() => (isQuit = app.quitApp())).not.toThrow()
@@ -410,6 +487,20 @@ describe("install on quit", { concurrent: false }, () => {
       await seedDownloadedUpdate()
       const app = makeStubApp()
       const { pkexecCalls } = createDebUpdater(app, 126)
+
+      expect(app.quitApp({ isCancelledEarlier: true })).toBe(false)
+      expect(pkexecCalls).toEqual([])
+      expect(app.quitApp()).toBe(true)
+      expect(pkexecCalls.length).toBe(1)
+      expect(app.quitApp({ isCancelledEarlier: true })).toBe(false)
+      expect(app.quitApp()).toBe(true)
+      expect(pkexecCalls.length).toBe(1)
+    })
+
+    test("with cancelQuitOnInstallFailure, does not try to install the update again when installing it failed", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { pkexecCalls } = createDebUpdater(app, 126, { cancelQuitOnInstallFailure: true })
 
       expect(app.quitApp({ isCancelledEarlier: true })).toBe(false)
       expect(pkexecCalls).toEqual([])

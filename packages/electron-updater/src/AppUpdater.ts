@@ -86,12 +86,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * When a downloaded update is automatically installed (if `quitAndInstall` was not called before).
    *
    * - `"onQuit"` (default) — install on app quit by spawning the installer while the app exits. Linux package targets
-   *   (deb, rpm, pacman) install before the app exits, unless another `will-quit` listener cancelled that quit: when the
-   *   install fails, for example because the user dismissed the authentication dialog, an `error` event is emitted and
-   *   the quit is cancelled. The app keeps running, with its windows already closed: listen for `error` to reopen a
-   *   window, or to quit from a later tick (`setImmediate(() => app.quit())`; Electron ignores `app.quit()` while the
-   *   quit is still in progress). The next quit is not cancelled and does not try to install that update again; a
-   *   different update downloaded later is installed on quit.
+   *   (deb, rpm, pacman) install before the app exits, from `will-quit`, unless another `will-quit` listener cancelled
+   *   that quit: when the install fails, for example because the user dismissed the authentication dialog, an `error`
+   *   event is emitted and logged, and the app exits without the update (see {@link cancelQuitOnInstallFailure} to keep
+   *   it running instead).
    * - `"onNextLaunch"` — defer the install: any app quit persists an install-on-next-launch marker for the downloaded
    *   update; on the next launch the updater re-validates the cached installer against freshly fetched update info and
    *   installs it (see `installPendingUpdateIfAvailable`). This avoids the class of failures where the on-quit installer
@@ -108,6 +106,20 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * @default "onQuit"
    */
   autoInstallEvent: AutoInstallEvent = "onQuit"
+
+  /**
+   * Whether a failed install on quit cancels the quit, so that the app keeps running instead of exiting without the
+   * update. Linux package targets (deb, rpm, pacman) only, with `autoInstallEvent` `"onQuit"`: the install on quit runs
+   * from `will-quit` there and knows whether it succeeded. It fails, for example, when the user dismissed the
+   * authentication dialog; an `error` event is emitted first, while the quit can still be cancelled.
+   *
+   * The app keeps running with its windows already closed, so without a tray it is left windowless: listen for `error`
+   * to reopen a window, or to quit from a later tick (`setImmediate(() => app.quit())`; Electron ignores `app.quit()`
+   * while the quit is still in progress). The next quit is not cancelled and does not try to install that update
+   * again; a different update downloaded later is installed on quit, and `quitAndInstall()` can still install it.
+   * @default false
+   */
+  cancelQuitOnInstallFailure = false
 
   /**
    * @deprecated Removed in v27 — use {@link autoInstallEvent}. This accessor is a compatibility shim
