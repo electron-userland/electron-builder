@@ -1,6 +1,7 @@
 import { exists, InvalidConfigurationError, sanitizeDirPath, validateSecuredUrl } from "builder-util"
 import { mkdir, rm, stat } from "fs/promises"
 import * as path from "path"
+import { fileURLToPath } from "url"
 import { ToolsetCustom } from "../configuration.js"
 import { ACCEPTED_CHECKSUM_FORMATS, checksumCacheKey, checksumMismatchMessage, ExpectedChecksum, parseChecksum, verifyFileChecksum } from "../util/checksum.js"
 import { cacheDirectoryOverrideAllowed, downloadBuilderToolset, extractArchive, hashUrlSafe } from "../util/electronGet.js"
@@ -17,7 +18,7 @@ async function validateCustomToolset(custom: ToolsetCustom, resourcesDir?: strin
     // Ignore. If the URL is invalid, validate it as a file path
   }
   if (url.startsWith("file://")) {
-    const p = url.slice("file://".length)
+    const p = fileUrlToPath(url)
     const isWithinResources = resourcesDir ? path.normalize(p).startsWith(path.normalize(resourcesDir + path.sep)) : false
     const isValid = path.isAbsolute(p) || isWithinResources
     const type =
@@ -33,9 +34,24 @@ async function validateCustomToolset(custom: ToolsetCustom, resourcesDir?: strin
   throw new Error(`Invalid custom toolset: ${url}. Must be a valid https:// URL or a file:// path.`)
 }
 
+// The path of a file:// toolset URL. "file:///..." is converted as a file URL, so that "file:///C:/tools/nsis.zip" (the form
+// pathToFileURL gives on Windows) is found on Windows instead of being read as "/C:/tools/nsis.zip", and percent-encoded
+// characters are decoded. "file://<relative path>" and "file://C:\..." are not file URLs and stay the path as written.
+function fileUrlToPath(url: string): string {
+  const p = url.slice("file://".length)
+  if (p.startsWith("/")) {
+    try {
+      return fileURLToPath(url)
+    } catch {
+      // not the URL of a path on this platform, such as "file:///opt/..." on Windows
+    }
+  }
+  return p
+}
+
 // Strip the file:// prefix and sanitize the path against resourcesDir (relative paths must be within it)
 function resolveFilePath(url: string, resourcesDir?: string): string {
-  const p = url.startsWith("file://") ? url.slice("file://".length) : url
+  const p = url.startsWith("file://") ? fileUrlToPath(url) : url
   return path.isAbsolute(p) ? sanitizeDirPath(p) : sanitizeDirPath(p, resourcesDir)
 }
 

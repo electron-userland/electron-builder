@@ -3,6 +3,7 @@ import { createHash } from "crypto"
 import { promises as fs } from "fs"
 import * as path from "path"
 import * as tar from "tar"
+import { pathToFileURL } from "url"
 import { afterEach, beforeEach, vi } from "vitest"
 import { clearCustomToolsetCache, getCustomToolsetPath } from "app-builder-lib/src/toolsets/custom"
 import type { ToolsetCustom } from "app-builder-lib/internal"
@@ -85,6 +86,14 @@ describe("getCustomToolsetPath memoization", { concurrent: false }, () => {
   test("directory type resolves to the directory path", async ({ expect, tmpDir }) => {
     const dir = await tmpDir.createTempDir()
     const result = await getCustomToolsetPath(dirToolset(dir), "")
+    expect(result).toBe(dir)
+  })
+
+  // pathToFileURL gives "file:///C:/..." on Windows and percent-encodes characters such as spaces
+  test("a file:// URL made with pathToFileURL resolves to the directory path", async ({ expect, tmpDir }) => {
+    const dir = path.join(await tmpDir.createTempDir(), "my toolset")
+    await fs.mkdir(dir)
+    const result = await getCustomToolsetPath({ url: pathToFileURL(dir).href }, "")
     expect(result).toBe(dir)
   })
 })
