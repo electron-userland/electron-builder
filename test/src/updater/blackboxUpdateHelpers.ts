@@ -271,11 +271,21 @@ function updateFilesDir(target: string, distDir: string): string {
 const isNsisTarget = (target: string) => target === "nsis" || target === "nsis-web"
 
 /**
- * Targets whose first update hop downloads differentially: the NSIS installer is compared with the copy of itself the installer
- * left in the updater cache, an AppImage with its own embedded block map. A mac zip has nothing cached before its first update
- * (the first hop is a full download), and deb/rpm/pacman always download in full.
+ * Targets whose first update hop downloads differentially: an AppImage compares itself with its own embedded block map.
+ *
+ * Not NSIS: a fresh install has no cached block map, so the updater fetches the installed version's map from the URL of the new one
+ * with the version swapped, and the test app's artifact names carry no version (`TestApp Setup.exe`): that is the new map again, which
+ * cannot describe the installed installer, so the first update is a full download. A mac zip has nothing cached before its first
+ * update, and deb/rpm/pacman always download in full.
  */
-export const isDifferentialOnFirstHop = (target: string) => target === "nsis" || target === "AppImage"
+export const isDifferentialOnFirstHop = (target: string) => target === "AppImage"
+
+/**
+ * Targets whose update after the first one downloads differentially. The first update leaves its block map in the updater cache and,
+ * for NSIS, the installer leaves a copy of itself there, so the NSIS update after it compares the cached pair. A mac zip caches
+ * update.zip but no block map on a full first update, so its second update meets the versionless-name problem above.
+ */
+export const isDifferentialAfterFirstUpdate = (target: string) => target === "AppImage" || target === "nsis"
 
 /** Logged by DifferentialDownloader once it has planned the download (`Full: 42 MB, To download: 1.2 MB (3%)`). */
 export const DIFFERENTIAL_PLAN_MARKER = /\[updater\] Full: [^\n]+, To download: [^\n]+ \(\d+%\)/
@@ -1233,6 +1243,9 @@ export async function runKeyRotationTest(context: TestContext, target: string, p
         assertLaunch: stdout => {
           expect(stdout).toContain(manifestVerifiedMarker(THIRD_VERSION_NUMBER))
           expect(stdout).not.toContain(MANIFEST_VERIFICATION_DISABLED_MARKER)
+          if (isDifferentialAfterFirstUpdate(target)) {
+            assertDifferentialDownload(expect, stdout)
+          }
         },
       })
     },
@@ -1248,9 +1261,6 @@ export async function runKeyRotationTest(context: TestContext, target: string, p
  * whose next update after a block map format change is differential again (earlier ones keep the old map in their cache).
  */
 export const LEGACY_ELECTRON_UPDATER_VERSION = "6.8.10"
-
-/** Targets whose update after the first one downloads differentially: a mac zip has a cached update.zip only from the first update on. */
-const isDifferentialAfterFirstUpdate = (target: string) => isDifferentialOnFirstHop(target) || target === "zip"
 
 /** Whether the `.blockmap` published next to the update files is the binary format (`EBM3` magic) rather than gzipped JSON. */
 async function publishesBinaryBlockMap(filesDir: string): Promise<boolean> {
