@@ -5,7 +5,7 @@ import fsExtra from "fs-extra"
 import { createWriteStream, WriteStream } from "fs"
 import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
 import { ProgressInfo, CancellationError, CancellationToken } from "builder-util-runtime"
-import { Logger } from "../types.js"
+import { Logger, NonThrowableLogger } from "../types.js"
 import { nonThrowingLogger, throwIfCancelled } from "../util.js"
 import { copyData, stopCopies } from "./DataSplitter.js"
 import { URL } from "url"
@@ -37,7 +37,7 @@ export interface DifferentialDownloaderOptions {
 export abstract class DifferentialDownloader {
   fileMetadataBuffer: Buffer | null = null
 
-  readonly logger: Logger
+  readonly logger: NonThrowableLogger
 
   // range requests that have not closed yet, aborted when the download is cancelled or fails
   private readonly requestsInFlight = new Set<AbortableRequest>()
@@ -100,11 +100,8 @@ export abstract class DifferentialDownloader {
       throw new Error(`version is different (${oldBlockMap.version} - ${newBlockMap.version}), full download is required`)
     }
 
-    const logger = this.logger
-    const operations = computeOperations(oldBlockMap, newBlockMap, logger)
-    if (logger.debug != null) {
-      logger.debug(JSON.stringify(operations, null, 2))
-    }
+    const operations = computeOperations(oldBlockMap, newBlockMap, this.logger)
+      this.logger.debug(JSON.stringify(operations, null, 2))
 
     let downloadSize = 0
     let copySize = 0
@@ -122,7 +119,7 @@ export abstract class DifferentialDownloader {
       throw new Error(`Internal error, size mismatch: downloadSize: ${downloadSize}, copySize: ${copySize}, newSize: ${newSize}`)
     }
 
-    logger.info(`Full: ${formatBytes(newSize)}, To download: ${formatBytes(downloadSize)} (${Math.round(downloadSize / (newSize / 100))}%)`)
+    this.logger.info(`Full: ${formatBytes(newSize)}, To download: ${formatBytes(downloadSize)} (${Math.round(downloadSize / (newSize / 100))}%)`)
 
     return this.downloadFile(operations).catch((e: unknown) => {
       // a cancel (or a failure caused by one, such as an aborted request) ends the download instead of starting the retry
@@ -133,7 +130,7 @@ export abstract class DifferentialDownloader {
       }
       // The new file is rewritten from the start, and each single-range answer is checked, so a host that ignores ranges
       // fails on its first request instead of streaming the whole file per range.
-      logger.warn(`${e.message}: retrying with one range per request`)
+      this.logger.warn(`${e.message}: retrying with one range per request`)
       this.isUseMultipleRangeRequest = false
       return this.downloadFile(operations)
     })

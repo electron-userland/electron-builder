@@ -18,6 +18,10 @@ export interface Logger {
   debug?(message: string): void
 }
 
+export interface NonThrowableLogger extends Logger {
+  debug(message: string): void
+}
+
 /**
  * When a downloaded update is automatically installed.
  * - `"onQuit"` — install on app quit by spawning the installer while the app exits (the historical `autoInstallOnAppQuit = true` behavior).

@@ -1,7 +1,7 @@
 // if baseUrl path doesn't ends with /, this path will be not prepended to passed pathname for new URL(input, base)
 import { CancellationError, CancellationToken, HttpExecutor } from "builder-util-runtime"
 import { URL } from "url"
-import type { Logger } from "./types.js"
+import type { Logger, NonThrowableLogger } from "./types.js"
 
 /** @internal */
 export function newBaseUrl(url: string): URL {
@@ -41,7 +41,7 @@ export function getChannelFilename(channel: string): string {
  * `logger` has one, so callers can still skip building an expensive debug message.
  * @internal
  */
-export function nonThrowingLogger(logger: Logger): Logger {
+export function nonThrowingLogger(logger: Logger): NonThrowableLogger {
   const ignoreErrors = (log: () => void): void => {
     try {
       log()
@@ -49,13 +49,11 @@ export function nonThrowingLogger(logger: Logger): Logger {
       // a throwing logger must not break the caller
     }
   }
-  const result: Logger = {
+  const result: NonThrowableLogger = {
     info: message => ignoreErrors(() => logger.info(message)),
     warn: message => ignoreErrors(() => logger.warn(message)),
     error: message => ignoreErrors(() => logger.error(message)),
-  }
-  if (logger.debug != null) {
-    result.debug = message => ignoreErrors(() => logger.debug?.(message))
+    debug: message => ignoreErrors(() => logger.debug?.(message))
   }
   return result
 }

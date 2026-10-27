@@ -263,11 +263,11 @@ export abstract class LinuxUpdater extends BaseUpdater {
   /** Determines once per install how {@link runCommandWithSudoIfNeeded} and {@link runCommandWithSudoIfNeededAsync} run privileged commands. */
   protected resolveElevation(): Elevation {
     if (this.isRunningAsRoot()) {
-      this._logger.info("Running as root, no need to use sudo")
+      this.logger.info("Running as root, no need to use sudo")
       return { kind: "root" }
     }
     const helper = this.sudoWithArgs(this.installComment())
-    this._logger.info(`Running as non-root user, using sudo to install: ${helper}`)
+    this.logger.info(`Running as non-root user, using sudo to install: ${helper}`)
     return { kind: this.takesArgv(helper[0]) ? "argv" : "wrapped", helper }
   }
 
@@ -369,7 +369,7 @@ export abstract class LinuxUpdater extends BaseUpdater {
     }
     try {
       const { elevation, plan } = this.prepareInstall()
-      runInstallPlan(plan, commandWithArgs => this.runCommandWithSudoIfNeeded(commandWithArgs, elevation), this._logger)
+      runInstallPlan(plan, commandWithArgs => this.runCommandWithSudoIfNeeded(commandWithArgs, elevation), this.logger)
     } catch (error: unknown) {
       // on quit, an "error" listener that shows the error has no window left to show it in: the updater's own "error"
       // listener logs it, as for the async install
@@ -387,7 +387,7 @@ export abstract class LinuxUpdater extends BaseUpdater {
     }
     try {
       const { elevation, plan } = this.prepareInstall()
-      await runInstallPlanAsync(plan, commandWithArgs => this.runCommandWithSudoIfNeededAsync(commandWithArgs, elevation), this._logger)
+      await runInstallPlanAsync(plan, commandWithArgs => this.runCommandWithSudoIfNeededAsync(commandWithArgs, elevation), this.logger)
     } catch (error: unknown) {
       this.dispatchError(error instanceof Error ? error : new Error(String(error)))
       return false
@@ -445,7 +445,7 @@ export abstract class LinuxUpdater extends BaseUpdater {
     this.legacyHelpersChecked = true
     const installed = ["gksudo", "kdesudo"].filter(helper => this.hasCommand(helper))
     if (installed.length !== 0) {
-      this._logger.info(`Elevating the install with pkexec (polkit); ${installed.join(" and ")} ${installed.length === 1 ? "is" : "are"} only used on systems without polkit`)
+      this.logger.info(`Elevating the install with pkexec (polkit); ${installed.join(" and ")} ${installed.length === 1 ? "is" : "are"} only used on systems without polkit`)
     }
   }
 
@@ -462,7 +462,7 @@ export abstract class LinuxUpdater extends BaseUpdater {
     const pmOverride = process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER?.trim()
     if (pmOverride) {
       if (!SAFE_PM_REGEX.test(pmOverride)) {
-        this._logger.warn(`ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER "${pmOverride}" contains unsafe characters. Ignoring override.`)
+        this.logger.warn(`ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER "${pmOverride}" contains unsafe characters. Ignoring override.`)
       } else {
         availablePMs = [pmOverride]
       }
@@ -476,7 +476,7 @@ export abstract class LinuxUpdater extends BaseUpdater {
     // return the first/default package manager in the original list if none are found, this will throw upstream for proper logging
     const searchList = pmOverride ? `ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER override "${pmOverride}", ` : ""
     const defaultPM = pms[0]
-    this._logger.warn(`No package manager found in the list: ${searchList}${pms.join(", ")}. Utilizing default: ${defaultPM}`)
+    this.logger.warn(`No package manager found in the list: ${searchList}${pms.join(", ")}. Utilizing default: ${defaultPM}`)
     return defaultPM
   }
 }
