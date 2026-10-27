@@ -31,7 +31,7 @@ export class MacUpdater extends AppUpdater {
     })
     this.nativeUpdater.on("update-downloaded", () => {
       this.squirrelDownloadedUpdate = true
-      this.debug("nativeUpdater.update-downloaded")
+      this.logger.debug("nativeUpdater.update-downloaded")
     })
   }
 
@@ -46,18 +46,12 @@ export class MacUpdater extends AppUpdater {
     return files.filter(file => !isArm64File(file))
   }
 
-  private debug(message: string): void {
-    if (this.logger.debug != null) {
-      this.logger.debug(message)
-    }
-  }
-
   private closeServerIfExists() {
     if (this.server) {
-      this.debug("Closing proxy server")
+      this.logger.debug("Closing proxy server")
       this.server.close(err => {
         if (err) {
-          this.debug("proxy server wasn't already open, probably attempted closing again as a safety check before quit")
+          this.logger.debug("proxy server wasn't already open, probably attempted closing again as a safety check before quit")
         }
       })
     }
@@ -70,7 +64,7 @@ export class MacUpdater extends AppUpdater {
     const sysctlRosettaInfoKey = "sysctl.proc_translated"
     let isRosetta = false
     try {
-      this.debug("Checking for macOS Rosetta environment")
+      this.logger.debug("Checking for macOS Rosetta environment")
       // by absolute path, like uname below: a bare name would be looked up on the PATH the app was started with
       const result = execFileSync("/usr/sbin/sysctl", [sysctlRosettaInfoKey], { encoding: "utf8" })
       isRosetta = result.includes(`${sysctlRosettaInfoKey}: 1`)
@@ -81,7 +75,7 @@ export class MacUpdater extends AppUpdater {
 
     let isArm64Mac = false
     try {
-      this.debug("Checking for arm64 in uname")
+      this.logger.debug("Checking for arm64 in uname")
       const result = execFileSync("/usr/bin/uname", ["-a"], { encoding: "utf8" })
       const isArm = result.includes("ARM")
       this.logger.info(`Checked 'uname -a': arm64=${isArm}`)
@@ -147,9 +141,9 @@ export class MacUpdater extends AppUpdater {
 
     const logContext = `fileToProxy=${zipFileInfo.url.href}`
     this.closeServerIfExists()
-    this.debug(`Creating proxy server for native Squirrel.Mac (${logContext})`)
+    this.logger.debug(`Creating proxy server for native Squirrel.Mac (${logContext})`)
     this.server = createServer()
-    this.debug(`Proxy server for native Squirrel.Mac is created (${logContext})`)
+    this.logger.debug(`Proxy server for native Squirrel.Mac is created (${logContext})`)
     this.server.on("close", () => {
       this.logger.info(`Proxy server for native Squirrel.Mac is closed (${logContext})`)
     })

@@ -600,9 +600,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   checkForUpdatesAndNotify(downloadNotification?: DownloadNotification): Promise<UpdateCheckResult | null> {
     return this.checkForUpdates().then(it => {
       if (!it?.downloadPromise) {
-        if (this.logger.debug != null) {
-          this.logger.debug("checkForUpdatesAndNotify called, downloadPromise is null")
-        }
+        this.logger.debug("checkForUpdatesAndNotify called, downloadPromise is null")
         return it
       }
 
