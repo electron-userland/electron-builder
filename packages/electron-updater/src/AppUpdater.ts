@@ -41,7 +41,7 @@ import type { AuthInfo } from "electron"
 import { gunzipSync, gzipSync } from "zlib"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
-import { nonThrowingLogger, throwIfCancelled } from "./util.js"
+import { nonThrowingAppLogger, nonThrowingLogger, throwIfCancelled } from "./util.js"
 import {
   AutoInstallEvent,
   DOWNLOAD_PROGRESS,
@@ -357,8 +357,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * @internal
    */
   protected limitedLogger(key: string, max = 1): LimitedLogger<Logger> {
-    // the app's own logger, not `this.log`: a logger without `debug()` must not use up the quota on debug calls
-    return this.logLimiter.wrap(() => this._logger, { key, max })
+    // the app's own logger, made non-throwing but not `this.log`: a logger without `debug()` must not use up the quota on debug calls
+    return this.logLimiter.wrap(() => nonThrowingAppLogger(this._logger), { key, max })
   }
 
   /**
