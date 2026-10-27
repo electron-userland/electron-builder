@@ -86,9 +86,12 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * When a downloaded update is automatically installed (if `quitAndInstall` was not called before).
    *
    * - `"onQuit"` (default) — install on app quit by spawning the installer while the app exits. Linux package targets
-   *   (deb, rpm, pacman) install before the app exits: when that fails, for example because the user dismissed the
-   *   authentication dialog, the quit is cancelled and an `error` event is emitted. The app keeps running, with its
-   *   windows already closed, and its next quit is not cancelled and does not try to install again.
+   *   (deb, rpm, pacman) install before the app exits, unless another `will-quit` listener cancelled that quit: when the
+   *   install fails, for example because the user dismissed the authentication dialog, an `error` event is emitted and
+   *   the quit is cancelled. The app keeps running, with its windows already closed: listen for `error` to reopen a
+   *   window, or to quit from a later tick (`setImmediate(() => app.quit())`; Electron ignores `app.quit()` while the
+   *   quit is still in progress). The next quit is not cancelled and does not try to install that update again; a
+   *   different update downloaded later is installed on quit.
    * - `"onNextLaunch"` — defer the install: any app quit persists an install-on-next-launch marker for the downloaded
    *   update; on the next launch the updater re-validates the cached installer against freshly fetched update info and
    *   installs it (see `installPendingUpdateIfAvailable`). This avoids the class of failures where the on-quit installer

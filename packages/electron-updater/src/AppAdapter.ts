@@ -5,6 +5,11 @@ import { homedir as getHomedir } from "os"
 export interface CancellableQuitEvent {
   /** Cancels the quit: the app keeps running. */
   preventDefault(): void
+  /**
+   * Whether the quit is cancelled already, by {@link preventDefault} called from this or another handler of the same
+   * quit (Electron's `event.defaultPrevented`). An adapter that cannot tell reports `false`.
+   */
+  readonly defaultPrevented: boolean
 }
 
 export interface AppAdapter {
@@ -39,7 +44,8 @@ export interface AppAdapter {
   /**
    * Called on every quit (`app.quit()`, the quit after the last window closed, the app menu), once all windows have
    * closed and before {@link onQuit}; `event.preventDefault()` cancels that quit (Electron's `will-quit`). Not called
-   * for `app.exit()`. Optional: without it, an install on quit cannot cancel the quit when it fails.
+   * for `app.exit()`. All handlers of a quit get the same event, so `event.defaultPrevented` tells whether one that ran
+   * earlier cancelled it. Optional: without it, an install on quit cannot cancel the quit when it fails.
    */
   onWillQuit?(handler: (event: CancellableQuitEvent) => void): void
 

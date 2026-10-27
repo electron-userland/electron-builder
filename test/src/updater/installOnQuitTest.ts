@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { DebUpdater, NsisUpdater } from "electron-updater"
 import type { AppAdapter, CancellableQuitEvent } from "electron-updater/src/AppAdapter"
 import { CommandExitError } from "electron-updater/src/BaseUpdater"
+import { ElevationDeniedError } from "electron-updater/src/LinuxUpdater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
 import { ElectronAppAdapter } from "electron-updater/src/ElectronAppAdapter"
 import type { Logger } from "electron-updater/src/types"
@@ -28,8 +29,13 @@ function makeLogger(): Logger & { infos: string[]; warns: string[]; errors: stri
 interface StubApp extends AppAdapter {
   quitCalls: number
   willQuitHandlerCount: () => number
-  /** Emits `will-quit`, then `quit` unless a handler cancelled it, like Electron's `app.quit()` once all windows closed. Returns whether the app quit. */
-  quitApp: () => boolean
+  /** The event of the `will-quit` being emitted, or emitted last. */
+  lastWillQuitEvent: CancellableQuitEvent | null
+  /**
+   * Emits `will-quit`, then `quit` unless a handler cancelled it, like Electron's `app.quit()` once all windows closed.
+   * `isCancelledEarlier`: a `will-quit` listener added by the app before the updater's has cancelled it already. Returns whether the app quit.
+   */
+  quitApp: (options?: { isCancelledEarlier?: boolean }) => boolean
   emitQuit: (exitCode: number) => void
   emitSessionEnd: () => void
 }
@@ -46,6 +52,7 @@ function makeStubApp(options: { isWillQuitSupported?: boolean } = {}): StubApp {
     userDataPath: "/tmp",
     baseCachePath: "/tmp",
     quitCalls: 0,
+    lastWillQuitEvent: null,
     whenReady: () => Promise.resolve(),
     relaunch: () => {},
     quit: () => {
@@ -58,13 +65,17 @@ function makeStubApp(options: { isWillQuitSupported?: boolean } = {}): StubApp {
       sessionEndHandlers.push(handler)
     },
     willQuitHandlerCount: () => willQuitHandlers.length,
-    quitApp: () => {
-      let isPrevented = false
+    quitApp: ({ isCancelledEarlier = false } = {}) => {
+      let isPrevented = isCancelledEarlier
       const event: CancellableQuitEvent = {
         preventDefault: () => {
           isPrevented = true
         },
+        get defaultPrevented() {
+          return isPrevented
+        },
       }
+      app.lastWillQuitEvent = event
       willQuitHandlers.forEach(it => it(event))
       if (isPrevented) {
         return false
@@ -98,11 +109,11 @@ describe("install on quit", { concurrent: false }, () => {
     vi.restoreAllMocks()
   })
 
-  async function seedDownloadedUpdate(fileName = "TestApp-1.0.1.deb"): Promise<void> {
+  async function seedDownloadedUpdate(fileName = "TestApp-1.0.1.deb", version = "1.0.1"): Promise<void> {
     const installerPath = path.join(helper.cacheDirForPendingUpdate, fileName)
-    await outputFile(installerPath, "installer binary content")
+    await outputFile(installerPath, `installer binary content ${version}`)
     const sha512 = await hashFile(installerPath)
-    const updateInfo: UpdateInfo = { version: "1.0.1", files: [{ url: fileName, sha512 }], path: fileName, sha512, releaseDate: "" }
+    const updateInfo: UpdateInfo = { version, files: [{ url: fileName, sha512 }], path: fileName, sha512, releaseDate: "" }
     await helper.setDownloadedFile(
       installerPath,
       null,
@@ -127,18 +138,19 @@ describe("install on quit", { concurrent: false }, () => {
     vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === "dpkg" || args[0] === "pkexec")
     vi.spyOn(updater as any, "resolveTrustedCommand").mockImplementation((...args: unknown[]) => `/usr/bin/${String(args[0])}`)
     const pkexecCalls: string[][] = []
+    const pkexec = { exitCode: pkexecExitCode }
     vi.spyOn(updater as any, "spawnSyncLog").mockImplementation((...args: unknown[]) => {
       const [cmd, cmdArgs] = args
       if (cmd === "pkexec") {
         pkexecCalls.push(Array.isArray(cmdArgs) ? cmdArgs.map(String) : [])
-        if (pkexecExitCode !== 0) {
-          throw new CommandExitError(`Command pkexec exited with code ${pkexecExitCode}`, "pkexec", pkexecExitCode, null)
+        if (pkexec.exitCode !== 0) {
+          throw new CommandExitError(`Command pkexec exited with code ${pkexec.exitCode}`, "pkexec", pkexec.exitCode, null)
         }
       }
       return ""
     })
     ;(updater as any).addQuitHandler()
-    return { updater, errors, pkexecCalls }
+    return { updater, errors, pkexecCalls, setPkexecExitCode: (exitCode: number) => (pkexec.exitCode = exitCode) }
   }
 
   describe("a failed install on quit (deb, pkexec)", () => {
@@ -199,6 +211,68 @@ describe("install on quit", { concurrent: false }, () => {
       expect(pkexecCalls.length).toBe(pkexecCallCount)
       expect(errors.length).toBe(1)
       expect(log.infos.some(it => it.includes("installing it failed earlier in this session"))).toBe(true)
+    })
+
+    test("emits error while the quit can still be cancelled, before cancelling it", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { updater } = createDebUpdater(app, 126)
+      const isCancelledOnError: boolean[] = []
+      updater.on("error", (error: Error) => {
+        expect(error).toBeInstanceOf(ElevationDeniedError)
+        // an app reopens a window here, or schedules app.quit()
+        isCancelledOnError.push(app.lastWillQuitEvent?.defaultPrevented ?? true)
+      })
+
+      expect(app.quitApp()).toBe(false)
+
+      expect(isCancelledOnError).toEqual([false])
+    })
+
+    test("does not show the dialog again when the cached re-check announces the same update again", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { errors, pkexecCalls, setPkexecExitCode } = createDebUpdater(app, 126)
+      expect(app.quitApp()).toBe(false)
+      const pkexecCallCount = pkexecCalls.length
+
+      // a later check finds the same update cached: the download helper is set to it again
+      await seedDownloadedUpdate()
+      setPkexecExitCode(0)
+
+      expect(app.quitApp()).toBe(true)
+      expect(pkexecCalls.length).toBe(pkexecCallCount)
+      expect(errors.length).toBe(1)
+    })
+
+    test("installs a different update downloaded later on the next quit", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { errors, pkexecCalls, setPkexecExitCode } = createDebUpdater(app, 126)
+      expect(app.quitApp()).toBe(false)
+      expect(pkexecCalls.length).toBe(1)
+
+      await seedDownloadedUpdate("TestApp-1.0.2.deb", "1.0.2")
+      setPkexecExitCode(0)
+
+      expect(app.quitApp()).toBe(true)
+      expect(pkexecCalls.slice(1)).toEqual([["--disable-internal-agent", "/usr/bin/dpkg", "-i", path.join(helper.cacheDirForPendingUpdate, "TestApp-1.0.2.deb")]])
+      expect(errors.length).toBe(1)
+    })
+
+    test("lets an explicit quitAndInstall install the same update", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { updater } = createDebUpdater(app, 126)
+      expect(app.quitApp()).toBe(false)
+      // left running: once it succeeds, quitAndInstall emits before-quit-for-update on Electron's autoUpdater
+      const doInstallAsync = vi.spyOn(updater as any, "doInstallAsync").mockReturnValue(new Promise<boolean>(() => {}))
+
+      updater.quitAndInstall({ isSilent: true })
+      await flush()
+
+      expect(doInstallAsync).toHaveBeenCalledTimes(1)
+      expect(log.warns).not.toContain("install call ignored: quitAndInstallCalled is set to true")
     })
 
     test("cancels the quit when an 'error' listener throws", async () => {
@@ -313,6 +387,54 @@ describe("install on quit", { concurrent: false }, () => {
       app.emitSessionEnd()
 
       expect(app.quitApp()).toBe(true)
+    })
+  })
+
+  describe("a quit that another will-quit listener cancelled already", () => {
+    test("installs nothing, and the quit that follows installs", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { errors, pkexecCalls } = createDebUpdater(app, 0)
+
+      // the app finishes its async cleanup before it quits again
+      expect(app.quitApp({ isCancelledEarlier: true })).toBe(false)
+      expect(pkexecCalls).toEqual([])
+      expect(log.infos.some(it => it.includes("cancelled by another will-quit listener"))).toBe(true)
+
+      expect(app.quitApp()).toBe(true)
+      expect(pkexecCalls.length).toBe(1)
+      expect(errors).toEqual([])
+    })
+
+    test("does not try to install the update again when installing it failed", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { pkexecCalls } = createDebUpdater(app, 126)
+
+      expect(app.quitApp({ isCancelledEarlier: true })).toBe(false)
+      expect(pkexecCalls).toEqual([])
+      expect(app.quitApp()).toBe(false)
+      expect(pkexecCalls.length).toBe(1)
+      expect(app.quitApp()).toBe(true)
+      expect(pkexecCalls.length).toBe(1)
+    })
+
+    test("while an install runs, does not schedule a quit for when it finished", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { updater } = createDebUpdater(app, 0)
+      let finish: (isInstalled: boolean) => void = () => {}
+      vi.spyOn(updater as any, "doInstallAsync").mockReturnValue(new Promise<boolean>(resolve => (finish = resolve)))
+
+      const installed = updater.installAsync(true, false)
+      expect(app.quitApp({ isCancelledEarlier: true })).toBe(false)
+      expect(log.infos).not.toContain("Waiting for the update install to finish before quitting")
+
+      finish(true)
+      await expect(installed).resolves.toBe(true)
+      await flush()
+
+      expect(app.quitCalls).toBe(0)
     })
   })
 
@@ -453,5 +575,31 @@ describe("install on quit", { concurrent: false }, () => {
 
     expect(events.length).toBe(2)
     expect(preventDefault).toHaveBeenCalledTimes(1)
+  })
+
+  test("ElectronAppAdapter forwards defaultPrevented, read when asked", () => {
+    const electronApp = new EventEmitter()
+    const adapter = new ElectronAppAdapter(electronApp)
+    const seen: boolean[] = []
+    adapter.onWillQuit(event => {
+      seen.push(event.defaultPrevented)
+      event.preventDefault()
+      seen.push(event.defaultPrevented)
+    })
+
+    const electronEvent = {
+      defaultPrevented: false,
+      preventDefault() {
+        electronEvent.defaultPrevented = true
+      },
+    }
+    electronApp.emit("will-quit", electronEvent)
+    // cancelled by a listener that ran earlier
+    electronApp.emit("will-quit", { defaultPrevented: true, preventDefault: () => {} })
+    // an Electron version, or an emitter, without it
+    electronApp.emit("will-quit", { preventDefault: () => {} })
+    electronApp.emit("will-quit", { defaultPrevented: "yes", preventDefault: () => {} })
+
+    expect(seen).toEqual([false, true, true, true, false, false, false, false])
   })
 })

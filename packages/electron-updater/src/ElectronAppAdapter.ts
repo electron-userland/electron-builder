@@ -49,7 +49,16 @@ export class ElectronAppAdapter implements AppAdapter {
 
   onWillQuit(handler: (event: CancellableQuitEvent) => void): void {
     // `on`, not `once`: a cancelled quit is followed by another one
-    this.app.on("will-quit", (event: Electron.Event) => handler(event))
+    this.app.on("will-quit", (event: Electron.Event) =>
+      handler({
+        preventDefault: () => event.preventDefault(),
+        // read when asked: a handler that cancels the quit sets it; an Electron version without it reports false
+        get defaultPrevented(): boolean {
+          const defaultPrevented: unknown = event.defaultPrevented
+          return typeof defaultPrevented === "boolean" && defaultPrevented
+        },
+      })
+    )
   }
 
   onSessionEnd(handler: () => void): void {
