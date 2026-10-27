@@ -15,10 +15,10 @@ export class SpacesPublisher extends BaseS3Publisher {
 
   static checkAndResolveOptions(options: SpacesOptions, channelFromAppVersion: string | null, _errorIfCannot: boolean) {
     if (options.name == null) {
-      throw new InvalidConfigurationError(`Please specify "name" for "spaces" publish provider (see https://www.electron.build/publish#spacesoptions)`)
+      throw new InvalidConfigurationError(`Please specify "name" for "spaces" publish provider (see https://www.electron.build/docs/publish#spaces)`)
     }
     if (options.region == null) {
-      throw new InvalidConfigurationError(`Please specify "region" for "spaces" publish provider (see https://www.electron.build/publish#spacesoptions)`)
+      throw new InvalidConfigurationError(`Please specify "region" for "spaces" publish provider (see https://www.electron.build/docs/publish#spaces)`)
     }
 
     if (options.channel == null && channelFromAppVersion != null) {
@@ -35,10 +35,10 @@ export class SpacesPublisher extends BaseS3Publisher {
     const accessKey = process.env.DO_KEY_ID
     const secretKey = process.env.DO_SECRET_KEY
     if (isEmptyOrSpaces(accessKey)) {
-      throw new InvalidConfigurationError("Please set env DO_KEY_ID (see https://www.electron.build/publish#spacesoptions)")
+      throw new InvalidConfigurationError("Please set env DO_KEY_ID (see https://www.electron.build/docs/publish#spaces)")
     }
     if (isEmptyOrSpaces(secretKey)) {
-      throw new InvalidConfigurationError("Please set env DO_SECRET_KEY (see https://www.electron.build/publish#spacesoptions)")
+      throw new InvalidConfigurationError("Please set env DO_SECRET_KEY (see https://www.electron.build/docs/publish#spaces)")
     }
     return {
       region: this.info.region,

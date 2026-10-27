@@ -21,10 +21,10 @@ export class R2Publisher extends BaseS3Publisher {
 
   static checkAndResolveOptions(options: R2Options, channelFromAppVersion: string | null, errorIfCannot: boolean) {
     if (isEmptyOrSpaces(options.bucket)) {
-      throw new InvalidConfigurationError(`Please specify "bucket" for "r2" publish provider (see https://www.electron.build/publish#r2options)`)
+      throw new InvalidConfigurationError(`Please specify "bucket" for "r2" publish provider (see https://www.electron.build/docs/publish#r2)`)
     }
     if (isEmptyOrSpaces(options.accountId)) {
-      throw new InvalidConfigurationError(`Please specify "accountId" for "r2" publish provider (see https://www.electron.build/publish#r2options)`)
+      throw new InvalidConfigurationError(`Please specify "accountId" for "r2" publish provider (see https://www.electron.build/docs/publish#r2)`)
     }
     // Cloudflare account IDs are 32-character hex strings. Catching typos here produces a clear
     // error instead of a confusing DNS/connection failure at upload time.
@@ -73,7 +73,7 @@ export class R2Publisher extends BaseS3Publisher {
     // at build time instead of shipping a broken updater.
     if (isEmptyOrSpaces(options.publicUrl) && options.publishAutoUpdate !== false) {
       const message =
-        `Please specify "publicUrl" for "r2" publish provider when "publishAutoUpdate" is not disabled (see https://www.electron.build/publish#r2options). ` +
+        `Please specify "publicUrl" for "r2" publish provider when "publishAutoUpdate" is not disabled (see https://www.electron.build/docs/publish#r2). ` +
         `R2's S3 API endpoint cannot serve unauthenticated downloads — public access requires an r2.dev subdomain or a custom domain ` +
         `(see https://developers.cloudflare.com/r2/buckets/public-buckets/). Set "publicUrl" to that base URL, or set "publishAutoUpdate": false if the app does not auto-update.`
       if (errorIfCannot) {
