@@ -1,5 +1,5 @@
 import { hashFile } from "builder-util-runtime"
-import type { UpdateInfo } from "builder-util-runtime"
+import type { UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
 import { EventEmitter } from "events"
 import { outputFile } from "fs-extra"
 import * as path from "path"
@@ -116,19 +116,24 @@ describe("install on quit", { concurrent: false }, () => {
     vi.restoreAllMocks()
   })
 
-  async function seedDownloadedUpdate(fileName = "TestApp-1.0.1.deb", version = "1.0.1"): Promise<void> {
+  /** `checksum: "sha2"`: update info written for legacy clients, with a sha2 (SHA-256) checksum and no sha512. */
+  async function seedDownloadedUpdate(fileName = "TestApp-1.0.1.deb", version = "1.0.1", checksum: "sha512" | "sha2" = "sha512"): Promise<void> {
     const installerPath = path.join(helper.cacheDirForPendingUpdate, fileName)
     await outputFile(installerPath, `installer binary content ${version}`)
-    const sha512 = await hashFile(installerPath)
-    const updateInfo: UpdateInfo = { version, files: [{ url: fileName, sha512 }], path: fileName, sha512, releaseDate: "" }
-    await helper.setDownloadedFile(
-      installerPath,
-      null,
-      updateInfo,
-      { url: new URL(`https://example.com/${fileName}`), info: { url: fileName, sha512, size: 1024 } },
-      fileName,
-      true
-    )
+    let fileInfo: UpdateFileInfo
+    if (checksum === "sha512") {
+      fileInfo = { url: fileName, sha512: await hashFile(installerPath), size: 1024 }
+    } else {
+      // the type requires a sha512, which such update info does not have
+      fileInfo = { url: fileName, sha2: await hashFile(installerPath, "sha256", "hex"), size: 1024 } as unknown as UpdateFileInfo
+    }
+    const updateInfo: UpdateInfo = { version, files: [fileInfo], path: fileName, sha512: fileInfo.sha512, releaseDate: "" }
+    await helper.setDownloadedFile(installerPath, null, updateInfo, { url: new URL(`https://example.com/${fileName}`), info: fileInfo }, fileName, true)
+  }
+
+  /** The update install failure that the updater's own "error" listener logged, once per failure. */
+  function loggedInstallErrors(message: string): string[] {
+    return log.errors.filter(it => it.startsWith("Error: ") && it.includes(message))
   }
 
   /**
@@ -180,12 +185,11 @@ describe("install on quit", { concurrent: false }, () => {
       // dpkg only: the apt-get repair would show the dismissed authentication dialog a second time
       expect(pkexecCalls.length).toBe(1)
       expect(errors.map(it => it.message)).toEqual(["Command pkexec exited with code 126 (the authentication dialog was dismissed), the update is not installed"])
-      // visible in the log, since an "error" listener has no window left to show it in
-      expect(log.errors.some(it => it.includes("Cannot install update: Command pkexec exited with code 126"))).toBe(true)
+      // visible in the log, since an "error" listener has no window left to show it in: logged once, by the updater's own listener
+      expect(loggedInstallErrors("Command pkexec exited with code 126").length).toBe(1)
+      expect(log.errors.some(it => it.includes("Cannot install update"))).toBe(false)
       expect(log.warns.some(it => it.includes("the app quits without it"))).toBe(true)
       expect(log.warns.some(it => it.includes("the quit is cancelled"))).toBe(false)
-      // the quit handler that runs next does not install either
-      expect(log.infos.some(it => it.includes("installing it failed earlier in this session"))).toBe(true)
       expect((updater as any).quitAndInstallCalled).toBe(false)
     })
 
@@ -267,7 +271,8 @@ describe("install on quit", { concurrent: false }, () => {
 
       expect(pkexecCalls.length).toBe(1)
       expect(errors.map(it => it.message)).toEqual(["Command pkexec exited with code 126 (the authentication dialog was dismissed), the update is not installed"])
-      expect(log.errors.some(it => it.includes("Cannot install update: Command pkexec exited with code 126"))).toBe(true)
+      expect(loggedInstallErrors("Command pkexec exited with code 126").length).toBe(1)
+      expect(log.errors.some(it => it.includes("Cannot install update"))).toBe(false)
       expect(log.warns.some(it => it.includes("the quit is cancelled"))).toBe(true)
       // an explicit quitAndInstall() can still install
       expect((updater as any).quitAndInstallCalled).toBe(false)
@@ -402,6 +407,149 @@ describe("install on quit", { concurrent: false }, () => {
     expect(errors).toEqual([])
   })
 
+  describe("where the install on quit runs", () => {
+    /** A will-quit listener that the app registers after the updater's, recording what it sees. */
+    function addLaterWillQuitListener(app: StubApp, onWillQuit: (event: CancellableQuitEvent) => void): void {
+      expect(app.willQuitHandlerCount()).toBe(1)
+      app.onWillQuit?.(onWillQuit)
+    }
+
+    test("by default, in the quit handler, once every will-quit listener let the quit through", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { errors, pkexecCalls } = createDebUpdater(app, 0)
+      const pkexecCallCountOnWillQuit: number[] = []
+      addLaterWillQuitListener(app, () => pkexecCallCountOnWillQuit.push(pkexecCalls.length))
+
+      expect(app.quitApp()).toBe(true)
+
+      expect(pkexecCallCountOnWillQuit).toEqual([0])
+      expect(pkexecCalls.length).toBe(1)
+      expect(errors).toEqual([])
+    })
+
+    test("by default, installs nothing when a will-quit listener registered after the updater's cancels the quit", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { errors, pkexecCalls } = createDebUpdater(app, 0)
+      addLaterWillQuitListener(app, event => event.preventDefault())
+
+      // quit is not emitted
+      expect(app.quitApp()).toBe(false)
+      expect(app.quitApp()).toBe(false)
+
+      expect(pkexecCalls).toEqual([])
+      expect(errors).toEqual([])
+      expect(log.infos).not.toContain("Auto install update on quit")
+    })
+
+    test("with cancelQuitOnInstallFailure, in will-quit: a listener registered after the updater's runs after the install", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { errors, pkexecCalls } = createDebUpdater(app, 0, { cancelQuitOnInstallFailure: true })
+      const pkexecCallCountOnWillQuit: number[] = []
+      addLaterWillQuitListener(app, event => {
+        pkexecCallCountOnWillQuit.push(pkexecCalls.length)
+        event.preventDefault()
+      })
+
+      expect(app.quitApp()).toBe(false)
+
+      // documented on cancelQuitOnInstallFailure: register the app's will-quit listeners before checking for updates
+      expect(pkexecCallCountOnWillQuit).toEqual([1])
+      expect(errors).toEqual([])
+    })
+
+    test("with cancelQuitOnInstallFailure, installs nothing when a will-quit listener registered before the updater's cancels the quit", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      app.onWillQuit?.(event => event.preventDefault())
+      const { errors, pkexecCalls } = createDebUpdater(app, 0, { cancelQuitOnInstallFailure: true })
+
+      expect(app.quitApp()).toBe(false)
+
+      expect(pkexecCalls).toEqual([])
+      expect(errors).toEqual([])
+    })
+  })
+
+  describe("update info with only a legacy sha2 checksum", () => {
+    test("identifies the downloaded update by it", async () => {
+      await seedDownloadedUpdate("TestApp-1.0.1.deb", "1.0.1", "sha2")
+      const id = helper.downloadedUpdateId
+      expect(id).toMatch(/^sha2:[0-9a-f]{64}$/)
+
+      await seedDownloadedUpdate("TestApp-1.0.1.deb", "1.0.1", "sha2")
+      expect(helper.downloadedUpdateId).toBe(id)
+
+      await seedDownloadedUpdate("TestApp-1.0.1.deb", "1.0.2", "sha2")
+      expect(helper.downloadedUpdateId).toMatch(/^sha2:/)
+      expect(helper.downloadedUpdateId).not.toBe(id)
+
+      await helper.clear()
+      expect(helper.downloadedUpdateId).toBeNull()
+    })
+
+    test("with cancelQuitOnInstallFailure, a failed install on quit cancels only that quit, and is not retried", async () => {
+      await seedDownloadedUpdate("TestApp-1.0.1.deb", "1.0.1", "sha2")
+      const app = makeStubApp()
+      const { errors, pkexecCalls } = createDebUpdater(app, 126, { cancelQuitOnInstallFailure: true })
+
+      expect(app.quitApp()).toBe(false)
+      expect(app.quitApp()).toBe(true)
+      expect(app.quitApp()).toBe(true)
+
+      expect(pkexecCalls.length).toBe(1)
+      expect(errors.length).toBe(1)
+      expect(log.infos.some(it => it.includes("installing it failed earlier in this session"))).toBe(true)
+    })
+
+    test("a failed install on quit is not retried when the cached re-check announces the same update again", async () => {
+      await seedDownloadedUpdate("TestApp-1.0.1.deb", "1.0.1", "sha2")
+      const app = makeStubApp()
+      const { pkexecCalls, setPkexecExitCode } = createDebUpdater(app, 126, { cancelQuitOnInstallFailure: true })
+      expect(app.quitApp()).toBe(false)
+
+      await seedDownloadedUpdate("TestApp-1.0.1.deb", "1.0.1", "sha2")
+      setPkexecExitCode(0)
+
+      expect(app.quitApp()).toBe(true)
+      expect(pkexecCalls.length).toBe(1)
+    })
+
+    test("a newer update downloaded later, under the same installer file name, is installed on quit", async () => {
+      await seedDownloadedUpdate("TestApp.deb", "1.0.1", "sha2")
+      const app = makeStubApp()
+      const { pkexecCalls, setPkexecExitCode } = createDebUpdater(app, 126, { cancelQuitOnInstallFailure: true })
+      expect(app.quitApp()).toBe(false)
+
+      await seedDownloadedUpdate("TestApp.deb", "1.0.2", "sha2")
+      setPkexecExitCode(0)
+
+      expect(app.quitApp()).toBe(true)
+      expect(pkexecCalls.length).toBe(2)
+    })
+
+    test("a quit that waited for a failing quitAndInstall does not install it on quit", async () => {
+      await seedDownloadedUpdate("TestApp-1.0.1.deb", "1.0.1", "sha2")
+      const app = makeStubApp()
+      const { updater, pkexecCalls } = createDebUpdater(app, 126)
+      let finish: (isInstalled: boolean) => void = () => {}
+      vi.spyOn(updater as any, "doInstallAsync").mockReturnValue(new Promise<boolean>(resolve => (finish = resolve)))
+
+      updater.quitAndInstall({ isSilent: true })
+      await flush()
+      expect(app.quitApp()).toBe(false)
+      finish(false)
+      await flush()
+      await flush()
+
+      expect(app.quitCalls).toBe(1)
+      expect(app.quitApp()).toBe(true)
+      expect(pkexecCalls).toEqual([])
+    })
+  })
+
   describe("does not cancel the quit", () => {
     test("when no update finished downloading", () => {
       const app = makeStubApp()
@@ -476,7 +624,6 @@ describe("install on quit", { concurrent: false }, () => {
       // the app finishes its async cleanup before it quits again
       expect(app.quitApp({ isCancelledEarlier: true })).toBe(false)
       expect(pkexecCalls).toEqual([])
-      expect(log.infos.some(it => it.includes("cancelled by another will-quit listener"))).toBe(true)
 
       expect(app.quitApp()).toBe(true)
       expect(pkexecCalls.length).toBe(1)
@@ -504,6 +651,7 @@ describe("install on quit", { concurrent: false }, () => {
 
       expect(app.quitApp({ isCancelledEarlier: true })).toBe(false)
       expect(pkexecCalls).toEqual([])
+      expect(log.infos.some(it => it.includes("cancelled by another will-quit listener"))).toBe(true)
       expect(app.quitApp()).toBe(false)
       expect(pkexecCalls.length).toBe(1)
       expect(app.quitApp()).toBe(true)
@@ -574,9 +722,54 @@ describe("install on quit", { concurrent: false }, () => {
       await flush()
 
       expect(app.quitCalls).toBe(1)
+      expect(log.warns.some(it => it.includes("the quit that waited for the install proceeds without it"))).toBe(true)
+      expect(log.infos).not.toContain("The update install finished, quitting")
       // the quit that follows does not show the authentication dialog again
       expect(app.quitApp()).toBe(true)
       expect(pkexecCalls).toEqual([])
+    })
+
+    test("with cancelQuitOnInstallFailure, a quit that waited for a failing quitAndInstall stays cancelled", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { updater, pkexecCalls } = createDebUpdater(app, 126, { cancelQuitOnInstallFailure: true })
+      const { finish } = deferredInstall(updater)
+
+      updater.quitAndInstall({ isSilent: true })
+      await flush()
+      expect(app.quitApp()).toBe(false)
+
+      finish(false)
+      await flush()
+      await flush()
+
+      expect(app.quitCalls).toBe(0)
+      expect(log.warns.some(it => it.includes("the quit that waited for the install stays cancelled (cancelQuitOnInstallFailure)"))).toBe(true)
+      expect(log.infos).not.toContain("The update install finished, quitting")
+      // the next quit is not cancelled, and does not show the authentication dialog again
+      expect(app.quitApp()).toBe(true)
+      expect(pkexecCalls).toEqual([])
+    })
+
+    test("quits once when a will-quit listener registered after the updater's cancels the waiting quit too", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { updater } = createDebUpdater(app, 0)
+      const { finish } = deferredInstall(updater)
+      const installed = updater.installAsync(true, false)
+      // the app, say, asks for confirmation and quits again by itself
+      app.onWillQuit?.(event => event.preventDefault())
+
+      expect(app.quitApp()).toBe(false)
+      expect(app.quitApp()).toBe(false)
+
+      finish(true)
+      await expect(installed).resolves.toBe(true)
+      await flush()
+
+      // one app.quit(), which emits will-quit again: that listener can cancel it as well
+      expect(app.quitCalls).toBe(1)
+      expect(log.infos.filter(it => it === "The update install finished, quitting").length).toBe(1)
     })
 
     test("waits for the install on launch, which quits once it succeeded, and quits only once", async () => {

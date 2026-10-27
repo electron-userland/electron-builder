@@ -371,8 +371,8 @@ export abstract class LinuxUpdater extends BaseUpdater {
       const { elevation, plan } = this.prepareInstall()
       runInstallPlan(plan, commandWithArgs => this.runCommandWithSudoIfNeeded(commandWithArgs, elevation), this._logger)
     } catch (error: unknown) {
-      // on quit, an "error" listener that shows the error has no window left to show it in: the log has it
-      nonThrowingLogger(this._logger).error(`Cannot install update: ${errorMessage(error)}`)
+      // on quit, an "error" listener that shows the error has no window left to show it in: the updater's own "error"
+      // listener logs it, as for the async install
       this.dispatchError(error instanceof Error ? error : new Error(String(error)))
       return false
     }

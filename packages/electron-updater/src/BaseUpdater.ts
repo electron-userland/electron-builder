@@ -132,8 +132,8 @@ interface InstallOnQuitSkip {
 
 /** An install {@link BaseUpdater.runInstallAsync} waits for. */
 interface InFlightInstall {
-  /** The update it installs, should the download helper move on to another one meanwhile. */
-  readonly sha512: string | null
+  /** The update it installs ({@link BaseUpdater.downloadedUpdateId}), should the download helper move on to another one meanwhile. */
+  readonly updateId: string | null
   /** A quit was cancelled to let it finish: the app quits once it settled. */
   isQuitDeferred: boolean
 }
@@ -146,10 +146,10 @@ export abstract class BaseUpdater extends AppUpdater {
   /** The install {@link runInstallAsync} waits for, `null` when none runs. */
   private inFlightInstall: InFlightInstall | null = null
   /**
-   * The sha512 of the downloaded update whose install failed while the app was quitting: no later quit in this session
-   * tries to install that update on quit again. A different update downloaded later is installed on quit.
+   * The {@link downloadedUpdateId} of the downloaded update whose install failed while the app was quitting: no later quit
+   * in this session tries to install that update on quit again. A different update downloaded later is installed on quit.
    */
-  private failedInstallOnQuitSha512: string | null = null
+  private failedInstallOnQuitUpdateId: string | null = null
   /**
    * Set while {@link executeDownload} runs. The downloaded update helper can already point at an installer then, e.g. one
    * cached by an earlier launch that the app's `verifyUpdateFile` has not accepted yet, so the quit handler must not install it.
@@ -214,10 +214,10 @@ export abstract class BaseUpdater extends AppUpdater {
 
   /**
    * Whether a quit can be cancelled for this target (see {@link handleWillQuit}): a quit waits for an install that is
-   * running, and the install on quit runs while the quit can still be cancelled, which a failed install does when
-   * {@link cancelQuitOnInstallFailure} is set. Only for targets whose {@link doInstall} has finished, and knows whether
-   * it succeeded, when it returns: the Linux package targets. The others keep installing in the quit itself, which
-   * cannot be cancelled; NSIS, for one, only starts an installer that runs once the app exited.
+   * running, and with {@link cancelQuitOnInstallFailure} the install on quit runs while the quit can still be cancelled,
+   * which a failed install then does. Only for targets whose {@link doInstall} has finished, and knows whether it
+   * succeeded, when it returns: the Linux package targets. The others always install in the quit itself, which cannot
+   * be cancelled; NSIS, for one, only starts an installer that runs once the app exited.
    */
   protected get isQuitCancellable(): boolean {
     return false
@@ -319,7 +319,7 @@ export abstract class BaseUpdater extends AppUpdater {
     }
 
     this.addWillQuitHandler()
-    const install: InFlightInstall = { sha512: this.downloadedUpdateSha512, isQuitDeferred: false }
+    const install: InFlightInstall = { updateId: this.downloadedUpdateId, isQuitDeferred: false }
     let isInstalled = false
     this.inFlightInstall = install
     try {
@@ -334,6 +334,12 @@ export abstract class BaseUpdater extends AppUpdater {
     }
   }
 
+  /**
+   * The quit that waited for `install` (see {@link handleWillQuit}) happens now that it settled: once, with one
+   * `app.quit()`, which emits `will-quit` again, so a `will-quit` listener that cancelled the deferred quit as well can
+   * cancel this one too. Not when the install succeeded and its caller quits by itself, nor when it failed and
+   * {@link cancelQuitOnInstallFailure} is set: the quit stays cancelled then.
+   */
   private quitIfDeferred(install: InFlightInstall, isInstalled: boolean, isQuitOnSuccess: boolean): void {
     if (!install.isQuitDeferred) {
       return
@@ -342,11 +348,22 @@ export abstract class BaseUpdater extends AppUpdater {
       // quitAndInstall and the install on launch quit once the install succeeded
       return
     }
-    if (!isInstalled) {
-      // the user cancelled the authentication dialog, for example: quitting must not show it again for this update
-      this.failedInstallOnQuitSha512 = install.sha512
+    const logger = nonThrowingLogger(this._logger)
+    if (isInstalled) {
+      logger.info("The update install finished, quitting")
+      setImmediate(() => this.app.quit())
+      return
     }
-    nonThrowingLogger(this._logger).info("The update install finished, quitting")
+
+    // the user cancelled the authentication dialog, for example: quitting must not show it again for this update
+    this.failedInstallOnQuitUpdateId = install.updateId
+    if (this.cancelQuitOnInstallFailure) {
+      logger.warn(
+        'The update was not installed, so the quit that waited for the install stays cancelled (cancelQuitOnInstallFailure): the app keeps running (its windows are already closed) and an "error" event was emitted. The next quit is not cancelled and does not try to install this update again; call quitAndInstall() to retry.'
+      )
+      return
+    }
+    logger.warn('The update was not installed, and an "error" event was emitted: the quit that waited for the install proceeds without it')
     setImmediate(() => this.app.quit())
   }
 
@@ -591,8 +608,38 @@ export abstract class BaseUpdater extends AppUpdater {
       return
     }
 
+    // with cancelQuitOnInstallFailure, will-quit installed already, unless the app adapter does not support it or the
+    // app called app.exit(), which skips will-quit
+    if (this.installOnQuit(logger) || !this.isQuitCancellable) {
+      return
+    }
+    logger.warn(
+      this.cancelQuitOnInstallFailure
+        ? 'The update was not installed on quit, and an "error" event is emitted: the app quits without it, since this quit cannot be cancelled anymore (cancelQuitOnInstallFailure needs will-quit).'
+        : 'The update was not installed on quit, and an "error" event is emitted: the app quits without it. Set cancelQuitOnInstallFailure to keep the app running instead.'
+    )
+  }
+
+  /**
+   * Installs the downloaded update on quit; returns whether it is installed. Never throws. When the install fails, no
+   * later quit in this session tries to install that update again, and an explicit `quitAndInstall()` still can.
+   */
+  private installOnQuit(logger: Logger): boolean {
     logger.info("Auto install update on quit")
-    this.install(true, false)
+    const updateId = this.downloadedUpdateId
+    let isInstalled = false
+    try {
+      isInstalled = this.install(true, false)
+    } catch (error: unknown) {
+      // install() reports a failed install itself; this is a failure to report it (an "error" listener that throws)
+      logger.error(`Cannot install update on quit: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
+    }
+    if (!isInstalled) {
+      this.failedInstallOnQuitUpdateId = updateId
+      // install() leaves it set
+      this.quitAndInstallCalled = false
+    }
+    return isInstalled
   }
 
   private addWillQuitHandler(): void {
@@ -605,15 +652,18 @@ export abstract class BaseUpdater extends AppUpdater {
     })
   }
 
-  /** The sha512 of the downloaded update, which tells one update from another. */
-  private get downloadedUpdateSha512(): string | null {
-    return this.downloadedUpdateHelper?.downloadedFileInfo?.sha512 ?? null
+  /**
+   * Tells the downloaded update from another one (see `DownloadedUpdateHelper.downloadedUpdateId`): its sha512, or
+   * the legacy sha2 checksum of update info that has no sha512.
+   */
+  private get downloadedUpdateId(): string | null {
+    return this.downloadedUpdateHelper?.downloadedUpdateId ?? null
   }
 
   /** Whether installing the downloaded update failed while the app was quitting earlier in this session. */
   private get isDownloadedUpdateFailedOnQuit(): boolean {
-    const sha512 = this.downloadedUpdateSha512
-    return sha512 != null && sha512 === this.failedInstallOnQuitSha512
+    const updateId = this.downloadedUpdateId
+    return updateId != null && updateId === this.failedInstallOnQuitUpdateId
   }
 
   /** Whether the quit handler would install the downloaded update now; it logs why not, when not. */
@@ -628,13 +678,18 @@ export abstract class BaseUpdater extends AppUpdater {
    * Runs on every quit that can still be cancelled (Electron's `will-quit`: after all windows closed, not for
    * `app.exit()`), for targets where {@link isQuitCancellable}. It never throws.
    * - While an install runs (an explicit `quitAndInstall()`, the install on launch), the quit waits for it: when it is
-   *   cancelled, the update would be left half installed, and the app would not be relaunched.
-   * - The install on quit runs here rather than in the quit handler, which cannot cancel the quit. When it fails (the
-   *   user dismissed the authentication dialog, for example), an `error` event is emitted and logged, and the quit
-   *   proceeds: the app exits without the update. With {@link cancelQuitOnInstallFailure}, the quit is cancelled
-   *   instead and the app keeps running, with its windows closed. Either way, no later quit in this session tries to
-   *   install that update again; an explicit `quitAndInstall()` still can, and a different update downloaded later is
-   *   installed on quit.
+   *   cancelled, the update would be left half installed, and the app would not be relaunched. Once the install settled,
+   *   the quit happens (see {@link quitIfDeferred}).
+   * - With {@link cancelQuitOnInstallFailure}, the install on quit runs here rather than in the quit handler, which cannot
+   *   cancel the quit. When it fails (the user dismissed the authentication dialog, for example), an `error` event is
+   *   emitted and logged, and the quit is cancelled: the app keeps running, with its windows closed. No later quit in this
+   *   session tries to install that update again; an explicit `quitAndInstall()` still can, and a different update
+   *   downloaded later is installed on quit.
+   *
+   * Without that option, the install on quit runs in the quit handler ({@link handleQuit}), as on the other targets:
+   * `quit` is only emitted once every `will-quit` listener let the quit through, while here only the listeners that ran
+   * before this one can be seen to have cancelled it. With the option, a listener registered after this one (that is,
+   * after the first update download or install started) that cancels the quit runs after the install.
    *
    * When the OS session ends, the quit proceeds as before. A quit that a `will-quit` listener called before this one
    * already cancelled (an app finishing async cleanup before it quits again, for example) is left alone: nothing is
@@ -646,15 +701,16 @@ export abstract class BaseUpdater extends AppUpdater {
       return
     }
 
+    const inFlightInstall = this.inFlightInstall
+    const isInstallOnQuitHere = this.cancelQuitOnInstallFailure && inFlightInstall == null && this.isInstallOnQuitDue
     // a custom app adapter may not tell: then the quit is taken as not cancelled
     if (event.defaultPrevented === true) {
-      if (this.inFlightInstall != null || this.isInstallOnQuitDue) {
+      if (inFlightInstall != null || isInstallOnQuitHere) {
         logger.info("The quit was cancelled by another will-quit listener: the update is installed on a quit that proceeds")
       }
       return
     }
 
-    const inFlightInstall = this.inFlightInstall
     if (inFlightInstall != null) {
       event.preventDefault()
       if (!inFlightInstall.isQuitDeferred) {
@@ -664,30 +720,7 @@ export abstract class BaseUpdater extends AppUpdater {
       return
     }
 
-    if (!this.isInstallOnQuitDue) {
-      return
-    }
-
-    logger.info("Auto install update on quit")
-    const sha512 = this.downloadedUpdateSha512
-    let isInstalled = false
-    try {
-      isInstalled = this.install(true, false)
-    } catch (error: unknown) {
-      // install() reports a failed install itself; this is a failure to report it (an "error" listener that throws)
-      logger.error(`Cannot install update on quit: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
-    }
-    if (isInstalled) {
-      return
-    }
-
-    this.failedInstallOnQuitSha512 = sha512
-    // install() leaves it set; an explicit quitAndInstall() must still be able to install
-    this.quitAndInstallCalled = false
-    if (!this.cancelQuitOnInstallFailure) {
-      logger.warn(
-        'The update was not installed on quit, and an "error" event is emitted: the app quits without it. Set cancelQuitOnInstallFailure to keep the app running instead.'
-      )
+    if (!isInstallOnQuitHere || this.installOnQuit(logger)) {
       return
     }
 
