@@ -217,7 +217,7 @@ describe("checkMetadata electron-updater version validation", () => {
     test("the 7.0.0 prereleases before the first one that reads the binary block map are rejected where the build writes it", async ({ tmpDir }) => {
       for (const version of ["7.0.0-alpha.0", "7.0.0-alpha.12"]) {
         await withProjectDir(tmpDir, version, projectDir => {
-          const escaped = version.replace(/\./g, "\\.")
+          const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
           expect(() => checkDependencies({ "electron-updater": version }, projectDir, DEFAULT, [Platform.WINDOWS, Platform.MAC, Platform.LINUX])).toThrow(
             new RegExp(
               `electron-updater ${escaped} cannot read the binary block map the build writes for windows, mac: electron-updater reads it from 7\\.0\\.0-alpha\\.13\\..*"blockmap" to "v2".*v27-build-changes#block-map-format-follows-electronupdatercompatibility`
