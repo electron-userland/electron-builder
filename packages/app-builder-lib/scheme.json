@@ -8995,6 +8995,23 @@
           "default": "latest",
           "description": "Version of the NSIS toolset bundle used to compile Windows installers.\n\nThe bundle ships:\n- **`makensis`** — the NSIS compiler invoked to build `.nsi` scripts into `.exe` installers.\n- **NSIS plugins** — the plugin DLLs (`NsisMultiUser`, `UAC`, `StdUtils`, etc.) referenced by\n  electron-builder's default installer scripts.\n- **`elevate.exe`** — UAC elevation helper included in NSIS installers.\n\nAvailable versions:\n| Version | `makensis` version | Notes |\n|---------|------------------|-------|\n| `\"0.0.0\"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27) |\n| `\"1.2.1\"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md\n\nA custom bundle (a {@link ToolsetCustom} object) must follow the layout at\nhttps://www.electron.build/docs/toolsets#custom-nsis-bundle-layout"
         },
+        "rpm": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
+            {
+              "enum": [
+                "1.0.0",
+                "latest",
+                "system"
+              ],
+              "type": "string"
+            }
+          ],
+          "default": "latest",
+          "description": "The `rpmbuild` that fpm runs to build the `rpm` target, on macOS and Linux hosts.\n\nBy default (`\"latest\"`) a portable `rpmbuild` bundle is downloaded, so the `.rpm` is the same whichever `rpm` version (if any) is\ninstalled on the build machine, and whatever its configuration: host and user rpm macros (`/etc/rpm`, `~/.rpmmacros`) are ignored.\nThe bundle pins the v4 package format and disables `/usr/lib/.build-id` links.\n\nAvailable versions:\n| Version | rpm version | Platform support | Notes |\n|---------|-------------|------------------|-------|\n| `\"1.0.0\"` | 6.1.0 | Linux x64 and arm64 (glibc >= 2.28), macOS arm64 (15+) | Current default |\n| `\"system\"` | host install | macOS, Linux | The `rpmbuild` on `PATH` (pre-v27 behavior); install it with `brew install rpm` or `apt-get install rpm` |\n\nNo bundle is published for Intel macOS or 32-bit Linux hosts: building the `rpm` target there requires `\"system\"`, and any other\nvalue fails the build with a configuration error.\n\nA custom bundle (a {@link ToolsetCustom} object) must have the same layout: `bin/rpmbuild` at its root.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/rpm/CHANGELOG.md"
+        },
         "sevenZip": {
           "anyOf": [
             {

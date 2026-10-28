@@ -837,6 +837,30 @@ export interface ToolsetConfig {
   readonly linuxToolsMac?: "1.0.0" | "1.0.1" | ToolsetCustom | "latest"
 
   /**
+   * The `rpmbuild` that fpm runs to build the `rpm` target, on macOS and Linux hosts.
+   *
+   * By default (`"latest"`) a portable `rpmbuild` bundle is downloaded, so the `.rpm` is the same whichever `rpm` version (if any) is
+   * installed on the build machine, and whatever its configuration: host and user rpm macros (`/etc/rpm`, `~/.rpmmacros`) are ignored.
+   * The bundle pins the v4 package format and disables `/usr/lib/.build-id` links.
+   *
+   * Available versions:
+   * | Version | rpm version | Platform support | Notes |
+   * |---------|-------------|------------------|-------|
+   * | `"1.0.0"` | 6.1.0 | Linux x64 and arm64 (glibc >= 2.28), macOS arm64 (15+) | Current default |
+   * | `"system"` | host install | macOS, Linux | The `rpmbuild` on `PATH` (pre-v27 behavior); install it with `brew install rpm` or `apt-get install rpm` |
+   *
+   * No bundle is published for Intel macOS or 32-bit Linux hosts: building the `rpm` target there requires `"system"`, and any other
+   * value fails the build with a configuration error.
+   *
+   * A custom bundle (a {@link ToolsetCustom} object) must have the same layout: `bin/rpmbuild` at its root.
+   *
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/rpm/CHANGELOG.md
+   *
+   * @default "latest"
+   */
+  readonly rpm?: "1.0.0" | "system" | ToolsetCustom | "latest"
+
+  /**
    * Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.
    *
    * Set to a {@link ToolsetCustom} object to supply your own 7za binary.

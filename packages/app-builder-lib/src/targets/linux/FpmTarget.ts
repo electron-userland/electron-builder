@@ -16,6 +16,7 @@ import { ArtifactCreated } from "../../packagerApi.js"
 import { getPackAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../publish/PublishManager.js"
 import { getFpmPath } from "../../toolsets/fpm.js"
 import { getLinuxToolsPath } from "../../toolsets/linuxToolsMac.js"
+import { getRpmToolsetBinDir } from "../../toolsets/rpm.js"
 import { computeEnv } from "../../util/bundledTool.js"
 import { isFpmDebug } from "../../util/flags.js"
 import { hashFile } from "../../util/hash.js"
@@ -315,8 +316,9 @@ export default class FpmTarget extends Target {
       env.XZ_DEFAULTS = "-T0"
     }
 
-    // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)
-    // so, for now, brew install rpm is still required.
+    // linux-tools-mac provides GNU tar/ar/lzip for the other fpm targets on macOS. The rpm target does not use them: rpmbuild
+    // writes the payload itself, and it comes from toolsets.rpm (see executeFpm). Keeping linux-tools-mac's DYLD_LIBRARY_PATH
+    // away from it also keeps the rpm bundle loading its own dylibs.
     if (target !== "rpm" && (await isMacOsSierra())) {
       const linuxToolsPath = await getLinuxToolsPath(packager.config.toolsets?.linuxToolsMac, packager.buildResourcesDir)
       Object.assign(env, {
@@ -386,9 +388,13 @@ export default class FpmTarget extends Target {
 
     const fpmPath = await getFpmPath(this.packager.config.toolsets?.fpm, this.packager.buildResourcesDir)
 
-    await exec(fpmPath, fpmArgs, { env }).catch(e => {
-      if (e.message.includes("Need executable 'rpmbuild' to convert dir to rpm")) {
-        const hint = "to build rpm, executable rpmbuild is required, please install rpm package on your system. "
+    // fpm looks rpmbuild up on PATH only, so the toolsets.rpm bundle goes first on it; null is "system" (the host rpmbuild)
+    const rpmBinDir = target === "rpm" ? await getRpmToolsetBinDir(this.packager.config.toolsets?.rpm, this.packager.buildResourcesDir) : null
+    const execEnv = rpmBinDir == null ? env : { ...env, PATH: computeEnv(env.PATH, [rpmBinDir]) }
+
+    await exec(fpmPath, fpmArgs, { env: execEnv }).catch(e => {
+      if (rpmBinDir == null && e.message.includes("Need executable 'rpmbuild' to convert dir to rpm")) {
+        const hint = 'to build rpm with toolsets.rpm: "system", executable rpmbuild is required on PATH, please install rpm package on your system. '
         if (process.platform === "darwin") {
           log.error(null, hint + "(brew install rpm)")
         } else {

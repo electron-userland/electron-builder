@@ -195,6 +195,15 @@ rpm:
 electron-builder interpolates variables into maintainer scripts (`afterInstall` / `afterRemove`) using shell-style `${var}`. The legacy EJS `<%= var %>` interpolation was **removed** in v27 — update any templated maintainer scripts to `${var}`. See [v27 Breaking Changes → Linux maintainer-script EJS syntax](./migration/v27-developer-changes.md#linux-maintainer-script-ejs-template-syntax).
 :::
 
+**`rpmbuild`:** fpm builds the package with the portable `rpmbuild` from the [`toolsets.rpm`](./toolsets.md) toolset (rpm 6.1.0), so the build machine needs no `rpm` package and the output does not depend on its rpm version or on host rpm macros (`~/.rpmmacros`, `/etc/rpm`). The bundle is published for Linux x64 and arm64 and macOS arm64. On Intel macOS and 32-bit Linux, or to build with the host `rpmbuild` as before v27, set:
+
+```yaml
+toolsets:
+  rpm: system
+```
+
+See [v27 Breaking Changes → RPM builds use a bundled `rpmbuild`](./migration/v27-build-changes.md#rpm-builds-use-a-bundled-rpmbuild).
+
 ## Pacman Package (`pacman`)
 
 :::warning[Beta]
