@@ -10,7 +10,6 @@ import { AppAdapter, CancellableQuitEvent } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask, UpdateInfoAndProvider } from "./AppUpdater.js"
 import type { Logger, VerifyUpdateFileResult } from "./types.js"
 import { QuitAndInstallOptions, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
-import { nonThrowingLogger } from "./util.js"
 
 const require = createRequire(import.meta.url)
 
@@ -190,7 +189,7 @@ export abstract class BaseUpdater extends AppUpdater {
     super(options, app)
     void this.app.whenReady().then(() => {
       if (this.autoInstallEvent === "onNextLaunch") {
-        return this.installPendingUpdate(true).catch((e: any) => this._logger.warn(`Cannot install pending update on launch: ${e.message || e}`))
+        return this.installPendingUpdate(true).catch((e: any) => this.log.warn(`Cannot install pending update on launch: ${e.message || e}`))
       }
       return Promise.resolve(false)
     })
@@ -199,21 +198,21 @@ export abstract class BaseUpdater extends AppUpdater {
   quitAndInstall(options: QuitAndInstallOptions | boolean = {}, legacyIsForceRunAfter?: boolean): void {
     const { isSilent = false, isForceRunAfter = false, waitUntilNextLaunch = false } = this.normalizeQuitAndInstallOptions(options, legacyIsForceRunAfter)
     if (waitUntilNextLaunch) {
-      this._logger.info(`Deferring install to next launch on explicit quitAndInstall (waitUntilNextLaunch)`)
+      this.log.info(`Deferring install to next launch on explicit quitAndInstall (waitUntilNextLaunch)`)
       if (this.markPendingInstallOnNextLaunch()) {
         this.installState = HANDED_OFF
         setImmediate(() => this.app.quit())
       }
       return
     }
-    this._logger.info(`Install on explicit quitAndInstall`)
+    this.log.info(`Install on explicit quitAndInstall`)
     // If NOT in silent mode use `autoRunAppAfterInstall` to determine whether to force run the app
     // the install runs asynchronously on targets whose install shows an elevation dialog (see installAsync), so the
     // app quits once it finished instead of right after this call returns
     void this.runInstallAsync(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall, "quitAndInstall")
       .catch((error: unknown) => {
         // installAsync reports install failures itself; this is a failure to report one (an "error" listener that throws)
-        nonThrowingLogger(this._logger).error(`Cannot install update: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
+        this.log.error(`Cannot install update: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
         return false
       })
       .then(isInstalled => {
@@ -292,7 +291,7 @@ export abstract class BaseUpdater extends AppUpdater {
    */
   private beginInstall(isSilent: boolean, isForceRunAfter: boolean): { readonly install: Installing; readonly options: InstallOptions } | null {
     if (this.installState.kind !== "idle") {
-      this._logger.warn("install call ignored: quitAndInstallCalled is set to true")
+      this.log.warn("install call ignored: quitAndInstallCalled is set to true")
       return null
     }
 
@@ -308,7 +307,7 @@ export abstract class BaseUpdater extends AppUpdater {
     const install: Installing = { kind: "installing", updateId: this.downloadedUpdateId, isQuitDeferred: false }
     this.installState = install
 
-    this._logger.info(`Install: isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter}`)
+    this.log.info(`Install: isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter}`)
     return {
       install,
       options: {
@@ -344,16 +343,15 @@ export abstract class BaseUpdater extends AppUpdater {
       // quitAndInstall and the install on launch quit once the install succeeded
       return
     }
-    const logger = nonThrowingLogger(this._logger)
     if (isInstalled) {
-      logger.info("The update install finished, quitting")
+      this.log.info("The update install finished, quitting")
     } else if (this.cancelQuitOnInstallFailure) {
-      logger.warn(
+      this.log.warn(
         'The update was not installed, so the quit that waited for the install stays cancelled (cancelQuitOnInstallFailure): the app keeps running (its windows are already closed) and an "error" event was emitted. The next quit is not cancelled and does not try to install this update again; call quitAndInstall() to retry.'
       )
       return
     } else {
-      logger.warn('The update was not installed, and an "error" event was emitted: the quit that waited for the install proceeds without it')
+      this.log.warn('The update was not installed, and an "error" event was emitted: the quit that waited for the install proceeds without it')
     }
     setImmediate(() => this.app.quit())
   }
@@ -426,26 +424,26 @@ export abstract class BaseUpdater extends AppUpdater {
     const pendingInfo = await downloadedUpdateHelper.getPendingInstallInfo()
     if (pendingInfo == null) {
       if (!isAutomatic) {
-        this._logger.info("No update is marked for install on next launch")
+        this.log.info("No update is marked for install on next launch")
       }
       return false
     }
 
     if (isAutomatic && !this.isAutoInstallOnNextLaunchSupported) {
-      this._logger.info(
+      this.log.info(
         "Skipping automatic install of the pending update on launch: this target installs via the system package manager and always requires elevation (pkexec/sudo), which would show an authentication prompt at startup. Call installPendingUpdateIfAvailable() explicitly to install it at a moment the app controls."
       )
       return false
     }
 
     if (isAutomatic && pendingInfo.isAdminRightsRequired) {
-      this._logger.info(
+      this.log.info(
         "Skipping automatic install of the pending update on launch: it is a per-machine installation (isAdminRightsRequired is true). Call installPendingUpdateIfAvailable() explicitly to install it."
       )
       return false
     }
 
-    this._logger.info("Update is marked for install on next launch, validating it against the latest update info")
+    this.log.info("Update is marked for install on next launch, validating it against the latest update info")
     const updateInfoAndProvider = await this.getUpdateInfoAndProvider()
     const latestInfo = updateInfoAndProvider.info
     const latestVersion = parseVersion(latestInfo.version)
@@ -456,32 +454,32 @@ export abstract class BaseUpdater extends AppUpdater {
     const isInstallableChange =
       latestVersion != null && !isVersionsEqual(latestVersion, this.currentVersion) && (isVersionGreaterThan(latestVersion, this.currentVersion) || this.allowDowngrade)
     if (!isInstallableChange) {
-      this._logger.info(
+      this.log.info(
         `Pending update ${latestInfo.version} is not an installable change from the current version ${this.currentVersion.format()} (allowDowngrade: ${this.allowDowngrade}), clearing install-on-next-launch state`
       )
-      await downloadedUpdateHelper.clearPendingInstallMarker(this._logger)
+      await downloadedUpdateHelper.clearPendingInstallMarker(this.log)
       return false
     }
 
     const fileInfo = updateInfoAndProvider.provider.resolveFiles(latestInfo).find(it => it.info.sha512 === pendingInfo.sha512)
     if (fileInfo == null) {
-      this._logger.warn(
+      this.log.warn(
         `Pending update doesn't match any file of the latest update info (version ${latestInfo.version}), clearing install-on-next-launch state. The new update must be downloaded again.`
       )
-      await downloadedUpdateHelper.clearPendingInstallMarker(this._logger)
+      await downloadedUpdateHelper.clearPendingInstallMarker(this.log)
       return false
     }
 
     if (fileInfo.packageInfo != null && this.disableWebInstaller) {
-      await downloadedUpdateHelper.clearPendingInstallMarker(this._logger)
+      await downloadedUpdateHelper.clearPendingInstallMarker(this.log)
       this.dispatchError(newError(`Unable to install pending update ${latestInfo.version}. Web Installers are disabled`, "ERR_UPDATER_WEB_INSTALLER_DISABLED"))
       return false
     }
 
-    const installerPath = await downloadedUpdateHelper.validateCachedPendingInstall(fileInfo, this._logger)
+    const installerPath = await downloadedUpdateHelper.validateCachedPendingInstall(fileInfo)
     if (installerPath == null) {
       // validation already logged the reason and cleaned the pending cache
-      this._logger.warn("Pending update failed validation and will not be installed")
+      this.log.warn("Pending update failed validation and will not be installed")
       return false
     }
 
@@ -515,9 +513,9 @@ export abstract class BaseUpdater extends AppUpdater {
 
     // clear the marker before spawning the installer so a silently failing install cannot produce an endless
     // spawn-and-quit loop on every launch
-    await downloadedUpdateHelper.clearPendingInstallMarker(this._logger)
+    await downloadedUpdateHelper.clearPendingInstallMarker(this.log)
     this.updateInfoAndProvider = updateInfoAndProvider
-    this._logger.info(`Installing pending update ${latestInfo.version} on launch`)
+    this.log.info(`Installing pending update ${latestInfo.version} on launch`)
     // a failed install returns to idle (see endInstall): with the pending marker cleared above, autoInstallEvent: "onQuit"
     // or an explicit quitAndInstall can still install the cached update
     const isInstalled = await this.runInstallAsync(true, true, "launch")
@@ -547,9 +545,9 @@ export abstract class BaseUpdater extends AppUpdater {
       this.dispatchError(new Error("No update filepath provided, can't defer install to next launch"))
       return false
     }
-    const isMarked = downloadedUpdateHelper.markInstallOnNextLaunchSync(this._logger)
+    const isMarked = downloadedUpdateHelper.markInstallOnNextLaunchSync(this.log)
     if (isMarked) {
-      this._logger.info("Update is marked for install on next launch")
+      this.log.info("Update is marked for install on next launch")
     }
     return isMarked
   }
@@ -623,7 +621,7 @@ export abstract class BaseUpdater extends AppUpdater {
 
   private handleQuit(exitCode: number): void {
     // it runs after a failed install on quit too, when the quit proceeds: logging must not throw
-    const logger = nonThrowingLogger(this._logger)
+    const logger = this.log
     const unavailableReason = this.installOnQuitUnavailableReason
     if (unavailableReason != null) {
       logger[unavailableReason.level](unavailableReason.message)
@@ -734,7 +732,7 @@ export abstract class BaseUpdater extends AppUpdater {
    * installed and no quit is scheduled, the quit that follows does that.
    */
   private handleWillQuit(event: CancellableQuitEvent): void {
-    const logger = nonThrowingLogger(this._logger)
+    const logger = this.log
     if (this.isSessionEnding) {
       return
     }
@@ -777,7 +775,7 @@ export abstract class BaseUpdater extends AppUpdater {
       }
       this.app.onSessionEnd(() => {
         this.isSessionEnding = true
-        this._logger.info("OS session is ending (shutdown/reboot/log off), install of the downloaded update on quit will be skipped")
+        this.log.info("OS session is ending (shutdown/reboot/log off), install of the downloaded update on quit will be skipped")
       })
       return true
     })
@@ -804,7 +802,7 @@ export abstract class BaseUpdater extends AppUpdater {
    * nothing has to be escaped.
    */
   protected spawnSyncLog(cmd: string, args: string[] = [], env = {}, useShell = true): string {
-    this._logger.info(`Executing: ${cmd} with args: ${args}`)
+    this.log.info(`Executing: ${cmd} with args: ${args}`)
     const mergedEnv: NodeJS.ProcessEnv = { ...process.env, ...env }
     const response = spawnSync(useShell ? shellCommandLine(cmd, args) : cmd, useShell ? [] : args, {
       env: { ...mergedEnv, PATH: this.sanitizeEnvPath(mergedEnv.PATH ?? "") },
@@ -814,11 +812,11 @@ export abstract class BaseUpdater extends AppUpdater {
 
     const { error, status, signal, stdout, stderr } = response
     if (error != null) {
-      this._logger.error(stderr)
+      this.log.error(stderr)
       throw error
     } else if (status !== 0) {
       // a command killed by a signal has no exit code, and did not succeed either
-      this._logger.error(stderr)
+      this.log.error(stderr)
       throw new CommandExitError(`Command ${cmd} exited with code ${status}${signal == null ? "" : `, signal ${signal}`}`, cmd, status, signal)
     }
 
@@ -833,7 +831,7 @@ export abstract class BaseUpdater extends AppUpdater {
   // https://github.com/electron-userland/electron-builder/issues/1129
   // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
   protected async spawnLog(cmd: string, args: string[] = [], env: any = undefined, stdio: StdioOptions = "ignore"): Promise<boolean> {
-    this._logger.info(`Executing: ${cmd} with args: ${args}`)
+    this.log.info(`Executing: ${cmd} with args: ${args}`)
     return new Promise<boolean>((resolve, reject) => {
       try {
         const params: SpawnOptions = { stdio, env, detached: true }
@@ -865,7 +863,7 @@ export abstract class BaseUpdater extends AppUpdater {
    */
   protected async spawnAsyncLog(cmd: string, args: string[] = [], env = {}, useShell = true): Promise<void> {
     // logging runs in child-process callbacks, where a throwing logger would escape as an uncaught exception
-    const logger = nonThrowingLogger(this._logger)
+    const logger = this.log
     logger.info(`Executing: ${cmd} with args: ${args}`)
     const mergedEnv: NodeJS.ProcessEnv = { ...process.env, ...env }
     const stderr = await StderrCapture.open(this.commandStderrDir(), logger)

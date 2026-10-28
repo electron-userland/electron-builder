@@ -37,7 +37,7 @@ export class DebUpdater extends LinuxUpdater {
     if (!isSupportedPackageManager(packageManager, DEB_PACKAGE_MANAGERS)) {
       throw new Error(`Package manager ${packageManager} not supported`)
     }
-    return DebUpdater.planInstall(packageManager, installerPath, this._logger, this.allowUnverifiedLinuxPackages)
+    return DebUpdater.planInstall(packageManager, installerPath, this.log, this.allowUnverifiedLinuxPackages)
   }
 
   static installWithCommandRunner(

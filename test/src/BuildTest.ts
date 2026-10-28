@@ -95,7 +95,6 @@ test("merge configurations", ({ expect }) => {
     },
   ])
 
-  // console.log("data: " + JSON.stringify(result, null, 2))
   expect(result).toMatchObject({
     directories: {
       output: "dist",

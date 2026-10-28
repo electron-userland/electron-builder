@@ -34,7 +34,7 @@ export class RpmUpdater extends LinuxUpdater {
     if (!isSupportedPackageManager(packageManager, RPM_PACKAGE_MANAGERS)) {
       throw new Error(`Package manager ${packageManager} not supported`)
     }
-    return RpmUpdater.planInstall(packageManager, installerPath, this._logger, this.allowUnverifiedLinuxPackages)
+    return RpmUpdater.planInstall(packageManager, installerPath, this.log, this.allowUnverifiedLinuxPackages)
   }
 
   static installWithCommandRunner(

@@ -73,13 +73,13 @@ export class NsisUpdater extends BaseUpdater {
         if (dirName == null) {
           return
         }
-        downloadedUpdateHelper = new DownloadedUpdateHelper(path.join(this.app.baseCachePath, dirName))
+        downloadedUpdateHelper = new DownloadedUpdateHelper(path.join(this.app.baseCachePath, dirName), this.log)
       }
-      await downloadedUpdateHelper.removeInstalledWebPackage(this.currentVersion.version, this._logger)
+      await downloadedUpdateHelper.removeInstalledWebPackage(this.currentVersion.version)
     } catch (e: any) {
       // best effort: no readable app-update.yml (e.g. forceDevUpdateConfig without dev-app-update.yml) means no cache to clean, and an
       // unusable config is reported by the update check itself
-      this._logger.debug?.(`Cannot look for the web installer package of an installed update: ${e.message || e}`)
+      this.log.debug(`Cannot look for the web installer package of an installed update: ${e.message || e}`)
     }
   }
 
@@ -120,8 +120,8 @@ export class NsisUpdater extends BaseUpdater {
       this.limitedLogger("publisher-name-not-dn").warn(note)
     }
     // read when the verification runs, for this update only
-    const options = resolveCatalogSignatureOptions(this.allowCatalogSignature, update, this._logger)
-    return verifySignature(publisherNames, unescapedTempUpdateFile, this._logger, options)
+    const options = resolveCatalogSignatureOptions(this.allowCatalogSignature, update, this.log)
+    return verifySignature(publisherNames, unescapedTempUpdateFile, this.log, options)
   }
 
   protected _verifyUpdateFileAuthenticodeSignature: VerifyUpdateFileAuthenticodeSignature = this._defaultVerifyUpdateFileAuthenticodeSignature
@@ -218,12 +218,12 @@ export class NsisUpdater extends BaseUpdater {
         const isWebInstaller = packageInfo != null && packageFile != null
         if (!isWebInstaller && !webInstallerDisabled) {
           if (webInstallerEnabledByApp) {
-            this._logger.warn(
+            this.log.warn(
               "disableWebInstaller is explicitly set to false, but a full installer (not a web installer) was downloaded. As of v27 web installers are opt-in (disabled by default); remove the override unless you intentionally publish NSIS web-installer packages."
             )
           } else {
             // the nsis-web default (package-type marker) needs no change by the app, but the full installer writes the `nsis` marker
-            this._logger.info(
+            this.log.info(
               "A full installer (not a web installer) was downloaded for an install made by an nsis-web installer. After it is installed, web-installer updates need disableWebInstaller = false."
             )
           }
@@ -361,7 +361,7 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     if (options.isAdminRightsRequired) {
-      this._logger.info("isAdminRightsRequired is set to true, run installer using elevate.exe")
+      this.log.info("isAdminRightsRequired is set to true, run installer using elevate.exe")
       callUsingElevation()
       return true
     }
@@ -370,7 +370,7 @@ export class NsisUpdater extends BaseUpdater {
       // https://github.com/electron-userland/electron-builder/issues/1129
       // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
       const errorCode = (e as NodeJS.ErrnoException).code
-      this._logger.info(
+      this.log.info(
         `Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using elevate if EACCES, and will try to use electron.shell.openItem if ENOENT`
       )
       if (errorCode === "UNKNOWN" || errorCode === "EACCES") {
@@ -401,7 +401,7 @@ export class NsisUpdater extends BaseUpdater {
       const downloadOptions: DifferentialDownloaderOptions = {
         newUrl,
         oldFile: path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_APP_PACKAGE_FILE_NAME),
-        logger: this._logger,
+        logger: this.log,
         newFile: packagePath,
         requestHeaders: this.downloadRequestHeaders(newUrl, downloadUpdateOptions),
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,

@@ -3,23 +3,11 @@ import { outputFile, outputJson, pathExists, readJson, remove } from "fs-extra"
 import { createHash } from "crypto"
 import * as path from "path"
 import { beforeEach, describe, expect, test } from "vitest"
-import type { Logger } from "electron-updater/src/types"
 import { hashFile } from "builder-util-runtime"
 import type { UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
 import { load } from "js-yaml"
 import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
-
-function makeLogger(): Logger & { infos: string[]; warns: string[] } {
-  const infos: string[] = []
-  const warns: string[] = []
-  return {
-    info: (msg: string) => infos.push(msg),
-    warn: (msg: string) => warns.push(msg),
-    error: () => {},
-    infos,
-    warns,
-  }
-}
+import { makeLogger } from "../helpers/updaterTestUtil"
 
 function makeFileInfo(sha512: string, fileName = "TestApp Setup.exe"): ResolvedUpdateFileInfo {
   return {
@@ -40,12 +28,12 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
 
     beforeEach(async context => {
       cacheDir = await context.tmpDir.createTempDir()
-      helper = new DownloadedUpdateHelper(cacheDir)
       log = makeLogger()
+      helper = new DownloadedUpdateHelper(cacheDir, log)
     })
 
     test("returns null when update-info.json does not exist", async () => {
-      const result = await (helper as any).getValidCachedUpdateFile(makeFileInfo("sha512abc"), log)
+      const result = await (helper as any).getValidCachedUpdateFile(makeFileInfo("sha512abc"))
       expect(result).toBeNull()
     })
 
@@ -54,7 +42,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       const infoFile = path.join(pending, "update-info.json")
       await outputFile(infoFile, "not-valid-json{{{{")
 
-      const result = await (helper as any).getValidCachedUpdateFile(makeFileInfo("sha512abc"), log)
+      const result = await (helper as any).getValidCachedUpdateFile(makeFileInfo("sha512abc"))
       expect(result).toBeNull()
       // cache directory is emptied, info file should be gone
       expect(await pathExists(infoFile)).toBe(false)
@@ -66,7 +54,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       const infoFile = path.join(pending, "update-info.json")
       await outputJson(infoFile, { sha512: "sha512abc", isAdminRightsRequired: false })
 
-      await expect((helper as any).getValidCachedUpdateFile(makeFileInfo("sha512abc"), log)).resolves.toBeNull()
+      await expect((helper as any).getValidCachedUpdateFile(makeFileInfo("sha512abc"))).resolves.toBeNull()
       expect(await pathExists(infoFile)).toBe(false)
       expect(log.warns.some(m => m.includes("invalid fileName"))).toBe(true)
     })
@@ -83,7 +71,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
         isAdminRightsRequired: false,
       })
 
-      await expect((helper as any).getValidCachedUpdateFile(makeFileInfo(sha512), log)).resolves.toBeNull()
+      await expect((helper as any).getValidCachedUpdateFile(makeFileInfo(sha512))).resolves.toBeNull()
       expect(await pathExists(outsideFile)).toBe(true)
     })
 
@@ -93,7 +81,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       await outputJson(infoFile, { fileName: "TestApp Setup.exe", sha512: "old-hash", isAdminRightsRequired: false })
       await outputFile(path.join(pending, "TestApp Setup.exe"), "dummy-content")
 
-      const result = await (helper as any).getValidCachedUpdateFile(makeFileInfo("new-hash"), log)
+      const result = await (helper as any).getValidCachedUpdateFile(makeFileInfo("new-hash"))
       expect(result).toBeNull()
       expect(await pathExists(infoFile)).toBe(false)
       expect(log.infos.some(m => m.includes("doesn't match"))).toBe(true)
@@ -105,7 +93,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       await outputJson(path.join(pending, "update-info.json"), { fileName: "TestApp Setup.exe", sha512, isAdminRightsRequired: false })
       // intentionally do NOT write the installer file
 
-      const result = await (helper as any).getValidCachedUpdateFile(makeFileInfo(sha512), log)
+      const result = await (helper as any).getValidCachedUpdateFile(makeFileInfo(sha512))
       expect(result).toBeNull()
       expect(log.infos.some(m => m.includes("doesn't exist"))).toBe(true)
     })
@@ -117,7 +105,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       await outputJson(path.join(pending, "update-info.json"), { fileName: "TestApp Setup.exe", sha512: declaredHash, isAdminRightsRequired: false })
       await outputFile(installerPath, "binary content that will produce a different sha512")
 
-      const result = await (helper as any).getValidCachedUpdateFile(makeFileInfo(declaredHash), log)
+      const result = await (helper as any).getValidCachedUpdateFile(makeFileInfo(declaredHash))
       expect(result).toBeNull()
       expect(await pathExists(installerPath)).toBe(false)
       expect(log.warns.some(w => w.includes("doesn't match"))).toBe(true)
@@ -126,15 +114,13 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
 
   describe("createTempUpdateFile", () => {
     let cacheDir: string
-    let log: ReturnType<typeof makeLogger>
 
     beforeEach(async context => {
       cacheDir = await context.tmpDir.createTempDir()
-      log = makeLogger()
     })
 
     test("returns the path directly when no existing file blocks it", async () => {
-      const result = await createTempUpdateFile("update.exe", cacheDir, log)
+      const result = await createTempUpdateFile("update.exe", cacheDir, makeLogger())
       expect(result).toBe(path.join(cacheDir, "update.exe"))
     })
 
@@ -150,7 +136,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       // Actually just creating them as files and then deleting will return them on first try.
       // Instead: write a real file at `first` so it CAN be unlinked — createTempUpdateFile
       // unlinks and returns the path. Test that with pre-existing file it still returns the path.
-      const result = await createTempUpdateFile("update.exe", cacheDir, log)
+      const result = await createTempUpdateFile("update.exe", cacheDir, makeLogger())
       // After unlinking the existing file, the same path is returned
       expect(result).toBe(path.join(cacheDir, "update.exe"))
       // File no longer exists at that path (it was removed)
@@ -165,13 +151,13 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
 
     beforeEach(async context => {
       cacheDir = await context.tmpDir.createTempDir()
-      helper = new DownloadedUpdateHelper(cacheDir)
       log = makeLogger()
+      helper = new DownloadedUpdateHelper(cacheDir, log)
     })
 
     test("returns null when no cache exists", async () => {
       const fileInfo = makeFileInfo("sha512abc")
-      const result = await helper.validateDownloadedPath(path.join(cacheDir, "update.exe"), makeUpdateInfo(), fileInfo, log)
+      const result = await helper.validateDownloadedPath(path.join(cacheDir, "update.exe"), makeUpdateInfo(), fileInfo)
       expect(result).toBeNull()
     })
 
@@ -183,7 +169,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       // Simulate in-memory cache via setDownloadedFile
       await helper.setDownloadedFile(updateFile, null, versionInfo, fileInfo, "update.exe", false)
 
-      const result = await helper.validateDownloadedPath(updateFile, versionInfo, fileInfo, log)
+      const result = await helper.validateDownloadedPath(updateFile, versionInfo, fileInfo)
       expect(result).toBe(updateFile)
     })
 
@@ -194,7 +180,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       // Set the in-memory state but don't create the file
       await helper.setDownloadedFile(updateFile, null, versionInfo, fileInfo, "update.exe", false)
 
-      const result = await helper.validateDownloadedPath(updateFile, versionInfo, fileInfo, log)
+      const result = await helper.validateDownloadedPath(updateFile, versionInfo, fileInfo)
       expect(result).toBeNull()
     })
   })
@@ -238,14 +224,14 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       cacheDir = await context.tmpDir.getTempDir({ prefix: "downloaded-update-helper" })
       updateFile = path.join(cacheDir, "update.exe")
       await outputFile(updateFile, "installer content")
-      helper = new DownloadedUpdateHelper(cacheDir)
       log = makeLogger()
+      helper = new DownloadedUpdateHelper(cacheDir, log)
       const downloaded = parseChannelFile()
       await helper.setDownloadedFile(updateFile, null, downloaded.updateInfo, downloaded.fileInfo, "update.exe", false)
     })
 
     async function validate(updateInfo: UpdateInfo, fileInfo: ResolvedUpdateFileInfo): Promise<string | null> {
-      return await helper.validateDownloadedPath(updateFile, updateInfo, fileInfo, log)
+      return await helper.validateDownloadedPath(updateFile, updateInfo, fileInfo)
     }
 
     test("reuses the downloaded file for an equal update info parsed again", async () => {
@@ -312,9 +298,9 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
 
     beforeEach(async context => {
       cacheDir = await context.tmpDir.createTempDir()
-      helper = new DownloadedUpdateHelper(cacheDir)
-      pending = helper.cacheDirForPendingUpdate
       log = makeLogger()
+      helper = new DownloadedUpdateHelper(cacheDir, log)
+      pending = helper.cacheDirForPendingUpdate
     })
 
     // writes a web installer + app package into the pending cache dir and returns file info whose checksums match both
@@ -335,7 +321,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
     test("validateCachedPendingInstall returns the installer and exposes the verified package", async () => {
       const { installerPath, packagePath, fileInfo } = await seedWebCache({ installOnNextLaunch: true })
 
-      expect(await helper.validateCachedPendingInstall(fileInfo, log)).toBe(installerPath)
+      expect(await helper.validateCachedPendingInstall(fileInfo)).toBe(installerPath)
       expect(helper.file).toBe(installerPath)
       expect(helper.packageFile).toBe(packagePath)
     })
@@ -343,7 +329,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
     test("validateDownloadedPath reuses a web installer cache from a previous launch and exposes the package", async () => {
       const { installerPath, packagePath, fileInfo } = await seedWebCache()
 
-      expect(await helper.validateDownloadedPath(installerPath, makeUpdateInfo(), fileInfo, log)).toBe(installerPath)
+      expect(await helper.validateDownloadedPath(installerPath, makeUpdateInfo(), fileInfo)).toBe(installerPath)
       expect(helper.packageFile).toBe(packagePath)
     })
 
@@ -352,7 +338,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       expect(await helper.getPendingInstallInfo()).not.toBeNull()
       await outputFile(packagePath, "different app package archive")
 
-      expect(await helper.validateCachedPendingInstall(fileInfo, log)).toBeNull()
+      expect(await helper.validateCachedPendingInstall(fileInfo)).toBeNull()
       expect(helper.packageFile).toBeNull()
       expect(await pathExists(installerPath)).toBe(false)
       expect(await pathExists(packagePath)).toBe(false)
@@ -364,7 +350,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
     test("returns null and cleans an old-format cache that does not record packageFileName", async () => {
       const { installerPath, fileInfo } = await seedWebCache({ packageFileName: undefined })
 
-      expect(await helper.validateDownloadedPath(installerPath, makeUpdateInfo(), fileInfo, log)).toBeNull()
+      expect(await helper.validateDownloadedPath(installerPath, makeUpdateInfo(), fileInfo)).toBeNull()
       expect(helper.packageFile).toBeNull()
       expect(await pathExists(installerPath)).toBe(false)
       expect(await pathExists(path.join(pending, "update-info.json"))).toBe(false)
@@ -374,7 +360,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       const { installerPath, packagePath, fileInfo } = await seedWebCache()
       await remove(packagePath)
 
-      expect(await helper.validateCachedPendingInstall(fileInfo, log)).toBeNull()
+      expect(await helper.validateCachedPendingInstall(fileInfo)).toBeNull()
       expect(helper.packageFile).toBeNull()
       expect(await pathExists(installerPath)).toBe(false)
     })
@@ -385,7 +371,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       const sha512 = await hashFile(installerPath)
       await outputJson(path.join(pending, "update-info.json"), { fileName: installerName, sha512, isAdminRightsRequired: false })
 
-      expect(await helper.validateCachedPendingInstall(makeFileInfo(sha512, installerName), log)).toBe(installerPath)
+      expect(await helper.validateCachedPendingInstall(makeFileInfo(sha512, installerName))).toBe(installerPath)
       expect(helper.packageFile).toBeNull()
     })
 
@@ -420,7 +406,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       test("removes the package of the installed update, and keeps the installer and update-info.json", async () => {
         const { installerPath, packagePath } = await seedWebCache({ version: "1.0.1" })
 
-        expect(await helper.removeInstalledWebPackage("1.0.1", log)).toBe(true)
+        expect(await helper.removeInstalledWebPackage("1.0.1")).toBe(true)
         expect(await pathExists(packagePath)).toBe(false)
         expect(await pathExists(installerPath)).toBe(true)
         expect(await readJson(path.join(pending, "update-info.json"))).toMatchObject({ packageFileName: packageName, version: "1.0.1" })
@@ -433,10 +419,10 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       ] as const)("keeps the package of %s", async ([, currentVersion]) => {
         const { packagePath, fileInfo } = await seedWebCache({ version: "1.0.1", installOnNextLaunch: true })
 
-        expect(await helper.removeInstalledWebPackage(currentVersion, log)).toBe(false)
+        expect(await helper.removeInstalledWebPackage(currentVersion)).toBe(false)
         expect(await pathExists(packagePath)).toBe(true)
         // still usable for the install
-        expect(await helper.validateCachedPendingInstall(fileInfo, log)).not.toBeNull()
+        expect(await helper.validateCachedPendingInstall(fileInfo)).not.toBeNull()
         expect(helper.packageFile).toBe(packagePath)
       })
 
@@ -447,7 +433,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       ] as const)("keeps the pending files for %s", async ([, cachedInfo]) => {
         const { installerPath, packagePath } = await seedWebCache(cachedInfo)
 
-        expect(await helper.removeInstalledWebPackage("1.0.1", log)).toBe(false)
+        expect(await helper.removeInstalledWebPackage("1.0.1")).toBe(false)
         expect(await pathExists(packagePath)).toBe(true)
         expect(await pathExists(installerPath)).toBe(true)
       })
@@ -457,17 +443,17 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
         await outputFile(outside, "stored package")
         const { packagePath } = await seedWebCache({ version: "1.0.1", packageFileName: `../${packageName}` })
 
-        expect(await helper.removeInstalledWebPackage("1.0.1", log)).toBe(true)
+        expect(await helper.removeInstalledWebPackage("1.0.1")).toBe(true)
         expect(await pathExists(packagePath)).toBe(false)
         expect(await pathExists(outside)).toBe(true)
       })
 
       test("is a no-op without a pending update or package", async () => {
-        expect(await helper.removeInstalledWebPackage("1.0.1", log)).toBe(false)
+        expect(await helper.removeInstalledWebPackage("1.0.1")).toBe(false)
 
         const { packagePath } = await seedWebCache({ version: "1.0.1" })
         await remove(packagePath)
-        expect(await helper.removeInstalledWebPackage("1.0.1", log)).toBe(false)
+        expect(await helper.removeInstalledWebPackage("1.0.1")).toBe(false)
         expect(log.warns).toEqual([])
       })
     })

@@ -198,7 +198,7 @@ describe("differential multipart download", () => {
     test("a finished batch does not fail a slower next batch", async ({ expect, tmpDir }) => {
       vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] })
 
-      // > 1000 operations => two range requests
+      // > 1000 operations and > 200 DOWNLOAD ranges => several range requests (MAX_RANGES_PER_REQUEST batches)
       const tasks = makeTasks(1200, 1200 * 6)
       const bigNewFile = patternBuffer(1200 * 6, 3)
       const bigOldFile = patternBuffer(1200 * 6, 4)
@@ -266,6 +266,14 @@ describe("differential multipart download", () => {
         expect(failure).toBeNull()
 
         respond(1)
+        // answer every later batch as it arrives until the download finishes
+        for (let next = 2; ; next++) {
+          const outcome = await Promise.race([finished.then(() => "finished" as const), waitForRequest(next + 1).then(() => "request" as const)])
+          if (outcome === "finished") {
+            break
+          }
+          respond(next)
+        }
         await finished
         expect(failure).toBeNull()
         expect(data().equals(expectedOutput(tasks, bigOldFile, bigNewFile))).toBe(true)

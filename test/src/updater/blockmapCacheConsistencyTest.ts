@@ -1,4 +1,6 @@
+import { blake2b } from "@noble/hashes/blake2.js"
 import { CancellationToken } from "builder-util-runtime"
+import { encodeBlockMapV3 } from "builder-util-runtime/internal"
 import { AppImageUpdater } from "electron-updater"
 import type { DownloadExecutorResult } from "electron-updater"
 import { AppUpdater, isBlockMapOfFile } from "electron-updater/src/AppUpdater"
@@ -10,6 +12,7 @@ import { copyFile, outputFile, pathExists, readFile } from "fs-extra"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { gzipSync } from "zlib"
+import { makeLogger } from "../helpers/updaterTestUtil"
 
 const stubApp: AppAdapter = {
   name: "TestApp",
@@ -44,13 +47,15 @@ describe("executeDownload blockmap cache consistency", { concurrent: false }, ()
     cacheDir = await context.tmpDir.createTempDir({ prefix: "blockmap-cache" })
     updater = new AppImageUpdater(null, stubApp)
     updater.logger = null
-    helper = new DownloadedUpdateHelper(cacheDir)
+    helper = new DownloadedUpdateHelper(cacheDir, makeLogger())
     pendingDir = helper.cacheDirForPendingUpdate
     // inject the helper directly so getOrCreateDownloadHelper does not need app-update.yml
     ;(updater as any).downloadedUpdateHelper = helper
   })
 
-  function executeDownload(options: { disableDifferentialDownload?: boolean; writePendingBlockMap?: string; onDone?: () => Promise<void> } = {}): Promise<DownloadExecutorResult> {
+  function executeDownload(
+    options: { disableDifferentialDownload?: boolean; writePendingBlockMap?: string | Buffer; onDone?: () => Promise<void> } = {}
+  ): Promise<DownloadExecutorResult> {
     const disableDifferentialDownload = options.disableDifferentialDownload === true
     const taskOptions: DownloadExecutorTask = {
       fileExtension: "zip",
@@ -115,6 +120,16 @@ describe("executeDownload blockmap cache consistency", { concurrent: false }, ()
     expect((await readFile(cachedBlockMapFile())).toString()).toBe("blockmap of 2.0.0")
   })
 
+  test("a binary (v2) blockmap produced by this download round is promoted byte for byte", async () => {
+    const blocks = [0, 1, 2].map(i => ({ digest: blake2b(Buffer.from(`block-${i}`), { dkLen: 18 }), size: 1000, offset: i * 1000 }))
+    const binary = encodeBlockMapV3(blocks, { fileSize: 3000, defaultChunker: { min: 8192, avg: 16384, max: 32768 } })
+    await outputFile(cachedBlockMapFile(), "stale blockmap describing an old release")
+
+    await executeDownload({ writePendingBlockMap: binary })
+
+    expect((await readFile(cachedBlockMapFile())).equals(binary)).toBe(true)
+  })
+
   test("blockmap is cached before update-downloaded is announced", async () => {
     // `done` emits update-downloaded; an app that calls quitAndInstall() from that listener exits before anything after it runs
     let cachedAtDone: string | null = null
@@ -152,7 +167,7 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
   let updater: AppImageUpdater
   let requestedUrls: Array<string>
   let plannedOldBlockMap: any
-  let infoMessages: Array<string>
+  let log: ReturnType<typeof makeLogger>
 
   const blockMap = (sizes: Array<number>, tag: string) => ({ version: "2" as const, files: [{ name: "file", offset: 0, checksums: sizes.map((_, i) => `${tag}-${i}`), sizes }] })
   const serverOldBlockMap = blockMap([600, 400], "server-1.0.0")
@@ -161,11 +176,11 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
   let servedOldBlockMap: ReturnType<typeof blockMap>
 
   beforeEach(async context => {
+    log = makeLogger()
     cacheDir = await context.tmpDir.createTempDir({ prefix: "blockmap-pairing" })
     updater = new AppImageUpdater(null, stubApp)
-    infoMessages = []
-    updater.logger = { info: (message: string) => infoMessages.push(message), warn: () => {}, error: () => {} }
-    ;(updater as any).downloadedUpdateHelper = new DownloadedUpdateHelper(cacheDir)
+    updater.logger = log
+    ;(updater as any).downloadedUpdateHelper = new DownloadedUpdateHelper(cacheDir, log)
     requestedUrls = []
     plannedOldBlockMap = null
     servedOldBlockMap = serverOldBlockMap
@@ -224,7 +239,7 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
 
     expect(requestedUrls).toContain(OLD_BLOCKMAP_URL)
     expect(plannedOldBlockMap).toEqual(serverOldBlockMap)
-    expect(infoMessages).toContain(ignoredMessage)
+    expect(log.infos).toContain(ignoredMessage)
   })
 
   test("a malformed cached blockmap is ignored and the installed release's blockmap is fetched from the server", async () => {
@@ -235,7 +250,7 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
 
     expect(requestedUrls).toContain(OLD_BLOCKMAP_URL)
     expect(plannedOldBlockMap).toEqual(serverOldBlockMap)
-    expect(infoMessages).toContain(ignoredMessage)
+    expect(log.infos).toContain(ignoredMessage)
   })
 
   test("with blockMapUrl in the manifest and no override, a cached blockmap of another release leads to a full download", async () => {
@@ -246,7 +261,7 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
 
     expect(requestedUrls).not.toContain(OLD_BLOCKMAP_URL)
     expect(plannedOldBlockMap).toBeNull()
-    expect(infoMessages).toContain(ignoredMessage)
+    expect(log.infos).toContain(ignoredMessage)
   })
 
   test("without a cached blockmap, an old blockmap URL equal to the new one (artifact name without version) leads to a full download without requesting it", async () => {
@@ -255,7 +270,7 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
 
     expect(requestedUrls).toEqual([NEW_BLOCKMAP_URL])
     expect(plannedOldBlockMap).toBeNull()
-    expect(infoMessages.some(it => it.includes("because the artifact name has no version: downloading the full update"))).toBe(true)
+    expect(log.infos.some(it => it.includes("because the artifact name has no version: downloading the full update"))).toBe(true)
     // the new blockmap is cached with the update, so the next update can be differential
     expect(await pathExists(path.join(cacheDir, "pending", "current.blockmap"))).toBe(true)
   })
@@ -268,7 +283,7 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
 
     expect(requestedUrls).toContain(OLD_BLOCKMAP_URL)
     expect(plannedOldBlockMap).toBeNull()
-    expect(infoMessages).toContain(
+    expect(log.infos).toContain(
       `The blockmap downloaded from "${OLD_BLOCKMAP_URL}" does not describe the cached "${OLD_INSTALLER_FILE_NAME}" (malformed, or its blocks do not end at the file size): downloading the full update`
     )
   })
@@ -281,7 +296,7 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
 
     expect(requestedUrls).not.toContain(OLD_BLOCKMAP_URL)
     expect(plannedOldBlockMap).toEqual(cached)
-    expect(infoMessages).not.toContain(ignoredMessage)
+    expect(log.infos).not.toContain(ignoredMessage)
   })
 })
 
