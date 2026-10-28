@@ -852,8 +852,8 @@ export interface ToolsetConfig {
    * | Version | Notes |
    * |---------|-------|
    * | `"1.0.0"` | Shipped the 32-bit `7za.exe` for every Windows arch (1.75 GiB memory cap, no LZMA2 multithreading on x64/arm64) |
-   * | `"1.0.1"` | Correct per-arch Windows binaries (x64, ia32, arm64) |
-   * | `"1.1.0"` | 7-Zip 26.05 (was 24.09), with upstream security fixes for ZIP symlink path traversal and the XZ decoder |
+   * | `"1.0.1"` | 24.09 - Correct per-arch Windows binaries (x64, ia32, arm64) |
+   * | `"1.1.0"` | 26.05 |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/7zip/CHANGELOG.md
    *
