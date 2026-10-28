@@ -16,7 +16,7 @@ import type { TmpDir } from "temp-file"
 import { afterEach, describe, test, vi } from "vitest"
 import { gzipSync } from "zlib"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
-import { createNsisUpdater, httpExecutor, tuneTestUpdater } from "../helpers/updaterTestUtil.js"
+import { createNsisUpdater, httpExecutor, makeLogger, tuneTestUpdater } from "../helpers/updaterTestUtil.js"
 
 // One `.blockmap` per artifact, in the format the `blockmap` option chose: the updater tells v1 (gzipped JSON) from v2 (the
 // binary range-fetchable map) by the file's first bytes, range-fetches a v2 map against a cached v2 map, and falls back to a full
@@ -116,7 +116,7 @@ describe("block map format detection", () => {
   async function setUp(tmpDir: TmpDir, cached: Buffer | null) {
     const updater = await createNsisUpdater("1.0.0")
     tuneTestUpdater(updater, { platform: "win32", isUseDifferentialDownload: true })
-    const helper = new DownloadedUpdateHelper(await tmpDir.getTempDir({ prefix: "blockmap-format-cache" }))
+    const helper = new DownloadedUpdateHelper(await tmpDir.getTempDir({ prefix: "blockmap-format-cache" }), makeLogger())
     ;(updater as any).downloadedUpdateHelper = helper
     ;(updater as any).httpExecutor = httpExecutor
     if (cached != null) {

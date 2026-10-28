@@ -52,7 +52,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
     it("ignores unsafe-char override with a warning and falls through to pms detection", () => {
       process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = "dpkg;rm -rf /"
       const hasCommandSpy = vi.spyOn(updater as any, "hasCommand").mockImplementation((cmd: unknown) => cmd === "apt")
-      const warnSpy = vi.spyOn((updater as any)._logger, "warn")
+      const warnSpy = vi.spyOn((updater as any).logger, "warn")
       const result = (updater as any).detectPackageManager(["dpkg", "apt"])
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("unsafe characters"))
       // fell through to normal pms detection — found "apt"
@@ -63,7 +63,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
     it("ignores a pipe in override with a warning", () => {
       process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = "dpkg|bash"
-      const warnSpy = vi.spyOn((updater as any)._logger, "warn")
+      const warnSpy = vi.spyOn((updater as any).logger, "warn")
       vi.spyOn(updater as any, "hasCommand").mockReturnValue(false)
       ;(updater as any).detectPackageManager(["dpkg"])
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("unsafe characters"))
@@ -71,7 +71,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
     it("ignores a dollar-sign override with a warning", () => {
       process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = "$IFS"
-      const warnSpy = vi.spyOn((updater as any)._logger, "warn")
+      const warnSpy = vi.spyOn((updater as any).logger, "warn")
       vi.spyOn(updater as any, "hasCommand").mockReturnValue(false)
       ;(updater as any).detectPackageManager(["dpkg"])
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("unsafe characters"))
@@ -80,7 +80,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
     it("falls through to default when override passes regex but is not found on system", () => {
       process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = "dpkg"
       vi.spyOn(updater as any, "hasCommand").mockReturnValue(false)
-      const warnSpy = vi.spyOn((updater as any)._logger, "warn")
+      const warnSpy = vi.spyOn((updater as any).logger, "warn")
       const result = (updater as any).detectPackageManager(["dpkg", "apt"])
       // returns pms[0] as the default fallback
       expect(result).toBe("dpkg")
@@ -103,7 +103,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
     it("returns first PM in list with a warning when none are found on system", () => {
       vi.spyOn(updater as any, "hasCommand").mockReturnValue(false)
-      const warnSpy = vi.spyOn((updater as any)._logger, "warn")
+      const warnSpy = vi.spyOn((updater as any).logger, "warn")
       const result = (updater as any).detectPackageManager(["dpkg", "apt"])
       expect(result).toBe("dpkg")
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("No package manager found"))

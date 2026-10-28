@@ -11,20 +11,7 @@ import { ElevationDeniedError } from "electron-updater/src/LinuxUpdater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
 import { ElectronAppAdapter } from "electron-updater/src/ElectronAppAdapter"
 import type { Logger } from "electron-updater/src/types"
-
-function makeLogger(): Logger & { infos: string[]; warns: string[]; errors: string[] } {
-  const infos: string[] = []
-  const warns: string[] = []
-  const errors: string[] = []
-  return {
-    info: (msg: string) => infos.push(msg),
-    warn: (msg: string) => warns.push(msg),
-    error: (msg: string) => errors.push(msg),
-    infos,
-    warns,
-    errors,
-  }
-}
+import { makeLogger } from "../helpers/updaterTestUtil"
 
 interface StubApp extends AppAdapter {
   quitCalls: number
@@ -108,8 +95,8 @@ describe("install on quit", { concurrent: false }, () => {
   let log: ReturnType<typeof makeLogger>
 
   beforeEach(async context => {
-    helper = new DownloadedUpdateHelper(await context.tmpDir.getTempDir({ prefix: "install-on-quit" }))
     log = makeLogger()
+    helper = new DownloadedUpdateHelper(await context.tmpDir.getTempDir({ prefix: "install-on-quit" }), log)
   })
 
   afterEach(() => {
