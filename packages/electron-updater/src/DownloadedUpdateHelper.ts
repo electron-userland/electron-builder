@@ -1,6 +1,6 @@
 import { hashFile, UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
 import isEqual from "lodash.isequal"
-import { ResolvedUpdateFileInfo } from "./types.js"
+import { NonThrowableLogger, ResolvedUpdateFileInfo } from "./types.js"
 import { Logger } from "./types.js"
 import fsExtra from "fs-extra"
 import * as path from "path"
@@ -34,7 +34,10 @@ export class DownloadedUpdateHelper {
   private fileInfo: ResolvedUpdateFileInfo | null = null
   private _downloadedUpdateId: string | null = null
 
-  constructor(readonly cacheDir: string) {}
+  constructor(
+    readonly cacheDir: string,
+    private readonly logger: NonThrowableLogger
+  ) {}
 
   private _downloadedFileInfo: CachedUpdateInfo | null = null
   get downloadedFileInfo(): CachedUpdateInfo | null {
@@ -61,7 +64,7 @@ export class DownloadedUpdateHelper {
     return path.join(this.cacheDir, "pending")
   }
 
-  async validateDownloadedPath(updateFile: string, updateInfo: UpdateInfo, fileInfo: ResolvedUpdateFileInfo, logger: Logger): Promise<string | null> {
+  async validateDownloadedPath(updateFile: string, updateInfo: UpdateInfo, fileInfo: ResolvedUpdateFileInfo): Promise<string | null> {
     if (this.versionInfo != null && this.file === updateFile && this.fileInfo != null) {
       // update has already been downloaded from this running instance
       // check here only existence, not checksum
@@ -73,11 +76,11 @@ export class DownloadedUpdateHelper {
     }
 
     // update has already been downloaded from some previous app launch
-    const cachedUpdateFile = await this.getValidCachedUpdateFile(fileInfo, logger)
+    const cachedUpdateFile = await this.getValidCachedUpdateFile(fileInfo)
     if (cachedUpdateFile === null) {
       return null
     }
-    logger.info(`Update has already been downloaded to ${updateFile}).`)
+    this.logger.info(`Update has already been downloaded to ${updateFile}).`)
     this._file = cachedUpdateFile
     return cachedUpdateFile
   }
@@ -170,8 +173,8 @@ export class DownloadedUpdateHelper {
    * the app package is re-validated as well and exposed as `packageFile`.
    * @returns Path to the validated installer or `null` if the cache is unusable.
    */
-  async validateCachedPendingInstall(fileInfo: ResolvedUpdateFileInfo, logger: Logger): Promise<string | null> {
-    const cachedUpdateFile = await this.getValidCachedUpdateFile(fileInfo, logger)
+  async validateCachedPendingInstall(fileInfo: ResolvedUpdateFileInfo): Promise<string | null> {
+    const cachedUpdateFile = await this.getValidCachedUpdateFile(fileInfo)
     if (cachedUpdateFile != null) {
       this._file = cachedUpdateFile
     }
@@ -187,7 +190,7 @@ export class DownloadedUpdateHelper {
    * @param currentVersion The version of the running app.
    * @returns Whether a package was removed.
    */
-  async removeInstalledWebPackage(currentVersion: string, logger: Logger): Promise<boolean> {
+  async removeInstalledWebPackage(currentVersion: string): Promise<boolean> {
     let cachedInfo: CachedUpdateInfo | null
     try {
       cachedInfo = await fsExtra.readJson(this.getUpdateInfoFile())
@@ -204,11 +207,11 @@ export class DownloadedUpdateHelper {
       await fsExtra.unlink(packageFile)
     } catch (e: any) {
       if (e.code !== "ENOENT") {
-        logger.warn(`Cannot remove the web installer package of the installed update ${version.format()}: ${e.message || e}`)
+        this.logger.warn(`Cannot remove the web installer package of the installed update ${version.format()}: ${e.message || e}`)
       }
       return false
     }
-    logger.info(`Removed the web installer package of the installed update ${version.format()}: ${packageFile}`)
+    this.logger.info(`Removed the web installer package of the installed update ${version.format()}: ${packageFile}`)
     return true
   }
 
@@ -235,7 +238,7 @@ export class DownloadedUpdateHelper {
    * @param fileInfo
    * @param logger
    */
-  private async getValidCachedUpdateFile(fileInfo: ResolvedUpdateFileInfo, logger: Logger): Promise<string | null> {
+  private async getValidCachedUpdateFile(fileInfo: ResolvedUpdateFileInfo): Promise<string | null> {
     const updateInfoFilePath: string = this.getUpdateInfoFile()
 
     const doesUpdateInfoFileExist = await fsExtra.pathExists(updateInfoFilePath)
@@ -252,20 +255,20 @@ export class DownloadedUpdateHelper {
         await this.cleanCacheDirForPendingUpdate()
         message += ` (error on read: ${error.message})`
       }
-      logger.info(message)
+      this.logger.info(message)
       return null
     }
 
     const cachedFileName = cachedInfo?.fileName
     const isCachedInfoFileNameValid = typeof cachedFileName === "string" && cachedFileName.length > 0 && path.basename(cachedFileName) === cachedFileName
     if (!isCachedInfoFileNameValid) {
-      logger.warn(`Cached update info is corrupted: invalid fileName, directory for cached update will be cleaned`)
+      this.logger.warn(`Cached update info is corrupted: invalid fileName, directory for cached update will be cleaned`)
       await this.cleanCacheDirForPendingUpdate()
       return null
     }
 
     if (fileInfo.info.sha512 !== cachedInfo.sha512) {
-      logger.info(
+      this.logger.info(
         `Cached update sha512 checksum doesn't match the latest available update. New update must be downloaded. Cached: ${cachedInfo.sha512}, expected: ${fileInfo.info.sha512}. Directory for cached update will be cleaned`
       )
       await this.cleanCacheDirForPendingUpdate()
@@ -274,13 +277,13 @@ export class DownloadedUpdateHelper {
 
     const updateFile = path.join(this.cacheDirForPendingUpdate, cachedFileName)
     if (!(await fsExtra.pathExists(updateFile))) {
-      logger.info("Cached update file doesn't exist")
+      this.logger.info("Cached update file doesn't exist")
       return null
     }
 
     const sha512 = await hashFile(updateFile)
     if (fileInfo.info.sha512 !== sha512) {
-      logger.warn(`Sha512 checksum doesn't match the latest available update. New update must be downloaded. Cached: ${sha512}, expected: ${fileInfo.info.sha512}`)
+      this.logger.warn(`Sha512 checksum doesn't match the latest available update. New update must be downloaded. Cached: ${sha512}, expected: ${fileInfo.info.sha512}`)
       await this.cleanCacheDirForPendingUpdate()
       return null
     }
@@ -291,7 +294,7 @@ export class DownloadedUpdateHelper {
     if (packageInfo != null) {
       packageFile = cachedInfo.packageFileName == null ? null : path.join(this.cacheDirForPendingUpdate, path.basename(cachedInfo.packageFileName))
       if (packageFile == null || !(await fsExtra.pathExists(packageFile)) || (await hashFile(packageFile)) !== packageInfo.sha512) {
-        logger.warn(
+        this.logger.warn(
           `Cached web installer package doesn't match the latest available update. New update must be downloaded. Expected: ${packageInfo.sha512}. Directory for cached update will be cleaned`
         )
         await this.cleanCacheDirForPendingUpdate()

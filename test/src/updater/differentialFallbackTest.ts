@@ -190,7 +190,7 @@ describe("differential download failures fall back to a verified full download, 
     if (setup.cacheOldBlockMap != null) {
       await fsExtra.outputFile(path.join(cacheDir, "current.blockmap"), setup.cacheOldBlockMap)
     }
-    ;(updater as any).downloadedUpdateHelper = new DownloadedUpdateHelper(cacheDir)
+    ;(updater as any).downloadedUpdateHelper = new DownloadedUpdateHelper(cacheDir, updater.log)
     if (setup.onProgress != null) {
       updater.on("download-progress", setup.onProgress)
     }

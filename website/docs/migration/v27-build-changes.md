@@ -44,6 +44,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [`app-update.yml` feed follows the update-writing targets](#app-updateyml-feed-follows-the-update-writing-targets) | Silent (conflicts fail) | Only with target-level `publish` (e.g. `nsis.publish`), targets of one app with different feeds, or a first provider with `publishAutoUpdate: false`: check which feed installs will poll |
 | [Suffixed channels expand to lower channels](#suffixed-update-channels-now-expand-to-lower-channels) | Warns | Only with `generateUpdatesFilesForAllChannels`: a `beta-*`/`latest-*` channel now writes 2–3 yml files instead of 1 |
 | [`latest*.yml` drops legacy top-level `path`/`sha512`](#latestyml-drops-legacy-top-level-pathsha512) | Silent | None for electron-updater >=2.16 (all modern clients); set `electronUpdaterCompatibility` to a legacy-inclusive range only if you still ship apps embedding electron-updater 1.x–2.15 |
+| [Block map format follows `electronUpdaterCompatibility` (default `>=7`)](#block-map-format-follows-electronupdatercompatibility) | Fails build / warns | Apps on electron-updater 6 fail the build: upgrade electron-updater to 7, or set `electronUpdaterCompatibility` to a range that includes them (e.g. `">=6"`), which keeps the JSON `.blockmap` and warns. Installs still on electron-updater 6 download the first release with a binary map in full once |
 | [S3 publishing requires an explicit `awsCredentials.source`](#s3-publishing-requires-an-explicit-awscredentialssource) | Fails at publish | Add `awsCredentials: { source: "env" }` (for `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`), `{ source: "profile", profile: "<name>" }` (for `AWS_PROFILE` / `~/.aws` / SSO) or `{ source: "sso-role-chain", profile: "<name>" }` (for a role assumed from an SSO `source_profile`) |
 | [Bitbucket Cloud publishing: token without username → Bearer auth](#bitbucket-cloud-publishing-token-without-username-uses-bearer-auth) | Warns at publish | Set `BITBUCKET_USERNAME` if your token is an app password / API token |
 | [Flatpak target requires `flatpak` >= 1.12.4 and `flatpak-builder` >= 1.2.2](#flatpak-tooling-requirements) | Fails build | Only for tools older than the stock packages of Ubuntu 22.04 and Debian 12: update them (the `electronuserland/builder` images with a date tag newer than `-05.26` include them, those up to `-05.26` none); replace `DEBUG=@malept/flatpak-bundler` with `DEBUG=electron-builder` |
@@ -565,6 +566,22 @@ The deprecated top-level `path` and `sha512` fields are **no longer written** to
 - **If you still ship apps embedding electron-updater 1.x – 2.15**, keep emitting the legacy descriptor by declaring a compatibility range that includes them, e.g. `"electronUpdaterCompatibility": ">=1.0.0"` (also settable per platform, e.g. `win.electronUpdaterCompatibility`).
 
 > Related: metadata validated only by the legacy SHA-256 `sha2` checksum is deprecated — v27 warns and **v28 will reject sha2-only metadata (fail-closed)**. Avoid pinning `electronUpdaterCompatibility` to a legacy range unless you actually ship 1.x–2.15 clients.
+
+### Block map format follows `electronUpdaterCompatibility` {#block-map-format-follows-electronupdatercompatibility}
+
+**How you'll find out:** the build **fails** when the app's electron-updater is outside `electronUpdaterCompatibility`, and **warns** once when the range makes it write JSON block maps.
+
+v27 adds a binary `.blockmap` format that electron-updater 7 fetches in parts with HTTP `Range` requests, so a differential update no longer downloads the whole map ([Differential updates](../features/auto-update.md#differential-updates-blockmap)). electron-updater 6 cannot read it. The map is read by the updater already installed in your users' apps, which is what [`electronUpdaterCompatibility`](../features/auto-update.md#compatibility) describes, so the format follows that range, and its default is now **`>=7`** (it was `>=2.16`; the legacy `latest*.yml` fields it also controls are written only for ranges below 2.16, so they are unaffected):
+
+| `electronUpdaterCompatibility` | `.blockmap` written | Build |
+|---|---|---|
+| Unset (`>=7`), or any range of electron-updater 7 and later | Binary (`"v3"`) | Fails if the app's own electron-updater dependency is 6 or earlier |
+| A range that includes electron-updater 6 or earlier (e.g. `">=6"`) | Gzipped JSON (`"v2"`), as in v26 | Warns once that binary block maps are off and why |
+
+- **Your app ships electron-updater 7:** no action. The first release built with v27 publishes binary maps. Installs that are still on electron-updater 6 (an app version built before you upgraded) cannot read it and download that one update in full ("Cannot download differentially, fallback to full download"); the update installs electron-updater 7, and later updates are differential again.
+- **Your app still ships electron-updater 6:** the build fails with a link here. Upgrade `electron-updater` to 7, or keep it and set `"electronUpdaterCompatibility": ">=6"` (per platform with e.g. `win.electronUpdaterCompatibility`), which keeps the JSON map. Raise the range to `>=7` once your installed apps ship electron-updater 7.
+- **Opting out:** `"blockmap": "v2"` always writes the JSON map, whatever the range. `"blockmap": "v3"` asks for the binary map and fails the build when the range includes electron-updater 6 or earlier; `"blockmap": "latest"` follows the newest format the range allows.
+- With the JSON map, NSIS packages and their block maps are byte-for-byte what v26 wrote. With the binary map, the 7z header of a differential package is also stored uncompressed and chunked on its own.
 
 ### S3 publishing requires an explicit `awsCredentials.source` {#s3-publishing-requires-an-explicit-awscredentialssource}
 

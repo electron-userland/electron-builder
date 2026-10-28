@@ -29,10 +29,15 @@ import { verifyUpdateInstallerPublisher } from "../../../codeSign/win/verifyUpda
 import { archive, ArchiveOptions } from "../../archive.js"
 import {
   appendBlockmap,
+  asarContentBoundaries,
+  BINARY_BLOCK_MAP_FORMAT,
   configureDifferentialAwareArchiveOptions,
   createBlockmap,
   createNsisWebDifferentialUpdateInfo,
+  getBlockMapFormat,
+  locateArchiveHeaderRegions,
   locateStoredMemberRegions,
+  locateStoredMembers,
   toBlockMapOptions,
 } from "../../differentialUpdateInfoBuilder.js"
 import { getWindowsInstallationAppPackageName, getWindowsInstallationDirName } from "../../targetUtil.js"
@@ -204,6 +209,8 @@ export class NsisTarget extends Target {
     const packager = this.packager
 
     const isBuildDifferentialAware = this.isBuildDifferentialAware
+    // the stored 7z header and its finer chunking only with binary block maps, so a JSON-format build stays as before
+    const isBinaryBlockMap = isBuildDifferentialAware && getBlockMapFormat(packager) === BINARY_BLOCK_MAP_FORMAT
     const format = this.isZipPayload ? "zip" : "7z"
     const archiveFile = path.join(this.outDir, `${packager.appInfo.sanitizedName}-${packager.appInfo.version}-${Arch[arch]}${fileNameSuffix}.nsis.${format}`)
     const preCompressedFileExtensions = this.getPreCompressedFileExtensions()
@@ -233,7 +240,7 @@ export class NsisTarget extends Target {
     archiveOptions.externalLinks = await packager.getExternalLinkPolicy()
 
     const timer = time(`nsis package, ${Arch[arch]}`)
-    await archive(format, archiveFile, appOutDir, isBuildDifferentialAware ? configureDifferentialAwareArchiveOptions(archiveOptions) : archiveOptions)
+    await archive(format, archiveFile, appOutDir, isBuildDifferentialAware ? configureDifferentialAwareArchiveOptions(archiveOptions, isBinaryBlockMap) : archiveOptions)
     timer.end()
 
     // Inject elevate.exe into the archive via a temp staging dir, never by mutating appOutDir
@@ -246,7 +253,10 @@ export class NsisTarget extends Target {
     }
 
     if (isBuildDifferentialAware && this.isWebInstaller) {
-      const regions = await locateStoredMemberRegions(archiveFile, storedMemberFiles)
+      const regions = [
+        ...(await locateStoredMemberRegions(archiveFile, storedMemberFiles)),
+        ...(isBinaryBlockMap ? await locateArchiveHeaderRegions(archiveFile, [archiveFile]) : []),
+      ]
       const data = await appendBlockmap(archiveFile, toBlockMapOptions(regions))
       return {
         fileInfo: {
@@ -503,9 +513,19 @@ export class NsisTarget extends Target {
         updateInfo = createNsisWebDifferentialUpdateInfo(installerPath, packageFiles)
       } else if (this.isBuildDifferentialAware) {
         // Every arch package is embedded verbatim in the installer (SetCompress off), so the stored
-        // members of all of them sit verbatim in the signed installer too; locate them there.
-        const regions = await locateStoredMemberRegions(installerPath, storedMemberFiles)
-        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName, primaryArch, toBlockMapOptions(regions))
+        // members and the archive headers of all of them sit verbatim in the signed installer too;
+        // locate them there. The v3 map is additionally cut at every packed file of a stored asar.
+        const members = await locateStoredMembers(installerPath, storedMemberFiles)
+        const regions = [
+          ...members.map(it => it.region),
+          ...(getBlockMapFormat(packager) === BINARY_BLOCK_MAP_FORMAT
+            ? await locateArchiveHeaderRegions(
+                installerPath,
+                Object.values(packageFiles).map(it => it.path)
+              )
+            : []),
+        ]
+        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName, primaryArch, toBlockMapOptions(regions, await asarContentBoundaries(members)))
       }
 
       // a per-machine build always packs elevate.exe (see CopyElevateHelper), unless the framework has no elevate helper
