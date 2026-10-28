@@ -133,7 +133,7 @@ Legacy-base snap template builds (`core18`/`core20`/`core22` with `useTemplateAp
 
 **How you'll find out:** **Info log** the first time an `rpm` target builds with the default (`v27: the rpm target now builds with the bundled rpmbuild …`), with a link here. On a host with no bundle (Intel macOS, 32-bit Linux) the build **fails** with a configuration error that names `toolsets.rpm: "system"`.
 
-In v26, fpm ran whatever `rpmbuild` was on the build machine's `PATH` (`brew install rpm`, `apt-get install rpm`), so the `.rpm` depended on that rpm's version and configuration: rpm 4.x adds `/usr/lib/.build-id` links, rpm 6 writes the v6 package format by default, and host and user macros (`/etc/rpm`, `~/.rpmmacros`) apply. v27 adds the [`toolsets.rpm`](../toolsets.md) toolset and defaults it to a portable `rpmbuild` (rpm 6.1.0, release `rpm@1.0.0`), downloaded and cached like the other toolsets and put first on fpm's `PATH`. It ignores host and user rpm configuration and pins the v4 package format and `_build_id_links none`, so the package format and contents no longer depend on which rpm, if any, is installed on the build machine: building on Linux, on macOS or in Docker gives the same package. Supported hosts no longer need an `rpm` package installed.
+In v26, fpm ran whatever `rpmbuild` was on the build machine's `PATH` (`brew install rpm`, `apt-get install rpm`), so the `.rpm` depended on that rpm's version and configuration: rpm 4.x adds `/usr/lib/.build-id` links, rpm 6 writes the v6 package format by default, and host and user macros (`/etc/rpm`, `~/.rpmmacros`) apply. v27 adds the [`toolsets.rpm`](../toolsets.md) toolset and defaults it to a portable `rpmbuild` (rpm 6.1.0, release `rpm@1.0.0`), downloaded and cached like the other toolsets and put first on fpm's `PATH`. It ignores host and user rpm configuration and pins the v4 package format and `_build_id_links none` in its own macros (electron-builder also passes both as `rpmbuild` defines, so `"system"` builds get them too), so the package format and contents no longer depend on which rpm, if any, is installed on the build machine: building on Linux, on macOS or in Docker gives the same package. Supported hosts no longer need an `rpm` package installed.
 
 | `toolsets.rpm` | `rpmbuild` used |
 |---|---|
@@ -144,7 +144,7 @@ In v26, fpm ran whatever `rpmbuild` was on the build machine's `PATH` (`brew ins
 Set `toolsets.rpm: "system"` when:
 
 - you build the `rpm` target on **Intel macOS** or **32-bit Linux**. No bundle is published for them, and electron-builder does not fall back to the host `rpmbuild` on its own: any other value fails the build.
-- your build relies on host rpm configuration, such as macros in `~/.rpmmacros` or `/etc/rpm`. The bundle reads only its own macros; pass a macro explicitly instead with `rpm.fpm: ["--rpm-rpmbuild-define=<name> <value>"]`, which also overrides the bundle's pinned values.
+- your build relies on host rpm configuration, such as macros in `~/.rpmmacros` or `/etc/rpm`. The bundle reads only its own macros; pass a macro explicitly instead with `rpm.fpm: ["--rpm-rpmbuild-define=<name> <value>"]`, which also overrides the pinned `_build_id_links` and `_rpmformat` values.
 
 ```yaml
 toolsets:

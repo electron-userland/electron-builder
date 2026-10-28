@@ -841,7 +841,8 @@ export interface ToolsetConfig {
    *
    * By default (`"latest"`) a portable `rpmbuild` bundle is downloaded, so the `.rpm` is the same whichever `rpm` version (if any) is
    * installed on the build machine, and whatever its configuration: host and user rpm macros (`/etc/rpm`, `~/.rpmmacros`) are ignored.
-   * The bundle pins the v4 package format and disables `/usr/lib/.build-id` links.
+   * The bundle's own macros pin the v4 package format and disable `/usr/lib/.build-id` links; electron-builder also passes both as
+   * `rpmbuild` defines with every value, `"system"` included.
    *
    * Available versions:
    * | Version | rpm version | Platform support | Notes |

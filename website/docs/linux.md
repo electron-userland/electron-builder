@@ -204,6 +204,14 @@ toolsets:
 
 See [v27 Breaking Changes → RPM builds use a bundled `rpmbuild`](./migration/v27-build-changes.md#rpm-builds-use-a-bundled-rpmbuild).
 
+**Build-id links and package format:** RPMs are built without `/usr/lib/.build-id` links and with the v4 package format, with the bundled `rpmbuild` and with `toolsets.rpm: system` alike: electron-builder passes both as `rpmbuild` defines, so a host rpm 4.x or 6.x gives the same layout and format as the bundle. Without them, rpm 4.x adds a build-id link for every bundled ELF file, and two apps that ship the same Electron binaries conflict on install. To restore the links, override the define through `fpm` (user args come last, so they win):
+
+```yaml
+rpm:
+  fpm:
+    - "--rpm-rpmbuild-define=_build_id_links compat"
+```
+
 ## Pacman Package (`pacman`)
 
 :::warning[Beta]
