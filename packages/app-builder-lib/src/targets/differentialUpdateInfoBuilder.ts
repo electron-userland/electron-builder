@@ -341,6 +341,24 @@ export function toBlockMapOptions(regions: Array<BlockMapRegion>, v3Boundaries?:
   return options
 }
 
+/**
+ * Block map options of an installer that embeds its app packages verbatim: the regions of their stored `members` and, for the
+ * binary format only, those of the 7z headers of `archiveFiles` and a block boundary at every packed file of a stored asar. The
+ * JSON format uses neither, so its build does not read them.
+ */
+export async function installerBlockMapOptions(
+  installerPath: string,
+  members: Array<StoredMember>,
+  archiveFiles: Array<string>,
+  format: BlockMapFormat
+): Promise<DifferentialBlockMapOptions | undefined> {
+  const regions = members.map(it => it.region)
+  if (format !== BINARY_BLOCK_MAP_FORMAT) {
+    return toBlockMapOptions(regions)
+  }
+  return toBlockMapOptions([...regions, ...(await locateArchiveHeaderRegions(installerPath, archiveFiles))], await asarContentBoundaries(members))
+}
+
 function isSameChunker(a: ChunkerParams, b: ChunkerParams): boolean {
   return a.min === b.min && a.avg === b.avg && a.max === b.max
 }
