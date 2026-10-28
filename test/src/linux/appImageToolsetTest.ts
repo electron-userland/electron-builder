@@ -30,13 +30,38 @@ describe("getAppImageTools", () => {
     ["latest", "latest"],
     ["undefined", undefined],
     ["null", null],
-  ])("%s resolves to the newest bundle (1.1.0)", async (_label, toolset) => {
+  ])("%s resolves to the newest bundle (1.2.0)", async (_label, toolset) => {
     await getAppImageTools(toolset as any, Arch.x64, tmpDir)
     expect(downloadBuilderToolset).toHaveBeenCalledTimes(1)
     expect(downloadBuilderToolset).toHaveBeenCalledWith({
-      releaseName: "appimage@1.1.0",
+      releaseName: "appimage@1.2.0",
       filenameWithExt: "appimage-tools-runtime-20251108.tar.gz",
-      checksums: appimageChecksums["1.1.0"],
+      checksums: appimageChecksums["1.2.0"],
+      githubOrgRepo: GITHUB_ORG_REPO,
+    })
+  })
+
+  // Making 1.2.0 the default must stay additive: every earlier pin keeps its own release and checksum.
+  test("1.2.0 is added alongside the earlier pins, which keep their checksums", () => {
+    expect(Object.keys(appimageChecksums)).toEqual(["0.0.0", "1.0.3", "1.1.0", "1.2.0"])
+    expect(appimageChecksums["1.2.0"]).toEqual({
+      "appimage-tools-runtime-20251108.tar.gz": "ee120b9454caefe88cec87f77f1e7ee32de779433b5596f220aaf6c80d63a597",
+    })
+    expect(appimageChecksums["1.1.0"]).toEqual({
+      "appimage-tools-runtime-20251108.tar.gz": "098182ab8d3bb93db8a23691671f665ff92316249ace850aec63b9d010ec7fe0",
+    })
+    expect(appimageChecksums["1.0.3"]).toEqual({
+      "appimage-tools-runtime-20251108.tar.gz": "84021a78ee214ae6fd33a2d62a92ba25542dd10bc86bf117a9b2d0bba44e7665",
+    })
+  })
+
+  test.each(["1.0.3", "1.1.0"])('an explicit "%s" pin still resolves to that release, not the new default', async version => {
+    await getAppImageTools(version as any, Arch.x64, tmpDir)
+    expect(downloadBuilderToolset).toHaveBeenCalledTimes(1)
+    expect(downloadBuilderToolset).toHaveBeenCalledWith({
+      releaseName: `appimage@${version}`,
+      filenameWithExt: "appimage-tools-runtime-20251108.tar.gz",
+      checksums: (appimageChecksums as any)[version],
       githubOrgRepo: GITHUB_ORG_REPO,
     })
   })
