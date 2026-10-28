@@ -1,5 +1,5 @@
 import * as semver from "semver"
-import type { Platform } from "../core.js"
+import { DEFAULT_TARGET, type Platform } from "../core.js"
 import type { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
 
 /** Default `electronUpdaterCompatibility`: the electron-updater versions the installed apps are assumed to ship. */
@@ -42,6 +42,15 @@ export function resolveElectronUpdaterCompatibility(
 type CompatibilityOptions = Pick<PlatformSpecificBuildOptions, "electronUpdaterCompatibility">
 type PlatformKey = "mac" | "win" | "linux"
 
+/** The targets that publish a `.blockmap` file beside their artifact, by platform; `DEFAULT_TARGET` (an NSIS installer, a zip and a dmg) among them. */
+const BLOCK_MAP_FILE_TARGETS: Readonly<Record<PlatformKey, ReadonlyArray<string>>> = {
+  // not the portable executable, nor nsis-web, whose package embeds its map
+  win: [DEFAULT_TARGET, "nsis"],
+  mac: [DEFAULT_TARGET, "zip", "dmg"],
+  // an AppImage embeds its map
+  linux: [],
+}
+
 /** What the app's own electron-updater has to read on one platform of a build. */
 export interface ElectronUpdaterRequirement {
   readonly platform: string
@@ -53,16 +62,18 @@ export interface ElectronUpdaterRequirement {
 
 /**
  * The requirement of each platform a build targets, resolved as the targets resolve them (`platformOptions`, then the root option,
- * then the default). Linux publishes no `.blockmap` file: an AppImage embeds the JSON map.
+ * then the default). `builtTargets`: the target names each platform builds (see `resolveTargetNames`).
  */
 export function electronUpdaterRequirements(
   config: CompatibilityOptions & { readonly blockmap?: unknown } & { readonly [platform in PlatformKey]?: CompatibilityOptions | null },
-  platforms: Iterable<Pick<Platform, "name" | "buildConfigurationKey">>
+  builtTargets: Iterable<readonly [Pick<Platform, "name" | "buildConfigurationKey">, Iterable<string>]>
 ): Array<ElectronUpdaterRequirement> {
   const requirements: Array<ElectronUpdaterRequirement> = []
-  for (const { name, buildConfigurationKey: key } of platforms) {
-    const range = resolveElectronUpdaterCompatibility(key === "mac" || key === "win" || key === "linux" ? config[key] : null, config)
-    requirements.push({ platform: name, range, binaryBlockMap: key !== "linux" && writesBinaryBlockMap(config.blockmap, range) })
+  for (const [{ name, buildConfigurationKey: key }, targetNames] of builtTargets) {
+    const isKnown = key === "mac" || key === "win" || key === "linux"
+    const range = resolveElectronUpdaterCompatibility(isKnown ? config[key] : null, config)
+    const writesBlockMapFile = isKnown && [...targetNames].some(it => BLOCK_MAP_FILE_TARGETS[key].includes(it))
+    requirements.push({ platform: name, range, binaryBlockMap: writesBlockMapFile && writesBinaryBlockMap(config.blockmap, range) })
   }
   return requirements
 }

@@ -270,7 +270,7 @@ The `electronUpdaterCompatibility` option sets the electron-updater compatibilit
 * the [`.blockmap` format](#differential-updates-blockmap): the binary map for a range that includes only electron-updater 7 and later, the JSON map (with a build warning) for a range that includes earlier versions;
 * the legacy fields emitted in addition to `files[]`: the top-level `path`/`sha512` and the Windows `sha2` checksum for ranges intersecting `<2.16.0`, and the old `latest-mac.json` for ranges intersecting `<2.0.0`.
 
-The build fails when the app's own electron-updater is outside the range of a platform it builds (for example electron-updater 6 with the default `>=7`): upgrade it, or declare a range that includes it. The app's electron-updater is the one in `dependencies`, else in `devDependencies` (bundled by webpack, vite and the like). Where the build writes the binary block map (Windows and macOS), electron-updater 7.0.0-alpha.0 to 7.0.0-alpha.12, which cannot read it, fail the build as well: upgrade to 7.0.0-alpha.13 or later, or set `blockmap` to `"v2"`.
+The build fails when the app's own electron-updater is outside the range of a platform it builds (for example electron-updater 6 with the default `>=7`): upgrade it, or declare a range that includes it. The app's electron-updater is the one in `dependencies`, else in `devDependencies` (bundled by webpack, vite and the like), else, with two package.json files, in the development package.json. Where the build writes binary `.blockmap` files (an NSIS installer, a macOS zip or dmg), electron-updater 7.0.0-alpha.0 to 7.0.0-alpha.12, which cannot read it, fail the build as well: upgrade to 7.0.0-alpha.13 or later, or set `blockmap` to `"v2"`.
 
 Metadata format history:
 

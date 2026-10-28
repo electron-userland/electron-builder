@@ -1,5 +1,6 @@
-import { Platform } from "app-builder-lib"
+import { Arch, Configuration, DEFAULT_TARGET, Packager, Platform } from "app-builder-lib"
 import { checkMetadata } from "app-builder-lib/internal"
+import { resolveTargetNames } from "app-builder-lib/src/targets/targetFactory"
 import { electronUpdaterRequirements } from "app-builder-lib/src/util/electronUpdaterCompatibility"
 import { TmpDir } from "builder-util"
 import fsExtra from "fs-extra"
@@ -10,12 +11,12 @@ import { describe, expect, test, vi } from "vitest"
 type CompatibilityConfig = Parameters<typeof electronUpdaterRequirements>[0]
 
 // the minimum-version tests below declare a range that includes 6.x, so only the 4.0.0 minimum applies
-// ({}: what the build has when it declares none, the default)
+// ({}: what the build has when it declares none, the default). A bare platform builds its default targets.
 function checkDependencies(
   dependencies: Record<string, string>,
   projectDir: string,
   config: CompatibilityConfig = { electronUpdaterCompatibility: ">=4" },
-  platforms: Array<Platform> = [Platform.WINDOWS],
+  platforms: Array<Platform | [Platform, Array<string>]> = [Platform.WINDOWS],
   extraMetadata: Record<string, unknown> = {},
   devMetadata?: Record<string, unknown>
 ) {
@@ -27,7 +28,8 @@ function checkDependencies(
     dependencies,
     ...extraMetadata,
   }
-  checkMetadata(metadata, devMetadata ?? metadata, "package.json", "package.json", projectDir, electronUpdaterRequirements(config, platforms))
+  const builtTargets = platforms.map(it => (Array.isArray(it) ? it : ([it, [DEFAULT_TARGET]] as const)))
+  checkMetadata(metadata, devMetadata ?? metadata, "package.json", "package.json", projectDir, electronUpdaterRequirements(config, builtTargets))
 }
 
 /**
@@ -231,6 +233,21 @@ describe("checkMetadata electron-updater version validation", () => {
       }
     })
 
+    test("the binary block map floor applies only to a build with a target that publishes a .blockmap file", async ({ tmpDir }) => {
+      await withProjectDir(tmpDir, "7.0.0-alpha.12", projectDir => {
+        const check = (platform: Platform, targets: Array<string>) => () => checkDependencies({ "electron-updater": "^7.0.0-alpha.12" }, projectDir, DEFAULT, [[platform, targets]])
+        for (const targets of [["dir"], ["portable"], ["nsis-web"], ["msi"], ["appx"], ["portable", "appx"]]) {
+          expect(check(Platform.WINDOWS, targets)).not.toThrow()
+        }
+        for (const targets of [["dir"], ["mas"], ["mas-dev"], ["pkg"]]) {
+          expect(check(Platform.MAC, targets)).not.toThrow()
+        }
+        expect(check(Platform.WINDOWS, ["portable", "nsis"])).toThrow(/cannot read the binary block map the build writes for windows/)
+        expect(check(Platform.MAC, ["zip"])).toThrow(/cannot read the binary block map the build writes for mac/)
+        expect(check(Platform.MAC, ["pkg", "dmg"])).toThrow(/cannot read the binary block map the build writes for mac/)
+      })
+    })
+
     test("a declared prerelease specifier is checked at the lowest version it allows when electron-updater is not installed", async ({ tmpDir }) => {
       await withProjectDir(tmpDir, null, projectDir => {
         expect(() => checkDependencies({ "electron-updater": "^7.0.0-alpha.5" }, projectDir, DEFAULT)).toThrow(
@@ -276,6 +293,18 @@ describe("checkMetadata electron-updater version validation", () => {
       })
     })
 
+    test("an electron-updater in the dependencies of the development package.json is checked", async ({ tmpDir }) => {
+      // two package.json layout (e.g. electron-react-boilerplate): the app's package.json lists only native modules
+      const devMetadata = { name: "dev", dependencies: { "electron-updater": "^6.8.10" }, devDependencies: { "electron-updater": "^7.3.1" } }
+      await withProjectDir(tmpDir, null, projectDir => {
+        expect(() => checkDependencies({}, projectDir, DEFAULT, [Platform.WINDOWS], {}, devMetadata)).toThrow(
+          /electron-updater \^6\.8\.10 \(bundled from dependencies of the development package\.json\) does not satisfy electronUpdaterCompatibility ">=7" of windows/
+        )
+        // the app's own package.json takes precedence
+        expect(() => checkDependencies({}, projectDir, DEFAULT, [Platform.WINDOWS], { devDependencies: { "electron-updater": "^7.3.1" } }, devMetadata)).not.toThrow()
+      })
+    })
+
     test("dependencies take precedence over devDependencies", async ({ tmpDir }) => {
       await withProjectDir(tmpDir, null, projectDir => {
         expect(() =>
@@ -299,13 +328,51 @@ describe("checkMetadata electron-updater version validation", () => {
 describe("electronUpdaterRequirements", () => {
   test("resolves each platform's range as its targets do and whether it publishes binary .blockmap files", () => {
     const config = { electronUpdaterCompatibility: ">=7.1", win: { electronUpdaterCompatibility: ">=6" }, linux: { electronUpdaterCompatibility: ">=8" } }
-    expect(electronUpdaterRequirements(config, [Platform.WINDOWS, Platform.MAC, Platform.LINUX])).toEqual([
+    const defaults = (...platforms: Array<Platform>) => platforms.map(it => [it, [DEFAULT_TARGET]] as const)
+    expect(electronUpdaterRequirements(config, defaults(Platform.WINDOWS, Platform.MAC, Platform.LINUX))).toEqual([
       { platform: "windows", range: ">=6", binaryBlockMap: false },
       { platform: "mac", range: ">=7.1", binaryBlockMap: true },
       { platform: "linux", range: ">=8", binaryBlockMap: false },
     ])
-    expect(electronUpdaterRequirements({}, [Platform.MAC])).toEqual([{ platform: "mac", range: ">=7", binaryBlockMap: true }])
-    expect(electronUpdaterRequirements({ blockmap: "v2" }, [Platform.WINDOWS])).toEqual([{ platform: "windows", range: ">=7", binaryBlockMap: false }])
-    expect(electronUpdaterRequirements({ blockmap: "latest" }, [Platform.WINDOWS])).toEqual([{ platform: "windows", range: ">=7", binaryBlockMap: true }])
+    expect(electronUpdaterRequirements({}, defaults(Platform.MAC))).toEqual([{ platform: "mac", range: ">=7", binaryBlockMap: true }])
+    expect(electronUpdaterRequirements({ blockmap: "v2" }, defaults(Platform.WINDOWS))).toEqual([{ platform: "windows", range: ">=7", binaryBlockMap: false }])
+    expect(electronUpdaterRequirements({ blockmap: "latest" }, defaults(Platform.WINDOWS))).toEqual([{ platform: "windows", range: ">=7", binaryBlockMap: true }])
+    expect(electronUpdaterRequirements({}, [[Platform.WINDOWS, ["portable"]]])).toEqual([{ platform: "windows", range: ">=7", binaryBlockMap: false }])
+  })
+})
+
+describe("resolveTargetNames", () => {
+  test("resolves the requested targets, else the platform's target option, else the default targets", () => {
+    const names = (targets: Map<Platform, Map<Arch, Array<string>>>, config: Configuration = {}) =>
+      Object.fromEntries([...resolveTargetNames(targets, config)].map(([p, n]) => [p.name, [...n]]))
+    expect(names(Platform.WINDOWS.createTarget("portable", Arch.x64))).toEqual({ windows: ["portable"] })
+    expect(names(Platform.MAC.createTarget("dir", Arch.arm64))).toEqual({ mac: ["dir"] })
+    // the CLI's requested targets win over the target option, as in the build
+    expect(names(Platform.WINDOWS.createTarget("portable", Arch.x64), { win: { target: "nsis" } })).toEqual({ windows: ["portable"] })
+    expect(names(Platform.WINDOWS.createTarget(null, Arch.x64), { win: { target: [{ target: "portable" }, "appx:x64"] } })).toEqual({ windows: ["portable", "appx"] })
+    expect(names(Platform.MAC.createTarget(null, Arch.arm64), { mac: { target: "mas" } })).toEqual({ mac: ["mas"] })
+    // an arch that no configured target covers builds the default targets
+    expect(names(Platform.WINDOWS.createTarget(null, Arch.ia32), { win: { target: "portable:x64" } })).toEqual({ windows: [DEFAULT_TARGET, "portable"] })
+    expect(names(Platform.WINDOWS.createTarget(null, Arch.x64))).toEqual({ windows: [DEFAULT_TARGET] })
+    expect(names(Platform.MAC.createTarget())).toEqual({ mac: [DEFAULT_TARGET] })
+  })
+})
+
+describe("Packager electron-updater check", () => {
+  // the CLI publish and verify commands target the host platform, but build nothing
+  test("publish and verify (validateConfig) do not check the host platform's range; a build checks the platforms it builds", async ({ tmpDir }) => {
+    await withProjectDir(tmpDir, "6.8.10", async projectDir => {
+      await fsExtra.outputJson(path.join(projectDir, "package.json"), {
+        name: "test-app",
+        version: "1.0.0",
+        description: "test",
+        author: "test",
+        dependencies: { "electron-updater": "^6.8.10" },
+      })
+      // a Windows-only app on electron-updater 6, published from a macOS host
+      const options = { projectDir, targets: Platform.MAC.createTarget(), config: { win: { electronUpdaterCompatibility: ">=6" } } }
+      await expect(new Packager(options).validateConfig()).resolves.toBeUndefined()
+      await expect(new Packager(options).build()).rejects.toThrow(/electron-updater 6\.8\.10 does not satisfy electronUpdaterCompatibility ">=7" of mac/)
+    })
   })
 })

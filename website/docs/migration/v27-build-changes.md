@@ -545,7 +545,7 @@ The deprecated top-level `path` and `sha512` fields are **no longer written** to
 
 ### Block map format follows `electronUpdaterCompatibility` {#block-map-format-follows-electronupdatercompatibility}
 
-**How you'll find out:** the build **fails** when the app's electron-updater (in `dependencies`, or bundled from `devDependencies`) is outside the `electronUpdaterCompatibility` of a platform it builds, or is a 7.0.0 prerelease before 7.0.0-alpha.13 where it writes binary block maps, and **warns** once when the range makes it write JSON block maps.
+**How you'll find out:** the build **fails** when the app's electron-updater (in `dependencies`, or bundled from `devDependencies` or the development package.json) is outside the `electronUpdaterCompatibility` of a platform it builds, or is a 7.0.0 prerelease before 7.0.0-alpha.13 where it writes binary block maps (an NSIS installer, a macOS zip or dmg), and **warns** once when the range makes it write JSON block maps.
 
 v27 adds a binary `.blockmap` format that electron-updater 7 fetches in parts with HTTP `Range` requests, so a differential update no longer downloads the whole map ([Differential updates](../features/auto-update.md#differential-updates-blockmap)). electron-updater 6 cannot read it. The map is read by the updater already installed in your users' apps, which is what [`electronUpdaterCompatibility`](../features/auto-update.md#compatibility) describes, so the format follows that range, and its default is now **`>=7`** (it was `>=2.16`; the legacy `latest*.yml` fields it also controls are written only for ranges below 2.16, so they are unaffected):
 

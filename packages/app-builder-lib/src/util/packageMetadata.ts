@@ -139,33 +139,36 @@ function lowestVersion(versionOrRange: string): semver.SemVer | null {
 interface AppElectronUpdater {
   /** the installed version, or the declared specifier when electron-updater is not installed */
   readonly version: string
-  readonly dependencyType: "dependencies" | "devDependencies"
+  /** where a bundler takes it from (null: the app's `dependencies`, which are packaged) */
+  readonly bundledFrom: string | null
   /** `catalog:` / `workspace:` specifier of an electron-updater that is not installed */
   readonly isUnresolvable: boolean
 }
 
 /**
- * The electron-updater the app ships: from `dependencies`, else from `devDependencies` (bundled by webpack, vite, ...), of the app
- * and then of the development package.json.
+ * The electron-updater the app ships: from the app's `dependencies`, else bundled (by webpack, vite, ...) from its `devDependencies`,
+ * or from the `dependencies` or `devDependencies` of the development package.json (two package.json layout).
  */
 function findAppElectronUpdater(metadata: Metadata, devMetadata: any | null, projectDir: string): AppElectronUpdater | null {
-  let declared: { specifier: string; dependencyType: AppElectronUpdater["dependencyType"] } | null = null
-  const candidates: Array<[unknown, AppElectronUpdater["dependencyType"]]> = [
-    [metadata.dependencies, "dependencies"],
+  let declared: { specifier: string; bundledFrom: string | null } | null = null
+  const dev = devMetadata === metadata ? null : devMetadata
+  const candidates: Array<[unknown, string | null]> = [
+    [metadata.dependencies, null],
     [(metadata as any).devDependencies, "devDependencies"],
-    [devMetadata === metadata ? null : devMetadata?.devDependencies, "devDependencies"],
+    [dev?.dependencies, "dependencies of the development package.json"],
+    [dev?.devDependencies, "devDependencies"],
   ]
-  for (const [dependencies, dependencyType] of candidates) {
+  for (const [dependencies, bundledFrom] of candidates) {
     const specifier = dependencies == null ? undefined : (dependencies as Record<string, unknown>)["electron-updater"]
     if (typeof specifier === "string") {
-      declared = { specifier, dependencyType }
+      declared = { specifier, bundledFrom }
       break
     }
   }
   if (declared == null) {
     return null
   }
-  const { dependencyType } = declared
+  const { bundledFrom } = declared
   let updaterVersion = declared.specifier
 
   // prefer the version of the actually-installed electron-updater over the declared specifier,
@@ -179,7 +182,7 @@ function findAppElectronUpdater(metadata: Metadata, devMetadata: any | null, pro
   }
 
   if (resolvedPackageJson != null) {
-    return { version: fsExtra.readJsonSync(resolvedPackageJson).version, dependencyType, isUnresolvable: false }
+    return { version: fsExtra.readJsonSync(resolvedPackageJson).version, bundledFrom, isUnresolvable: false }
   }
 
   // Pick the version out of yarn berry patch syntax
@@ -202,13 +205,13 @@ function findAppElectronUpdater(metadata: Metadata, devMetadata: any | null, pro
       const normalized = path.normalize(updaterVersion.substring(prefix.length))
       const packageJsonPath = path.isAbsolute(normalized) ? normalized : path.resolve(process.cwd(), normalized)
       const json = fsExtra.readJsonSync(path.join(packageJsonPath, "package.json"))
-      return { version: json.version, dependencyType, isUnresolvable: false }
+      return { version: json.version, bundledFrom, isUnresolvable: false }
     }
   }
 
   // pnpm `catalog:` and `workspace:` specifiers cannot be resolved to a concrete version from the package.json alone, so skip validation
   const isUnresolvable = ["catalog:", "workspace:"].some(protocol => updaterVersion.startsWith(protocol))
-  return { version: updaterVersion, dependencyType, isUnresolvable }
+  return { version: updaterVersion, bundledFrom, isUnresolvable }
 }
 
 function checkElectronUpdater(metadata: Metadata, devMetadata: any | null, errors: Array<string>, projectDir: string, requirements: Array<ElectronUpdaterRequirement>) {
@@ -216,8 +219,8 @@ function checkElectronUpdater(metadata: Metadata, devMetadata: any | null, error
   if (updater == null || updater.isUnresolvable) {
     return
   }
-  const { version, dependencyType } = updater
-  const source = dependencyType === "devDependencies" ? " (bundled from devDependencies)" : ""
+  const { version, bundledFrom } = updater
+  const source = bundledFrom == null ? "" : ` (bundled from ${bundledFrom})`
 
   const requiredElectronUpdaterVersion = "4.0.0"
   if (!versionSatisfies(version, `>=${requiredElectronUpdaterVersion}`)) {
