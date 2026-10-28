@@ -1,5 +1,5 @@
-import { log } from "builder-util"
-import { lstat, readdir, rename } from "fs/promises"
+import { log, walk } from "builder-util"
+import { rename } from "fs/promises"
 import * as path from "path"
 
 /** Fast path: a pure ASCII name can never change under Unicode normalization, and most names are. */
@@ -33,59 +33,41 @@ function isAscii(name: string): boolean {
  * decomposed name through unchanged. Lookups on both are normalization-insensitive, so code that opens
  * the file under its precomposed name keeps working.
  *
- * Renaming is bottom-up: a directory renamed before its children would invalidate the paths used to
- * reach them. The bundle root itself is left alone — the caller holds that path.
- *
  * @param root the app bundle to normalize in place; the root's own name is not changed
  * @returns the number of entries renamed
  */
 export async function normalizeFileNamesToNfd(root: string): Promise<number> {
+  // `walk` stats with `lstat`, so a symlink is listed as itself and never followed, and it omits the
+  // root it was given — which is what we want, since the caller holds that path.
+  const entries = await walk(root, null, { isIncludeDir: true, consume: () => null })
+
+  // `walk` collects top-down, so a parent is renamed before the children whose paths it already
+  // collected. macOS resolves those stale paths anyway — lookups ignore normalization, so a child
+  // path spelled with the parent's precomposed name still opens after the parent is decomposed — but
+  // that makes the rename order load-bearing on filesystem behavior. Rename the deepest entries first
+  // instead. (The tests do not catch the unsorted version for exactly that reason; see the PR notes.)
+  entries.sort((a, b) => b.split(path.sep).length - a.split(path.sep).length)
+
   let renamed = 0
-
-  const walk = async (dir: string): Promise<void> => {
-    let entries: string[]
+  for (const entry of entries) {
+    const name = path.basename(entry)
+    if (isAscii(name)) {
+      continue
+    }
+    const normalized = name.normalize("NFD")
+    if (normalized === name) {
+      continue
+    }
     try {
-      entries = await readdir(dir)
+      await rename(entry, path.join(path.dirname(entry), normalized))
+      renamed++
     } catch (e: any) {
-      // a bundle is not expected to be unreadable, but an unreadable directory must not fail the build
-      log.debug({ directory: dir, error: e.message }, "cannot list directory while normalizing file names")
-      return
-    }
-
-    // children first — see the note on bottom-up renaming above
-    for (const name of entries) {
-      const entry = path.join(dir, name)
-      try {
-        // lstat, not stat: a symlink is renamed like any other entry, never followed
-        if ((await lstat(entry)).isDirectory()) {
-          await walk(entry)
-        }
-      } catch {
-        // vanished between readdir and lstat — nothing to rename
-      }
-    }
-
-    for (const name of entries) {
-      if (isAscii(name)) {
-        continue
-      }
-      const normalized = name.normalize("NFD")
-      if (normalized === name) {
-        continue
-      }
-      try {
-        await rename(path.join(dir, name), path.join(dir, normalized))
-        renamed++
-      } catch (e: any) {
-        // signing still happens; the name stays precomposed and may break inside a DMG, so say so
-        log.warn(
-          { file: log.filePath(path.join(dir, name)), error: e.message },
-          "cannot normalize the file name to NFD — the code signature may be reported as damaged when the app is installed from a DMG"
-        )
-      }
+      // signing still happens; the name stays precomposed and may break inside a DMG, so say so
+      log.warn(
+        { file: log.filePath(entry), error: e.message },
+        "cannot normalize the file name to NFD — the code signature may be reported as damaged when the app is installed from a DMG"
+      )
     }
   }
-
-  await walk(root)
   return renamed
 }
