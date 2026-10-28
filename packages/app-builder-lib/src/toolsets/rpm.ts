@@ -11,10 +11,6 @@ const RPM_LATEST = "1.0.0"
 
 export const RPM_TOOLSET_MIGRATION_URL = "https://www.electron.build/docs/migration/v27-build-changes#rpm-builds-use-a-bundled-rpmbuild"
 
-// TODO(electron-builder-binaries#238): replace these placeholders with the SHA-256 of each asset once rpm@1.0.0 is released.
-// They are deliberately not a checksum format, so a download is refused before it starts instead of being verified against a made-up value.
-const RPM_CHECKSUM_PENDING = "PENDING: electron-builder-binaries#238 (rpm@1.0.0 not released yet)"
-
 /**
  * Portable `rpmbuild` (rpm 6.1.0) built by electron-builder-binaries `packages/rpm`. The archive has no top-level directory:
  * `bin/rpmbuild` and `bin/rpm` are wrappers that set `RPM_CONFIGDIR`/`MAGIC` relative to the bundle and load only the bundled
@@ -22,9 +18,9 @@ const RPM_CHECKSUM_PENDING = "PENDING: electron-builder-binaries#238 (rpm@1.0.0 
  */
 export const rpmChecksums = {
   "1.0.0": {
-    "rpm-6.1.0-linux-amd64.7z": RPM_CHECKSUM_PENDING,
-    "rpm-6.1.0-linux-arm64v8.7z": RPM_CHECKSUM_PENDING,
-    "rpm-6.1.0-darwin-arm64.7z": RPM_CHECKSUM_PENDING,
+    "rpm-6.1.0-linux-amd64.7z": "cd548e7f03bf822aa47ad22a4bcbab16eb56ab4ce800f051ff7ceffb4bdf5507",
+    "rpm-6.1.0-linux-arm64v8.7z": "b12fd461a2fd5fb6ccfd1492fbac9f242ef46b83ec27bd30af8f580ca0241f97",
+    "rpm-6.1.0-darwin-arm64.7z": "62417c83c00b685fd7526ab4270b55cad765cb0604da015259a2ce8353cc4019",
   },
 } as const
 
