@@ -2,12 +2,11 @@ import { Arch, exists, InvalidConfigurationError, log } from "builder-util"
 import { BlockMapDataHolder, PackageFileInfo } from "builder-util-runtime"
 import { open, stat } from "fs/promises"
 import * as path from "path"
-import * as semver from "semver"
 import * as zlib from "zlib"
 import { Node, readAsarHeader } from "../asar/asar.js"
 import { Target } from "../core.js"
 import { PlatformPackager } from "../platformPackager.js"
-import { BLOCK_MAP_FORMAT_DOCS_URL, resolveElectronUpdaterCompatibility } from "../util/electronUpdaterCompatibility.js"
+import { BINARY_BLOCK_MAP_MIN_UPDATER, BLOCK_MAP_FORMAT_DOCS_URL, isBinaryBlockMapSupported, resolveElectronUpdaterCompatibility } from "../util/electronUpdaterCompatibility.js"
 import { ArchiveOptions } from "./archive.js"
 import { BlockMapRegion, buildBlockMap, BuildBlockMapOptions, ChunkerParams } from "./blockmap/blockmap.js"
 import { buildBlockMapV3 } from "./blockmap/blockmapV3.js"
@@ -27,9 +26,6 @@ export const BINARY_BLOCK_MAP_FORMAT: BlockMapFormat = "v3"
 /** The newest format electron-builder writes, what `blockmap: "latest"` selects when `electronUpdaterCompatibility` allows it. */
 export const LATEST_BLOCK_MAP_FORMAT: BlockMapFormat = "v3"
 
-/** electron-updater versions before this one cannot read the binary format. */
-const BINARY_BLOCK_MAP_MIN_UPDATER = "7.0.0"
-
 /**
  * The format of the `.blockmap` files of a build. The map is read by the updater already installed in the users' apps, which
  * `electronUpdaterCompatibility` describes, so:
@@ -43,8 +39,7 @@ export function resolveBlockMapFormat(value: unknown, electronUpdaterCompatibili
   if (value != null && value !== "latest" && value !== "v2" && value !== "v3") {
     throw new InvalidConfigurationError(`"blockmap" must be "v2", "v3" or "latest", got ${JSON.stringify(value)}`)
   }
-  // no includePrerelease: it would make ">=7" intersect "<7.0.0" at the 7.0.0-0 prerelease point
-  const binarySupported = !semver.intersects(electronUpdaterCompatibility, `<${BINARY_BLOCK_MAP_MIN_UPDATER}`)
+  const binarySupported = isBinaryBlockMapSupported(electronUpdaterCompatibility)
   if (value === "v2") {
     return "v2"
   }

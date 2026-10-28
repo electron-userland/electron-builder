@@ -35,7 +35,7 @@ import { addTargetsForPlatform, computeArchToTargetNamesMap, createTargets, NoOp
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
 import { assertNoRemovedEnvVars } from "./util/flags.js"
 import { expandMacro } from "./util/macroExpander.js"
-import { declaredElectronUpdaterCompatibility } from "./util/electronUpdaterCompatibility.js"
+import { electronUpdaterRequirements } from "./util/electronUpdaterCompatibility.js"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata.js"
 import { warnOnRemovedEnvVars } from "./util/removedEnvVars.js"
 import { getRepositoryInfo } from "./util/repositoryInfo.js"
@@ -413,7 +413,9 @@ export class Packager {
     if (this.isTwoPackageJsonProjectLayoutUsed) {
       log.debug({ devPackageFile, appPackageFile }, "two package.json structure is used")
     }
-    checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile, projectDir, declaredElectronUpdaterCompatibility(configuration))
+    // per platform this packager targets (the CLI `publish` and `verify` commands: the current one), which writes update files for its own range
+    const updaterRequirements = electronUpdaterRequirements(configuration, this.options.targets?.keys() ?? [])
+    checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile, projectDir, updaterRequirements)
 
     await validateConfiguration(configuration, this.debugLogger)
 
