@@ -346,10 +346,9 @@ describe("checkLegacyConfiguration — removed custom NSIS bundle keys", () => {
 
 describe("assertInstallerDebugLoggingSupported", () => {
   test.each([
-    ["unset", undefined, "unset"],
-    ["latest", "latest", '"latest"'],
-    ["a pinned version", "1.2.1", '"1.2.1"'],
-  ] as const)("rejects %s toolsets.nsis, which is not log-enabled", (_name, nsis, shown) => {
+    ["the legacy", "0.0.0", '"0.0.0"'],
+    ["the stock NSIS 3.12", "1.2.1", '"1.2.1"'],
+  ] as const)("rejects %s toolsets.nsis bundle, which is not log-enabled", (_name, nsis, shown) => {
     let error: unknown
     try {
       assertInstallerDebugLoggingSupported(nsis, "nsis-web")
@@ -361,7 +360,16 @@ describe("assertInstallerDebugLoggingSupported", () => {
     expect(message).toContain("`installerDebugLogging` (nsis-web target) needs a log-enabled NSIS")
     expect(message).toContain("NSIS_CONFIG_LOG=yes")
     expect(message).toContain(`\`toolsets.nsis\` is ${shown}`)
+    expect(message).toContain('Remove the `toolsets.nsis` pin (or set it to "latest" or "2.0.2")')
     expect(message.endsWith("https://www.electron.build/docs/migration/v27-config-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis")).toBe(true)
+  })
+
+  test.each([
+    ["unset (the default bundle)", undefined],
+    ['"latest"', "latest"],
+    ['"2.0.2"', "2.0.2"],
+  ] as const)("accepts %s toolsets.nsis, which is log-enabled", (_name, nsis) => {
+    expect(() => assertInstallerDebugLoggingSupported(nsis, "nsis")).not.toThrow()
   })
 
   test("accepts a custom toolsets.nsis bundle", () => {

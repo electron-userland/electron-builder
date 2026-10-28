@@ -10,7 +10,7 @@ import _fsExtra from "fs-extra"
 const { stat } = _fsExtra
 
 // Newest NSIS bundle — selected when the config is unset / null / "latest".
-const NSIS_LATEST = "1.2.1"
+const NSIS_LATEST = "2.0.2"
 
 function getLegacyNsisBin(): Promise<string> {
   // Warning: Don't use v3.0.4.2 - https://github.com/electron-userland/electron-builder/issues/6334
@@ -37,20 +37,42 @@ export const nsisChecksums = {
     // unified bundle
     "nsis-bundle-3.12.tar.gz": "56997fdefe25e7928a1a68b4583d08b240b66cf660234053b20131a74cc082f4",
   },
+  "2.0.2": {
+    // unified bundle, NSIS 3.12 compiled from source: every makensis (Linux, macOS, Windows) and the Windows stubs are log-enabled
+    "nsis-bundle-3.12.tar.gz": "83d80ee578cb19008b2a99e4fccfb5e7c023cc9bb791eb38f6048fccc875f62c",
+  },
 } as const
+
+// Bundled versions whose makensis is not compiled with NSIS_CONFIG_LOG=yes: the legacy NSIS 3.0.4.1 and nsis@1.2.1 (stock NSIS 3.12).
+// nsis@2.0.2 is the first bundle with log-enabled makensis builds for every host and log-enabled stubs.
+const NSIS_VERSIONS_WITHOUT_LOGGING: ReadonlySet<string> = new Set<keyof typeof nsisChecksums>(["0.0.0", "1.2.1"])
+
+/**
+ * Whether `toolsets.nsis` selects a log-enabled NSIS, which `installerDebugLogging` needs. The default (unset / `"latest"`) and
+ * `"2.0.2"` are; the older pinned bundles (`"0.0.0"`, `"1.2.1"`) are not. A custom bundle is assumed to be log-enabled
+ * (makensis rejects `LogSet` if it is not).
+ */
+export function isNsisLoggingSupported(nsis: ToolsetConfig["nsis"] | Nullish): boolean {
+  if (typeof nsis === "object" && nsis != null) {
+    return true
+  }
+  return !NSIS_VERSIONS_WITHOUT_LOGGING.has(resolveToolsetVersion(nsis, NSIS_LATEST))
+}
 
 /**
  * `installerDebugLogging` emits `LogSet`, which only a `makensis` compiled with `NSIS_CONFIG_LOG=yes` accepts ("LogSet specified,
- * NSIS_CONFIG_LOG not defined" otherwise). The bundled NSIS toolsets are not log-enabled, so only a custom bundle can support it.
+ * NSIS_CONFIG_LOG not defined" otherwise). The default bundle (nsis@2.0.2 and newer) is log-enabled; the older pinned bundles are not.
  */
 export function assertInstallerDebugLoggingSupported(nsis: ToolsetConfig["nsis"] | Nullish, targetName: string): void {
-  if (typeof nsis === "object" && nsis != null) {
+  // a custom bundle and the default (unset / "latest") are always supported, so only a pinned bundled version is left here
+  if (isNsisLoggingSupported(nsis) || typeof nsis !== "string") {
     return
   }
   throw new InvalidConfigurationError(
     `\`installerDebugLogging\` (${targetName} target) needs a log-enabled NSIS (makensis and stubs compiled with NSIS_CONFIG_LOG=yes), ` +
-      `but \`toolsets.nsis\` is ${nsis == null ? "unset" : `"${nsis}"`}, which selects a bundled NSIS that is not log-enabled.\n` +
-      "  Supply a log-enabled NSIS bundle as a custom `toolsets.nsis: { url, checksum, version }`, or remove `installerDebugLogging`.\n" +
+      `but \`toolsets.nsis\` is "${nsis}", which selects a bundled NSIS that is not log-enabled.\n` +
+      `  Remove the \`toolsets.nsis\` pin (or set it to "latest" or "${NSIS_LATEST}") to use the log-enabled default bundle, supply a log-enabled custom ` +
+      "`toolsets.nsis: { url, checksum, version }`, or remove `installerDebugLogging`.\n" +
       "  https://www.electron.build/docs/migration/v27-config-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis"
   )
 }

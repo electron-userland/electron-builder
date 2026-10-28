@@ -18,7 +18,7 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 |---|---|---|
 | `winCodeSign` | Windows code signing & resource editing (`signtool` / `osslsigncode`, `rcedit`, Windows Kits for AppX/MSIX) | `1.3.1` |
 | `appimage` | Building `.AppImage` files (`mksquashfs`, `unsquashfs`, the self-executing runtime); its `mksquashfs` also packs legacy-base snaps built from the snap template app | `1.1.0` |
-| `nsis` | Compiling Windows installers (`makensis`, plugin DLLs, `elevate.exe`) | `1.2.1` |
+| `nsis` | Compiling Windows installers (`makensis`, plugin DLLs, `elevate.exe`) | `2.0.2` |
 | `wine` | Running Windows tools (NSIS, rcedit, signtool) on non-Windows hosts | `system` (host `wine` at a fixed install location) |
 | `fpm` | Building Linux packages (`.deb`, `.rpm`, `.pacman`, …) on macOS & Linux | `2.2.1` |
 | `linuxToolsMac` | Building Linux targets / `.tar.lz` archives on macOS (`ar`, `lzip`, `gtar`) | `1.0.1` |
@@ -54,7 +54,7 @@ Pinning to a concrete version is as simple as naming it:
 
 ```yaml
 toolsets:
-  nsis: "1.2.1"
+  nsis: "2.0.2"
   winCodeSign: "1.3.1"
 ```
 
@@ -206,7 +206,7 @@ All `makensis/makensis.exe` binaries in this bundle were compiled with the `x86-
 
 Many files are omitted from this list, but most of the important ones are covered. See also [NSIS Resources](#nsis-resources)
 
-The default bundle (`nsis-bundle-3.12.tar.gz` from the [`nsis@1.2.1` release](https://github.com/electron-userland/electron-builder-binaries/tree/master/artifacts/nsis)
+The default bundle (`nsis-bundle-3.12.tar.gz` from the [`nsis@2.0.2` release](https://github.com/electron-userland/electron-builder-binaries/tree/master/artifacts/nsis)
 
 #### Custom NSIS bundle Anatomy (minimal)
 
@@ -284,7 +284,7 @@ Plugins are particularly of-note here. NSIS scripts do not offer a lot of functi
 
 
 :::info[ You can toggle logging on an NSIS bundle via: ]
-`.installerDebugLogging` However it additionally needs `makensis/makensis.exe` binaries and the stubs compiled with `NSIS_CONFIG_LOG=yes`, which the default bundle's NSIS versions are not.
+`.installerDebugLogging` However it additionally needs `makensis/makensis.exe` binaries and the stubs compiled with `NSIS_CONFIG_LOG=yes`. The default bundle (`nsis@2.0.2`) is compiled that way; the older pinned bundles (`"0.0.0"`, `"1.2.1"`) are not, and a custom bundle must be.
 :::
 
 ## Host programs — `executables` {#executables}
