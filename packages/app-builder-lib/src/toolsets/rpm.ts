@@ -18,9 +18,9 @@ export const RPM_TOOLSET_MIGRATION_URL = "https://www.electron.build/docs/migrat
  */
 export const rpmChecksums = {
   "1.0.0": {
-    "rpm-6.1.0-linux-amd64.7z": "cd548e7f03bf822aa47ad22a4bcbab16eb56ab4ce800f051ff7ceffb4bdf5507",
-    "rpm-6.1.0-linux-arm64v8.7z": "b12fd461a2fd5fb6ccfd1492fbac9f242ef46b83ec27bd30af8f580ca0241f97",
-    "rpm-6.1.0-darwin-arm64.7z": "62417c83c00b685fd7526ab4270b55cad765cb0604da015259a2ce8353cc4019",
+    "rpm-6.1.0-linux-amd64.7z": "e17b704b65b9192ca9fa1eaca3e5e4d80b0d430e6273286d065b8e75cea52d16",
+    "rpm-6.1.0-linux-arm64v8.7z": "1a284057e5151c467cb71e36222f21754f5554249f0d562ce2ecaae63d8ec83b",
+    "rpm-6.1.0-darwin-arm64.7z": "e3398a76ac22846faa238ed68c72d829811c89c7c9962d49eaff4f6db30cb774",
   },
 } as const
 
