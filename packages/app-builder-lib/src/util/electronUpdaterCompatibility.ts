@@ -42,11 +42,12 @@ export function resolveElectronUpdaterCompatibility(
 type CompatibilityOptions = Pick<PlatformSpecificBuildOptions, "electronUpdaterCompatibility">
 type PlatformKey = "mac" | "win" | "linux"
 
-/** The targets that publish a `.blockmap` file beside their artifact, by platform; `DEFAULT_TARGET` (an NSIS installer, a zip and a dmg) among them. */
+/** The targets whose `.blockmap` file electron-updater reads, by platform; `DEFAULT_TARGET` (an NSIS installer, a zip and a dmg) among them. */
 const BLOCK_MAP_FILE_TARGETS: Readonly<Record<PlatformKey, ReadonlyArray<string>>> = {
   // not the portable executable, nor nsis-web, whose package embeds its map
   win: [DEFAULT_TARGET, "nsis"],
-  mac: [DEFAULT_TARGET, "zip", "dmg"],
+  // MacUpdater downloads only the zip, so a dmg's map is never read
+  mac: [DEFAULT_TARGET, "zip"],
   // an AppImage embeds its map
   linux: [],
 }
@@ -56,7 +57,7 @@ export interface ElectronUpdaterRequirement {
   readonly platform: string
   /** the `electronUpdaterCompatibility` of the platform */
   readonly range: string
-  /** whether the platform publishes binary `.blockmap` files */
+  /** whether the platform publishes binary `.blockmap` files that electron-updater reads */
   readonly binaryBlockMap: boolean
 }
 

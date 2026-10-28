@@ -98,8 +98,10 @@ export function resolveTargetNames(targets: Map<Platform, Map<Arch, Array<string
   for (const [platform, archToType] of targets) {
     const key = platform.buildConfigurationKey
     const platformOptions = (key === "mac" || key === "win" || key === "linux" ? config[key] : null) ?? {}
+    // copies of the lists: computeArchToTargetNamesMap adds the configured targets to empty ones, and the build resolves `targets` again
+    const archToTypeCopy = new Map(Array.from(archToType, ([arch, list]) => [arch, list.slice()] as const))
     const names = new Set<string>()
-    for (const list of computeArchToTargetNamesMap(archToType, { platformOptions, defaultTarget: [DEFAULT_TARGET] }, platform).values()) {
+    for (const list of computeArchToTargetNamesMap(archToTypeCopy, { platformOptions, defaultTarget: [DEFAULT_TARGET] }, platform).values()) {
       for (const name of list.length === 0 ? [DEFAULT_TARGET] : list) {
         names.add(name.toLowerCase().trim())
       }

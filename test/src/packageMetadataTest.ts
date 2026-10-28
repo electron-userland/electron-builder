@@ -1,6 +1,6 @@
 import { Arch, Configuration, DEFAULT_TARGET, Packager, Platform } from "app-builder-lib"
 import { checkMetadata } from "app-builder-lib/internal"
-import { resolveTargetNames } from "app-builder-lib/src/targets/targetFactory"
+import { computeArchToTargetNamesMap, resolveTargetNames } from "app-builder-lib/src/targets/targetFactory"
 import { electronUpdaterRequirements } from "app-builder-lib/src/util/electronUpdaterCompatibility"
 import { TmpDir } from "builder-util"
 import fsExtra from "fs-extra"
@@ -239,12 +239,13 @@ describe("checkMetadata electron-updater version validation", () => {
         for (const targets of [["dir"], ["portable"], ["nsis-web"], ["msi"], ["appx"], ["portable", "appx"]]) {
           expect(check(Platform.WINDOWS, targets)).not.toThrow()
         }
-        for (const targets of [["dir"], ["mas"], ["mas-dev"], ["pkg"]]) {
+        // MacUpdater reads no dmg block map
+        for (const targets of [["dir"], ["mas"], ["mas-dev"], ["pkg"], ["dmg"], ["pkg", "dmg"]]) {
           expect(check(Platform.MAC, targets)).not.toThrow()
         }
         expect(check(Platform.WINDOWS, ["portable", "nsis"])).toThrow(/cannot read the binary block map the build writes for windows/)
         expect(check(Platform.MAC, ["zip"])).toThrow(/cannot read the binary block map the build writes for mac/)
-        expect(check(Platform.MAC, ["pkg", "dmg"])).toThrow(/cannot read the binary block map the build writes for mac/)
+        expect(check(Platform.MAC, ["dmg", "zip"])).toThrow(/cannot read the binary block map the build writes for mac/)
       })
     })
 
@@ -355,6 +356,24 @@ describe("resolveTargetNames", () => {
     expect(names(Platform.WINDOWS.createTarget(null, Arch.ia32), { win: { target: "portable:x64" } })).toEqual({ windows: [DEFAULT_TARGET, "portable"] })
     expect(names(Platform.WINDOWS.createTarget(null, Arch.x64))).toEqual({ windows: [DEFAULT_TARGET] })
     expect(names(Platform.MAC.createTarget())).toEqual({ mac: [DEFAULT_TARGET] })
+  })
+
+  test("leaves the requested targets as the build resolves them afterwards", () => {
+    const config: Configuration = { win: { target: [{ target: "nsis", arch: ["x64", "ia32"] }] } }
+    // --win --x64: the configured archs of the target win over the requested one
+    const requested = () => Platform.WINDOWS.createTarget(null, Arch.x64)
+    const targets = requested()
+    resolveTargetNames(targets, config)
+    expect(targets).toEqual(requested())
+    const resolve = (archToType: Map<Arch, Array<string>>) => computeArchToTargetNamesMap(archToType, { platformOptions: config.win!, defaultTarget: [] }, Platform.WINDOWS)
+    const fresh = resolve(requested().get(Platform.WINDOWS)!)
+    expect(fresh).toEqual(
+      new Map([
+        [Arch.x64, ["nsis"]],
+        [Arch.ia32, ["nsis"]],
+      ])
+    )
+    expect(resolve(targets.get(Platform.WINDOWS)!)).toEqual(fresh)
   })
 })
 
