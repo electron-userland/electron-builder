@@ -6,6 +6,8 @@ import { TestContext } from "vitest"
 import {
   optionsForFlakyE2E,
   optionsForFlakyMultiHopE2E,
+  runCorruptedPendingUpdateTest,
+  runCrossVersionUpdateTest,
   runInstallOnNextLaunchTest,
   runKeyRotationTest,
   runSignedManifestTest,
@@ -42,6 +44,25 @@ export function registerBlackboxLinuxTests(toolset: Required<Pick<ToolsetConfig,
     test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true" && process.arch === "x64")("AppImage - key rotation - x64", optionsForFlakyMultiHopE2E, async (context: TestContext) => {
       await runKeyRotationTest(context, "AppImage", "appimage", Arch.x64, { appimage })
     })
+
+    // An app on electron-updater 6 updates to this build, then once more with this repository's updater.
+    test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true" && process.arch === "x64")(
+      "AppImage - update from electron-updater 6 - x64",
+      optionsForFlakyMultiHopE2E,
+      async (context: TestContext) => {
+        await runCrossVersionUpdateTest(context, "AppImage", "appimage", Arch.x64, { appimage })
+      }
+    )
+
+    // A queued update damaged on disk is refused at the next launch, the installed version keeps running, and the next check
+    // installs the update.
+    test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true" && process.arch === "x64")(
+      "AppImage - corrupted pending update - x64",
+      optionsForFlakyE2E,
+      async (context: TestContext) => {
+        await runCorruptedPendingUpdateTest(context, "AppImage", "appimage", Arch.x64, { appimage })
+      }
+    )
 
     // App-supplied verification (AppUpdater.verifyUpdateFile): a rejecting hook aborts the download, an accepting
     // one lets it through, and the pending installer is re-verified at its real path on the next launch — the

@@ -292,7 +292,7 @@ export default class SquirrelWindowsTarget extends Target {
       }
 
       if (iconUrl == null) {
-        throw new InvalidConfigurationError("squirrelWindows.iconUrl is not specified, please see https://www.electron.build/squirrel-windows#SquirrelWindowsOptions-iconUrl")
+        throw new InvalidConfigurationError("squirrelWindows.iconUrl is not specified, please see https://www.electron.build/docs/squirrel-windows#iconurl")
       }
     }
 

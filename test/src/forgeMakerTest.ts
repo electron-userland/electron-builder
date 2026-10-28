@@ -66,7 +66,7 @@ const makers = [
   },
 ] as const
 
-describe.each(makers)("$pkg", ({ pkg, named, module, name, platform, targetKey, target, configKey }) => {
+describe.each(makers)("$pkg", ({ pkg, named, module, name: _name, platform, targetKey, target, configKey }) => {
   const Maker = module.default
 
   test("is loaded and run by Electron Forge's make", async ({ expect, tmpDir }) => {

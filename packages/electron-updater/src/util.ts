@@ -1,7 +1,7 @@
 // if baseUrl path doesn't ends with /, this path will be not prepended to passed pathname for new URL(input, base)
 import { CancellationError, CancellationToken, HttpExecutor } from "builder-util-runtime"
 import { URL } from "url"
-import type { Logger } from "./types.js"
+import type { Logger, NonThrowableLogger } from "./types.js"
 
 /** @internal */
 export function newBaseUrl(url: string): URL {
@@ -35,29 +35,53 @@ export function getChannelFilename(channel: string): string {
   return `${channel}.yml`
 }
 
+/** Calls `log`, ignoring an exception it throws: a throwing logger must not break the caller. */
+function ignoreErrors(log: () => void): void {
+  try {
+    log()
+  } catch (_ignored) {
+    // a throwing logger must not break the caller
+  }
+}
+
 /**
  * `logger` with every call made safe: a call that throws is ignored, so logging can never change how a download ends (a throw
- * would otherwise escape from a stream callback, or stop the fallback to a full download). `debug` is only present when
- * `logger` has one, so callers can still skip building an expensive debug message.
+ * would otherwise escape from a stream callback, or stop the fallback to a full download). `debug` is always present, and does
+ * nothing when `logger` has none.
  * @internal
  */
-export function nonThrowingLogger(logger: Logger): Logger {
-  const ignoreErrors = (log: () => void): void => {
-    try {
-      log()
-    } catch (_ignored) {
-      // a throwing logger must not break the caller
-    }
+export function nonThrowingLogger(logger: Logger): NonThrowableLogger {
+  const result: NonThrowableLogger = {
+    ...nonThrowingAppLogger(logger),
+    debug: message => ignoreErrors(() => logger.debug?.(message)),
   }
+  return result
+}
+
+/**
+ * `logger` with every call made safe like {@link nonThrowingLogger}, but keeping its shape: `debug` is only present when `logger`
+ * has one, so a log limiter wrapping it still sees that the app's logger drops debug messages and does not use up its quota on them.
+ * @internal
+ */
+export function nonThrowingAppLogger(logger: Logger): Logger {
   const result: Logger = {
     info: message => ignoreErrors(() => logger.info(message)),
     warn: message => ignoreErrors(() => logger.warn(message)),
     error: message => ignoreErrors(() => logger.error(message)),
   }
-  if (logger.debug != null) {
+  if (hasDebug(logger)) {
     result.debug = message => ignoreErrors(() => logger.debug?.(message))
   }
   return result
+}
+
+/** Whether `logger` has a `debug()` method; a logger whose property access throws counts as having none. */
+function hasDebug(logger: Logger): boolean {
+  try {
+    return typeof logger.debug === "function"
+  } catch (_ignored) {
+    return false
+  }
 }
 
 /**

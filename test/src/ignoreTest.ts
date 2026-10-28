@@ -117,6 +117,8 @@ test.ifNotWindows("copied sub node_modules of the rootDir/node_modules", ({ expe
       config: {
         asar: false,
         fileOptions: { files: ["**/*", "**/submodule-1-test/node_modules/**"] },
+        // the fixture installs electron-updater 6, which the default ">=7" rejects
+        electronUpdaterCompatibility: ">=6",
       },
     },
     {

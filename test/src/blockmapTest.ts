@@ -4,7 +4,7 @@ import * as path from "path"
 import * as zlib from "zlib"
 import { describe, expect, it } from "vitest"
 import { BlockMapDataHolder } from "builder-util-runtime"
-import { BlockMapRegion, BuildBlockMapOptions, buildBlockMap, ChunkerParams, DEFAULT_CHUNKER } from "app-builder-lib/src/targets/blockmap/blockmap.js"
+import { BlockMapRegion, BuildBlockMapOptions, buildBlockMap, ChunkerParams, DEFAULT_CHUNKER, chunkFile } from "app-builder-lib/src/targets/blockmap/blockmap.js"
 import { TmpDir } from "temp-file"
 
 // getTempDir only reserves the path; the region tests write straight into it.
@@ -579,5 +579,60 @@ describe("buildBlockMap — regions", () => {
     const bm = JSON.parse(zlib.inflateRawSync(full.subarray(full.length - 4 - (meta.blockMapSize ?? 0), full.length - 4)).toString())
     expect(bm.files[0].sizes).toEqual(withRegions.sizes)
     expect(bm.files[0].checksums).toEqual(withRegions.checksums)
+  })
+})
+
+describe("buildBlockMap — boundaries", () => {
+  async function starts(file: string, options: Parameters<typeof chunkFile>[1]): Promise<Array<number>> {
+    const result: Array<number> = []
+    await chunkFile(file, options, (_chunk, offset) => result.push(offset))
+    return result
+  }
+
+  test("a boundary is a block start; blocks away from the boundaries are unchanged", async ({ expect, tmpDir }) => {
+    const dir = await regionTestDir(tmpDir)
+    const file = path.join(dir, "bounded.bin")
+    const data = makeTestData(600 * 1024, 777)
+    await writeFile(file, data)
+    const plain = await starts(file, undefined)
+    const boundaries = [0, 100_000, 250_001, 250_001, 599_000, 2_000_000]
+    const bounded = await starts(file, { boundaries })
+    for (const boundary of [100_000, 250_001, 599_000]) {
+      expect(bounded).toContain(boundary)
+      expect(plain).not.toContain(boundary)
+    }
+    // every block start the plain chunking has after the Rabin window re-synchronises is kept
+    expect(bounded.filter(it => plain.includes(it)).length).toBeGreaterThan(plain.length - 12)
+    // 0 and offsets past the end are ignored, duplicates count once
+    expect(bounded[0]).toBe(0)
+    expect(bounded.filter(it => it === 250_001)).toHaveLength(1)
+  })
+
+  test("a boundary inside a region keeps the region's chunker parameters", async ({ expect, tmpDir }) => {
+    const dir = await regionTestDir(tmpDir)
+    const file = path.join(dir, "bounded-region.bin")
+    await writeFile(file, makeTestData(300 * 1024, 778))
+    const region = { offset: 64 * 1024, size: 128 * 1024, chunker: { min: 1024, avg: 2048, max: 4096 } }
+    const sizes: Array<number> = []
+    const offsets: Array<number> = []
+    await chunkFile(file, { regions: [region], boundaries: [100 * 1024] }, chunk => {
+      sizes.push(chunk.length)
+      offsets.push(offsets.length === 0 ? 0 : offsets[offsets.length - 1] + sizes[sizes.length - 2])
+    })
+    expect(offsets).toContain(100 * 1024)
+    for (let i = 0; i < offsets.length; i++) {
+      if (offsets[i] >= region.offset && offsets[i] < region.offset + region.size) {
+        expect(sizes[i], `block at ${offsets[i]} obeys the region's max`).toBeLessThanOrEqual(4096)
+      }
+    }
+  })
+
+  test("boundaries must be ascending non-negative integers", async ({ expect, tmpDir }) => {
+    const dir = await regionTestDir(tmpDir)
+    const file = path.join(dir, "bad-bounds.bin")
+    await writeFile(file, makeTestData(10 * 1024, 779))
+    await expect(chunkFile(file, { boundaries: [500, 400] }, () => {})).rejects.toThrow("ascending")
+    await expect(chunkFile(file, { boundaries: [-1] }, () => {})).rejects.toThrow("non-negative integer")
+    await expect(chunkFile(file, { boundaries: [1.5] }, () => {})).rejects.toThrow("non-negative integer")
   })
 })

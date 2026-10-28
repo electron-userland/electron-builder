@@ -194,20 +194,20 @@ flatpak:
 See [Building in unprivileged containers](flatpak.md#building-in-unprivileged-containers) for what the two arguments do and what such a container cannot build, [Building Flatpak Bundles in CI and Containers](tutorials/flatpak-in-ci-and-containers.md) for an image to build in, and [Flatpak → Troubleshooting](flatpak.md#troubleshooting) for other Flatpak errors.
 
 **Snap confinement issues: permission denied at runtime**
-: The snap is trying to access something not declared in its interface plugs. Run `snap run --shell myapp` to get a shell inside the snap, then test access. Add the appropriate plug to `snap.plugs` in your config.
+: The snap is trying to access something not declared in its interface plugs. Run `snap run --shell myapp` to get a shell inside the snap, then test access. Add the appropriate plug to `snapcraft.<base>.plugs` in your config (for example `snapcraft.core24.plugs`), see [Snap → Plugs](snap.md#plugs).
 
 ---
 
 ## macOS-Specific
 
 **DMG window layout doesn't look right**
-: DMG window positions are set by the macOS system and can behave unexpectedly if the dimensions in `dmg.window.size` don't match the `contents` positions. Ensure icon positions fit within the window bounds with some padding. Test by opening the built DMG manually.
+: DMG window positions are set by the macOS system and can behave unexpectedly if `dmg.window.width` and `dmg.window.height` don't match the `contents` positions. Ensure icon positions fit within the window bounds with some padding. Test by opening the built DMG manually.
 
 **"App is damaged and can't be opened"**
 : Usually means the app was downloaded without Gatekeeper quarantine being cleared, and notarization failed or wasn't performed. Run `xattr -dr com.apple.quarantine /path/to/app` temporarily during testing. Ensure notarization succeeds before distributing.
 
 **PKG installer fails: "The package … is not compatible with this version of macOS"**
-: Check `pkg.minVersion` matches your actual minimum supported macOS version.
+: The `.pkg` takes its minimum macOS version from `mac.minimumSystemVersion`. Check it matches your actual minimum supported macOS version.
 
 **App exits at launch with "Failed to get integrity for validatable asar archive"**
 : With the `enableEmbeddedAsarIntegrityValidation` fuse, Electron looks up the archive in the `ElectronAsarIntegrity` entries of `Info.plist`, and with Electron 41+ first checks those entries against the digest electron-builder embedded into the Electron Framework after the `afterPack` hook. This message means it found no valid entry: `Info.plist` was changed after the digest was embedded, or it has no entry for the archive (as with `asar.disableIntegrity: true`). Change `Info.plist` in `afterPack` at the latest, or set `mac.asarIntegrityDigest: false` if it has to change later. A modified `app.asar` whose hash was not updated fails with "Integrity check failed for asar archive" instead: electron-builder computes the hashes before `afterPack`, so changing `app.asar` in `afterPack` or later also means updating its hash in `Info.plist`.

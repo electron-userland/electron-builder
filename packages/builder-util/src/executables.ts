@@ -1,4 +1,4 @@
-import { asArray, Nullish, windowsPowerShellPath } from "builder-util-runtime"
+import { asArray, Nullish } from "builder-util-runtime"
 import { AsyncLocalStorage } from "async_hooks"
 import { accessSync, constants, statSync } from "fs"
 import { homedir } from "os"
@@ -52,16 +52,27 @@ export type ExecutablesConfig = { readonly [K in ExecutableName]?: ExecutableLoc
 
 type DefaultLocations = Partial<Record<NodeJS.Platform, () => ReadonlyArray<string>>>
 
-// %ProgramFiles%, accepted only as a drive-absolute path: a relative, drive-relative ("\Program Files") or UNC value would be
-// resolved against the current directory or drive, or reach out to another host
-function windowsProgramFiles(): string {
-  // process.env is case-insensitive on Windows
-  const value = process.env.ProgramFiles
-  if (!value) {
-    throw new Error("ProgramFiles is not set")
+// The value of an environment variable in any casing: a host can have SYSTEMROOT rather than SystemRoot, which only Windows' own
+// process.env finds by either name (off Windows, as in tests, the keys are case-sensitive)
+function windowsEnv(name: string): string | undefined {
+  const value = process.env[name]
+  if (value) {
+    return value
+  }
+  const lowerName = name.toLowerCase()
+  return Object.entries(process.env).find(([key, it]) => key.toLowerCase() === lowerName && it != null && it !== "")?.[1]
+}
+
+// A Windows directory from the first of `names` that is set (the first name is the one errors use), accepted only as a drive-absolute
+// path: a relative, drive-relative ("\Program Files") or UNC value would be resolved against the current directory or drive, or reach
+// out to another host
+function windowsDirectory(...names: [string, ...Array<string>]): string {
+  const value = names.map(windowsEnv).find(it => it != null)
+  if (value == null) {
+    throw new Error(`${names[0]} is not set`)
   }
   if (!/^[a-zA-Z]:[\\/]/.test(value)) {
-    throw new Error(`ProgramFiles is not an absolute path (${value})`)
+    throw new Error(`${names[0]} is not an absolute path (${value})`)
   }
   return value
 }
@@ -72,14 +83,15 @@ const inUsrBinOnLinux = (name: string): DefaultLocations => ({ linux: () => [`/u
 /**
  * The default install locations of each host program, in the order they are tried. Where a program has several, the order is that
  * of the default `PATH` (Homebrew's shellenv and MacPorts prepend their `bin`; /etc/paths puts /usr/local/bin first on macOS).
- * Windows locations come from `SystemRoot` and `ProgramFiles`, which must be drive-absolute.
+ * Windows locations come from `SystemRoot` (or `windir`) and `ProgramFiles`, which must be drive-absolute.
  */
 export const DEFAULT_EXECUTABLES: Readonly<Record<ExecutableName, DefaultLocations>> = {
-  // the in-box Windows PowerShell 5.1
-  powershell: { win32: () => [windowsPowerShellPath()] },
+  // the in-box Windows PowerShell 5.1, under SystemRoot (or windir, its legacy name). A 32-bit Node is redirected to SysWOW64, like any
+  // System32 path. electron-updater looks Windows PowerShell up on the end user's machine itself (builder-util-runtime).
+  powershell: { win32: () => [path.win32.join(windowsDirectory("SystemRoot", "windir"), "System32", "WindowsPowerShell", "v1.0", "powershell.exe")] },
   // PowerShell 7 from Microsoft's packages: the MSI installer on Windows, the pkg or Homebrew cask on macOS, deb/rpm or snap on Linux
   pwsh: {
-    win32: () => [path.win32.join(windowsProgramFiles(), "PowerShell", "7", "pwsh.exe")],
+    win32: () => [path.win32.join(windowsDirectory("ProgramFiles"), "PowerShell", "7", "pwsh.exe")],
     darwin: () => ["/usr/local/microsoft/powershell/7/pwsh"],
     linux: () => ["/opt/microsoft/powershell/7/pwsh", "/snap/bin/pwsh"],
   },

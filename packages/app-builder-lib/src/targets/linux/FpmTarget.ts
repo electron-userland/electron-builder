@@ -473,7 +473,21 @@ export default class FpmTarget extends Target {
   private configureTargetSpecificOptions(target: string, compression: string): string[] {
     switch (target) {
       case "rpm":
-        return ["--rpm-os", "linux", "--rpm-compression", compression === "xz" ? "xzmt" : compression]
+        return [
+          "--rpm-os",
+          "linux",
+          "--rpm-compression",
+          compression === "xz" ? "xzmt" : compression,
+          // rpm 4.x adds a /usr/lib/.build-id/<xx>/<hash> link for every ELF file it packages, so two apps
+          // shipping the same Electron binaries conflict on install; rpm 6 emits none for fpm specs.
+          // Disable them so every host rpm produces the same package (#10471).
+          "--rpm-rpmbuild-define",
+          "_build_id_links none",
+          // upstream rpm 6 defaults to the v6 package format, which rpm 4 reads only with limitations:
+          // pin v4 so the output does not depend on the host rpm (older rpm ignores the unknown macro).
+          "--rpm-rpmbuild-define",
+          "_rpmformat 4",
+        ]
       case "deb":
         return ["--deb-compression", compression]
       case "pacman":

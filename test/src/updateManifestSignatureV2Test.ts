@@ -53,10 +53,11 @@ function onlyFormat(info: UpdateInfo, format: "EBUM1" | "EBUM2"): UpdateInfo {
 }
 
 /**
- * The verifier of electron-updater 7.0.0-alpha.8 to alpha.11 (builder-util-runtime 10.0.0-alpha.8 to alpha.11), reproduced from the
- * published `dist/updateManifestSignature.js`: it knows no `format`, collects every entry with a non-empty `signature`, and tries each
- * against the EBUM1 payload. Its EBUM1 canonicalizer and shape check are byte-for-byte the current `canonicalizeForSigning` and
- * `validateSignedManifestShape` (whose wire format is pinned in updateManifestSignatureTest).
+ * The verifier of electron-updater 7.0.0-alpha.8 to alpha.12 (builder-util-runtime 10.0.0-alpha.8 to alpha.12), reproduced from the
+ * published `dist/updateManifestSignature.js` (the collect/verify code is identical in all of them): it knows no `format`, collects every
+ * entry with a non-empty `signature`, and tries each against the EBUM1 payload. Its EBUM1 canonicalizer and shape check are the current
+ * `canonicalizeForSigning` and `validateSignedManifestShape` (whose wire format is pinned in updateManifestSignatureTest), as shipped in
+ * alpha.12; alpha.8 to alpha.11 lack only the `allowCatalogSignature:true` line, which no manifest here carries.
  */
 function alpha11VerifyManifestSignatures(info: UpdateInfo, publicKeys: Array<string>): { ok: boolean; keyId?: string; reason?: string } {
   const candidates: Array<{ keyId?: string; signature: string }> = []
@@ -359,7 +360,7 @@ describe("compatibility with EBUM1-only verifiers and manifests", () => {
   const oldKey = generateUpdateSigningKeypair()
   const newKey = generateUpdateSigningKeypair()
 
-  test("a dual-signed manifest verifies under the alpha.8–alpha.11 verifier, for each key, and still fails when tampered", () => {
+  test("a dual-signed manifest verifies under the alpha.8–alpha.12 verifier, for each key, and still fails when tampered", () => {
     const parsed = publish(makeInfo({ stagingPercentage: 50 }), [oldKey.privateKeyPem, newKey.privateKeyPem])
     expect(alpha11VerifyManifestSignatures(parsed, [oldKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(oldKey.publicKeyPem) })
     expect(alpha11VerifyManifestSignatures(parsed, [newKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(newKey.publicKeyPem) })
@@ -370,7 +371,7 @@ describe("compatibility with EBUM1-only verifiers and manifests", () => {
     expect(alpha11VerifyManifestSignatures({ ...parsed, stagingPercentage: 100 }, [newKey.publicKeyPem]).ok).toBe(false)
   })
 
-  test("an EBUM2 entry alone does not verify under the alpha.11 verifier, so the EBUM1 entries are what keep it updating", () => {
+  test("an EBUM2 entry alone does not verify under the alpha.8–alpha.12 verifier, so the EBUM1 entries are what keep it updating", () => {
     const parsed = publish(makeInfo(), [oldKey.privateKeyPem])
     expect(alpha11VerifyManifestSignatures(onlyFormat(parsed, "EBUM2"), [oldKey.publicKeyPem]).ok).toBe(false)
     expect(alpha11VerifyManifestSignatures(onlyFormat(parsed, "EBUM1"), [oldKey.publicKeyPem]).ok).toBe(true)
@@ -382,9 +383,9 @@ describe("compatibility with EBUM1-only verifiers and manifests", () => {
     expect(verifyManifestSignatures(parsed, [newKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(newKey.publicKeyPem), format: "EBUM2" })
   })
 
-  test("an EBUM1-only manifest as electron-builder 27.0.0-alpha.9–alpha.12 wrote it still verifies", () => {
+  test("an EBUM1-only manifest as electron-builder 27.0.0-alpha.9–alpha.13 wrote it still verifies", () => {
     const base = makeInfo({ releaseNotes: "notes", path: "App-1.2.3.exe", sha512: "abc123" })
-    // alpha.9–alpha.12: `signatures` entries without `format`, plus the legacy `signature`
+    // alpha.9–alpha.13: `signatures` entries without `format`, plus the legacy `signature`
     const alphaShape: UpdateInfo = {
       ...base,
       signature: signUpdateManifest(base, oldKey.privateKeyPem),
@@ -456,9 +457,10 @@ describe("AppUpdater verifies the manifest as published, before providers add fi
     // what GitHubProvider / GitLabProvider return
     const info = carryUpdateManifestSource(result, { tag: "v1.2.3", assets: { "App-1.2.3.exe": "https://api.example.com/1" }, ...result })
     const updater = makeUpdater()
-    const infoSpy = vi.spyOn((updater as any)._logger, "info")
+    const info_ = vi.fn()
+    updater.logger = { info: info_, warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
     await expect(verify(updater, info)).resolves.toBe(true)
-    expect(infoSpy).toHaveBeenCalledWith("Update manifest signature verified for version 1.2.3 (EBUM2)")
+    expect(info_).toHaveBeenCalledWith("Update manifest signature verified for version 1.2.3 (EBUM2)")
   })
 
   test("the recorded manifest text leaves the UpdateInfo object untouched", () => {

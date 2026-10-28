@@ -120,7 +120,7 @@ export interface UpdateInfo {
  * Payload format of a manifest signature:
  * - `EBUM1` — a fixed list of integrity-critical fields (see `canonicalizeForSigning`); electron-updater 7.0.0-alpha.8 and later.
  * - `EBUM2` — every top-level field except `signature`, `signatures`, `releaseName` and `releaseNotes`, as canonical JSON
- *   (see `canonicalizeForSigningV2`); electron-updater 7.0.0-alpha.12 and later.
+ *   (see `canonicalizeForSigningV2`); electron-updater 7.0.0-alpha.13 and later.
  */
 export type UpdateManifestSignatureFormat = "EBUM1" | "EBUM2"
 

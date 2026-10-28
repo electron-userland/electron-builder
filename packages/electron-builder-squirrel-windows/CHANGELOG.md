@@ -1,5 +1,29 @@
 # electron-builder-squirrel-windows
 
+## 27.0.0-alpha.13
+### Major Changes
+
+- Feat(squirrel)!: `squirrelWindows.msi: true` warns that the MSI Squirrel.Windows builds embeds `Setup.exe` before electron-builder signs it, and fails under `forceCodeSigning`, pointing at the `msi` target for a signed MSI. See https://www.electron.build/docs/migration/v27-build-changes#forcecodesigning-covers-notarization-and-update-manifests _[`#10444`](https://github.com/electron-userland/electron-builder/pull/10444) [`145b373`](https://github.com/electron-userland/electron-builder/commit/145b373ec18228f0bf531880f81577ff17c2fa28)_
+
+### Patch Changes
+
+- Fix(squirrel): wait for the zip/7z archive of the same app directory (whatever its arch) to finish before Squirrel.Windows writes its execution stub and re-signs the app exe in it _[`#10432`](https://github.com/electron-userland/electron-builder/pull/10432) [`9cc8cd6`](https://github.com/electron-userland/electron-builder/commit/9cc8cd65b4f487ee30c2fd40324307d7c10c3a4f)_
+- Fix(squirrel): copy Squirrel.exe into the app directory in `build()`, with the execution stub, instead of from the queued installer work, so NSIS/AppX/MSIX never read the app directory while it is being written _[`#10436`](https://github.com/electron-userland/electron-builder/pull/10436) [`f0dd663`](https://github.com/electron-userland/electron-builder/commit/f0dd663074bba64d547fdc75cb414c5a087d1efa)_
+- Electron-builder starts the host programs it uses only from an absolute path, never by looking up a name on `PATH`: PowerShell, Wine, Mono (Squirrel.Windows on macOS and Linux), `prlctl`, `productbuild`, `pkgbuild`, `codesign`, `hdiutil`, `tiffutil`, `sips`, `actool`, `zip`, `notarytool` (passed to `@electron/notarize` as `notarytoolPath`, located with `/usr/bin/xcrun` by default), `lzip`, `snapcraft`, `flatpak` and `flatpak-builder`. Each comes from its default install locations or from the new `toolsets.executables` map, whose entries are `file://` URIs, or lists of them, that replace the defaults for that program. Child processes started without an explicit environment get no credential variables on Windows either, and `snapcraft upload` gets the store credentials but no other secret. The NSIS installer starts `tasklist` and `taskkill` from `$SYSDIR` (and passes the force flag in per-machine mode), the AppImage launcher runs the dialog tool it checked by its absolute path, and electron-updater on macOS starts `/usr/sbin/sysctl` and `/usr/bin/uname`. _[`#10430`](https://github.com/electron-userland/electron-builder/pull/10430) [`b98e1f2`](https://github.com/electron-userland/electron-builder/commit/b98e1f2910edaa14b554e603d3ff509c8b04ccf2)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`169c5bb`](https://github.com/electron-userland/electron-builder/commit/169c5bbcbac1f25254381ee8016a958602f3af2a) [`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14) [`ed05bd0`](https://github.com/electron-userland/electron-builder/commit/ed05bd0f734dd3b898b9c43c81abd56c08d242ef) [`0fa7237`](https://github.com/electron-userland/electron-builder/commit/0fa7237a3d68ecc91025d9c748fbf856362605e4) [`046f936`](https://github.com/electron-userland/electron-builder/commit/046f9365cf923a22dc1504297702b3625ed473fb) [`4329ef6`](https://github.com/electron-userland/electron-builder/commit/4329ef6ffd96d4029db7d234377295b0eec8e944) [`955cd00`](https://github.com/electron-userland/electron-builder/commit/955cd00bd32f4dff0fd5f120b5c7bdad92ea1d7f) [`862437f`](https://github.com/electron-userland/electron-builder/commit/862437ff62e30d88c29ba112dd2f6b5a16c42183) [`145b373`](https://github.com/electron-userland/electron-builder/commit/145b373ec18228f0bf531880f81577ff17c2fa28) [`b086ae7`](https://github.com/electron-userland/electron-builder/commit/b086ae79116b793c90a1ca785ca17628e5d064dc) [`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14) [`145b373`](https://github.com/electron-userland/electron-builder/commit/145b373ec18228f0bf531880f81577ff17c2fa28) [`145b373`](https://github.com/electron-userland/electron-builder/commit/145b373ec18228f0bf531880f81577ff17c2fa28) [`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14) [`046f936`](https://github.com/electron-userland/electron-builder/commit/046f9365cf923a22dc1504297702b3625ed473fb) [`b5e144d`](https://github.com/electron-userland/electron-builder/commit/b5e144dfeea1e0e8eaa13aec151457227ee4d7d5) [`9cc8cd6`](https://github.com/electron-userland/electron-builder/commit/9cc8cd65b4f487ee30c2fd40324307d7c10c3a4f) [`145b373`](https://github.com/electron-userland/electron-builder/commit/145b373ec18228f0bf531880f81577ff17c2fa28) [`8366dc6`](https://github.com/electron-userland/electron-builder/commit/8366dc690ba5bc453c45f6ebbb8f8ad3561521df) [`b98e1f2`](https://github.com/electron-userland/electron-builder/commit/b98e1f2910edaa14b554e603d3ff509c8b04ccf2) [`a7f005c`](https://github.com/electron-userland/electron-builder/commit/a7f005ce837df409cc7cf9049e3eff74a2d5a503)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.13`
+- `builder-util@27.0.0-alpha.13`
+
+</details>
+
 ## 27.0.0-alpha.12
 ### Patch Changes
 

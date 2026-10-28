@@ -74,7 +74,7 @@ describe("AppUpdater.verifyManifestSignature (A1)", () => {
 
   it("skips verification and warns once when no key is configured", async () => {
     const updater = makeUpdater(null)
-    const warnSpy = vi.spyOn((updater as any)._logger, "warn")
+    const warnSpy = vi.spyOn((updater as any).logger, "warn")
     try {
       await expect(verify(updater, makeInfo())).resolves.toBe(false)
       await expect(verify(updater, makeInfo())).resolves.toBe(false)
