@@ -241,22 +241,21 @@ describe("checkMetadata electron-updater version validation", () => {
       })
     })
 
-    test("a linked electron-updater checkout is not held to the release floor: its version names the last release", async ({ tmpDir }) => {
+    test("a linked electron-updater checkout is held to the release floor like a release", async ({ tmpDir }) => {
       const checkout = await tmpDir.getTempDir({ prefix: "electron-updater-checkout" })
       await fsExtra.outputJson(path.join(checkout, "package.json"), { name: "electron-updater", version: "7.0.0-alpha.12" })
+      const floor = /electron-updater 7\.0\.0-alpha\.12 cannot read the binary block map the build writes for windows/
       // declared as link: and not installed
       await withProjectDir(tmpDir, null, projectDir => {
-        expect(() => checkDependencies({ "electron-updater": `link:${checkout}` }, projectDir, DEFAULT)).not.toThrow()
+        expect(() => checkDependencies({ "electron-updater": `link:${checkout}` }, projectDir, DEFAULT)).toThrow(floor)
+        expect(() => checkDependencies({ "electron-updater": `file:${checkout}` }, projectDir, DEFAULT)).toThrow(floor)
+        expect(() => checkDependencies({ "electron-updater": `link:${checkout}` }, projectDir, { blockmap: "v2" })).not.toThrow()
       })
       // installed as a symlink to the checkout, as pnpm links it
       await withProjectDir(tmpDir, null, async projectDir => {
         await fsExtra.ensureDir(path.join(projectDir, "node_modules"))
         await fsExtra.symlink(checkout, path.join(projectDir, "node_modules", "electron-updater"), "junction")
-        expect(() => checkDependencies({ "electron-updater": `link:${checkout}` }, projectDir, DEFAULT)).not.toThrow()
-        // the other checks still apply to it
-        expect(() => checkDependencies({ "electron-updater": `link:${checkout}` }, projectDir, { electronUpdaterCompatibility: ">=8" })).toThrow(
-          /does not satisfy electronUpdaterCompatibility ">=8"/
-        )
+        expect(() => checkDependencies({ "electron-updater": `link:${checkout}` }, projectDir, DEFAULT)).toThrow(floor)
       })
     })
 

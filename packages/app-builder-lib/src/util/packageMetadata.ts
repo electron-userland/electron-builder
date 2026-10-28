@@ -142,8 +142,6 @@ interface AppElectronUpdater {
   readonly dependencyType: "dependencies" | "devDependencies"
   /** `catalog:` / `workspace:` specifier of an electron-updater that is not installed */
   readonly isUnresolvable: boolean
-  /** a linked checkout rather than a release: its version names the last release, not what its source reads */
-  readonly isLocalCheckout: boolean
 }
 
 /**
@@ -181,9 +179,7 @@ function findAppElectronUpdater(metadata: Metadata, devMetadata: any | null, pro
   }
 
   if (resolvedPackageJson != null) {
-    // a release is installed under node_modules; a `link:`ed checkout resolves to its own directory
-    const isLocalCheckout = !fsExtra.realpathSync(path.dirname(resolvedPackageJson)).split(path.sep).includes("node_modules")
-    return { version: fsExtra.readJsonSync(resolvedPackageJson).version, dependencyType, isUnresolvable: false, isLocalCheckout }
+    return { version: fsExtra.readJsonSync(resolvedPackageJson).version, dependencyType, isUnresolvable: false }
   }
 
   // Pick the version out of yarn berry patch syntax
@@ -206,13 +202,13 @@ function findAppElectronUpdater(metadata: Metadata, devMetadata: any | null, pro
       const normalized = path.normalize(updaterVersion.substring(prefix.length))
       const packageJsonPath = path.isAbsolute(normalized) ? normalized : path.resolve(process.cwd(), normalized)
       const json = fsExtra.readJsonSync(path.join(packageJsonPath, "package.json"))
-      return { version: json.version, dependencyType, isUnresolvable: false, isLocalCheckout: true }
+      return { version: json.version, dependencyType, isUnresolvable: false }
     }
   }
 
   // pnpm `catalog:` and `workspace:` specifiers cannot be resolved to a concrete version from the package.json alone, so skip validation
   const isUnresolvable = ["catalog:", "workspace:"].some(protocol => updaterVersion.startsWith(protocol))
-  return { version: updaterVersion, dependencyType, isUnresolvable, isLocalCheckout: false }
+  return { version: updaterVersion, dependencyType, isUnresolvable }
 }
 
 function checkElectronUpdater(metadata: Metadata, devMetadata: any | null, errors: Array<string>, projectDir: string, requirements: Array<ElectronUpdaterRequirement>) {
@@ -247,7 +243,7 @@ function checkElectronUpdater(metadata: Metadata, devMetadata: any | null, error
 
   const lowest = lowestVersion(version)
   const binary = requirements.filter(it => it.binaryBlockMap)
-  if (updater.isLocalCheckout || lowest == null || binary.length === 0 || semver.gte(lowest, BINARY_BLOCK_MAP_MIN_UPDATER_RELEASE)) {
+  if (lowest == null || binary.length === 0 || semver.gte(lowest, BINARY_BLOCK_MAP_MIN_UPDATER_RELEASE)) {
     return
   }
   errors.push(
