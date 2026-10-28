@@ -1,11 +1,12 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { AsarIntegrity, getWindowsVm, parsePlistFile, ParallelsVmManager, PM, VmManager } from "app-builder-lib/internal"
 import { ASAR_INTEGRITY_DIGEST_SENTINEL, computeAsarIntegrityDigest } from "app-builder-lib/src/electron/mac/asarIntegrityDigest"
+import { BINARY_BLOCK_MAP_MIN_UPDATER_RELEASE } from "app-builder-lib/src/util/electronUpdaterCompatibility"
 import { computeUpdateManifestKeyId, GenericServerOptions, hashFile, Nullish, UpdateInfo, verifyManifestSignatures, WindowsUpdateInfo } from "builder-util-runtime"
 import { BLOCK_MAP_V3_MAGIC } from "builder-util-runtime/internal"
 import { archFromString, deepAssign, DebugLogger, generateUpdateSigningKeypair, log, serializeToYaml, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
-import { copy, emptyDir, existsSync, move, outputFile, readdir, readFile, readJson, readJsonSync, remove, stat } from "fs-extra"
+import { copy, emptyDir, existsSync, move, outputFile, outputJson, readdir, readFile, readJson, readJsonSync, remove, stat } from "fs-extra"
 import { open } from "fs/promises"
 import { homedir } from "os"
 import path from "path"
@@ -32,12 +33,14 @@ import { installMac } from "./blackboxInstallMac"
 import { readEmbeddedUpdateConfig, readUpdateManifest, resignManifest, rewriteServedManifests } from "./signedManifestTestUtil"
 
 export const optionsForFlakyE2E = { concurrent: false, retry: 2, timeout: EXTENDED_TIMEOUT } as const
-// Three builds and two update hops (plus negative launches) instead of two builds and one hop: 15-25 min per
+// Three or four builds and two or three update hops (plus negative launches) instead of two builds and one hop: 15-25 min per
 // attempt, so a single retry keeps a genuine failure within the 60-minute job cap of the mac runner.
 export const optionsForFlakyMultiHopE2E = { ...optionsForFlakyE2E, retry: 1, timeout: EXTENDED_TIMEOUT * 1.5 } as const
 
 /** Third version for multi-hop (key rotation) update tests: 1.0.0 → 1.0.1 → 1.0.2 */
 export const THIRD_VERSION_NUMBER = "1.0.2"
+/** Fourth version, for the third hop of the update from electron-updater 6 (runCrossVersionUpdateTest) */
+export const FOURTH_VERSION_NUMBER = "1.0.3"
 
 /**
  * A version to build, optionally with configuration that applies to that build only (e.g. its `updateManifest` keys) and a
@@ -52,6 +55,16 @@ export type VersionBuild = {
    * update from an app that ships an older updater)
    */
   electronUpdater?: string
+}
+
+/**
+ * Test opt-out of the binary block map's electron-updater floor: the workspace electron-updater reads the binary map, but its
+ * package.json lags its source (7.0.0-alpha.12) until Version Packages runs. Remove once it is at 7.0.0-alpha.13 or later.
+ * The build checks the electron-updater it resolves from the project directory, while the app's own is installed in and collected
+ * from app/node_modules: only the check reads this package.json.
+ */
+async function optOutOfElectronUpdaterReleaseFloor(projectDir: string): Promise<void> {
+  await outputJson(path.join(projectDir, "node_modules", "electron-updater", "package.json"), { name: "electron-updater", version: BINARY_BLOCK_MAP_MIN_UPDATER_RELEASE })
 }
 
 // Resolve only to a ParallelsVmManager — PwshVmManager (used for code-signing on Linux/Mac via Wine)
@@ -196,6 +209,9 @@ export async function doBuild(
             },
             true
           )
+          if (electronUpdater == null) {
+            await optOutOfElectronUpdaterReleaseFloor(projectDir)
+          }
         },
       }
     )
@@ -1276,66 +1292,88 @@ async function publishesBinaryBlockMap(filesDir: string): Promise<boolean> {
 }
 
 /**
- * An app on electron-updater 6 updates to a build of this repository (with this repository's electron-updater), and from there once
+ * An app on electron-updater 6 updates to a build of this repository (with this repository's electron-updater), and from there twice
  * more. The first hop reads the update metadata and the block map the current electron-builder publishes with an updater that predates
- * them: a binary block map it cannot read must end in a full download, not a failed update. The second hop runs the current updater and
- * must be differential again.
+ * them: a binary block map it cannot read must end in a full download, not a failed update. The second hop runs the current updater,
+ * which has no block map of the installed version when the first hop was a full one and the artifact name has no version (see
+ * hop 2). The third hop must be differential again.
  */
 export async function runCrossVersionUpdateTest(context: TestContext, target: string, packageManager: string, arch: Arch = Arch.x64, toolsets: ToolsetConfig = {}): Promise<void> {
   // the updated builds declare that the installed apps ship electron-updater 7 or later, so a build that can write a binary block map writes it
   const currentUpdaterBuild = { electronUpdaterCompatibility: ">=7" }
-  await runUpdateScenario(context, {
-    target,
-    packageManager,
-    arch,
-    toolsets,
-    tmpDirPrefix: "cross-version",
-    builds: [
-      { version: OLD_VERSION_NUMBER, electronUpdater: LEGACY_ELECTRON_UPDATER_VERSION },
-      { version: NEW_VERSION_NUMBER, extraConfig: currentUpdaterBuild },
-      { version: THIRD_VERSION_NUMBER, extraConfig: currentUpdaterBuild },
-    ],
-    initialUpdateConfig: () => Promise.resolve({}),
-    scenario: async ctx => {
-      const { expect, outDirs, rootDirectory } = ctx
-      const isBinaryBlockMap = await publishesBinaryBlockMap(updateFilesDir(target, outDirs[1].dir))
+  // the stored and pending installers of an earlier test would be the base of the first differential download
+  await withEmptyUpdaterCaches(() =>
+    runUpdateScenario(context, {
+      target,
+      packageManager,
+      arch,
+      toolsets,
+      tmpDirPrefix: "cross-version",
+      builds: [
+        { version: OLD_VERSION_NUMBER, electronUpdater: LEGACY_ELECTRON_UPDATER_VERSION },
+        { version: NEW_VERSION_NUMBER, extraConfig: currentUpdaterBuild },
+        { version: THIRD_VERSION_NUMBER, extraConfig: currentUpdaterBuild },
+        { version: FOURTH_VERSION_NUMBER, extraConfig: currentUpdaterBuild },
+      ],
+      initialUpdateConfig: () => Promise.resolve({}),
+      scenario: async ctx => {
+        const { expect, outDirs, rootDirectory } = ctx
+        const isBinaryBlockMap = await publishesBinaryBlockMap(updateFilesDir(target, outDirs[1].dir))
+        // serves the update files of `outDirs[index]` alone; resets the served root first (see runKeyRotationTest)
+        const serve = async (index: number) => {
+          await emptyDir(rootDirectory)
+          await copy(updateFilesDir(target, outDirs[index].dir), rootDirectory, { recursive: true, overwrite: true })
+        }
 
-      // Hop 1: electron-updater 6 → this build
-      await updateHop(expect, {
-        ...ctx,
-        fromVersion: OLD_VERSION_NUMBER,
-        toVersion: NEW_VERSION_NUMBER,
-        assertLaunch: stdout => {
-          if (isBinaryBlockMap) {
-            // electron-updater 6 cannot read the binary block map: one full download, which installs all the same
-            expect(stdout).toContain(DIFFERENTIAL_FALLBACK_MARKER)
-          } else if (isDifferentialOnFirstHop(target)) {
-            assertDifferentialDownload(expect, stdout)
-          }
-        },
-      })
+        // Hop 1: electron-updater 6 → this build
+        await updateHop(expect, {
+          ...ctx,
+          fromVersion: OLD_VERSION_NUMBER,
+          toVersion: NEW_VERSION_NUMBER,
+          assertLaunch: stdout => {
+            if (isBinaryBlockMap) {
+              // electron-updater 6 cannot read the binary block map: one full download, which installs all the same
+              expect(stdout).toContain(DIFFERENTIAL_FALLBACK_MARKER)
+            } else if (isDifferentialOnFirstHop(target)) {
+              assertDifferentialDownload(expect, stdout)
+            }
+          },
+        })
 
-      // Hop 2: the installed app now ships this repository's electron-updater. Reset the served root first (see runKeyRotationTest).
-      await emptyDir(rootDirectory)
-      await copy(updateFilesDir(target, outDirs[2].dir), rootDirectory, { recursive: true, overwrite: true })
-      await updateHop(expect, {
-        ...ctx,
-        fromVersion: NEW_VERSION_NUMBER,
-        toVersion: THIRD_VERSION_NUMBER,
-        assertLaunch: stdout => {
-          if (isBinaryBlockMap && !isDifferentialOnFirstHop(target)) {
-            // electron-updater 6 cached no block map for the version it installed (it cannot read the binary one), and the test app's
-            // artifact name has no version, so the installed version's map cannot be fetched either: a full download, without a failed
-            // differential attempt. The map of this update is cached, so the next one is differential again.
-            expect(stdout).not.toContain(DIFFERENTIAL_FALLBACK_MARKER)
-            expect(stdout).toContain(UNVERSIONED_OLD_BLOCK_MAP_MARKER)
-          } else if (isDifferentialAfterFirstUpdate(target)) {
-            assertDifferentialDownload(expect, stdout)
-          }
-        },
-      })
-    },
-  })
+        // Hop 2: the installed app now ships this repository's electron-updater
+        await serve(2)
+        await updateHop(expect, {
+          ...ctx,
+          fromVersion: NEW_VERSION_NUMBER,
+          toVersion: THIRD_VERSION_NUMBER,
+          assertLaunch: stdout => {
+            if (isBinaryBlockMap && !isDifferentialOnFirstHop(target)) {
+              // electron-updater 6 cached no block map for the version it installed (it cannot read the binary one), and the test app's
+              // artifact name has no version, so the installed version's map cannot be fetched either: a full download, without a failed
+              // differential attempt. It caches the map of this update.
+              expect(stdout).not.toContain(DIFFERENTIAL_FALLBACK_MARKER)
+              expect(stdout).toContain(UNVERSIONED_OLD_BLOCK_MAP_MARKER)
+            } else if (isDifferentialAfterFirstUpdate(target)) {
+              assertDifferentialDownload(expect, stdout)
+            }
+          },
+        })
+
+        // Hop 3: against the map cached by hop 2, the transition from electron-updater 6 is complete
+        await serve(3)
+        await updateHop(expect, {
+          ...ctx,
+          fromVersion: THIRD_VERSION_NUMBER,
+          toVersion: FOURTH_VERSION_NUMBER,
+          assertLaunch: stdout => {
+            if (isDifferentialAfterFirstUpdate(target)) {
+              assertDifferentialDownload(expect, stdout)
+            }
+          },
+        })
+      },
+    })
+  )
 }
 
 /** Logged by AppUpdater once a download has passed verification. */
