@@ -5,6 +5,7 @@ import { createRequire } from "node:module"
 import * as path from "path"
 import * as semver from "semver"
 import { Metadata } from "../options/metadata.js"
+import { BLOCK_MAP_FORMAT_DOCS_URL, DEFAULT_ELECTRON_UPDATER_COMPATIBILITY } from "./electronUpdaterCompatibility.js"
 import { normalizePackageData } from "./normalizePackageData.js"
 
 const require = createRequire(import.meta.url)
@@ -35,8 +36,19 @@ async function authors(file: string, data: any) {
   data.contributors = authorData.split(/\r?\n/g).map(it => it.replace(/^\s*#.*$/, "").trim())
 }
 
-/** @internal */
-export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPackageFile: string, devAppPackageFile: string, projectDir: string): void {
+/**
+ * `electronUpdaterCompatibility`: the ranges the build declares (the root option or its default, and each platform's own), which
+ * the app's electron-updater must satisfy.
+ * @internal
+ */
+export function checkMetadata(
+  metadata: Metadata,
+  devMetadata: any | null,
+  appPackageFile: string,
+  devAppPackageFile: string,
+  projectDir: string,
+  electronUpdaterCompatibility: Array<string> = [DEFAULT_ELECTRON_UPDATER_COMPATIBILITY]
+): void {
   const errors: Array<string> = []
   const reportError = (missedFieldName: string) => {
     errors.push(`Please specify '${missedFieldName}' in the package.json (${appPackageFile})`)
@@ -58,7 +70,7 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
   }
   checkNotEmpty("version", metadata.version)
 
-  checkDependencies(metadata.dependencies, errors, projectDir)
+  checkDependencies(metadata.dependencies, errors, projectDir, electronUpdaterCompatibility)
   if (metadata !== devMetadata) {
     if (metadata.build != null) {
       errors.push(
@@ -106,7 +118,7 @@ function versionSatisfies(version: string | semver.SemVer | null, range: string 
   return semver.satisfies(coerced, range, loose)
 }
 
-function checkDependencies(dependencies: Record<string, string> | Nullish, errors: Array<string>, projectDir: string) {
+function checkDependencies(dependencies: Record<string, string> | Nullish, errors: Array<string>, projectDir: string, electronUpdaterCompatibility: Array<string>) {
   if (dependencies == null) {
     return
   }
@@ -163,6 +175,14 @@ function checkDependencies(dependencies: Record<string, string> | Nullish, error
     if (!skipValidation && !versionSatisfies(updaterVersion, `>=${requiredElectronUpdaterVersion}`)) {
       errors.push(
         `At least electron-updater ${requiredElectronUpdaterVersion} is recommended by current electron-builder version. Please set electron-updater version to "^${requiredElectronUpdaterVersion}". Received "${updaterVersion}"`
+      )
+    } else if (!skipValidation && !electronUpdaterCompatibility.some(range => versionSatisfies(updaterVersion, range))) {
+      // the build writes update files (the block map format among them) for the declared range: an app outside it cannot read them
+      const ranges = electronUpdaterCompatibility.map(it => `"${it}"`).join(", ")
+      errors.push(
+        `electron-updater ${updaterVersion} does not satisfy electronUpdaterCompatibility ${ranges} (the default is "${DEFAULT_ELECTRON_UPDATER_COMPATIBILITY}" since electron-builder 27). ` +
+          `Upgrade electron-updater to 7, or set electronUpdaterCompatibility to a range that includes "<7" (e.g. ">=6"), which switches the build to the JSON block map. ` +
+          `See ${BLOCK_MAP_FORMAT_DOCS_URL}`
       )
     }
   }

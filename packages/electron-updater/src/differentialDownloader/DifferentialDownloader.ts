@@ -9,7 +9,7 @@ import { Logger } from "../types.js"
 import { nonThrowingLogger, throwIfCancelled } from "../util.js"
 import { copyData, stopCopies } from "./DataSplitter.js"
 import { URL } from "url"
-import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder.js"
+import { coalesceDownloadGaps, computeOperations, downloadGapCoalesceThreshold, Operation, OperationKind } from "./downloadPlanBuilder.js"
 import {
   AbortableRequest,
   checkIsPartialContent,
@@ -101,7 +101,9 @@ export abstract class DifferentialDownloader {
     }
 
     const logger = this.logger
-    const operations = computeOperations(oldBlockMap, newBlockMap, logger)
+    // download through small COPY gaps: fewer ranges = fewer sequential requests on single-range hosts,
+    // while a multipart host only charges a few bytes of framing per range
+    const operations = coalesceDownloadGaps(computeOperations(oldBlockMap, newBlockMap, logger), downloadGapCoalesceThreshold(this.options.isUseMultipleRangeRequest))
     if (logger.debug != null) {
       logger.debug(JSON.stringify(operations, null, 2))
     }

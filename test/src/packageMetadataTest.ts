@@ -5,7 +5,9 @@ import Module from "node:module"
 import * as path from "path"
 import { describe, expect, test } from "vitest"
 
-function checkDependencies(dependencies: Record<string, string>, projectDir: string) {
+// the minimum-version tests below declare a range that includes 6.x, so only the 4.0.0 minimum applies
+// (null: what the build passes when it declares none, the default)
+function checkDependencies(dependencies: Record<string, string>, projectDir: string, electronUpdaterCompatibility: Array<string> | null = [">=4"]) {
   const metadata: any = {
     name: "test-app",
     version: "1.0.0",
@@ -13,7 +15,7 @@ function checkDependencies(dependencies: Record<string, string>, projectDir: str
     author: "test",
     dependencies,
   }
-  checkMetadata(metadata, metadata, "package.json", "package.json", projectDir)
+  checkMetadata(metadata, metadata, "package.json", "package.json", projectDir, electronUpdaterCompatibility ?? undefined)
 }
 
 /**
@@ -150,6 +152,40 @@ describe("checkMetadata electron-updater version validation", () => {
           },
         }
       )
+    })
+  })
+
+  describe("electronUpdaterCompatibility", () => {
+    const DEFAULT = null
+
+    test('the default (">=7") rejects an installed electron-updater 6.x, naming both ways out and the docs', async () => {
+      await withProjectDir("6.8.10", projectDir => {
+        expect(() => checkDependencies({ "electron-updater": "^6.8.10" }, projectDir, DEFAULT)).toThrow(
+          /electron-updater 6\.8\.10 does not satisfy electronUpdaterCompatibility ">=7".*Upgrade electron-updater to 7, or set electronUpdaterCompatibility to a range that includes "<7".*v27-build-changes#block-map-format-follows-electronupdatercompatibility/s
+        )
+      })
+    })
+
+    test("the default accepts electron-updater 7, prereleases included", async () => {
+      for (const version of ["7.0.0", "7.0.0-alpha.12", "7.3.1"]) {
+        await withProjectDir(version, projectDir => {
+          expect(() => checkDependencies({ "electron-updater": `^${version}` }, projectDir, DEFAULT)).not.toThrow()
+        })
+      }
+    })
+
+    test("a declared range that includes the installed version accepts it, also when only a platform declares it", async () => {
+      await withProjectDir("6.8.10", projectDir => {
+        expect(() => checkDependencies({ "electron-updater": "^6.8.10" }, projectDir, [">=6"])).not.toThrow()
+        expect(() => checkDependencies({ "electron-updater": "^6.8.10" }, projectDir, [">=7", ">=6"])).not.toThrow()
+      })
+    })
+
+    test("an unresolvable specifier and a missing electron-updater are not checked", async () => {
+      await withProjectDir(null, projectDir => {
+        expect(() => checkDependencies({ "electron-updater": "catalog:" }, projectDir, DEFAULT)).not.toThrow()
+        expect(() => checkDependencies({}, projectDir, DEFAULT)).not.toThrow()
+      })
     })
   })
 })

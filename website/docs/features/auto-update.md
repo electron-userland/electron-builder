@@ -265,7 +265,12 @@ But it is not recommended, better to test auto-update for installed application 
 
 Since electron-builder 27 the generated `latest*.yml` targets the modern `files[]` metadata format by default and no longer includes the legacy top-level `path`/`sha512` fields, which are needed only by electron-updater 1.x – 2.15.0.
 
-The `electronUpdaterCompatibility` option sets the electron-updater compatibility semver range (e.g. `>=2.16`, `>=1.0.0`). Can be specified per platform (e.g. `win.electronUpdaterCompatibility`). When the declared range intersects legacy electron-updater versions, the corresponding legacy fields are emitted in addition to `files[]`: the top-level `path`/`sha512` and the Windows `sha2` checksum for ranges intersecting `<2.16.0`, and the old `latest-mac.json` for ranges intersecting `<2.0.0`. Defaults to `>=2.16`.
+The `electronUpdaterCompatibility` option sets the electron-updater compatibility semver range: the electron-updater versions your installed apps ship, which have to read the update files a build publishes (e.g. `>=7`, `>=6`, `>=1.0.0`). Can be specified per platform (e.g. `win.electronUpdaterCompatibility`). Defaults to `>=7`. The range decides:
+
+* the [`.blockmap` format](#differential-updates-blockmap): the binary map for a range that includes only electron-updater 7 and later, the JSON map (with a build warning) for a range that includes earlier versions;
+* the legacy fields emitted in addition to `files[]`: the top-level `path`/`sha512` and the Windows `sha2` checksum for ranges intersecting `<2.16.0`, and the old `latest-mac.json` for ranges intersecting `<2.0.0`.
+
+The build fails when the app's own electron-updater dependency is outside the declared range (for example electron-updater 6 with the default `>=7`): upgrade it, or declare a range that includes it.
 
 Metadata format history:
 
@@ -335,6 +340,47 @@ Because some of your users will be on the broken 1.0.1, releasing a new 1.0.1 wo
 ## File Generated and Uploaded in Addition
 
 `latest.yml` (or `latest-mac.yml` for macOS, or `latest-linux.yml` for Linux) will be generated and uploaded for all providers except `bintray` (because not required, `bintray` doesn't use `latest.yml`).
+
+### Differential updates: `.blockmap`
+
+For targets that support differential (delta) updates (NSIS on Windows and the macOS update zip; AppImage embeds its map in the binary), electron-builder publishes a **block map** next to the artifact: a list of content-defined blocks and their hashes. electron-updater compares the new map with the one of the installed version and downloads only the byte ranges that changed, using HTTP `Range` requests.
+
+One `<artifact>.blockmap` is published per artifact. Its format follows [`electronUpdaterCompatibility`](#compatibility), since the map is read by the updater already installed in your users' apps:
+
+* `"v3"` (the default when `electronUpdaterCompatibility` includes only electron-updater 7 and later, as the default `>=7` does): an uncompressed binary map that electron-updater fetches in parts with `Range` requests. It carries the blocks in a three-level layout (a small table of *super-groups*, a table of *groups* of blocks, then one 10-byte record per block), so the updater reads the super-group table, compares it with its cached previous map, fetches only the group entries of the super-groups that changed, compares those, and finally fetches only the records of the groups that changed. The map cost of an update therefore grows with the change, not with the installer size, which is what makes 512 B blocks inside `app.asar` affordable.
+* `"v2"` (the default when the range includes electron-updater 6 or earlier): the gzipped JSON map (~16 KiB blocks) every electron-updater release reads. It is downloaded in full on every update, a fixed cost of roughly 20 bytes per block of the installer. The build warns that it writes this format and why.
+
+![Block map file layout: header, super-group and group tables and 10-byte block records, with content-defined groups](/img/blockmap-v3-format.svg)
+
+The `blockmap` option overrides the choice: `"v2"` always writes the JSON map, `"v3"` the binary map (the build fails when `electronUpdaterCompatibility` includes electron-updater versions before 7), and `"latest"` the newest format the range allows, so that a future format is picked up without a config change.
+
+Compatibility: electron-updater tells the two formats apart by the file's first bytes, so `latest.yml` is the same for both. electron-updater before 7.0 cannot read `"v3"`: an app still on electron-updater 6 that receives a release with a binary map falls back to a full download once ("Cannot download differentially, fallback to full download"), and the update it installs brings an updater that can. From electron-updater 6.8.10 the next update is differential again; 6.8.9 and earlier leave the old block map in their cache, which can make the next update a full download too. The same one-time full download happens whenever the format changes between two releases (the first release built with the other format, or a future format under `"latest"`), because blocks of maps in different formats are not compared; electron-updater 7 logs it once at `info`. Block maps embedded in an artifact (AppImage, the NSIS web installer's app package) are always `"v2"`.
+
+```json
+{
+  "electronUpdaterCompatibility": ">=7",
+  "blockmap": "v3"
+}
+```
+
+The `"v3"` format pays off most for app-code changes when the asar is stored uncompressed and laid out so that a small edit does not shift the rest of the archive:
+
+```json
+{
+  "nsis": { "differentialPackage": "store-asar" },
+  "asar": { "contentAlignment": 512 }
+}
+```
+
+`nsis.differentialPackage: "store-asar"` stores `resources/app.asar` uncompressed in the differential package (so a one-line change maps to a few changed blocks instead of a re-compressed archive), and `asar.contentAlignment` pads file contents inside the asar so that a file growing by a few bytes does not move the offsets of every later file. The `"v3"` format additionally starts a new block at every packed file of the stored asar, so an edit inside one file never touches a block of its neighbour, and in a build that writes it the 7z header of every differential package is stored as is and chunked on its own, so the CRCs that change with each build cost a few hundred bytes instead of the package's last block (a `"v2"` build packages exactly as electron-builder 26 did). With all of that, the `"v3"` rows of the repository benchmark (`test/src/differentialOneLineBenchTest.ts`) bring a one-line change in a 32 MB asar down to about ten kilobytes on the wire.
+
+![What electron-updater fetches for a "v3" block map: header and super-group table, the entries and records of what changed, then the changed data ranges; any failure falls back to a full download](/img/blockmap-v3-update-flow.svg)
+
+How this compares with per-version delta packages (Squirrel, Velopack): those frameworks compute a binary patch between two specific releases on the build machine and publish one delta file per consecutive version pair, which a client applies in sequence from the exact release it has installed. The patch itself is small (a zstd `--patch-from` diff of a one-line change is a few kilobytes), but every release pair needs its own artifact, a client that skipped releases applies several of them, and the old release must still be present in full. A block map describes a single artifact independently of any previous version: one `.blockmap` per installer serves updates from any older version, the server only needs HTTP `Range` support, and the cost of an update is a handful of kilobytes of map plus the changed blocks. The repository benchmark reports both side by side for the same synthetic app.
+
+![Per-version delta packages versus block maps: what is published, what a client downloads, measured bytes for the same edits](/img/blockmap-v3-vs-delta.svg)
+
+electron-updater also downloads through small gaps between changed ranges (copy gaps below 8 KiB are fetched rather than copied, saving one request per gap on hosts such as GitHub or S3 that serve a single range per request) and never puts more than 200 ranges into one `multipart/byteranges` request (Apache's default `MaxRanges`).
 
 ## Private GitHub Update Repo
 
