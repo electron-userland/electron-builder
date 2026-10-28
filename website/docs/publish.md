@@ -76,7 +76,7 @@ installed NSIS apps poll the S3 bucket and embed the update-manifest trust key. 
 
 You can also configure publishing using CLI arguments, for example, to force publishing snap not to Snap Store, but to GitHub: `-c.snap.publish=github`
 
-A [custom](https://github.com/electron-userland/electron-builder/issues/3261) publish provider can be used if needed.
+A [custom](#custom-publisher) publish provider can be used if needed.
 
 :::tip[Macros]
 In all publish options [File Macros](./file-patterns.md#file-macros) are supported.
@@ -242,6 +242,41 @@ Auto-updating from R2 requires an `electron-updater` version that supports the `
 Note: files are uploaded with a single PUT request, and R2 limits single-PUT uploads to ~5 GiB per object.
 
   {!./builder-util-runtime.Interface.R2Options.md!}
+
+## Custom Publisher {#custom-publisher}
+
+To upload artifacts with your own code, set the provider to `custom`. Any other options in the entry are passed to your publisher as is.
+
+```yaml
+publish:
+  provider: custom
+  url: https://updates.example.com
+```
+
+electron-builder then loads `electron-publisher-custom.mjs`, `.js` or `.cjs` (checked in that order) from the build resources directory (`directories.buildResources`, `build` by default) and uses the exported class (`export default` or `module.exports`) as the publisher. That directory is excluded from the app by default, so the publisher is not packaged unless your `files` patterns include it explicitly.
+
+The class is created with the publish context and the `publish` entry, and `upload(task)` is called for every artifact and update info file. `task.file` is the path of the file to upload; for update info files `task.fileContent` also holds the content.
+
+```js
+// build/electron-publisher-custom.js
+class CustomPublisher {
+  constructor(context, options) {
+    this.options = options
+  }
+
+  get providerName() {
+    return "custom"
+  }
+
+  async upload(task) {
+    // upload task.file to this.options.url
+  }
+}
+
+module.exports = CustomPublisher
+```
+
+electron-updater can only read a `custom` feed when the app passes a provider class itself, for example `autoUpdater.setFeedURL({ provider: "custom", updateProvider: MyProvider })`. To serve updates from your own server without writing a provider, use the [generic](#byo-generic-create-your-own) provider.
 
 ## BYO Generic (create-your-own)
 (And maybe submit it upstream in a PR!)

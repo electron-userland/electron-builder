@@ -104,6 +104,29 @@ export interface CommonConfiguration {
   readonly toolsets?: ToolsetConfig | null
 
   /**
+   * Format of the `<artifact>.blockmap` file published next to installers and update archives, which electron-updater reads for
+   * differential downloads. The map is read by the updater already installed in your users' apps, so the format follows
+   * `electronUpdaterCompatibility` (default `">=7"`):
+   *
+   * - unset: `"v3"` when `electronUpdaterCompatibility` includes only electron-updater 7 and later, else `"v2"`, with a build
+   *   warning.
+   * - `"v3"`: a binary block map that electron-updater fetches in parts with HTTP `Range` requests (only the parts that changed
+   *   since the installed version), with finer blocks for stored members such as an uncompressed `app.asar`. Needs electron-updater
+   *   7 or later: with an `electronUpdaterCompatibility` that includes earlier versions, the build fails.
+   * - `"v2"`: the gzipped JSON block map every electron-updater version reads, downloaded in full on every update; the package and
+   *   block map are the same as electron-builder 26 wrote.
+   * - `"latest"`: the newest format the `electronUpdaterCompatibility` range supports (currently the same as unset). A future
+   *   format then costs one full download per user, as below.
+   *
+   * Apps whose electron-updater cannot read a release's format, or whose cached map is in another format, download that update
+   * in full once; the next one is differential again.
+   *
+   * Block maps embedded in an artifact (AppImage, the NSIS web installer's app package) are always `"v2"`.
+   * See [the v27 notes](https://www.electron.build/docs/migration/v27-build-changes#block-map-format-follows-electronupdatercompatibility).
+   */
+  readonly blockmap?: "v2" | "v3" | "latest" | null
+
+  /**
    * macOS-specific build options (signing, entitlements, notarization, target categories, etc.).
    * @see {@link MacConfiguration}
    */
@@ -714,6 +737,7 @@ export interface ToolsetConfig {
    * | `"0.0.0"` | Legacy | FUSE2-based AppImage runtime (pre-v27) |
    * | `"1.0.3"` | 20251108 | Introduces static AppImage runtime |
    * | `"1.1.0"` | 20251108 | Adds `unsquashfs` support |
+   * | `"1.2.0"` | 20251108 | squashfs-tools 4.7.5 with a statically linked zstd 1.5.7, so Linux and macOS hosts produce identical images |
    *
    * An explicit version pin always selects exactly that release.
    *
@@ -721,7 +745,7 @@ export interface ToolsetConfig {
    *
    * @default "latest"
    */
-  readonly appimage?: "0.0.0" | "1.0.3" | "1.1.0" | ToolsetCustom | "latest"
+  readonly appimage?: "0.0.0" | "1.0.3" | "1.1.0" | "1.2.0" | ToolsetCustom | "latest"
 
   /**
    * Version of the NSIS toolset bundle used to compile Windows installers.

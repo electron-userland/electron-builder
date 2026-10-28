@@ -183,6 +183,14 @@ rpm:
 - `libXScrnSaver` — screen saver
 - `nss` — networking
 
+**Build-id links and package format:** RPMs are built without `/usr/lib/.build-id` links and with the v4 package format, so the output is the same whichever `rpm` version is installed on the build host. Without this, rpm 4.x adds a build-id link for every bundled ELF file, and two apps that ship the same Electron binaries conflict on install. To restore the links, override the define through `fpm` (user args come last, so they win):
+
+```yaml
+rpm:
+  fpm:
+    - "--rpm-rpmbuild-define=_build_id_links compat"
+```
+
 **After-install/after-remove scripts:**
 
 ```yaml
