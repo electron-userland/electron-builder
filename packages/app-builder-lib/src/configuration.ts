@@ -714,6 +714,7 @@ export interface ToolsetConfig {
    * | `"0.0.0"` | Legacy | FUSE2-based AppImage runtime (pre-v27) |
    * | `"1.0.3"` | 20251108 | Introduces static AppImage runtime |
    * | `"1.1.0"` | 20251108 | Adds `unsquashfs` support |
+   * | `"1.2.0"` | 20251108 | squashfs-tools 4.7.5 with a statically linked zstd 1.5.7, so Linux and macOS hosts produce identical images |
    *
    * An explicit version pin always selects exactly that release.
    *
@@ -721,7 +722,7 @@ export interface ToolsetConfig {
    *
    * @default "latest"
    */
-  readonly appimage?: "0.0.0" | "1.0.3" | "1.1.0" | ToolsetCustom | "latest"
+  readonly appimage?: "0.0.0" | "1.0.3" | "1.1.0" | "1.2.0" | ToolsetCustom | "latest"
 
   /**
    * Version of the NSIS toolset bundle used to compile Windows installers.
