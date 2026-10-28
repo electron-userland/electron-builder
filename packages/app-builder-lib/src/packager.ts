@@ -22,16 +22,16 @@ import { Lazy } from "lazy-val"
 import { release as getOsRelease } from "os"
 import * as path from "path"
 import { AppInfo } from "./appInfo.js"
+import { assertArchSupported, assertPlatformBuildableOnHost, partitionTargetsToFinish, PoolCount, resolvePoolCount, runUntilCancelled } from "./buildSteps.js"
 import { readAsarJson } from "./asar/asar.js"
 import { AfterExtractContext, AfterPackContext, BeforePackContext, Configuration, Hook } from "./configuration.js"
 import { Platform, SourceRepositoryInfo, Target } from "./core.js"
 import { createElectronFrameworkSupport } from "./electron/ElectronFramework.js"
-import { assertElectronArchSupported } from "./electron/electronArchSupport.js"
-import { Framework, isElectronBased } from "./Framework.js"
+import { Framework } from "./Framework.js"
 import { Metadata } from "./options/metadata.js"
 import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions, PlannedTargets } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
-import { addTargetsForPlatform, computeArchToTargetNamesMap, createTargets, NoOpTarget, resolveTargetNames } from "./targets/targetFactory.js"
+import { addTargetsForPlatform, createTargets, NoOpTarget, PlatformBuildPlan, resolveBuildPlan, resolveTargetNames } from "./targets/targetFactory.js"
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
 import { assertNoRemovedEnvVars } from "./util/flags.js"
 import { expandMacro } from "./util/macroExpander.js"
@@ -539,6 +539,30 @@ export class Packager {
   }
 
   private async doBuild(): Promise<Map<Platform, Map<string, Target>>> {
+    await this.configureSevenZip()
+
+    const platformToTarget = new Map<Platform, Map<string, Target>>()
+    // Every platform packager and target is created before the first pack, so listeners of `targetsCreated` (the
+    // publish preflight) see the whole build and can fail it before any artifact exists - let alone is uploaded.
+    const plans = await this.createPlannedTargets(resolveBuildPlan(this.options.targets ?? new Map(), this.config), platformToTarget)
+
+    // a cancelled build stops here rather than running the publish preflight on a partial plan
+    if (!this.cancellationToken.cancelled) {
+      await this.eventEmitter.emit(
+        "targetsCreated",
+        plans.flatMap<PlannedTargets>(it => it.archs)
+      )
+    }
+
+    await this.finishTargets(await this.packAll(plans))
+
+    // Every target has now finished reading the shared appOutDir(s), so finalize tasks may safely
+    // mutate them (e.g. NSIS copying elevate.exe into win-unpacked — see #9852).
+    await runUntilCancelled(this.buildFinalizeTasks, this.cancellationToken)
+    return platformToTarget
+  }
+
+  private async configureSevenZip(): Promise<void> {
     const sevenZipConfig = this.config.toolsets?.sevenZip
     if (typeof sevenZipConfig === "object" && sevenZipConfig != null) {
       const toolDir = await getCustomToolsetPath(sevenZipConfig, this.buildResourcesDir)
@@ -550,130 +574,111 @@ export class Packager {
     } else {
       setSevenZipVersion(sevenZipConfig)
     }
+  }
 
+  /** Creates the platform packagers and the targets of each arch, recording each platform's targets in `platformToTarget`. */
+  private async createPlannedTargets(buildPlan: ReadonlyArray<PlatformBuildPlan>, platformToTarget: Map<Platform, Map<string, Target>>): Promise<Array<PlatformTargets>> {
+    const result: Array<PlatformTargets> = []
+    for (const platformPlan of buildPlan) {
+      if (this.cancellationToken.cancelled) {
+        break
+      }
+      assertPlatformBuildableOnHost(platformPlan.platform)
+
+      const packager = await this.createHelper(platformPlan.platform)
+      const nameToTarget = new Map<string, Target>()
+      platformToTarget.set(platformPlan.platform, nameToTarget)
+      result.push({ packager, nameToTarget, archs: this.createArchTargets(platformPlan, packager, nameToTarget) })
+    }
+    return result
+  }
+
+  private createArchTargets({ platform, archToTargetNames }: PlatformBuildPlan, packager: PlatformPackager<any>, nameToTarget: Map<string, Target>): Array<ArchTargets> {
+    const archSupport = { prepackaged: this.options.prepackaged, framework: this.framework, config: this.config }
+    const output = this.outputDirectoryPattern()
+    const result: Array<ArchTargets> = []
+    for (const [arch, targetNames] of archToTargetNames) {
+      if (this.cancellationToken.cancelled) {
+        break
+      }
+      assertArchSupported(platform, arch, archSupport)
+
+      // support os and arch macro in output value
+      const outDir = path.resolve(this.projectDir, packager.expandMacro(output, Arch[arch]))
+      const targets = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
+      result.push({ packager, arch, targets, outDir })
+    }
+    return result
+  }
+
+  private outputDirectoryPattern(): string {
+    const output = this.config.directories?.output
+    if (output == null) {
+      throw new Error("directories.output is not set: the configuration was not loaded")
+    }
+    return output
+  }
+
+  /**
+   * Packs the platforms one after another. The targets of a packed platform that support it start finishing right away, in the
+   * returned task manager; the others are returned to be finished once every platform is packed.
+   */
+  private async packAll(plans: ReadonlyArray<PlatformTargets>): Promise<TargetFinishers> {
     const taskManager = new AsyncTaskManager(this.cancellationToken)
-    const syncTargetsIfAny = [] as Target[]
-
-    const platformToTarget = new Map<Platform, Map<string, Target>>()
+    const syncTargets: Array<Target> = []
     const createdOutDirs = new Set<string>()
-
-    // Every platform packager and target is created before the first pack, so listeners of `targetsCreated` (the
-    // publish preflight) see the whole build and can fail it before any artifact exists - let alone is uploaded.
-    type ArchPlan = { packager: PlatformPackager<any>; arch: Arch; targets: Array<Target>; outDir: string }
-    const plans: Array<{ packager: PlatformPackager<any>; nameToTarget: Map<string, Target>; archs: Array<ArchPlan> }> = []
-    for (const [platform, archToType] of this.options.targets!) {
+    const isSkipped = (target: Target) => this.targetsSkippedByTestHook.has(target) && !this.targetsBuiltAfterPack.has(target)
+    for (const plan of plans) {
+      if (this.cancellationToken.cancelled) {
+        break
+      }
+      await this.packPlatform(plan, taskManager, createdOutDirs)
       if (this.cancellationToken.cancelled) {
         break
       }
 
-      if (platform === Platform.MAC && process.platform === Platform.WINDOWS.nodeName) {
-        throw new InvalidConfigurationError("Build for macOS is supported only on macOS, please see https://electron.build/docs/features/multi-platform-build")
+      const { async, sync } = partitionTargetsToFinish(plan.nameToTarget.values(), isSkipped)
+      for (const target of async) {
+        taskManager.addTask(target.finishBuild())
       }
-
-      const packager = await this.createHelper(platform)
-      const nameToTarget: Map<string, Target> = new Map()
-      platformToTarget.set(platform, nameToTarget)
-
-      const archs: Array<ArchPlan> = []
-      for (const [arch, targetNames] of computeArchToTargetNamesMap(archToType, packager, platform)) {
-        if (this.cancellationToken.cancelled) {
-          break
-        }
-
-        // fail fast when the requested arch has no official Electron build anymore (Electron 44 removed win32-ia32 and linux-armv7l);
-        // skipped for prepackaged apps since nothing is downloaded then
-        if (this.options.prepackaged == null && isElectronBased(this.framework)) {
-          assertElectronArchSupported(platform, arch, this.framework.version, this.config)
-        }
-
-        // support os and arch macro in output value
-        const outDir = path.resolve(this.projectDir, packager.expandMacro(this.config.directories!.output!, Arch[arch]))
-        const targets = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
-        archs.push({ packager, arch, targets, outDir })
-      }
-      plans.push({ packager, nameToTarget, archs })
+      syncTargets.push(...sync)
     }
+    return { taskManager, syncTargets }
+  }
 
-    // a cancelled build stops here rather than running the publish preflight on a partial plan
-    if (!this.cancellationToken.cancelled) {
-      await this.eventEmitter.emit(
-        "targetsCreated",
-        plans.flatMap<PlannedTargets>(it => it.archs)
-      )
-    }
-
-    for (const { packager, nameToTarget, archs } of plans) {
+  private async packPlatform({ packager, archs }: PlatformTargets, taskManager: AsyncTaskManager, createdOutDirs: Set<string>): Promise<void> {
+    const poolCount = resolvePoolCount(packager.config.concurrency?.jobs)
+    warnAboutPoolCount(poolCount)
+    const packPromises: Array<Promise<any>> = []
+    for (const { arch, targets, outDir } of archs) {
       if (this.cancellationToken.cancelled) {
         break
       }
 
-      let poolCount = Math.floor(packager.config.concurrency?.jobs || 1)
-      if (poolCount < 1) {
-        log.warn({ concurrency: poolCount }, "concurrency is invalid, overriding with job count: 1")
-        poolCount = 1
-      } else if (poolCount > MAX_FILE_REQUESTS) {
-        log.warn(
-          { concurrency: poolCount, MAX_FILE_REQUESTS },
-          `job concurrency is greater than recommended MAX_FILE_REQUESTS, this may lead to File Descriptor errors (too many files open). Proceed with caution (e.g. this is an experimental feature)`
-        )
-      }
-      const packPromises: Promise<any>[] = []
-
-      for (const { arch, targets: targetList, outDir } of archs) {
-        if (this.cancellationToken.cancelled) {
-          break
-        }
-
-        await createOutDirIfNeed(targetList, createdOutDirs)
-        const promise = packager.pack(outDir, arch, targetList, taskManager)
-        if (poolCount < 2) {
-          await promise
-        } else {
-          packPromises.push(promise)
-        }
-      }
-
-      await asyncPool(poolCount, packPromises, async it => {
-        if (this.cancellationToken.cancelled) {
-          return
-        }
-        await it
-      })
-
-      if (this.cancellationToken.cancelled) {
-        break
-      }
-
-      for (const target of nameToTarget.values()) {
-        if (this.targetsSkippedByTestHook.has(target) && !this.targetsBuiltAfterPack.has(target)) {
-          continue
-        }
-        if (target.isAsyncSupported) {
-          taskManager.addTask(target.finishBuild())
-        } else {
-          syncTargetsIfAny.push(target)
-        }
+      await createOutDirIfNeed(targets, createdOutDirs)
+      const promise = packager.pack(outDir, arch, targets, taskManager)
+      if (poolCount.poolCount < 2) {
+        await promise
+      } else {
+        packPromises.push(promise)
       }
     }
 
+    await asyncPool(poolCount.poolCount, packPromises, async it => {
+      if (this.cancellationToken.cancelled) {
+        return
+      }
+      await it
+    })
+  }
+
+  /** Waits for the targets that finish on their own, then finishes the others one after another. */
+  private async finishTargets({ taskManager, syncTargets }: TargetFinishers): Promise<void> {
     await taskManager.awaitTasks()
-
-    for (const target of syncTargetsIfAny) {
-      if (this.cancellationToken.cancelled) {
-        break
-      }
-      await target.finishBuild()
-    }
-
-    // Every target has now finished reading the shared appOutDir(s), so finalize tasks may safely
-    // mutate them (e.g. NSIS copying elevate.exe into win-unpacked — see #9852).
-    for (const task of this.buildFinalizeTasks) {
-      if (this.cancellationToken.cancelled) {
-        break
-      }
-      await task()
-    }
-    return platformToTarget
+    await runUntilCancelled(
+      syncTargets.map(target => () => target.finishBuild()),
+      this.cancellationToken
+    )
   }
 
   private async createHelper(platform: Platform): Promise<PlatformPackager<any>> {
@@ -746,6 +751,35 @@ export class Packager {
       },
       false,
       this.runtimeEnvironmentVariables
+    )
+  }
+}
+
+interface ArchTargets extends PlannedTargets {
+  readonly targets: Array<Target>
+  readonly outDir: string
+}
+
+interface PlatformTargets {
+  readonly packager: PlatformPackager<any>
+  readonly nameToTarget: Map<string, Target>
+  readonly archs: ReadonlyArray<ArchTargets>
+}
+
+interface TargetFinishers {
+  /** The targets that finish while the build goes on. */
+  readonly taskManager: AsyncTaskManager
+  /** The targets to finish one after another at the end. */
+  readonly syncTargets: ReadonlyArray<Target>
+}
+
+function warnAboutPoolCount({ requested, warning }: PoolCount): void {
+  if (warning === "invalid") {
+    log.warn({ concurrency: requested }, "concurrency is invalid, overriding with job count: 1")
+  } else if (warning === "aboveMaxFileRequests") {
+    log.warn(
+      { concurrency: requested, MAX_FILE_REQUESTS },
+      `job concurrency is greater than recommended MAX_FILE_REQUESTS, this may lead to File Descriptor errors (too many files open). Proceed with caution (e.g. this is an experimental feature)`
     )
   }
 }

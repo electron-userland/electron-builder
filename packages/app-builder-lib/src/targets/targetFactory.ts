@@ -64,35 +64,30 @@ export function computeArchToTargetNamesMap(
 ): Map<Arch, Array<string>> {
   // copies: a caller may put one array under several archs (as the CLI does), and the lists below are added to per arch
   const result = new Map(Array.from(raw, ([arch, list]) => [arch, list.slice()] as const))
-  for (const targetNames of raw.values()) {
-    if (targetNames.length > 0) {
-      // https://github.com/electron-userland/electron-builder/issues/1355
-      return result
-    }
+  // https://github.com/electron-userland/electron-builder/issues/1355
+  if (Array.from(raw.values()).some(it => it.length > 0)) {
+    return result
   }
 
   const defaultArchs = (): Array<Arch> => (raw.size === 0 ? [archFromString(host.arch)] : Array.from(raw.keys()))
-  for (const target of asArray(platformPackager.platformOptions.target)) {
+  addConfiguredTargets(result, platformPackager.platformOptions.target, defaultArchs)
+  if (result.size === 0) {
+    // cannot enable arm for a Linux build on macOS or Windows because of native dependencies - e.g. keytar doesn't provide pre-builds for arm
+    const crossLinux = raw.size === 0 && platform === Platform.LINUX && (host.platform === "darwin" || host.platform === "win32")
+    for (const arch of crossLinux ? [Arch.x64] : defaultArchs()) {
+      result.set(arch, platformPackager.defaultTarget.slice())
+    }
+  }
+  return result
+}
+
+function addConfiguredTargets(result: Map<Arch, Array<string>>, configured: TargetConfigType | undefined, defaultArchs: () => Array<Arch>): void {
+  for (const target of asArray(configured)) {
     const { name, archs } = parseTargetConfiguration(typeof target === "string" ? { target } : target)
     for (const arch of archs == null ? defaultArchs() : archs.map(archFromString)) {
       addValue(result, arch, name)
     }
   }
-
-  if (result.size === 0) {
-    const defaultTarget = platformPackager.defaultTarget
-    if (raw.size === 0 && platform === Platform.LINUX && (host.platform === "darwin" || host.platform === "win32")) {
-      result.set(Arch.x64, defaultTarget.slice())
-      // cannot enable arm because of native dependencies - e.g. keytar doesn't provide pre-builds for arm
-      // result.set(Arch.armv7l, ["snap"])
-    } else {
-      for (const arch of defaultArchs()) {
-        result.set(arch, defaultTarget.slice())
-      }
-    }
-  }
-
-  return result
 }
 
 /** A configured target's name and archs; an arch suffix of the name (`nsis:ia32`) is used when the target sets no `arch`. */
@@ -105,18 +100,43 @@ function parseTargetConfiguration(target: TargetConfiguration): { name: string; 
   return { name, archs: suffixPos > 0 ? [target.target.substring(suffixPos + 1)] : null }
 }
 
+/** One platform of a build: the target names each arch builds, where an empty list stands for the platform's default targets. */
+export interface PlatformBuildPlan {
+  readonly platform: Platform
+  readonly archToTargetNames: ReadonlyMap<Arch, ReadonlyArray<string>>
+}
+
 /**
- * The target names each platform of `targets` builds, from the platform's `target` option when none is requested, as the build
- * resolves them before it creates the platform packagers; `DEFAULT_TARGET` stands for the platform's default targets.
+ * What the build creates for each requested platform, from the requested targets and the platform's `target` option. The build and the
+ * electron-updater check (see {@link resolveTargetNames}) both resolve it here, so they cannot disagree.
  * @internal
  */
-export function resolveTargetNames(targets: ReadonlyMap<Platform, ReadonlyMap<Arch, ReadonlyArray<string>>>, config: Configuration): Map<Platform, Set<string>> {
-  const result = new Map<Platform, Set<string>>()
-  for (const [platform, archToType] of targets) {
+export function resolveBuildPlan(
+  requested: ReadonlyMap<Platform, ReadonlyMap<Arch, ReadonlyArray<string>>>,
+  config: Configuration,
+  host: BuildHost = process
+): Array<PlatformBuildPlan> {
+  return Array.from(requested, ([platform, archToType]) => {
     const key = platform.buildConfigurationKey
     const platformOptions = (key === "mac" || key === "win" || key === "linux" ? config[key] : null) ?? {}
+    return { platform, archToTargetNames: computeArchToTargetNamesMap(archToType, { platformOptions, defaultTarget: [] }, platform, host) }
+  })
+}
+
+/**
+ * The target names each platform of `targets` builds (see {@link resolveBuildPlan}), lower-cased; `DEFAULT_TARGET` stands for the
+ * platform's default targets.
+ * @internal
+ */
+export function resolveTargetNames(
+  targets: ReadonlyMap<Platform, ReadonlyMap<Arch, ReadonlyArray<string>>>,
+  config: Configuration,
+  host: BuildHost = process
+): Map<Platform, Set<string>> {
+  const result = new Map<Platform, Set<string>>()
+  for (const { platform, archToTargetNames } of resolveBuildPlan(targets, config, host)) {
     const names = new Set<string>()
-    for (const list of computeArchToTargetNamesMap(archToType, { platformOptions, defaultTarget: [DEFAULT_TARGET] }, platform).values()) {
+    for (const list of archToTargetNames.values()) {
       for (const name of list.length === 0 ? [DEFAULT_TARGET] : list) {
         names.add(name.toLowerCase().trim())
       }
@@ -126,7 +146,7 @@ export function resolveTargetNames(targets: ReadonlyMap<Platform, ReadonlyMap<Ar
   return result
 }
 
-export function createTargets(nameToTarget: Map<string, Target>, rawList: Array<string>, outDir: string, packager: PlatformPackager<any>): Array<Target> {
+export function createTargets(nameToTarget: Map<string, Target>, rawList: ReadonlyArray<string>, outDir: string, packager: PlatformPackager<any>): Array<Target> {
   const result: Array<Target> = []
 
   const mapper = (name: string, factory: (outDir: string) => Target) => {
@@ -143,7 +163,7 @@ export function createTargets(nameToTarget: Map<string, Target>, rawList: Array<
   return result
 }
 
-function normalizeTargets(targets: Array<string>, defaultTarget: Array<string>): Array<string> {
+function normalizeTargets(targets: ReadonlyArray<string>, defaultTarget: ReadonlyArray<string>): Array<string> {
   const list: Array<string> = []
   for (const t of targets) {
     const name = t.toLowerCase().trim()
