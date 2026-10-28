@@ -114,8 +114,9 @@ export class MacUpdater extends AppUpdater {
         let differentialDownloadFailed = true
         if (canDifferentialDownload()) {
           differentialDownloadFailed = await this.differentialDownloadInstaller(zipFileInfo, downloadUpdateOptions, destinationFile, provider, CURRENT_MAC_APP_ZIP_FILE_NAME)
+          // only report a result when a differential download was actually attempted
+          this.log.info(`Differential download ${differentialDownloadFailed ? "failed" : "succeeded"}`)
         }
-        this.log.info(`Differential download ${differentialDownloadFailed ? "failed" : "succeeded"}`)
 
         if (differentialDownloadFailed) {
           await this.httpExecutor.download(zipFileInfo.url, destinationFile, downloadOptions)
