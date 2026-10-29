@@ -21,7 +21,17 @@ describe("SquirrelWindowsTarget.select7zipArch", () => {
   afterEach(() => rm(tmpDir, { recursive: true, force: true }).catch(() => {}))
 
   test("copies arch-specific 7z.exe and 7z.dll when both are present", async () => {
-    const arch = osArch()
+    await writeFile(path.join(tmpDir, "7z-x64.exe"), "exe-content")
+    await writeFile(path.join(tmpDir, "7z-x64.dll"), "dll-content")
+
+    t.select7zipArch(tmpDir, "win32", "x64")
+
+    expect(await readFile(path.join(tmpDir, "7z.exe"), "utf8")).toBe("exe-content")
+    expect(await readFile(path.join(tmpDir, "7z.dll"), "utf8")).toBe("dll-content")
+  })
+
+  test("defaults to the current host platform and arch", async () => {
+    const arch = process.platform === "win32" ? osArch() : "x64"
     await writeFile(path.join(tmpDir, `7z-${arch}.exe`), "exe-content")
     await writeFile(path.join(tmpDir, `7z-${arch}.dll`), "dll-content")
 
@@ -34,21 +44,50 @@ describe("SquirrelWindowsTarget.select7zipArch", () => {
   test("skips copy and leaves existing 7z.exe unchanged when arch-specific exe is absent", async () => {
     await writeFile(path.join(tmpDir, "7z.exe"), "original-exe")
 
-    t.select7zipArch(tmpDir)
+    t.select7zipArch(tmpDir, "win32", "x64")
 
     expect(await readFile(path.join(tmpDir, "7z.exe"), "utf8")).toBe("original-exe")
   })
 
   test("copies exe but skips dll when only arch-specific exe is present", async () => {
-    const arch = osArch()
-    await writeFile(path.join(tmpDir, `7z-${arch}.exe`), "exe-only")
+    await writeFile(path.join(tmpDir, "7z-x64.exe"), "exe-only")
     await writeFile(path.join(tmpDir, "7z.exe"), "original-exe")
 
-    t.select7zipArch(tmpDir)
+    t.select7zipArch(tmpDir, "win32", "x64")
 
     expect(await readFile(path.join(tmpDir, "7z.exe"), "utf8")).toBe("exe-only")
     // 7z.dll was never created — should still not exist
     await expect(readFile(path.join(tmpDir, "7z.dll"), "utf8")).rejects.toThrow()
+  })
+
+  // squirrel.windows@1.2.1 ships both 7z-x64 and 7z-arm64 next to the default (x64) 7z.exe/7z.dll
+  async function writeBundle7zip() {
+    for (const arch of ["x64", "arm64"]) {
+      await writeFile(path.join(tmpDir, `7z-${arch}.exe`), `${arch}-exe`)
+      await writeFile(path.join(tmpDir, `7z-${arch}.dll`), `${arch}-dll`)
+    }
+    await writeFile(path.join(tmpDir, "7z.exe"), "x64-exe")
+    await writeFile(path.join(tmpDir, "7z.dll"), "x64-dll")
+  }
+
+  test("picks the native arm64 7-Zip on arm64 Windows", async () => {
+    await writeBundle7zip()
+
+    t.select7zipArch(tmpDir, "win32", "arm64")
+
+    expect(await readFile(path.join(tmpDir, "7z.exe"), "utf8")).toBe("arm64-exe")
+    expect(await readFile(path.join(tmpDir, "7z.dll"), "utf8")).toBe("arm64-dll")
+  })
+
+  // 7z.exe runs under Wine there: Wine on Apple Silicon only runs x64 code (via Rosetta), and the other vendor exes
+  // already need an x86-capable Wine on arm64 Linux
+  test.each(["darwin", "linux"] as const)("keeps the x64 7-Zip on %s arm64 hosts", async platform => {
+    await writeBundle7zip()
+
+    t.select7zipArch(tmpDir, platform, "arm64")
+
+    expect(await readFile(path.join(tmpDir, "7z.exe"), "utf8")).toBe("x64-exe")
+    expect(await readFile(path.join(tmpDir, "7z.dll"), "utf8")).toBe("x64-dll")
   })
 })
 

@@ -252,13 +252,16 @@ export default class SquirrelWindowsTarget extends Target {
     return sanitizeFileName(name)
   }
 
-  private select7zipArch(vendorDirectory: string) {
+  private select7zipArch(vendorDirectory: string, platform: NodeJS.Platform = process.platform, hostArch: string = os.arch()) {
     // https://github.com/electron/windows-installer/blob/main/script/select-7z-arch.js
     // Even if we're cross-compiling for a different arch like arm64,
     // we still need to use the 7-Zip executable for the host arch.
+    // On macOS and Linux, Squirrel runs 7z.exe under Wine, which (like rcedit above) needs the x64 build:
+    // Wine on Apple Silicon only runs x64 code through Rosetta, and the other vendor exes already need an
+    // x86-capable Wine on arm64 Linux, so a native arm64 7-Zip is only picked on arm64 Windows.
     // When arch-specific variants aren't present (vendor bundle ships a pre-selected 7z.exe),
     // skip the copy — the bundle's 7z.exe is already correct.
-    const resolvedArch = os.arch()
+    const resolvedArch = platform === "win32" ? hostArch : "x64"
     const archExe = path.join(vendorDirectory, `7z-${resolvedArch}.exe`)
     const archDll = path.join(vendorDirectory, `7z-${resolvedArch}.dll`)
     if (fs.existsSync(archExe)) {
