@@ -78,6 +78,13 @@ export interface AsarOptions {
   contentAlignment?: number | null
 
   /**
+   * Experimental. Keep every packed file of `app.asar` at the offset it had in a previous release, so that the
+   * asar header (which stores every file's absolute offset) only changes in the entries of the files that changed.
+   * Off when unset; see the `AsarStableLayoutOptions` docs for how files are placed.
+   */
+  stableLayout?: AsarStableLayoutOptions | null
+
+  /**
    * Whether to skip the ASAR package integrity sanity check.
    *
    * Set to `true` only when using a custom Electron fork that implements its own encrypted or
@@ -99,6 +106,46 @@ export interface AsarOptions {
    * @default false
    */
   disableIntegrity?: boolean
+}
+
+/**
+ * `asar.stableLayout`: lay `app.asar` out like the previous release's archive.
+ *
+ * By default every file is packed right after the one before it, so adding, removing or growing one file
+ * shifts the offset of every later file and the asar header changes all over: a differential update then
+ * re-downloads most of the header even though the content blocks of the moved files are still found. With a
+ * stable layout a file that still fits its previous slot (its size plus the padding up to the next file) keeps its
+ * offset; a new file, or one that outgrew its slot, goes into a freed slot it fits or after the previous content, so
+ * it never shifts another file. Files are matched by path. When the freed slots exceed 10 % of the packed bytes the
+ * archive is laid out afresh (one update then pays for the whole header).
+ *
+ * Every packed file starts at a multiple of `asar.contentAlignment` when that is set. File sizes, the header's entry
+ * order and per-file integrity are unchanged, and Electron's asar integrity is computed from the result. The layout is
+ * applied when electron-builder packs `app.asar`, so — like `contentAlignment` — it is lost when the archive is rebuilt
+ * afterwards (macOS universal builds with `mac.universal.mergeASARs`, `--prepackaged`). Files that keep their offset
+ * ignore `asar.ordering`; it still orders the files that are placed afresh.
+ *
+ * Measured with the v3 block map on a synthetic 25 MB asar with 1,962 files (`test/src/asarLayoutBenchTest.ts`): adding
+ * 4 files cost 544 KB of differential download with the default layout and 27 KB with a stable layout plus
+ * `contentAlignment: 512`; over 10 releases that each grow, add, remove and edit a few files the mean update went
+ * from 567 KB to 84 KB, for 2.3 % more asar size (almost all of it the alignment).
+ */
+export interface AsarStableLayoutOptions {
+  /**
+   * Path to the `app.asar` of the previous release (any asar works: only its header is read), relative to the
+   * project directory. Keep it from the previous build, e.g. in a CI cache. When the file does not exist the archive
+   * is laid out afresh with the growth margins and a warning is logged — the first release of a stable layout.
+   */
+  previous: string
+
+  /**
+   * Share of each file's size reserved after it when it is placed afresh, so it can grow by that much in later
+   * releases without moving. Between `0` and `1`. Rarely worth it: a file that outgrows its slot just moves without
+   * shifting any other file. In the benchmark above `0.02` saved 7 KB when 5 files grew, nothing over the 10-release
+   * chain, and cost 1.7 % more asar size.
+   * @default 0
+   */
+  growthMargin?: number | null
 }
 
 /**
