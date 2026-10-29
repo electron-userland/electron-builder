@@ -72,7 +72,7 @@ export function signUpdateManifest(info: UpdateInfo, privateKey: string | KeyObj
  * entry per key, in order, then one `EBUM2` entry per key, in order, each tagged with the id of the key that produced it
  * and its `format`. `UpdateInfo.signature` is the first entry's signature (the first key's `EBUM1` signature).
  *
- * The `EBUM1` entries keep electron-updater 7.0.0-alpha.8 to alpha.12 verifying: they do not know `format`, try the
+ * The `EBUM1` entries keep electron-updater 7.0.0-alpha.8 to alpha.13 verifying: they do not know `format`, try the
  * `EBUM2` entries as `EBUM1`, fail, and verify the `EBUM1` entry of the same key. Newer updaters prefer `EBUM2`.
  * Throws when `privateKeys` is empty — callers decide whether an unsigned manifest is acceptable.
  */

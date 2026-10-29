@@ -185,7 +185,7 @@ signatures:
     format: EBUM2
 ```
 
-Both fields are always written, even with a single key, so the manifest shape does not change when a second key is added. Every key signs both payload formats: electron-updater 7.0.0-alpha.13 and later verify the `EBUM2` entries, while 7.0.0-alpha.8 to alpha.12, which predate `format`, ignore the tag, fail on the `EBUM2` entries and verify the `EBUM1` entry of the same key. The `keyId` lets an updater holding several trusted keys pick the matching signature directly, and lets you tell at a glance which keys signed a release. An entry without `format` is an `EBUM1` signature, as electron-builder 27.0.0-alpha.9 to alpha.13 wrote them.
+Both fields are always written, even with a single key, so the manifest shape does not change when a second key is added. Every key signs both payload formats: electron-updater 7.0.0-alpha.14 and later verify the `EBUM2` entries, while 7.0.0-alpha.8 to alpha.13, which predate `format`, ignore the tag, fail on the `EBUM2` entries and verify the `EBUM1` entry of the same key. The `keyId` lets an updater holding several trusted keys pick the matching signature directly, and lets you tell at a glance which keys signed a release. An entry without `format` is an `EBUM1` signature, as electron-builder 27.0.0-alpha.9 to alpha.14 wrote them.
 
 Before writing the file, electron-builder parses the YAML back the way electron-updater does and checks that both payloads come out exactly as signed, so a build cannot publish a manifest its own installs would refuse.
 

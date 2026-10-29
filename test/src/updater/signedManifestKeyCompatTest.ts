@@ -257,7 +257,7 @@ async function appUpdateYmlFromCurrentBuilder(keys: Array<KeyObject>): Promise<s
 }
 
 // The EBUM1 signatures, without the `format` tag the released signer did not write: these are what electron-updater
-// 7.0.0-alpha.8 to alpha.12 verify, so they must stay byte-identical. The current builder appends EBUM2 entries after them.
+// 7.0.0-alpha.8 to alpha.13 verify, so they must stay byte-identical. The current builder appends EBUM2 entries after them.
 const signaturesOf = (yml: string) => {
   const info = yamlLoad(yml) as UpdateInfo
   const ebum1 = (info.signatures ?? []).filter(it => (it.format ?? "EBUM1") === "EBUM1").map(({ keyId, signature }) => ({ keyId, signature }))

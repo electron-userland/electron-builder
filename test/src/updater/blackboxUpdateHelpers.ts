@@ -1124,7 +1124,7 @@ async function expectRejectedUpdate(
 
 /**
  * Asserts the manifest of a build is signed by exactly `publicKeyPems` (in order), legacy `signature` included: one EBUM1
- * entry per key (what electron-updater 7.0.0-alpha.8 to alpha.12 verify), then one EBUM2 entry per key.
+ * entry per key (what electron-updater 7.0.0-alpha.8 to alpha.13 verify), then one EBUM2 entry per key.
  */
 function assertManifestSignedBy(expect: ExpectStatic, info: UpdateInfo, version: string, publicKeyPems: Array<string>): void {
   expect(info.version).toBe(version)

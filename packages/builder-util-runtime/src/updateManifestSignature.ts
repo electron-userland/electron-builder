@@ -22,7 +22,7 @@ export const UPDATE_MANIFEST_SIGNATURE_VERSION_2 = "EBUM2"
 export const UPDATE_MANIFEST_UNSIGNED_FIELDS: ReadonlyArray<string> = ["signature", "signatures", "releaseName", "releaseNotes"]
 
 /**
- * Every top-level field an `EBUM1`-only electron-builder (27.0.0-alpha.9 to alpha.13) can write into `latest*.yml`, plus
+ * Every top-level field an `EBUM1`-only electron-builder (27.0.0-alpha.9 to alpha.14) can write into `latest*.yml`, plus
  * `allowCatalogSignature`, which `EBUM1` itself signs when it is `true` (see {@link canonicalizeForSigning}).
  * {@link verifyManifestSignatures} accepts an `EBUM1` signature only for a manifest whose top-level fields are all in this
  * list. Stripping the `EBUM2` signatures from a dual-signed manifest therefore cannot smuggle a newer field past the
@@ -652,7 +652,7 @@ export interface ManifestVerificationResult {
  *   1. `EBUM2` entries, over {@link canonicalizeForSigningV2} — every field but the unsigned ones.
  *   2. `EBUM1` entries (and the legacy `signature`), over {@link canonicalizeForSigning} — only when every top-level field
  *      of the manifest is one an `EBUM1`-only electron-builder writes ({@link EBUM1_MANIFEST_FIELDS}). This keeps manifests
- *      from 27.0.0-alpha.9 to alpha.13 verifying, while a field newer than `EBUM1` is only ever accepted under an `EBUM2`
+ *      from 27.0.0-alpha.9 to alpha.14 verifying, while a field newer than `EBUM1` is only ever accepted under an `EBUM2`
  *      signature, which covers it.
  * Entries in a format this version does not know are skipped. Within a format, signatures tagged with a trusted key's
  * {@link computeUpdateManifestKeyId} are tried first, then untagged entries. Never throws on a bad signature; malformed
