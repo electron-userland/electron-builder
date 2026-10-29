@@ -834,13 +834,16 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | FPM version | Notes |
    * |---------|------------|-------|
-   * | `"2.2.1"` | 1.17.0 (Ruby 3.4.3) | Current default |
+   * | `"2.2.1"` | 1.17.0 (Ruby 3.4.3) | Previous default |
+   * | `"2.3.1"` | 1.18.0 (Ruby 3.4.12) | Linux bundles link a static OpenSSL 3.5.9 instead of OpenSSL 1.1.1 |
+   *
+   * An explicit version pin always selects exactly that release.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/fpm/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly fpm?: "2.2.1" | ToolsetCustom | "latest"
+  readonly fpm?: "2.2.1" | "2.3.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build
