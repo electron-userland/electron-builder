@@ -98,6 +98,7 @@ export interface CommonConfiguration {
    * `"latest"`) to use the modern default (newest bundle) for that toolset.
    *
    * Note: Toolset versioning can drop intermediate releases (such as if a problem is discovered in a bundle). If you need to pin to a specific release, check the release notes for the toolset to ensure the version you specify is valid.
+   * Toolsets and their versions can be added, changed or removed in any electron-builder release (minor or patch), not only in a major release.
    *
    * @see {@link ToolsetConfig}
    */
@@ -696,6 +697,9 @@ export type AfterExtractContext = PackContext
  *
  * To supply your own bundle, set the property to a {@link ToolsetCustom} object with a `url` (https:// or file://) and a `checksum` for verification. The bundle must mirror the expected directory layout of the corresponding built-in bundle; see the build scripts at
  * https://github.com/electron-userland/electron-builder-binaries/tree/master/packages.
+ *
+ * Toolsets, the versions offered for each, and what `latest` resolves to can be added, changed or removed in any electron-builder release (minor or patch), not only in a major release.
+ * Pin an explicit version to avoid surprise updates. For long-term stability, host your own bundle as a {@link ToolsetCustom}.
  */
 export interface ToolsetConfig {
   /**

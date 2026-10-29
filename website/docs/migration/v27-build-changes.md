@@ -124,7 +124,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 { "build": { "toolsets": { "winCodeSign": "0.0.0", "nsis": "0.0.0", "appimage": "0.0.0", "wine": "0.0.0", "wix": "0.0.0" } } }
 ```
 
-This escape hatch is intended as a short-term workaround. The `"0.0.0"` alias may be removed in a future major release.
+This escape hatch is intended as a short-term workaround. Like any toolset version, the `"0.0.0"` alias can be removed in any release, including a minor or patch release (see [Toolsets](../toolsets.md)).
 
 Legacy-base snap template builds (`core18`/`core20`/`core22` with `useTemplateApp`) now pack with the `mksquashfs` from `toolsets.appimage` instead of always using the legacy `"0.0.0"` bundle, so an `appimage: "0.0.0"` pin applies to them too — and its `mksquashfs` supports only `gzip`/`xz`, so snap `compression: "lzo"` (or `linux.compression: "store"`) needs a newer toolset.
 

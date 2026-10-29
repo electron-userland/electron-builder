@@ -6,6 +6,10 @@ electron-builder relies on a handful of external **binary bundles** — the NSIS
 
 For most projects you never touch this key: every toolset defaults to the newest published bundle. You reach for `toolsets` only to **pin a specific (or legacy) version**, or to **supply a custom bundle** in place of a built-in one.
 
+:::warning[Toolsets can change in any release]
+Toolsets, the versions offered for each, and what `"latest"` resolves to can be added, changed or removed in any electron-builder release (minor or patch), not only in a major release. Pin an explicit version to avoid surprise updates. For long-term stability, host your own bundle as a [custom toolset](#custom-toolsets).
+:::
+
 :::info[New in v27]
 Before v27, toolset selection was a mix of fixed version pins and environment-variable overrides (`APPIMAGE_TOOLS_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, `USE_SYSTEM_WINE`, …). v27 **removes every one of those env vars** and replaces them with the typed `toolsets` config on this page. See [Toolsets & environment variables](./migration/v27-build-changes.md#toolsets-environment-variables) in the breaking-changes reference and the [Replacing removed environment variables](#replacing-removed-environment-variables) section below.
 :::
@@ -78,7 +82,7 @@ Every toolset accepts the sentinel version **`"0.0.0"`**, which selects the **pr
 Pinning `"0.0.0"` also changes a few behaviors that are gated on the bundle version — for example, the legacy AppImage bundle (`appimage: "0.0.0"`) is the FUSE2 runtime and re-adds the automatic `--no-sandbox` launch argument, and a `winCodeSign` below `1.3.0` forces the legacy PowerShell path for Azure Trusted Signing (see [Code signing & toolsets](#code-signing-and-toolsets)).
 
 :::warning[Short-term workaround only]
-`"0.0.0"` is intended as a temporary fallback while you resolve an incompatibility. The alias **may be removed in a future major release** — prefer moving to a current bundle (or a [custom toolset](#custom-toolsets)) rather than relying on it long-term.
+`"0.0.0"` is intended as a temporary fallback while you resolve an incompatibility. Like any toolset version, the alias can be removed in any release, including a minor or patch release — prefer moving to a current bundle (or a [custom toolset](#custom-toolsets)) rather than relying on it long-term.
 :::
 
 ## Custom toolsets
