@@ -7,7 +7,7 @@ electron-builder relies on a handful of external **binary bundles** — the NSIS
 For most projects you never touch this key: every toolset defaults to the newest published bundle. You reach for `toolsets` only to **pin a specific (or legacy) version**, or to **supply a custom bundle** in place of a built-in one.
 
 :::warning[Toolsets can change in any release]
-Toolsets, the versions offered for each, and what `"latest"` resolves to can be added, changed or removed in any electron-builder release (minor or patch), not only in a major release. Pin an explicit version to avoid surprise updates. For long-term stability, host your own bundle as a [custom toolset](#custom-toolsets).
+Toolsets, the versions offered for each, and what `"latest"` resolves to can be added, changed or removed in any electron-builder release (minor or patch), not only in a major release. (To address toolset stability, reported issues, adopt latest tooling versions, etc.)
 :::
 
 :::info[New in v27]
@@ -80,10 +80,6 @@ Every toolset accepts the sentinel version **`"0.0.0"`**, which selects the **pr
 ```
 
 Pinning `"0.0.0"` also changes a few behaviors that are gated on the bundle version — for example, the legacy AppImage bundle (`appimage: "0.0.0"`) is the FUSE2 runtime and re-adds the automatic `--no-sandbox` launch argument, and a `winCodeSign` below `1.3.0` forces the legacy PowerShell path for Azure Trusted Signing (see [Code signing & toolsets](#code-signing-and-toolsets)).
-
-:::warning[Short-term workaround only]
-`"0.0.0"` is intended as a temporary fallback while you resolve an incompatibility. Like any toolset version, the alias can be removed in any release, including a minor or patch release — prefer moving to a current bundle (or a [custom toolset](#custom-toolsets)) rather than relying on it long-term.
-:::
 
 ## Custom toolsets
 
