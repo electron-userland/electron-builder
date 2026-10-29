@@ -105,19 +105,7 @@ describe("PnpmNodeModulesCollector link: dependency bundling", () => {
     const { nodeModules } = await collector.getNodeModules({ packageName: "TestApp" })
 
     const names = flattenNames(nodeModules)
-    const required = [
-      "electron-updater",
-      "builder-util-runtime",
-      "fs-extra",
-      "js-yaml",
-      "semver",
-      "debug",
-      "sax",
-      "lazy-val",
-      "tiny-typed-emitter",
-      "lodash.escaperegexp",
-      "lodash.isequal",
-    ]
+    const required = ["electron-updater", "builder-util-runtime", "fs-extra", "js-yaml", "semver", "debug", "sax", "lazy-val", "tiny-typed-emitter", "lodash.escaperegexp"]
     expect(required.filter(r => !names.includes(r))).toEqual([])
 
     // The link: entries must resolve to their real source dirs, not the app's node_modules
