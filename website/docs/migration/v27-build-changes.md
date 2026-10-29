@@ -110,7 +110,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 | `wine` | `0.0.0` (Wine 4.0.1, macOS only) | `system` | Host-installed Wine, on macOS and Linux, started by absolute path from its install locations or [`toolsets.executables.wine`](../toolsets.md#executables), never from `PATH`. **Requires a host Wine on macOS** — see the note below. The `"1.0.1"` Wine 11.0 bundle still downloads when pinned, but ships no PE builtins and cannot run Windows tools on its own |
 | `winCodeSign` | `0.0.0` (winCodeSign 2.6.0) | `1.3.3` | Windows Kits 10.0.26100.0; `osslsigncode` 2.14 + native arm64; bundles the Azure Trusted Signing `dlib` + .NET 8 runtime |
 | `appimage` | `0.0.0` (FUSE2 runtime) | `1.2.1` | Static FUSE3-compatible runtime (runs without a host FUSE install); adds `unsquashfs` support; statically linked zstd, so Linux and macOS hosts build identical images |
-| `nsis` | `0.0.0` (NSIS 3.0.4.1, split bundle) | `1.2.1` | NSIS 3.12; unified single-archive bundle; entrypoint scripts auto-set `NSISDIR` |
+| `nsis` | `0.0.0` (NSIS 3.0.4.1, split bundle) | `2.0.4` | NSIS 3.13 compiled from source; unified single-archive bundle; entrypoint scripts auto-set `NSISDIR`; a second, log-enabled bundle is picked when `installerDebugLogging` is on |
 | `fpm` | `2.2.1` | `2.3.1` | FPM 1.18.0 / Ruby 3.4.12; Linux bundles link a static OpenSSL 3.5.9 instead of OpenSSL 1.1.1 (same glibc 2.28 floor) |
 | `icons` | `1.1.0` | `1.2.3` | Newer bundle — `wasm-vips` + `@resvg/resvg-wasm`; 16/32 px ICNS entries written as ARGB |
 | `linuxToolsMac` | `1.0.0` | `1.1.1` | Trimmed to the tools electron-builder runs (`gtar`, `lzip`, binutils 2.47 `ar`) plus their license files, built to run on macOS 15+ (1.0.0 required macOS 26) |

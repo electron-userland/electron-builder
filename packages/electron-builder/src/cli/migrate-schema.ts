@@ -1601,7 +1601,7 @@ function printManualSteps() {
     "• Move helper-bundle-id → mac.helperBundleId",
     "• Replace squirrelWindows.noMsi with squirrelWindows.msi (inverted)",
     "• Replace squirrelWindows.customSquirrelVendorDir with a toolsets.squirrel custom bundle (it must contain an electron-winstaller/vendor/ subtree)",
-    "• Move nsis/nsisWeb customNsisBinary.debugLogging → installerDebugLogging (it needs a log-enabled custom toolsets.nsis); remove customNsisBinary and customNsisResources, replacing a custom url/checksum with a toolsets.nsis custom bundle (the checksum carries over; the bundle must also contain the NSIS plugins)",
+    "• Move nsis/nsisWeb customNsisBinary.debugLogging → installerDebugLogging (it needs a log-enabled NSIS: the default toolsets.nsis or a log-enabled custom bundle); remove customNsisBinary and customNsisResources, replacing a custom url/checksum with a toolsets.nsis custom bundle (the checksum carries over; the bundle must also contain the NSIS plugins)",
     "• Move mac/mas/masDev signing fields (identity, entitlements, entitlementsInherit, entitlementsLoginHelper, hardenedRuntime, type, requirements, timestamp, binaries, strictVerify, preAutoEntitlements, provisioningProfile, additionalArguments) into the `sign` object; rename signIgnore → sign.ignore; remove gatekeeperAssess",
     "• Move mac/mas/masDev mergeASARs / singleArchFiles / x64ArchFiles into the `universal` object",
     "• Rename electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum:false → unsafelyDisableChecksums:true; drop cache/customDir/customFilename/strictSSL/platform/arch/version/force)",

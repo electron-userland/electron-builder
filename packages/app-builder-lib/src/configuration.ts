@@ -762,6 +762,7 @@ export interface ToolsetConfig {
    * |---------|------------------|-------|
    * | `"0.0.0"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27) |
    * | `"1.2.1"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` |
+   * | `"2.0.4"` | 3.13 | Compiled from source, `NSIS_MAX_STRLEN=8192` — two bundles: the default, and a `-log` bundle whose `makensis` and stubs are log-enabled (`NSIS_CONFIG_LOG=yes`), used when `installerDebugLogging` is on |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md
    *
@@ -770,7 +771,7 @@ export interface ToolsetConfig {
    *
    * @default "latest"
    */
-  readonly nsis?: "0.0.0" | "1.2.1" | ToolsetCustom | "latest"
+  readonly nsis?: "0.0.0" | "1.2.1" | "2.0.4" | ToolsetCustom | "latest"
 
   /**
    * Version of the WiX Toolset bundle used to build `msi` and `msiWrapped` installers.

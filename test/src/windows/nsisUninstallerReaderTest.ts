@@ -4,6 +4,9 @@ import { exec, exists, spawnAndWriteWithOutput } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
+import type { ToolsetConfig } from "app-builder-lib"
+
+type NsisBundle = { readonly nsis: Exclude<ToolsetConfig["nsis"], object | undefined>; readonly debugLogging?: boolean }
 
 // UninstallerReader extracts the uninstaller from an installer built with `WriteUninstaller`, without running it.
 // It must produce the same bytes as NSIS itself, including the uninstaller icon patch, or the uninstaller fails
@@ -11,10 +14,10 @@ import type { TmpDir } from "temp-file"
 
 // `uninstallerIcon: null` configures no icon at all, so makensis uses its own default install and uninstall icons, which differ
 // (electron-builder does the same when no icon is configured: `MUI_ICON`/`MUI_UNICON` are not defined)
-async function buildInstaller(tmpDir: TmpDir, uninstallerIcon: string | null, compress = true) {
+async function buildInstaller(tmpDir: TmpDir, uninstallerIcon: string | null, compress = true, bundle: NsisBundle = { nsis: "latest" }) {
   const dir = await tmpDir.getTempDir({ prefix: "nsis-uninstaller-reader" })
   await fs.mkdir(dir, { recursive: true })
-  const makensis = await getMakeNsisPath(undefined, dir)
+  const makensis = await getMakeNsisPath(bundle.nsis, dir, { debugLogging: bundle.debugLogging })
   const installer = path.join(dir, "installer.exe")
   const script = [
     "Unicode true",
@@ -59,10 +62,13 @@ function findNsisFirstHeader(data: Buffer): number {
   return -1
 }
 
-for (const compress of [true, false]) {
-  describe(`UninstallerReader (${compress ? "zlib" : "no compression"})`, () => {
+// the exehead stubs differ in layout per bundle: MSVC-built (nsis@1.2.1, sections .text/.rdata/.data/.rsrc) and MinGW-built
+// (nsis@2.0.4, the default, which also has raw data in .idata and .ndata; its log-enabled stubs, used for installerDebugLogging, are larger)
+const bundles: ReadonlyArray<NsisBundle> = [{ nsis: "1.2.1" }, { nsis: "2.0.4" }, { nsis: "2.0.4", debugLogging: true }]
+for (const [bundle, compress] of bundles.flatMap(bundle => [true, false].map(compress => [bundle, compress] as const))) {
+  describe(`UninstallerReader (nsis ${bundle.nsis}${bundle.debugLogging ? " log-enabled" : ""}, ${compress ? "zlib" : "no compression"})`, () => {
     test("uninstaller icon differs from installer icon", async ({ expect, tmpDir }) => {
-      const { installer, uninstaller, iconsDir } = await buildInstaller(tmpDir, "modern-uninstall.ico", compress)
+      const { installer, uninstaller, iconsDir } = await buildInstaller(tmpDir, "modern-uninstall.ico", compress, bundle)
       await UninstallerReader.exec(installer, uninstaller)
 
       const data = await fs.readFile(uninstaller)
@@ -74,7 +80,7 @@ for (const compress of [true, false]) {
     })
 
     test("uninstaller icon is the installer icon", async ({ expect, tmpDir }) => {
-      const { installer, uninstaller } = await buildInstaller(tmpDir, "modern-install.ico", compress)
+      const { installer, uninstaller } = await buildInstaller(tmpDir, "modern-install.ico", compress, bundle)
       await UninstallerReader.exec(installer, uninstaller)
       const data = await fs.readFile(uninstaller)
       expect(() => verifyNsisIntegrity(data)).not.toThrow()
@@ -82,7 +88,7 @@ for (const compress of [true, false]) {
 
     // https://github.com/electron-userland/electron-builder/issues/10258#issuecomment-5896037582
     test("no icon configured (makensis default icons)", async ({ expect, tmpDir }) => {
-      const { installer, uninstaller } = await buildInstaller(tmpDir, null, compress)
+      const { installer, uninstaller } = await buildInstaller(tmpDir, null, compress, bundle)
       await UninstallerReader.exec(installer, uninstaller)
       const data = await fs.readFile(uninstaller)
       expect(() => verifyNsisIntegrity(data)).not.toThrow()

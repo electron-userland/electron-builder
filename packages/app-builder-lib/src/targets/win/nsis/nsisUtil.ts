@@ -103,7 +103,7 @@ export class CopyElevateHelper {
     }
 
     if (this.elevatePath == null) {
-      this.elevatePath = getNsisElevatePath(target.packager.config.toolsets?.nsis, target.packager.buildResourcesDir)
+      this.elevatePath = getNsisElevatePath(target.packager.config.toolsets?.nsis, target.packager.buildResourcesDir, target.nsisToolsetOptions)
     }
 
     return this.elevatePath
@@ -195,19 +195,6 @@ class BinaryReader {
   uint32(): number {
     return this.uint16() | (this.uint16() << 16)
   }
-
-  string(length: number): string {
-    let value = ""
-    for (let i = 0; i < length; i++) {
-      const c = this._buffer[this._position + i]
-      if (c === 0x00) {
-        break
-      }
-      value += String.fromCharCode(c)
-    }
-    this._position += length
-    return value
-  }
 }
 
 export class UninstallerReader {
@@ -233,28 +220,22 @@ export class UninstallerReader {
     reader.skip(2)
     reader.skip(sizeOfOptionalHeader)
     // IMAGE_SECTION_HEADER
+    // makensis appends the NSIS data right after the exehead stub, so it starts where the last section's raw data ends. Which sections
+    // a stub has depends on the toolchain that built it: the MSVC stubs of nsis@1.2.1 have .text/.rdata/.data/.rsrc (and an empty
+    // .ndata), the MinGW stubs of nsis@2.0.4 and later also have raw data in .idata and .ndata. The firstheader check below and the
+    // NSIS CRC check of the result reject a wrong offset.
     let nsisOffset = 0
     for (let i = 0; i < numberOfSections; i++) {
-      const name = reader.string(8)
-      reader.skip(8)
+      reader.skip(16) // Name, VirtualSize, VirtualAddress
       const rawSize = reader.uint32()
       const rawPointer = reader.uint32()
       reader.skip(16)
-      switch (name) {
-        case ".text":
-        case ".rdata":
-        case ".data":
-        case ".rsrc": {
-          nsisOffset = Math.max(rawPointer + rawSize, nsisOffset)
-          break
-        }
-        default: {
-          if (rawPointer !== 0 && rawSize !== 0) {
-            throw new Error("Unsupported section '" + name + "'.")
-          }
-          break
-        }
+      if (rawPointer !== 0 && rawSize !== 0) {
+        nsisOffset = Math.max(rawPointer + rawSize, nsisOffset)
       }
+    }
+    if (nsisOffset === 0 || nsisOffset >= buffer.length) {
+      throw new Error("No NSIS data after the executable sections.")
     }
     // copied, because the uninstaller icon is patched into it below
     const executable = Buffer.from(buffer.subarray(0, nsisOffset))
