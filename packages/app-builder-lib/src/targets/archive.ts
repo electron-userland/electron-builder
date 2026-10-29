@@ -4,7 +4,7 @@ import { create } from "tar"
 import type { TarOptionsWithAliasesAsync } from "tar"
 import { TmpDir } from "temp-file"
 import { CompressionLevel, Platform } from "../core.js"
-import { getLinuxToolsMacToolset } from "../toolsets/linuxToolsMac.js"
+import { getArchiveToolsetBinDir } from "../toolsets/archive.js"
 import { ToolsetConfig } from "../configuration.js"
 import { getPath7za } from "../toolsets/7zip.js"
 import _fsExtra from "fs-extra"
@@ -28,12 +28,12 @@ type TarConfig = {
   dirToArchive: string
   isMacApp: boolean
   tempDirManager: TmpDir
-  linuxToolsMac: ToolsetConfig["linuxToolsMac"]
+  archiveToolset: ToolsetConfig["archive"]
   buildResourcesDir: string
 }
 
 /** @internal */
-export async function tar({ compression, format, outFile, dirToArchive, isMacApp, tempDirManager, linuxToolsMac, buildResourcesDir }: TarConfig): Promise<void> {
+export async function tar({ compression, format, outFile, dirToArchive, isMacApp, tempDirManager, archiveToolset, buildResourcesDir }: TarConfig): Promise<void> {
   const tarFile = await tempDirManager.getTempFile({ suffix: ".tar" })
   const tarArgs: TarOptionsWithAliasesAsync = {
     file: tarFile,
@@ -55,7 +55,8 @@ export async function tar({ compression, format, outFile, dirToArchive, isMacApp
   ])
 
   if (format === "tar.lz") {
-    const lzipPath = process.platform === "darwin" ? (await getLinuxToolsMacToolset(linuxToolsMac, buildResourcesDir)).lzip : Executables.resolve("lzip")
+    const archiveBinDir = await getArchiveToolsetBinDir(archiveToolset, buildResourcesDir)
+    const lzipPath = archiveBinDir == null ? Executables.resolve("lzip") : path.join(archiveBinDir, "lzip")
     await exec(lzipPath, [compression === "store" ? "-1" : "-9", "--keep" /* keep (don't delete) input files */, tarFile])
     // lzip creates the output file in the same directory as the input with a .lz suffix
     await move(`${tarFile}.lz`, outFile)

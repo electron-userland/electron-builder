@@ -851,23 +851,17 @@ export interface ToolsetConfig {
   readonly fpm?: "2.2.1" | "2.3.1" | ToolsetCustom | "latest"
 
   /**
-   * Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build
-   * Linux targets on macOS hosts.
+   * The archive and packaging tools that fpm and the `tar.lz` target run, on macOS and Linux hosts: `xz`, `lzip`, GNU `tar`
+   * (`tar`, `gtar`), GNU `ar` (`ar`, `gar`) and `bsdtar`, plus `rpm` and `rpmbuild` (rpm 6.1.0) on Linux x64 and arm64 and macOS arm64.
+   * Its `bin` directory goes first on fpm's `PATH`. On Intel macOS and 32-bit Linux, which get no bundled `rpmbuild`,
+   * building `rpm` uses the host `rpmbuild` on `PATH`. A {@link ToolsetCustom} bundle must have the same `bin/` layout.
+   * `"system"` uses the host's tools (no download); `tar.lz` then uses `lzip` from {@link executables}.
    *
-   * The bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).
-   *
-   * Available versions:
-   * | Version | Notes |
-   * |---------|-------|
-   * | `"1.0.0"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |
-   * | `"1.0.1"` | Same tools rebuilt on macOS 15 runners — binaries run on macOS 15+ (1.0.0 required macOS 26) |
-   * | `"1.1.1"` | Trimmed to gnu-tar, lzip and binutils 2.47 (`ar`) plus their dylibs and license files; still runs on macOS 15+ |
-   *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/archive/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly linuxToolsMac?: "1.0.0" | "1.0.1" | "1.1.1" | ToolsetCustom | "latest"
+  readonly archive?: "1.0.0" | "system" | ToolsetCustom | "latest"
 
   /**
    * Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.
