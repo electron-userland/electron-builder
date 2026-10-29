@@ -1,12 +1,11 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { AsarIntegrity, getWindowsVm, parsePlistFile, ParallelsVmManager, PM, VmManager } from "app-builder-lib/internal"
 import { ASAR_INTEGRITY_DIGEST_SENTINEL, computeAsarIntegrityDigest } from "app-builder-lib/src/electron/mac/asarIntegrityDigest"
-import { BINARY_BLOCK_MAP_MIN_UPDATER_RELEASE } from "app-builder-lib/src/util/electronUpdaterCompatibility"
 import { computeUpdateManifestKeyId, GenericServerOptions, hashFile, Nullish, UpdateInfo, verifyManifestSignatures, WindowsUpdateInfo } from "builder-util-runtime"
 import { BLOCK_MAP_V3_MAGIC } from "builder-util-runtime/internal"
 import { archFromString, deepAssign, DebugLogger, generateUpdateSigningKeypair, log, serializeToYaml, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
-import { copy, emptyDir, existsSync, move, outputFile, outputJson, readdir, readFile, readJson, readJsonSync, remove, stat } from "fs-extra"
+import { copy, emptyDir, existsSync, move, outputFile, readdir, readFile, readJson, readJsonSync, remove, stat } from "fs-extra"
 import { open } from "fs/promises"
 import { homedir } from "os"
 import path from "path"
@@ -55,16 +54,6 @@ export type VersionBuild = {
    * update from an app that ships an older updater)
    */
   electronUpdater?: string
-}
-
-/**
- * Test opt-out of the binary block map's electron-updater floor: the workspace electron-updater reads the binary map, but its
- * package.json lags its source (7.0.0-alpha.12) until Version Packages runs. Remove once it is at 7.0.0-alpha.13 or later.
- * The build checks the electron-updater it resolves from the project directory, while the app's own is installed in and collected
- * from app/node_modules: only the check reads this package.json.
- */
-async function optOutOfElectronUpdaterReleaseFloor(projectDir: string): Promise<void> {
-  await outputJson(path.join(projectDir, "node_modules", "electron-updater", "package.json"), { name: "electron-updater", version: BINARY_BLOCK_MAP_MIN_UPDATER_RELEASE })
 }
 
 // Resolve only to a ParallelsVmManager — PwshVmManager (used for code-signing on Linux/Mac via Wine)
@@ -209,9 +198,6 @@ export async function doBuild(
             },
             true
           )
-          if (electronUpdater == null) {
-            await optOutOfElectronUpdaterReleaseFloor(projectDir)
-          }
         },
       }
     )

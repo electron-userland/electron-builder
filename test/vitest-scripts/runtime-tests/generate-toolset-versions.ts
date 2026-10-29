@@ -10,10 +10,10 @@ export const WINE_VERSIONS: ToolsetConfig["wine"][] = ["0.0.0"]
 // Bundle-resolution / NsisTarget coverage of the actual wine toolset versions (wineToolset + nsisWine
 // suites, mac generator). nsisWine guards its own platform skips; wineToolset asserts path resolution.
 export const WINE_TOOLSET_VERSIONS: ToolsetConfig["wine"][] = ["0.0.0", "1.0.1"]
-export const APPIMAGE_VERSIONS: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.3", "1.1.0", "1.2.0"]
+export const APPIMAGE_VERSIONS: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.3", "1.1.0", "1.2.1"]
 
-export const WIN_CODE_SIGN_VERSIONS: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0", "1.2.1", "1.3.1"]
-export const NSIS_VERSIONS: ToolsetConfig["nsis"][] = ["0.0.0", "1.2.1"]
+export const WIN_CODE_SIGN_VERSIONS: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0", "1.2.1", "1.3.3"]
+export const NSIS_VERSIONS: ToolsetConfig["nsis"][] = ["0.0.0", "2.0.4"]
 // MSI suites: the legacy WiX 4 preview bundle and WiX 3.14.1 (latest), which builds native arm64 MSIs
 export const WIX_VERSIONS: ToolsetConfig["wix"][] = ["0.0.0", "2.0.0"]
 

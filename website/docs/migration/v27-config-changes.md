@@ -186,7 +186,7 @@ Removed. v27 inlines the Squirrel.Windows installer logic and drops the `electro
 The shape and behaviour differ, so this is not a 1-to-1 rename:
 
 - The old `customSquirrelVendorDir` pointed at a directory **whose contents were the vendor files** (`Squirrel.exe`, `nuget.exe`, …) and was copied verbatim, bypassing all provisioning.
-- `toolsets.squirrel` accepts a version pin (`"1.1.1"` / `"latest"`) **or** a `ToolsetCustom` object whose `url` points at a bundle that **contains an `electron-winstaller/vendor/` subtree**. The bundle still goes through normal provisioning: on every platform `rcedit.exe` is supplied from the `winCodeSign` toolset (it runs under Wine on non-Windows hosts), and for `msi: true` the shared WiX toolset is merged in.
+- `toolsets.squirrel` accepts a version pin (`"1.1.1"`, `"1.2.1"` / `"latest"`) **or** a `ToolsetCustom` object whose `url` points at a bundle that **contains an `electron-winstaller/vendor/` subtree**. The bundle still goes through normal provisioning: on every platform `rcedit.exe` is supplied from the `winCodeSign` toolset (it runs under Wine on non-Windows hosts), and for `msi: true` the shared WiX toolset is merged in.
 
 ```json5
 // Before (removed):
@@ -256,7 +256,7 @@ Of note, `v27` also accepts a `file://` path in the `url` field. A `file://` pat
 - `https://` — downloaded and cached locally; the archive is extracted before use.
 - `file:///absolute/path` — used directly; relative paths must be within the project resources dir.
 
-**`installerDebugLogging` needs a log-enabled NSIS**, that is `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`; any other `makensis` rejects the `LogSet` it emits. The bundled `toolsets.nsis` versions are not log-enabled, so the build fails with a configuration error when `installerDebugLogging` is set without a custom `toolsets.nsis` bundle. This is unchanged from v26, where the option also only worked with your own `customNsisBinary`. When building on Linux or macOS, the bundle's `makensis` for that host must be log-enabled too.
+**`installerDebugLogging` needs a log-enabled NSIS**, that is `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`; any other `makensis` rejects the `LogSet` it emits. From `toolsets.nsis` `"2.0.4"` (the default) on, electron-builder downloads the log-enabled variant of the bundle (`nsis-bundle-3.13-log.tar.gz`) when `installerDebugLogging` is on, so the option works without a custom bundle. The older pinned bundles (`"0.0.0"`, `"1.2.1"`) are not log-enabled, so the build fails with a configuration error when `installerDebugLogging` is set with one of them. A custom `toolsets.nsis` bundle must be log-enabled itself; when building on Linux or macOS, its `makensis` for that host must be log-enabled too.
 
 `migrate-schema` moves `debugLogging` to `installerDebugLogging` (dropping it, with a warning, for `portable`) and removes a `customNsisBinary` that sets nothing else. It cannot convert a custom bundle, so it leaves a `customNsisBinary` with a `url` / `checksum` / `version`, and any `customNsisResources`, in place and warns; the build then fails with the message above until you move them.
 

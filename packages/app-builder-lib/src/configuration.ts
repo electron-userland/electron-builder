@@ -716,12 +716,13 @@ export interface ToolsetConfig {
    * | `"1.2.1"` | Adds native `osslsigncode` arm64 |
    * | `"1.3.0"` | Includes support for Azure Trusted Signing `signtool` via dlib and .NET 8 runtime |
    * | `"1.3.1"` | macOS `osslsigncode` bundles its own OpenSSL (no Homebrew `openssl@3` needed) and libp11's PKCS#11 provider |
+   * | `"1.3.3"` | Linux `osslsigncode` bundles its own OpenSSL (no system OpenSSL 1.1 needed); `osslsigncode` 2.14 and .NET runtime 8.0.33 |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | "1.1.1" | "1.2.1" | "1.3.0" | "1.3.1" | ToolsetCustom | "latest"
+  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | "1.1.1" | "1.2.1" | "1.3.0" | "1.3.1" | "1.3.3" | ToolsetCustom | "latest"
 
   /**
    * Version of the AppImage toolset bundle used for building `.AppImage` files.
@@ -737,7 +738,7 @@ export interface ToolsetConfig {
    * | `"0.0.0"` | Legacy | FUSE2-based AppImage runtime (pre-v27) |
    * | `"1.0.3"` | 20251108 | Introduces static AppImage runtime |
    * | `"1.1.0"` | 20251108 | Adds `unsquashfs` support |
-   * | `"1.2.0"` | 20251108 | squashfs-tools 4.7.5 with a statically linked zstd 1.5.7, so Linux and macOS hosts produce identical images |
+   * | `"1.2.1"` | 20251108 | squashfs-tools 4.7.5 with a statically linked zstd 1.5.7, so Linux and macOS hosts produce identical images; ships the bundled components' license files |
    *
    * An explicit version pin always selects exactly that release.
    *
@@ -745,7 +746,7 @@ export interface ToolsetConfig {
    *
    * @default "latest"
    */
-  readonly appimage?: "0.0.0" | "1.0.3" | "1.1.0" | "1.2.0" | ToolsetCustom | "latest"
+  readonly appimage?: "0.0.0" | "1.0.3" | "1.1.0" | "1.2.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the NSIS toolset bundle used to compile Windows installers.
@@ -761,6 +762,7 @@ export interface ToolsetConfig {
    * |---------|------------------|-------|
    * | `"0.0.0"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27) |
    * | `"1.2.1"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` |
+   * | `"2.0.4"` | 3.13 | Compiled from source, `NSIS_MAX_STRLEN=8192` — two bundles: the default, and a `-log` bundle whose `makensis` and stubs are log-enabled (`NSIS_CONFIG_LOG=yes`), used when `installerDebugLogging` is on |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md
    *
@@ -769,7 +771,7 @@ export interface ToolsetConfig {
    *
    * @default "latest"
    */
-  readonly nsis?: "0.0.0" | "1.2.1" | ToolsetCustom | "latest"
+  readonly nsis?: "0.0.0" | "1.2.1" | "2.0.4" | ToolsetCustom | "latest"
 
   /**
    * Version of the WiX Toolset bundle used to build `msi` and `msiWrapped` installers.
@@ -834,13 +836,16 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | FPM version | Notes |
    * |---------|------------|-------|
-   * | `"2.2.1"` | 1.17.0 (Ruby 3.4.3) | Current default |
+   * | `"2.2.1"` | 1.17.0 (Ruby 3.4.3) | Previous default |
+   * | `"2.3.1"` | 1.18.0 (Ruby 3.4.12) | Linux bundles link a static OpenSSL 3.5.9 instead of OpenSSL 1.1.1 |
+   *
+   * An explicit version pin always selects exactly that release.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/fpm/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly fpm?: "2.2.1" | ToolsetCustom | "latest"
+  readonly fpm?: "2.2.1" | "2.3.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build
@@ -853,12 +858,13 @@ export interface ToolsetConfig {
    * |---------|-------|
    * | `"1.0.0"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |
    * | `"1.0.1"` | Same tools rebuilt on macOS 15 runners — binaries run on macOS 15+ (1.0.0 required macOS 26) |
+   * | `"1.1.1"` | Trimmed to gnu-tar, lzip and binutils 2.47 (`ar`) plus their dylibs and license files; still runs on macOS 15+ |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly linuxToolsMac?: "1.0.0" | "1.0.1" | ToolsetCustom | "latest"
+  readonly linuxToolsMac?: "1.0.0" | "1.0.1" | "1.1.1" | ToolsetCustom | "latest"
 
   /**
    * The `rpmbuild` that fpm runs to build the `rpm` target, on macOS and Linux hosts.
@@ -941,6 +947,7 @@ export interface ToolsetConfig {
    * | Version | Notes |
    * |---------|-------|
    * | `"1.1.1"` | Squirrel.Windows 2.0.1 (patched) with a standalone, checksum-verified `nuget.exe` 6.14.0 |
+   * | `"1.2.1"` | Pinned, checksum-verified 7-Zip 26.05 (adds native `7z-arm64`, selected on arm64 Windows hosts) and `nuget.exe` 7.9.0 |
    *
    * Set to a {@link ToolsetCustom} object to supply your own bundle — it must contain the
    * `electron-winstaller/vendor/` subtree. Only used when building the `squirrelWindows` target.
@@ -949,7 +956,7 @@ export interface ToolsetConfig {
    *
    * @default "latest"
    */
-  readonly squirrel?: "1.1.1" | ToolsetCustom | "latest"
+  readonly squirrel?: "1.1.1" | "1.2.1" | ToolsetCustom | "latest"
 
   /**
    * Where the host programs that electron-builder starts are installed on the build machine, by program name.
