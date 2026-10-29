@@ -1,6 +1,13 @@
-import { Arch, DEFAULT_TARGET, DIR_TARGET, Platform } from "app-builder-lib"
+import { Arch, Configuration, DEFAULT_TARGET, DIR_TARGET, Platform } from "app-builder-lib"
 import { ArchType } from "builder-util"
-import { BuildHost, computeArchToTargetNamesMap, resolveTargetNames, TargetNamesSource } from "app-builder-lib/src/targets/targetFactory"
+import {
+  BuildHost,
+  computeArchToTargetNamesMap,
+  resolveBuildPlan,
+  resolvePlatformBuildPlan,
+  resolveTargetNames,
+  TargetNamesSource,
+} from "app-builder-lib/src/targets/targetFactory"
 import { normalizeOptions } from "electron-builder/src/builder"
 import { describe, expect, test } from "vitest"
 
@@ -149,5 +156,59 @@ describe("resolveTargetNames", () => {
       throw new Error("no targets requested")
     }
     expect(resolveTargetNames(targets, { win: { target: [{ target: "nsis", arch: "x64" }] } })).toEqual(new Map([[Platform.WINDOWS, new Set(["nsis", DEFAULT_TARGET])]]))
+  })
+})
+
+describe("resolveBuildPlan", () => {
+  const plan = (requested: Parameters<typeof resolveBuildPlan>[0], config: Parameters<typeof resolveBuildPlan>[1], host?: BuildHost) =>
+    resolveBuildPlan(requested, config, host).map(({ platform, archToTargetNames }) => [
+      platform.name,
+      Object.fromEntries(Array.from(archToTargetNames, ([arch, list]) => [Arch[arch], list])),
+    ])
+
+  test("resolves each requested platform from its own target option, in the requested order", () => {
+    const requested = normalizeOptions({ linux: [], win: [], x64: true }).targets
+    if (requested == null) {
+      throw new Error("no targets requested")
+    }
+    const config: Configuration = { win: { target: [{ target: "nsis", arch: ["x64", "ia32"] }] }, linux: { target: "deb" }, mac: { target: "dmg" } }
+    expect(plan(requested, config)).toEqual([
+      ["linux", { x64: ["deb"] }],
+      ["windows", { x64: ["nsis"], ia32: ["nsis"] }],
+    ])
+  })
+
+  test("an empty list stands for the platform's default targets", () => {
+    expect(plan(Platform.LINUX.createTarget(), {}, { platform: "darwin", arch: "arm64" })).toEqual([["linux", { x64: [] }]])
+    expect(plan(Platform.MAC.createTarget(), {}, { platform: "darwin", arch: "arm64" })).toEqual([["mac", { arm64: [] }]])
+    expect(plan(Platform.WINDOWS.createTarget(null, Arch.x64, Arch.ia32), { win: { target: "portable:ia32" } })).toEqual([["windows", { x64: [], ia32: ["portable"] }]])
+  })
+
+  test("names the same targets as resolveTargetNames, which the electron-updater check reads", () => {
+    const requested = Platform.WINDOWS.createTarget(null, Arch.x64, Arch.ia32)
+    const config = { win: { target: "portable:ia32" } }
+    expect(resolveTargetNames(requested, config)).toEqual(new Map([[Platform.WINDOWS, new Set([DEFAULT_TARGET, "portable"])]]))
+  })
+})
+
+describe("resolvePlatformBuildPlan", () => {
+  // a custom packager (`platformPackagerFactory`) whose platform options are not the configuration's
+  class OverridingPackager implements TargetNamesSource {
+    readonly defaultTarget = ["nsis"]
+    get platformOptions() {
+      return { target: "portable" }
+    }
+  }
+
+  test("the given platform options decide the targets, not the configuration", () => {
+    const requested = Platform.WINDOWS.createTarget(null, Arch.x64)
+    const archToType = requested.get(Platform.WINDOWS)
+    if (archToType == null) {
+      throw new Error("no targets requested")
+    }
+    const config: Configuration = { win: { target: "zip" } }
+    const plan = resolvePlatformBuildPlan(Platform.WINDOWS, archToType, new OverridingPackager().platformOptions)
+    expect(plan).toEqual({ platform: Platform.WINDOWS, archToTargetNames: new Map([[Arch.x64, ["portable"]]]) })
+    expect(resolveBuildPlan(requested, config)).toEqual([{ platform: Platform.WINDOWS, archToTargetNames: new Map([[Arch.x64, ["zip"]]]) }])
   })
 })
