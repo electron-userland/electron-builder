@@ -920,6 +920,7 @@ export interface ToolsetConfig {
    * | Version | Notes |
    * |---------|-------|
    * | `"1.1.1"` | Squirrel.Windows 2.0.1 (patched) with a standalone, checksum-verified `nuget.exe` 6.14.0 |
+   * | `"1.2.1"` | Pinned, checksum-verified 7-Zip 26.05 (adds native `7z-arm64`, selected on arm64 Windows hosts) and `nuget.exe` 7.9.0 |
    *
    * Set to a {@link ToolsetCustom} object to supply your own bundle — it must contain the
    * `electron-winstaller/vendor/` subtree. Only used when building the `squirrelWindows` target.
@@ -928,7 +929,7 @@ export interface ToolsetConfig {
    *
    * @default "latest"
    */
-  readonly squirrel?: "1.1.1" | ToolsetCustom | "latest"
+  readonly squirrel?: "1.1.1" | "1.2.1" | ToolsetCustom | "latest"
 
   /**
    * Where the host programs that electron-builder starts are installed on the build machine, by program name.
