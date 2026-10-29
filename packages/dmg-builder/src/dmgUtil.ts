@@ -39,17 +39,24 @@ async function getDmgVendorPath(): Promise<string> {
     return resolvedPath
   }
 
-  const arch = process.arch === "arm64" ? "arm64" : "x86_64"
-  // https://github.com/electron-userland/electron-builder-binaries/releases?q=dmg-builder&expanded=true
-  const file = await downloadBuilderToolset({
-    releaseName: "dmg-builder@1.2.5",
-    filenameWithExt: `dmgbuild-bundle-${arch}-75c8a6c.tar.gz`,
-    checksums: {
-      "dmgbuild-bundle-arm64-75c8a6c.tar.gz": "793404d0c96687e27d5ee40a668d498c92e36a64d6c2906df511031adb33cbeb",
-      "dmgbuild-bundle-x86_64-75c8a6c.tar.gz": "1664972f9cc2d6e8fce3b63e42cd30078aff602669c5856939c4519921200433",
-    },
-  })
+  const file = await downloadBuilderToolset(getDmgbuildBundle(process.arch === "arm64" ? "arm64" : "x86_64"))
   return path.resolve(file, "dmgbuild")
+}
+
+// https://github.com/electron-userland/electron-builder-binaries/releases?q=dmg-builder&expanded=true
+const DMGBUILD_RELEASE = "dmg-builder@1.2.7"
+const DMGBUILD_CHECKSUMS = {
+  "dmgbuild-bundle-arm64-cc96fa2.tar.gz": "2b5b01f3900c702a8dcbaec5d502ae0e3dea9f3abe83097fb16f5bed11c252c6",
+  "dmgbuild-bundle-x86_64-cc96fa2.tar.gz": "fa3d91c8f9c4ac44c32cd223349a4154bdd94b09ec072c7a3cb62b11fe83f023",
+} as const
+
+/** The dmgbuild bundle downloaded for the given host architecture. */
+export function getDmgbuildBundle(arch: "arm64" | "x86_64") {
+  return {
+    releaseName: DMGBUILD_RELEASE,
+    filenameWithExt: `dmgbuild-bundle-${arch}-cc96fa2.tar.gz` as const,
+    checksums: DMGBUILD_CHECKSUMS,
+  }
 }
 
 export async function attachAndExecute(dmgPath: string, readWrite: boolean, forceDetach: boolean, task: (devicePath: string) => Promise<any>) {
