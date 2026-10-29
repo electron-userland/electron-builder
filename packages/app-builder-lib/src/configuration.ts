@@ -874,10 +874,13 @@ export interface ToolsetConfig {
    * | `"1.0.0"` | 6.1.0 | Linux x64 and arm64 (glibc >= 2.28), macOS arm64 (15+) | Current default |
    * | `"system"` | host install | macOS, Linux | The `rpmbuild` on `PATH` (pre-v27 behavior); install it with `brew install rpm` or `apt-get install rpm` |
    *
-   * No bundle is published for Intel macOS or 32-bit Linux hosts: building the `rpm` target there requires `"system"`, and any other
-   * value fails the build with a configuration error.
+   * No bundle is published for Intel macOS or 32-bit Linux hosts, and the published ones need macOS 15 or newer (Darwin 24) and
+   * glibc 2.28 or newer (not musl): building the `rpm` target on any other host requires `"system"`, and any other value fails the
+   * build with a configuration error before anything is downloaded.
    *
-   * A custom bundle (a {@link ToolsetCustom} object) must have the same layout: `bin/rpmbuild` at its root.
+   * A custom bundle (a {@link ToolsetCustom} object) is used on any host, and must have the same layout: an executable `bin/rpmbuild`
+   * at the root of the archive or directory (no top-level directory). Without it the build fails, rather than fpm silently running
+   * the host `rpmbuild`.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/rpm/CHANGELOG.md
    *
