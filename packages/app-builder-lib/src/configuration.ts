@@ -104,6 +104,29 @@ export interface CommonConfiguration {
   readonly toolsets?: ToolsetConfig | null
 
   /**
+   * Format of the `<artifact>.blockmap` file published next to installers and update archives, which electron-updater reads for
+   * differential downloads. The map is read by the updater already installed in your users' apps, so the format follows
+   * `electronUpdaterCompatibility` (default `">=7"`):
+   *
+   * - unset: `"v3"` when `electronUpdaterCompatibility` includes only electron-updater 7 and later, else `"v2"`, with a build
+   *   warning.
+   * - `"v3"`: a binary block map that electron-updater fetches in parts with HTTP `Range` requests (only the parts that changed
+   *   since the installed version), with finer blocks for stored members such as an uncompressed `app.asar`. Needs electron-updater
+   *   7 or later: with an `electronUpdaterCompatibility` that includes earlier versions, the build fails.
+   * - `"v2"`: the gzipped JSON block map every electron-updater version reads, downloaded in full on every update; the package and
+   *   block map are the same as electron-builder 26 wrote.
+   * - `"latest"`: the newest format the `electronUpdaterCompatibility` range supports (currently the same as unset). A future
+   *   format then costs one full download per user, as below.
+   *
+   * Apps whose electron-updater cannot read a release's format, or whose cached map is in another format, download that update
+   * in full once; the next one is differential again, or with an artifact name without `${version}` the one after it.
+   *
+   * Block maps embedded in an artifact (AppImage, the NSIS web installer's app package) are always `"v2"`.
+   * See [the v27 notes](https://www.electron.build/docs/migration/v27-build-changes#block-map-format-follows-electronupdatercompatibility).
+   */
+  readonly blockmap?: "v2" | "v3" | "latest" | null
+
+  /**
    * macOS-specific build options (signing, entitlements, notarization, target categories, etc.).
    * @see {@link MacConfiguration}
    */
@@ -714,6 +737,7 @@ export interface ToolsetConfig {
    * | `"0.0.0"` | Legacy | FUSE2-based AppImage runtime (pre-v27) |
    * | `"1.0.3"` | 20251108 | Introduces static AppImage runtime |
    * | `"1.1.0"` | 20251108 | Adds `unsquashfs` support |
+   * | `"1.2.0"` | 20251108 | squashfs-tools 4.7.5 with a statically linked zstd 1.5.7, so Linux and macOS hosts produce identical images |
    *
    * An explicit version pin always selects exactly that release.
    *
@@ -721,7 +745,7 @@ export interface ToolsetConfig {
    *
    * @default "latest"
    */
-  readonly appimage?: "0.0.0" | "1.0.3" | "1.1.0" | ToolsetCustom | "latest"
+  readonly appimage?: "0.0.0" | "1.0.3" | "1.1.0" | "1.2.0" | ToolsetCustom | "latest"
 
   /**
    * Version of the NSIS toolset bundle used to compile Windows installers.
@@ -746,6 +770,30 @@ export interface ToolsetConfig {
    * @default "latest"
    */
   readonly nsis?: "0.0.0" | "1.2.1" | ToolsetCustom | "latest"
+
+  /**
+   * Version of the WiX Toolset bundle used to build `msi` and `msiWrapped` installers.
+   *
+   * The bundle ships **`candle.exe`** and **`light.exe`** (compile and link the generated `.wxs` project) and the WiX
+   * extensions (`WixUIExtension` for assisted installers). On macOS and Linux they run under Wine with wine-mono.
+   *
+   * Available versions:
+   * | Version | WiX version | Notes |
+   * |---------|-------------|-------|
+   * | `"0.0.0"` | 4.0.0.5512 (preview) | Legacy bundle (pre-v27). An `arm64` app is packaged in an `x64` MSI, because this toolset has no `arm64` |
+   * | `"2.0.0"` | 3.14.1 | Builds a native `arm64` MSI for `arm64` |
+   *
+   * The `.wxs` project uses the WiX 3 schema with `"2.0.0"`: an `msiProjectCreated` hook that inserts elements of a WiX 4
+   * extension namespace must use the WiX 3 one (for example `http://schemas.microsoft.com/wix/UtilExtension`), or pin `"0.0.0"`.
+   *
+   * A custom bundle (a {@link ToolsetCustom} object) must have the WiX v3 layout: `candle.exe`, `light.exe` and the
+   * extensions at its root.
+   *
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wix/CHANGELOG.md
+   *
+   * @default "latest"
+   */
+  readonly wix?: "0.0.0" | "2.0.0" | ToolsetCustom | "latest"
 
   /**
    * Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on

@@ -16,6 +16,8 @@ import {
   doBuild,
   optionsForFlakyE2E,
   optionsForFlakyMultiHopE2E,
+  runCorruptedPendingUpdateTest,
+  runCrossVersionUpdateTest,
   runInstallOnNextLaunchTest,
   runKeyRotationTest,
   runSignedManifestTest,
@@ -206,6 +208,25 @@ export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, 
         context.skip()
       }
       await runKeyRotationTest(context, "nsis", "", Arch.x64, toolsets)
+    })
+
+    // An app on electron-updater 6 updates to this build, then twice more with this repository's updater. Gated to the latest
+    // toolset combination only — the toolsets do not take part in what the updater reads.
+    test.ifEnv(isLatestToolset(toolsets))("nsis - update from electron-updater 6", optionsForFlakyMultiHopE2E, async (context: TestContext) => {
+      const vm = await windowsVmPromise
+      if (process.platform !== "win32" && vm == null) {
+        context.skip()
+      }
+      await runCrossVersionUpdateTest(context, "nsis", "", Arch.x64, toolsets)
+    })
+
+    // A queued update damaged on disk is refused at the next launch, the installed version keeps running, and the next check
+    // installs the update. Changes the queued file on this machine, so native Windows only.
+    test.ifEnv(isLatestToolset(toolsets))("nsis - corrupted pending update", optionsForFlakyE2E, async (context: TestContext) => {
+      if (process.platform !== "win32") {
+        context.skip()
+      }
+      await runCorruptedPendingUpdateTest(context, "nsis", "", Arch.x64, toolsets)
     })
 
     // Full per-machine update cycle: install old → trigger update → verify new version.

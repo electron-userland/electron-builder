@@ -337,7 +337,10 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly forceCodeSigning?: boolean
 
   /**
-   * The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.
+   * The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range: the
+   * electron-updater versions the installed apps ship, which have to read the update files this build writes. It selects the
+   * `.blockmap` format (see `blockmap`), and the build fails when the app's electron-updater does not satisfy it.
+   * @default >=7
    */
   readonly electronUpdaterCompatibility?: string | null
 

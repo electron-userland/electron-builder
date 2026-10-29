@@ -5,6 +5,12 @@ import { createRequire } from "node:module"
 import * as path from "path"
 import * as semver from "semver"
 import { Metadata } from "../options/metadata.js"
+import {
+  BINARY_BLOCK_MAP_MIN_UPDATER_RELEASE,
+  BLOCK_MAP_FORMAT_DOCS_URL,
+  DEFAULT_ELECTRON_UPDATER_COMPATIBILITY,
+  ElectronUpdaterRequirement,
+} from "./electronUpdaterCompatibility.js"
 import { normalizePackageData } from "./normalizePackageData.js"
 
 const require = createRequire(import.meta.url)
@@ -35,8 +41,18 @@ async function authors(file: string, data: any) {
   data.contributors = authorData.split(/\r?\n/g).map(it => it.replace(/^\s*#.*$/, "").trim())
 }
 
-/** @internal */
-export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPackageFile: string, devAppPackageFile: string, projectDir: string): void {
+/**
+ * `electronUpdaterRequirements`: what the app's electron-updater has to read on each platform the build targets.
+ * @internal
+ */
+export function checkMetadata(
+  metadata: Metadata,
+  devMetadata: any | null,
+  appPackageFile: string,
+  devAppPackageFile: string,
+  projectDir: string,
+  electronUpdaterRequirements: Array<ElectronUpdaterRequirement>
+): void {
   const errors: Array<string> = []
   const reportError = (missedFieldName: string) => {
     errors.push(`Please specify '${missedFieldName}' in the package.json (${appPackageFile})`)
@@ -58,7 +74,8 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
   }
   checkNotEmpty("version", metadata.version)
 
-  checkDependencies(metadata.dependencies, errors, projectDir)
+  checkElectronUpdater(metadata, devMetadata, errors, projectDir, electronUpdaterRequirements)
+  checkDependencies(metadata.dependencies, errors)
   if (metadata !== devMetadata) {
     if (metadata.build != null) {
       errors.push(
@@ -106,65 +123,142 @@ function versionSatisfies(version: string | semver.SemVer | null, range: string 
   return semver.satisfies(coerced, range, loose)
 }
 
-function checkDependencies(dependencies: Record<string, string> | Nullish, errors: Array<string>, projectDir: string) {
-  if (dependencies == null) {
+/** The lowest version `versionOrRange` (an installed version, or a declared specifier such as `^7.0.0-alpha.5`) allows. */
+function lowestVersion(versionOrRange: string): semver.SemVer | null {
+  const version = semver.parse(versionOrRange)
+  if (version != null) {
+    return version
+  }
+  try {
+    return semver.validRange(versionOrRange) == null ? null : semver.minVersion(versionOrRange)
+  } catch (_ignored) {
+    return null
+  }
+}
+
+interface AppElectronUpdater {
+  /** the installed version, or the declared specifier when electron-updater is not installed */
+  readonly version: string
+  /** where a bundler takes it from (null: the app's `dependencies`, which are packaged) */
+  readonly bundledFrom: string | null
+  /** `catalog:` / `workspace:` specifier of an electron-updater that is not installed */
+  readonly isUnresolvable: boolean
+}
+
+/**
+ * The electron-updater the app ships: from the app's `dependencies`, else bundled (by webpack, vite, ...) from its `devDependencies`,
+ * or from the `dependencies` or `devDependencies` of the development package.json (two package.json layout).
+ */
+function findAppElectronUpdater(metadata: Metadata, devMetadata: any | null, projectDir: string): AppElectronUpdater | null {
+  let declared: { specifier: string; bundledFrom: string | null } | null = null
+  const dev = devMetadata === metadata ? null : devMetadata
+  const candidates: Array<[unknown, string | null]> = [
+    [metadata.dependencies, null],
+    [(metadata as any).devDependencies, "devDependencies"],
+    [dev?.dependencies, "dependencies of the development package.json"],
+    [dev?.devDependencies, "devDependencies"],
+  ]
+  for (const [dependencies, bundledFrom] of candidates) {
+    const specifier = dependencies == null ? undefined : (dependencies as Record<string, unknown>)["electron-updater"]
+    if (typeof specifier === "string") {
+      declared = { specifier, bundledFrom }
+      break
+    }
+  }
+  if (declared == null) {
+    return null
+  }
+  const { bundledFrom } = declared
+  let updaterVersion = declared.specifier
+
+  // prefer the version of the actually-installed electron-updater over the declared specifier,
+  // so that specifiers like pnpm `catalog:`/`workspace:` are validated against the real version
+  let resolvedPackageJson: string | null = null
+  try {
+    resolvedPackageJson = require.resolve("electron-updater/package.json", { paths: [projectDir] })
+  } catch (_ignored) {
+    // electron-updater is not installed (MODULE_NOT_FOUND), or the installed version's `exports` map
+    // does not expose "./package.json" (ERR_PACKAGE_PATH_NOT_EXPORTED) — fall back to the declared specifier below
+  }
+
+  if (resolvedPackageJson != null) {
+    return { version: fsExtra.readJsonSync(resolvedPackageJson).version, bundledFrom, isUnresolvable: false }
+  }
+
+  // Pick the version out of yarn berry patch syntax
+  // "patch:electron-updater@npm%3A6.4.1#~/.yarn/patches/electron-updater-npm-6.4.1-ef33e6cc39.patch"
+  if (updaterVersion.startsWith("patch:")) {
+    const npmMarker = "@npm%3A"
+    const markerIndex = updaterVersion.indexOf(npmMarker)
+    if (markerIndex !== -1) {
+      const versionStart = markerIndex + npmMarker.length
+      const hashIndex = updaterVersion.indexOf("#", versionStart)
+      if (hashIndex > versionStart) {
+        updaterVersion = updaterVersion.slice(versionStart, hashIndex)
+      }
+    }
+  }
+
+  // for testing auto-update using workspace electron-updater
+  for (const prefix of ["link:", "file:"]) {
+    if (updaterVersion.startsWith(prefix)) {
+      const normalized = path.normalize(updaterVersion.substring(prefix.length))
+      const packageJsonPath = path.isAbsolute(normalized) ? normalized : path.resolve(process.cwd(), normalized)
+      const json = fsExtra.readJsonSync(path.join(packageJsonPath, "package.json"))
+      return { version: json.version, bundledFrom, isUnresolvable: false }
+    }
+  }
+
+  // pnpm `catalog:` and `workspace:` specifiers cannot be resolved to a concrete version from the package.json alone, so skip validation
+  const isUnresolvable = ["catalog:", "workspace:"].some(protocol => updaterVersion.startsWith(protocol))
+  return { version: updaterVersion, bundledFrom, isUnresolvable }
+}
+
+function checkElectronUpdater(metadata: Metadata, devMetadata: any | null, errors: Array<string>, projectDir: string, requirements: Array<ElectronUpdaterRequirement>) {
+  const updater = findAppElectronUpdater(metadata, devMetadata, projectDir)
+  if (updater == null || updater.isUnresolvable) {
+    return
+  }
+  const { version, bundledFrom } = updater
+  const source = bundledFrom == null ? "" : ` (bundled from ${bundledFrom})`
+
+  const requiredElectronUpdaterVersion = "4.0.0"
+  if (!versionSatisfies(version, `>=${requiredElectronUpdaterVersion}`)) {
+    errors.push(
+      `At least electron-updater ${requiredElectronUpdaterVersion} is recommended by current electron-builder version. Please set electron-updater version to "^${requiredElectronUpdaterVersion}". Received "${version}"${source}`
+    )
     return
   }
 
-  let updaterVersion = dependencies["electron-updater"]
-  if (updaterVersion != null) {
-    let skipValidation = false
+  // the build writes update files (the block map format among them) for each platform's range: an app outside it cannot read them.
+  // Coerced, so that ">=7" admits the 7.0.0 prereleases; the binary block map floor below tells those apart.
+  const unsatisfied = requirements.filter(it => !versionSatisfies(version, it.range))
+  if (unsatisfied.length > 0) {
+    const ranges = [...new Set(unsatisfied.map(it => `"${it.range}"`))].join(", ")
+    const platforms = unsatisfied.map(it => it.platform).join(", ")
+    errors.push(
+      `electron-updater ${version}${source} does not satisfy electronUpdaterCompatibility ${ranges} of ${platforms} (the default is "${DEFAULT_ELECTRON_UPDATER_COMPATIBILITY}" since electron-builder 27). ` +
+        `Upgrade electron-updater to 7, or set electronUpdaterCompatibility to a range that includes "<7" (e.g. ">=6"), which switches the build to the JSON block map. ` +
+        `See ${BLOCK_MAP_FORMAT_DOCS_URL}`
+    )
+    return
+  }
 
-    // prefer the version of the actually-installed electron-updater over the declared specifier,
-    // so that specifiers like pnpm `catalog:`/`workspace:` are validated against the real version
-    let resolvedPackageJson: string | null = null
-    try {
-      resolvedPackageJson = require.resolve("electron-updater/package.json", { paths: [projectDir] })
-    } catch (_ignored) {
-      // electron-updater is not installed (MODULE_NOT_FOUND), or the installed version's `exports` map
-      // does not expose "./package.json" (ERR_PACKAGE_PATH_NOT_EXPORTED) — fall back to the declared specifier below
-    }
+  const lowest = lowestVersion(version)
+  const binary = requirements.filter(it => it.binaryBlockMap)
+  if (lowest == null || binary.length === 0 || semver.gte(lowest, BINARY_BLOCK_MAP_MIN_UPDATER_RELEASE)) {
+    return
+  }
+  errors.push(
+    `electron-updater ${version}${source} cannot read the binary block map the build writes for ${binary.map(it => it.platform).join(", ")}: ` +
+      `electron-updater reads it from ${BINARY_BLOCK_MAP_MIN_UPDATER_RELEASE}. Upgrade electron-updater, or set "blockmap" to "v2" to write the JSON block map. ` +
+      `See ${BLOCK_MAP_FORMAT_DOCS_URL}`
+  )
+}
 
-    if (resolvedPackageJson != null) {
-      updaterVersion = fsExtra.readJsonSync(resolvedPackageJson).version
-    } else {
-      // Pick the version out of yarn berry patch syntax
-      // "patch:electron-updater@npm%3A6.4.1#~/.yarn/patches/electron-updater-npm-6.4.1-ef33e6cc39.patch"
-      if (updaterVersion.startsWith("patch:")) {
-        const npmMarker = "@npm%3A"
-        const markerIndex = updaterVersion.indexOf(npmMarker)
-        if (markerIndex !== -1) {
-          const versionStart = markerIndex + npmMarker.length
-          const hashIndex = updaterVersion.indexOf("#", versionStart)
-          if (hashIndex > versionStart) {
-            updaterVersion = updaterVersion.slice(versionStart, hashIndex)
-          }
-        }
-      }
-
-      // for testing auto-update using workspace electron-updater
-      const prefixes = ["link:", "file:"]
-      for (const prefix of prefixes) {
-        if (updaterVersion.startsWith(prefix)) {
-          const normalized = path.normalize(updaterVersion.substring(prefix.length))
-          const packageJsonPath = path.isAbsolute(normalized) ? normalized : path.resolve(process.cwd(), normalized)
-          const json = fsExtra.readJsonSync(path.join(packageJsonPath, "package.json"))
-          updaterVersion = json.version
-          break
-        }
-      }
-
-      // pnpm `catalog:` and `workspace:` specifiers cannot be resolved to a concrete version from the package.json alone, so skip validation
-      const unresolvableProtocols = ["catalog:", "workspace:"]
-      skipValidation = unresolvableProtocols.some(protocol => updaterVersion.startsWith(protocol))
-    }
-
-    const requiredElectronUpdaterVersion = "4.0.0"
-    if (!skipValidation && !versionSatisfies(updaterVersion, `>=${requiredElectronUpdaterVersion}`)) {
-      errors.push(
-        `At least electron-updater ${requiredElectronUpdaterVersion} is recommended by current electron-builder version. Please set electron-updater version to "^${requiredElectronUpdaterVersion}". Received "${updaterVersion}"`
-      )
-    }
+function checkDependencies(dependencies: Record<string, string> | Nullish, errors: Array<string>) {
+  if (dependencies == null) {
+    return
   }
 
   const swVersion = dependencies["electron-builder-squirrel-windows"]

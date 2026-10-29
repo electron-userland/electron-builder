@@ -43,6 +43,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [`app-update.yml` feed follows the update-writing targets](#app-updateyml-feed-follows-the-update-writing-targets) | Silent (conflicts fail) | Only with target-level `publish` (e.g. `nsis.publish`), targets of one app with different feeds, or a first provider with `publishAutoUpdate: false`: check which feed installs will poll |
 | [Suffixed channels expand to lower channels](#suffixed-update-channels-now-expand-to-lower-channels) | Warns | Only with `generateUpdatesFilesForAllChannels`: a `beta-*`/`latest-*` channel now writes 2–3 yml files instead of 1 |
 | [`latest*.yml` drops legacy top-level `path`/`sha512`](#latestyml-drops-legacy-top-level-pathsha512) | Silent | None for electron-updater >=2.16 (all modern clients); set `electronUpdaterCompatibility` to a legacy-inclusive range only if you still ship apps embedding electron-updater 1.x–2.15 |
+| [Block map format follows `electronUpdaterCompatibility` (default `>=7`)](#block-map-format-follows-electronupdatercompatibility) | Fails build / warns | Apps on electron-updater 6 fail the build: upgrade electron-updater to 7, or set `electronUpdaterCompatibility` to a range that includes them (e.g. `">=6"`), which keeps the JSON `.blockmap` and warns. Installs still on electron-updater 6 download the first release with a binary map in full once |
 | [S3 publishing requires an explicit `awsCredentials.source`](#s3-publishing-requires-an-explicit-awscredentialssource) | Fails at publish | Add `awsCredentials: { source: "env" }` (for `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`), `{ source: "profile", profile: "<name>" }` (for `AWS_PROFILE` / `~/.aws` / SSO) or `{ source: "sso-role-chain", profile: "<name>" }` (for a role assumed from an SSO `source_profile`) |
 | [Bitbucket Cloud publishing: token without username → Bearer auth](#bitbucket-cloud-publishing-token-without-username-uses-bearer-auth) | Warns at publish | Set `BITBUCKET_USERNAME` if your token is an app password / API token |
 | [Flatpak target requires `flatpak` >= 1.12.4 and `flatpak-builder` >= 1.2.2](#flatpak-tooling-requirements) | Fails build | Only for tools older than the stock packages of Ubuntu 22.04 and Debian 12: update them (the `electronuserland/builder` images with a date tag newer than `-05.26` include them, those up to `-05.26` none); replace `DEBUG=@malept/flatpak-bundler` with `DEBUG=electron-builder` |
@@ -100,7 +101,7 @@ These flags are removed (they have thrown since v22).
 
 ### Toolset defaults resolve to `"latest"` (newest bundle) {#toolset-defaults-resolve-to-latest-newest-bundle}
 
-**How you'll find out:** **Info log only.** The build logs which toolset version it uses, with a link here, but not that the default changed. Without Wine installed, a macOS build that needs it fails with a bare `spawn wine ENOENT`.
+**How you'll find out:** **Info log only.** The build logs which toolset version it uses, with a link here, but not that the default changed. Without Wine installed, a macOS build that needs it fails with a bare `spawn wine ENOENT`. An `msiProjectCreated` hook that adds a WiX 4 namespace fails the MSI build with an error that links here.
 
 In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset property or the literal `"latest"` resolves to the **newest published bundle** for that toolset. (Earlier v27 prereleases pinned a fixed default per toolset; those fixed defaults are gone.) (In v26 an unset or `null` toolset resolved to the legacy `"0.0.0"` bundle, so pin `"0.0.0"` if you need to stay on it.) A `null` value and the retired `appimage: "1.0.2"` pin are config changes: see [`toolsets.*: null` rejected](./v27-config-changes.md#toolsets-null-rejected).
 
@@ -108,18 +109,19 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 |---------|-------------|----------------------------|--------------------------|
 | `wine` | `0.0.0` (Wine 4.0.1, macOS only) | `system` | Host-installed Wine, on macOS and Linux, started by absolute path from its install locations or [`toolsets.executables.wine`](../toolsets.md#executables), never from `PATH`. **Requires a host Wine on macOS** — see the note below. The `"1.0.1"` Wine 11.0 bundle still downloads when pinned, but ships no PE builtins and cannot run Windows tools on its own |
 | `winCodeSign` | `0.0.0` (winCodeSign 2.6.0) | `1.3.1` | Windows Kits 10.0.26100.0; `osslsigncode` 2.11 + native arm64; bundles the Azure Trusted Signing `dlib` + .NET 8 runtime |
-| `appimage` | `0.0.0` (FUSE2 runtime) | `1.1.0` | Static FUSE3-compatible runtime (runs without a host FUSE install); adds `unsquashfs` support |
+| `appimage` | `0.0.0` (FUSE2 runtime) | `1.2.0` | Static FUSE3-compatible runtime (runs without a host FUSE install); adds `unsquashfs` support; statically linked zstd, so Linux and macOS hosts build identical images |
 | `nsis` | `0.0.0` (NSIS 3.0.4.1, split bundle) | `1.2.1` | NSIS 3.12; unified single-archive bundle; entrypoint scripts auto-set `NSISDIR` |
 | `fpm` | `2.2.1` | `2.2.1` | Unchanged — FPM 1.17.0 / Ruby 3.4.3 |
 | `icons` | `1.1.0` | `1.2.3` | Newer bundle — `wasm-vips` + `@resvg/resvg-wasm`; 16/32 px ICNS entries written as ARGB |
 | `linuxToolsMac` | `1.0.0` | `1.0.1` | Same tools rebuilt to run on macOS 15+ (1.0.0 required macOS 26) |
 | `sevenZip` | `1.0.0` | `1.0.1` | Correct per-arch Windows `7za.exe` (x64, ia32, arm64) |
 | `squirrel` | *(electron-winstaller npm package)* | `1.1.1` | New toolset — Squirrel.Windows vendor bundle, replaces the `electron-winstaller` dependency |
+| `wix` | *(fixed, WiX 4.0.0.5512 preview)* — now `0.0.0` | `2.0.0` | WiX 3.14.1: an `arm64` build gets a native `Arm64` MSI (the preview packaged the arm64 app in an x64 MSI). The generated `.wxs` uses the WiX 3 schema, so an `msiProjectCreated` hook that inserts WiX 4-namespace elements needs the WiX 3 namespace (e.g. `http://schemas.microsoft.com/wix/UtilExtension`) or `wix: "0.0.0"`; the build fails with an error naming the namespace otherwise |
 
-**No action required** for most projects — the new bundles are drop-in replacements and produce identical output. **`wine` is the exception:** its default is no longer a bundle at all, so a macOS host that builds Windows targets now needs Wine installed (`brew install --cask wine-stable`). If you hit a regression introduced by a newer bundle, pin back by setting the toolset version to `"0.0.0"`:
+**No action required** for most projects — the new bundles are drop-in replacements and produce identical output. For `wix`, the x64 and ia32 MSIs keep the upgrade code, install paths and file layout, but are built from a WiX 3 project; an `arm64` MSI is now an `Arm64` package, and `msiProjectCreated` hooks that edit the project can notice the schema. **`wine` is the exception:** its default is no longer a bundle at all, so a macOS host that builds Windows targets now needs Wine installed (`brew install --cask wine-stable`). If you hit a regression introduced by a newer bundle, pin back by setting the toolset version to `"0.0.0"`:
 
 ```json5
-{ "build": { "toolsets": { "winCodeSign": "0.0.0", "nsis": "0.0.0", "appimage": "0.0.0", "wine": "0.0.0" } } }
+{ "build": { "toolsets": { "winCodeSign": "0.0.0", "nsis": "0.0.0", "appimage": "0.0.0", "wine": "0.0.0", "wix": "0.0.0" } } }
 ```
 
 This escape hatch is intended as a short-term workaround. The `"0.0.0"` alias may be removed in a future major release.
@@ -540,6 +542,22 @@ The deprecated top-level `path` and `sha512` fields are **no longer written** to
 - **If you still ship apps embedding electron-updater 1.x – 2.15**, keep emitting the legacy descriptor by declaring a compatibility range that includes them, e.g. `"electronUpdaterCompatibility": ">=1.0.0"` (also settable per platform, e.g. `win.electronUpdaterCompatibility`).
 
 > Related: metadata validated only by the legacy SHA-256 `sha2` checksum is deprecated — v27 warns and **v28 will reject sha2-only metadata (fail-closed)**. Avoid pinning `electronUpdaterCompatibility` to a legacy range unless you actually ship 1.x–2.15 clients.
+
+### Block map format follows `electronUpdaterCompatibility` {#block-map-format-follows-electronupdatercompatibility}
+
+**How you'll find out:** the build **fails** when the app's electron-updater (in `dependencies`, or bundled from `devDependencies` or the development package.json) is outside the `electronUpdaterCompatibility` of a platform it builds, or is a 7.0.0 prerelease before 7.0.0-alpha.13 where it writes binary block maps (an NSIS installer, a macOS zip), and **warns** once when the range makes it write JSON block maps.
+
+v27 adds a binary `.blockmap` format that electron-updater 7 fetches in parts with HTTP `Range` requests, so a differential update no longer downloads the whole map ([Differential updates](../features/auto-update.md#differential-updates-blockmap)). electron-updater 6 cannot read it. The map is read by the updater already installed in your users' apps, which is what [`electronUpdaterCompatibility`](../features/auto-update.md#compatibility) describes, so the format follows that range, and its default is now **`>=7`** (it was `>=2.16`; the legacy `latest*.yml` fields it also controls are written only for ranges below 2.16, so they are unaffected):
+
+| `electronUpdaterCompatibility` | `.blockmap` written | Build |
+|---|---|---|
+| Unset (`>=7`), or any range of electron-updater 7 and later | Binary (`"v3"`) on Windows and macOS | Fails if the app's own electron-updater is 6 or earlier, or 7.0.0-alpha.0 to 7.0.0-alpha.12 (which cannot read the binary map) |
+| A range that includes electron-updater 6 or earlier (e.g. `">=6"`) | Gzipped JSON (`"v2"`), as in v26 | Warns once that binary block maps are off and why |
+
+- **Your app ships electron-updater 7:** no action. The first release built with v27 publishes binary maps. Installs that are still on electron-updater 6 (an app version built before you upgraded) cannot read it and download that one update in full ("Cannot download differentially, fallback to full download"); the update installs electron-updater 7, and later updates are differential again. With an artifact name without `${version}` (the default names include it) the next update is a full download too: electron-updater 6 cached no map for the release it could not read, and the installed version's map URL electron-updater 7 derives is the new map's own; that update caches its map, and the ones after it are differential.
+- **Your app still ships electron-updater 6:** the build fails with a link here. Upgrade `electron-updater` to 7, or keep it and set `"electronUpdaterCompatibility": ">=6"` (per platform with e.g. `win.electronUpdaterCompatibility`), which keeps the JSON map. Raise the range to `>=7` once your installed apps ship electron-updater 7.
+- **Opting out:** `"blockmap": "v2"` always writes the JSON map, whatever the range. `"blockmap": "v3"` asks for the binary map and fails the build when the range includes electron-updater 6 or earlier; `"blockmap": "latest"` follows the newest format the range allows.
+- With the JSON map, NSIS packages and their block maps are byte-for-byte what v26 wrote. With the binary map, the 7z header of a differential package is also stored uncompressed and chunked on its own.
 
 ### S3 publishing requires an explicit `awsCredentials.source` {#s3-publishing-requires-an-explicit-awscredentialssource}
 

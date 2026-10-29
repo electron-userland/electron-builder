@@ -1,4 +1,5 @@
 export { BlockMap, BlockMapFile } from "./blockMapApi.js"
+export * from "./blockMapV3.js"
 export { detectSha512Encoding, hashSensitiveValue, REDACTED_VALUE, safeStringifyJson } from "./httpExecutor.js"
 export type { SnapStoreOptions } from "./publishOptions.js"
 export { LogLimiter } from "./logLimiter.js"

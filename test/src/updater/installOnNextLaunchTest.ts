@@ -1,4 +1,4 @@
-import { hashFile } from "builder-util-runtime"
+import { CancellationToken, hashFile } from "builder-util-runtime"
 import type { UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { outputFile, pathExists, readJson } from "fs-extra"
 import * as path from "path"
@@ -6,19 +6,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { DebUpdater, NsisUpdater } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
-import type { Logger, ResolvedUpdateFileInfo } from "electron-updater/src/types"
-
-function makeLogger(): Logger & { infos: string[]; warns: string[] } {
-  const infos: string[] = []
-  const warns: string[] = []
-  return {
-    info: (msg: string) => infos.push(msg),
-    warn: (msg: string) => warns.push(msg),
-    error: () => {},
-    infos,
-    warns,
-  }
-}
+import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
+import { makeLogger } from "../helpers/updaterTestUtil"
 
 function makeStubApp(overrides: Partial<AppAdapter> = {}): AppAdapter & { quitCalls: number; emitQuit: (exitCode: number) => void; emitSessionEnd: () => void } {
   let quitHandler: ((exitCode: number) => void) | null = null
@@ -102,8 +91,8 @@ describe("install on next launch", { concurrent: false }, () => {
 
   beforeEach(async context => {
     cacheDir = await context.tmpDir.createTempDir()
-    helper = new DownloadedUpdateHelper(cacheDir)
     log = makeLogger()
+    helper = new DownloadedUpdateHelper(cacheDir, log)
   })
 
   afterEach(() => {
@@ -148,12 +137,21 @@ describe("install on next launch", { concurrent: false }, () => {
       const { installerPath, fileInfo } = await seedDownloadedUpdate(helper)
       helper.markInstallOnNextLaunchSync(log)
 
-      expect(await helper.validateCachedPendingInstall(fileInfo, log)).toBe(installerPath)
+      expect(await helper.validateCachedPendingInstall(fileInfo)).toBe(installerPath)
       expect(helper.file).toBe(installerPath)
 
-      expect(await helper.validateCachedPendingInstall(makeResolvedFileInfo("different-sha512"), log)).toBeNull()
+      expect(await helper.validateCachedPendingInstall(makeResolvedFileInfo("different-sha512"))).toBeNull()
     })
   })
+
+  /**
+   * Routes the async install path back to `doInstall`, which every assertion in this file spies on. Linux
+   * targets install asynchronously so their elevation dialog cannot block the main process; what those tests
+   * exercise is BaseUpdater's orchestration, and the Linux execution itself is covered by linuxUpdaterUnitTest.
+   */
+  function delegateAsyncInstallToSyncInstall(updater: DebUpdater | NsisUpdater): void {
+    ;(updater as any).doInstallAsync = (options: unknown) => Promise.resolve((updater as any).doInstall(options))
+  }
 
   describe("BaseUpdater quit handler", () => {
     function createUpdater(app = makeStubApp()) {
@@ -161,6 +159,8 @@ describe("install on next launch", { concurrent: false }, () => {
       updater.logger = log
       ;(updater as any).downloadedUpdateHelper = helper
       const doInstall = vi.spyOn(updater as any, "doInstall").mockReturnValue(true)
+      // Linux targets install through the async path; keep every assertion on the single doInstall spy
+      delegateAsyncInstallToSyncInstall(updater)
       ;(updater as any).addQuitHandler()
       return { updater, app, doInstall }
     }
@@ -233,6 +233,94 @@ describe("install on next launch", { concurrent: false }, () => {
       expect(app.quitCalls).toBe(1)
       expect(await helper.getPendingInstallInfo()).toMatchObject({ installOnNextLaunch: true })
     })
+
+    test("installs on quit when autoInstallEvent is switched from 'manual' to 'onQuit' after the download", async () => {
+      const app = makeStubApp()
+      const updater = new DebUpdater(null, app)
+      updater.logger = log
+      ;(updater as any).downloadedUpdateHelper = helper
+      const doInstall = vi.spyOn(updater as any, "doInstall").mockReturnValue(true)
+      updater.autoInstallEvent = "manual"
+      // what the end of the download does
+      ;(updater as any).addQuitHandler()
+      await seedDownloadedUpdate(helper)
+
+      updater.autoInstallEvent = "onQuit"
+      app.emitQuit(0)
+
+      expect(doInstall).toHaveBeenCalledTimes(1)
+    })
+
+    test.each(["onQuit", "onNextLaunch"] as const)("says why nothing is installed when the app quits before the download finished (%s)", autoInstallEvent => {
+      const { updater, app, doInstall } = createUpdater()
+      updater.autoInstallEvent = autoInstallEvent
+      const dispatchError = vi.spyOn(updater as any, "dispatchError")
+
+      app.emitQuit(0)
+
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(dispatchError).not.toHaveBeenCalled()
+      expect(log.infos).toContain("No update is installed on quit: no update has finished downloading")
+    })
+
+    test("registers the quit handler when the download starts", async () => {
+      let registered = 0
+      const app = makeStubApp({ onQuit: () => registered++ })
+      const updater = new DebUpdater(null, app)
+      updater.logger = log
+
+      // a download that fails at once, before it could ever end: the handler is registered all the same
+      await expect((updater as any).executeDownload({})).rejects.toThrow()
+
+      expect(registered).toBe(1)
+    })
+
+    test("does not install an update cached by an earlier launch while the app's verifier still checks it", async () => {
+      const { updater, app, doInstall } = createUpdater()
+      const { fileInfo, updateInfo } = await seedDownloadedUpdate(helper)
+      // as on a new launch: the cached update is only known from disk
+      const launchHelper = new DownloadedUpdateHelper(cacheDir, log)
+      ;(updater as any).downloadedUpdateHelper = launchHelper
+      let enterVerifier: () => void = () => {}
+      const isVerifying = new Promise<void>(resolve => (enterVerifier = resolve))
+      let finishVerifier: () => void = () => {}
+      const verified = new Promise<void>(resolve => (finishVerifier = resolve))
+      updater.verifyUpdateFile = async () => {
+        enterVerifier()
+        await verified
+        return { response: "success" }
+      }
+
+      const download = (updater as any).executeDownload({
+        fileExtension: "deb",
+        fileInfo,
+        downloadUpdateOptions: { updateInfoAndProvider: { info: updateInfo, provider: { feedBaseUrl: null } }, cancellationToken: new CancellationToken(), requestHeaders: {} },
+        task: () => Promise.reject(new Error("the cached update must not be downloaded again")),
+      })
+      await isVerifying
+      // the helper already points at the cached installer, which the verifier has not accepted yet
+      expect(launchHelper.file).not.toBeNull()
+      app.emitQuit(0)
+
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(log.infos).toContain("No update is installed on quit: the update has not finished downloading and verifying")
+
+      finishVerifier()
+      await download
+      app.emitQuit(0)
+
+      expect(doInstall).toHaveBeenCalledTimes(1)
+    })
+
+    test("installs the downloaded update on quit after a later download failed before it touched it", async () => {
+      const { updater, app, doInstall } = createUpdater()
+      await seedDownloadedUpdate(helper)
+
+      await expect((updater as any).executeDownload({})).rejects.toThrow()
+      app.emitQuit(0)
+
+      expect(doInstall).toHaveBeenCalledTimes(1)
+    })
   })
 
   describe("BaseUpdater.installPendingUpdateIfAvailable", () => {
@@ -243,6 +331,8 @@ describe("install on next launch", { concurrent: false }, () => {
       updater.forceDevUpdateConfig = true
       ;(updater as any).downloadedUpdateHelper = helper
       const doInstall = vi.spyOn(updater as any, "doInstall").mockReturnValue(true)
+      // Linux targets install through the async path; keep every assertion on the single doInstall spy
+      delegateAsyncInstallToSyncInstall(updater)
       const getUpdateInfoAndProvider = vi.spyOn(updater as any, "getUpdateInfoAndProvider")
       if (latestUpdateInfo == null) {
         getUpdateInfoAndProvider.mockRejectedValue(new Error("network must not be hit"))
@@ -502,7 +592,7 @@ describe("install on next launch", { concurrent: false }, () => {
     test("passes the re-verified web-installer package to the installer via --package-file", async () => {
       const seeded = await seedDownloadedWebUpdate(helper, { version: "1.0.1" })
       // next launch: a fresh helper knows the package only from the persisted update-info.json, not from the download
-      helper = new DownloadedUpdateHelper(cacheDir)
+      helper = new DownloadedUpdateHelper(cacheDir, log)
       const { updater, app, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
       updater.disableWebInstaller = false
       vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
@@ -528,7 +618,7 @@ describe("install on next launch", { concurrent: false }, () => {
 
     test("does not install a pending web-installer update whose package verifyUpdateFile rejects", async () => {
       const seeded = await seedDownloadedWebUpdate(helper, { version: "1.0.1" })
-      helper = new DownloadedUpdateHelper(cacheDir)
+      helper = new DownloadedUpdateHelper(cacheDir, log)
       const { updater, app, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
       updater.disableWebInstaller = false
       vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
@@ -584,7 +674,8 @@ describe("install on next launch", { concurrent: false }, () => {
     async function createPackagedNsisUpdater(version: string, context: { tmpDir: import("temp-file").TmpDir }) {
       const configDir = await context.tmpDir.createTempDir()
       const appUpdateConfigPath = path.join(configDir, "app-update.yml")
-      await outputFile(appUpdateConfigPath, `provider: generic\nurl: https://example.com\nupdaterCacheDirName: ${path.basename(cacheDir)}\n`)
+      // quoted: a temp dir name can be all digits, which YAML would read as a number
+      await outputFile(appUpdateConfigPath, `provider: generic\nurl: https://example.com\nupdaterCacheDirName: ${JSON.stringify(path.basename(cacheDir))}\n`)
       let ready!: () => void
       const whenReady = new Promise<void>(resolve => (ready = resolve))
       const app = makeStubApp({ version, isPackaged: true, appUpdateConfigPath, baseCachePath: path.dirname(cacheDir), whenReady: () => whenReady })

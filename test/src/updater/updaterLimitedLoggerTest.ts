@@ -82,4 +82,22 @@ describe("AppUpdater limited logging", () => {
 
     expect(withDebug.debug.mock.calls).toEqual([["shown"]])
   })
+
+  test("a throwing logger does not throw from a limited log call, and a missing debug() still keeps the quota", ({ expect }) => {
+    const fail = () => {
+      throw new Error("logger failure")
+    }
+    const throwing = { info: vi.fn(fail), warn: vi.fn(fail), error: vi.fn(fail) }
+    const updater = newUpdater(throwing)
+
+    expect(() => limited(updater, "t").warn("once")).not.toThrow()
+    expect(() => limited(updater, "t").warn("twice")).not.toThrow()
+    expect(throwing.warn.mock.calls).toEqual([["once"]])
+
+    expect(() => limited(updater, "d").debug("dropped")).not.toThrow()
+    const withDebug = newLogger()
+    updater.logger = withDebug
+    limited(updater, "d").debug("shown")
+    expect(withDebug.debug.mock.calls).toEqual([["shown"]])
+  })
 })
