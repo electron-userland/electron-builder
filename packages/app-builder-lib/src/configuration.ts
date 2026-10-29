@@ -116,10 +116,17 @@ export interface CommonConfiguration {
    * - `"v2"`: the gzipped JSON block map every electron-updater version reads, downloaded in full on every update; the package and
    *   block map are the same as electron-builder 26 wrote.
    * - `"latest"`: the newest format the `electronUpdaterCompatibility` range supports (currently the same as unset). A future
-   *   format then costs one full download per user, as below.
+   *   format may then cost one full download per user, as below.
    *
-   * Apps whose electron-updater cannot read a release's format, or whose cached map is in another format, download that update
-   * in full once; the next one is differential again, or with an artifact name without `${version}` the one after it.
+   * Apps whose electron-updater cannot read a release's format download that update in full once; the next one is differential
+   * again, or with an artifact name without `${version}` the one after it. Switching between `"v2"` and `"v3"` does not cost a
+   * full download with electron-updater 7.0.0-alpha.14 and later: both formats cut the same blocks and hash them alike, so the
+   * cached map of one format is compared with the new map of the other. Only the bytes of a stored member (`nsis.differentialPackage: "store-asar"`),
+   * which `"v3"` cuts into finer blocks, are downloaded whole by that first update.
+   *
+   * Compressed bytes (a compressed app package, a zip) are cut into the same 8/16/32 KiB blocks in both formats, so `"v3"`
+   * downloads the same data for them as `"v2"` (compressed data changes from a change up to the end of its compressed stream,
+   * whatever the format); it only makes the map smaller (about 10 instead of 22 bytes per block) and fetched in parts.
    *
    * Block maps embedded in an artifact (AppImage, the NSIS web installer's app package) are always `"v2"`.
    * See [the v27 notes](https://www.electron.build/docs/migration/v27-build-changes#block-map-format-follows-electronupdatercompatibility).
