@@ -57,6 +57,6 @@ export interface PrepareApplicationStageDirectoryOptions {
   readonly version: string
 }
 
-export function isElectronBased(framework: Pick<Framework, "name">): boolean {
+export function isElectronBased(framework: Framework): boolean {
   return framework.name === "electron"
 }

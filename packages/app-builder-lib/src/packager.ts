@@ -22,12 +22,12 @@ import { Lazy } from "lazy-val"
 import { release as getOsRelease } from "os"
 import * as path from "path"
 import { AppInfo } from "./appInfo.js"
-import { assertArchSupported, assertPlatformBuildableOnHost, partitionTargetsToFinish, PoolCount, resolvePoolCount, runUntilCancelled } from "./buildSteps.js"
 import { readAsarJson } from "./asar/asar.js"
 import { AfterExtractContext, AfterPackContext, BeforePackContext, Configuration, Hook } from "./configuration.js"
 import { Platform, SourceRepositoryInfo, Target } from "./core.js"
 import { createElectronFrameworkSupport } from "./electron/ElectronFramework.js"
-import { Framework } from "./Framework.js"
+import { assertElectronArchSupported } from "./electron/electronArchSupport.js"
+import { Framework, isElectronBased } from "./Framework.js"
 import { Metadata } from "./options/metadata.js"
 import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions, PlannedTargets } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
@@ -558,7 +558,12 @@ export class Packager {
 
     // Every target has now finished reading the shared appOutDir(s), so finalize tasks may safely
     // mutate them (e.g. NSIS copying elevate.exe into win-unpacked — see #9852).
-    await runUntilCancelled(this.buildFinalizeTasks, this.cancellationToken)
+    for (const task of this.buildFinalizeTasks) {
+      if (this.cancellationToken.cancelled) {
+        break
+      }
+      await task()
+    }
     return platformToTarget
   }
 
@@ -589,7 +594,10 @@ export class Packager {
       if (this.cancellationToken.cancelled) {
         break
       }
-      assertPlatformBuildableOnHost(platform)
+
+      if (platform === Platform.MAC && process.platform === Platform.WINDOWS.nodeName) {
+        throw new InvalidConfigurationError("Build for macOS is supported only on macOS, please see https://electron.build/docs/features/multi-platform-build")
+      }
 
       const packager = await this.createHelper(platform)
       const nameToTarget = new Map<string, Target>()
@@ -601,17 +609,20 @@ export class Packager {
   }
 
   private createArchTargets({ platform, archToTargetNames }: PlatformBuildPlan, packager: PlatformPackager<any>, nameToTarget: Map<string, Target>): Array<ArchTargets> {
-    const archSupport = { prepackaged: this.options.prepackaged, framework: this.framework, config: this.config }
-    const output = this.outputDirectoryPattern()
     const result: Array<ArchTargets> = []
     for (const [arch, targetNames] of archToTargetNames) {
       if (this.cancellationToken.cancelled) {
         break
       }
-      assertArchSupported(platform, arch, archSupport)
+
+      // fail fast when the requested arch has no official Electron build anymore (Electron 44 removed win32-ia32 and linux-armv7l);
+      // skipped for prepackaged apps since nothing is downloaded then
+      if (this.options.prepackaged == null && isElectronBased(this.framework)) {
+        assertElectronArchSupported(platform, arch, this.framework.version, this.config)
+      }
 
       // support os and arch macro in output value
-      const outDir = path.resolve(this.projectDir, packager.expandMacro(output, Arch[arch]))
+      const outDir = path.resolve(this.projectDir, packager.expandMacro(this.outputDirectoryPattern(), Arch[arch]))
       const targets = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
       result.push({ packager, arch, targets, outDir })
     }
@@ -634,7 +645,6 @@ export class Packager {
     const taskManager = new AsyncTaskManager(this.cancellationToken)
     const syncTargets: Array<Target> = []
     const createdOutDirs = new Set<string>()
-    const isSkipped = (target: Target) => this.targetsSkippedByTestHook.has(target) && !this.targetsBuiltAfterPack.has(target)
     for (const plan of plans) {
       if (this.cancellationToken.cancelled) {
         break
@@ -644,18 +654,31 @@ export class Packager {
         break
       }
 
-      const { async, sync } = partitionTargetsToFinish(plan.nameToTarget.values(), isSkipped)
-      for (const target of async) {
-        taskManager.addTask(target.finishBuild())
+      for (const target of plan.nameToTarget.values()) {
+        if (this.targetsSkippedByTestHook.has(target) && !this.targetsBuiltAfterPack.has(target)) {
+          continue
+        }
+        if (target.isAsyncSupported) {
+          taskManager.addTask(target.finishBuild())
+        } else {
+          syncTargets.push(target)
+        }
       }
-      syncTargets.push(...sync)
     }
     return { taskManager, syncTargets }
   }
 
   private async packPlatform({ packager, archs }: PlatformTargets, taskManager: AsyncTaskManager, createdOutDirs: Set<string>): Promise<void> {
-    const poolCount = resolvePoolCount(packager.config.concurrency?.jobs)
-    warnAboutPoolCount(poolCount)
+    let poolCount = Math.floor(packager.config.concurrency?.jobs || 1)
+    if (poolCount < 1) {
+      log.warn({ concurrency: poolCount }, "concurrency is invalid, overriding with job count: 1")
+      poolCount = 1
+    } else if (poolCount > MAX_FILE_REQUESTS) {
+      log.warn(
+        { concurrency: poolCount, MAX_FILE_REQUESTS },
+        `job concurrency is greater than recommended MAX_FILE_REQUESTS, this may lead to File Descriptor errors (too many files open). Proceed with caution (e.g. this is an experimental feature)`
+      )
+    }
     const packPromises: Array<Promise<any>> = []
     for (const { arch, targets, outDir } of archs) {
       if (this.cancellationToken.cancelled) {
@@ -664,14 +687,14 @@ export class Packager {
 
       await createOutDirIfNeed(targets, createdOutDirs)
       const promise = packager.pack(outDir, arch, targets, taskManager)
-      if (poolCount.poolCount < 2) {
+      if (poolCount < 2) {
         await promise
       } else {
         packPromises.push(promise)
       }
     }
 
-    await asyncPool(poolCount.poolCount, packPromises, async it => {
+    await asyncPool(poolCount, packPromises, async it => {
       if (this.cancellationToken.cancelled) {
         return
       }
@@ -682,10 +705,12 @@ export class Packager {
   /** Waits for the targets that finish on their own, then finishes the others one after another. */
   private async finishTargets({ taskManager, syncTargets }: TargetFinishers): Promise<void> {
     await taskManager.awaitTasks()
-    await runUntilCancelled(
-      syncTargets.map(target => () => target.finishBuild()),
-      this.cancellationToken
-    )
+    for (const target of syncTargets) {
+      if (this.cancellationToken.cancelled) {
+        break
+      }
+      await target.finishBuild()
+    }
   }
 
   private async createHelper(platform: Platform): Promise<PlatformPackager<any>> {
@@ -778,17 +803,6 @@ interface TargetFinishers {
   readonly taskManager: AsyncTaskManager
   /** The targets to finish one after another at the end. */
   readonly syncTargets: ReadonlyArray<Target>
-}
-
-function warnAboutPoolCount({ requested, warning }: PoolCount): void {
-  if (warning === "invalid") {
-    log.warn({ concurrency: requested }, "concurrency is invalid, overriding with job count: 1")
-  } else if (warning === "aboveMaxFileRequests") {
-    log.warn(
-      { concurrency: requested, MAX_FILE_REQUESTS },
-      `job concurrency is greater than recommended MAX_FILE_REQUESTS, this may lead to File Descriptor errors (too many files open). Proceed with caution (e.g. this is an experimental feature)`
-    )
-  }
 }
 
 function createOutDirIfNeed(targetList: Array<Target>, createdOutDirs: Set<string>): Promise<any> {
