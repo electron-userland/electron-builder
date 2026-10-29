@@ -450,3 +450,46 @@ export function toBlockMap(map: BlockMapV3): BlockMap {
     files: [{ name: "file", offset: 0, checksums: map.records.map(record => record.hash), sizes: map.records.map(record => record.size) }],
   }
 }
+
+/** Length of the blake2b digest a v2 map stores per block (base64-encoded: 24 characters). */
+const V2_DIGEST_LENGTH = 18
+/** 18 bytes are exactly 24 base64 characters, without padding. */
+const V2_CHECKSUM_PATTERN = /^[A-Za-z0-9+/]{24}$/
+
+/**
+ * Converts a v2 map (gzipped JSON, already parsed) to the keys `toBlockMap` gives a v3 map, so that maps of the two formats can
+ * be compared block by block: the first update after an app switches formats is then differential instead of a full download.
+ *
+ * Both formats are built from the same Rabin chunker and the same blake2b-18 block digest: v2 stores the whole digest in base64,
+ * v3 its first `HASH_LEN` bytes. So the v3 key of a v2 block is the hex of the first `HASH_LEN` bytes of its decoded checksum,
+ * and nothing has to be read or re-hashed. Outside regions both formats cut the same blocks; inside a region (a stored
+ * `app.asar` is chunked 4/8/16 KiB in v2 and 512 B / 1 / 2 KiB with extra cuts in v3) they differ, and those blocks are not
+ * matched, so they are downloaded. A match means the same digest prefix, the same guarantee as between two v3 maps.
+ *
+ * @throws when `map` is not a v2 map this function can vouch for: another version, several files, a checksum that is not a
+ *   base64 blake2b-18 digest, or a block size a v3 record cannot hold. Callers then compare nothing (full download).
+ */
+export function blockMapV2ToV3Keys(map: BlockMap): BlockMap {
+  if (map == null || map.version !== "2" || !Array.isArray(map.files) || map.files.length !== 1) {
+    throw new Error("not a single-file v2 block map")
+  }
+  const file = map.files[0]
+  const { checksums, sizes } = file ?? {}
+  if (file?.offset !== 0 || !Array.isArray(checksums) || !Array.isArray(sizes) || checksums.length !== sizes.length) {
+    throw new Error("malformed v2 block map")
+  }
+  const keys: Array<string> = new Array(checksums.length)
+  for (let i = 0; i < checksums.length; i++) {
+    const checksum = checksums[i]
+    const size = sizes[i]
+    if (!Number.isInteger(size) || size <= 0 || size > 0xffff) {
+      throw new Error(`v2 block #${i} has size ${String(size)}, which a v3 record cannot hold`)
+    }
+    // checked strictly: Buffer's base64 decoder skips what is not base64, so a checksum of another hash could decode to 18 bytes
+    if (typeof checksum !== "string" || !V2_CHECKSUM_PATTERN.test(checksum)) {
+      throw new Error(`v2 block #${i} checksum is not a base64 blake2b-${V2_DIGEST_LENGTH} digest`)
+    }
+    keys[i] = Buffer.from(checksum, "base64").toString("hex", 0, HASH_LEN)
+  }
+  return { version: "2", files: [{ name: file.name, offset: 0, checksums: keys, sizes: [...sizes] }] }
+}

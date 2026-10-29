@@ -1,6 +1,8 @@
 import { blake2b } from "@noble/hashes/blake2.js"
+import { BlockMap } from "builder-util-runtime"
 import {
   BlockInput,
+  blockMapV2ToV3Keys,
   decodeBlockMapV3,
   encodeBlockMapV3,
   GROUP_MAX,
@@ -196,5 +198,68 @@ describe("block map v3 format", () => {
     expect(() => parseBlockMapV3Header(withCount(20, header.fileSize + 1))).toThrow("inconsistent counts")
     expect(() => parseBlockMapV3Header(withCount(16, header.blockCount + 1))).toThrow("inconsistent counts")
     expect(() => parseBlockMapV3Header(withCount(42, header.groupCount + 1))).toThrow("inconsistent counts")
+  })
+})
+
+describe("blockMapV2ToV3Keys (comparing a v2 map with a v3 map)", () => {
+  function v2Of(blocks: Array<BlockInput>): BlockMap {
+    return { version: "2", files: [{ name: "file", offset: 0, checksums: blocks.map(b => Buffer.from(b.digest).toString("base64")), sizes: blocks.map(b => b.size) }] }
+  }
+
+  function withFile(map: BlockMap, patch: Partial<BlockMap["files"][0]>): BlockMap {
+    return { ...map, files: [{ ...map.files[0], ...patch }] }
+  }
+
+  test("gives every block the key toBlockMap gives the v3 map of the same blocks", ({ expect }) => {
+    const blocks = makeBlocks(500, 8)
+    const v3 = toBlockMap(decodeBlockMapV3(encodeBlockMapV3(blocks, { fileSize: blocks.reduce((s, b) => s + b.size, 0), defaultChunker: DEFAULT })))
+    const v2 = v2Of(blocks)
+    expect(blockMapV2ToV3Keys(v2)).toEqual(v3)
+    // the input is not modified
+    expect(v2.files[0].checksums[0]).toBe(Buffer.from(blocks[0].digest).toString("base64"))
+  })
+
+  test("an empty map converts to an empty map", ({ expect }) => {
+    expect(blockMapV2ToV3Keys(v2Of([])).files[0]).toEqual({ name: "file", offset: 0, checksums: [], sizes: [] })
+  })
+
+  test("rejects maps it cannot vouch for, so that the caller falls back to a full download", ({ expect }) => {
+    const v2 = v2Of(makeBlocks(5, 2))
+    const checksums = v2.files[0].checksums
+    expect(() => blockMapV2ToV3Keys(null as any)).toThrow("not a single-file v2 block map")
+    expect(() => blockMapV2ToV3Keys({ ...v2, version: "1" })).toThrow("not a single-file v2 block map")
+    expect(() => blockMapV2ToV3Keys({ ...v2, files: [v2.files[0], v2.files[0]] })).toThrow("not a single-file v2 block map")
+    expect(() => blockMapV2ToV3Keys({ ...v2, files: {} as any })).toThrow("not a single-file v2 block map")
+    expect(() => blockMapV2ToV3Keys(withFile(v2, { offset: 10 }))).toThrow("malformed v2 block map")
+    expect(() => blockMapV2ToV3Keys(withFile(v2, { sizes: v2.files[0].sizes.slice(1) }))).toThrow("malformed v2 block map")
+    expect(() => blockMapV2ToV3Keys(withFile(v2, { checksums: null as any }))).toThrow("malformed v2 block map")
+    // a block a 16-bit v3 record cannot hold (a v2 region with a coarse custom chunker), or no block at all
+    for (const size of [0, -1, 1.5, 0x10000, "4096" as any]) {
+      expect(() => blockMapV2ToV3Keys(withFile(v2, { sizes: [size, ...v2.files[0].sizes.slice(1)] }))).toThrow("which a v3 record cannot hold")
+    }
+    // a digest of another length (another hash), not a string, or base64 the builder never writes (Buffer's decoder skips junk)
+    const sha256 = Buffer.alloc(32, 7).toString("base64")
+    for (const checksum of [sha256, 42 as any, `${checksums[0].substring(0, 4)}\n${checksums[0].substring(4)}`, `${checksums[0]}==`, ""]) {
+      expect(() => blockMapV2ToV3Keys(withFile(v2, { checksums: [checksum, ...checksums.slice(1)] }))).toThrow("is not a base64 blake2b-18 digest")
+    }
+  })
+
+  test("CPU cost: the map of a 2 GiB artifact (131,072 blocks of 16 KiB) converts without reading or hashing anything", ({ expect }) => {
+    const count = (2 * 1024 * 1024 * 1024) / 16384
+    const checksums: Array<string> = new Array(count)
+    const digest = Buffer.alloc(18)
+    for (let i = 0; i < count; i++) {
+      digest.writeUInt32LE(i, 0)
+      checksums[i] = digest.toString("base64")
+    }
+    const map: BlockMap = { version: "2", files: [{ name: "file", offset: 0, checksums, sizes: new Array(count).fill(16384) }] }
+    const start = process.hrtime.bigint()
+    const converted = blockMapV2ToV3Keys(map)
+    const ms = Number(process.hrtime.bigint() - start) / 1e6
+    expect(converted.files[0].checksums).toHaveLength(count)
+    expect(converted.files[0].checksums[1]).toBe("0100000000000000")
+    // about 0.1 s; re-chunking and re-hashing the 2 GiB file with the v3 chunker (what building a map costs, ~10-100 MiB/s)
+    // would take from tens of seconds to minutes. The bound only catches an accidental quadratic or I/O path, not a slow CI machine
+    expect(ms).toBeLessThan(5000)
   })
 })
