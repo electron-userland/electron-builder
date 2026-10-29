@@ -108,14 +108,14 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 | Toolset | v26 default | v27 `"latest"` resolves to | What the upgrade entails |
 |---------|-------------|----------------------------|--------------------------|
 | `wine` | `0.0.0` (Wine 4.0.1, macOS only) | `system` | Host-installed Wine, on macOS and Linux, started by absolute path from its install locations or [`toolsets.executables.wine`](../toolsets.md#executables), never from `PATH`. **Requires a host Wine on macOS** — see the note below. The `"1.0.1"` Wine 11.0 bundle still downloads when pinned, but ships no PE builtins and cannot run Windows tools on its own |
-| `winCodeSign` | `0.0.0` (winCodeSign 2.6.0) | `1.3.1` | Windows Kits 10.0.26100.0; `osslsigncode` 2.11 + native arm64; bundles the Azure Trusted Signing `dlib` + .NET 8 runtime |
-| `appimage` | `0.0.0` (FUSE2 runtime) | `1.2.0` | Static FUSE3-compatible runtime (runs without a host FUSE install); adds `unsquashfs` support; statically linked zstd, so Linux and macOS hosts build identical images |
-| `nsis` | `0.0.0` (NSIS 3.0.4.1, split bundle) | `1.2.1` | NSIS 3.12; unified single-archive bundle; entrypoint scripts auto-set `NSISDIR` |
-| `fpm` | `2.2.1` | `2.2.1` | Unchanged — FPM 1.17.0 / Ruby 3.4.3 |
+| `winCodeSign` | `0.0.0` (winCodeSign 2.6.0) | `1.3.3` | Windows Kits 10.0.26100.0; `osslsigncode` 2.14 + native arm64; bundles the Azure Trusted Signing `dlib` + .NET 8 runtime |
+| `appimage` | `0.0.0` (FUSE2 runtime) | `1.2.1` | Static FUSE3-compatible runtime (runs without a host FUSE install); adds `unsquashfs` support; statically linked zstd, so Linux and macOS hosts build identical images |
+| `nsis` | `0.0.0` (NSIS 3.0.4.1, split bundle) | `2.0.4` | NSIS 3.13 compiled from source; unified single-archive bundle; entrypoint scripts auto-set `NSISDIR`; a second, log-enabled bundle is picked when `installerDebugLogging` is on |
+| `fpm` | `2.2.1` | `2.3.1` | FPM 1.18.0 / Ruby 3.4.12; Linux bundles link a static OpenSSL 3.5.9 instead of OpenSSL 1.1.1 (same glibc 2.28 floor) |
 | `icons` | `1.1.0` | `1.2.3` | Newer bundle — `wasm-vips` + `@resvg/resvg-wasm`; 16/32 px ICNS entries written as ARGB |
-| `linuxToolsMac` | `1.0.0` | `1.0.1` | Same tools rebuilt to run on macOS 15+ (1.0.0 required macOS 26) |
-| `sevenZip` | `1.0.0` | `1.0.1` | Correct per-arch Windows `7za.exe` (x64, ia32, arm64) |
-| `squirrel` | *(electron-winstaller npm package)* | `1.1.1` | New toolset — Squirrel.Windows vendor bundle, replaces the `electron-winstaller` dependency |
+| `linuxToolsMac` | `1.0.0` | `1.1.1` | Trimmed to the tools electron-builder runs (`gtar`, `lzip`, binutils 2.47 `ar`) plus their license files, built to run on macOS 15+ (1.0.0 required macOS 26) |
+| `sevenZip` | `1.0.0` | `1.1.0` | 7-Zip 26.05 |
+| `squirrel` | *(electron-winstaller npm package)* | `1.2.1` | New toolset — Squirrel.Windows vendor bundle, replaces the `electron-winstaller` dependency; pinned, checksum-verified 7-Zip 26.05 (native arm64 on arm64 Windows hosts) and `nuget.exe` 7.9.0 |
 | `wix` | *(fixed, WiX 4.0.0.5512 preview)* — now `0.0.0` | `2.0.0` | WiX 3.14.1: an `arm64` build gets a native `Arm64` MSI (the preview packaged the arm64 app in an x64 MSI). The generated `.wxs` uses the WiX 3 schema, so an `msiProjectCreated` hook that inserts WiX 4-namespace elements needs the WiX 3 namespace (e.g. `http://schemas.microsoft.com/wix/UtilExtension`) or `wix: "0.0.0"`; the build fails with an error naming the namespace otherwise |
 
 **No action required** for most projects — the new bundles are drop-in replacements and produce identical output. For `wix`, the x64 and ia32 MSIs keep the upgrade code, install paths and file layout, but are built from a WiX 3 project; an `arm64` MSI is now an `Arm64` package, and `msiProjectCreated` hooks that edit the project can notice the schema. **`wine` is the exception:** its default is no longer a bundle at all, so a macOS host that builds Windows targets now needs Wine installed (`brew install --cask wine-stable`). If you hit a regression introduced by a newer bundle, pin back by setting the toolset version to `"0.0.0"`:
@@ -132,7 +132,7 @@ Legacy-base snap template builds (`core18`/`core20`/`core22` with `useTemplateAp
 
 **How you'll find out:** **Info log only.** Each signed file logs which signing path was used. Falling back to the legacy PowerShell path logs a line that links here.
 
-Azure Trusted Signing (`win.sign: { type: "azure" }`) uses the faster `signtool /dlib` path automatically: the default `winCodeSign` (`"latest"` → `1.3.1`) ships the ATS `dlib` + .NET 8 payload, so no pin is required. To **force the legacy** PowerShell `Invoke-TrustedSigning` path instead (which requires the `TrustedSigning` PS module in the signing environment), pin `winCodeSign` below `1.3.0`:
+Azure Trusted Signing (`win.sign: { type: "azure" }`) uses the faster `signtool /dlib` path automatically: the default `winCodeSign` (`"latest"` → `1.3.3`) ships the ATS `dlib` + .NET 8 payload, so no pin is required. To **force the legacy** PowerShell `Invoke-TrustedSigning` path instead (which requires the `TrustedSigning` PS module in the signing environment), pin `winCodeSign` below `1.3.0`:
 
 ```json5
 { "build": { "toolsets": { "winCodeSign": "1.2.1" } } } // or "0.0.0" — forces the legacy PowerShell signing path

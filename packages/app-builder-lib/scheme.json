@@ -4919,7 +4919,7 @@
         },
         "installerDebugLogging": {
           "default": false,
-          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). In your custom NSIS scripts, write to the log via `${LogText}`.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. The default `toolsets.nsis` bundle\nis not log-enabled, so supply one as a custom `toolsets.nsis` bundle; the build fails otherwise.\nReplaces the v26 `customNsisBinary.debugLogging`.",
+          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). In your custom NSIS scripts, write to the log via `${LogText}`.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. From `toolsets.nsis` `\"2.0.4\"` (the\ndefault) on, each NSIS release publishes a log-enabled bundle next to the default one, and electron-builder downloads it when this\noption is `true` (the default bundle otherwise). Its stubs make the installer and uninstaller up to about 8 KB larger, and they\nwrite a log only once `LogSet on` runs, which this option adds. The older pinned bundles (`\"0.0.0\"`, `\"1.2.1\"`) have no\nlog-enabled variant, and the build fails with one of them. A custom `toolsets.nsis` bundle must be log-enabled itself.\nReplaces the v26 `customNsisBinary.debugLogging`.",
           "type": "boolean"
         },
         "installerHeader": {
@@ -5279,7 +5279,7 @@
         },
         "installerDebugLogging": {
           "default": false,
-          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). In your custom NSIS scripts, write to the log via `${LogText}`.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. The default `toolsets.nsis` bundle\nis not log-enabled, so supply one as a custom `toolsets.nsis` bundle; the build fails otherwise.\nReplaces the v26 `customNsisBinary.debugLogging`.",
+          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). In your custom NSIS scripts, write to the log via `${LogText}`.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. From `toolsets.nsis` `\"2.0.4\"` (the\ndefault) on, each NSIS release publishes a log-enabled bundle next to the default one, and electron-builder downloads it when this\noption is `true` (the default bundle otherwise). Its stubs make the installer and uninstaller up to about 8 KB larger, and they\nwrite a log only once `LogSet on` runs, which this option adds. The older pinned bundles (`\"0.0.0\"`, `\"1.2.1\"`) have no\nlog-enabled variant, and the build fails with one of them. A custom `toolsets.nsis` bundle must be log-enabled itself.\nReplaces the v26 `customNsisBinary.debugLogging`.",
           "type": "boolean"
         },
         "installerHeader": {
@@ -8912,14 +8912,14 @@
                 "0.0.0",
                 "1.0.3",
                 "1.1.0",
-                "1.2.0",
+                "1.2.1",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the AppImage toolset bundle used for building `.AppImage` files.\n\nThe bundle ships:\n- **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage. It also packs legacy-base (core18/core20/core22) snaps built from the snap template app.\n- **`desktop-file-validate`** — validates the generated `.desktop` entry.\n- **AppImage runtime** — the self-executing stub that mounts the SquashFS at launch.\n\nAvailable versions:\n| Version | Runtime date | Notes |\n|---------|-------------|-------|\n| `\"0.0.0\"` | Legacy | FUSE2-based AppImage runtime (pre-v27) |\n| `\"1.0.3\"` | 20251108 | Introduces static AppImage runtime |\n| `\"1.1.0\"` | 20251108 | Adds `unsquashfs` support |\n| `\"1.2.0\"` | 20251108 | squashfs-tools 4.7.5 with a statically linked zstd 1.5.7, so Linux and macOS hosts produce identical images |\n\nAn explicit version pin always selects exactly that release.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/appimage/CHANGELOG.md"
+          "description": "Version of the AppImage toolset bundle used for building `.AppImage` files.\n\nThe bundle ships:\n- **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage. It also packs legacy-base (core18/core20/core22) snaps built from the snap template app.\n- **`desktop-file-validate`** — validates the generated `.desktop` entry.\n- **AppImage runtime** — the self-executing stub that mounts the SquashFS at launch.\n\nAvailable versions:\n| Version | Runtime date | Notes |\n|---------|-------------|-------|\n| `\"0.0.0\"` | Legacy | FUSE2-based AppImage runtime (pre-v27) |\n| `\"1.0.3\"` | 20251108 | Introduces static AppImage runtime |\n| `\"1.1.0\"` | 20251108 | Adds `unsquashfs` support |\n| `\"1.2.1\"` | 20251108 | squashfs-tools 4.7.5 with a statically linked zstd 1.5.7, so Linux and macOS hosts produce identical images; ships the bundled components' license files |\n\nAn explicit version pin always selects exactly that release.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/appimage/CHANGELOG.md"
         },
         "executables": {
           "anyOf": [
@@ -8941,13 +8941,14 @@
             {
               "enum": [
                 "2.2.1",
+                "2.3.1",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)\non macOS and Linux hosts.\n\nAvailable versions:\n| Version | FPM version | Notes |\n|---------|------------|-------|\n| `\"2.2.1\"` | 1.17.0 (Ruby 3.4.3) | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/fpm/CHANGELOG.md"
+          "description": "Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)\non macOS and Linux hosts.\n\nAvailable versions:\n| Version | FPM version | Notes |\n|---------|------------|-------|\n| `\"2.2.1\"` | 1.17.0 (Ruby 3.4.3) | Previous default |\n| `\"2.3.1\"` | 1.18.0 (Ruby 3.4.12) | Linux bundles link a static OpenSSL 3.5.9 instead of OpenSSL 1.1.1 |\n\nAn explicit version pin always selects exactly that release.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/fpm/CHANGELOG.md"
         },
         "icons": {
           "anyOf": [
@@ -8974,13 +8975,14 @@
               "enum": [
                 "1.0.0",
                 "1.0.1",
+                "1.1.1",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build\nLinux targets on macOS hosts.\n\nThe bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |\n| `\"1.0.1\"` | Same tools rebuilt on macOS 15 runners — binaries run on macOS 15+ (1.0.0 required macOS 26) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md"
+          "description": "Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build\nLinux targets on macOS hosts.\n\nThe bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |\n| `\"1.0.1\"` | Same tools rebuilt on macOS 15 runners — binaries run on macOS 15+ (1.0.0 required macOS 26) |\n| `\"1.1.1\"` | Trimmed to gnu-tar, lzip and binutils 2.47 (`ar`) plus their dylibs and license files; still runs on macOS 15+ |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md"
         },
         "nsis": {
           "anyOf": [
@@ -8991,13 +8993,14 @@
               "enum": [
                 "0.0.0",
                 "1.2.1",
+                "2.0.4",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the NSIS toolset bundle used to compile Windows installers.\n\nThe bundle ships:\n- **`makensis`** — the NSIS compiler invoked to build `.nsi` scripts into `.exe` installers.\n- **NSIS plugins** — the plugin DLLs (`NsisMultiUser`, `UAC`, `StdUtils`, etc.) referenced by\n  electron-builder's default installer scripts.\n- **`elevate.exe`** — UAC elevation helper included in NSIS installers.\n\nAvailable versions:\n| Version | `makensis` version | Notes |\n|---------|------------------|-------|\n| `\"0.0.0\"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27) |\n| `\"1.2.1\"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md\n\nA custom bundle (a {@link ToolsetCustom} object) must follow the layout at\nhttps://www.electron.build/docs/toolsets#custom-nsis-bundle-layout"
+          "description": "Version of the NSIS toolset bundle used to compile Windows installers.\n\nThe bundle ships:\n- **`makensis`** — the NSIS compiler invoked to build `.nsi` scripts into `.exe` installers.\n- **NSIS plugins** — the plugin DLLs (`NsisMultiUser`, `UAC`, `StdUtils`, etc.) referenced by\n  electron-builder's default installer scripts.\n- **`elevate.exe`** — UAC elevation helper included in NSIS installers.\n\nAvailable versions:\n| Version | `makensis` version | Notes |\n|---------|------------------|-------|\n| `\"0.0.0\"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27) |\n| `\"1.2.1\"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` |\n| `\"2.0.4\"` | 3.13 | Compiled from source, `NSIS_MAX_STRLEN=8192` — two bundles: the default, and a `-log` bundle whose `makensis` and stubs are log-enabled (`NSIS_CONFIG_LOG=yes`), used when `installerDebugLogging` is on |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md\n\nA custom bundle (a {@link ToolsetCustom} object) must follow the layout at\nhttps://www.electron.build/docs/toolsets#custom-nsis-bundle-layout"
         },
         "sevenZip": {
           "anyOf": [
@@ -9008,13 +9011,14 @@
               "enum": [
                 "1.0.0",
                 "1.0.1",
+                "1.1.0",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.\n\nSet to a {@link ToolsetCustom} object to supply your own 7za binary.\nThe `url` must point to a directory (or a `.tar.gz`/`.zip` archive of one) that contains\n`bin/7za` (macOS/Linux) or `bin/7za.exe` (Windows).\n\n**Bootstrap constraint:** the custom bundle itself must be a `.tar.gz` or `.zip` archive\n(or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because\nextracting them requires 7za — a circular dependency.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | Shipped the 32-bit `7za.exe` for every Windows arch (1.75 GiB memory cap, no LZMA2 multithreading on x64/arm64) |\n| `\"1.0.1\"` | Correct per-arch Windows binaries (x64, ia32, arm64) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/7zip/CHANGELOG.md"
+          "description": "Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.\n\nSet to a {@link ToolsetCustom} object to supply your own 7za binary.\nThe `url` must point to a directory (or a `.tar.gz`/`.zip` archive of one) that contains\n`bin/7za` (macOS/Linux) or `bin/7za.exe` (Windows).\n\n**Bootstrap constraint:** the custom bundle itself must be a `.tar.gz` or `.zip` archive\n(or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because\nextracting them requires 7za — a circular dependency.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | Shipped the 32-bit `7za.exe` for every Windows arch (1.75 GiB memory cap, no LZMA2 multithreading on x64/arm64) |\n| `\"1.0.1\"` | 24.09 - Correct per-arch Windows binaries (x64, ia32, arm64) |\n| `\"1.1.0\"` | 26.05 |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/7zip/CHANGELOG.md"
         },
         "squirrel": {
           "anyOf": [
@@ -9024,13 +9028,14 @@
             {
               "enum": [
                 "1.1.1",
+                "1.2.1",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the `squirrel.windows` bundle used to build Squirrel.Windows installers.\n\nThe bundle ships the Squirrel vendor toolset under `electron-winstaller/vendor/`:\n- **`Squirrel.exe`** / **`Squirrel-Mono.exe`** — releasify the app into `Setup.exe` (and an optional MSI).\n- **`SyncReleases.exe`** — downloads prior releases to produce delta packages.\n- **`nuget.exe`**, **`7z`** — pack the app into a `.nupkg` and compress release assets.\n\n`rcedit.exe` is provisioned from the {@link winCodeSign} toolset at runtime (on every platform;\nunder Wine on non-Windows hosts). Building an MSI additionally uses the shared WiX toolset.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.1.1\"` | Squirrel.Windows 2.0.1 (patched) with a standalone, checksum-verified `nuget.exe` 6.14.0 |\n\nSet to a {@link ToolsetCustom} object to supply your own bundle — it must contain the\n`electron-winstaller/vendor/` subtree. Only used when building the `squirrelWindows` target.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/squirrel.windows/CHANGELOG.md"
+          "description": "Version of the `squirrel.windows` bundle used to build Squirrel.Windows installers.\n\nThe bundle ships the Squirrel vendor toolset under `electron-winstaller/vendor/`:\n- **`Squirrel.exe`** / **`Squirrel-Mono.exe`** — releasify the app into `Setup.exe` (and an optional MSI).\n- **`SyncReleases.exe`** — downloads prior releases to produce delta packages.\n- **`nuget.exe`**, **`7z`** — pack the app into a `.nupkg` and compress release assets.\n\n`rcedit.exe` is provisioned from the {@link winCodeSign} toolset at runtime (on every platform;\nunder Wine on non-Windows hosts). Building an MSI additionally uses the shared WiX toolset.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.1.1\"` | Squirrel.Windows 2.0.1 (patched) with a standalone, checksum-verified `nuget.exe` 6.14.0 |\n| `\"1.2.1\"` | Pinned, checksum-verified 7-Zip 26.05 (adds native `7z-arm64`, selected on arm64 Windows hosts) and `nuget.exe` 7.9.0 |\n\nSet to a {@link ToolsetCustom} object to supply your own bundle — it must contain the\n`electron-winstaller/vendor/` subtree. Only used when building the `squirrelWindows` target.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/squirrel.windows/CHANGELOG.md"
         },
         "winCodeSign": {
           "anyOf": [
@@ -9046,13 +9051,14 @@
                 "1.2.1",
                 "1.3.0",
                 "1.3.1",
+                "1.3.3",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the `win-codesign` bundle used for Windows code signing and resource editing.\n\nThe bundle ships:\n- **`signtool.exe`** (Windows) / **`osslsigncode`** (macOS & Linux) — used to sign `.exe`,\n  `.dll`, and `.msix` artifacts.\n- **`rcedit`** — embeds version metadata and icons into `.exe` files (legacy usage, migrated to npm `resedit` package).\n- **Windows Kits** — used by AppX/MSIX packaging (`makeappx`, `signtool`).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"0.0.0\"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27) |\n| `\"1.0.0\"` | Windows Kits 10.0.26100.0, `osslsigncode` v2.9 |\n| `\"1.1.1\"` | Updates `osslsigncode` to v2.11 |\n| `\"1.2.1\"` | Adds native `osslsigncode` arm64 |\n| `\"1.3.0\"` | Includes support for Azure Trusted Signing `signtool` via dlib and .NET 8 runtime |\n| `\"1.3.1\"` | macOS `osslsigncode` bundles its own OpenSSL (no Homebrew `openssl@3` needed) and libp11's PKCS#11 provider |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md"
+          "description": "Version of the `win-codesign` bundle used for Windows code signing and resource editing.\n\nThe bundle ships:\n- **`signtool.exe`** (Windows) / **`osslsigncode`** (macOS & Linux) — used to sign `.exe`,\n  `.dll`, and `.msix` artifacts.\n- **`rcedit`** — embeds version metadata and icons into `.exe` files (legacy usage, migrated to npm `resedit` package).\n- **Windows Kits** — used by AppX/MSIX packaging (`makeappx`, `signtool`).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"0.0.0\"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27) |\n| `\"1.0.0\"` | Windows Kits 10.0.26100.0, `osslsigncode` v2.9 |\n| `\"1.1.1\"` | Updates `osslsigncode` to v2.11 |\n| `\"1.2.1\"` | Adds native `osslsigncode` arm64 |\n| `\"1.3.0\"` | Includes support for Azure Trusted Signing `signtool` via dlib and .NET 8 runtime |\n| `\"1.3.1\"` | macOS `osslsigncode` bundles its own OpenSSL (no Homebrew `openssl@3` needed) and libp11's PKCS#11 provider |\n| `\"1.3.3\"` | Linux `osslsigncode` bundles its own OpenSSL (no system OpenSSL 1.1 needed); `osslsigncode` 2.14 and .NET runtime 8.0.33 |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md"
         },
         "wine": {
           "anyOf": [

@@ -1,5 +1,5 @@
-import { addValue, Arch, archFromString, ArchType, asArray } from "builder-util"
-import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } from "../core.js"
+import { addValue, Arch, archFromString, asArray } from "builder-util"
+import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfigType, TargetConfiguration } from "../core.js"
 import type { Configuration } from "../configuration.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { ArchiveTarget } from "./ArchiveTarget.js"
@@ -42,66 +42,116 @@ export function addTargetsForPlatform(
   }
 }
 
-export function computeArchToTargetNamesMap(
-  raw: Map<Arch, Array<string>>,
-  platformPackager: Pick<PlatformPackager<any>, "platformOptions" | "defaultTarget">,
-  platform: Platform
-): Map<Arch, Array<string>> {
-  for (const targetNames of raw.values()) {
-    if (targetNames.length > 0) {
-      // https://github.com/electron-userland/electron-builder/issues/1355
-      return raw
-    }
-  }
+/** The machine the build runs on: it decides the default arch, and which default targets a Linux build gets. Defaults to `process`. */
+export type BuildHost = Readonly<Pick<NodeJS.Process, "platform" | "arch">>
 
-  const defaultArchs: Array<ArchType> = raw.size === 0 ? [process.arch as ArchType] : Array.from(raw.keys()).map(it => Arch[it] as ArchType)
-  const result = new Map(raw)
-  for (const target of asArray(platformPackager.platformOptions.target).map<TargetConfiguration>(it => (typeof it === "string" ? { target: it } : it))) {
-    let name = target.target
-    let archs = target.arch
-    const suffixPos = name.lastIndexOf(":")
-    if (suffixPos > 0) {
-      name = target.target.substring(0, suffixPos)
-      if (archs == null) {
-        archs = target.target.substring(suffixPos + 1) as ArchType
-      }
-    }
-
-    for (const arch of archs == null ? defaultArchs : asArray(archs)) {
-      addValue(result, archFromString(arch), name)
-    }
-  }
-
-  if (result.size === 0) {
-    const defaultTarget = platformPackager.defaultTarget
-    if (raw.size === 0 && platform === Platform.LINUX && (process.platform === "darwin" || process.platform === "win32")) {
-      result.set(Arch.x64, defaultTarget)
-      // cannot enable arm because of native dependencies - e.g. keytar doesn't provide pre-builds for arm
-      // result.set(Arch.armv7l, ["snap"])
-    } else {
-      for (const arch of defaultArchs) {
-        result.set(archFromString(arch), defaultTarget)
-      }
-    }
-  }
-
-  return result
+/** What {@link computeArchToTargetNamesMap} reads from a platform packager: the platform's `target` option and its default targets. */
+export interface TargetNamesSource {
+  readonly platformOptions: { readonly target?: TargetConfigType }
+  readonly defaultTarget: ReadonlyArray<string>
 }
 
 /**
- * The target names each platform of `targets` builds, from the platform's `target` option when none is requested, as the build
- * resolves them before it creates the platform packagers; `DEFAULT_TARGET` stands for the platform's default targets.
+ * The target names each arch of `platform` builds: the requested ones when any arch has some (#1355), else the platform's `target`
+ * option, else the default targets; an arch whose list stays empty builds the default targets. It changes none of its arguments and
+ * every list of the result is a new array, so resolving the same requested targets again gives the same result.
+ */
+export function computeArchToTargetNamesMap(
+  raw: ReadonlyMap<Arch, ReadonlyArray<string>>,
+  platformPackager: TargetNamesSource,
+  platform: Platform,
+  host: BuildHost = process
+): Map<Arch, Array<string>> {
+  // copies: a caller may put one array under several archs (as the CLI does), and the lists below are added to per arch
+  const result = new Map(Array.from(raw, ([arch, list]) => [arch, list.slice()] as const))
+  // https://github.com/electron-userland/electron-builder/issues/1355
+  if (Array.from(raw.values()).some(it => it.length > 0)) {
+    return result
+  }
+
+  const defaultArchs = (): Array<Arch> => (raw.size === 0 ? [archFromString(host.arch)] : Array.from(raw.keys()))
+  addConfiguredTargets(result, platformPackager.platformOptions.target, defaultArchs)
+  if (result.size === 0) {
+    // cannot enable arm for a Linux build on macOS or Windows because of native dependencies - e.g. keytar doesn't provide pre-builds for arm
+    const crossLinux = raw.size === 0 && platform === Platform.LINUX && (host.platform === "darwin" || host.platform === "win32")
+    for (const arch of crossLinux ? [Arch.x64] : defaultArchs()) {
+      result.set(arch, platformPackager.defaultTarget.slice())
+    }
+  }
+  return result
+}
+
+function addConfiguredTargets(result: Map<Arch, Array<string>>, configured: TargetConfigType | undefined, defaultArchs: () => Array<Arch>): void {
+  for (const target of asArray(configured)) {
+    const { name, archs } = parseTargetConfiguration(typeof target === "string" ? { target } : target)
+    for (const arch of archs == null ? defaultArchs() : archs.map(archFromString)) {
+      addValue(result, arch, name)
+    }
+  }
+}
+
+/** A configured target's name and archs; an arch suffix of the name (`nsis:ia32`) is used when the target sets no `arch`. */
+function parseTargetConfiguration(target: TargetConfiguration): { name: string; archs: ReadonlyArray<string> | null } {
+  const suffixPos = target.target.lastIndexOf(":")
+  const name = suffixPos > 0 ? target.target.substring(0, suffixPos) : target.target
+  if (target.arch != null) {
+    return { name, archs: asArray(target.arch) }
+  }
+  return { name, archs: suffixPos > 0 ? [target.target.substring(suffixPos + 1)] : null }
+}
+
+/** One platform of a build: the target names each arch builds, where an empty list stands for the platform's default targets. */
+export interface PlatformBuildPlan {
+  readonly platform: Platform
+  readonly archToTargetNames: ReadonlyMap<Arch, ReadonlyArray<string>>
+}
+
+/**
+ * What the build creates for one requested platform, from its requested targets and `platformOptions`: the build passes the created
+ * platform packager's `platformOptions` (a custom packager may override them), the electron-updater check passes the platform's
+ * configuration (see {@link resolveBuildPlan}).
  * @internal
  */
-export function resolveTargetNames(targets: Map<Platform, Map<Arch, Array<string>>>, config: Configuration): Map<Platform, Set<string>> {
-  const result = new Map<Platform, Set<string>>()
-  for (const [platform, archToType] of targets) {
+export function resolvePlatformBuildPlan(
+  platform: Platform,
+  requested: ReadonlyMap<Arch, ReadonlyArray<string>>,
+  platformOptions: TargetNamesSource["platformOptions"],
+  host: BuildHost = process
+): PlatformBuildPlan {
+  return { platform, archToTargetNames: computeArchToTargetNamesMap(requested, { platformOptions, defaultTarget: [] }, platform, host) }
+}
+
+/**
+ * What the build creates for each requested platform when its packager uses the platform's configuration (`config.mac`, `config.win`,
+ * `config.linux`), resolved by {@link resolvePlatformBuildPlan} as the build does.
+ * @internal
+ */
+export function resolveBuildPlan(
+  requested: ReadonlyMap<Platform, ReadonlyMap<Arch, ReadonlyArray<string>>>,
+  config: Configuration,
+  host: BuildHost = process
+): Array<PlatformBuildPlan> {
+  return Array.from(requested, ([platform, archToType]) => {
     const key = platform.buildConfigurationKey
     const platformOptions = (key === "mac" || key === "win" || key === "linux" ? config[key] : null) ?? {}
-    // copies of the lists: computeArchToTargetNamesMap adds the configured targets to empty ones, and the build resolves `targets` again
-    const archToTypeCopy = new Map(Array.from(archToType, ([arch, list]) => [arch, list.slice()] as const))
+    return resolvePlatformBuildPlan(platform, archToType, platformOptions, host)
+  })
+}
+
+/**
+ * The target names each platform of `targets` builds (see {@link resolveBuildPlan}), lower-cased; `DEFAULT_TARGET` stands for the
+ * platform's default targets.
+ * @internal
+ */
+export function resolveTargetNames(
+  targets: ReadonlyMap<Platform, ReadonlyMap<Arch, ReadonlyArray<string>>>,
+  config: Configuration,
+  host: BuildHost = process
+): Map<Platform, Set<string>> {
+  const result = new Map<Platform, Set<string>>()
+  for (const { platform, archToTargetNames } of resolveBuildPlan(targets, config, host)) {
     const names = new Set<string>()
-    for (const list of computeArchToTargetNamesMap(archToTypeCopy, { platformOptions, defaultTarget: [DEFAULT_TARGET] }, platform).values()) {
+    for (const list of archToTargetNames.values()) {
       for (const name of list.length === 0 ? [DEFAULT_TARGET] : list) {
         names.add(name.toLowerCase().trim())
       }
@@ -111,7 +161,7 @@ export function resolveTargetNames(targets: Map<Platform, Map<Arch, Array<string
   return result
 }
 
-export function createTargets(nameToTarget: Map<string, Target>, rawList: Array<string>, outDir: string, packager: PlatformPackager<any>): Array<Target> {
+export function createTargets(nameToTarget: Map<string, Target>, rawList: ReadonlyArray<string>, outDir: string, packager: PlatformPackager<any>): Array<Target> {
   const result: Array<Target> = []
 
   const mapper = (name: string, factory: (outDir: string) => Target) => {
@@ -128,7 +178,7 @@ export function createTargets(nameToTarget: Map<string, Target>, rawList: Array<
   return result
 }
 
-function normalizeTargets(targets: Array<string>, defaultTarget: Array<string>): Array<string> {
+function normalizeTargets(targets: ReadonlyArray<string>, defaultTarget: ReadonlyArray<string>): Array<string> {
   const list: Array<string> = []
   for (const t of targets) {
     const name = t.toLowerCase().trim()

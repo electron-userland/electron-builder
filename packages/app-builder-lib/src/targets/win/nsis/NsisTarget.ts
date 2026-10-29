@@ -48,7 +48,7 @@ import { computeLicensePage } from "./nsisLicense.js"
 import { NsisOptions, PortableOptions } from "./nsisOptions.js"
 import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator.js"
 import { ELECTRON_BUILDER_NS_UUID, ProgIdMaker } from "./progId.js"
-import { assertInstallerDebugLoggingSupported, getMakeNsisPath, getNsisPluginsPath } from "../../../toolsets/nsis.js"
+import { assertInstallerDebugLoggingSupported, getMakeNsisPath, getNsisPluginsPath, NsisToolsetOptions } from "../../../toolsets/nsis.js"
 import { AppPackageHelper, CopyElevateHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js"
 import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation.js"
 import _fsExtra from "fs-extra"
@@ -601,6 +601,11 @@ export class NsisTarget extends Target {
     return this.options.unicode !== false
   }
 
+  /** Selects the log-enabled NSIS bundle (nsis@2.0.4 and newer publish one) when `installerDebugLogging` is on. */
+  get nsisToolsetOptions(): NsisToolsetOptions {
+    return { debugLogging: this.options.installerDebugLogging === true }
+  }
+
   get isWebInstaller(): boolean {
     return false
   }
@@ -865,7 +870,7 @@ export class NsisTarget extends Target {
       await ensureNotBusy(commands["OutFile"].replace(/"/g, ""))
     }
 
-    const makensis = await getMakeNsisPath(this.packager.config.toolsets?.nsis, this.packager.buildResourcesDir)
+    const makensis = await getMakeNsisPath(this.packager.config.toolsets?.nsis, this.packager.buildResourcesDir, this.nsisToolsetOptions)
     const { stdout, stderr } = await spawnAndWriteWithOutput(makensis.path, args, script, {
       env: { ...process.env, ...(makensis.env ?? {}) },
       cwd: nsisTemplatesDir,
@@ -904,7 +909,10 @@ export class NsisTarget extends Target {
 
     const bundledPluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     taskManager.add(async () => {
-      scriptGenerator.addPluginDir(bundledPluginArch, path.join(await getNsisPluginsPath(this.packager.config.toolsets?.nsis, this.packager.buildResourcesDir), bundledPluginArch))
+      scriptGenerator.addPluginDir(
+        bundledPluginArch,
+        path.join(await getNsisPluginsPath(this.packager.config.toolsets?.nsis, this.packager.buildResourcesDir, this.nsisToolsetOptions), bundledPluginArch)
+      )
     })
 
     for (const pluginArch of ["x86-unicode", "x86-ansi"]) {

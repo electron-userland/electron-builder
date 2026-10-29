@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`linux > appimage tool: 1.2.0 > AppImage - corrupted pending update - x64 1`] = `
+exports[`linux > appimage tool: 1.2.1 > AppImage - corrupted pending update - x64 1`] = `
 {
   "linux": [
     {
@@ -31,7 +31,7 @@ exports[`linux > appimage tool: 1.2.0 > AppImage - corrupted pending update - x6
 }
 `;
 
-exports[`linux > appimage tool: 1.2.0 > AppImage - corrupted pending update - x64 2`] = `
+exports[`linux > appimage tool: 1.2.1 > AppImage - corrupted pending update - x64 2`] = `
 {
   "linux": [
     {
@@ -62,7 +62,7 @@ exports[`linux > appimage tool: 1.2.0 > AppImage - corrupted pending update - x6
 }
 `;
 
-exports[`linux > appimage tool: 1.2.0 > AppImage - install on next launch - x64 1`] = `
+exports[`linux > appimage tool: 1.2.1 > AppImage - install on next launch - x64 1`] = `
 {
   "linux": [
     {
@@ -93,7 +93,7 @@ exports[`linux > appimage tool: 1.2.0 > AppImage - install on next launch - x64 
 }
 `;
 
-exports[`linux > appimage tool: 1.2.0 > AppImage - install on next launch - x64 2`] = `
+exports[`linux > appimage tool: 1.2.1 > AppImage - install on next launch - x64 2`] = `
 {
   "linux": [
     {
@@ -124,7 +124,7 @@ exports[`linux > appimage tool: 1.2.0 > AppImage - install on next launch - x64 
 }
 `;
 
-exports[`linux > appimage tool: 1.2.0 > AppImage - key rotation - x64 1`] = `
+exports[`linux > appimage tool: 1.2.1 > AppImage - key rotation - x64 1`] = `
 {
   "linux": [
     {
@@ -168,7 +168,7 @@ exports[`linux > appimage tool: 1.2.0 > AppImage - key rotation - x64 1`] = `
 }
 `;
 
-exports[`linux > appimage tool: 1.2.0 > AppImage - key rotation - x64 2`] = `
+exports[`linux > appimage tool: 1.2.1 > AppImage - key rotation - x64 2`] = `
 {
   "linux": [
     {
@@ -222,7 +222,7 @@ exports[`linux > appimage tool: 1.2.0 > AppImage - key rotation - x64 2`] = `
 }
 `;
 
-exports[`linux > appimage tool: 1.2.0 > AppImage - key rotation - x64 3`] = `
+exports[`linux > appimage tool: 1.2.1 > AppImage - key rotation - x64 3`] = `
 {
   "linux": [
     {
@@ -266,7 +266,7 @@ exports[`linux > appimage tool: 1.2.0 > AppImage - key rotation - x64 3`] = `
 }
 `;
 
-exports[`linux > appimage tool: 1.2.0 > AppImage - signed update manifest - x64 1`] = `
+exports[`linux > appimage tool: 1.2.1 > AppImage - signed update manifest - x64 1`] = `
 {
   "linux": [
     {
@@ -310,7 +310,7 @@ exports[`linux > appimage tool: 1.2.0 > AppImage - signed update manifest - x64 
 }
 `;
 
-exports[`linux > appimage tool: 1.2.0 > AppImage - signed update manifest - x64 2`] = `
+exports[`linux > appimage tool: 1.2.1 > AppImage - signed update manifest - x64 2`] = `
 {
   "linux": [
     {
@@ -354,7 +354,7 @@ exports[`linux > appimage tool: 1.2.0 > AppImage - signed update manifest - x64 
 }
 `;
 
-exports[`linux > appimage tool: 1.2.0 > AppImage - update from electron-updater 6 - x64 1`] = `
+exports[`linux > appimage tool: 1.2.1 > AppImage - update from electron-updater 6 - x64 1`] = `
 {
   "linux": [
     {
@@ -385,7 +385,7 @@ exports[`linux > appimage tool: 1.2.0 > AppImage - update from electron-updater 
 }
 `;
 
-exports[`linux > appimage tool: 1.2.0 > AppImage - update from electron-updater 6 - x64 2`] = `
+exports[`linux > appimage tool: 1.2.1 > AppImage - update from electron-updater 6 - x64 2`] = `
 {
   "linux": [
     {
@@ -416,7 +416,7 @@ exports[`linux > appimage tool: 1.2.0 > AppImage - update from electron-updater 
 }
 `;
 
-exports[`linux > appimage tool: 1.2.0 > AppImage - update from electron-updater 6 - x64 3`] = `
+exports[`linux > appimage tool: 1.2.1 > AppImage - update from electron-updater 6 - x64 3`] = `
 {
   "linux": [
     {
@@ -447,7 +447,7 @@ exports[`linux > appimage tool: 1.2.0 > AppImage - update from electron-updater 
 }
 `;
 
-exports[`linux > appimage tool: 1.2.0 > AppImage - update from electron-updater 6 - x64 4`] = `
+exports[`linux > appimage tool: 1.2.1 > AppImage - update from electron-updater 6 - x64 4`] = `
 {
   "linux": [
     {
@@ -478,7 +478,7 @@ exports[`linux > appimage tool: 1.2.0 > AppImage - update from electron-updater 
 }
 `;
 
-exports[`linux > appimage tool: 1.2.0 > AppImage - verifyUpdateFile - x64 1`] = `
+exports[`linux > appimage tool: 1.2.1 > AppImage - verifyUpdateFile - x64 1`] = `
 {
   "linux": [
     {
@@ -509,7 +509,7 @@ exports[`linux > appimage tool: 1.2.0 > AppImage - verifyUpdateFile - x64 1`] = 
 }
 `;
 
-exports[`linux > appimage tool: 1.2.0 > AppImage - verifyUpdateFile - x64 2`] = `
+exports[`linux > appimage tool: 1.2.1 > AppImage - verifyUpdateFile - x64 2`] = `
 {
   "linux": [
     {
@@ -540,7 +540,7 @@ exports[`linux > appimage tool: 1.2.0 > AppImage - verifyUpdateFile - x64 2`] = 
 }
 `;
 
-exports[`linux > appimage tool: 1.2.0 > AppImage - x64 1`] = `
+exports[`linux > appimage tool: 1.2.1 > AppImage - x64 1`] = `
 {
   "linux": [
     {
@@ -571,7 +571,7 @@ exports[`linux > appimage tool: 1.2.0 > AppImage - x64 1`] = `
 }
 `;
 
-exports[`linux > appimage tool: 1.2.0 > AppImage - x64 2`] = `
+exports[`linux > appimage tool: 1.2.1 > AppImage - x64 2`] = `
 {
   "linux": [
     {
