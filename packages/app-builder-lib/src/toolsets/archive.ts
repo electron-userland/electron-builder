@@ -12,11 +12,11 @@ const ARCHIVE_LATEST = "1.0.0"
 // plus rpm and rpmbuild (rpm 6.1.0) on linux-amd64, linux-arm64v8 and darwin-arm64 only.
 export const archiveChecksums = {
   "1.0.0": {
-    "archive-linux-amd64.7z": "TODO",
-    "archive-linux-arm64v8.7z": "TODO",
-    "archive-linux-i386.7z": "TODO",
-    "archive-darwin-arm64.7z": "TODO",
-    "archive-darwin-x86_64.7z": "TODO",
+    "archive-linux-amd64.7z": "e8c2f1d611492cf51dfc1703f48a2b8804e15fde44d09c0e5d3d9b0b4410abb6",
+    "archive-linux-arm64v8.7z": "a473505a58f7f059051587a84405e2e13382820b64893fa82fe16ceb1b80c392",
+    "archive-linux-i386.7z": "09209547ba629c6b8c18bad4e4c24b55c8c6c407cf8ec0e4662a0816aa597640",
+    "archive-darwin-arm64.7z": "07505ce02339a9ca01a1d47b14bbed95e6bc26fdfe284a2cdea1e54f92753057",
+    "archive-darwin-x86_64.7z": "a0d55100cd2bcd5175ea5deae1d458885e1f478b4917994501d3e1bcb4f6b8c4",
   },
 } as const
 
