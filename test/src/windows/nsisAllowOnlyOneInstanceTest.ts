@@ -293,7 +293,7 @@ describe("allowOnlyOneInstallerInstance.nsh", { concurrent: false }, () => {
   })
 
   test("FIND distinguishes CIM query failures from an absent process", () => {
-    expect(findProcessMacro).toContain(' -C "try { if ((')
+    expect(findProcessMacro).toContain(' -C "try {')
     expect(findProcessMacro).toContain("Get-CimInstance -ClassName Win32_Process -ErrorAction Stop")
     expect(findProcessMacro).toContain("{ exit 0 } else { exit 1 } } catch { exit 3 }")
   })
@@ -442,14 +442,16 @@ describe("allowOnlyOneInstallerInstance.nsh", { concurrent: false }, () => {
 
   test.runIf(process.platform === "win32").each([
     ["absent", "", 1],
-    ["present", "@{ Path = 'fixture' }", 0],
+    ["one CIM process", "New-CimInstance -ClientOnly -ClassName Win32_Process -Property @{ Path = 'fixture' }", 0],
+    ["multiple CIM processes", "1..2 | % { New-CimInstance -ClientOnly -ClassName Win32_Process -Property @{ Path = 'fixture' } }", 0],
     ["query error", "Write-Error 'simulated CIM failure'", 3],
   ] as const)("PowerShell FIND contract: %s", (_name, output, expected) => {
     const command = findProcessMacro
       .match(/-C "([^\n]+)"`/)![1]
       .replaceAll("$$", "$")
       .replace("$processPathFilter", "$true")
-    // A function-local CIM stub produces a non-terminating error without changing WMI.
+    // Real CimInstance objects lack scalar .Count in Windows PowerShell 5.1; a hashtable hides that regression.
+    // A function-local CIM stub also produces a non-terminating error without changing WMI.
     const stub = `function Get-CimInstance { [CmdletBinding()] param([string] $ClassName) ${output} }; `
     const systemRoot = process.env.SystemRoot!
     const run = spawnSync(path.join(systemRoot, "System32/WindowsPowerShell/v1.0/powershell.exe"), ["-NoProfile", "-NonInteractive", "-Command", stub + command], {

@@ -150,7 +150,7 @@
 
 !macro FIND_PROCESS _FILE _RETURN
   ${if} $IsPowerShellAvailable == 0
-    nsExec::Exec /TIMEOUT=${APP_PROCESS_QUERY_TIMEOUT} `"$PowerShellPath" -NoProfile -NonInteractive -C "try { if ((Get-CimInstance -ClassName Win32_Process -ErrorAction Stop | ? {$$_.Path -and ($processPathFilter)}).Count -gt 0) { exit 0 } else { exit 1 } } catch { exit 3 }"`
+    nsExec::Exec /TIMEOUT=${APP_PROCESS_QUERY_TIMEOUT} `"$PowerShellPath" -NoProfile -NonInteractive -C "try { if (@(Get-CimInstance -ClassName Win32_Process -ErrorAction Stop | ? {$$_.Path -and ($processPathFilter)}).Count -gt 0) { exit 0 } else { exit 1 } } catch { exit 3 }"`
     Pop ${_RETURN}
     ${if} ${_RETURN} != 0
     ${andIf} ${_RETURN} != 1
