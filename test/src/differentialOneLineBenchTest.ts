@@ -43,7 +43,7 @@
 // the 7z header region every production map gets, and a forced block boundary at every packed file of
 // the stored asar (`asarContentBoundaries`) — so its blocks differ from the v2 row's. Wire cost of a v3
 // update, exactly the updater's plan (blockMapV3Fetcher's `planSuperStage` / `planRecordStage`):
-//   first request (header + super-group table + first group entries, sized from the old map)
+//   first request (header + super-group table + the group table when it is small, else the first group entries; sized from the old map)
 //   + group entries of every new super-group whose (hash, groupCount, blockCount) matches no old one
 //   + records of every remaining group whose (hash, byteLength, blockCount) matches no old group
 //     (adjacent ranges coalesced at each stage)
@@ -529,7 +529,7 @@ interface V3Row {
   groupsFetched: number
   /** full v3 file size (what a fresh install with no cached old map would download) */
   mapFileBytes: number
-  /** the first request: header + super-group table + the first group entries (`firstRangeSize`) */
+  /** the first request: header + super-group table + the group table when small, else the first group entries (`firstRangeSize`) */
   firstRequestBytes: number
   /** group entries of the unmatched super-groups beyond the first request */
   groupEntryBytes: number
