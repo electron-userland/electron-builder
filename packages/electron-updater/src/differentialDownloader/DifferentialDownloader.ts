@@ -19,6 +19,7 @@ import {
   requestRange,
 } from "./multipleRangeDownloader.js"
 import { ProgressDifferentialDownloadCallbackTransform, ProgressDifferentialDownloadInfo } from "./ProgressDifferentialDownloadCallbackTransform.js"
+import { SingleRangeReadAhead } from "./singleRangeReadAhead.js"
 
 export interface DifferentialDownloaderOptions {
   readonly oldFile: string
@@ -247,6 +248,22 @@ export abstract class DifferentialDownloader {
 
       // once a request is redirected, the remaining ranges are requested from the redirect target
       const target: RangeRequestTarget = { options: this.createRequestOptions() }
+      // the next small ranges are requested while earlier ones are written: one round trip per range is the cost otherwise
+      const readAhead = new SingleRangeReadAhead(this, target, tasks, firstStream, reject)
+
+      const onRangeWritten = (index: number): void => {
+        // Pass on that we are downloading a segment
+        if (downloadInfoTransform) {
+          downloadInfoTransform.endRangeDownload()
+        }
+
+        if (++downloadOperationCount === 100) {
+          downloadOperationCount = 0
+          setTimeout(() => w(index), 1000)
+        } else {
+          w(index)
+        }
+      }
 
       w = (index: number): void => {
         if (index >= tasks.length) {
@@ -257,7 +274,25 @@ export abstract class DifferentialDownloader {
           return
         }
 
+        const isReadAhead = readAhead.advance(index)
+        const operationIndex = index
         const operation = tasks[index++]
+        if (isReadAhead) {
+          if (downloadInfoTransform) {
+            downloadInfoTransform.beginRangeDownload()
+          }
+          readAhead.take(operationIndex, data => {
+            // the callback runs once the chunk went through the first stream (the progress transform), so the progress of this
+            // range is reported before the next operation begins
+            firstStream.write(data, (error: Error | null | undefined) => {
+              if (error == null) {
+                onRangeWritten(index)
+              }
+            })
+          })
+          return
+        }
+
         if (operation.kind === OperationKind.COPY) {
           // We are copying, let's not send status updates to the UI
           if (downloadInfoTransform) {
@@ -290,27 +325,21 @@ export abstract class DifferentialDownloader {
             response.on("aborted", () => {
               reject(new Error("response has been aborted by the server"))
             })
+            readAhead.onRangeAnswered()
 
             response.pipe(firstStream, {
               end: false,
             })
             response.once("end", () => {
-              // Pass on that we are downloading a segment
-              if (downloadInfoTransform) {
-                downloadInfoTransform.endRangeDownload()
-              }
-
-              if (++downloadOperationCount === 100) {
-                downloadOperationCount = 0
-                setTimeout(() => w(index), 1000)
-              } else {
-                w(index)
-              }
+              readAhead.endStreaming()
+              onRangeWritten(index)
             })
           },
           reject,
           firstStream
         )
+        // after the request above, so that the ranges are requested in plan order
+        readAhead.beginStreaming(operationIndex)
       }
 
       w(0)
