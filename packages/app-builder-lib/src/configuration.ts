@@ -852,12 +852,13 @@ export interface ToolsetConfig {
    * (`tar`, `gtar`), GNU `ar` (`ar`, `gar`) and `bsdtar`, plus `rpm` and `rpmbuild` (rpm 6.1.0) on Linux x64 and arm64 and macOS arm64.
    * Its `bin` directory goes first on fpm's `PATH`. On Intel macOS and 32-bit Linux, which get no bundled `rpmbuild`,
    * building `rpm` uses the host `rpmbuild` on `PATH`. A {@link ToolsetCustom} bundle must have the same `bin/` layout.
+   * `"system"` uses the host's tools (no download); `tar.lz` then uses `lzip` from {@link executables}.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/archive/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly archive?: "1.0.0" | ToolsetCustom | "latest"
+  readonly archive?: "1.0.0" | "system" | ToolsetCustom | "latest"
 
   /**
    * Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.

@@ -83,6 +83,11 @@ describe("getArchiveToolsetBinDir", () => {
     expect(downloadBuilderToolset).not.toHaveBeenCalled()
   })
 
+  test('"system" is null (host tools), without a download', async () => {
+    expect(await getArchiveToolsetBinDir("system", "build")).toBeNull()
+    expect(downloadBuilderToolset).not.toHaveBeenCalled()
+  })
+
   test("an unknown version is rejected before any download", async () => {
     await expect(getArchiveToolsetBinDir("9.9.9" as any, "build")).rejects.toBeInstanceOf(InvalidConfigurationError)
     expect(downloadBuilderToolset).not.toHaveBeenCalled()

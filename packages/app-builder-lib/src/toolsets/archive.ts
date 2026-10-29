@@ -34,6 +34,10 @@ export async function getArchiveToolsetBinDir(toolset: ToolsetConfig["archive"],
     return path.join(await getCustomToolsetPath(toolset, resourcesDir), "bin")
   }
 
+  if (toolset === "system") {
+    return null
+  }
+
   // Unset / null / "latest" → newest; an explicit pin selects exactly that release.
   const version = resolveToolsetVersion(toolset, ARCHIVE_LATEST)
   // Never download without a checksum entry: the downloader would run with integrity verification disabled.
