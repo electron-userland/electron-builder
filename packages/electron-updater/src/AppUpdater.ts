@@ -1,5 +1,5 @@
 import { createRequire } from "node:module"
-import { decodeBlockMapV3, isBlockMapV3, LogLimiter, toBlockMap } from "builder-util-runtime/internal"
+import { blockMapV2ToV3Keys, decodeBlockMapV3, isBlockMapV3, LogLimiter, toBlockMap } from "builder-util-runtime/internal"
 import {
   AllPublishOptions,
   asArray,
@@ -1407,15 +1407,29 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         }
       }
 
+      let oldBlockMap = oldBlockMapData.map
+      let newBlockMap = newBlockMapData.map
       if (oldBlockMapData.format !== newBlockMapData.format) {
-        // e.g. the first release built with a newer `blockmap` format: the new map is cached above, so the next update is differential again
-        throw newError(
-          `Block map format changed (old: ${oldBlockMapData.format}, new: ${newBlockMapData.format}), so the old and new files cannot be compared block by block`,
-          "ERR_UPDATER_BLOCKMAP_FORMAT_CHANGED"
-        )
+        // e.g. the first release built with a newer `blockmap` format (the new map is cached above, so the next update compares
+        // maps of one format again): a v2 map carries the v3 block hashes, so the v2 side is compared by those
+        try {
+          if (oldBlockMapData.format === "v2") {
+            oldBlockMap = blockMapV2ToV3Keys(oldBlockMap)
+          } else {
+            newBlockMap = blockMapV2ToV3Keys(newBlockMap)
+          }
+        } catch (e: unknown) {
+          throw newError(
+            `Block map format changed (old: ${oldBlockMapData.format}, new: ${newBlockMapData.format}) and the ${
+              oldBlockMapData.format === "v2" ? "old" : "new"
+            } v2 map cannot be compared with a v3 map (${e instanceof Error ? e.message : String(e)})`,
+            "ERR_UPDATER_BLOCKMAP_FORMAT_CHANGED"
+          )
+        }
+        this.log.info(`Block map format changed (old: ${oldBlockMapData.format}, new: ${newBlockMapData.format}): comparing the blocks by the v3 block hashes both maps carry`)
       }
 
-      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData.map, newBlockMapData.map)
+      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMap, newBlockMap)
       return false
     } catch (e: any) {
       // a user cancellation is not a differential failure: no fallback to a full download
@@ -1428,7 +1442,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         )
       }
       if (e?.code === "ERR_UPDATER_BLOCKMAP_FORMAT_CHANGED") {
-        // expected once, for the first update after the format changed: not a failure
+        // a v2 map that cannot be compared with a v3 one, once, for the first update after the format changed: not a failure
         this.log.info(`${e.message}: downloading this update in full; the next one is differential again`)
       } else {
         this.logDifferentialDownloadFallback(e)

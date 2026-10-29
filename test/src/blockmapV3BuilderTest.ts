@@ -19,8 +19,9 @@ import {
   toV3Regions,
 } from "app-builder-lib/src/targets/differentialUpdateInfoBuilder.js"
 import { Arch, InvalidConfigurationError } from "builder-util"
-import { GenericServerOptions } from "builder-util-runtime"
-import { BlockMapV3, BlockMapV3Group, decodeBlockMapV3, GROUP_MAX, GROUP_MIN, HASH_LEN, isBlockMapV3 } from "builder-util-runtime/internal"
+import { BlockMap, GenericServerOptions } from "builder-util-runtime"
+import { BlockMapV3, BlockMapV3Group, blockMapV2ToV3Keys, decodeBlockMapV3, GROUP_MAX, GROUP_MIN, HASH_LEN, isBlockMapV3, toBlockMap } from "builder-util-runtime/internal"
+import { computeOperations, Operation, OperationKind } from "electron-updater/src/differentialDownloader/downloadPlanBuilder"
 
 // Reproducible deterministic test data (same LCG as blockmapTest.ts)
 function makeTestData(size: number, seed = 12345): Buffer {
@@ -577,5 +578,91 @@ describe("createBlockmap — v3Boundaries", () => {
     }
     expect(v3Boundaries.some(it => plainStarts.has(it))).toBe(false)
     expect(bounded.header.regions).toEqual(plain.header.regions)
+  })
+})
+
+// The first update after an app switches from "v2" to "v3" compares the cached v2 map with the new v3 map by the v3 block hash
+// both carry (`blockMapV2ToV3Keys`), instead of downloading the update in full.
+describe("comparing a v2 map of the old file with a v3 map of the new file", () => {
+  const silent = { info: () => undefined, warn: () => undefined, error: () => undefined }
+
+  async function maps(dir: string, name: string, data: Buffer, regions: { v2?: Array<BlockMapRegion>; v3?: Array<BlockMapRegion> } = {}) {
+    const inFile = path.join(dir, `${name}.bin`)
+    await writeFile(inFile, data)
+    const v2File = path.join(dir, `${name}.v2${BLOCK_MAP_FILE_SUFFIX}`)
+    await buildBlockMap(inFile, "gzip", v2File, { regions: regions.v2 })
+    const v2Bytes = await readFile(v2File)
+    const v3 = await buildV3(dir, name, data, regions.v3)
+    return { v2: JSON.parse(zlib.gunzipSync(v2Bytes).toString()) as BlockMap, v2Bytes, v3: toBlockMap(v3.map), v3Bytes: v3.bytes }
+  }
+
+  /** Applies the plan the way the differential downloader does and checks the result is the new file; returns the downloaded byte count. */
+  function apply(oldData: Buffer, newData: Buffer, operations: Array<Operation>): number {
+    const parts: Array<Buffer> = []
+    let downloaded = 0
+    for (const operation of operations) {
+      if (operation.kind === OperationKind.COPY) {
+        parts.push(oldData.subarray(operation.start, operation.end))
+      } else {
+        parts.push(newData.subarray(operation.start, operation.end))
+        downloaded += operation.end - operation.start
+      }
+    }
+    expect(Buffer.concat(parts).equals(newData)).toBe(true)
+    return downloaded
+  }
+
+  it("no regions: the cross-format plan is the plan two v3 maps give, and two v2 maps", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir()
+    const oldData = makeTestData(3_000_000, 4242)
+    // an insertion (shifts everything after it) and an in-place edit
+    const newData = Buffer.concat([oldData.subarray(0, 700_000), makeTestData(5_000, 7), oldData.subarray(700_000)])
+    makeTestData(100, 8).copy(newData, 2_000_000)
+    const old = await maps(dir, "old", oldData)
+    const updated = await maps(dir, "new", newData)
+
+    const cross = computeOperations(blockMapV2ToV3Keys(old.v2), updated.v3, silent)
+    expect(cross).toEqual(computeOperations(old.v3, updated.v3, silent))
+    expect(cross).toEqual(computeOperations(old.v2, updated.v2, silent))
+    const downloaded = apply(oldData, newData, cross)
+    // two changed spots, a few 16 KiB blocks each
+    expect(downloaded).toBeLessThan(4 * DEFAULT_CHUNKER.max)
+    // and the other direction (a release built with blockmap: "v2" again)
+    expect(computeOperations(old.v3, blockMapV2ToV3Keys(updated.v2), silent)).toEqual(cross)
+  })
+
+  it("a stored member chunked finer in v3 is downloaded once, every byte outside it is still copied", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir()
+    const region = { offset: 400_000, size: 1_000_000 }
+    const oldData = makeTestData(region.offset + region.size + 600_000, 99)
+    const newData = Buffer.from(oldData)
+    makeTestData(64, 3).copy(newData, region.offset + 500_000)
+    const old = await maps(dir, "old", oldData, { v2: [{ ...region, chunker: STORED_MEMBER_CHUNKER }] })
+    const updated = await maps(dir, "new", newData, { v3: [{ ...region, chunker: STORED_MEMBER_CHUNKER_V3 }] })
+
+    const downloaded = apply(oldData, newData, computeOperations(blockMapV2ToV3Keys(old.v2), updated.v3, silent))
+    // v3 blocks inside the region (at most 2 KiB) can never equal a v2 block there (at least 4 KiB but the last)
+    expect(downloaded).toBeGreaterThanOrEqual(region.size - STORED_MEMBER_CHUNKER.max)
+    // the default-chunked bytes around it are identical in both formats
+    expect(downloaded).toBeLessThanOrEqual(region.size + 2 * DEFAULT_CHUNKER.max)
+  })
+
+  // What "v3" changes for a compressed artifact (a 7z package, a zip): its bytes use the default chunker in both formats, so the
+  // data plan is the same; only the map differs, and the v3 map is the smaller one even when nothing after a change matches.
+  it("compressed data: same data plan in both formats, and the v3 map is smaller than the v2 map", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir()
+    // incompressible bytes stand for compressed ones; a solid stream re-encodes everything after the first change
+    const oldData = makeTestData(4_000_000, 5)
+    const newData = Buffer.concat([oldData.subarray(0, 1_000_000), makeTestData(3_000_000, 6)])
+    const old = await maps(dir, "old", oldData)
+    const updated = await maps(dir, "new", newData)
+
+    const v2Plan = computeOperations(old.v2, updated.v2, silent)
+    expect(computeOperations(old.v3, updated.v3, silent)).toEqual(v2Plan)
+    expect(apply(oldData, newData, v2Plan)).toBeGreaterThanOrEqual(3_000_000)
+    // ~10.5 B per block in v3 (records + group and super-group entries), ~24 B per block in v2 (base64 digests barely compress)
+    const blocks = updated.v3.files[0].sizes.length
+    expect(updated.v3Bytes.length).toBeLessThan(blocks * 11 + 128)
+    expect(updated.v2Bytes.length).toBeGreaterThan(blocks * 20)
   })
 })
