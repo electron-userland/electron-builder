@@ -75,11 +75,16 @@ describe("getArchiveToolsetBinDir", () => {
   })
 
   test.each([
-    ["win32", "x64", "latest"],
-    ["linux", "x64", "9.9.9"],
-  ])("%s %s %s is rejected before any download", async (platform, arch, version) => {
+    ["linux", "arm"],
+    ["win32", "x64"],
+  ])("%s %s has no bundle: null (host tools), without a download", async (platform, arch) => {
     pinHost(platform, arch)
-    await expect(getArchiveToolsetBinDir(version as any, "build")).rejects.toBeInstanceOf(InvalidConfigurationError)
+    expect(await getArchiveToolsetBinDir("latest", "build")).toBeNull()
+    expect(downloadBuilderToolset).not.toHaveBeenCalled()
+  })
+
+  test("an unknown version is rejected before any download", async () => {
+    await expect(getArchiveToolsetBinDir("9.9.9" as any, "build")).rejects.toBeInstanceOf(InvalidConfigurationError)
     expect(downloadBuilderToolset).not.toHaveBeenCalled()
   })
 

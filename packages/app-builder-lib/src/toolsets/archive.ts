@@ -28,22 +28,27 @@ const hostSuffixes: Record<string, string> = {
   "darwin-x64": "darwin-x86_64",
 }
 
-/** @returns the toolset's `bin` directory, which electron-builder puts first on `PATH` for fpm. */
-export async function getArchiveToolsetBinDir(toolset: ToolsetConfig["archive"], resourcesDir: string): Promise<string> {
+/** @returns the toolset's `bin` directory, which electron-builder puts first on `PATH` for fpm, or `null` on a host with no bundle (its own tools are used). */
+export async function getArchiveToolsetBinDir(toolset: ToolsetConfig["archive"], resourcesDir: string): Promise<string | null> {
   if (typeof toolset === "object" && toolset != null) {
     return path.join(await getCustomToolsetPath(toolset, resourcesDir), "bin")
   }
 
   // Unset / null / "latest" → newest; an explicit pin selects exactly that release.
   const version = resolveToolsetVersion(toolset, ARCHIVE_LATEST)
-  const checksums: Record<string, string> | undefined = (archiveChecksums as Record<string, Record<string, string>>)[version]
-  const filenameWithExt = `archive-${hostSuffixes[`${process.platform}-${process.arch}`]}.7z`
   // Never download without a checksum entry: the downloader would run with integrity verification disabled.
-  if (checksums?.[filenameWithExt] == null) {
+  if (!Object.prototype.hasOwnProperty.call(archiveChecksums, version)) {
     throw new InvalidConfigurationError(
-      `No toolsets.archive "${version}" bundle for ${process.platform}-${process.arch}. Set toolsets.archive to a ToolsetCustom object (url + checksum) instead.`
+      `Unknown toolsets.archive version "${version}". Known versions: ${Object.keys(archiveChecksums).join(", ")} (or "latest"). ` +
+        `To use a custom bundle, set toolsets.archive to a ToolsetCustom object (url + checksum) instead.`
     )
   }
+  const suffix = hostSuffixes[`${process.platform}-${process.arch}`]
+  if (suffix == null) {
+    return null
+  }
+  const checksums: Record<string, string> = archiveChecksums[version]
+  const filenameWithExt = `archive-${suffix}.7z`
   const bundleDir = await downloadBuilderToolset({
     releaseName: `archive@${version}`,
     filenameWithExt,

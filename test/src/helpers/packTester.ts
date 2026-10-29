@@ -1016,12 +1016,12 @@ export async function extractDebMember(debFile: string, member: string, tarArgs:
 }
 
 export async function getTarExecutable() {
-  return process.platform === "darwin" ? path.join(await getArchiveToolsetBinDir(undefined, ""), "gtar") : "tar"
+  return process.platform === "darwin" ? path.join((await getArchiveToolsetBinDir(undefined, "")) ?? "", "gtar") : "tar"
 }
 
 export async function getArExecutable() {
   if (process.platform === "darwin") {
-    return path.join(await getArchiveToolsetBinDir(undefined, ""), "ar")
+    return path.join((await getArchiveToolsetBinDir(undefined, "")) ?? "", "ar")
   }
   return "ar"
 }

@@ -55,7 +55,8 @@ export async function tar({ compression, format, outFile, dirToArchive, isMacApp
   ])
 
   if (format === "tar.lz") {
-    const lzipPath = path.join(await getArchiveToolsetBinDir(archiveToolset, buildResourcesDir), "lzip")
+    const archiveBinDir = await getArchiveToolsetBinDir(archiveToolset, buildResourcesDir)
+    const lzipPath = archiveBinDir == null ? Executables.resolve("lzip") : path.join(archiveBinDir, "lzip")
     await exec(lzipPath, [compression === "store" ? "-1" : "-9", "--keep" /* keep (don't delete) input files */, tarFile])
     // lzip creates the output file in the same directory as the input with a .lz suffix
     await move(`${tarFile}.lz`, outFile)

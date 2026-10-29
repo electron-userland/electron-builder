@@ -31,7 +31,7 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 - **`wine`** is only needed to build **Windows targets on a non-Windows machine**. On Windows it has no effect. It defaults to the **host-installed `wine`** (`"system"`) on both macOS and Linux, so a macOS host that builds Windows targets needs Wine installed (`brew install --cask wine-stable`). See [Host Wine](#host-wine) for where it is looked for. `toolsets.wine: "1.0.1"` still downloads the Wine 11.0 bundle on macOS when pinned explicitly, but the published bundle ships no PE builtins, so it cannot run Windows tools on its own.
 - **`winCodeSign`** is used on all platforms (`signtool.exe` on Windows, `osslsigncode` on macOS/Linux).
 - **`squirrel`** is only used by the `squirrelWindows` target. It runs natively on Windows; on macOS/Linux it needs a host-installed `mono` (see [`executables`](#executables)), and `rcedit` (from `winCodeSign`) runs under Wine.
-- **`archive`** ships for Linux x64, arm64 and ia32 and macOS arm64 and x64; its `bin/` goes first on fpm's `PATH`. `rpm`/`rpmbuild` are bundled only on Linux x64 and arm64 and macOS arm64: on **Intel macOS** and **32-bit Linux**, building `rpm` uses the host `rpmbuild` on `PATH` (e.g. `brew install rpm`, `apt-get install rpm`). A custom `archive` bundle must have the same `bin/` layout.
+- **`archive`** ships for Linux x64, arm64 and ia32 and macOS arm64 and x64; its `bin/` goes first on fpm's `PATH`. Other hosts use their own tools (`lzip` from [`executables`](#executables)). `rpm`/`rpmbuild` are bundled only on Linux x64 and arm64 and macOS arm64: on **Intel macOS** and **32-bit Linux**, building `rpm` uses the host `rpmbuild` on `PATH` (e.g. `brew install rpm`, `apt-get install rpm`). A custom `archive` bundle must have the same `bin/` layout.
 - **`icons`** has only one published version today, so `"latest"` and the listed version are equivalent.
 - **`wix`** `"latest"` is WiX 3.14.1, which builds a native **arm64** MSI for `arm64`; `"0.0.0"` is the legacy WiX 4.0.0.5512 preview bundle, which packages an arm64 app in an x64 MSI. On macOS/Linux, `candle.exe` and `light.exe` run under Wine with [wine-mono](https://gitlab.winehq.org/wine-mono/wine-mono). If an `msiProjectCreated` hook adds elements in a WiX 4 namespace (for example `http://wixtoolset.org/schemas/v4/wxs/util`), switch it to the WiX 3 one (`http://schemas.microsoft.com/wix/UtilExtension`), or pin `"0.0.0"`; with WiX 3 the build fails with an error that names the namespace.
 :::
@@ -290,7 +290,7 @@ Plugins are particularly of-note here. NSIS scripts do not offer a lot of functi
 
 ## Host programs — `executables` {#executables}
 
-Besides the bundles above, electron-builder starts a few programs that are installed on the build machine: PowerShell, Wine, Mono, the Parallels Desktop command line tool, the macOS packaging and signing tools, `snapcraft` and `flatpak`. electron-builder starts these programs only from an absolute path, never by looking up a name on `PATH`, so that nothing a dependency puts on `PATH` (such as `node_modules/.bin`) or in the current directory can stand in for them.
+Besides the bundles above, electron-builder starts a few programs that are installed on the build machine: PowerShell, Wine, Mono, the Parallels Desktop command line tool, the macOS packaging and signing tools, `lzip`, `snapcraft` and `flatpak`. electron-builder starts these programs only from an absolute path, never by looking up a name on `PATH`, so that nothing a dependency puts on `PATH` (such as `node_modules/.bin`) or in the current directory can stand in for them.
 
 For each program it uses the first location that is an executable file: the locations of its `toolsets.executables` entry when that is set, otherwise the default install locations below. If none is, the build fails with a configuration error that names the locations it tried. An entry **replaces** the default locations of that program; it is not merged with them.
 
@@ -323,6 +323,7 @@ Each entry is one `file://` URI or a list of them. A list can serve several host
 | `notarytool` | Notarization | the `notarytool` of the selected Xcode, located with `/usr/bin/xcrun --find notarytool` |
 | `stapler` | Validating stapled notarization tickets (`forceCodeSigning`, `electron-builder verify`) | the `stapler` of the selected Xcode, located with `/usr/bin/xcrun --find stapler` |
 | `pkgutil` | Checking the signature of `pkg` installers (`forceCodeSigning`, `electron-builder verify`) | macOS: `/usr/sbin/pkgutil` |
+| `lzip` | `tar.lz` archives on hosts without an `archive` toolset bundle | Linux: `/usr/bin/lzip`, `/usr/local/bin/lzip` |
 | `snapcraft` | Building and publishing snaps | macOS: `/opt/homebrew/bin/snapcraft`, `/usr/local/bin/snapcraft`; Linux: `/snap/bin/snapcraft`, `/usr/bin/snapcraft` |
 | `flatpak`, `flatpak-builder` | Building flatpaks | Linux: `/usr/bin/<name>`, `/usr/local/bin/<name>` |
 

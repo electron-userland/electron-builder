@@ -377,8 +377,10 @@ export default class FpmTarget extends Target {
 
     // fpm runs rpmbuild, xz, tar and ar from PATH: the archive toolset's go first
     const execEnv = { ...env }
-    if (process.platform === "linux" || process.platform === "darwin") {
-      execEnv.PATH = computeEnv(env.PATH, [await getArchiveToolsetBinDir(this.packager.config.toolsets?.archive, this.packager.buildResourcesDir)])
+    const archiveBinDir =
+      process.platform === "linux" || process.platform === "darwin" ? await getArchiveToolsetBinDir(this.packager.config.toolsets?.archive, this.packager.buildResourcesDir) : null
+    if (archiveBinDir != null) {
+      execEnv.PATH = computeEnv(env.PATH, [archiveBinDir])
     }
 
     await exec(fpmPath, fpmArgs, { env: execEnv }).catch(e => {
