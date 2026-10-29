@@ -210,7 +210,7 @@ export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, 
       await runKeyRotationTest(context, "nsis", "", Arch.x64, toolsets)
     })
 
-    // An app on electron-updater 6 updates to this build, then once more with this repository's updater. Gated to the latest
+    // An app on electron-updater 6 updates to this build, then twice more with this repository's updater. Gated to the latest
     // toolset combination only — the toolsets do not take part in what the updater reads.
     test.ifEnv(isLatestToolset(toolsets))("nsis - update from electron-updater 6", optionsForFlakyMultiHopE2E, async (context: TestContext) => {
       const vm = await windowsVmPromise

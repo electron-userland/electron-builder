@@ -411,6 +411,37 @@ exports[`linux > appimage tool: 1.1.0 > AppImage - update from electron-updater 
 }
 `;
 
+exports[`linux > appimage tool: 1.1.0 > AppImage - update from electron-updater 6 - x64 4`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.3",
+      },
+    },
+  ],
+}
+`;
+
 exports[`linux > appimage tool: 1.1.0 > AppImage - verifyUpdateFile - x64 1`] = `
 {
   "linux": [

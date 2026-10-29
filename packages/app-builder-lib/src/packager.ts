@@ -31,11 +31,11 @@ import { Framework, isElectronBased } from "./Framework.js"
 import { Metadata } from "./options/metadata.js"
 import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions, PlannedTargets } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
-import { addTargetsForPlatform, computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
+import { addTargetsForPlatform, computeArchToTargetNamesMap, createTargets, NoOpTarget, resolveTargetNames } from "./targets/targetFactory.js"
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
 import { assertNoRemovedEnvVars } from "./util/flags.js"
 import { expandMacro } from "./util/macroExpander.js"
-import { declaredElectronUpdaterCompatibility } from "./util/electronUpdaterCompatibility.js"
+import { electronUpdaterRequirements } from "./util/electronUpdaterCompatibility.js"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata.js"
 import { warnOnRemovedEnvVars } from "./util/removedEnvVars.js"
 import { getRepositoryInfo } from "./util/repositoryInfo.js"
@@ -374,7 +374,16 @@ export class Packager {
     await this.eventEmitter.emit("afterExtract", context)
   }
 
+  /**
+   * Loads and validates the configuration. The app's electron-updater is checked against no platform's `electronUpdaterCompatibility`
+   * here: `build` checks it against the platforms it builds, while the CLI `publish` and `verify` commands write no update files.
+   */
   async validateConfig(): Promise<void> {
+    await this.loadAndValidateConfig(new Map())
+  }
+
+  /** `builtTargets`: the targets the build creates, whose update files the app's electron-updater has to read. */
+  private async loadAndValidateConfig(builtTargets: Map<Platform, Map<Arch, Array<string>>>): Promise<void> {
     let configPath: string | null = null
     let configFromOptions = this.options.config
     if (typeof configFromOptions === "string") {
@@ -413,7 +422,9 @@ export class Packager {
     if (this.isTwoPackageJsonProjectLayoutUsed) {
       log.debug({ devPackageFile, appPackageFile }, "two package.json structure is used")
     }
-    checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile, projectDir, declaredElectronUpdaterCompatibility(configuration))
+    // per platform the build targets, which writes update files for its own range
+    const updaterRequirements = electronUpdaterRequirements(configuration, resolveTargetNames(builtTargets, configuration))
+    checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile, projectDir, updaterRequirements)
 
     await validateConfiguration(configuration, this.debugLogger)
 
@@ -432,7 +443,7 @@ export class Packager {
     // image still exporting one silently gets a different toolchain than it asked for.
     assertNoRemovedEnvVars()
 
-    await this.validateConfig()
+    await this.loadAndValidateConfig(this.options.targets ?? new Map())
 
     // every host program the build starts, also in its asynchronous work, comes from this build's toolsets.executables (or the
     // default install locations), whatever other builds in this process configure

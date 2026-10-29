@@ -119,7 +119,7 @@ export interface CommonConfiguration {
    *   format then costs one full download per user, as below.
    *
    * Apps whose electron-updater cannot read a release's format, or whose cached map is in another format, download that update
-   * in full once; the next one is differential again.
+   * in full once; the next one is differential again, or with an artifact name without `${version}` the one after it.
    *
    * Block maps embedded in an artifact (AppImage, the NSIS web installer's app package) are always `"v2"`.
    * See [the v27 notes](https://www.electron.build/docs/migration/v27-build-changes#block-map-format-follows-electronupdatercompatibility).

@@ -45,7 +45,7 @@ export function registerBlackboxLinuxTests(toolset: Required<Pick<ToolsetConfig,
       await runKeyRotationTest(context, "AppImage", "appimage", Arch.x64, { appimage })
     })
 
-    // An app on electron-updater 6 updates to this build, then once more with this repository's updater.
+    // An app on electron-updater 6 updates to this build, then twice more with this repository's updater.
     test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true" && process.arch === "x64")(
       "AppImage - update from electron-updater 6 - x64",
       optionsForFlakyMultiHopE2E,
