@@ -135,7 +135,7 @@ Legacy-base snap template builds (`core18`/`core20`/`core22` with `useTemplateAp
 
 In v26, fpm ran whatever `rpmbuild`, `xz`, `tar` and `ar` were on the build machine's `PATH`, and on macOS the `linuxToolsMac` bundle. v27 replaces `linuxToolsMac` with the [`toolsets.archive`](../toolsets.md) toolset, whose `bin/` (`xz`, `lzip`, GNU `tar`/`gtar`, GNU `ar`/`gar`, `bsdtar`, and `rpm`/`rpmbuild` from rpm 6.1.0) goes first on fpm's `PATH` on macOS and Linux. Its `rpmbuild` ignores host and user rpm configuration (`/etc/rpm`, `~/.rpmmacros`) and pins the v4 package format and `_build_id_links none`, so building on Linux, on macOS or in Docker gives the same package. Pass a macro explicitly with `rpm.fpm: ["--rpm-rpmbuild-define=<name> <value>"]`.
 
-The bundled `rpmbuild` ships for Linux x64 and arm64 (glibc 2.28 or newer) and macOS arm64 (macOS 15 or newer). On **Intel macOS** and **32-bit Linux**, the toolset has no `rpmbuild`, so building `rpm` uses the host `rpmbuild` on `PATH`: install it (`brew install rpm`, `apt-get install rpm`).
+The bundle needs glibc 2.28 or newer on Linux x64 and arm64, glibc 2.17 or newer on Linux ia32, and macOS 15 or newer, and does not run on musl (e.g. Alpine); on older or musl hosts, set `toolsets.archive: "system"`. The bundled `rpmbuild` ships for Linux x64 and arm64 and macOS arm64. On **Intel macOS** and **32-bit Linux**, the toolset has no `rpmbuild`, so building `rpm` uses the host `rpmbuild` on `PATH`: install it (`brew install rpm`, `apt-get install rpm`).
 
 ### Azure Trusted Signing `signtool /dlib` is the default {#azure-trusted-signing-signtool-dlib-is-the-default}
 
