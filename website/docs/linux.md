@@ -195,7 +195,7 @@ rpm:
 electron-builder interpolates variables into maintainer scripts (`afterInstall` / `afterRemove`) using shell-style `${var}`. The legacy EJS `<%= var %>` interpolation was **removed** in v27 — update any templated maintainer scripts to `${var}`. See [v27 Breaking Changes → Linux maintainer-script EJS syntax](./migration/v27-developer-changes.md#linux-maintainer-script-ejs-template-syntax).
 :::
 
-**`rpmbuild`:** fpm builds the package with the portable `rpmbuild` from the [`toolsets.rpm`](./toolsets.md) toolset (rpm 6.1.0), so the build machine needs no `rpm` package and the output does not depend on its rpm version or on host rpm macros (`~/.rpmmacros`, `/etc/rpm`). The bundle is published for Linux x64 and arm64 (glibc 2.28 or newer, matching Node.js 22's own floor; not musl) and macOS arm64 (macOS 15 or newer). If the bundle cannot run on the host, the build stops with an error that quotes the loader output and suggests `toolsets.rpm: system`. On other hosts (Intel macOS, 32-bit Linux, older macOS, Alpine), or to build with the host `rpmbuild` as before v27, set:
+**`rpmbuild`:** fpm builds the package with the portable `rpmbuild` from the [`toolsets.rpm`](./toolsets.md) toolset (rpm 6.1.0), so the build machine needs no `rpm` package and the output does not depend on its rpm version or on host rpm macros (`~/.rpmmacros`, `/etc/rpm`). The bundled `rpmbuild` ships for **Linux x64 and arm64** (glibc 2.28 or newer; not musl) and **macOS arm64** (macOS 15 or newer). On any other host (Intel macOS, 32-bit Linux, musl-based Linux such as Alpine, macOS 14 or older), install `rpmbuild` yourself (`brew install rpm`, `apt-get install rpm`) and set the following. The same setting keeps the host `rpmbuild` as before v27:
 
 ```yaml
 toolsets:
