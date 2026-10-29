@@ -111,7 +111,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 | `winCodeSign` | `0.0.0` (winCodeSign 2.6.0) | `1.3.1` | Windows Kits 10.0.26100.0; `osslsigncode` 2.11 + native arm64; bundles the Azure Trusted Signing `dlib` + .NET 8 runtime |
 | `appimage` | `0.0.0` (FUSE2 runtime) | `1.2.1` | Static FUSE3-compatible runtime (runs without a host FUSE install); adds `unsquashfs` support; statically linked zstd, so Linux and macOS hosts build identical images |
 | `nsis` | `0.0.0` (NSIS 3.0.4.1, split bundle) | `1.2.1` | NSIS 3.12; unified single-archive bundle; entrypoint scripts auto-set `NSISDIR` |
-| `fpm` | `2.2.1` | `2.2.1` | Unchanged — FPM 1.17.0 / Ruby 3.4.3 |
+| `fpm` | `2.2.1` | `2.3.1` | FPM 1.18.0 / Ruby 3.4.12; Linux bundles link a static OpenSSL 3.5.9 instead of OpenSSL 1.1.1 (same glibc 2.28 floor) |
 | `icons` | `1.1.0` | `1.2.3` | Newer bundle — `wasm-vips` + `@resvg/resvg-wasm`; 16/32 px ICNS entries written as ARGB |
 | `linuxToolsMac` | `1.0.0` | `1.0.1` | Same tools rebuilt to run on macOS 15+ (1.0.0 required macOS 26) |
 | `sevenZip` | `1.0.0` | `1.1.0` | 7-Zip 26.05 |
