@@ -1,9 +1,9 @@
 import { hashFile, UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
-import isEqual from "lodash.isequal"
 import { NonThrowableLogger, ResolvedUpdateFileInfo } from "./types.js"
 import { Logger } from "./types.js"
 import fsExtra from "fs-extra"
 import * as path from "path"
+import { isDeepStrictEqual } from "util"
 import { eq as isVersionsEqual, parse as parseVersion } from "semver"
 
 /**
@@ -68,7 +68,9 @@ export class DownloadedUpdateHelper {
     if (this.versionInfo != null && this.file === updateFile && this.fileInfo != null) {
       // update has already been downloaded from this running instance
       // check here only existence, not checksum
-      if (isEqual(this.versionInfo, updateInfo) && isEqual(this.fileInfo.info, fileInfo.info) && (await fsExtra.pathExists(updateFile))) {
+      // update info is plain data parsed from the channel file (YAML), so a structural comparison is enough: key order does not matter,
+      // a key set to `undefined` differs from a missing one
+      if (isDeepStrictEqual(this.versionInfo, updateInfo) && isDeepStrictEqual(this.fileInfo.info, fileInfo.info) && (await fsExtra.pathExists(updateFile))) {
         return updateFile
       } else {
         return null

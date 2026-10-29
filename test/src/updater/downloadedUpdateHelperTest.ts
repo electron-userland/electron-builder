@@ -4,7 +4,8 @@ import { createHash } from "crypto"
 import * as path from "path"
 import { beforeEach, describe, expect, test } from "vitest"
 import { hashFile } from "builder-util-runtime"
-import type { UpdateInfo } from "builder-util-runtime"
+import type { UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
+import { load } from "js-yaml"
 import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
 import { makeLogger } from "../helpers/updaterTestUtil"
 
@@ -181,6 +182,109 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
 
       const result = await helper.validateDownloadedPath(updateFile, versionInfo, fileInfo)
       expect(result).toBeNull()
+    })
+  })
+
+  describe("DownloadedUpdateHelper.validateDownloadedPath (in-memory update info comparison)", () => {
+    const channelFile = [
+      "version: 1.0.1",
+      "files:",
+      "  - url: TestApp-Setup-1.0.1.exe",
+      "    sha512: sha512abc",
+      "    size: 1024",
+      "    blockMapSize: 128",
+      "path: TestApp-Setup-1.0.1.exe",
+      "sha512: sha512abc",
+      "releaseDate: '2026-01-01T00:00:00.000Z'",
+      "releaseNotes:",
+      "  - version: 1.0.1",
+      "    note: fixes",
+      "  - version: 1.0.0",
+      "    note: null",
+      "",
+    ].join("\n")
+
+    // a re-check parses the channel file again: the update info is equal in content, but never the same object
+    function parseChannelFile(data = channelFile): { updateInfo: UpdateInfo; fileInfo: ResolvedUpdateFileInfo } {
+      const loaded = load(data)
+      if (loaded == null || typeof loaded !== "object" || !("version" in loaded)) {
+        throw new Error("unexpected channel file content")
+      }
+      const updateInfo = loaded as UpdateInfo
+      const info = updateInfo.files[0]
+      return { updateInfo, fileInfo: { url: new URL(`https://example.com/${info.url}`), info } }
+    }
+
+    let cacheDir: string
+    let updateFile: string
+    let helper: DownloadedUpdateHelper
+    let log: ReturnType<typeof makeLogger>
+
+    beforeEach(async context => {
+      cacheDir = await context.tmpDir.getTempDir({ prefix: "downloaded-update-helper" })
+      updateFile = path.join(cacheDir, "update.exe")
+      await outputFile(updateFile, "installer content")
+      log = makeLogger()
+      helper = new DownloadedUpdateHelper(cacheDir, log)
+      const downloaded = parseChannelFile()
+      await helper.setDownloadedFile(updateFile, null, downloaded.updateInfo, downloaded.fileInfo, "update.exe", false)
+    })
+
+    async function validate(updateInfo: UpdateInfo, fileInfo: ResolvedUpdateFileInfo): Promise<string | null> {
+      return await helper.validateDownloadedPath(updateFile, updateInfo, fileInfo)
+    }
+
+    test("reuses the downloaded file for an equal update info parsed again", async () => {
+      const { updateInfo, fileInfo } = parseChannelFile()
+      expect(await validate(updateInfo, fileInfo)).toBe(updateFile)
+    })
+
+    test("key order does not matter", async () => {
+      const { updateInfo, fileInfo } = parseChannelFile()
+      const reordered: UpdateInfo = Object.fromEntries(Object.entries(updateInfo).reverse()) as UpdateInfo
+      const reorderedFileInfo: ResolvedUpdateFileInfo = { ...fileInfo, info: Object.fromEntries(Object.entries(fileInfo.info).reverse()) as UpdateFileInfo }
+      expect(await validate(reordered, reorderedFileInfo)).toBe(updateFile)
+    })
+
+    test("compares nested arrays and objects by content", async () => {
+      const { updateInfo, fileInfo } = parseChannelFile()
+      expect(await validate(structuredClone(updateInfo), { ...fileInfo, info: structuredClone(fileInfo.info) })).toBe(updateFile)
+    })
+
+    test("a different version is not the downloaded update", async () => {
+      const { updateInfo, fileInfo } = parseChannelFile(channelFile.replace("version: 1.0.1\n", "version: 1.0.2\n"))
+      expect(await validate(updateInfo, fileInfo)).toBeNull()
+    })
+
+    test("a different nested value is not the downloaded update", async () => {
+      const { updateInfo, fileInfo } = parseChannelFile(channelFile.replace("note: fixes", "note: other fixes"))
+      expect(await validate(updateInfo, fileInfo)).toBeNull()
+    })
+
+    test("a different order of array items is not the downloaded update", async () => {
+      const { updateInfo, fileInfo } = parseChannelFile()
+      const releaseNotes = updateInfo.releaseNotes
+      if (!Array.isArray(releaseNotes)) {
+        throw new Error("expected release notes to be an array")
+      }
+      expect(await validate({ ...updateInfo, releaseNotes: [...releaseNotes].reverse() }, fileInfo)).toBeNull()
+    })
+
+    test("a different file info is not the downloaded update", async () => {
+      const { updateInfo, fileInfo } = parseChannelFile()
+      expect(await validate(updateInfo, { ...fileInfo, info: { ...fileInfo.info, size: 2048 } })).toBeNull()
+      expect(await validate(updateInfo, { ...fileInfo, info: { ...fileInfo.info, sha512: "sha512def" } })).toBeNull()
+    })
+
+    test("a key set to undefined differs from a missing key", async () => {
+      const { updateInfo, fileInfo } = parseChannelFile()
+      expect(await validate({ ...updateInfo, minimumSystemVersion: undefined }, fileInfo)).toBeNull()
+      expect(await validate(updateInfo, { ...fileInfo, info: { ...fileInfo.info, isAdminRightsRequired: undefined } })).toBeNull()
+    })
+
+    test("only the update info content is compared, not the resolved url", async () => {
+      const { updateInfo, fileInfo } = parseChannelFile()
+      expect(await validate(updateInfo, { ...fileInfo, url: new URL("https://mirror.example.com/TestApp-Setup-1.0.1.exe") })).toBe(updateFile)
     })
   })
 

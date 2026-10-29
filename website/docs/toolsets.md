@@ -23,7 +23,7 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 | `fpm` | Building Linux packages (`.deb`, `.rpm`, `.pacman`, …) on macOS & Linux | `2.2.1` |
 | `linuxToolsMac` | Building Linux targets / `.tar.lz` archives on macOS (`ar`, `lzip`, `gtar`) | `1.0.1` |
 | `rpm` | The `rpmbuild` that fpm runs for the `rpm` target on macOS & Linux (portable rpm 6.1.0, host rpm macros ignored) | `1.0.0`; `"system"` uses the host `rpmbuild` |
-| `sevenZip` | Extracting `.7z` and `.tar.xz` archives internally | `1.0.1` |
+| `sevenZip` | Extracting `.7z` and `.tar.xz` archives internally | `1.1.0` |
 | `icons` | Converting source images to `.icns`, `.ico`, and PNG icon sets | `1.2.3` |
 | `squirrel` | Building Squirrel.Windows installers (`Squirrel.exe`, `SyncReleases.exe`, `nuget.exe`, `7z`) — requires `electron-builder-squirrel-windows` | `1.1.1` |
 | `wix` | Building `msi` and `msiWrapped` installers (`candle.exe`, `light.exe`, WiX extensions) | `2.0.0` (WiX 3.14.1) |
