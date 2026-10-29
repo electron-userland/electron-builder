@@ -21,8 +21,7 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 | `nsis` | Compiling Windows installers (`makensis`, plugin DLLs, `elevate.exe`) | `2.0.4` |
 | `wine` | Running Windows tools (NSIS, rcedit, signtool) on non-Windows hosts | `system` (host `wine` at a fixed install location) |
 | `fpm` | Building Linux packages (`.deb`, `.rpm`, `.pacman`, …) on macOS & Linux | `2.3.1` |
-| `linuxToolsMac` | Building Linux targets / `.tar.lz` archives on macOS (`ar`, `lzip`, `gtar`) | `1.1.1` |
-| `rpm` | The `rpmbuild` that fpm runs for the `rpm` target on macOS & Linux (portable rpm 6.1.0, host rpm macros ignored) | `1.0.0`; `"system"` uses the host `rpmbuild` |
+| `archive` | Tools that fpm and `.tar.lz` archives run on macOS & Linux: `xz`, `lzip`, GNU `tar`/`gtar`, GNU `ar`/`gar`, `bsdtar`, and `rpm`/`rpmbuild` (rpm 6.1.0) | `1.0.0` |
 | `sevenZip` | Extracting `.7z` and `.tar.xz` archives internally | `1.1.0` |
 | `icons` | Converting source images to `.icns`, `.ico`, and PNG icon sets | `1.2.3` |
 | `squirrel` | Building Squirrel.Windows installers (`Squirrel.exe`, `SyncReleases.exe`, `nuget.exe`, `7z`) — requires `electron-builder-squirrel-windows` | `1.2.1` |
@@ -32,7 +31,7 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 - **`wine`** is only needed to build **Windows targets on a non-Windows machine**. On Windows it has no effect. It defaults to the **host-installed `wine`** (`"system"`) on both macOS and Linux, so a macOS host that builds Windows targets needs Wine installed (`brew install --cask wine-stable`). See [Host Wine](#host-wine) for where it is looked for. `toolsets.wine: "1.0.1"` still downloads the Wine 11.0 bundle on macOS when pinned explicitly, but the published bundle ships no PE builtins, so it cannot run Windows tools on its own.
 - **`winCodeSign`** is used on all platforms (`signtool.exe` on Windows, `osslsigncode` on macOS/Linux).
 - **`squirrel`** is only used by the `squirrelWindows` target. It runs natively on Windows; on macOS/Linux it needs a host-installed `mono` (see [`executables`](#executables)), and `rcedit` (from `winCodeSign`) runs under Wine.
-- **`rpm`** ships for **Linux x64 and arm64** (glibc 2.28 or newer; not musl) and **macOS arm64** (macOS 15 or newer). Other hosts (Intel macOS, 32-bit Linux, musl-based Linux such as Alpine, macOS 14 or older) should set `toolsets.rpm: "system"` and install `rpmbuild` themselves (e.g. `brew install rpm`, `apt-get install rpm`). A custom `rpm` bundle must have `bin/rpmbuild` at the root of the archive or directory. See [RPM builds use a bundled `rpmbuild`](./migration/v27-build-changes.md#rpm-builds-use-a-bundled-rpmbuild).
+- **`archive`** ships for Linux x64, arm64 and ia32 and macOS arm64 and x64; its `bin/` goes first on fpm's `PATH`. `rpm`/`rpmbuild` are bundled only on Linux x64 and arm64 and macOS arm64: on **Intel macOS** and **32-bit Linux**, building `rpm` uses the host `rpmbuild` on `PATH` (e.g. `brew install rpm`, `apt-get install rpm`). A custom `archive` bundle must have the same `bin/` layout.
 - **`icons`** has only one published version today, so `"latest"` and the listed version are equivalent.
 - **`wix`** `"latest"` is WiX 3.14.1, which builds a native **arm64** MSI for `arm64`; `"0.0.0"` is the legacy WiX 4.0.0.5512 preview bundle, which packages an arm64 app in an x64 MSI. On macOS/Linux, `candle.exe` and `light.exe` run under Wine with [wine-mono](https://gitlab.winehq.org/wine-mono/wine-mono). If an `msiProjectCreated` hook adds elements in a WiX 4 namespace (for example `http://wixtoolset.org/schemas/v4/wxs/util`), switch it to the WiX 3 one (`http://schemas.microsoft.com/wix/UtilExtension`), or pin `"0.0.0"`; with WiX 3 the build fails with an error that names the namespace.
 :::
@@ -118,7 +117,7 @@ toolsets.<name>: { url: string, checksum?: string, version?: string }
 
 ### Custom toolset checksums {#custom-toolset-checksum}
 
-Every custom toolset bundle accepts the same checksum formats, whichever toolset it replaces: `winCodeSign`, `appimage`, `nsis`, `wine`, `fpm`, `linuxToolsMac`, `rpm`, `sevenZip`, `icons` or `squirrel`.
+Every custom toolset bundle accepts the same checksum formats, whichever toolset it replaces: `winCodeSign`, `appimage`, `nsis`, `wine`, `fpm`, `archive`, `sevenZip`, `icons` or `squirrel`.
 
 - **Formats:** either
   - the SHA-256 of the archive file as 64 **hex** characters (an uppercase value is lowercased for you), or
@@ -291,7 +290,7 @@ Plugins are particularly of-note here. NSIS scripts do not offer a lot of functi
 
 ## Host programs — `executables` {#executables}
 
-Besides the bundles above, electron-builder starts a few programs that are installed on the build machine: PowerShell, Wine, Mono, the Parallels Desktop command line tool, the macOS packaging and signing tools, `lzip`, `snapcraft` and `flatpak`. electron-builder starts these programs only from an absolute path, never by looking up a name on `PATH`, so that nothing a dependency puts on `PATH` (such as `node_modules/.bin`) or in the current directory can stand in for them.
+Besides the bundles above, electron-builder starts a few programs that are installed on the build machine: PowerShell, Wine, Mono, the Parallels Desktop command line tool, the macOS packaging and signing tools, `snapcraft` and `flatpak`. electron-builder starts these programs only from an absolute path, never by looking up a name on `PATH`, so that nothing a dependency puts on `PATH` (such as `node_modules/.bin`) or in the current directory can stand in for them.
 
 For each program it uses the first location that is an executable file: the locations of its `toolsets.executables` entry when that is set, otherwise the default install locations below. If none is, the build fails with a configuration error that names the locations it tried. An entry **replaces** the default locations of that program; it is not merged with them.
 
@@ -324,7 +323,6 @@ Each entry is one `file://` URI or a list of them. A list can serve several host
 | `notarytool` | Notarization | the `notarytool` of the selected Xcode, located with `/usr/bin/xcrun --find notarytool` |
 | `stapler` | Validating stapled notarization tickets (`forceCodeSigning`, `electron-builder verify`) | the `stapler` of the selected Xcode, located with `/usr/bin/xcrun --find stapler` |
 | `pkgutil` | Checking the signature of `pkg` installers (`forceCodeSigning`, `electron-builder verify`) | macOS: `/usr/sbin/pkgutil` |
-| `lzip` | `tar.lz` archives on Linux (macOS uses the `linuxToolsMac` toolset) | Linux: `/usr/bin/lzip`, `/usr/local/bin/lzip` |
 | `snapcraft` | Building and publishing snaps | macOS: `/opt/homebrew/bin/snapcraft`, `/usr/local/bin/snapcraft`; Linux: `/snap/bin/snapcraft`, `/usr/bin/snapcraft` |
 | `flatpak`, `flatpak-builder` | Building flatpaks | Linux: `/usr/bin/<name>`, `/usr/local/bin/<name>` |
 
@@ -343,7 +341,7 @@ v27 **removes** the toolset environment-variable overrides. Replace each with a 
 | Removed env var | Toolset it controlled | Replacement |
 |---|---|---|
 | `APPIMAGE_TOOLS_PATH` | AppImage build tools | `toolsets.appimage: { url }` |
-| `LINUX_TOOLS_MAC_PATH` | linux-tools-mac bundle | `toolsets.linuxToolsMac: { url }` |
+| `LINUX_TOOLS_MAC_PATH` | linux-tools-mac bundle | `toolsets.archive: { url }` |
 | `CUSTOM_FPM_PATH` | FPM executable | `toolsets.fpm: { url }` |
 | `ELECTRON_BUILDER_NSIS_DIR` | NSIS compiler bundle | `toolsets.nsis: { url }` |
 | `ELECTRON_BUILDER_NSIS_RESOURCES_DIR` | NSIS resources/plugins | `toolsets.nsis: { url }` |

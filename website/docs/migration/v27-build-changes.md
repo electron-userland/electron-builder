@@ -21,7 +21,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [Implicit `--publish` removed](#implicit-publish-removed) | Warns | Pass `--publish` explicitly |
 | [`--em.build` / `--em.directories` CLI flags removed](#removed-flags-embuild-emdirectories) | Fails build | Use `-c` / `-c.directories` |
 | [Toolset defaults resolve to `"latest"`](#toolset-defaults-resolve-to-latest-newest-bundle) | Info log | No action; pin to `"0.0.0"` to restore a legacy bundle. **Wine is now the host install** — building Windows targets on macOS needs Wine installed |
-| [RPM builds use a bundled `rpmbuild`](#rpm-builds-use-a-bundled-rpmbuild) | Fails build on hosts without a bundle | None on Linux x64/arm64 (glibc 2.28+, not musl) and macOS 15+ arm64. Set `toolsets.rpm: "system"` on other hosts, or to keep using host rpm macros |
+| [RPM builds use a bundled `rpmbuild`](#rpm-builds-use-a-bundled-rpmbuild) | None | Intel macOS and 32-bit Linux still need `rpmbuild` installed |
 | [Azure Trusted Signing `/dlib` is the default](#azure-trusted-signing-signtool-dlib-is-the-default) | Info log | Pin `winCodeSign` below `1.3.0` only to force the legacy PowerShell path |
 | [Toolset env-var overrides removed](#toolset-env-var-overrides-removed) | Fails build | Replace `APPIMAGE_TOOLS_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, `USE_SYSTEM_WINE`, … with `toolsets.X: { url, checksum }` — setting a removed variable now **fails the build** |
 | [`CI_BUILD_TAG` env var removed](#ci_build_tag-environment-variable) | Warns, then fails | Use `CI_COMMIT_TAG` |
@@ -114,8 +114,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 | `nsis` | `0.0.0` (NSIS 3.0.4.1, split bundle) | `2.0.4` | NSIS 3.13 compiled from source; unified single-archive bundle; entrypoint scripts auto-set `NSISDIR`; a second, log-enabled bundle is picked when `installerDebugLogging` is on |
 | `fpm` | `2.2.1` | `2.3.1` | FPM 1.18.0 / Ruby 3.4.12; Linux bundles link a static OpenSSL 3.5.9 instead of OpenSSL 1.1.1 (same glibc 2.28 floor) |
 | `icons` | `1.1.0` | `1.2.3` | Newer bundle — `wasm-vips` + `@resvg/resvg-wasm`; 16/32 px ICNS entries written as ARGB |
-| `rpm` | *(host `rpmbuild` on `PATH`)* | `1.0.0` | New toolset — portable `rpmbuild` (rpm 6.1.0) instead of the host one; Intel macOS, 32-bit Linux, macOS < 15, glibc < 2.28 and musl hosts need `"system"`. See [RPM builds use a bundled `rpmbuild`](#rpm-builds-use-a-bundled-rpmbuild) |
-| `linuxToolsMac` | `1.0.0` | `1.1.1` | Trimmed to the tools electron-builder runs (`gtar`, `lzip`, binutils 2.47 `ar`) plus their license files, built to run on macOS 15+ (1.0.0 required macOS 26) |
+| `archive` | *(host tools; `linuxToolsMac` on macOS)* | `1.0.0` | New toolset replacing `linuxToolsMac` — `xz`, `lzip`, GNU `tar`/`ar`, `bsdtar` and `rpmbuild` (rpm 6.1.0). See [RPM builds use a bundled `rpmbuild`](#rpm-builds-use-a-bundled-rpmbuild) |
 | `sevenZip` | `1.0.0` | `1.1.0` | 7-Zip 26.05 |
 | `squirrel` | *(electron-winstaller npm package)* | `1.2.1` | New toolset — Squirrel.Windows vendor bundle, replaces the `electron-winstaller` dependency; pinned, checksum-verified 7-Zip 26.05 (native arm64 on arm64 Windows hosts) and `nuget.exe` 7.9.0 |
 | `wix` | *(fixed, WiX 4.0.0.5512 preview)* — now `0.0.0` | `2.0.0` | WiX 3.14.1: an `arm64` build gets a native `Arm64` MSI (the preview packaged the arm64 app in an x64 MSI). The generated `.wxs` uses the WiX 3 schema, so an `msiProjectCreated` hook that inserts WiX 4-namespace elements needs the WiX 3 namespace (e.g. `http://schemas.microsoft.com/wix/UtilExtension`) or `wix: "0.0.0"`; the build fails with an error naming the namespace otherwise |
@@ -132,25 +131,11 @@ Legacy-base snap template builds (`core18`/`core20`/`core22` with `useTemplateAp
 
 ### RPM builds use a bundled `rpmbuild` {#rpm-builds-use-a-bundled-rpmbuild}
 
-**How you'll find out:** On Intel macOS and 32-bit Linux the build **fails** with a configuration error. On macOS older than 15, a glibc older than 2.28 or a musl Linux (Alpine), the bundled `rpmbuild` fails to start when fpm runs it.
+**How you'll find out:** No message. The `.rpm` no longer reflects the host rpm's version or macros.
 
-In v26, fpm ran whatever `rpmbuild` was on the build machine's `PATH` (`brew install rpm`, `apt-get install rpm`), so the `.rpm` depended on that rpm's version and configuration: rpm 4.x adds `/usr/lib/.build-id` links, rpm 6 writes the v6 package format by default, and host and user macros (`/etc/rpm`, `~/.rpmmacros`) apply. v27 adds the [`toolsets.rpm`](../toolsets.md) toolset and defaults it to a portable `rpmbuild` (rpm 6.1.0, release `rpm@1.0.0`), downloaded and cached like the other toolsets and put first on fpm's `PATH`. It ignores host and user rpm configuration and pins the v4 package format and `_build_id_links none` in its own macros (electron-builder also passes both as `rpmbuild` defines, so `"system"` builds get them too), so the package format and contents no longer depend on which rpm, if any, is installed on the build machine: building on Linux, on macOS or in Docker gives the same package. Supported hosts no longer need an `rpm` package installed.
+In v26, fpm ran whatever `rpmbuild`, `xz`, `tar` and `ar` were on the build machine's `PATH`, and on macOS the `linuxToolsMac` bundle. v27 replaces `linuxToolsMac` with the [`toolsets.archive`](../toolsets.md) toolset, whose `bin/` (`xz`, `lzip`, GNU `tar`/`gtar`, GNU `ar`/`gar`, `bsdtar`, and `rpm`/`rpmbuild` from rpm 6.1.0) goes first on fpm's `PATH` on macOS and Linux. Its `rpmbuild` ignores host and user rpm configuration (`/etc/rpm`, `~/.rpmmacros`) and pins the v4 package format and `_build_id_links none`, so building on Linux, on macOS or in Docker gives the same package. Pass a macro explicitly with `rpm.fpm: ["--rpm-rpmbuild-define=<name> <value>"]`.
 
-| `toolsets.rpm` | `rpmbuild` used |
-|---|---|
-| unset, `"latest"`, `"1.0.0"` | The bundle. Ships for Linux x64 and arm64 (glibc 2.28 or newer, which includes the `electronuserland/builder` images; not musl) and macOS arm64 (macOS 15 or newer) |
-| `"system"` | The host `rpmbuild` on `PATH` (v26 behavior) |
-| `{ url, checksum }` | A [custom bundle](../toolsets.md#custom-toolsets) with `bin/rpmbuild` at its root, on any host |
-
-Set `toolsets.rpm: "system"` when:
-
-- you build the `rpm` target on **Intel macOS**, **32-bit Linux**, **macOS 14 or older**, a Linux with **glibc older than 2.28**, or a **musl** Linux such as Alpine. The bundle does not ship for, or run on, those hosts: install `rpmbuild` yourself (`brew install rpm`, `apt-get install rpm`).
-- your build relies on host rpm configuration, such as macros in `~/.rpmmacros` or `/etc/rpm`. The bundle reads only its own macros; pass a macro explicitly instead with `rpm.fpm: ["--rpm-rpmbuild-define=<name> <value>"]`, which also overrides the pinned `_build_id_links` and `_rpmformat` values.
-
-```yaml
-toolsets:
-  rpm: system
-```
+The bundled `rpmbuild` ships for Linux x64 and arm64 (glibc 2.28 or newer) and macOS arm64 (macOS 15 or newer). On **Intel macOS** and **32-bit Linux**, the toolset has no `rpmbuild`, so building `rpm` uses the host `rpmbuild` on `PATH`: install it (`brew install rpm`, `apt-get install rpm`).
 
 ### Azure Trusted Signing `signtool /dlib` is the default {#azure-trusted-signing-signtool-dlib-is-the-default}
 
@@ -174,7 +159,7 @@ The signer resolves the path from the `winCodeSign` value: unset / `null` / `"la
 |---|---|---|
 | `APPIMAGE_TOOLS_PATH` | AppImage build tools (`mksquashfs`, runtime) | `toolsets.appimage` |
 | `MKSQUASHFS_PATH` | `mksquashfs` for legacy (core18/20/22) snap builds | `toolsets.appimage` |
-| `LINUX_TOOLS_MAC_PATH` | Linux-tools-mac bundle (`ar`, `lzip`, `gtar`) | `toolsets.linuxToolsMac` |
+| `LINUX_TOOLS_MAC_PATH` | Linux-tools-mac bundle (`ar`, `lzip`, `gtar`) | `toolsets.archive` |
 | `CUSTOM_FPM_PATH` | FPM executable | `toolsets.fpm` |
 | `ELECTRON_BUILDER_NSIS_DIR` | NSIS compiler bundle directory | `toolsets.nsis` |
 | `ELECTRON_BUILDER_NSIS_RESOURCES_DIR` | NSIS resources/plugins directory | `toolsets.nsis` |

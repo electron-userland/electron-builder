@@ -1,6 +1,6 @@
 import { PublishManager } from "app-builder-lib"
 import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier"
-import { computeArchToTargetNamesMap, getLinuxToolsMacToolset, parsePlistFile, PlistObject } from "app-builder-lib/internal"
+import { computeArchToTargetNamesMap, getArchiveToolsetBinDir, parsePlistFile, PlistObject } from "app-builder-lib/internal"
 import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, isEmptyOrSpaces, log, retry, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import {
@@ -1006,12 +1006,12 @@ const checkResult = (expect: ExpectStatic, artifacts: Array<ArtifactCreated>, ex
 export const execShell: any = promisify(require("child_process").exec)
 
 export async function getTarExecutable() {
-  return process.platform === "darwin" ? (await getLinuxToolsMacToolset()).gtar : "tar"
+  return process.platform === "darwin" ? path.join(await getArchiveToolsetBinDir(undefined, ""), "gtar") : "tar"
 }
 
 export async function getArExecutable() {
   if (process.platform === "darwin") {
-    return (await getLinuxToolsMacToolset()).ar
+    return path.join(await getArchiveToolsetBinDir(undefined, ""), "ar")
   }
   return "ar"
 }

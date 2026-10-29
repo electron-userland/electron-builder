@@ -183,6 +183,16 @@ rpm:
 - `libXScrnSaver` — screen saver
 - `nss` — networking
 
+**Build-id links and package format:** RPMs are built without `/usr/lib/.build-id` links and with the v4 package format, so the output is the same whichever `rpm` version is installed on the build host. Without this, rpm 4.x adds a build-id link for every bundled ELF file, and two apps that ship the same Electron binaries conflict on install. To restore the links, override the define through `fpm` (user args come last, so they win):
+
+```yaml
+rpm:
+  fpm:
+    - "--rpm-rpmbuild-define=_build_id_links compat"
+```
+
+**`rpmbuild`:** fpm runs the `rpmbuild` (rpm 6.1.0) from the [`toolsets.archive`](./toolsets.md) toolset on Linux x64 and arm64 and macOS arm64, so those hosts need no `rpm` package. On Intel macOS and 32-bit Linux the toolset has no `rpmbuild`: install one (`brew install rpm`, `apt-get install rpm`) and fpm uses the host `rpmbuild` on `PATH`.
+
 **After-install/after-remove scripts:**
 
 ```yaml
@@ -194,23 +204,6 @@ rpm:
 :::note[v27: maintainer-script variable syntax]
 electron-builder interpolates variables into maintainer scripts (`afterInstall` / `afterRemove`) using shell-style `${var}`. The legacy EJS `<%= var %>` interpolation was **removed** in v27 — update any templated maintainer scripts to `${var}`. See [v27 Breaking Changes → Linux maintainer-script EJS syntax](./migration/v27-developer-changes.md#linux-maintainer-script-ejs-template-syntax).
 :::
-
-**`rpmbuild`:** fpm builds the package with the portable `rpmbuild` from the [`toolsets.rpm`](./toolsets.md) toolset (rpm 6.1.0), so the build machine needs no `rpm` package and the output does not depend on its rpm version or on host rpm macros (`~/.rpmmacros`, `/etc/rpm`). The bundled `rpmbuild` ships for **Linux x64 and arm64** (glibc 2.28 or newer; not musl) and **macOS arm64** (macOS 15 or newer). On any other host (Intel macOS, 32-bit Linux, musl-based Linux such as Alpine, macOS 14 or older), install `rpmbuild` yourself (`brew install rpm`, `apt-get install rpm`) and set the following. The same setting keeps the host `rpmbuild` as before v27:
-
-```yaml
-toolsets:
-  rpm: system
-```
-
-See [v27 Breaking Changes → RPM builds use a bundled `rpmbuild`](./migration/v27-build-changes.md#rpm-builds-use-a-bundled-rpmbuild).
-
-**Build-id links and package format:** RPMs are built without `/usr/lib/.build-id` links and with the v4 package format, with the bundled `rpmbuild` and with `toolsets.rpm: system` alike: electron-builder passes both as `rpmbuild` defines, so a host rpm 4.x or 6.x gives the same layout and format as the bundle. Without them, rpm 4.x adds a build-id link for every bundled ELF file, and two apps that ship the same Electron binaries conflict on install. To restore the links, override the define through `fpm` (user args come last, so they win):
-
-```yaml
-rpm:
-  fpm:
-    - "--rpm-rpmbuild-define=_build_id_links compat"
-```
 
 ## Pacman Package (`pacman`)
 

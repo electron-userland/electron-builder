@@ -28,7 +28,6 @@ export type ExecutableName =
   | "notarytool"
   | "stapler"
   | "pkgutil"
-  | "lzip"
   | "snapcraft"
   | "flatpak"
   | "flatpak-builder"
@@ -136,8 +135,6 @@ export const DEFAULT_EXECUTABLES: Readonly<Record<ExecutableName, DefaultLocatio
   // likewise the stapler of the selected Xcode, found with /usr/bin/xcrun (see Executables.stapler)
   stapler: {},
   pkgutil: { darwin: () => ["/usr/sbin/pkgutil"] },
-  // on macOS lzip comes from the linuxToolsMac toolset
-  lzip: inUsrBinOnLinux("lzip"),
   snapcraft: {
     darwin: () => ["/opt/homebrew/bin/snapcraft", "/usr/local/bin/snapcraft"],
     linux: () => ["/snap/bin/snapcraft", "/usr/bin/snapcraft"],

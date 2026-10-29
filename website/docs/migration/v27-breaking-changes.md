@@ -79,7 +79,7 @@ The quickest way through an upgrade is:
 | Change | Affects you if | Page |
 |---|---|---|
 | [Toolsets resolve to `"latest"`; Wine is the host install](./v27-build-changes.md#toolset-defaults-resolve-to-latest-newest-bundle) | You build Windows targets on macOS (install Wine), or need a legacy bundle | Build |
-| [RPM builds use a bundled `rpmbuild`](./v27-build-changes.md#rpm-builds-use-a-bundled-rpmbuild) | Your `rpm` build relies on host rpm macros (`~/.rpmmacros`, `/etc/rpm`), or runs on a host the bundle does not ship for (Intel macOS, 32-bit Linux, musl, macOS < 15) | Build |
+| [RPM builds use a bundled `rpmbuild`](./v27-build-changes.md#rpm-builds-use-a-bundled-rpmbuild) | Your `rpm` build relies on host rpm macros (`~/.rpmmacros`, `/etc/rpm`) | Build |
 | [Azure Trusted Signing uses `signtool /dlib`](./v27-build-changes.md#azure-trusted-signing-signtool-dlib-is-the-default) | You need the legacy PowerShell signing path | Build |
 | [`node_modules` are filtered by `cpu` / `os` on every build](./v27-build-changes.md#node_modules-are-now-archos-filtered-on-every-build) | You bundle a cross-arch or cross-OS optional binary on purpose | Build |
 | [`electron` / `electron-builder` are excluded from the copied `node_modules`](./v27-build-changes.md#redundant-production-dependencies-are-excluded-not-rejected) | You need `electron-builder` inside the app | Build |

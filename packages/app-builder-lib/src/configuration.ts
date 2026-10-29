@@ -848,48 +848,16 @@ export interface ToolsetConfig {
   readonly fpm?: "2.2.1" | "2.3.1" | ToolsetCustom | "latest"
 
   /**
-   * Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build
-   * Linux targets on macOS hosts.
+   * The archive and packaging tools that fpm and the `tar.lz` target run, on macOS and Linux hosts: `xz`, `lzip`, GNU `tar`
+   * (`tar`, `gtar`), GNU `ar` (`ar`, `gar`) and `bsdtar`, plus `rpm` and `rpmbuild` (rpm 6.1.0) on Linux x64 and arm64 and macOS arm64.
+   * Its `bin` directory goes first on fpm's `PATH`. On Intel macOS and 32-bit Linux, which get no bundled `rpmbuild`,
+   * building `rpm` uses the host `rpmbuild` on `PATH`. A {@link ToolsetCustom} bundle must have the same `bin/` layout.
    *
-   * The bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).
-   *
-   * Available versions:
-   * | Version | Notes |
-   * |---------|-------|
-   * | `"1.0.0"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |
-   * | `"1.0.1"` | Same tools rebuilt on macOS 15 runners — binaries run on macOS 15+ (1.0.0 required macOS 26) |
-   * | `"1.1.1"` | Trimmed to gnu-tar, lzip and binutils 2.47 (`ar`) plus their dylibs and license files; still runs on macOS 15+ |
-   *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/archive/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly linuxToolsMac?: "1.0.0" | "1.0.1" | "1.1.1" | ToolsetCustom | "latest"
-
-  /**
-   * The `rpmbuild` that fpm runs to build the `rpm` target, on macOS and Linux hosts.
-   *
-   * By default (`"latest"`) a portable `rpmbuild` bundle is downloaded, so the `.rpm` is the same whichever `rpm` version (if any) is
-   * installed on the build machine, and whatever its configuration: host and user rpm macros (`/etc/rpm`, `~/.rpmmacros`) are ignored.
-   * The bundle's own macros pin the v4 package format and disable `/usr/lib/.build-id` links; electron-builder also passes both as
-   * `rpmbuild` defines with every value, `"system"` included.
-   *
-   * Available versions:
-   * | Version | rpm version | Platform support | Notes |
-   * |---------|-------------|------------------|-------|
-   * | `"1.0.0"` | 6.1.0 | Linux x64 and arm64 (glibc >= 2.28, not musl), macOS arm64 (15+) | Current default |
-   * | `"system"` | host install | macOS, Linux | The `rpmbuild` on `PATH` (pre-v27 behavior); install it with `brew install rpm` or `apt-get install rpm` |
-   *
-   * The bundled `rpmbuild` ships for Linux x64 and arm64 (glibc 2.28 or newer, not musl) and macOS arm64 (15+). Other hosts
-   * (Intel macOS, 32-bit Linux, musl, older macOS) should set `"system"` and install `rpmbuild` themselves.
-   *
-   * A custom bundle (a {@link ToolsetCustom} object) must have the same layout: `bin/rpmbuild` at the root of the archive or directory.
-   *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/rpm/CHANGELOG.md
-   *
-   * @default "latest"
-   */
-  readonly rpm?: "1.0.0" | "system" | ToolsetCustom | "latest"
+  readonly archive?: "1.0.0" | ToolsetCustom | "latest"
 
   /**
    * Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.

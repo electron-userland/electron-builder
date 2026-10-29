@@ -15,12 +15,10 @@ import { DebOptions, LinuxTargetSpecificOptions } from "../../options/linuxOptio
 import { ArtifactCreated } from "../../packagerApi.js"
 import { getPackAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../publish/PublishManager.js"
 import { getFpmPath } from "../../toolsets/fpm.js"
-import { getLinuxToolsPath } from "../../toolsets/linuxToolsMac.js"
-import { getRpmToolsetBinDir } from "../../toolsets/rpm.js"
+import { getArchiveToolsetBinDir } from "../../toolsets/archive.js"
 import { computeEnv } from "../../util/bundledTool.js"
 import { isFpmDebug } from "../../util/flags.js"
 import { hashFile } from "../../util/hash.js"
-import { isMacOsSierra } from "../../util/mac/macosVersion.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import { buildLauncherScript, shellQuote } from "./launcherScript.js"
 import { installPrefix, LinuxTargetHelper, quoteDesktopExecPath } from "./LinuxTargetHelper.js"
@@ -316,16 +314,6 @@ export default class FpmTarget extends Target {
       env.XZ_DEFAULTS = "-T0"
     }
 
-    // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)
-    // so, for now, brew install rpm is still required.
-    if (target !== "rpm" && (await isMacOsSierra())) {
-      const linuxToolsPath = await getLinuxToolsPath(packager.config.toolsets?.linuxToolsMac, packager.buildResourcesDir)
-      Object.assign(env, {
-        PATH: computeEnv(process.env.PATH, [path.join(linuxToolsPath, "bin")]),
-        DYLD_LIBRARY_PATH: computeEnv(process.env.DYLD_LIBRARY_PATH, [path.join(linuxToolsPath, "lib")]),
-      })
-    }
-
     await this.executeFpm(target, fpmConfiguration, env)
 
     let info: ArtifactCreated = {
@@ -387,27 +375,13 @@ export default class FpmTarget extends Target {
 
     const fpmPath = await getFpmPath(this.packager.config.toolsets?.fpm, this.packager.buildResourcesDir)
 
-    // fpm finds rpmbuild on PATH, so the toolsets.rpm bundle goes first on it; null is "system" (the host rpmbuild)
-    const rpmBinDir = target === "rpm" ? await getRpmToolsetBinDir(this.packager.config.toolsets?.rpm, this.packager.buildResourcesDir) : null
-    const execEnv = rpmBinDir == null ? env : { ...env, PATH: computeEnv(env.PATH, [rpmBinDir]) }
+    // fpm runs rpmbuild, xz, tar and ar from PATH: the archive toolset's go first
+    const execEnv = { ...env }
+    if (process.platform === "linux" || process.platform === "darwin") {
+      execEnv.PATH = computeEnv(env.PATH, [await getArchiveToolsetBinDir(this.packager.config.toolsets?.archive, this.packager.buildResourcesDir)])
+    }
 
     await exec(fpmPath, fpmArgs, { env: execEnv }).catch(e => {
-      if (e.message.includes("Need executable 'rpmbuild' to convert dir to rpm")) {
-        const hint = "to build rpm, executable rpmbuild is required, please install rpm package on your system. "
-        if (process.platform === "darwin") {
-          log.error(null, hint + "(brew install rpm)")
-        } else {
-          log.error(null, hint + "(sudo apt-get install rpm)")
-        }
-      }
-      if (e.message.includes("xz: not found")) {
-        const hint = "to build rpm, executable xz is required, please install xz package on your system. "
-        if (process.platform === "darwin") {
-          log.error(null, hint + "(brew install xz)")
-        } else {
-          log.error(null, hint + "(sudo apt-get install xz-utils)")
-        }
-      }
       if (e.message.includes("error: File not found")) {
         log.error(
           { fpmArgs, ...fpmConfiguration },
