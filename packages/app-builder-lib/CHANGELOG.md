@@ -1,5 +1,43 @@
 # app-builder-lib
 
+## 27.0.0-alpha.14
+### Major Changes
+
+- Feat(msi): build `msi` and `msiWrapped` installers with WiX 3.14.1 (`toolsets.wix`), native arm64 MSIs (#10354) _[`#10404`](https://github.com/electron-userland/electron-builder/pull/10404) [`dacb1ec`](https://github.com/electron-userland/electron-builder/commit/dacb1ece71d6ec1725e6d82ad05b2521e0e32d83)_
+
+  BREAKING CHANGE: `toolsets.wix` unset or `"latest"` (= `"2.0.0"`) builds `msi` and `msiWrapped` installers with WiX 3.14.1, which produces a native `Arm64` MSI for `arm64` builds. `toolsets.wix: "0.0.0"` keeps the previous WiX 4.0.0.5512 preview bundle, which packages an arm64 app in an x64 MSI. The WiX 3 project uses the WiX 3 namespace, nested `Directory` elements (also for a nested `menuCategory`) and explicit ids for files in subdirectories; it keeps the upgrade code, install paths and file layout. An `msiProjectCreated` hook that inserts elements of a WiX 4 extension namespace must use the WiX 3 one (for example `http://schemas.microsoft.com/wix/UtilExtension`) or pin `"0.0.0"`; with WiX 3, a project that still declares a WiX 4 namespace after the hook fails the build with an `InvalidConfigurationError` that names it. A custom bundle (`{ url, checksum }`) must have the WiX 3 layout.
+
+### Minor Changes
+
+- Feat: binary, range-fetchable `.blockmap` format, chosen from `electronUpdaterCompatibility` (default raised to `>=7`). The block map published next to NSIS installers and macOS update zips is read by the electron-updater already installed in the users' apps, so its format follows the declared range: a range of electron-updater 7 and later (the new default) writes the binary map, a range that includes earlier versions writes the gzipped JSON map, with a once-per-build warning. The new `blockmap` option, `"v2" | "v3" | "latest"`, overrides the choice: `"v2"` is the JSON map (format version 2), `"v3"` the binary map (failing the build when the range includes electron-updater before 7), `"latest"` the newest format the range allows. The build also fails when the app's own electron-updater dependency is outside `electronUpdaterCompatibility`, e.g. electron-updater 6 with the default `>=7`: upgrade it, or set `electronUpdaterCompatibility: ">=6"` to keep the JSON map. _[`#10312`](https://github.com/electron-userland/electron-builder/pull/10312) [`c983462`](https://github.com/electron-userland/electron-builder/commit/c98346245aed022560e58bc7d435a6f9d04f5a78)_
+
+  The binary map is uncompressed with fixed-size tables (header, content-defined super-groups of groups, content-defined groups of blocks, 10-byte per-block records, with 8-byte hashes at every level). electron-updater fetches the header and super-group table with one `Range` request, matches super-groups against its cached previous map, fetches only the group entries of the super-groups that changed, matches those groups and fetches only the records of the groups that changed, verifies every hash, then runs the existing block-level plan and download pipeline. If that range fetch fails, it downloads the new map with a plain GET and stays differential. Because the map cost grows with the change rather than with the installer, the stored `app.asar` region (`nsis.differentialPackage: "store-asar"`, ideally with `asar.contentAlignment`) uses 512 B / 1 KiB / 2 KiB blocks and a block boundary at every packed file, and the 7z header of a differential-aware package is stored as is (`-mhc=off`) and chunked into its own small blocks, so a changed CRC no longer re-downloads the trailing block of the package (5–30 KB on every update). Builds that write the JSON map keep packages and block maps byte-for-byte as before. electron-updater tells the formats apart by the file's first bytes, so there is no extra artifact and `latest.yml` is unchanged. Installs still on electron-updater 6 download the first release with a binary map in full once; the update brings an updater that reads it. A format change between two releases costs the same one-time full download, logged once at `info`. Block maps embedded in an artifact (AppImage, NSIS web installer packages) stay JSON. A binary `.blockmap` is uploaded to S3 as `application/octet-stream`.
+
+  electron-updater additionally downloads through COPY gaps smaller than 8 KiB between two changed ranges on single-range hosts such as GitHub and S3 (one request per range there makes re-downloading a few KiB cheaper than an extra request), only up to 256 B on hosts that serve `multipart/byteranges`, and caps `multipart/byteranges` requests at 200 ranges (Apache's `MaxRanges` default; larger `Range` headers exceed common 8 KB header limits).
+
+### Patch Changes
+
+- Fix(linux): update the default `appimage` toolset to `1.2.0`. Its `mksquashfs` (squashfs-tools 4.7.5) links a pinned static zstd 1.5.7, so Linux and macOS hosts now build byte-identical AppImages. Explicit `toolsets.appimage` pins (`0.0.0`, `1.0.3`, `1.1.0`) are unchanged _[`#10473`](https://github.com/electron-userland/electron-builder/pull/10473) [`e246f99`](https://github.com/electron-userland/electron-builder/commit/e246f99bf827890dfb8d75d5fa9f5b1384f49008)_
+- Fix(blockmap): check the app's electron-updater against the `electronUpdaterCompatibility` of every platform the build targets, instead of passing when any declared range includes it (e.g. `win.electronUpdaterCompatibility: ">=6"` no longer lets a macOS build with the default `>=7` write binary block maps for an app on electron-updater 6). Where the build writes binary block maps (an NSIS installer, a macOS zip target), electron-updater 7.0.0-alpha.0 to 7.0.0-alpha.12, which cannot read them, fail the build; an electron-updater bundled from `devDependencies`, or from the development package.json of a two package.json project, is checked like one in `dependencies`. The `publish` and `verify` commands, which write no update files, no longer check it against `electronUpdaterCompatibility`. An NSIS installer with a JSON (`"v2"`) block map no longer reads the asar and 7z archive headers that only the binary (`"v3"`) map uses. _[`#10485`](https://github.com/electron-userland/electron-builder/pull/10485) [`24c9ead`](https://github.com/electron-userland/electron-builder/commit/24c9ead5a5adb014ed8e973b011443ec7d70b685)_
+- Fix(nsis): skip the assisted installer's license page on the first visit in the elevated inner instance only if it was accepted in the outer instance. Keep the license visible when elevation occurs before any pages are shown, and preserve Back navigation. _[`#10377`](https://github.com/electron-userland/electron-builder/pull/10377) [`b66a4e1`](https://github.com/electron-userland/electron-builder/commit/b66a4e178b74a4e7e7d02d5df6960a380669565f)_
+- Fix(rpm): build RPMs without /usr/lib/.build-id links and with v4 package format so output is the same on every build host (#10471) _[`#10472`](https://github.com/electron-userland/electron-builder/pull/10472) [`60ce3ed`](https://github.com/electron-userland/electron-builder/commit/60ce3ed123d83f3cd73d6532bda31148f4b3b9d5)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`c983462`](https://github.com/electron-userland/electron-builder/commit/c98346245aed022560e58bc7d435a6f9d04f5a78) [`4152802`](https://github.com/electron-userland/electron-builder/commit/41528020456f5483bad2ed8d640e9e53c5193ed4)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.13`
+- `electron-publish@27.0.0-alpha.14`
+- `electron-builder-squirrel-windows@27.0.0-alpha.14`
+- `dmg-builder@27.0.0-alpha.14`
+- `builder-util@27.0.0-alpha.14`
+
+</details>
+
 ## 27.0.0-alpha.13
 ### Major Changes
 
