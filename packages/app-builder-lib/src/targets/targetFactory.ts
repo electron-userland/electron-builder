@@ -107,8 +107,23 @@ export interface PlatformBuildPlan {
 }
 
 /**
- * What the build creates for each requested platform, from the requested targets and the platform's `target` option. The build and the
- * electron-updater check (see {@link resolveTargetNames}) both resolve it here, so they cannot disagree.
+ * What the build creates for one requested platform, from its requested targets and `platformOptions`: the build passes the created
+ * platform packager's `platformOptions` (a custom packager may override them), the electron-updater check passes the platform's
+ * configuration (see {@link resolveBuildPlan}).
+ * @internal
+ */
+export function resolvePlatformBuildPlan(
+  platform: Platform,
+  requested: ReadonlyMap<Arch, ReadonlyArray<string>>,
+  platformOptions: TargetNamesSource["platformOptions"],
+  host: BuildHost = process
+): PlatformBuildPlan {
+  return { platform, archToTargetNames: computeArchToTargetNamesMap(requested, { platformOptions, defaultTarget: [] }, platform, host) }
+}
+
+/**
+ * What the build creates for each requested platform when its packager uses the platform's configuration (`config.mac`, `config.win`,
+ * `config.linux`), resolved by {@link resolvePlatformBuildPlan} as the build does.
  * @internal
  */
 export function resolveBuildPlan(
@@ -119,7 +134,7 @@ export function resolveBuildPlan(
   return Array.from(requested, ([platform, archToType]) => {
     const key = platform.buildConfigurationKey
     const platformOptions = (key === "mac" || key === "win" || key === "linux" ? config[key] : null) ?? {}
-    return { platform, archToTargetNames: computeArchToTargetNamesMap(archToType, { platformOptions, defaultTarget: [] }, platform, host) }
+    return resolvePlatformBuildPlan(platform, archToType, platformOptions, host)
   })
 }
 

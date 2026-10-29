@@ -31,7 +31,7 @@ import { Framework } from "./Framework.js"
 import { Metadata } from "./options/metadata.js"
 import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions, PlannedTargets } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
-import { addTargetsForPlatform, createTargets, NoOpTarget, PlatformBuildPlan, resolveBuildPlan, resolveTargetNames } from "./targets/targetFactory.js"
+import { addTargetsForPlatform, createTargets, NoOpTarget, PlatformBuildPlan, resolvePlatformBuildPlan, resolveTargetNames } from "./targets/targetFactory.js"
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
 import { assertNoRemovedEnvVars } from "./util/flags.js"
 import { expandMacro } from "./util/macroExpander.js"
@@ -544,7 +544,7 @@ export class Packager {
     const platformToTarget = new Map<Platform, Map<string, Target>>()
     // Every platform packager and target is created before the first pack, so listeners of `targetsCreated` (the
     // publish preflight) see the whole build and can fail it before any artifact exists - let alone is uploaded.
-    const plans = await this.createPlannedTargets(resolveBuildPlan(this.options.targets ?? new Map(), this.config), platformToTarget)
+    const plans = await this.createPlannedTargets(this.options.targets ?? new Map(), platformToTarget)
 
     // a cancelled build stops here rather than running the publish preflight on a partial plan
     if (!this.cancellationToken.cancelled) {
@@ -576,18 +576,25 @@ export class Packager {
     }
   }
 
-  /** Creates the platform packagers and the targets of each arch, recording each platform's targets in `platformToTarget`. */
-  private async createPlannedTargets(buildPlan: ReadonlyArray<PlatformBuildPlan>, platformToTarget: Map<Platform, Map<string, Target>>): Promise<Array<PlatformTargets>> {
+  /**
+   * Creates the platform packagers and the targets of each arch, recording each platform's targets in `platformToTarget`. Each platform's
+   * targets are resolved from its created packager's `platformOptions`, which a custom packager (`platformPackagerFactory`) may override.
+   */
+  private async createPlannedTargets(
+    requested: ReadonlyMap<Platform, ReadonlyMap<Arch, ReadonlyArray<string>>>,
+    platformToTarget: Map<Platform, Map<string, Target>>
+  ): Promise<Array<PlatformTargets>> {
     const result: Array<PlatformTargets> = []
-    for (const platformPlan of buildPlan) {
+    for (const [platform, archToType] of requested) {
       if (this.cancellationToken.cancelled) {
         break
       }
-      assertPlatformBuildableOnHost(platformPlan.platform)
+      assertPlatformBuildableOnHost(platform)
 
-      const packager = await this.createHelper(platformPlan.platform)
+      const packager = await this.createHelper(platform)
       const nameToTarget = new Map<string, Target>()
-      platformToTarget.set(platformPlan.platform, nameToTarget)
+      platformToTarget.set(platform, nameToTarget)
+      const platformPlan = resolvePlatformBuildPlan(platform, archToType, packager.platformOptions)
       result.push({ packager, nameToTarget, archs: this.createArchTargets(platformPlan, packager, nameToTarget) })
     }
     return result

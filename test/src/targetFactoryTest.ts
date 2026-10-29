@@ -1,6 +1,13 @@
 import { Arch, Configuration, DEFAULT_TARGET, DIR_TARGET, Platform } from "app-builder-lib"
 import { ArchType } from "builder-util"
-import { BuildHost, computeArchToTargetNamesMap, resolveBuildPlan, resolveTargetNames, TargetNamesSource } from "app-builder-lib/src/targets/targetFactory"
+import {
+  BuildHost,
+  computeArchToTargetNamesMap,
+  resolveBuildPlan,
+  resolvePlatformBuildPlan,
+  resolveTargetNames,
+  TargetNamesSource,
+} from "app-builder-lib/src/targets/targetFactory"
 import { normalizeOptions } from "electron-builder/src/builder"
 import { describe, expect, test } from "vitest"
 
@@ -181,5 +188,27 @@ describe("resolveBuildPlan", () => {
     const requested = Platform.WINDOWS.createTarget(null, Arch.x64, Arch.ia32)
     const config = { win: { target: "portable:ia32" } }
     expect(resolveTargetNames(requested, config)).toEqual(new Map([[Platform.WINDOWS, new Set([DEFAULT_TARGET, "portable"])]]))
+  })
+})
+
+describe("resolvePlatformBuildPlan", () => {
+  // a custom packager (`platformPackagerFactory`) whose platform options are not the configuration's
+  class OverridingPackager implements TargetNamesSource {
+    readonly defaultTarget = ["nsis"]
+    get platformOptions() {
+      return { target: "portable" }
+    }
+  }
+
+  test("the given platform options decide the targets, not the configuration", () => {
+    const requested = Platform.WINDOWS.createTarget(null, Arch.x64)
+    const archToType = requested.get(Platform.WINDOWS)
+    if (archToType == null) {
+      throw new Error("no targets requested")
+    }
+    const config: Configuration = { win: { target: "zip" } }
+    const plan = resolvePlatformBuildPlan(Platform.WINDOWS, archToType, new OverridingPackager().platformOptions)
+    expect(plan).toEqual({ platform: Platform.WINDOWS, archToTargetNames: new Map([[Arch.x64, ["portable"]]]) })
+    expect(resolveBuildPlan(requested, config)).toEqual([{ platform: Platform.WINDOWS, archToTargetNames: new Map([[Arch.x64, ["zip"]]]) }])
   })
 })
