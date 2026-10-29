@@ -24,6 +24,10 @@ StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
 
     FindWindow $0 "#32770" "" $hwndparent
     FindWindow $0 "#32770" "" $hwndparent $0
+    # NSIS counts instructions while Nsis7z reports extraction bytes on the same progress control. Their conflicting scales
+    # make the banner's percentage jump backwards. Keep the installing text, but hide the misleading bar (#10469).
+    GetDlgItem $1 $0 1001
+    ShowWindow $1 ${SW_HIDE}
     GetDlgItem $0 $0 1000
     SendMessage $0 ${WM_SETTEXT} 0 "STR:$(installing)"
 
