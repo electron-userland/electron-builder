@@ -769,11 +769,10 @@ async function packAndCheck(
   expect(objectToCompare).toMatchSnapshot()
 
   c: for (const [platform, archToType] of packagerOptions.targets!) {
-    for (const [arch, targets] of computeArchToTargetNamesMap(
-      archToType,
-      { platformOptions: (packagerOptions as any)[platform.buildConfigurationKey] || {}, defaultTarget: [] } as any,
-      platform
-    )) {
+    // the archs the build resolved: the requested ones, or the ones the platform's `target` option names (the build leaves `targets` as requested)
+    const key = platform.buildConfigurationKey
+    const platformOptions = (key === "mac" || key === "win" || key === "linux" ? packager.config[key] : null) ?? {}
+    for (const [arch, targets] of computeArchToTargetNamesMap(archToType, { platformOptions, defaultTarget: [] }, platform)) {
       if (targets.length === 1 && targets[0] === DIR_TARGET) {
         continue c
       }
