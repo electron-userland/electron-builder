@@ -1,11 +1,11 @@
-import { InvalidConfigurationError, log } from "builder-util"
+import { exec, InvalidConfigurationError, log, stripSensitiveEnvVars } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { constants as fsConstants } from "fs"
 import { access, stat } from "fs/promises"
 import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
+import { computeEnv } from "../util/bundledTool.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
-import { getDarwinRelease, getGlibcRuntimeVersion } from "../util/hostOsVersion.js"
 import { getCustomToolsetPath } from "./custom.js"
 import { resolveToolsetVersion } from "./version.js"
 
@@ -29,11 +29,6 @@ export const rpmChecksums = {
 
 type RpmBundleVersion = keyof typeof rpmChecksums
 
-/** Oldest glibc the published Linux bundles run on (they are built against it). */
-export const RPM_BUNDLE_MIN_GLIBC = "2.28"
-/** Oldest Darwin kernel the published macOS arm64 bundle runs on: Darwin 24 is macOS 15 Sequoia. */
-export const RPM_BUNDLE_MIN_DARWIN_MAJOR = 24
-
 /** The bundle archive for the build host, or `null` when none is published (Intel macOS, 32-bit Linux, Windows, …). */
 export function getRpmBundleFilename(platform: NodeJS.Platform = process.platform, arch: string = process.arch): keyof (typeof rpmChecksums)[RpmBundleVersion] | null {
   if (platform === "linux") {
@@ -49,57 +44,20 @@ export function getRpmBundleFilename(platform: NodeJS.Platform = process.platfor
   return null
 }
 
-/**
- * Why the published bundle cannot run on this host, which is below the bundle's OS or libc floor, or `null` when it can (and on
- * hosts with no bundle at all, which {@link getRpmBundleFilename} covers). Checked before the download: an old host would
- * otherwise download the bundle and then fail with an opaque dynamic loader error.
- */
-export function getRpmBundleHostIssue(platform: NodeJS.Platform = process.platform): string | null {
-  if (platform === "darwin") {
-    const release = getDarwinRelease()
-    const major = Number.parseInt(release, 10)
-    if (Number.isNaN(major) || major < RPM_BUNDLE_MIN_DARWIN_MAJOR) {
-      return `requires macOS 15 or newer (Darwin ${RPM_BUNDLE_MIN_DARWIN_MAJOR}), but this host is ${describeDarwinRelease(release, major)}`
-    }
-  } else if (platform === "linux") {
-    const glibc = getGlibcRuntimeVersion()
-    if (glibc == null) {
-      return `requires glibc ${RPM_BUNDLE_MIN_GLIBC} or newer, but this host has no glibc (musl or another libc)`
-    }
-    if (compareDottedVersions(glibc, RPM_BUNDLE_MIN_GLIBC) < 0) {
-      return `requires glibc ${RPM_BUNDLE_MIN_GLIBC} or newer, but this host has glibc ${glibc}`
-    }
-  }
-  return null
-}
-
-function describeDarwinRelease(release: string, major: number): string {
-  if (Number.isNaN(major)) {
-    return `Darwin ${release}`
-  }
-  // Darwin 20 is macOS 11, Darwin 24 is macOS 15; Darwin 19 and older are macOS 10.x (Darwin 19 is 10.15)
-  const macos = major >= 20 ? `${major - 9}` : `10.${major - 4}`
-  return `macOS ${macos} (Darwin ${release})`
-}
-
-// Numeric comparison of dotted versions such as glibc's "2.28" / "2.9" (not semver: no patch component)
-function compareDottedVersions(a: string, b: string): number {
-  const left = a.split(".").map(part => Number.parseInt(part, 10) || 0)
-  const right = b.split(".").map(part => Number.parseInt(part, 10) || 0)
-  for (let i = 0; i < Math.max(left.length, right.length); i++) {
-    const diff = (left[i] ?? 0) - (right[i] ?? 0)
-    if (diff !== 0) {
-      return diff
-    }
-  }
-  return 0
-}
-
 function describeSelection(toolset: Exclude<ToolsetConfig["rpm"], object> | Nullish, version: string): string {
   return toolset == null ? `defaults to the bundled rpmbuild (rpm@${version}) in v27` : `"${toolset}" selects the bundled rpmbuild (rpm@${version})`
 }
 
 const SYSTEM_HINT = 'Set toolsets.rpm: "system" to build the rpm target with the rpmbuild installed on this machine.'
+
+/** What the published bundles are built against, for the error when one cannot run: the probe, not this text, decides. */
+const RPM_BUNDLE_HOST_FLOORS = "The published bundles need glibc 2.28 or newer on Linux (not musl) and macOS 15 or newer on Apple silicon."
+
+/** How long `rpmbuild --version` may take: it only loads the binary and the bundle's macros, so a hang means it cannot run. */
+export const RPM_PROBE_TIMEOUT_MS = 30_000
+// at most this many lines of the probe's stderr go into the error: enough for a dynamic loader message
+const PROBE_EXCERPT_LINES = 5
+const PROBE_EXCERPT_LINE_LENGTH = 300
 
 /**
  * fpm finds `rpmbuild` on `PATH` only: a bundle without an executable `bin/rpmbuild` would make it run the host one silently,
@@ -118,23 +76,92 @@ async function assertRpmbuildInBundle(binDir: string, explain: (rpmbuild: string
   return binDir
 }
 
+// one probe per bundle bin directory per process; a failed probe stays failed (the bundle and the host do not change mid-build)
+const rpmbuildProbes = new Map<string, Promise<string | null>>()
+
+/**
+ * Runs the bundle's `rpmbuild --version` once, with the environment fpm will run it with. A bundle that cannot run on this host
+ * (macOS older than its deployment target, a glibc older than it was built against, musl, a missing ELF interpreter, …) fails here
+ * with the dynamic loader's own message, rather than deep inside fpm.
+ *
+ * @returns `null` when it runs, otherwise why not, with an excerpt of its output
+ */
+function probeRpmbuild(binDir: string, env: NodeJS.ProcessEnv): Promise<string | null> {
+  let probe = rpmbuildProbes.get(binDir)
+  if (probe == null) {
+    const rpmbuild = path.join(binDir, "rpmbuild")
+    probe = exec(rpmbuild, ["--version"], { env: { ...env, PATH: computeEnv(env.PATH, [binDir]) }, timeout: RPM_PROBE_TIMEOUT_MS }).then(
+      () => null,
+      (error: unknown) => `${rpmbuild} --version ${describeProbeFailure(error)}`
+    )
+    rpmbuildProbes.set(binDir, probe)
+  }
+  return probe
+}
+
+/** Never throws: it only words an error that is already being reported. */
+function describeProbeFailure(error: unknown): string {
+  // builder-util's ExecError keeps Node's execFile error, whose message is "Command failed: <cmd>\n<stderr>", as its cause
+  const execCause: unknown = error instanceof Error ? (error as { cause?: unknown }).cause : undefined
+  const cause = execCause instanceof Error ? execCause : error
+  if (!(cause instanceof Error)) {
+    return `failed: ${String(cause)}`
+  }
+  const { code, signal, killed } = cause as NodeJS.ErrnoException & { signal?: NodeJS.Signals | null; killed?: boolean }
+  let reason: string
+  if (killed === true && signal != null) {
+    reason = `did not finish within ${RPM_PROBE_TIMEOUT_MS / 1000}s`
+  } else if (signal != null) {
+    reason = `was killed by ${signal}`
+  } else if (typeof code === "number") {
+    reason = `exited with code ${code}`
+  } else if (typeof code === "string") {
+    reason = `could not be started (${code})`
+  } else {
+    reason = "failed"
+  }
+  const lines = cause.message
+    .split(/\r?\n/)
+    .filter((line, index) => !(index === 0 && line.startsWith("Command failed:")))
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+  if (lines.length === 0) {
+    return reason
+  }
+  const excerpt = lines.slice(0, PROBE_EXCERPT_LINES).map(line => (line.length > PROBE_EXCERPT_LINE_LENGTH ? `${line.slice(0, PROBE_EXCERPT_LINE_LENGTH)}…` : line))
+  if (lines.length > PROBE_EXCERPT_LINES) {
+    excerpt.push(`… (${lines.length - PROBE_EXCERPT_LINES} more lines)`)
+  }
+  return `${reason}:\n${excerpt.map(line => `  ${line}`).join("\n")}`
+}
+
 /**
  * Resolves `toolsets.rpm` for the `rpm` target.
  *
+ * @param env the environment fpm runs with; the bundle's `rpmbuild` is probed with it (plus the bundle on `PATH`) before it is used
  * @returns the bundle's `bin` directory (holding the `rpmbuild` wrapper), to put first on the `PATH` fpm runs with, or `null` for
  * `"system"`: fpm then finds the host `rpmbuild` on `PATH`, as before v27.
  */
-export async function getRpmToolsetBinDir(toolset: ToolsetConfig["rpm"] | Nullish, resourcesDir: string): Promise<string | null> {
+export async function getRpmToolsetBinDir(
+  toolset: ToolsetConfig["rpm"] | Nullish,
+  resourcesDir: string,
+  env: NodeJS.ProcessEnv = stripSensitiveEnvVars(process.env)
+): Promise<string | null> {
   // A custom toolset is an explicit user override — honored on every platform.
   if (typeof toolset === "object" && toolset != null) {
     const bundleDir = await getCustomToolsetPath(toolset, resourcesDir)
-    return assertRpmbuildInBundle(
+    const binDir = await assertRpmbuildInBundle(
       path.join(bundleDir, "bin"),
       rpmbuild =>
         `The custom toolsets.rpm bundle (${toolset.url}) has no executable bin/rpmbuild (looked for ${rpmbuild}). A custom rpm toolset must have the ` +
         `published bundle's layout: bin/rpmbuild at the root of the archive or directory, with no top-level directory. Without it fpm would silently ` +
         `run the host rpmbuild; to build with the host rpmbuild, set toolsets.rpm: "system".`
     )
+    const failure = await probeRpmbuild(binDir, env)
+    if (failure != null) {
+      throw new InvalidConfigurationError(`The custom toolsets.rpm bundle (${toolset.url}) cannot run on this host: ${failure}\n${SYSTEM_HINT} See ${RPM_TOOLSET_MIGRATION_URL}`)
+    }
+    return binDir
   }
   if (toolset === "system") {
     return null
@@ -148,10 +175,6 @@ export async function getRpmToolsetBinDir(toolset: ToolsetConfig["rpm"] | Nullis
       `toolsets.rpm ${describeSelection(toolset, version)}, which is not published for ${process.platform} ${process.arch} (published for Linux x64, Linux arm64 and macOS arm64). ` +
         `${SYSTEM_HINT} See ${RPM_TOOLSET_MIGRATION_URL}`
     )
-  }
-  const hostIssue = getRpmBundleHostIssue()
-  if (hostIssue != null) {
-    throw new InvalidConfigurationError(`toolsets.rpm ${describeSelection(toolset, version)}, which ${hostIssue}. ${SYSTEM_HINT} See ${RPM_TOOLSET_MIGRATION_URL}`)
   }
 
   if (toolset == null) {
@@ -170,10 +193,17 @@ export async function getRpmToolsetBinDir(toolset: ToolsetConfig["rpm"] | Nullis
     checksums: rpmChecksums[version],
     githubOrgRepo: "electron-userland/electron-builder-binaries",
   })
-  return assertRpmbuildInBundle(
+  const binDir = await assertRpmbuildInBundle(
     path.join(bundleDir, "bin"),
     rpmbuild =>
       `The downloaded rpm@${version} bundle has no executable bin/rpmbuild (looked for ${rpmbuild}): the cached bundle is incomplete or damaged. ` +
       `Delete ${bundleDir} to download it again. ${SYSTEM_HINT}`
   )
+  const failure = await probeRpmbuild(binDir, env)
+  if (failure != null) {
+    throw new InvalidConfigurationError(
+      `toolsets.rpm ${describeSelection(toolset, version)}, which cannot run on this host: ${failure}\n${RPM_BUNDLE_HOST_FLOORS} ${SYSTEM_HINT} See ${RPM_TOOLSET_MIGRATION_URL}`
+    )
+  }
+  return binDir
 }

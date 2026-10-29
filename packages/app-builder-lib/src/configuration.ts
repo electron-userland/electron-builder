@@ -874,13 +874,15 @@ export interface ToolsetConfig {
    * | `"1.0.0"` | 6.1.0 | Linux x64 and arm64 (glibc >= 2.28), macOS arm64 (15+) | Current default |
    * | `"system"` | host install | macOS, Linux | The `rpmbuild` on `PATH` (pre-v27 behavior); install it with `brew install rpm` or `apt-get install rpm` |
    *
-   * No bundle is published for Intel macOS or 32-bit Linux hosts, and the published ones need macOS 15 or newer (Darwin 24) and
-   * glibc 2.28 or newer (not musl): building the `rpm` target on any other host requires `"system"`, and any other value fails the
-   * build with a configuration error before anything is downloaded.
+   * No bundle is published for Intel macOS or 32-bit Linux hosts: building the `rpm` target there requires `"system"`, and any other
+   * value fails the build with a configuration error before anything is downloaded. The Linux bundles need glibc 2.28 or newer (the
+   * same floor as Node.js 22's own Linux builds) and do not run on musl; the macOS arm64 bundle needs macOS 15 or newer. Before its
+   * first use the bundled `rpmbuild` is run once (`rpmbuild --version`): if it cannot run on the host, the build stops with a
+   * configuration error that quotes its output and suggests `"system"`.
    *
    * A custom bundle (a {@link ToolsetCustom} object) is used on any host, and must have the same layout: an executable `bin/rpmbuild`
    * at the root of the archive or directory (no top-level directory). Without it the build fails, rather than fpm silently running
-   * the host `rpmbuild`.
+   * the host `rpmbuild`; it is run once before use like the published bundle.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/rpm/CHANGELOG.md
    *

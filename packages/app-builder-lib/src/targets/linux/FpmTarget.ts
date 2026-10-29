@@ -389,7 +389,7 @@ export default class FpmTarget extends Target {
     const fpmPath = await getFpmPath(this.packager.config.toolsets?.fpm, this.packager.buildResourcesDir)
 
     // fpm looks rpmbuild up on PATH only, so the toolsets.rpm bundle goes first on it; null is "system" (the host rpmbuild)
-    const rpmBinDir = target === "rpm" ? await getRpmToolsetBinDir(this.packager.config.toolsets?.rpm, this.packager.buildResourcesDir) : null
+    const rpmBinDir = target === "rpm" ? await getRpmToolsetBinDir(this.packager.config.toolsets?.rpm, this.packager.buildResourcesDir, env) : null
     const execEnv = rpmBinDir == null ? env : { ...env, PATH: computeEnv(env.PATH, [rpmBinDir]) }
 
     await exec(fpmPath, fpmArgs, { env: execEnv }).catch(e => {

@@ -6,23 +6,21 @@ vi.mock("app-builder-lib/src/util/electronGet", async importOriginal => {
   const actual = await importOriginal<typeof import("app-builder-lib/src/util/electronGet")>()
   return { ...actual, downloadBuilderToolset: vi.fn() }
 })
-// fpm itself is not run: capture the command line and environment it would get
+// Neither fpm nor the bundle's `rpmbuild --version` probe is run (unless a test delegates to the real exec): capture the command
+// lines and environments they would get. The probe succeeds by default.
 vi.mock("builder-util", async importOriginal => {
   const actual = await importOriginal<typeof import("builder-util")>()
   return { ...actual, exec: vi.fn(async () => "") }
 })
-// The bundle's host floors (macOS 15, glibc 2.28) are checked against these; each test pins them, so the suite does not depend on the CI host
-vi.mock("app-builder-lib/src/util/hostOsVersion", () => ({ getDarwinRelease: vi.fn(), getGlibcRuntimeVersion: vi.fn() }))
 vi.mock("app-builder-lib/src/toolsets/fpm", async importOriginal => {
   const actual = await importOriginal<typeof import("app-builder-lib/src/toolsets/fpm")>()
   return { ...actual, getFpmPath: async () => "fpm" }
 })
 
 import FpmTarget from "app-builder-lib/src/targets/linux/FpmTarget"
-import { getRpmBundleFilename, getRpmBundleHostIssue, getRpmToolsetBinDir, RPM_TOOLSET_MIGRATION_URL, rpmChecksums } from "app-builder-lib/src/toolsets/rpm"
+import { getRpmBundleFilename, getRpmToolsetBinDir, RPM_PROBE_TIMEOUT_MS, RPM_TOOLSET_MIGRATION_URL, rpmChecksums } from "app-builder-lib/src/toolsets/rpm"
 import { downloadBuilderToolset } from "app-builder-lib/src/util/electronGet"
-import { getDarwinRelease, getGlibcRuntimeVersion } from "app-builder-lib/src/util/hostOsVersion"
-import { exec, InvalidConfigurationError, log } from "builder-util"
+import { exec, ExecError, InvalidConfigurationError, log } from "builder-util"
 import { chmod, mkdir, writeFile } from "fs/promises"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
@@ -39,16 +37,33 @@ function pinHost(platform: NodeJS.Platform, arch: string) {
 }
 
 /** A bundle directory with the published layout (`bin/rpmbuild`, executable) unless `withRpmbuild` is false. */
-async function createBundle(tmpDir: TmpDir, withRpmbuild = true): Promise<string> {
+async function createBundle(tmpDir: TmpDir, withRpmbuild = true, script = "#!/bin/sh\n"): Promise<string> {
   const dir = await tmpDir.createTempDir({ prefix: "eb-rpm-bundle" })
   await mkdir(path.join(dir, "bin"))
   if (withRpmbuild) {
     const rpmbuild = path.join(dir, "bin", "rpmbuild")
-    await writeFile(rpmbuild, "#!/bin/sh\n")
+    await writeFile(rpmbuild, script)
     await chmod(rpmbuild, 0o755)
   }
   return dir
 }
+
+/** The `rpmbuild --version` probe calls made through the mocked exec. */
+function probeCalls() {
+  return vi.mocked(exec).mock.calls.filter(([file, args]) => path.basename(file) === "rpmbuild" && args?.[0] === "--version")
+}
+
+/** What builder-util's exec rejects with when a process fails: an ExecError whose cause is Node's execFile error. */
+function execFailure(file: string, cause: { message: string; code?: number | string; signal?: NodeJS.Signals | null; killed?: boolean }): ExecError {
+  const nodeError = Object.assign(new Error(cause.message), { code: cause.code, signal: cause.signal ?? null, killed: cause.killed ?? false })
+  return new ExecError(file, typeof cause.code === "number" ? cause.code : -1, cause.message, "", `${cause.code}`, { cause: nodeError })
+}
+
+const DYLD_ERROR = [
+  "dyld[4242]: Library not loaded: @loader_path/../lib/librpmbuild.10.dylib",
+  "  Referenced from: <1A2B> /cache/rpm@1.0.0/libexec/rpmbuild (built for macOS 15.0 which is newer than running OS)",
+  "  Reason: tried: '/cache/rpm@1.0.0/lib/librpmbuild.10.dylib' (no such file)",
+].join("\n")
 
 // the "downloaded" bundle every default/"latest"/version resolution gets from the mocked downloader
 let bundleDir: string
@@ -57,9 +72,7 @@ beforeEach(async context => {
   bundleDir = await createBundle(context.tmpDir)
   vi.mocked(downloadBuilderToolset).mockReset()
   vi.mocked(downloadBuilderToolset).mockResolvedValue(bundleDir)
-  // a supported host by default: macOS 15 / glibc 2.39
-  vi.mocked(getDarwinRelease).mockReset().mockReturnValue("24.0.0")
-  vi.mocked(getGlibcRuntimeVersion).mockReset().mockReturnValue("2.39")
+  vi.mocked(exec).mockReset().mockResolvedValue("")
   log.resetLimits(DEFAULT_ANNOUNCEMENT_KEY)
   pinHost("linux", "x64")
 })
@@ -78,6 +91,7 @@ describe("getRpmToolsetBinDir", () => {
   test('"system" uses the host rpmbuild: no bundle, PATH untouched', async () => {
     expect(await getRpmToolsetBinDir("system", "build")).toBeNull()
     expect(downloadBuilderToolset).not.toHaveBeenCalled()
+    expect(exec).not.toHaveBeenCalled()
   })
 
   test.each([
@@ -150,82 +164,140 @@ describe("getRpmToolsetBinDir", () => {
     expect(await getRpmToolsetBinDir({ url: `file://${dir}` }, "build")).toBe(path.join(dir, "bin"))
     expect(downloadBuilderToolset).not.toHaveBeenCalled()
   })
+})
 
-  test("a custom toolset is not subject to the published bundle's host floors", async context => {
-    vi.mocked(getGlibcRuntimeVersion).mockReturnValue(null)
+describe("the bundled rpmbuild is probed once before use", () => {
+  const env = { PATH: "/usr/bin:/bin", HOME: "/home/u" }
+
+  test("a probe that runs resolves to the bin directory; it gets the given env with the bundle first on PATH", async () => {
+    const binDir = path.join(bundleDir, "bin")
+    expect(await getRpmToolsetBinDir("latest", "build", env)).toBe(binDir)
+    expect(probeCalls()).toHaveLength(1)
+    const [file, args, options] = probeCalls()[0]
+    expect(file).toBe(path.join(binDir, "rpmbuild"))
+    expect(args).toEqual(["--version"])
+    expect(options).toEqual({ env: { PATH: [binDir, "/usr/bin", "/bin"].join(":"), HOME: "/home/u" }, timeout: RPM_PROBE_TIMEOUT_MS })
+  })
+
+  test.each([
+    [undefined, "toolsets.rpm defaults to the bundled rpmbuild (rpm@1.0.0) in v27, which cannot run on this host"],
+    ["latest" as const, 'toolsets.rpm "latest" selects the bundled rpmbuild (rpm@1.0.0), which cannot run on this host'],
+    ["1.0.0" as const, 'toolsets.rpm "1.0.0" selects the bundled rpmbuild (rpm@1.0.0), which cannot run on this host'],
+  ])('a failing probe (%s) is a configuration error quoting the loader output, with the "system" hint', async (toolset, wording) => {
+    pinHost("darwin", "arm64")
+    const rpmbuild = path.join(bundleDir, "bin", "rpmbuild")
+    vi.mocked(exec).mockRejectedValue(execFailure(rpmbuild, { message: `Command failed: ${rpmbuild} --version\n${DYLD_ERROR}\n`, signal: "SIGABRT" }))
+    const error = await getRpmToolsetBinDir(toolset, "build", env).catch(e => e)
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toContain(`${wording}: ${rpmbuild} --version was killed by SIGABRT:\n  dyld[4242]: Library not loaded`)
+    expect(error.message).toContain("(built for macOS 15.0 which is newer than running OS)")
+    expect(error.message).not.toContain("Command failed:")
+    expect(error.message).toContain("glibc 2.28 or newer on Linux (not musl) and macOS 15 or newer on Apple silicon")
+    expect(error.message).toContain('Set toolsets.rpm: "system" to build the rpm target with the rpmbuild installed on this machine.')
+    expect(error.message).toContain(RPM_TOOLSET_MIGRATION_URL)
+  })
+
+  test("a glibc mismatch (non-zero exit) names the exit code and the loader line", async () => {
+    const rpmbuild = path.join(bundleDir, "bin", "rpmbuild")
+    const glibc = `${rpmbuild}: /lib64/libc.so.6: version \`GLIBC_2.28' not found (required by ${rpmbuild})`
+    vi.mocked(exec).mockRejectedValue(execFailure(rpmbuild, { message: `Command failed: ${rpmbuild} --version\n${glibc}`, code: 1 }))
+    const error = await getRpmToolsetBinDir("latest", "build", env).catch(e => e)
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toContain(`--version exited with code 1:\n  ${glibc}`)
+  })
+
+  test("a probe that cannot be started (e.g. a missing ELF interpreter) or times out is a configuration error", async context => {
+    const rpmbuild = path.join(bundleDir, "bin", "rpmbuild")
+    vi.mocked(exec).mockRejectedValueOnce(execFailure(rpmbuild, { message: `spawn ${rpmbuild} ENOENT`, code: "ENOENT" }))
+    await expect(getRpmToolsetBinDir("latest", "build", env)).rejects.toThrow(`--version could not be started (ENOENT):\n  spawn ${rpmbuild} ENOENT`)
+
+    const other = await createBundle(context.tmpDir)
+    vi.mocked(downloadBuilderToolset).mockResolvedValue(other)
+    const otherRpmbuild = path.join(other, "bin", "rpmbuild")
+    vi.mocked(exec).mockRejectedValueOnce(execFailure(otherRpmbuild, { message: `Command failed: ${otherRpmbuild} --version\n`, signal: "SIGTERM", killed: true }))
+    const error = await getRpmToolsetBinDir("latest", "build", env).catch(e => e)
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toContain(`--version did not finish within ${RPM_PROBE_TIMEOUT_MS / 1000}s\n`)
+  })
+
+  test("a long stderr is cut to its first lines", async () => {
+    const rpmbuild = path.join(bundleDir, "bin", "rpmbuild")
+    const lines = Array.from({ length: 9 }, (_, i) => `line ${i + 1}`)
+    vi.mocked(exec).mockRejectedValue(execFailure(rpmbuild, { message: `Command failed: ${rpmbuild} --version\n${lines.join("\n")}`, code: 2 }))
+    const error = await getRpmToolsetBinDir("latest", "build", env).catch(e => e)
+    expect(error.message).toContain("  line 5\n  … (4 more lines)")
+    expect(error.message).not.toContain("line 6")
+  })
+
+  test("the probe runs once per bundle per process, also when it fails", async context => {
+    await getRpmToolsetBinDir("latest", "build", env)
+    await getRpmToolsetBinDir(undefined, "build", env)
+    expect(downloadBuilderToolset).toHaveBeenCalledTimes(2)
+    expect(probeCalls()).toHaveLength(1)
+
+    const broken = await createBundle(context.tmpDir)
+    vi.mocked(downloadBuilderToolset).mockResolvedValue(broken)
+    vi.mocked(exec).mockRejectedValue(execFailure(path.join(broken, "bin", "rpmbuild"), { message: "Command failed: x\nboom", code: 1 }))
+    await expect(getRpmToolsetBinDir("latest", "build", env)).rejects.toThrow(/boom/)
+    await expect(getRpmToolsetBinDir("latest", "build", env)).rejects.toThrow(/boom/)
+    expect(probeCalls()).toHaveLength(2)
+  })
+
+  test('"system" never probes', async () => {
+    expect(await getRpmToolsetBinDir("system", "build", env)).toBeNull()
+    expect(exec).not.toHaveBeenCalled()
+  })
+
+  test("a host with no published bundle fails before any probe", async () => {
+    pinHost("darwin", "x64")
+    await expect(getRpmToolsetBinDir("latest", "build", env)).rejects.toBeInstanceOf(InvalidConfigurationError)
+    expect(exec).not.toHaveBeenCalled()
+  })
+
+  test("a custom bundle is probed too, and a failure names its url", async context => {
     const dir = await createBundle(context.tmpDir)
-    expect(await getRpmToolsetBinDir({ url: `file://${dir}` }, "build")).toBe(path.join(dir, "bin"))
+    const rpmbuild = path.join(dir, "bin", "rpmbuild")
+    expect(await getRpmToolsetBinDir({ url: `file://${dir}` }, "build", env)).toBe(path.join(dir, "bin"))
+    expect(probeCalls().map(([file]) => file)).toEqual([rpmbuild])
+
+    const failing = await createBundle(context.tmpDir)
+    vi.mocked(exec).mockRejectedValue(execFailure(path.join(failing, "bin", "rpmbuild"), { message: "Command failed: x\nError loading shared library librpm.so.10", code: 127 }))
+    const error = await getRpmToolsetBinDir({ url: `file://${failing}` }, "build", env).catch(e => e)
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toContain(`The custom toolsets.rpm bundle (file://${failing}) cannot run on this host:`)
+    expect(error.message).toContain("exited with code 127:\n  Error loading shared library librpm.so.10")
+    expect(error.message).toContain('toolsets.rpm: "system"')
+  })
+
+  test("a bundle without bin/rpmbuild fails on its layout, without a probe", async context => {
+    vi.mocked(downloadBuilderToolset).mockResolvedValue(await createBundle(context.tmpDir, false))
+    await expect(getRpmToolsetBinDir("latest", "build", env)).rejects.toThrow(/has no executable bin\/rpmbuild/)
+    expect(exec).not.toHaveBeenCalled()
   })
 })
 
-describe("host floors of the published bundle", () => {
-  test.each([
-    ["23.6.0", "macOS 14 (Darwin 23.6.0)"],
-    ["22.1.0", "macOS 13 (Darwin 22.1.0)"],
-    ["19.6.0", "macOS 10.15 (Darwin 19.6.0)"],
-  ])("macOS arm64 on Darwin %s fails before the download, naming %s and the floor", async (release, detected) => {
-    pinHost("darwin", "arm64")
-    vi.mocked(getDarwinRelease).mockReturnValue(release)
-    for (const toolset of [undefined, "latest", "1.0.0"] as const) {
-      const error = await getRpmToolsetBinDir(toolset, "build").catch(e => e)
-      expect(error).toBeInstanceOf(InvalidConfigurationError)
-      expect(error.message).toContain(detected)
-      expect(error.message).toContain("requires macOS 15 or newer (Darwin 24)")
-      expect(error.message).toContain('toolsets.rpm: "system"')
-      expect(error.message).toContain(RPM_TOOLSET_MIGRATION_URL)
-    }
-    expect(downloadBuilderToolset).not.toHaveBeenCalled()
+describe.skipIf(process.platform === "win32")("the probe against a real executable", () => {
+  beforeEach(async () => {
+    const actual = await vi.importActual<typeof import("builder-util")>("builder-util")
+    vi.mocked(exec).mockImplementation(actual.exec)
   })
 
-  test.each([["24.0.0"], ["25.1.0"]])("macOS arm64 on Darwin %s (macOS 15+) downloads the bundle", async release => {
-    pinHost("darwin", "arm64")
-    vi.mocked(getDarwinRelease).mockReturnValue(release)
-    expect(await getRpmToolsetBinDir("latest", "build")).toBe(path.join(bundleDir, "bin"))
-    expect(vi.mocked(downloadBuilderToolset).mock.calls[0][0].filenameWithExt).toBe("rpm-6.1.0-darwin-arm64.7z")
+  test("an rpmbuild that exits 0 resolves", async context => {
+    const dir = await createBundle(context.tmpDir, true, '#!/bin/sh\necho "RPM version 6.1.0"\n')
+    vi.mocked(downloadBuilderToolset).mockResolvedValue(dir)
+    expect(await getRpmToolsetBinDir("latest", "build")).toBe(path.join(dir, "bin"))
   })
 
-  test.each([["x64"], ["arm64"]])("Linux %s with glibc 2.27 fails before the download", async arch => {
-    pinHost("linux", arch)
-    vi.mocked(getGlibcRuntimeVersion).mockReturnValue("2.27")
-    const error = await getRpmToolsetBinDir("1.0.0", "build").catch(e => e)
-    expect(error).toBeInstanceOf(InvalidConfigurationError)
-    expect(error.message).toContain('toolsets.rpm "1.0.0" selects the bundled rpmbuild (rpm@1.0.0), which requires glibc 2.28 or newer, but this host has glibc 2.27')
-    expect(error.message).toContain('toolsets.rpm: "system"')
-    expect(downloadBuilderToolset).not.toHaveBeenCalled()
-  })
-
-  test.each([["2.28"], ["2.28.9"], ["2.31"], ["2.100"], ["3.0"]])("Linux with glibc %s downloads the bundle", async glibc => {
-    vi.mocked(getGlibcRuntimeVersion).mockReturnValue(glibc)
-    expect(await getRpmToolsetBinDir("latest", "build")).toBe(path.join(bundleDir, "bin"))
-    expect(downloadBuilderToolset).toHaveBeenCalledTimes(1)
-  })
-
-  test("Linux without glibc (musl) fails before the download, with the default-change wording when unset", async () => {
-    vi.mocked(getGlibcRuntimeVersion).mockReturnValue(null)
+  test("an rpmbuild that exits 127 with a loader error fails with that error and the hint", async context => {
+    const loader = "rpmbuild: error while loading shared libraries: librpmbuild.so.10: cannot open shared object file: No such file or directory"
+    const dir = await createBundle(context.tmpDir, true, `#!/bin/sh\necho "${loader}" >&2\nexit 127\n`)
+    vi.mocked(downloadBuilderToolset).mockResolvedValue(dir)
     const error = await getRpmToolsetBinDir(undefined, "build").catch(e => e)
     expect(error).toBeInstanceOf(InvalidConfigurationError)
     expect(error.message).toContain(
-      "toolsets.rpm defaults to the bundled rpmbuild (rpm@1.0.0) in v27, which requires glibc 2.28 or newer, but this host has no glibc (musl or another libc)"
+      `toolsets.rpm defaults to the bundled rpmbuild (rpm@1.0.0) in v27, which cannot run on this host: ${path.join(dir, "bin", "rpmbuild")} --version exited with code 127:\n  ${loader}\n`
     )
-    expect(downloadBuilderToolset).not.toHaveBeenCalled()
-  })
-
-  test('"system" bypasses every floor check', async () => {
-    vi.mocked(getGlibcRuntimeVersion).mockReturnValue(null)
-    expect(await getRpmToolsetBinDir("system", "build")).toBeNull()
-    pinHost("darwin", "arm64")
-    vi.mocked(getDarwinRelease).mockReturnValue("23.0.0")
-    expect(await getRpmToolsetBinDir("system", "build")).toBeNull()
-    expect(getDarwinRelease).not.toHaveBeenCalled()
-    expect(getGlibcRuntimeVersion).not.toHaveBeenCalled()
-    expect(downloadBuilderToolset).not.toHaveBeenCalled()
-  })
-
-  test("getRpmBundleHostIssue is null on supported hosts and ignores platforms with no bundle", () => {
-    expect(getRpmBundleHostIssue("linux")).toBeNull()
-    expect(getRpmBundleHostIssue("darwin")).toBeNull()
-    vi.mocked(getGlibcRuntimeVersion).mockReturnValue(null)
-    expect(getRpmBundleHostIssue("win32")).toBeNull()
+    expect(error.message).toContain('Set toolsets.rpm: "system"')
   })
 })
 
@@ -301,14 +373,31 @@ describe("FpmTarget puts the rpm bundle on fpm's PATH", () => {
     fpm.packager = { config: { toolsets }, buildResourcesDir: "build" }
     vi.mocked(exec).mockClear()
     await fpm.executeFpm(target, { target, args: [] }, { PATH: "/usr/bin:/bin", HOME: "/home/u" })
-    expect(exec).toHaveBeenCalledTimes(1)
-    return (vi.mocked(exec).mock.calls[0][2] as any).env
+    const fpmCalls = vi.mocked(exec).mock.calls.filter(([file]) => file === "fpm")
+    expect(fpmCalls).toHaveLength(1)
+    return (fpmCalls[0][2] as any).env
   }
 
   test("rpm with the default toolset: the bundle's bin directory comes first", async () => {
     const env = await fpmEnvFor("rpm", {})
     expect(env.PATH).toBe([path.join(bundleDir, "bin"), "/usr/bin", "/bin"].join(":"))
     expect(env.HOME).toBe("/home/u")
+    // the probe ran first, with the environment fpm then gets
+    expect(vi.mocked(exec).mock.calls.map(([file]) => path.basename(file))).toEqual(["rpmbuild", "fpm"])
+    expect((probeCalls()[0][2] as any).env).toEqual(env)
+  })
+
+  test("rpm: a bundle that cannot run fails before fpm runs", async () => {
+    vi.mocked(exec).mockImplementation(async file => {
+      if (path.basename(file) === "rpmbuild") {
+        throw execFailure(file, { message: `Command failed: ${file} --version\n${DYLD_ERROR}`, code: 134 })
+      }
+      return ""
+    })
+    const fpm: any = Object.create(FpmTarget.prototype)
+    fpm.packager = { config: { toolsets: {} }, buildResourcesDir: "build" }
+    await expect(fpm.executeFpm("rpm", { target: "rpm", args: [] }, { PATH: "/usr/bin" })).rejects.toThrow(/cannot run on this host/)
+    expect(vi.mocked(exec).mock.calls.filter(([file]) => file === "fpm")).toHaveLength(0)
   })
 
   test('rpm with "system": PATH is passed through unchanged', async () => {
@@ -321,6 +410,7 @@ describe("FpmTarget puts the rpm bundle on fpm's PATH", () => {
     const env = await fpmEnvFor(target, { rpm: "1.0.0" })
     expect(env.PATH).toBe("/usr/bin:/bin")
     expect(downloadBuilderToolset).not.toHaveBeenCalled()
+    expect(probeCalls()).toHaveLength(0)
   })
 
   test('an Intel macOS host fails before fpm runs unless toolsets.rpm is "system"', async () => {
@@ -331,21 +421,5 @@ describe("FpmTarget puts the rpm bundle on fpm's PATH", () => {
     await expect(fpm.executeFpm("rpm", { target: "rpm", args: [] }, { PATH: "/usr/bin" })).rejects.toBeInstanceOf(InvalidConfigurationError)
     expect(exec).not.toHaveBeenCalled()
     expect((await fpmEnvFor("rpm", { rpm: "system" })).PATH).toBe("/usr/bin:/bin")
-  })
-})
-
-describe("host OS version detection (unmocked)", () => {
-  test("glibc runtime version comes from the process report header, which is left as configured", async () => {
-    const actual = await vi.importActual<typeof import("app-builder-lib/src/util/hostOsVersion")>("app-builder-lib/src/util/hostOsVersion")
-    const report = process.report as NodeJS.ProcessReport & { excludeNetwork?: boolean }
-    const excludeNetwork = report.excludeNetwork
-    const version = actual.getGlibcRuntimeVersion()
-    const expected = process.platform === "linux" ? ((report.getReport() as { header?: { glibcVersionRuntime?: string } }).header?.glibcVersionRuntime ?? null) : null
-    expect(version).toBe(expected)
-    if (version != null) {
-      expect(version).toMatch(/^\d+\.\d+/)
-    }
-    expect(report.excludeNetwork).toBe(excludeNetwork)
-    expect(actual.getDarwinRelease()).toMatch(/^\d+\./)
   })
 })
