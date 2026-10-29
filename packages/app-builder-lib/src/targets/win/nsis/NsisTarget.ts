@@ -29,12 +29,12 @@ import { verifyUpdateInstallerPublisher } from "../../../codeSign/win/verifyUpda
 import { archive, ArchiveOptions } from "../../archive.js"
 import {
   appendBlockmap,
-  asarContentBoundaries,
   BINARY_BLOCK_MAP_FORMAT,
   configureDifferentialAwareArchiveOptions,
   createBlockmap,
   createNsisWebDifferentialUpdateInfo,
   getBlockMapFormat,
+  installerBlockMapOptions,
   locateArchiveHeaderRegions,
   locateStoredMemberRegions,
   locateStoredMembers,
@@ -516,16 +516,9 @@ export class NsisTarget extends Target {
         // members and the archive headers of all of them sit verbatim in the signed installer too;
         // locate them there. The v3 map is additionally cut at every packed file of a stored asar.
         const members = await locateStoredMembers(installerPath, storedMemberFiles)
-        const regions = [
-          ...members.map(it => it.region),
-          ...(getBlockMapFormat(packager) === BINARY_BLOCK_MAP_FORMAT
-            ? await locateArchiveHeaderRegions(
-                installerPath,
-                Object.values(packageFiles).map(it => it.path)
-              )
-            : []),
-        ]
-        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName, primaryArch, toBlockMapOptions(regions, await asarContentBoundaries(members)))
+        const archiveFiles = Object.values(packageFiles).map(it => it.path)
+        const blockMapOptions = await installerBlockMapOptions(installerPath, members, archiveFiles, getBlockMapFormat(packager))
+        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName, primaryArch, blockMapOptions)
       }
 
       // a per-machine build always packs elevate.exe (see CopyElevateHelper), unless the framework has no elevate helper

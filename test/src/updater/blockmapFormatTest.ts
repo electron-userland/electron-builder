@@ -18,8 +18,8 @@ import { gzipSync } from "zlib"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { createNsisUpdater, httpExecutor, makeLogger, tuneTestUpdater } from "../helpers/updaterTestUtil.js"
 
-// One `.blockmap` per artifact, in the format the `blockmap` option chose: the updater tells v1 (gzipped JSON) from v2 (the
-// binary range-fetchable map) by the file's first bytes, range-fetches a v2 map against a cached v2 map, and falls back to a full
+// One `.blockmap` per artifact, in the format the `blockmap` option chose: the updater tells v2 (gzipped JSON) from v3 (the
+// binary range-fetchable map) by the file's first bytes, range-fetches a v3 map against a cached v3 map, and falls back to a full
 // download when the old and new maps are in different formats.
 
 function makeBlocks(count: number, seed: number): Array<BlockInput> {
@@ -35,7 +35,7 @@ function makeBlocks(count: number, seed: number): Array<BlockInput> {
   return blocks
 }
 
-function v2Map(blocks: Array<BlockInput>): Buffer {
+function v3Map(blocks: Array<BlockInput>): Buffer {
   let offset = 0
   const placed = blocks.map(b => {
     const result = { ...b, offset }
@@ -45,7 +45,7 @@ function v2Map(blocks: Array<BlockInput>): Buffer {
   return encodeBlockMapV3(placed, { fileSize: offset, defaultChunker: { min: 8192, avg: 16384, max: 32768 } })
 }
 
-function v1Map(blocks: Array<BlockInput>): Buffer {
+function v2Map(blocks: Array<BlockInput>): Buffer {
   const map: BlockMap = {
     version: "2",
     files: [{ name: "file", offset: 0, checksums: blocks.map(b => Buffer.from(b.digest).toString("base64")), sizes: blocks.map(b => b.size) }],
@@ -55,13 +55,13 @@ function v1Map(blocks: Array<BlockInput>): Buffer {
 
 describe("block map format detection", () => {
   const OLD_BLOCKS = makeBlocks(3000, 1)
-  // a few blocks changed, so most of the v2 map is reused from the cached one
+  // a few blocks changed, so most of the v3 map is reused from the cached one
   const NEW_BLOCKS = OLD_BLOCKS.map((b, i) => (i % 700 === 5 ? { ...b, digest: blake2b(Buffer.from(`changed-${i}`), { dkLen: 18 }) } : b))
-  const OLD_V1 = v1Map(OLD_BLOCKS)
-  const NEW_V1 = v1Map(NEW_BLOCKS)
   const OLD_V2 = v2Map(OLD_BLOCKS)
   const NEW_V2 = v2Map(NEW_BLOCKS)
-  // the update's `size` in the manifest: a v2 map describing another size is rejected
+  const OLD_V3 = v3Map(OLD_BLOCKS)
+  const NEW_V3 = v3Map(NEW_BLOCKS)
+  // the update's `size` in the manifest: a v3 map describing another size is rejected
   const NEW_SIZE = NEW_BLOCKS.reduce((sum, b) => sum + b.size, 0)
 
   const servers: Array<Server> = []
@@ -151,9 +151,9 @@ describe("block map format detection", () => {
 
   const pending = (helper: DownloadedUpdateHelper) => fsExtra.readFile(path.join(helper.cacheDirForPendingUpdate, "current.blockmap"))
 
-  test("v1 cached, v1 published: the new map is downloaded whole and compared to the cached one", async ({ tmpDir, expect }) => {
-    const server = await serve(tmpDir, { new: NEW_V1 })
-    const { updater, helper, maps } = await setUp(tmpDir, OLD_V1)
+  test("v2 cached, v2 published: the new map is downloaded whole and compared to the cached one", async ({ tmpDir, expect }) => {
+    const server = await serve(tmpDir, { new: NEW_V2 })
+    const { updater, helper, maps } = await setUp(tmpDir, OLD_V2)
 
     await expect(run(updater, server.url, tmpDir)).resolves.toBe(false)
 
@@ -161,12 +161,12 @@ describe("block map format detection", () => {
     expect(maps).toHaveLength(1)
     expect(maps[0].old.files[0].sizes).toEqual(OLD_BLOCKS.map(b => b.size))
     expect(maps[0].new.files[0].checksums).toEqual(NEW_BLOCKS.map(b => Buffer.from(b.digest).toString("base64")))
-    expect((await pending(helper)).equals(NEW_V1)).toBe(true)
+    expect((await pending(helper)).equals(NEW_V2)).toBe(true)
   })
 
-  test("v2 cached, v2 published: only the changed parts of the new map are fetched, by Range, and the old map is not requested", async ({ tmpDir, expect }) => {
-    const server = await serve(tmpDir, { old: OLD_V2, new: NEW_V2 })
-    const { updater, helper, maps } = await setUp(tmpDir, OLD_V2)
+  test("v3 cached, v3 published: only the changed parts of the new map are fetched, by Range, and the old map is not requested", async ({ tmpDir, expect }) => {
+    const server = await serve(tmpDir, { old: OLD_V3, new: NEW_V3 })
+    const { updater, helper, maps } = await setUp(tmpDir, OLD_V3)
 
     await expect(run(updater, server.url, tmpDir)).resolves.toBe(false)
 
@@ -179,11 +179,11 @@ describe("block map format detection", () => {
     expect(maps[0].new.files[0].sizes).toEqual(NEW_BLOCKS.map(b => b.size))
     expect(maps[0].old.files[0].sizes).toEqual(OLD_BLOCKS.map(b => b.size))
     // the reconstructed map is byte-identical to the published one, and cached for the next update
-    expect((await pending(helper)).equals(NEW_V2)).toBe(true)
+    expect((await pending(helper)).equals(NEW_V3)).toBe(true)
   })
 
-  test("no cached map, v2 published: both maps are downloaded whole, the new one first", async ({ tmpDir, expect }) => {
-    const server = await serve(tmpDir, { old: OLD_V2, new: NEW_V2 })
+  test("no cached map, v3 published: both maps are downloaded whole, the new one first", async ({ tmpDir, expect }) => {
+    const server = await serve(tmpDir, { old: OLD_V3, new: NEW_V3 })
     const { updater, helper, maps } = await setUp(tmpDir, null)
 
     await expect(run(updater, server.url, tmpDir)).resolves.toBe(false)
@@ -193,12 +193,12 @@ describe("block map format detection", () => {
       ["/app-1.0.0.exe.blockmap", null],
     ])
     expect(maps).toHaveLength(1)
-    expect((await pending(helper)).equals(NEW_V2)).toBe(true)
+    expect((await pending(helper)).equals(NEW_V3)).toBe(true)
   })
 
   test.for([
-    { name: "v1 cached, v2 published (the first release built with a newer format)", cached: OLD_V1, published: NEW_V2 },
-    { name: "v2 cached, v1 published (a release built with blockmap: v1 again)", cached: OLD_V2, published: NEW_V1 },
+    { name: "v2 cached, v3 published (the first release built with a newer format)", cached: OLD_V2, published: NEW_V3 },
+    { name: "v3 cached, v2 published (a release built with blockmap: v2 again)", cached: OLD_V3, published: NEW_V2 },
   ])("$name: no block comparison across formats; the new map is still cached for the next update", async ({ cached, published }, { tmpDir, expect }) => {
     const server = await serve(tmpDir, { new: published })
     const { updater, helper, maps } = await setUp(tmpDir, cached)
@@ -218,9 +218,9 @@ describe("block map format detection", () => {
     expect(log.error).toEqual([])
   })
 
-  test("v2 cached, Range fetch of the new map fails: the new map is downloaded whole and the update is still differential", async ({ tmpDir, expect }) => {
-    const server = await serveRejectingRanges({ "app-1.1.0.exe.blockmap": NEW_V2 })
-    const { updater, helper, maps } = await setUp(tmpDir, OLD_V2)
+  test("v3 cached, Range fetch of the new map fails: the new map is downloaded whole and the update is still differential", async ({ tmpDir, expect }) => {
+    const server = await serveRejectingRanges({ "app-1.1.0.exe.blockmap": NEW_V3 })
+    const { updater, helper, maps } = await setUp(tmpDir, OLD_V3)
     const log = captureLog(updater)
 
     await expect(run(updater, server.url, tmpDir)).resolves.toBe(false)
@@ -232,17 +232,17 @@ describe("block map format detection", () => {
     expect(log.warn).toEqual([expect.stringContaining("Cannot fetch the changed parts of the block map")])
     expect(maps).toHaveLength(1)
     expect(maps[0].new.files[0].sizes).toEqual(NEW_BLOCKS.map(b => b.size))
-    expect((await pending(helper)).equals(NEW_V2)).toBe(true)
+    expect((await pending(helper)).equals(NEW_V3)).toBe(true)
   })
 
-  test("a cached v2 map of another release (it does not end at the cached installer's size) is ignored, and the installed release's map is downloaded", async ({
+  test("a cached v3 map of another release (it does not end at the cached installer's size) is ignored, and the installed release's map is downloaded", async ({
     tmpDir,
     expect,
   }) => {
-    const server = await serve(tmpDir, { old: OLD_V2, new: NEW_V2 })
+    const server = await serve(tmpDir, { old: OLD_V3, new: NEW_V3 })
     // the pending release's map was promoted, but installer.exe is still the installed release
-    const STALE_V2 = v2Map(makeBlocks(2000, 9))
-    const { updater, helper, maps } = await setUp(tmpDir, STALE_V2)
+    const STALE_V3 = v3Map(makeBlocks(2000, 9))
+    const { updater, helper, maps } = await setUp(tmpDir, STALE_V3)
     await fsExtra.outputFile(path.join(helper.cacheDir, "installer.exe"), Buffer.alloc(OLD_BLOCKS.reduce((sum, b) => sum + b.size, 0)))
 
     await expect(run(updater, server.url, tmpDir)).resolves.toBe(false)

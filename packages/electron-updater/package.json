@@ -1,6 +1,6 @@
 {
   "name": "electron-updater",
-  "version": "7.0.0-alpha.12",
+  "version": "7.0.0-alpha.13",
   "description": "Cross platform updater for electron applications",
   "type": "module",
   "main": "./dist/index.js",
@@ -35,7 +35,6 @@
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
     "lodash.escaperegexp": "^4.1.2",
-    "lodash.isequal": "^4.5.0",
     "semver": "~7.7.3",
     "tiny-typed-emitter": "^2.1.0"
   },
@@ -43,7 +42,6 @@
     "@types/fs-extra": "9.0.13",
     "@types/js-yaml": "4.0.3",
     "@types/lodash.escaperegexp": "4.1.6",
-    "@types/lodash.isequal": "4.5.5",
     "@types/semver": "7.7.1",
     "electron": "42.11.16"
   },

@@ -660,6 +660,45 @@ exports[`blackboxWin > windows > nsis - update from electron-updater 6 3`] = `
 }
 `;
 
+exports[`blackboxWin > windows > nsis - update from electron-updater 6 4`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup.exe",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.3",
+      },
+    },
+  ],
+}
+`;
+
 exports[`blackboxWin > windows > nsis 1`] = `
 {
   "win": [

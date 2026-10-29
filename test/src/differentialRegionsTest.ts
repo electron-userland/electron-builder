@@ -4,6 +4,7 @@ import {
   ARCHIVE_HEADER_CHUNKER,
   asarContentBoundaries,
   configureDifferentialAwareArchiveOptions,
+  installerBlockMapOptions,
   locateArchiveHeaderRegions,
   locateStoredMembers,
   STORED_MEMBER_CHUNKER,
@@ -225,5 +226,31 @@ describe("asarContentBoundaries", () => {
     for (const boundary of boundaries) {
       expect(starts, `block boundary at ${boundary}`).toContain(boundary)
     }
+  })
+})
+
+describe("installerBlockMapOptions", () => {
+  test("only the binary format reads the asar headers and the archive headers; the JSON format gets the stored member regions alone", async ({ expect, tmpDir }) => {
+    const dir = await makeTempDir(tmpDir, "installer-options")
+    const src = path.join(dir, "app-src")
+    await fs.mkdir(src, { recursive: true })
+    for (const [i, rel] of ["a.js", "b.js", "c.js"].entries()) {
+      await fs.writeFile(path.join(src, rel), pseudoRandom(900 + i * 211, 50 + i))
+    }
+    const { createPackageWithOptions } = await dynamicImport<any>("@electron/asar")
+    const asar = path.join(dir, "app.asar")
+    await createPackageWithOptions(src, asar, {})
+    const installer = path.join(dir, "installer.exe")
+    await fs.writeFile(installer, Buffer.concat([pseudoRandom(5 * KiB, 60), await fs.readFile(asar), pseudoRandom(KiB, 61)]))
+    const members = await locateStoredMembers(installer, [asar])
+    expect(members).toHaveLength(1)
+
+    expect(await installerBlockMapOptions(installer, members, [], "v2")).toEqual({ regions: [members[0].region] })
+    const binary = await installerBlockMapOptions(installer, members, [], "v3")
+    expect(binary?.regions).toEqual([members[0].region])
+    expect(binary?.v3Boundaries).toEqual(await asarContentBoundaries(members))
+    expect(binary?.v3Boundaries?.length).toBeGreaterThan(1)
+    // nothing stored: no options at all
+    expect(await installerBlockMapOptions(installer, [], [], "v2")).toBeUndefined()
   })
 })

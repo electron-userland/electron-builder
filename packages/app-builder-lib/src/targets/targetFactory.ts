@@ -1,5 +1,6 @@
 import { addValue, Arch, archFromString, ArchType, asArray } from "builder-util"
 import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } from "../core.js"
+import type { Configuration } from "../configuration.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { ArchiveTarget } from "./ArchiveTarget.js"
 
@@ -41,7 +42,11 @@ export function addTargetsForPlatform(
   }
 }
 
-export function computeArchToTargetNamesMap(raw: Map<Arch, Array<string>>, platformPackager: PlatformPackager<any>, platform: Platform): Map<Arch, Array<string>> {
+export function computeArchToTargetNamesMap(
+  raw: Map<Arch, Array<string>>,
+  platformPackager: Pick<PlatformPackager<any>, "platformOptions" | "defaultTarget">,
+  platform: Platform
+): Map<Arch, Array<string>> {
   for (const targetNames of raw.values()) {
     if (targetNames.length > 0) {
       // https://github.com/electron-userland/electron-builder/issues/1355
@@ -80,6 +85,29 @@ export function computeArchToTargetNamesMap(raw: Map<Arch, Array<string>>, platf
     }
   }
 
+  return result
+}
+
+/**
+ * The target names each platform of `targets` builds, from the platform's `target` option when none is requested, as the build
+ * resolves them before it creates the platform packagers; `DEFAULT_TARGET` stands for the platform's default targets.
+ * @internal
+ */
+export function resolveTargetNames(targets: Map<Platform, Map<Arch, Array<string>>>, config: Configuration): Map<Platform, Set<string>> {
+  const result = new Map<Platform, Set<string>>()
+  for (const [platform, archToType] of targets) {
+    const key = platform.buildConfigurationKey
+    const platformOptions = (key === "mac" || key === "win" || key === "linux" ? config[key] : null) ?? {}
+    // copies of the lists: computeArchToTargetNamesMap adds the configured targets to empty ones, and the build resolves `targets` again
+    const archToTypeCopy = new Map(Array.from(archToType, ([arch, list]) => [arch, list.slice()] as const))
+    const names = new Set<string>()
+    for (const list of computeArchToTargetNamesMap(archToTypeCopy, { platformOptions, defaultTarget: [DEFAULT_TARGET] }, platform).values()) {
+      for (const name of list.length === 0 ? [DEFAULT_TARGET] : list) {
+        names.add(name.toLowerCase().trim())
+      }
+    }
+    result.set(platform, names)
+  }
   return result
 }
 

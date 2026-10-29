@@ -329,7 +329,7 @@ describe("blockMapV3Fetcher", () => {
   })
 
   test("a file without the v3 magic is not treated as a broken v3 map: it is downloaded whole and returned for the caller to decode", async () => {
-    // AppUpdater then reads it as a v1 (gzipped JSON) map: here that fails too, so the update falls back to a full download
+    // AppUpdater then reads it as a v2 (gzipped JSON) map: here that fails too, so the update falls back to a full download
     const corrupt = Buffer.from(OLD)
     corrupt.write("XXXX", 0, 4, "latin1")
     server.files.set("corrupt.blockmap", corrupt)
@@ -340,9 +340,9 @@ describe("blockMapV3Fetcher", () => {
     }
   })
 
-  describe('a v1 map (gzipped JSON) published under the URL, e.g. by a release built with blockmap: "v1"', () => {
+  describe('a v2 map (gzipped JSON) published under the URL, e.g. by a release built with blockmap: "v2"', () => {
     // incompressible, so the gzipped file is larger than the first Range request
-    const V1 = gzipSync(
+    const V2 = gzipSync(
       Buffer.from(
         makeBlocks(4000, 77)
           .map(b => Buffer.from(b.digest).toString("base64"))
@@ -351,44 +351,44 @@ describe("blockMapV3Fetcher", () => {
       { level: 0 }
     )
 
-    test("the first Range response is not a v3 map → the rest of the file is fetched, and the v1 map is returned unverified", async () => {
-      expect(V1.length).toBeGreaterThan(firstRangeSize(oldMap.header))
-      server.files.set("v1.blockmap", V1)
-      const result = await fetchWith("v1.blockmap", OLD, false)
-      expect(result.buffer.equals(V1)).toBe(true)
+    test("the first Range response is not a v3 map → the rest of the file is fetched, and the v2 map is returned unverified", async () => {
+      expect(V2.length).toBeGreaterThan(firstRangeSize(oldMap.header))
+      server.files.set("v2.blockmap", V2)
+      const result = await fetchWith("v2.blockmap", OLD, false)
+      expect(result.buffer.equals(V2)).toBe(true)
       expect(isBlockMapV3(result.buffer)).toBe(false)
       const first = firstRangeSize(oldMap.header)
       expect(server.requests).toEqual([
         { method: "GET", range: `bytes=0-${first - 1}`, status: 206 },
-        { method: "GET", range: `bytes=${first}-${V1.length - 1}`, status: 206 },
+        { method: "GET", range: `bytes=${first}-${V2.length - 1}`, status: 206 },
       ])
-      expect(result.wireBytes).toBe(V1.length)
+      expect(result.wireBytes).toBe(V2.length)
     })
 
-    test("a v1 map smaller than the first Range request arrives in one response", async () => {
+    test("a v2 map smaller than the first Range request arrives in one response", async () => {
       const small = gzipSync(Buffer.from("[]"))
-      server.files.set("v1-small.blockmap", small)
-      const result = await fetchWith("v1-small.blockmap", OLD, false)
+      server.files.set("v2-small.blockmap", small)
+      const result = await fetchWith("v2-small.blockmap", OLD, false)
       expect(result.buffer.equals(small)).toBe(true)
       expect(server.requests).toHaveLength(1)
     })
 
-    test("a server that ignores Range returns the v1 map whole in one response", async () => {
-      server.files.set("v1.blockmap", V1)
+    test("a server that ignores Range returns the v2 map whole in one response", async () => {
+      server.files.set("v2.blockmap", V2)
       server.rangeSupport = false
       try {
-        const result = await fetchWith("v1.blockmap", OLD, false)
-        expect(result.buffer.equals(V1)).toBe(true)
+        const result = await fetchWith("v2.blockmap", OLD, false)
+        expect(result.buffer.equals(V2)).toBe(true)
         expect(server.requests).toEqual([{ method: "GET", range: expect.stringMatching(/^bytes=0-/), status: 200 }])
       } finally {
         server.rangeSupport = true
       }
     })
 
-    test("no old map → one plain GET, and the v1 map is returned as is", async () => {
-      server.files.set("v1.blockmap", V1)
-      const result = await fetchWith("v1.blockmap", null, false)
-      expect(result.buffer.equals(V1)).toBe(true)
+    test("no old map → one plain GET, and the v2 map is returned as is", async () => {
+      server.files.set("v2.blockmap", V2)
+      const result = await fetchWith("v2.blockmap", null, false)
+      expect(result.buffer.equals(V2)).toBe(true)
       expect(server.requests).toEqual([{ method: "GET", range: null, status: 200 }])
     })
   })
