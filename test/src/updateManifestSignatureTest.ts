@@ -611,6 +611,48 @@ describe("blockMapUrl is signed only when present", () => {
   })
 })
 
+describe("blockMapSha512 is signed only when present", () => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  const BLOCKMAP = "https://cdn.example.com/App-1.2.3.exe.blockmap"
+  const SHA = "c2hhNTEyIG9mIHRoZSBibG9ja21hcA=="
+  const withFields = (fields: { blockMapUrl?: unknown; blockMapSha512?: unknown }) =>
+    makeInfo({ files: [{ url: "App-1.2.3.exe", sha512: "abc123", size: 8123456, ...(fields as { blockMapUrl?: string; blockMapSha512?: string }) }] })
+  const header = ["EBUM1", 'version:"1.2.3"', "staging:", "minimumSystemVersion:"]
+
+  test("adds the blockMapUrl (empty when absent) and the blockMapSha512 to the file record; a manifest without it canonicalizes as before", ({ expect }) => {
+    expect(canonicalizeForSigning(withFields({ blockMapSha512: SHA }))).toBe([...header, `file:"App-1.2.3.exe"\t"abc123"\t8123456\t\t"${SHA}"`].join("\n"))
+    expect(canonicalizeForSigning(withFields({ blockMapUrl: BLOCKMAP, blockMapSha512: SHA }))).toBe(
+      [...header, `file:"App-1.2.3.exe"\t"abc123"\t8123456\t${JSON.stringify(BLOCKMAP)}\t"${SHA}"`].join("\n")
+    )
+    expect(canonicalizeForSigning(withFields({ blockMapSha512: undefined }))).toBe(canonicalizeForSigning(makeInfo()))
+    expect(canonicalizeForSigning(withFields({ blockMapUrl: BLOCKMAP, blockMapSha512: null }))).toBe(canonicalizeForSigning(withFields({ blockMapUrl: BLOCKMAP })))
+  })
+
+  test("a blockMapSha512 cannot pass for a blockMapUrl", ({ expect }) => {
+    expect(canonicalizeForSigning(withFields({ blockMapSha512: SHA }))).not.toBe(canonicalizeForSigning(withFields({ blockMapUrl: SHA })))
+  })
+
+  test("a signed manifest with a blockMapSha512 verifies; a changed, added or removed blockMapSha512 does not", ({ expect }) => {
+    const info = signed(withFields({ blockMapSha512: SHA }), privateKeyPem)
+    expect(verifyManifestSignatures(info, [publicKeyPem]).ok).toBe(true)
+
+    const files = (blockMapSha512?: string) => [{ ...info.files[0], blockMapSha512 }]
+    expect(verifyManifestSignatures({ ...info, files: files("b3RoZXI=") }, [publicKeyPem]).ok).toBe(false)
+    expect(verifyManifestSignatures({ ...info, files: files(undefined) }, [publicKeyPem]).ok).toBe(false)
+
+    const plain = signed(makeInfo(), privateKeyPem)
+    expect(verifyManifestSignatures({ ...plain, files: [{ ...plain.files[0], blockMapSha512: SHA }] }, [publicKeyPem]).ok).toBe(false)
+  })
+
+  test.for<[string, unknown, RegExp]>([
+    ["a non-string blockMapSha512", 1, /files\[0\]\.blockMapSha512 must be a non-empty string/],
+    ["an empty blockMapSha512", "", /files\[0\]\.blockMapSha512 must be a non-empty string/],
+    ["a control character in blockMapSha512", "a\nb", /files\[0\]\.blockMapSha512 contains a control character/],
+  ])("the shape check rejects %s", ([_name, blockMapSha512, expected], { expect }) => {
+    expect(validateSignedManifestShape(withFields({ blockMapSha512 }))).toMatch(expected)
+  })
+})
+
 describe("allowCatalogSignature is signed only when true", () => {
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
   // the web-installer manifest of the pinned wire-format test above, and a signature over its EBUM1 payload made with a fixed key

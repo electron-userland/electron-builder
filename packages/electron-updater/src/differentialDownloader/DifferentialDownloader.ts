@@ -1,4 +1,4 @@
-import { BlockMapDataHolder, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
+import { BlockMapDataHolder, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions, newError } from "builder-util-runtime"
 import { BlockMap } from "builder-util-runtime"
 import { detectSha512Encoding } from "builder-util-runtime/internal"
 import fsExtra from "fs-extra"
@@ -117,6 +117,10 @@ export abstract class DifferentialDownloader {
     }
 
     const newSize = this.blockAwareFileInfo.size
+    // a map without blocks (or an update of unknown or zero size) plans nothing: "downloading" it would write an empty file
+    if (newSize == null || newSize <= 0 || operations.length === 0) {
+      throw newError(`The block maps plan no data (${operations.length} operations for a ${newSize ?? "unknown"}-byte file)`, "ERR_UPDATER_INVALID_BLOCKMAP")
+    }
     if (downloadSize + copySize + (this.fileMetadataBuffer == null ? 0 : this.fileMetadataBuffer.length) !== newSize) {
       throw new Error(`Internal error, size mismatch: downloadSize: ${downloadSize}, copySize: ${copySize}, newSize: ${newSize}`)
     }

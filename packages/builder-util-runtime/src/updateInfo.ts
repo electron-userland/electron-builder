@@ -45,6 +45,14 @@ export interface UpdateFileInfo extends BlockMapDataHolder {
    * electron-builder; covered by the manifest signature when present.
    */
   blockMapUrl?: string
+
+  /**
+   * Base64 SHA-512 of the file's `.blockmap` (separate block map, as published). When present, electron-updater checks the new block
+   * map it downloads (or assembles from Range requests) against it and downloads the update in full on a mismatch; absent, the block
+   * map is used unchecked, as before. Not written by electron-builder yet: installed updaters that verify signed manifests but predate
+   * this field would reject a signed manifest carrying it. Covered by the manifest signature when present.
+   */
+  blockMapSha512?: string
 }
 
 export interface UpdateInfo {

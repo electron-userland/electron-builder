@@ -1,5 +1,5 @@
 import { blake2b } from "@noble/hashes/blake2.js"
-import { BlockMap } from "./blockMapApi.js"
+import { BlockMap, MAX_BLOCK_MAP_SIZE } from "./blockMapApi.js"
 
 /**
  * Block map v3 — a range-fetchable, three-level binary block map (see the v3 spec in the PR that
@@ -290,19 +290,24 @@ export function parseBlockMapV3Header(buf: Buffer): BlockMapV3Header {
   if (buf.length < headerLen) {
     throw new Error("block map v3: truncated header")
   }
+  const fileSize = Number(buf.readBigUInt64LE(8))
   const regions: Array<BlockMapV3Region> = []
   let p = HEADER_FIXED_SIZE
   for (let i = 0; i < regionCount; i++) {
-    regions.push({
+    const region: BlockMapV3Region = {
       offset: Number(buf.readBigUInt64LE(p)),
       size: Number(buf.readBigUInt64LE(p + 8)),
       min: buf.readUInt32LE(p + 16),
       avg: buf.readUInt32LE(p + 20),
       max: buf.readUInt32LE(p + 24),
-    })
+    }
+    // the builder rejects such regions (normalizeRegions), so one here is corruption
+    if (region.size === 0 || region.offset + region.size > fileSize) {
+      throw new Error(`block map v3: region ${i} [${region.offset}, ${region.offset + region.size}) is empty or extends past the ${fileSize}-byte file`)
+    }
+    regions.push(region)
     p += REGION_SIZE
   }
-  const fileSize = Number(buf.readBigUInt64LE(8))
   const superCount = buf.readUInt32LE(42)
   const groupCount = buf.readUInt32LE(16)
   const blockCount = buf.readUInt32LE(20)
@@ -406,9 +411,21 @@ export function recordRangeOfGroup(header: BlockMapV3Header, groups: Array<Block
   return recordRanges(header, groups)[index]
 }
 
-/** Parses a complete v3 buffer. */
-export function decodeBlockMapV3(buf: Buffer): BlockMapV3 {
+/**
+ * Parses a complete v3 buffer. A map whose header declares no blocks (or a 0-byte file), or tables larger than `maxSize` bytes
+ * (MAX_BLOCK_MAP_SIZE by default; an updater passes the bound for the update's size, `blockMapSizeLimit`), is rejected before its
+ * tables are parsed.
+ */
+export function decodeBlockMapV3(buf: Buffer, maxSize: number = MAX_BLOCK_MAP_SIZE): BlockMapV3 {
   const header = parseBlockMapV3Header(buf)
+  if (header.blockCount === 0 || header.fileSize === 0) {
+    // the counts are bounded by the file size, so a 0-byte file has no blocks either: nothing to plan a differential download on
+    throw new Error(`block map v3: empty map (fileSize ${header.fileSize}, blocks ${header.blockCount})`)
+  }
+  const declaredSize = blockMapV3Size(header)
+  if (declaredSize > maxSize) {
+    throw new Error(`block map v3: the header declares a ${declaredSize}-byte map, more than the ${maxSize}-byte limit`)
+  }
   const supers = parseBlockMapV3Supers(header, buf)
   const groups = parseBlockMapV3Groups(header, buf)
   const records = parseBlockMapV3Records(buf, recordsStart(header), header.blockCount)
@@ -434,8 +451,15 @@ export function decodeBlockMapV3(buf: Buffer): BlockMapV3 {
   if (counted !== header.blockCount) {
     throw new Error("block map v3: group block counts do not sum to blockCount")
   }
-  if (records.some(record => record.size === 0)) {
-    throw new Error("block map v3: empty block")
+  let bytes = 0
+  for (const record of records) {
+    if (record.size === 0) {
+      throw new Error("block map v3: empty block")
+    }
+    bytes += record.size
+  }
+  if (bytes !== header.fileSize) {
+    throw new Error(`block map v3: blocks cover ${bytes} bytes, file size is ${header.fileSize}`)
   }
   return { header, supers, groups, records }
 }

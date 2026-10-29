@@ -4,6 +4,7 @@ import {
   BlockMapV3Group,
   BlockMapV3Header,
   BlockMapV3Super,
+  blockMapSizeLimit,
   blockMapV3Size,
   decodeBlockMapV3,
   GROUP_SIZE,
@@ -12,6 +13,7 @@ import {
   groupTableStart,
   isBlockMapV3,
   IndexRange,
+  MAX_BLOCK_MAP_SIZE,
   parseBlockMapV3Groups,
   parseBlockMapV3Header,
   parseBlockMapV3Records,
@@ -35,10 +37,10 @@ export const COALESCE_GAP_BYTES = 1024
 /** Apache's default MaxRanges is 200 and header buffers are 8 KB; stay under both. */
 export const MAX_RANGES_PER_REQUEST = 200
 /**
- * Largest block map accepted (whole downloads, and the size a header declares): a 2 GB installer at 1 KiB blocks needs ~22 MB,
- * so this leaves ample room while keeping a corrupt or hostile header from allocating or requesting gigabytes.
+ * Largest block map accepted when the size of the update is not known (whole downloads, and the size a header declares); with a
+ * known size the bound is `blockMapSizeLimit(expectedFileSize)`, a few percent of the update.
  */
-export const MAX_BLOCK_MAP_SIZE = 128 * 1024 * 1024
+export { MAX_BLOCK_MAP_SIZE }
 /** per-part allowance for the boundary and part headers of a `multipart/byteranges` response */
 const MULTIPART_PART_OVERHEAD = 256
 const MAX_REDIRECTS = 10
@@ -121,8 +123,11 @@ class BlockMapV3Fetcher {
   /** options of the current target: retargeted by every redirect (later ranges go directly to e.g. the CDN a feed redirects to) */
   private requestOptions: RequestOptions
   private currentUrl: URL
+  /** largest map accepted: bounds the whole download, the size a header declares and every buffer derived from it */
+  private readonly maxMapSize: number
 
   constructor(private readonly options: BlockMapV3FetchOptions) {
+    this.maxMapSize = blockMapSizeLimit(options.expectedFileSize)
     // Electron's net reports redirects as events instead of following them, so they can be followed without the credentials
     const requestOptions: RequestOptions & { redirect?: "manual" } = {
       headers: {
@@ -253,17 +258,20 @@ class BlockMapV3Fetcher {
   }
 
   /**
-   * Rejects a header that does not describe the expected file, or declares a map larger than MAX_BLOCK_MAP_SIZE, before any size
-   * derived from its counts is requested or allocated (the counts themselves are bounded by `parseBlockMapV3Header`).
+   * Rejects a header that does not describe the expected file, describes an empty one, or declares a map larger than `maxMapSize`,
+   * before any size derived from its counts is requested or allocated (the counts themselves are bounded by `parseBlockMapV3Header`).
    */
   private checkHeader(header: BlockMapV3Header): void {
+    if (header.blockCount === 0 || header.fileSize === 0) {
+      throw new Error(`block map v3: empty map (fileSize ${header.fileSize}, blocks ${header.blockCount})`)
+    }
     const expectedFileSize = this.options.expectedFileSize
     if (expectedFileSize != null && header.fileSize !== expectedFileSize) {
       throw new Error(`block map v3: the map describes a ${header.fileSize}-byte file, the update is ${expectedFileSize} bytes`)
     }
     const size = blockMapV3Size(header)
-    if (size > MAX_BLOCK_MAP_SIZE) {
-      throw new Error(`block map v3: the header declares a ${size}-byte map, more than the ${MAX_BLOCK_MAP_SIZE}-byte limit`)
+    if (size > this.maxMapSize) {
+      throw new Error(`block map v3: the header declares a ${size}-byte map, more than the ${this.maxMapSize}-byte limit`)
     }
   }
 
@@ -272,7 +280,7 @@ class BlockMapV3Fetcher {
       this.options.logger?.info?.(`Block map ${this.options.url.href} is not a v3 map; downloaded it whole`)
       return this.result(body, { supers: 0, groups: 0 }, { supers: 0, groups: 0 })
     }
-    const map = decodeBlockMapV3(body)
+    const map = decodeBlockMapV3(body, this.maxMapSize)
     this.checkHeader(map.header)
     const expected = blockMapV3Size(map.header)
     if (body.length !== expected) {
@@ -287,8 +295,8 @@ class BlockMapV3Fetcher {
     let body = first.body
     if (first.totalSize == null) {
       body = await this.fetchWhole()
-    } else if (first.totalSize > MAX_BLOCK_MAP_SIZE) {
-      throw new Error(`Blockmap "${this.options.url.href}" is ${first.totalSize} bytes, more than the ${MAX_BLOCK_MAP_SIZE}-byte limit`)
+    } else if (first.totalSize > this.maxMapSize) {
+      throw new Error(`Blockmap "${this.options.url.href}" is ${first.totalSize} bytes, more than the ${this.maxMapSize}-byte limit`)
     } else if (body.length < first.totalSize) {
       const rest = await this.rangeRequest([{ start: body.length, end: first.totalSize }])
       body = rest.status === 200 ? rest.body : Buffer.concat([body, rest.body])
@@ -297,7 +305,7 @@ class BlockMapV3Fetcher {
   }
 
   private async fetchWhole(): Promise<Buffer> {
-    const response = await this.doRequest(null, MAX_BLOCK_MAP_SIZE)
+    const response = await this.doRequest(null, this.maxMapSize)
     if (response.status !== 200 && response.status !== 206) {
       throw new Error(`block map v3: unexpected status ${response.status} for a full download`)
     }
@@ -371,7 +379,7 @@ class BlockMapV3Fetcher {
 
   /**
    * Sends one GET (of `ranges`, or of the whole file when null) and buffers the body, failing once a 206 body exceeds
-   * `maxPartialBytes` or any other body (the whole file) exceeds MAX_BLOCK_MAP_SIZE.
+   * `maxPartialBytes` or any other body (the whole file) exceeds the size limit of the map (`blockMapSizeLimit`).
    */
   private doRequest(ranges: Array<ByteRange> | null, maxPartialBytes: number, redirectCount = 0): Promise<RangeResponse> {
     const { cancellationToken, httpExecutor } = this.options
@@ -418,7 +426,7 @@ class BlockMapV3Fetcher {
           return
         }
 
-        const maxBytes = status === 206 ? maxPartialBytes : MAX_BLOCK_MAP_SIZE
+        const maxBytes = status === 206 ? maxPartialBytes : this.maxMapSize
         const chunks: Array<Buffer> = []
         let received = 0
         response.on("data", (chunk: Buffer) => {
