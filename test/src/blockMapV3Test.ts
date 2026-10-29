@@ -197,4 +197,36 @@ describe("block map v3 format", () => {
     expect(() => parseBlockMapV3Header(withCount(16, header.blockCount + 1))).toThrow("inconsistent counts")
     expect(() => parseBlockMapV3Header(withCount(42, header.groupCount + 1))).toThrow("inconsistent counts")
   })
+
+  test("rejects an empty map: a 0-byte file, or a file without blocks", ({ expect }) => {
+    expect(() => decodeBlockMapV3(encodeBlockMapV3([], { fileSize: 0, defaultChunker: DEFAULT }))).toThrow("empty map (fileSize 0, blocks 0)")
+    expect(() => decodeBlockMapV3(encodeBlockMapV3([], { fileSize: 4096, defaultChunker: DEFAULT }))).toThrow("empty map (fileSize 4096, blocks 0)")
+  })
+
+  test("rejects regions that are empty or extend past the file", ({ expect }) => {
+    const blocks = makeBlocks(20, 1)
+    const fileSize = blocks.reduce((s, b) => s + b.size, 0)
+    const encodeWith = (region: { offset: number; size: number }) =>
+      encodeBlockMapV3(blocks, { fileSize, defaultChunker: DEFAULT, regions: [{ ...region, min: 512, avg: 1024, max: 2048 }] })
+    expect(() => parseBlockMapV3Header(encodeWith({ offset: blocks[5].offset, size: 0 }))).toThrow(/region 0 .* is empty or extends past/)
+    expect(() => parseBlockMapV3Header(encodeWith({ offset: blocks[5].offset, size: fileSize }))).toThrow(/region 0 .* is empty or extends past/)
+    expect(parseBlockMapV3Header(encodeWith({ offset: blocks[5].offset, size: fileSize - blocks[5].offset })).regions).toHaveLength(1)
+  })
+
+  test("rejects blocks that do not cover the file size", ({ expect }) => {
+    const blocks = makeBlocks(20, 1)
+    const fileSize = blocks.reduce((s, b) => s + b.size, 0)
+    expect(() => decodeBlockMapV3(encodeBlockMapV3(blocks, { fileSize: fileSize + 1, defaultChunker: DEFAULT }))).toThrow(
+      `blocks cover ${fileSize} bytes, file size is ${fileSize + 1}`
+    )
+  })
+
+  test("rejects a header that declares a map larger than the limit before parsing its tables", ({ expect }) => {
+    const blocks = makeBlocks(20, 1)
+    const buf = encodeBlockMapV3(blocks, { fileSize: blocks.reduce((s, b) => s + b.size, 0), defaultChunker: DEFAULT })
+    expect(decodeBlockMapV3(buf, buf.length).records).toHaveLength(20)
+    expect(() => decodeBlockMapV3(buf, buf.length - 1)).toThrow(`the header declares a ${buf.length}-byte map, more than the ${buf.length - 1}-byte limit`)
+    // only the header is in hand: the declared size is checked before the (missing) tables are read
+    expect(() => decodeBlockMapV3(buf.subarray(0, HEADER_FIXED_SIZE), 100)).toThrow("more than the 100-byte limit")
+  })
 })

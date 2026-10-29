@@ -1,5 +1,5 @@
 import { createRequire } from "node:module"
-import { decodeBlockMapV3, isBlockMapV3, LogLimiter, toBlockMap } from "builder-util-runtime/internal"
+import { blockMapSizeLimit, decodeBlockMapV3, detectSha512Encoding, isBlockMapV3, LogLimiter, toBlockMap } from "builder-util-runtime/internal"
 import {
   AllPublishOptions,
   asArray,
@@ -19,7 +19,7 @@ import {
   verifyManifestSignatures,
   type LimitedLogger,
 } from "builder-util-runtime"
-import { randomBytes } from "crypto"
+import { createHash, randomBytes } from "crypto"
 import { release } from "os"
 import { EventEmitter } from "events"
 import fsExtra from "fs-extra"
@@ -1262,7 +1262,12 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   protected logDifferentialDownloadFallback(error: unknown): void {
     try {
-      this.log.error(`Cannot download differentially, fallback to full download: ${error instanceof Error ? error.stack || String(error) : String(error)}`)
+      // a rejected block map (empty, too large, not the update's, or not the published bytes) is fully described by its message:
+      // one line, without a stack trace
+      const code = (error as any)?.code
+      const isRejectedBlockMap = code === ERR_INVALID_BLOCKMAP || code === ERR_BLOCKMAP_SHA512_MISMATCH
+      const details = error instanceof Error ? (isRejectedBlockMap ? error.message : error.stack || String(error)) : String(error)
+      this.log.error(`Cannot download differentially, fallback to full download: ${details}`)
     } catch (_ignored) {
       // a throwing logger must not stop the fallback
     }
@@ -1293,18 +1298,43 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         newBlockMapUrl = fileInfo.blockMapUrl
         oldBlockMapUrl = override ? (await getBlockMapFiles())[0] : null
       }
+      const newFileSize = fileInfo.info.size
+      if (newFileSize === 0) {
+        throw newError(`The update "${fileInfo.info.url}" is 0 bytes, it has no blocks to download differentially`, ERR_INVALID_BLOCKMAP)
+      }
       this.log.info(`Download block maps (old: "${oldBlockMapUrl ?? "cache only"}", new: ${newBlockMapUrl})`)
 
-      const downloadBlockMap = async (url: URL, originUrl?: URL): Promise<LoadedBlockMap> => {
-        const data = await this.httpExecutor.downloadToBuffer(url, {
-          headers: this.downloadRequestHeaders(url, downloadUpdateOptions, originUrl),
-          cancellationToken: downloadUpdateOptions.cancellationToken,
-        })
+      const downloadBlockMap = async (url: URL, maxSize: number, originUrl?: URL): Promise<Buffer> => {
+        // a block map is gzipped JSON or binary, so the bytes on the wire never exceed its decoded size by more than a few bytes
+        const data = await this.httpExecutor.downloadToBuffer(
+          url,
+          {
+            headers: this.downloadRequestHeaders(url, downloadUpdateOptions, originUrl),
+            cancellationToken: downloadUpdateOptions.cancellationToken,
+          },
+          maxSize
+        )
 
         if (data == null || data.length === 0) {
-          throw new Error(`Blockmap "${url.href}" is empty`)
+          throw newError(`Blockmap "${url.href}" is empty`, ERR_INVALID_BLOCKMAP)
         }
-        return parseBlockMapData(data, url.href)
+        return data
+      }
+
+      // the new map must describe the update: its blocks end at the update's size, and its bytes are the published ones when the
+      // manifest names their sha512 (checked before the map is cached for the next update)
+      const newBlockMapLimit = blockMapSizeLimit(newFileSize)
+      const loadNewBlockMap = (data: Buffer): LoadedBlockMap => {
+        verifyBlockMapSha512(data, fileInfo.info.blockMapSha512, newBlockMapUrl.href)
+        const loaded = parseBlockMapData(data, newBlockMapUrl.href, newBlockMapLimit)
+        const end = getBlockMapEnd(loaded.map)
+        if (end == null || end === 0 || (newFileSize != null && end !== newFileSize)) {
+          throw newError(
+            `Blockmap "${newBlockMapUrl.href}" does not describe the ${newFileSize ?? "unknown"}-byte update (${end == null ? "malformed" : `its blocks end at ${end}`})`,
+            ERR_INVALID_BLOCKMAP
+          )
+        }
+        return loaded
       }
 
       const downloadOptions: DifferentialDownloaderOptions = {
@@ -1326,11 +1356,15 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         await fsExtra.outputFile(path.join(cacheDir, "current.blockmap"), blockMap.data)
       }
 
+      // the old map describes the cached old installer (checked by isBlockMapOfFile), so its size bounds the map; unknown when it is missing
+      const oldFileStat = await fsExtra.stat(downloadOptions.oldFile).catch(() => null)
+      const oldBlockMapLimit = blockMapSizeLimit(oldFileStat?.size)
+
       const getBlockMapFromCacheDir = async (cacheDir: string): Promise<LoadedBlockMap | null> => {
         const blockMapFile = path.join(cacheDir, "current.blockmap")
         try {
           if (await fsExtra.pathExists(blockMapFile)) {
-            return parseBlockMapData(await fsExtra.readFile(blockMapFile), blockMapFile)
+            return parseBlockMapData(await fsExtra.readFile(blockMapFile), blockMapFile, oldBlockMapLimit)
           }
         } catch (e: any) {
           this.log.warn(`Cannot parse blockmap "${blockMapFile}", error: ${e}`)
@@ -1363,7 +1397,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
             isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
             logger: this.log,
           })
-          newBlockMapData = parseBlockMapData(fetched.buffer, newBlockMapUrl.href)
+          // the assembled map is byte-identical to the published file, so blockMapSha512 covers it like a whole download
+          newBlockMapData = loadNewBlockMap(fetched.buffer)
         } catch (e: unknown) {
           // a host or CDN that mishandles Range requests, or a map that fails verification: a plain GET of the new map still
           // allows a differential update
@@ -1371,7 +1406,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
           this.log.warn(`Cannot fetch the changed parts of the block map "${newBlockMapUrl.href}", downloading it whole: ${e instanceof Error ? e.message : String(e)}`)
         }
       }
-      newBlockMapData ??= await downloadBlockMap(newBlockMapUrl)
+      newBlockMapData ??= loadNewBlockMap(await downloadBlockMap(newBlockMapUrl, newBlockMapLimit))
       await saveBlockMapToCacheDir(newBlockMapData, this.downloadedUpdateHelper!.cacheDirForPendingUpdate)
 
       if (oldBlockMapData == null) {
@@ -1397,7 +1432,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         }
         this.log.info(`No cached blockmap for the old installer, downloading it from "${oldBlockMapUrl}"`)
         // the old blockmap comes from previousBlockmapBaseUrlOverride when the app sets it, so that origin gets the credentials
-        oldBlockMapData = await downloadBlockMap(oldBlockMapUrl, override ? new URL(override) : undefined)
+        const oldData = await downloadBlockMap(oldBlockMapUrl, oldBlockMapLimit, override ? new URL(override) : undefined)
+        oldBlockMapData = parseBlockMapData(oldData, oldBlockMapUrl.href, oldBlockMapLimit)
         if (!(await isBlockMapOfFile(oldBlockMapData.map, downloadOptions.oldFile))) {
           // e.g. a server that serves another release's blockmap under the derived name: planned against it, the download fails the sha512 check
           this.log.info(
@@ -1449,15 +1485,50 @@ interface LoadedBlockMap {
   readonly map: BlockMap
 }
 
-/** Decodes a block map file in either format; the v3 map starts with its magic, anything else is read as gzipped JSON (v2). */
-function parseBlockMapData(data: Buffer, source: string): LoadedBlockMap {
+/** A block map that cannot be planned on: empty, larger than its limit, malformed, or not describing the update. */
+const ERR_INVALID_BLOCKMAP = "ERR_UPDATER_INVALID_BLOCKMAP"
+/** The downloaded block map is not the one the update manifest names by `blockMapSha512`. */
+const ERR_BLOCKMAP_SHA512_MISMATCH = "ERR_UPDATER_BLOCKMAP_SHA512_MISMATCH"
+
+/**
+ * Decodes a block map file in either format; the v3 map starts with its magic, anything else is read as gzipped JSON (v2). A map
+ * of more than `maxSize` bytes (`blockMapSizeLimit` of the file it describes), compressed or decoded, is rejected before it is
+ * decompressed or its tables are parsed.
+ */
+function parseBlockMapData(data: Buffer, source: string, maxSize: number): LoadedBlockMap {
   try {
-    if (isBlockMapV3(data)) {
-      return { format: "v3", data, map: toBlockMap(decodeBlockMapV3(data)) }
+    if (data.length > maxSize) {
+      throw new Error(`${data.length} bytes, more than the ${maxSize}-byte limit`)
     }
-    return { format: "v2", data, map: JSON.parse(gunzipSync(data).toString()) }
+    if (isBlockMapV3(data)) {
+      return { format: "v3", data, map: toBlockMap(decodeBlockMapV3(data, maxSize)) }
+    }
+    let json: Buffer
+    try {
+      json = gunzipSync(data, { maxOutputLength: maxSize })
+    } catch (e: any) {
+      if (e?.code === "ERR_BUFFER_TOO_LARGE") {
+        throw new Error(`decompressed size exceeds the ${maxSize}-byte limit`)
+      }
+      throw e
+    }
+    return { format: "v2", data, map: JSON.parse(json.toString()) }
   } catch (e: any) {
-    throw new Error(`Cannot parse blockmap "${source}", error: ${e}`)
+    throw newError(`Cannot parse blockmap "${source}", error: ${e}`, ERR_INVALID_BLOCKMAP)
+  }
+}
+
+/**
+ * Checks `data` against the `blockMapSha512` of the update manifest; nothing to check when the manifest has none (written by
+ * earlier electron-builder versions, or a custom manifest).
+ */
+function verifyBlockMapSha512(data: Buffer, expected: string | null | undefined, source: string): void {
+  if (expected == null) {
+    return
+  }
+  const actual = createHash("sha512").update(data).digest(detectSha512Encoding(expected))
+  if (actual !== expected) {
+    throw newError(`Blockmap "${source}" does not match the blockMapSha512 of the update manifest (expected ${expected}, got ${actual})`, ERR_BLOCKMAP_SHA512_MISMATCH)
   }
 }
 
@@ -1469,7 +1540,8 @@ function parseBlockMapData(data: Buffer, source: string): LoadedBlockMap {
  */
 export async function isBlockMapOfFile(blockMap: unknown, file: string): Promise<boolean> {
   const end = getBlockMapEnd(blockMap)
-  if (end == null) {
+  // a map without a single byte describes nothing, even a 0-byte file: there is no block to copy from it
+  if (end == null || end === 0) {
     return false
   }
   const stat = await fsExtra.stat(file).catch(() => null)

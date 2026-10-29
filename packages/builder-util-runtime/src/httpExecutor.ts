@@ -18,6 +18,9 @@ const debug = _debug("electron-builder")
 
 // Normalise a header or field name: lowercase + strip all separators (- and _).
 // Shared by both registries so lookup is always separator-agnostic.
+/** default body limit of `downloadToBuffer` */
+const MAX_BUFFER_DOWNLOAD_SIZE = 500 * 1024 * 1024
+
 const normalizeName = (name: string): string => name.toLowerCase().replace(/[-_]/g, "")
 
 // HTTP header names (normalised) stripped on cross-origin redirects.
@@ -272,7 +275,8 @@ Please double check that your authentication token is correct. Due to security r
   // noinspection JSUnusedLocalSymbols
   abstract createRequest(options: RequestOptions, callback: (response: any) => void): T
 
-  async downloadToBuffer(url: URL, options: DownloadOptions): Promise<Buffer> {
+  /** Downloads `url` into memory; a body larger than `maxSize` bytes (500 MB by default) fails the download. */
+  async downloadToBuffer(url: URL, options: DownloadOptions, maxSize: number = MAX_BUFFER_DOWNLOAD_SIZE): Promise<Buffer> {
     return await options.cancellationToken.createPromise<Buffer>((resolve, reject, onCancel) => {
       const responseChunks: Buffer[] = []
       const requestOptions = {
@@ -310,8 +314,8 @@ Please double check that your authentication token is correct. Due to security r
                 return
               }
               receivedLength += chunk.length
-              if (receivedLength > 524288000) {
-                finish(new Error("Maximum allowed size is 500 MB"))
+              if (receivedLength > maxSize) {
+                finish(new Error(maxSize === MAX_BUFFER_DOWNLOAD_SIZE ? "Maximum allowed size is 500 MB" : `Maximum allowed size is ${maxSize} bytes`))
                 response.destroy()
                 return
               }

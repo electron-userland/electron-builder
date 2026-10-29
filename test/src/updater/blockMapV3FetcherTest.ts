@@ -1,6 +1,6 @@
 import { blake2b } from "@noble/hashes/blake2.js"
 import { CancellationToken } from "builder-util-runtime"
-import { BlockInput, decodeBlockMapV3, encodeBlockMapV3, isBlockMapV3, RECORD_SIZE, recordsStart, SUPER_SIZE } from "builder-util-runtime/internal"
+import { BlockInput, blockMapSizeLimit, decodeBlockMapV3, encodeBlockMapV3, isBlockMapV3, RECORD_SIZE, recordsStart, SUPER_SIZE } from "builder-util-runtime/internal"
 import {
   coalesce,
   fetchBlockMapV3,
@@ -556,5 +556,30 @@ describe("blockMapV3Fetcher", () => {
     expect(() => verifyBlockMapV3(OLD, map.header, map.supers, groups)).toThrow(/group 0 is empty/)
     const supers = map.supers.map((it, i) => (i === 0 ? { ...it, groupCount: 0 } : it))
     expect(() => verifyBlockMapV3(OLD, map.header, supers, map.groups)).toThrow(/super-group 0 is empty/)
+  })
+
+  test("a map without blocks is rejected, whether its header comes from a Range request or a whole download", async () => {
+    server.files.set("empty.blockmap", encodeBlockMapV3([], { fileSize: 0, defaultChunker: { min: 8192, avg: 16384, max: 32768 } }))
+    await expect(fetchWith("empty.blockmap", OLD, false)).rejects.toThrow(/empty map \(fileSize 0, blocks 0\)/)
+    await expect(fetchWith("empty.blockmap", null, false)).rejects.toThrow(/empty map \(fileSize 0, blocks 0\)/)
+  })
+
+  test("a map larger than the limit for the update's size is rejected before it is allocated or downloaded whole", async () => {
+    // 1-byte blocks: ~10 bytes of map per byte of file, far past the 64 bytes per KiB the limit allows
+    const fileSize = 120_000
+    const blocks: Array<BlockInput> = []
+    for (let i = 0; i < fileSize; i++) {
+      blocks.push({ digest: blake2b(Buffer.from(`dense-${i}`), { dkLen: 18 }), size: 1, offset: i })
+    }
+    const dense = encode(blocks)
+    expect(dense.length).toBeGreaterThan(blockMapSizeLimit(fileSize))
+    server.files.set("dense.blockmap", dense)
+
+    await expect(fetchWith("dense.blockmap", OLD, false, { expectedFileSize: fileSize })).rejects.toThrow(
+      `the header declares a ${dense.length}-byte map, more than the ${blockMapSizeLimit(fileSize)}-byte limit`
+    )
+    await expect(fetchWith("dense.blockmap", null, false, { expectedFileSize: fileSize })).rejects.toThrow(`response exceeds ${blockMapSizeLimit(fileSize)} bytes`)
+    // the size of the update is not known: only MAX_BLOCK_MAP_SIZE applies
+    await expect(fetchWith("dense.blockmap", null, false)).resolves.toMatchObject({ buffer: dense })
   })
 })
