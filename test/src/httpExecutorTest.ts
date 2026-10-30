@@ -847,6 +847,17 @@ describe("safeStringifyJson field redaction", () => {
     // the limit is per call
     expect(JSON.parse(safeStringifyJson({ token: "x" })).token).toBe(hashSensitiveValue("x"))
   })
+
+  // the publish manager and the update info builder use the result as the key of a publish configuration
+  test("fingerprints every sensitive value when called with no limit, so data differing in any of them stringify differently", () => {
+    const config = (last: string) => ({ ...Object.fromEntries(Array.from({ length: 16 }, (_, i) => [`token${i}`, "same"])), lastToken: last })
+
+    expect(safeStringifyJson(config("a"))).toBe(safeStringifyJson(config("b")))
+    const unlimited = safeStringifyJson(config("a"), undefined, Number.POSITIVE_INFINITY)
+    expect(unlimited).not.toBe(safeStringifyJson(config("b"), undefined, Number.POSITIVE_INFINITY))
+    expect(JSON.parse(unlimited).lastToken).toBe(hashSensitiveValue("a"))
+    expect(unlimited).not.toContain(REDACTED_VALUE)
+  })
 })
 
 describe("addSensitiveRedirectHeader / addSensitiveFieldPattern", () => {
