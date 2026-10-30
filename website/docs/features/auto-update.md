@@ -290,7 +290,7 @@ The update manifest (`latest*.yml`) itself **is** cryptographically signed and v
 
 Changing a signing key or certificate that installs in the field already trust requires a transition release — see [Key Rotation](./key-rotation.md).
 
-The manifest is parsed before its signature is checked, so electron-updater rejects a `latest*.yml` whose YAML aliases (`&name` / `*name`) expand to more than 100000 values plus key and string characters (or more than the file's length, if that is larger) with `ERR_UPDATER_INVALID_UPDATE_INFO`, with every built-in provider. A manifest without aliases is never rejected for its size.
+The manifest is parsed before its signature is checked, so electron-updater rejects a `latest*.yml` whose YAML aliases (`&name` / `*name`) expand to more than 100000 values plus key and string characters (or more than the file's length, if that is larger) with `ERR_UPDATER_INVALID_UPDATE_INFO`, with every built-in provider. A manifest without aliases is never rejected for its size. electron-updater 6 accepted such manifests; see [the v27 migration notes](../migration/v27-runtime-changes.md#update-manifest-yaml-aliases-are-limited).
 
 ### `disableWebInstaller` (now defaults to `true`)
 

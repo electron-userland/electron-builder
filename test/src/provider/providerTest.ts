@@ -196,6 +196,22 @@ test.for([
   expect(performance.now() - start).toBeLessThan(1000)
 })
 
+test("parseUpdateInfo - the alias-budget error names the v27 change, the replacement and the migration guide", ({ expect }) => {
+  let error: unknown
+  try {
+    parseUpdateInfo(mockAliasChainYaml("1.0.1", 40), "latest.yml", CHANNEL_FILE_URL)
+  } catch (e: unknown) {
+    error = e
+  }
+  expect(error).toMatchObject({
+    code: "ERR_UPDATER_INVALID_UPDATE_INFO",
+    message:
+      "Cannot parse update info from latest.yml in the latest release artifacts (https://example.com/latest.yml): YAML aliases expand to more than 100000 values and string characters. " +
+      "electron-updater 7 (electron-builder v27) rejects such a manifest: publish it without YAML aliases (js-yaml `dump` with `noRefs: true`, as electron-builder writes it) " +
+      "or with the shared values repeated inline. https://www.electron.build/docs/migration/v27-runtime-changes#update-manifest-yaml-aliases-are-limited",
+  })
+})
+
 test("parseUpdateInfo - accepts aliases as serializeToYaml writes them up to the budget", ({ expect }) => {
   // each reference to the notes is charged about 43000 keys, values and string characters, and the file stays under 100000 characters
   const notes = Array.from({ length: 200 }, (_, i) => ({ version: `0.${i}.0`, note: "n".repeat(200) }))
