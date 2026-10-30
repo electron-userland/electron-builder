@@ -259,8 +259,14 @@ test.for([
   ["a 600M-character key", `${mockYaml("1.0.1")}s: &s ${"A".repeat(100_000)}\n? [${Array(6000).fill("*s").join(", ")}]\n: 0\n`],
 ])("parseUpdateInfo - rejects YAML aliases in complex mapping keys while loading: %s", ([_name, yaml], { expect }) => {
   const start = performance.now()
+  // the error thrown from the listener reaches the caller as is, not wrapped with the stack and the whole rawData
   expect(() => parseUpdateInfo(yaml, "latest.yml", CHANNEL_FILE_URL)).toThrow(
-    expect.objectContaining({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringMatching(/YAML aliases expand to more than/) })
+    expect.objectContaining({
+      code: "ERR_UPDATER_INVALID_UPDATE_INFO",
+      message: expect.stringMatching(
+        /^Cannot parse update info from latest\.yml in the latest release artifacts \(https:\/\/example\.com\/latest\.yml\): YAML aliases expand to more than \d+ values and string characters$/
+      ),
+    })
   )
   expect(performance.now() - start).toBeLessThan(1000)
 })
