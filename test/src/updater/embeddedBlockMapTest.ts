@@ -62,6 +62,17 @@ test("rejects an embedded blockmap that inflates past the size limit for the fil
   await expect(downloader.download()).rejects.toMatchObject({ code: "ERR_BUFFER_TOO_LARGE" })
 })
 
+test("rejects an old file whose embedded blockmap inflates past the size limit for it", async ({ tmpDir }) => {
+  // a small old file (limit: the 8 MiB floor) whose trailer declares a few KB of deflate that inflates just past it
+  const inflating = deflateRawSync(Buffer.concat([Buffer.from(JSON.stringify({ version: "2", files: [] })), Buffer.alloc(8 * MiB, " ")]))
+  const trailer = Buffer.alloc(4)
+  trailer.writeUInt32BE(inflating.length)
+  const oldFile = path.join(await tmpDir.getTempDir({ prefix: "embedded-blockmap-test" }), "old.bin")
+  await fsExtra.outputFile(oldFile, Buffer.concat([inflating, trailer]))
+
+  await expect(new TestDownloader(oldFile, REMOTE_METADATA).download()).rejects.toMatchObject({ code: "ERR_BUFFER_TOO_LARGE" })
+})
+
 test.for([
   { name: "zero", info: { blockMapSize: 0 } },
   { name: "negative", info: { blockMapSize: -1 } },
