@@ -35,6 +35,16 @@ export function mockAliasChainYaml(version: string, depth: number): string {
 }
 
 /**
+ * mockYaml plus two complex mapping keys (`? [*s, *s, ...]`) that each reference a 10000-character string `count` times.
+ * js-yaml converts each key to a string while loading, and the two keys convert to the same string,
+ * so a manifest that is not rejected before its keys are converted fails as a duplicated mapping key instead.
+ */
+export function mockComplexKeyYaml(version: string, count = 200): string {
+  const key = `? [${Array(count).fill("*s").join(", ")}]\n`
+  return `${mockYaml(version)}s: &s ${"A".repeat(10_000)}\n${key}: 0\n${key}: 1\n`
+}
+
+/**
  * Type-safe accessor for the provider instance stored inside an updater
  * after checkForUpdates() has been called.
  */

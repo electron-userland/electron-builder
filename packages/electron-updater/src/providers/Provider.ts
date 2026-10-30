@@ -1,6 +1,6 @@
 import { CancellationToken, configureRequestUrl, newError, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
-import { load } from "js-yaml"
+import { EventType, load, State } from "js-yaml"
 import { URL } from "url"
 import { ElectronHttpExecutor } from "../electronHttpExecutor.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
@@ -130,36 +130,58 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
     throw newError(`Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): rawData: null`, "ERR_UPDATER_INVALID_UPDATE_INFO")
   }
 
+  // js-yaml returns an aliased node by reference, so a few hundred bytes of nested aliases can reach a value exponentially often,
+  // and a long string referenced by many aliases is read in full each time.
+  // Anything that walks the update info (a deep comparison, JSON serialization) would then block the main process.
+  // Without aliases, a document's keys and values, a string counted by its length, add up to at most its number of characters, so a legitimate channel file is never rejected.
+  const budget = Math.max(100_000, rawData.length)
+  const budgetExceeded = (): Error =>
+    newError(
+      `Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): YAML aliases expand to more than ${budget} values and string characters`,
+      "ERR_UPDATER_INVALID_UPDATE_INFO"
+    )
+
+  // js-yaml itself expands aliases while loading: it converts a complex mapping key (`? [*a, *a]`) to a string,
+  // so a few hundred KB of aliases in keys would build strings of hundreds of MB before load returns.
+  // Each alias is charged with everything it reaches as soon as js-yaml reads it, before the key that holds it is converted.
+  let aliasTotal = 0
+  const listener = (eventType: EventType, state: State): void => {
+    // an alias is the only node that closes with a value but no kind
+    if (eventType !== "close" || state.kind !== null || state.result == null) {
+      return
+    }
+    aliasTotal = chargeExpansion(state.result, aliasTotal, budget)
+    if (aliasTotal > budget) {
+      throw budgetExceeded()
+    }
+  }
+
   let result: UpdateInfo
   try {
-    result = load(rawData) as UpdateInfo
+    result = load(rawData, { listener }) as UpdateInfo
   } catch (e: any) {
+    if (e?.code === "ERR_UPDATER_INVALID_UPDATE_INFO") {
+      throw e
+    }
     throw newError(
       `Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}, rawData: ${rawData}`,
       "ERR_UPDATER_INVALID_UPDATE_INFO"
     )
   }
 
-  // js-yaml returns an aliased node by reference, so a few hundred bytes of nested aliases can reach a value exponentially often,
-  // and a long string referenced by many aliases is read in full each time.
-  // Anything that walks the update info (a deep comparison, JSON serialization) would then block the main process.
-  // Without aliases, a document's keys and values, a string counted by its length, add up to at most its number of characters, so a legitimate channel file is never rejected.
-  const budget = Math.max(100_000, rawData.length)
-  if (exceedsExpansionBudget(result, budget)) {
-    throw newError(
-      `Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): YAML aliases expand to more than ${budget} values and string characters`,
-      "ERR_UPDATER_INVALID_UPDATE_INFO"
-    )
+  if (chargeExpansion(result, 0, budget) > budget) {
+    throw budgetExceeded()
   }
   return result
 }
 
-// charges every value reachable from root, an aliased one each time it is referenced: a string by its length, anything else as 1,
-// and a mapping entry also by the length of its key. Stops once the total exceeds the budget.
-function exceedsExpansionBudget(root: unknown, budget: number): boolean {
-  let total = 0
+// adds to total every value reachable from root, root included and an aliased one each time it is referenced:
+// a string by its length, anything else as 1, and a mapping entry also by the length of its key.
+// Stops once the total exceeds the budget, so a call costs at most budget - total steps.
+function chargeExpansion(root: unknown, total: number, budget: number): number {
+  total += typeof root === "string" ? Math.max(1, root.length) : 1
   const stack: Array<unknown> = [root]
-  while (stack.length > 0) {
+  while (stack.length > 0 && total <= budget) {
     const value = stack.pop()
     if (value === null || typeof value !== "object") {
       continue
@@ -168,12 +190,12 @@ function exceedsExpansionBudget(root: unknown, budget: number): boolean {
     for (const [key, child] of Object.entries(value)) {
       total += (isMapping ? key.length : 0) + (typeof child === "string" ? Math.max(1, child.length) : 1)
       if (total > budget) {
-        return true
+        return total
       }
       stack.push(child)
     }
   }
-  return false
+  return total
 }
 
 export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {

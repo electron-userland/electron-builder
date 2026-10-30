@@ -9,7 +9,7 @@ import * as path from "path"
 import * as semver from "semver"
 import { URL } from "url"
 import { MockInstance, afterEach, beforeEach, vi } from "vitest"
-import { mockAliasChainYaml, mockYaml } from "../helpers/providerTestUtil.js"
+import { mockAliasChainYaml, mockComplexKeyYaml, mockYaml } from "../helpers/providerTestUtil.js"
 import { httpExecutor } from "../helpers/updaterTestUtil.js"
 
 let requestSpy: MockInstance
@@ -245,6 +245,42 @@ test("parseUpdateInfo - accepts alias-free channel files of any size and a benig
 
   const withAlias = parseUpdateInfo(`${mockYaml("1.0.1")}other: &f [a, b]\nreleaseNotes: *f\n`, "latest.yml", CHANNEL_FILE_URL) as any
   expect(withAlias.releaseNotes).toEqual(["a", "b"])
+})
+
+// js-yaml converts a complex mapping key to a string inside load, so its aliases must be charged before load returns:
+// without that, these fail as a duplicated mapping key, or a key longer than a string can be, after the keys are built
+test.for([
+  ["two explicit sequence keys", mockComplexKeyYaml("1.0.1")],
+  ["two implicit flow sequence keys", `${mockYaml("1.0.1")}s: &s ${"A".repeat(10_000)}\n${`[${Array(200).fill("*s").join(", ")}]: 0\n`.repeat(2)}`],
+  [
+    "two sequence keys in a flow mapping",
+    `${mockYaml("1.0.1")}s: &s ${"A".repeat(10_000)}\nm: { [${Array(200).fill("*s").join(", ")}]: 0, [${Array(200).fill("*s").join(", ")}]: 1 }\n`,
+  ],
+  ["a 600M-character key", `${mockYaml("1.0.1")}s: &s ${"A".repeat(100_000)}\n? [${Array(6000).fill("*s").join(", ")}]\n: 0\n`],
+])("parseUpdateInfo - rejects YAML aliases in complex mapping keys while loading: %s", ([_name, yaml], { expect }) => {
+  const start = performance.now()
+  expect(() => parseUpdateInfo(yaml, "latest.yml", CHANNEL_FILE_URL)).toThrow(
+    expect.objectContaining({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringMatching(/YAML aliases expand to more than/) })
+  )
+  expect(performance.now() - start).toBeLessThan(1000)
+})
+
+test("parseUpdateInfo - accepts a channel file as electron-builder writes it, and aliases in a key within the budget", ({ expect }) => {
+  const info = {
+    version: "1.0.1",
+    files: [
+      { url: "TestApp-Setup-1.0.1.exe", sha512: "sha512abc", size: 1024 },
+      { url: "TestApp-1.0.1-arm64.exe", sha512: "sha512def", size: 2048 },
+    ],
+    path: "TestApp-Setup-1.0.1.exe",
+    sha512: "sha512abc",
+    releaseDate: "2026-01-01T00:00:00.000Z",
+    releaseNotes: "Fixes and improvements",
+  }
+  expect(parseUpdateInfo(serializeToYaml(info), "latest.yml", CHANNEL_FILE_URL)).toEqual(info)
+
+  const withKey = parseUpdateInfo(`${mockYaml("1.0.1")}n: &n note\n? [*n, *n]\n: 0\n`, "latest.yml", CHANNEL_FILE_URL) as any
+  expect(withKey["note,note"]).toBe(0)
 })
 
 // js-yaml before 4.3.2 spends seconds of CPU on a few hundred KB of YAML merge keys, and the channel file is parsed before its signature is checked
