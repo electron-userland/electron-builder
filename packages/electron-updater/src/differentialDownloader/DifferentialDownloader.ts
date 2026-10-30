@@ -108,6 +108,11 @@ export abstract class DifferentialDownloader {
     let downloadSize = 0
     let copySize = 0
     for (const operation of operations) {
+      // Zero-size, negative or fractional blocks or offsets make ranges that cannot be requested or read from the old file: reject the
+      // plan before any I/O, so the update falls back to a full download
+      if (!Number.isSafeInteger(operation.start) || !Number.isSafeInteger(operation.end) || operation.start < 0 || operation.end <= operation.start) {
+        throw new Error(`Invalid ${OperationKind[operation.kind]} range [${operation.start}, ${operation.end}) in the download plan: malformed blockmap`)
+      }
       const length = operation.end - operation.start
       if (operation.kind === OperationKind.DOWNLOAD) {
         downloadSize += length

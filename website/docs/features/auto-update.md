@@ -203,11 +203,15 @@ electron-updater ≥ 7.0 (electron-builder v27) mitigates this in two ways:
     autoUpdater.quitAndInstall({ isSilent: true, isForceRunAfter: true, waitUntilNextLaunch: true })
     ```
 
+    The next launch installs that update automatically, as with `"onNextLaunch"`, whatever `autoInstallEvent` is set to, except `"manual"`: then install it with `installPendingUpdateIfAvailable()`.
+
     You can also trigger the pending install explicitly (e.g. before opening your first window):
 
     ```js
     await autoUpdater.installPendingUpdateIfAvailable()
     ```
+
+    The automatic install starts right after the app is `ready`, once your own `ready` handlers have run. Configure the updater (`autoInstallEvent`, `setFeedURL`, `addAuthHeader`, `requestHeaders`) before the app is `ready` or synchronously in a `ready` handler, not after an `await` in it. An explicit `installPendingUpdateIfAvailable()` call never runs at the same time as the automatic install: one waits for the other, and the update is installed once.
 
 ### Per-target behavior
 
@@ -304,7 +308,7 @@ const updater = new NsisUpdater()
 updater.disableWebInstaller = false // only if you intentionally ship a web installer
 ```
 
-Set it before the app is `ready`, e.g. right after creating the updater: with `autoInstallEvent: "onNextLaunch"`, a pending web-installer update is checked against the flag when the app is ready, and rejected (its pending-install marker cleared) while the flag is `true`.
+Set it before the app is `ready`, e.g. right after creating the updater, or synchronously in a `ready` handler: a web-installer update marked for [install on next launch](#install-on-next-launch-windowslinux) is checked against the flag right after the app is ready, once your own `ready` handlers have run, and rejected (its pending-install marker cleared) while the flag is `true`.
 
 A web update cached by a previous launch, or pending an install on next launch, is used only if its web package still matches the freshly fetched manifest; otherwise it is discarded. The `nsis-web` installer itself verifies the package electron-updater passes to it and installs its own copy — see [Web Installer](../nsis.md#web-installer). Once the app runs the version of that update, `NsisUpdater` removes the package from its `pending` cache directory at startup (app `ready`); the package of an update that is not installed yet, or whose install failed, is kept for the install or a retry. Because the manifest vouches for the web package, don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./signed-update-manifests.md) cover its path, SHA-512 and size.
 
