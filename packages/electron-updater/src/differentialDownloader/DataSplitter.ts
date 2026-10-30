@@ -60,13 +60,21 @@ export function copyData(task: Operation, out: Writable, oldFileFd: number, reje
     reject(new Error("Cannot copy data: the output stream is destroyed"))
     return
   }
-  const readStream = fs.createReadStream("", {
-    fd: oldFileFd,
-    fs: { read: fs.read, close: keepOldFileOpen },
-    start: task.start,
-    // end is inclusive
-    end: task.end - 1,
-  })
+  let readStream: fs.ReadStream
+  try {
+    readStream = fs.createReadStream("", {
+      fd: oldFileFd,
+      fs: { read: fs.read, close: keepOldFileOpen },
+      start: task.start,
+      // end is inclusive
+      end: task.end - 1,
+    })
+  } catch (e: unknown) {
+    // an invalid range throws synchronously, usually inside the `end` listener of a response or of the previous copy, where it
+    // would be an uncaught exception that leaves the download pending
+    reject(e instanceof Error ? e : new Error(String(e)))
+    return
+  }
   const copies = copiesInProgress.get(oldFileFd) ?? new Set<Readable>()
   copies.add(readStream)
   copiesInProgress.set(oldFileFd, copies)

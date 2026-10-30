@@ -182,6 +182,26 @@ describe("differential multipart download", () => {
     }
   })
 
+  // A copy usually starts in the `end` listener of a response or of the previous copy, where a synchronous throw is an uncaught
+  // exception that also leaves the download pending: a range the old file cannot be read with rejects the copy.
+  test("a copy of an empty range rejects without throwing", async ({ expect, tmpDir }) => {
+    const oldFileFd = await openOldFile(tmpDir, oldFile)
+    try {
+      const { out } = collector()
+      const outcomes: Array<string> = []
+      copyData(
+        { kind: OperationKind.COPY, start: 1024, end: 1024 },
+        out,
+        oldFileFd,
+        error => outcomes.push(`rejected: ${(error as NodeJS.ErrnoException).code}`),
+        () => outcomes.push("resolved")
+      )
+      expect(outcomes).toEqual(["rejected: ERR_OUT_OF_RANGE"])
+    } finally {
+      closeSync(oldFileFd)
+    }
+  })
+
   describe("multiple batches", () => {
     let server: Server | null = null
 
