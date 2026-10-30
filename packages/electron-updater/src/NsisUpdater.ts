@@ -53,6 +53,18 @@ export class NsisUpdater extends BaseUpdater {
    */
   allowCatalogSignature = false
 
+  /**
+   * The subject(s) of the certificate that signs your updates, in distinguished name (DN) format (e.g. `"CN=My Company, O=My Company, C=US"`),
+   * to verify the Authenticode signature of an update against when the update config has no `publisherName`: a packaged app without
+   * `app-update.yml` (a feed set only with `setFeedURL`), or an `app-update.yml` without one. The `publisherName` that electron-builder
+   * writes to `app-update.yml` wins over it.
+   *
+   * Since electron-updater 7, a packaged app without `app-update.yml` rejects every update (`ERR_UPDATER_NO_PUBLISHER_NAME`) unless it
+   * sets this property or assigns `verifyUpdateFileAuthenticodeSignature`.
+   * @default null
+   */
+  publisherName: Array<string> | null = null
+
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
     this.seedWebInstallerDefaultFromPackageType()
@@ -150,9 +162,13 @@ export class NsisUpdater extends BaseUpdater {
    *
    * Assigning `null` restores the default verify function.
    *
-   * It is called only with the `publisherName` of `app-update.yml`. Without one, the update is rejected
+   * It is called with the `publisherName` of `app-update.yml`, or else with {@link publisherName}. Without either, the update is rejected
    * (`ERR_UPDATER_INVALID_SIGNATURE`) before any verify function runs, unless `app-update.yml` opts out with
    * `verifyUpdateCodeSignature: false` (written by electron-builder for `win.verifyUpdateCodeSignature: false`).
+   *
+   * A packaged app without `app-update.yml` (a feed set only with `setFeedURL`) calls a custom verify function with an empty list when
+   * `publisherName` is not set, and uses its result: a function that returns `{ response: "success" }` for every file is the explicit
+   * opt-out of the verification there.
    */
   get verifyUpdateFileAuthenticodeSignature(): VerifyUpdateFileAuthenticodeSignature {
     return this._verifyUpdateFileAuthenticodeSignature
@@ -278,30 +294,52 @@ export class NsisUpdater extends BaseUpdater {
   // Fails closed: when the update config has no publisherName the update is rejected, unless the config opts out explicitly
   // (`verifyUpdateCodeSignature: false`, written by electron-builder for `win.verifyUpdateCodeSignature: false`). A custom verifier is
   // never called without a publisherName: it would get no names to match, and one checking them with e.g. `every` would accept any signer.
-  // An app with no update config file at all (dev mode, or a feed set only with setFeedURL) is not verified, as before: its feed is
-  // configured by the developer, not by electron-builder.
+  // The app's own `publisherName` property is used when the config has none.
+  //
+  // No update config file at all: an unpackaged app (dev mode) is not verified. A packaged app (a feed set only with setFeedURL) is,
+  // since electron-updater 7: against the app's `publisherName`, else by its custom verifier (called with an empty list, the app set
+  // the feed and chose the verifier itself), else the update is rejected.
   //
   // `update` is the update the file belongs to: the default verify function accepts a catalog signature for it when its verified manifest
   // allows one (see allowCatalogSignature). Without it, only NsisUpdater.allowCatalogSignature does.
   private async verifySignature(tempUpdateFile: string, update: UpdateInfoAndProvider | null = null): Promise<VerifyUpdateFileResult> {
-    let config: unknown
+    let config: unknown = null
+    let hasConfigFile = true
     try {
       config = await this.configOnDisk.value
     } catch (e: any) {
-      if (e?.code === "ENOENT") {
-        // no app-update.yml at all (unpackaged/dev mode, or a feed set only with setFeedURL): nothing to verify against, stay silent
+      if (e?.code !== "ENOENT") {
+        throw e
+      }
+      if (!this.app.isPackaged) {
+        // no dev-app-update.yml in dev mode: nothing to verify against, stay silent
         return { response: "success" }
       }
-      throw e
+      hasConfigFile = false
     }
 
-    const publisherNames = readConfiguredPublisherNames(config)
+    const publisherNames = readConfiguredPublisherNames(config) ?? readConfiguredPublisherNames({ publisherName: this.publisherName })
     if (publisherNames != null) {
       const implementation = this._verifyUpdateFileAuthenticodeSignature
       if (implementation === this._defaultVerifyUpdateFileAuthenticodeSignature) {
         return await this.defaultVerifyAuthenticodeSignature(publisherNames, tempUpdateFile, update)
       }
       return await implementation.call(this, publisherNames, tempUpdateFile)
+    }
+    if (!hasConfigFile) {
+      const implementation = this._verifyUpdateFileAuthenticodeSignature
+      if (implementation !== this._defaultVerifyUpdateFileAuthenticodeSignature) {
+        return await implementation.call(this, [], tempUpdateFile)
+      }
+      throw newError(
+        "electron-updater 7 (electron-builder v27) no longer installs updates unverified in a packaged app without app-update.yml: the update is rejected, " +
+          "as there is no publisherName to verify its Authenticode signature against. " +
+          "Build the app with a publish configuration so that electron-builder writes app-update.yml with the publisherName, " +
+          "or set autoUpdater.publisherName to the subject of the certificate that signs your updates, " +
+          'or assign autoUpdater.verifyUpdateFileAuthenticodeSignature (a function that returns { response: "success" } for every file opts out of the verification). ' +
+          "https://www.electron.build/docs/migration/v27-runtime-changes#packaged-nsis-apps-without-an-update-config-verify-updates",
+        "ERR_UPDATER_NO_PUBLISHER_NAME"
+      )
     }
     if (isUpdateCodeSignatureVerificationDisabled(config)) {
       this.limitedLogger("update-signature-verification-disabled").warn(

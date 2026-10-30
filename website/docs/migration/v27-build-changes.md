@@ -394,7 +394,7 @@ Every `publisherName` entry must now be in distinguished name (DN) format — fo
 electron-updater verifies the Authenticode signature of a downloaded NSIS update against the `publisherName` in `app-update.yml`. In v26, an `app-update.yml` without `publisherName` (written for an unsigned build, `win.sign: false`, or `publisherName: null`) made it install updates **without verifying them**. v27 fails closed on both sides:
 
 - **electron-updater 7** rejects the update with `ERR_UPDATER_INVALID_SIGNATURE` when `app-update.yml` (or `dev-app-update.yml`, or the `updateConfigPath` file) has no `publisherName`. A custom `verifyUpdateFileAuthenticodeSignature` / `verifyUpdateCodeSignature` is never called without a `publisherName`. This also applies to an app built with electron-builder v26 — build it with v27.
-- **An app with no update config file at all** (no `app-update.yml`, e.g. one that only uses `setFeedURL`) is not verified, as before: its feed is configured by the developer, not by electron-builder.
+- **A packaged app with no update config file at all** (no `app-update.yml`, e.g. one that only uses `setFeedURL`) is verified since electron-updater 7 against `autoUpdater.publisherName` or by a custom verify function, and otherwise rejects the update with `ERR_UPDATER_NO_PUBLISHER_NAME` — see [Packaged NSIS apps without an update config verify updates](./v27-runtime-changes.md#packaged-nsis-apps-without-an-update-config-verify-updates).
 - **electron-builder v27** fails the build with `InvalidConfigurationError` when it would write `app-update.yml` (an `nsis`, `nsis-web` or `electronUpdaterAware` `appx` target with a publish configuration of any provider, including one inferred from a GitHub `repository`) while `win.verifyUpdateCodeSignature` is enabled and no `publisherName` resolves: `win.sign: false` / `null`, no code signing certificate (no `certificateFile`, `WIN_CSC_LINK` / `CSC_LINK` or certificate-store lookup), or `win.sign.publisherName: null`. Builds without `app-update.yml` (e.g. `portable`, `zip`, `msi` or a `dir` target only, or `publish: null`) are not affected.
 - **The only opt-out** is `win.verifyUpdateCodeSignature: false`. The build then writes `verifyUpdateCodeSignature: false` (and no `publisherName`) into `app-update.yml`, and electron-updater installs updates without verifying their signature, warning once per updater. `publisherName: null` is no longer an opt-out.
 
@@ -406,7 +406,7 @@ electron-updater verifies the Authenticode signature of a downloaded NSIS update
 { "win": { "sign": false, "verifyUpdateCodeSignature": false } }                                 // v27: explicit opt-out
 ```
 
-For testing updates in development (`forceDevUpdateConfig`), put the certificate subject into `dev-app-update.yml` as `publisherName`, or `verifyUpdateCodeSignature: false` to skip the check. Without a `dev-app-update.yml` (a feed set only with `setFeedURL`), the update is not verified, as before.
+For testing updates in development (`forceDevUpdateConfig`), put the certificate subject into `dev-app-update.yml` as `publisherName`, or `verifyUpdateCodeSignature: false` to skip the check. Without a `dev-app-update.yml` (a feed set only with `setFeedURL`), the update of an app that is not packaged is not verified, as before.
 
 > **Tip:** `electron-builder migrate-schema` prints an advisory for `win.sign: false` / `null` or `win.sign.publisherName: null` without `win.verifyUpdateCodeSignature: false`.
 

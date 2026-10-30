@@ -18,6 +18,7 @@ What the installed app, its installer or its auto-updater does differently on yo
 | [NSIS: per-machine builds set `isAdminRightsRequired` in the update info](#nsis-per-machine-builds-set-isadminrightsrequired) | Advisory | None for most apps. Their updates are started with `elevate.exe`; with `autoInstallEvent: "onNextLaunch"`, per-machine apps call `installPendingUpdateIfAvailable()` to install a pending update |
 | [Update credentials are only sent to the feed's origin (electron-updater)](#update-credentials-stay-on-the-feeds-origin) | Warns, advisory, runtime log | Only if `latest*.yml` points downloads at another origin (another host, or another port or scheme) that needs your `requestHeaders` / `addAuthHeader` credentials or a token in the feed URL's query: serve the files from the feed origin or use pre-signed URLs. A custom provider used with credential headers must override `Provider.feedBaseUrl` (else `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`) |
 | [Windows update signature verification fails closed (electron-updater)](#windows-update-signature-verification-fails-closed) | Runtime error | An NSIS update is installed only when PowerShell verifies it: one electron-updater 6 installed with a warning (PowerShell could not be started or run, Windows 7/8) is now rejected (`ERR_UPDATER_SIGNATURE_UNVERIFIABLE`); a catalog signature is rejected as an invalid signature (`ERR_UPDATER_INVALID_SIGNATURE`) unless the app opts in with `allowCatalogSignature = true` (or the release with `win.allowCatalogSignature` in a signed manifest). If PowerShell may be blocked on your users' machines, assign a native `verifyUpdateFileAuthenticodeSignature` in your first electron-updater 7 release |
+| [Packaged NSIS apps without an update config verify updates (electron-updater)](#packaged-nsis-apps-without-an-update-config-verify-updates) | Runtime error | Only for a Windows app without `app-update.yml` (a feed set only with `setFeedURL`): set `autoUpdater.publisherName`, assign `verifyUpdateFileAuthenticodeSignature`, or build with a publish configuration; otherwise every update is rejected (`ERR_UPDATER_NO_PUBLISHER_NAME`) |
 | [`quitAndInstall` takes an options object (electron-updater)](#quitandinstall-takes-an-options-object) | TS error, runtime log | Replace positional args: `quitAndInstall(true, false)` → `quitAndInstall({ isSilent: true, isForceRunAfter: false })` |
 | [`autoInstallOnAppQuit` replaced by `autoInstallEvent` enum (electron-updater)](#autoinstallevent-replaces-autoinstallonappquit) | TS error, runtime log | `autoInstallOnAppQuit = false` → `autoInstallEvent = "manual"`; default `"onQuit"` preserves behavior |
 | [`downloadUpdate()` resolves with an object, not an array (electron-updater)](#downloadupdate-resolves-with-a-downloadexecutorresult-object) | TS error, runtime log | `const [installer] = await downloadUpdate()` → `const { updateFile } = await downloadUpdate()`; same for `checkForUpdates()` → `downloadPromise` |
@@ -114,9 +115,34 @@ PowerShell is also run more defensively, by electron-updater and by the build-ti
 - The script no longer assigns an output encoding, which PowerShell's Constrained Language Mode (AppLocker / WDAC script enforcement) forbids — electron-updater 7.0.0-alpha.8 to alpha.10 rejected every update there. Non-ASCII characters of paths, certificate subjects and error messages are escaped in PowerShell's output instead.
 - PowerShell gets up to 60 s (was 20 s) before the verification fails.
 
-This applies only where electron-updater verifies an update against a `publisherName`. What happens without one is unchanged by it: an `app-update.yml` without `publisherName` fails closed (see [A missing `publisherName` fails update verification](./v27-build-changes.md#missing-publishername-fails-update-verification)), `verifyUpdateCodeSignature: false` opts out, and an app with no update config file at all is not verified, as before.
+This applies only where electron-updater verifies an update against a `publisherName`. What happens without one is unchanged by it: an `app-update.yml` without `publisherName` fails closed (see [A missing `publisherName` fails update verification](./v27-build-changes.md#missing-publishername-fails-update-verification)), `verifyUpdateCodeSignature: false` opts out, and a packaged app with no update config file at all is verified as described in [Packaged NSIS apps without an update config verify updates](#packaged-nsis-apps-without-an-update-config-verify-updates).
 
 **Action:** none if your users' machines can run Windows PowerShell. If some may not — for example where AppLocker or WDAC blocks `powershell.exe` — verify updates natively by assigning [`verifyUpdateFileAuthenticodeSignature`](../win.md#how-do-you-use-a-custom-verify-function-to-enable-nsis-signature-verification-alternatives-instead-of-powershell) in the first release you build with electron-updater 7. electron-updater 6 still installs that release where PowerShell cannot run (with a warning), but from then on such an install rejects every update, including one that adds the native verifier, and only reinstalling recovers it.
+
+
+### Packaged NSIS apps without an update config verify updates {#packaged-nsis-apps-without-an-update-config-verify-updates}
+
+**How you'll find out:** **Silent** at build time. On users' machines every update fails with `ERR_UPDATER_NO_PUBLISHER_NAME` (with a link here).
+
+electron-updater 6 (and the earlier v27 alphas) installed an NSIS update **without verifying its Authenticode signature** when the packaged app had no `app-update.yml`, for example an app built without a publish configuration that sets its feed only with `setFeedURL`. A custom `verifyUpdateFileAuthenticodeSignature` was skipped there too, without a warning. electron-updater 7 verifies these updates as well:
+
+- When the app sets `autoUpdater.publisherName` (a new `NsisUpdater` property, `null` by default), the update is verified against it, with the default or a custom verify function. It is also used when an `app-update.yml` has no `publisherName`; the `publisherName` that electron-builder writes to `app-update.yml` wins over it.
+- Otherwise a custom `verifyUpdateFileAuthenticodeSignature` is called with an empty `publisherName` list, and its result decides.
+- Otherwise the update is rejected with `ERR_UPDATER_NO_PUBLISHER_NAME`.
+
+An app that is not packaged (development mode) without a `dev-app-update.yml` is still not verified.
+
+**Action:** only for a Windows app that has no `app-update.yml`. Build it with a publish configuration so that electron-builder writes `app-update.yml` with the `publisherName` (see [A missing `publisherName` fails update verification](./v27-build-changes.md#missing-publishername-fails-update-verification)), or set the subject of the certificate that signs your updates at runtime:
+
+```js
+autoUpdater.publisherName = ["CN=My Company, O=My Company, C=US"]
+```
+
+A custom verify function also works; it is called with an empty list when `publisherName` is not set. To install updates without verifying them, opt out explicitly with a verify function that accepts every file:
+
+```js
+autoUpdater.verifyUpdateFileAuthenticodeSignature = async () => ({ response: "success" })
+```
 
 ---
 
