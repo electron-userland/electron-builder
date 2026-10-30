@@ -386,7 +386,7 @@ How this compares with per-version delta packages (Squirrel, Velopack): those fr
 
 electron-updater also downloads through small gaps between changed ranges (copy gaps below 8 KiB are fetched rather than copied, saving one request per gap on hosts such as GitHub or S3 that serve a single range per request) and never puts more than 200 ranges into one `multipart/byteranges` request (Apache's default `MaxRanges`).
 
-A `"v2"` block map, or one embedded in an artifact, may unzip to at most 1/16 of the update's size, no less than 8 MiB and no more than 64 MiB (64 MiB when the update's size is not known). With a larger map the update is downloaded in full.
+A block map may be at most 1/16 of the update's size, no less than 8 MiB and no more than 64 MiB (64 MiB when the update's size is not known); a `"v2"` map, or one embedded in an artifact, is measured unzipped. With a larger map, or a `"v3"` map that describes a file of another size than the update, the update is downloaded in full.
 
 ## Private GitHub Update Repo
 
