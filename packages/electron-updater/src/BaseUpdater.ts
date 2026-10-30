@@ -12,7 +12,8 @@ import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper.js"
 import type { Logger, VerifyUpdateFileResult } from "./types.js"
 import { QuitAndInstallOptions, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
 
-const require = createRequire(import.meta.url)
+// import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
+const require = createRequire(import.meta.url ?? process.execPath)
 
 /** How much of a failed command's stderr goes into the error message, at most: its end, where the error is. */
 const STDERR_MESSAGE_BYTES = 8 * 1024
