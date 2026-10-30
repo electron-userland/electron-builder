@@ -152,6 +152,20 @@ describe("createClient — update info response size", () => {
     expect(executor.sent.map(it => it.url)).toEqual(["https://api.github.com/repos/owner/repo/releases/latest"])
   })
 
+  // the channel file (Bitbucket, Keygen) or the latest release (GitLab) is over the limit: its code is kept, not wrapped in a "latest version not found" error
+  const wrappingProviders: Array<{ name: string; options: AllPublishOptions }> = [
+    { name: "bitbucket", options: { provider: "bitbucket", owner: "owner", slug: "repo" } },
+    { name: "keygen", options: { provider: "keygen", account: "acc", product: "prod" } },
+    { name: "gitlab", options: { provider: "gitlab", projectId: 1 } },
+  ]
+
+  test.each(wrappingProviders)("a $name response larger than the limit fails the check with its own code", async ({ options }) => {
+    const executor = new FakeElectronHttpExecutor(() => tooLarge)
+    const provider = createClient(options, updater, { ...runtimeOptions, executor })
+    await expect(provider.getLatestVersion()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
+    expect(executor.sent).toHaveLength(1)
+  })
+
   const providers: Array<{ name: string; options: AllPublishOptions }> = [
     { name: "generic", options: { provider: "generic", url: "https://feed.example.com/updates" } },
     { name: "github", options: { provider: "github", owner: "owner", repo: "repo" } },
