@@ -45,10 +45,10 @@ export interface PublishConfiguration {
   readonly updaterCacheDirName?: string | null
 
   /**
-   * The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a
-   * provider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update
-   * check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`
-   * overrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.
+   * The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything
+   * verifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses
+   * (release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`
+   * overrides it at runtime. A positive integer, or `0` for no limit.
    * @default 10485760
    */
   readonly maxUpdateInfoSize?: number | null
@@ -174,9 +174,9 @@ export interface GithubOptions extends PublishConfiguration {
 /** The default {@link PublishConfiguration.maxUpdateInfoSize}: 10 MiB. */
 export const DEFAULT_MAX_UPDATE_INFO_SIZE = 10 * 1024 * 1024
 
-/** Whether `value` is a valid {@link PublishConfiguration.maxUpdateInfoSize}: a positive integer, or `Infinity` for no limit. */
+/** Whether `value` is a valid {@link PublishConfiguration.maxUpdateInfoSize}: a positive integer, or `0` for no limit. */
 export function isValidMaxUpdateInfoSize(value: unknown): value is number {
-  return typeof value === "number" && (value === Infinity || (Number.isSafeInteger(value) && value > 0))
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0
 }
 
 /** @private */

@@ -88,10 +88,6 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
     try {
       releaseResponse = await this.httpRequest(latestReleaseUrl, header, cancellationToken)
     } catch (e: any) {
-      // a response over the size limit of update info keeps its own code
-      if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
-        throw e
-      }
       throw newError(`Unable to find latest release on GitLab (${latestReleaseUrl}): ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
 
@@ -136,7 +132,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
       const headers = isSameOriginAsApi && Object.keys(authHeaders).length ? authHeaders : undefined
 
       try {
-        const result = await this.httpRequest(channelFileUrl, headers, cancellationToken)
+        const result = await this.channelFileRequest(channelFileUrl, headers, cancellationToken)
         if (!result) {
           throw newError(`Empty response from ${channelFileUrl}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
         }

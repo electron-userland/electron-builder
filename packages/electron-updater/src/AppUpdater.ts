@@ -329,8 +329,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   private publishConfigMaxUpdateInfoSize: unknown = undefined
 
   /**
-   * The largest update info response read, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a provider API
-   * response. A larger response fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. A positive integer, or `Infinity` for no
+   * The largest channel file (`latest*.yml`) read, in bytes. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`.
+   * Release feeds and provider API responses (release listings and lookups) are not limited. A positive integer, or `0` for no
    * limit; anything else throws `ERR_UPDATER_INVALID_MAX_UPDATE_INFO_SIZE`.
    *
    * Overrides `maxUpdateInfoSize` of the publish configuration (`app-update.yml`, or the options given to `setFeedURL`), whose default
@@ -343,7 +343,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   set maxUpdateInfoSize(value: number | null) {
     if (value != null && !isValidMaxUpdateInfoSize(value)) {
       throw newError(
-        `maxUpdateInfoSize must be a positive integer (bytes) or Infinity, but got: ${typeof value === "number" ? value : typeof value}`,
+        `maxUpdateInfoSize must be a positive integer (bytes) or 0 for no limit, but got: ${typeof value === "number" ? value : typeof value}`,
         "ERR_UPDATER_INVALID_MAX_UPDATE_INFO_SIZE"
       )
     }
@@ -779,12 +779,20 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         maxUpdateInfoSize = configured
       } else {
         throw newError(
-          `maxUpdateInfoSize in the publish configuration must be a positive integer (bytes) or Infinity, but got: ${typeof configured === "number" ? configured : typeof configured}`,
+          `maxUpdateInfoSize in the publish configuration must be a positive integer (bytes) or 0 for no limit, but got: ${typeof configured === "number" ? configured : typeof configured}`,
           "ERR_UPDATER_INVALID_MAX_UPDATE_INFO_SIZE"
         )
       }
     }
-    client.setMaxUpdateInfoSize(maxUpdateInfoSize)
+    // a custom updateProvider that is not built on this Provider (e.g. one from another copy of electron-updater) has no setMaxUpdateInfoSize
+    if (typeof Reflect.get(client, "setMaxUpdateInfoSize") === "function") {
+      client.setMaxUpdateInfoSize(maxUpdateInfoSize)
+    } else if (maxUpdateInfoSize !== DEFAULT_MAX_UPDATE_INFO_SIZE) {
+      this.limitedLogger("max-update-info-size-not-supported").warn(
+        `The custom update provider ${client.constructor.name} has no setMaxUpdateInfoSize, so maxUpdateInfoSize (${maxUpdateInfoSize} bytes) does not apply to its requests. ` +
+          `Extend Provider from electron-updater to use it.`
+      )
+    }
     const info = await client.getLatestVersion()
     // recorded on the new result object (never on the parsed manifest, which listeners of update-available also get), so the state
     // travels with exactly the update info it was established for

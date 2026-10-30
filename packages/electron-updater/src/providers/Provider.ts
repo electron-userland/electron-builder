@@ -40,8 +40,7 @@ export function channelFileNotFoundError(channelFile: string, channelFileUrl: UR
 
 export abstract class Provider<T extends UpdateInfo> {
   private requestHeaders: OutgoingHttpHeaders | null = null
-  // The update info (channel file, release feed, API response) is read into memory and parsed before anything verifies it: a larger
-  // response fails the request (see ApiRequestOptions.maxResponseSize). Real ones are a few KB, a GitHub release list a few MB.
+  // the size limit of channel files (see channelFileRequest), 0 for none
   private maxUpdateInfoSize = DEFAULT_MAX_UPDATE_INFO_SIZE
   protected readonly executor: ElectronHttpExecutor
 
@@ -104,7 +103,7 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 
   /**
-   * The largest update info response read, in bytes (`Infinity` for no limit). Set by AppUpdater before each update check, from
+   * The largest channel file (`latest*.yml`) read, in bytes (`0` for no limit). Set by AppUpdater before each update check, from
    * `autoUpdater.maxUpdateInfoSize` or the `maxUpdateInfoSize` of the publish configuration.
    */
   setMaxUpdateInfoSize(value: number): void {
@@ -118,9 +117,23 @@ export abstract class Provider<T extends UpdateInfo> {
   /**
    * Method to perform API request only to resolve update info, but not to download update.
    */
-  protected async httpRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken): Promise<string | null> {
+  protected httpRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken): Promise<string | null> {
+    return this.executor.request(this.createRequestOptions(url, headers), cancellationToken)
+  }
+
+  /**
+   * {@link httpRequest} for a channel file (`latest*.yml`), which is read into memory and parsed before anything verifies it: a response
+   * larger than `maxUpdateInfoSize` fails with `ERR_HTTP_RESPONSE_TOO_LARGE` (see ApiRequestOptions.maxResponseSize). Channel files are
+   * a few KB. Release feeds and API responses (release listings and lookups) are not limited: their size depends on the release history.
+   */
+  protected async channelFileRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken): Promise<string | null> {
+    const options: ApiRequestOptions = this.createRequestOptions(url, headers)
+    // 0 is no limit, while a maxResponseSize of 0 would only allow an empty response
+    if (this.maxUpdateInfoSize !== 0) {
+      options.maxResponseSize = this.maxUpdateInfoSize
+    }
     try {
-      return await this.executor.request(this.createRequestOptions(url, headers), cancellationToken)
+      return await this.executor.request(options, cancellationToken)
     } catch (e: unknown) {
       // names the options that raise the limit
       if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
@@ -134,7 +147,7 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): ApiRequestOptions {
-    const result: ApiRequestOptions = { maxResponseSize: this.maxUpdateInfoSize }
+    const result: ApiRequestOptions = {}
     // the same feed-origin rule as for downloads: e.g. a channel file on another origin gets no credential headers
     const feedBaseUrl = this.feedBaseUrl
     let requestHeaders = this.requestHeaders

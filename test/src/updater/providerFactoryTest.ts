@@ -1,4 +1,4 @@
-import { AllPublishOptions, getS3LikeProviderBaseUrl, R2Options, S3Options, SpacesOptions } from "builder-util-runtime"
+import { AllPublishOptions, DEFAULT_MAX_UPDATE_INFO_SIZE, getS3LikeProviderBaseUrl, R2Options, S3Options, SpacesOptions } from "builder-util-runtime"
 import { createClient } from "electron-updater/src/providerFactory"
 import { GenericProvider } from "electron-updater/src/providers/GenericProvider"
 import type { AppUpdater } from "electron-updater/src/AppUpdater"
@@ -118,74 +118,38 @@ describe("createClient — feedBaseUrl", () => {
   })
 })
 
-// The update info (channel file, release feed or API response) is read into memory and parsed before anything verifies it: its size is limited.
-describe("createClient — update info response size", () => {
-  const MAX_UPDATE_INFO_RESPONSE_SIZE = 10 * 1024 * 1024
-  const tooLarge = { statusCode: 200, body: Buffer.alloc(MAX_UPDATE_INFO_RESPONSE_SIZE + 1, "a") }
+// The channel file (latest*.yml) is read into memory and parsed before anything verifies it: its size is limited. Release feeds and API
+// responses (release listings and lookups) grow with the release history and are not limited.
+describe("createClient — channel file size", () => {
+  const LIMIT = 1024
+  const padding = "a".repeat(2 * LIMIT)
+  const channelFile =
+    "version: 1.1.0\nfiles:\n  - url: TestApp-1.1.0.zip\n    sha512: c2hhNTEy\n    size: 1\npath: TestApp-1.1.0.zip\nsha512: c2hhNTEy\nreleaseDate: '2024-01-01T00:00:00.000Z'\n"
+  const largeChannelFile = `${channelFile}#${padding}\n`
+  const ok = (body: string) => ({ statusCode: 200, body: Buffer.from(body) })
 
-  test("a channel file larger than the limit fails the check", async () => {
-    const executor = new FakeElectronHttpExecutor(() => tooLarge)
-    const provider = createClient({ provider: "generic", url: "https://feed.example.com/updates" }, updater, { ...runtimeOptions, executor })
-    await expect(provider.getLatestVersion()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
-  })
-
-  test("so does one behind a redirect", async () => {
-    const executor = new FakeElectronHttpExecutor(url => (url.startsWith("https://feed.example.com/") ? { location: "https://cdn.example.com/latest-mac.yml" } : tooLarge))
-    const provider = createClient({ provider: "generic", url: "https://feed.example.com/updates" }, updater, { ...runtimeOptions, executor })
-    await expect(provider.getLatestVersion()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
-    expect(executor.sent.map(it => it.url)).toEqual(["https://feed.example.com/updates/latest-mac.yml", "https://cdn.example.com/latest-mac.yml"])
-  })
-
-  // the API answers with a response over the limit: its code is kept, not wrapped in a "latest version not found" error
-  test("a GitHub /releases/latest response larger than the limit fails the check", async () => {
-    const feed = `<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom"><entry><link href="https://github.com/owner/repo/releases/tag/v1.1.0"/><title>1.1.0</title></entry></feed>`
-    const executor = new FakeElectronHttpExecutor(url => (url.endsWith(".atom") ? { statusCode: 200, body: Buffer.from(feed) } : tooLarge))
-    const provider = createClient({ provider: "github", owner: "owner", repo: "repo" }, updater, { ...runtimeOptions, executor })
-    await expect(provider.getLatestVersion()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
-    expect(executor.sent.map(it => it.url)).toEqual(["https://github.com/owner/repo/releases.atom", "https://github.com/owner/repo/releases/latest"])
-  })
-
-  test("a private GitHub release response larger than the limit fails the check", async () => {
-    const executor = new FakeElectronHttpExecutor(() => tooLarge)
-    const provider = createClient({ provider: "github", owner: "owner", repo: "repo", token: "t" }, updater, { ...runtimeOptions, executor })
-    await expect(provider.getLatestVersion()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
-    expect(executor.sent.map(it => it.url)).toEqual(["https://api.github.com/repos/owner/repo/releases/latest"])
-  })
-
-  // the channel file (Bitbucket, Keygen) or the latest release (GitLab) is over the limit: its code is kept, not wrapped in a "latest version not found" error
-  const wrappingProviders: Array<{ name: string; options: AllPublishOptions }> = [
-    { name: "bitbucket", options: { provider: "bitbucket", owner: "owner", slug: "repo" } },
-    { name: "keygen", options: { provider: "keygen", account: "acc", product: "prod" } },
-    { name: "gitlab", options: { provider: "gitlab", projectId: 1 } },
-  ]
-
-  test.each(wrappingProviders)("a $name response larger than the limit fails the check with its own code", async ({ options }) => {
-    const executor = new FakeElectronHttpExecutor(() => tooLarge)
-    const provider = createClient(options, updater, { ...runtimeOptions, executor })
-    await expect(provider.getLatestVersion()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE", message: expect.stringContaining("autoUpdater.maxUpdateInfoSize") })
-    expect(executor.sent).toHaveLength(1)
-  })
-
-  // the GitHub channel file is fetched after the feed and the latest release
-  test("a GitHub channel file larger than the limit fails the check with an error naming the option", async () => {
-    const feed = `<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom"><entry><link href="https://github.com/owner/repo/releases/tag/v1.1.0"/><title>1.1.0</title></entry></feed>`
-    const executor = new FakeElectronHttpExecutor(url => {
-      if (url.endsWith(".atom")) {
-        return { statusCode: 200, body: Buffer.from(feed) }
+  // a feed host whose release listings and lookups are larger than LIMIT, answering every channel file with `channel`
+  function host(channel: string, feedPadding = padding) {
+    return (url: string) => {
+      if (url.endsWith("/releases.atom")) {
+        return ok(
+          `<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom"><entry><link href="https://github.com/owner/repo/releases/tag/v1.1.0"/><title>1.1.0</title><content>${feedPadding}</content></entry></feed>`
+        )
       }
-      return url.endsWith("/releases/latest") ? { statusCode: 200, body: Buffer.from(JSON.stringify({ tag_name: "v1.1.0" })) } : tooLarge
-    })
-    const provider = createClient({ provider: "github", owner: "owner", repo: "repo" }, updater, { ...runtimeOptions, executor })
-    await expect(provider.getLatestVersion()).rejects.toMatchObject({
-      code: "ERR_HTTP_RESPONSE_TOO_LARGE",
-      message: expect.stringContaining("maxUpdateInfoSize in the publish configuration"),
-    })
-    expect(executor.sent.map(it => it.url)).toEqual([
-      "https://github.com/owner/repo/releases.atom",
-      "https://github.com/owner/repo/releases/latest",
-      "https://github.com/owner/repo/releases/download/v1.1.0/latest-mac.yml",
-    ])
-  })
+      if (url === "https://github.com/owner/repo/releases/latest") {
+        return ok(JSON.stringify({ tag_name: "v1.1.0", padding }))
+      }
+      if (url === "https://api.github.com/repos/owner/repo/releases/latest") {
+        const asset = { name: "latest-mac.yml", url: "https://api.github.com/repos/owner/repo/releases/assets/1" }
+        return ok(JSON.stringify({ tag_name: "v1.1.0", name: "1.1.0", html_url: "https://github.com/owner/repo/releases/tag/v1.1.0", body: padding, assets: [asset] }))
+      }
+      if (url === "https://gitlab.com/api/v4/projects/1/releases/permalink/latest") {
+        const link = { name: "latest-mac.yml", direct_asset_url: "https://gitlab.com/api/v4/projects/1/packages/generic/app/1.1.0/latest-mac.yml" }
+        return ok(JSON.stringify({ tag_name: "v1.1.0", name: "1.1.0", description: padding, upcoming_release: false, assets: { links: [link] } }))
+      }
+      return ok(channel)
+    }
+  }
 
   const providers: Array<{ name: string; options: AllPublishOptions }> = [
     { name: "generic", options: { provider: "generic", url: "https://feed.example.com/updates" } },
@@ -196,14 +160,44 @@ describe("createClient — update info response size", () => {
     { name: "keygen", options: { provider: "keygen", account: "acc", product: "prod" } },
   ]
 
-  test.each(providers)("$name requests carry the limit", ({ options }) => {
-    const provider = createClient(options, updater, runtimeOptions) as any
-    expect(provider.createRequestOptions(new URL("https://example.com/latest.yml")).maxResponseSize).toBe(MAX_UPDATE_INFO_RESPONSE_SIZE)
+  function createProvider(options: AllPublishOptions, channel: string, maxUpdateInfoSize = LIMIT) {
+    const executor = new FakeElectronHttpExecutor(host(channel))
+    const provider = createClient(options, updater, { ...runtimeOptions, executor })
+    provider.setMaxUpdateInfoSize(maxUpdateInfoSize)
+    return { provider, executor }
+  }
+
+  test.each(providers)("$name: release listings and lookups larger than the limit are read", async ({ options }) => {
+    const { provider } = createProvider(options, channelFile)
+    await expect(provider.getLatestVersion()).resolves.toMatchObject({ version: "1.1.0" })
   })
 
-  test.each(providers)("$name requests carry the limit set by the updater", ({ options }) => {
-    const provider = createClient(options, updater, runtimeOptions) as any
-    provider.setMaxUpdateInfoSize(20 * 1024 * 1024)
-    expect(provider.createRequestOptions(new URL("https://example.com/latest.yml")).maxResponseSize).toBe(20 * 1024 * 1024)
+  // Bitbucket, Keygen: the code is kept, not wrapped in a "latest version not found" error
+  test.each(providers)("$name: a channel file larger than the limit fails the check with an error naming the options", async ({ options }) => {
+    const { provider, executor } = createProvider(options, largeChannelFile)
+    await expect(provider.getLatestVersion()).rejects.toMatchObject({
+      code: "ERR_HTTP_RESPONSE_TOO_LARGE",
+      message: expect.stringContaining(`${LIMIT} bytes: raise the limit with maxUpdateInfoSize in the publish configuration (app-update.yml) or autoUpdater.maxUpdateInfoSize`),
+    })
+    expect(executor.sent.at(-1)?.url).toMatch(/(latest|stable)-mac\.yml|releases\/assets\/1/)
+  })
+
+  test.each(providers)("$name: 0 disables the limit", async ({ options }) => {
+    const { provider } = createProvider(options, largeChannelFile, 0)
+    await expect(provider.getLatestVersion()).resolves.toMatchObject({ version: "1.1.0" })
+  })
+
+  test("a GitHub releases feed larger than the default limit is read", async () => {
+    const executor = new FakeElectronHttpExecutor(host(channelFile, "a".repeat(DEFAULT_MAX_UPDATE_INFO_SIZE + 1)))
+    const provider = createClient({ provider: "github", owner: "owner", repo: "repo" }, updater, { ...runtimeOptions, executor })
+    await expect(provider.getLatestVersion()).resolves.toMatchObject({ version: "1.1.0" })
+  })
+
+  test("a channel file larger than the default limit behind a redirect fails the check", async () => {
+    const tooLarge = { statusCode: 200, body: Buffer.alloc(DEFAULT_MAX_UPDATE_INFO_SIZE + 1, "a") }
+    const executor = new FakeElectronHttpExecutor(url => (url.startsWith("https://feed.example.com/") ? { location: "https://cdn.example.com/latest-mac.yml" } : tooLarge))
+    const provider = createClient({ provider: "generic", url: "https://feed.example.com/updates" }, updater, { ...runtimeOptions, executor })
+    await expect(provider.getLatestVersion()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
+    expect(executor.sent.map(it => it.url)).toEqual(["https://feed.example.com/updates/latest-mac.yml", "https://cdn.example.com/latest-mac.yml"])
   })
 })
