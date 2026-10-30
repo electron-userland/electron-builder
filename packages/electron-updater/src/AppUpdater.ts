@@ -1295,9 +1295,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       }
       this.log.info(`Download block maps (old: "${oldBlockMapUrl ?? "cache only"}", new: ${newBlockMapUrl})`)
 
-      // the old map is held to the new file's limit too: it has ample headroom for a release of a different size
+      // a v2 map may inflate to, and a v3 map may be, at most this many bytes; the old map is held to the new file's limit too: it has
+      // ample headroom for a release of a different size
       const blockMapLimit = blockMapSizeLimit(fileInfo.info.size)
-      const downloadBlockMap = async (url: URL, originUrl?: URL): Promise<LoadedBlockMap> => {
+      // a v3 map of the update is rejected before its records are decoded when it describes a file of another size; an old map is held
+      // to the size limit and then matched to the cached installer by isBlockMapOfFile
+      const newFileSize = fileInfo.info.size ?? null
+      const downloadBlockMap = async (url: URL, expectedFileSize: number | null, originUrl?: URL): Promise<LoadedBlockMap> => {
         const data = await this.httpExecutor.downloadToBuffer(url, {
           headers: this.downloadRequestHeaders(url, downloadUpdateOptions, originUrl),
           cancellationToken: downloadUpdateOptions.cancellationToken,
@@ -1306,7 +1310,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         if (data == null || data.length === 0) {
           throw new Error(`Blockmap "${url.href}" is empty`)
         }
-        return parseBlockMapData(data, url.href, blockMapLimit)
+        return parseBlockMapData(data, url.href, blockMapLimit, expectedFileSize)
       }
 
       const downloadOptions: DifferentialDownloaderOptions = {
@@ -1332,7 +1336,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         const blockMapFile = path.join(cacheDir, "current.blockmap")
         try {
           if (await fsExtra.pathExists(blockMapFile)) {
-            return parseBlockMapData(await fsExtra.readFile(blockMapFile), blockMapFile, blockMapLimit)
+            return parseBlockMapData(await fsExtra.readFile(blockMapFile), blockMapFile, blockMapLimit, null)
           }
         } catch (e: any) {
           this.log.warn(`Cannot parse blockmap "${blockMapFile}", error: ${e}`)
@@ -1359,13 +1363,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
             url: newBlockMapUrl,
             oldMap: oldBlockMapData.data,
             expectedFileSize: fileInfo.info.size,
+            maxBlockMapSize: blockMapLimit,
             httpExecutor: this.httpExecutor,
             requestHeaders: this.downloadRequestHeaders(newBlockMapUrl, downloadUpdateOptions),
             cancellationToken: downloadUpdateOptions.cancellationToken,
             isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
             logger: this.log,
           })
-          newBlockMapData = parseBlockMapData(fetched.buffer, newBlockMapUrl.href, blockMapLimit)
+          newBlockMapData = parseBlockMapData(fetched.buffer, newBlockMapUrl.href, blockMapLimit, newFileSize)
         } catch (e: unknown) {
           // a host or CDN that mishandles Range requests, or a map that fails verification: a plain GET of the new map still
           // allows a differential update
@@ -1373,7 +1378,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
           this.log.warn(`Cannot fetch the changed parts of the block map "${newBlockMapUrl.href}", downloading it whole: ${e instanceof Error ? e.message : String(e)}`)
         }
       }
-      newBlockMapData ??= await downloadBlockMap(newBlockMapUrl)
+      newBlockMapData ??= await downloadBlockMap(newBlockMapUrl, newFileSize)
       await saveBlockMapToCacheDir(newBlockMapData, this.downloadedUpdateHelper!.cacheDirForPendingUpdate)
 
       if (oldBlockMapData == null) {
@@ -1399,7 +1404,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         }
         this.log.info(`No cached blockmap for the old installer, downloading it from "${oldBlockMapUrl}"`)
         // the old blockmap comes from previousBlockmapBaseUrlOverride when the app sets it, so that origin gets the credentials
-        oldBlockMapData = await downloadBlockMap(oldBlockMapUrl, override ? new URL(override) : undefined)
+        oldBlockMapData = await downloadBlockMap(oldBlockMapUrl, null, override ? new URL(override) : undefined)
         if (!(await isBlockMapOfFile(oldBlockMapData.map, downloadOptions.oldFile))) {
           // e.g. a server that serves another release's blockmap under the derived name: planned against it, the download fails the sha512 check
           this.log.info(
@@ -1467,14 +1472,15 @@ interface LoadedBlockMap {
 
 /**
  * Decodes a block map file in either format; the v3 map starts with its magic, anything else is read as gzipped JSON (v2), which
- * may inflate to at most `maxOutputLength` bytes (see `blockMapSizeLimit`).
+ * may inflate to at most `maxSize` bytes (see `blockMapSizeLimit`). A v3 map is checked (at most `maxSize` bytes, its exact length,
+ * and that it describes a file of `expectedFileSize` bytes when given) before its records are decoded.
  */
-function parseBlockMapData(data: Buffer, source: string, maxOutputLength: number): LoadedBlockMap {
+function parseBlockMapData(data: Buffer, source: string, maxSize: number, expectedFileSize: number | null): LoadedBlockMap {
   try {
     if (isBlockMapV3(data)) {
-      return { format: "v3", data, map: toBlockMap(decodeBlockMapV3(data)) }
+      return { format: "v3", data, map: toBlockMap(decodeBlockMapV3(data, expectedFileSize, maxSize)) }
     }
-    return { format: "v2", data, map: JSON.parse(gunzipSync(data, { maxOutputLength }).toString()) }
+    return { format: "v2", data, map: JSON.parse(gunzipSync(data, { maxOutputLength: maxSize }).toString()) }
   } catch (e: any) {
     throw new Error(`Cannot parse blockmap "${source}", error: ${e}`)
   }
