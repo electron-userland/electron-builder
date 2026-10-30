@@ -759,7 +759,7 @@ const MAX_FINGERPRINTS_PER_CALL = 16
  * Stands in for a secret (a password, token or key) in logs and error messages: a fingerprint that is the same for the same
  * value within this process, so log lines can be compared, but that cannot be checked against guesses offline, since it is
  * keyed with a random secret of this process. Derived with scrypt at a low cost: it runs whenever a secret is logged, and
- * {@link safeStringifyJson} computes at most 16 per call by default, logging the other values
+ * {@link safeStringifyJson} computes at most 16 fingerprints per call by default, logging the other values
  * as {@link REDACTED_VALUE}. Never throws: it returns {@link REDACTED_VALUE} when the fingerprint cannot be computed.
  */
 export function hashSensitiveValue(value: string): string {
