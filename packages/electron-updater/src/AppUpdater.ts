@@ -39,7 +39,7 @@ import type { TypedEmitter } from "tiny-typed-emitter"
 type Session = Electron.Session
 import type { AuthInfo } from "electron"
 import { gunzipSync } from "zlib"
-import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
+import { blockMapSizeLimit, DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
 import { fetchBlockMapV3 } from "./differentialDownloader/blockMapV3Fetcher.js"
 import { nonThrowingAppLogger, nonThrowingLogger, throwIfCancelled } from "./util.js"
@@ -1295,6 +1295,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       }
       this.log.info(`Download block maps (old: "${oldBlockMapUrl ?? "cache only"}", new: ${newBlockMapUrl})`)
 
+      // the old map is held to the new file's limit too: it has ample headroom for a release of a different size
+      const blockMapLimit = blockMapSizeLimit(fileInfo.info.size)
       const downloadBlockMap = async (url: URL, originUrl?: URL): Promise<LoadedBlockMap> => {
         const data = await this.httpExecutor.downloadToBuffer(url, {
           headers: this.downloadRequestHeaders(url, downloadUpdateOptions, originUrl),
@@ -1304,7 +1306,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         if (data == null || data.length === 0) {
           throw new Error(`Blockmap "${url.href}" is empty`)
         }
-        return parseBlockMapData(data, url.href)
+        return parseBlockMapData(data, url.href, blockMapLimit)
       }
 
       const downloadOptions: DifferentialDownloaderOptions = {
@@ -1330,7 +1332,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         const blockMapFile = path.join(cacheDir, "current.blockmap")
         try {
           if (await fsExtra.pathExists(blockMapFile)) {
-            return parseBlockMapData(await fsExtra.readFile(blockMapFile), blockMapFile)
+            return parseBlockMapData(await fsExtra.readFile(blockMapFile), blockMapFile, blockMapLimit)
           }
         } catch (e: any) {
           this.log.warn(`Cannot parse blockmap "${blockMapFile}", error: ${e}`)
@@ -1363,7 +1365,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
             isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
             logger: this.log,
           })
-          newBlockMapData = parseBlockMapData(fetched.buffer, newBlockMapUrl.href)
+          newBlockMapData = parseBlockMapData(fetched.buffer, newBlockMapUrl.href, blockMapLimit)
         } catch (e: unknown) {
           // a host or CDN that mishandles Range requests, or a map that fails verification: a plain GET of the new map still
           // allows a differential update
@@ -1463,13 +1465,16 @@ interface LoadedBlockMap {
   readonly map: BlockMap
 }
 
-/** Decodes a block map file in either format; the v3 map starts with its magic, anything else is read as gzipped JSON (v2). */
-function parseBlockMapData(data: Buffer, source: string): LoadedBlockMap {
+/**
+ * Decodes a block map file in either format; the v3 map starts with its magic, anything else is read as gzipped JSON (v2), which
+ * may inflate to at most `maxOutputLength` bytes (see `blockMapSizeLimit`).
+ */
+function parseBlockMapData(data: Buffer, source: string, maxOutputLength: number): LoadedBlockMap {
   try {
     if (isBlockMapV3(data)) {
       return { format: "v3", data, map: toBlockMap(decodeBlockMapV3(data)) }
     }
-    return { format: "v2", data, map: JSON.parse(gunzipSync(data).toString()) }
+    return { format: "v2", data, map: JSON.parse(gunzipSync(data, { maxOutputLength }).toString()) }
   } catch (e: any) {
     throw new Error(`Cannot parse blockmap "${source}", error: ${e}`)
   }

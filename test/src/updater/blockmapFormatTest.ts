@@ -14,7 +14,7 @@ import type { AddressInfo } from "net"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
 import { afterEach, describe, test, vi } from "vitest"
-import { gzipSync } from "zlib"
+import { gunzipSync, gzipSync } from "zlib"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { createNsisUpdater, httpExecutor, makeLogger, tuneTestUpdater } from "../helpers/updaterTestUtil.js"
 
@@ -51,6 +51,11 @@ function v2Map(blocks: Array<BlockInput>): Buffer {
     files: [{ name: "file", offset: 0, checksums: blocks.map(b => Buffer.from(b.digest).toString("base64")), sizes: blocks.map(b => b.size) }],
   }
   return gzipSync(JSON.stringify(map))
+}
+
+/** `map` (a v2 map) padded with 100 MiB of whitespace: still a valid map, a few hundred KB of gzip that inflates far past any blockmap's size. */
+function inflatingV2Map(map: Buffer): Buffer {
+  return gzipSync(Buffer.concat([gunzipSync(map), Buffer.alloc(100 * 1024 * 1024, " ")]))
 }
 
 describe("block map format detection", () => {
@@ -292,6 +297,38 @@ describe("block map format detection", () => {
     expect(maps).toHaveLength(1)
     expect(maps[0].new.files[0].sizes).toEqual(NEW_BLOCKS.map(b => b.size))
     expect((await pending(helper)).equals(NEW_V3)).toBe(true)
+  })
+
+  test.for([
+    { name: "no cached map", cached: null },
+    { name: "v2 cached", cached: OLD_V2 },
+    { name: "v3 cached (the new map is range-fetched first)", cached: OLD_V3 },
+  ])("$name: a new map that inflates past the size limit for the update is rejected before it is inflated in full", async ({ cached }, { tmpDir, expect }) => {
+    const server = await serve(tmpDir, { old: OLD_V2, new: inflatingV2Map(NEW_V2) })
+    const { updater, helper, maps } = await setUp(tmpDir, cached)
+    captureLog(updater)
+
+    // outside test mode this is the fallback to a full download
+    await expect(run(updater, server.url, tmpDir)).rejects.toThrow(/Cannot parse blockmap ".*app-1\.1\.0\.exe\.blockmap".*ERR_BUFFER_TOO_LARGE/)
+
+    expect(maps).toHaveLength(0)
+    expect(await fsExtra.pathExists(path.join(helper.cacheDirForPendingUpdate, "current.blockmap"))).toBe(false)
+  })
+
+  test("a cached map that inflates past the size limit is ignored, and the installed release's map is downloaded", async ({ tmpDir, expect }) => {
+    const server = await serve(tmpDir, { old: OLD_V2, new: NEW_V2 })
+    const { updater, maps } = await setUp(tmpDir, inflatingV2Map(OLD_V2))
+    const log = captureLog(updater)
+
+    await expect(run(updater, server.url, tmpDir)).resolves.toBe(false)
+
+    expect(log.warn).toEqual([expect.stringMatching(/Cannot parse blockmap ".*current\.blockmap".*ERR_BUFFER_TOO_LARGE/)])
+    expect(server.requests.map(it => [it.pathname, it.headers.range ?? null])).toEqual([
+      ["/app-1.1.0.exe.blockmap", null],
+      ["/app-1.0.0.exe.blockmap", null],
+    ])
+    expect(maps).toHaveLength(1)
+    expect(maps[0].old.files[0].sizes).toEqual(OLD_BLOCKS.map(b => b.size))
   })
 
   test("a cached v3 map of another release (it does not end at the cached installer's size) is ignored, and the installed release's map is downloaded", async ({
