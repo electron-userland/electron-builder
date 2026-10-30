@@ -478,6 +478,14 @@
             "string"
           ]
         },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "owner": {
           "description": "Repository owner",
           "type": "string"
@@ -595,6 +603,14 @@
     "CustomPublishOptions": {
       "additionalProperties": {},
       "properties": {
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "provider": {
           "const": "custom",
           "description": "The provider. Must be `custom`.",
@@ -2281,6 +2297,14 @@
             "string"
           ]
         },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "provider": {
           "const": "generic",
           "description": "The provider. Must be `generic`.",
@@ -2383,6 +2407,14 @@
           "type": [
             "null",
             "string"
+          ]
+        },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "type": [
+            "null",
+            "number"
           ]
         },
         "owner": {
@@ -2546,6 +2578,14 @@
             "string"
           ]
         },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "projectId": {
           "description": "The GitLab project ID or path (e.g., \"12345678\" or \"namespace/project\").",
           "type": [
@@ -2688,6 +2728,14 @@
           "default": "api.keygen.sh",
           "description": "Keygen host for self-hosted instances",
           "type": "string"
+        },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "type": [
+            "null",
+            "number"
+          ]
         },
         "platform": {
           "description": "The target Platform. Is set programmatically explicitly during publishing.",
@@ -6662,6 +6710,14 @@
           ],
           "description": "The jurisdiction of the R2 bucket, if the bucket was created with a jurisdictional\nrestriction. Buckets created in a jurisdiction live on a separate endpoint —\n`https://<accountId>.<jurisdiction>.r2.cloudflarestorage.com` — so this must match\nthe jurisdiction the bucket was created with. Omit for regular buckets.\n\nSee https://developers.cloudflare.com/r2/reference/data-location/#jurisdictional-restrictions"
         },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "path": {
           "default": "/",
           "description": "The directory path.",
@@ -7266,6 +7322,14 @@
         "forcePathStyle": {
           "description": "When true, force a path-style endpoint to be used where the bucket name is part of the path.\n[Path-style Access](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html#path-style-access)",
           "type": "boolean"
+        },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "type": [
+            "null",
+            "number"
+          ]
         },
         "path": {
           "default": "/",
@@ -8178,6 +8242,14 @@
           ],
           "description": "The list of channels the snap would be released."
         },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "provider": {
           "const": "snapStore",
           "description": "The provider. Must be `snapStore`.",
@@ -8669,6 +8741,14 @@
           "type": [
             "null",
             "string"
+          ]
+        },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "type": [
+            "null",
+            "number"
           ]
         },
         "name": {

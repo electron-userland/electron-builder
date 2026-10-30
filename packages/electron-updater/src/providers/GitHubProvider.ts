@@ -151,7 +151,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     const channelFile = getChannelFilename(channelName)
     const channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(String(tag), channelFile), this.baseUrl)
     try {
-      const rawData = (await this.executor.request(this.createRequestOptions(channelFileUrl), cancellationToken))!
+      const rawData = (await this.httpRequest(channelFileUrl, undefined, cancellationToken))!
       return { rawData, channelFile, channelFileUrl }
     } catch (e: any) {
       if (e instanceof HttpError && e.statusCode === 404) {
