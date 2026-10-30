@@ -820,7 +820,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         this.limitedLogger("cross-origin-update-info-headers").warn(
           `electron-updater 7 (electron-builder v27) sends the credential headers from requestHeaders / addAuthHeader only to the update feed's origin (${feedBaseUrl.origin}): ` +
             `${headerNames.join(", ")} not sent with the update info request to ${url.origin}, which is another origin. ` +
-            `If that server needs them, serve the channel file from the feed origin or use a pre-signed URL. ` +
+            `If that server needs them, serve the channel file from the feed origin or use a pre-signed URL; a custom provider whose update check calls an API on that origin passes them in httpRequest's headers argument or returns null from feedBaseUrl. ` +
             `https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin`
         )
       },
