@@ -2,6 +2,7 @@ import { serializeToYaml } from "builder-util"
 import { CancellationToken, CURRENT_APP_INSTALLER_FILE_NAME, DownloadOptions, HttpExecutor } from "builder-util-runtime"
 import { AppImageUpdater, BaseUpdater, NsisUpdater } from "electron-updater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
+import { DifferentialDownloader } from "electron-updater/src/differentialDownloader/DifferentialDownloader"
 import { createHash } from "crypto"
 import fs from "fs"
 import fsExtra from "fs-extra"
@@ -384,9 +385,10 @@ describe("differential download failures fall back to a verified full download, 
           const onUncaught = (e: unknown) => uncaught.push(e)
           process.on("uncaughtException", onUncaught)
           let hangTimer: NodeJS.Timeout | undefined
+          const doDownload = vi.spyOn(DifferentialDownloader.prototype, "doDownload")
           try {
             const url = await startServer(override)
-            const { updater, logs } = await createUpdater(tmpDir, url, { multiRange })
+            const { updater } = await createUpdater(tmpDir, url, { multiRange })
             await updater.checkForUpdates()
             const outcome = await Promise.race([
               updater.downloadUpdate().then(
@@ -401,8 +403,11 @@ describe("differential download failures fall back to a verified full download, 
             expect(uncaught).toEqual([])
             expect(rangeRequests()).toEqual([])
             expect(fullDownloads()).toHaveLength(1)
-            expect(logs.some(it => it.startsWith("error: Cannot download differentially, fallback to full download") && it.includes("malformed blockmap"))).toBe(true)
+            expect(doDownload.mock.results).toEqual([
+              { type: "throw", value: expect.objectContaining({ message: expect.stringMatching(/^Invalid (COPY|DOWNLOAD) range .*: malformed blockmap$/) }) },
+            ])
           } finally {
+            doDownload.mockRestore()
             clearTimeout(hangTimer)
             process.off("uncaughtException", onUncaught)
           }
