@@ -331,6 +331,8 @@ Please double check that your authentication token is correct. Due to security r
     const request = this.createRequest(requestOptions, (response: IncomingMessage) => {
       const code = response.statusCode ?? 0
       if (code >= 400) {
+        // the body is not used: drain it, so the response ends and releases its socket (see the redirect below)
+        response.resume()
         options.callback(
           new Error(
             `Cannot download "${requestOptions.protocol || "https:"}//${requestOptions.hostname}${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`
