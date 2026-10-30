@@ -387,10 +387,13 @@ Please double check that your authentication token is correct. Due to security r
 
   private addTimeOutHandler(request: any, callback: (error: Error) => void, timeout: number) {
     request.on("socket", (socket: Socket) => {
-      socket.setTimeout(timeout, () => {
+      const onTimeout = () => {
         request.abort()
         callback(new Error("Request timed out"))
-      })
+      }
+      socket.setTimeout(timeout, onTimeout)
+      // a keep-alive agent keeps the socket after the request and sets its own idle timeout on it: that timeout is not this request's
+      request.once("close", () => socket.removeListener("timeout", onTimeout))
     })
   }
 

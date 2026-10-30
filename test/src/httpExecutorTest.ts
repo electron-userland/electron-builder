@@ -978,6 +978,30 @@ describe("HttpExecutor redirect limit", () => {
   })
 })
 
+// A real request through Node's http module, by default through its keep-alive global agent
+class NodeExecutor extends HttpExecutor<http.ClientRequest> {
+  createRequest(options: RequestOptions, callback: (response: http.IncomingMessage) => void): http.ClientRequest {
+    return http.request(options, callback)
+  }
+
+  runDownload(url: URL, timeout: number, callback: (error: Error | null) => void, agent?: http.Agent): void {
+    this.doDownload(
+      { protocol: url.protocol, hostname: url.hostname, port: url.port, path: url.pathname, timeout, agent },
+      {
+        responseHandler: (response, done) => {
+          response.resume()
+          response.on("end", () => done(null))
+        },
+        onCancel: () => {},
+        callback,
+        options: { cancellationToken: new CancellationToken() },
+        destination: null,
+      },
+      0
+    )
+  }
+}
+
 describe("HttpExecutor download Location handling", () => {
   // Answers every request synchronously with `statusCode` and a Location to `location`; like http.request, createRequest throws for a
   // protocol other than http(s). Without the guard, that throw escaped from the response listener (an uncaught exception).
@@ -1042,29 +1066,6 @@ describe("HttpExecutor download Location handling", () => {
 
   // A real request through Node's keep-alive agent: a redirect's body that is not read keeps its socket busy, and the socket's timeout
   // then calls back a second time, after the download has settled
-  class NodeExecutor extends HttpExecutor<http.ClientRequest> {
-    createRequest(options: RequestOptions, callback: (response: http.IncomingMessage) => void): http.ClientRequest {
-      return http.request(options, callback)
-    }
-
-    runDownload(url: URL, timeout: number, callback: (error: Error | null) => void): void {
-      this.doDownload(
-        { protocol: url.protocol, hostname: url.hostname, port: url.port, path: url.pathname, timeout },
-        {
-          responseHandler: (response, done) => {
-            response.resume()
-            response.on("end", () => done(null))
-          },
-          onCancel: () => {},
-          callback,
-          options: { cancellationToken: new CancellationToken() },
-          destination: null,
-        },
-        0
-      )
-    }
-  }
-
   for (const [label, location, error] of [
     ["is followed", "/target", null],
     ["cannot be followed", "ftp://example.com/x", 'Cannot follow the redirect to the "ftp:" protocol'],
@@ -1101,6 +1102,47 @@ describe("HttpExecutor download Location handling", () => {
       }
     })
   }
+
+  // the redirect's drained socket goes back to the agent, which sets its own idle timeout on it while the target is still streaming
+  test("doDownload is not failed by the agent's idle timeout on the redirect's socket", async () => {
+    const AGENT_TIMEOUT = 100
+    const server = http.createServer((request, response) => {
+      if (request.url === "/start") {
+        response.writeHead(302, { Location: "/target", "Content-Length": 5 })
+        response.end("moved")
+      } else {
+        response.writeHead(200, { "Content-Length": 8 })
+        response.write("body")
+        setTimeout(() => response.end("done"), AGENT_TIMEOUT * 4)
+      }
+    })
+    const agent = new http.Agent({ keepAlive: true, timeout: AGENT_TIMEOUT })
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    try {
+      const address = server.address()
+      if (address == null || typeof address === "string") {
+        throw new Error("server has no port")
+      }
+      const results: Array<string | null> = []
+      await new Promise<void>(resolve => {
+        new NodeExecutor().runDownload(
+          new URL(`http://127.0.0.1:${address.port}/start`),
+          5000,
+          e => {
+            results.push(e == null ? null : e.message)
+            resolve()
+          },
+          agent
+        )
+      })
+      await new Promise(resolve => setTimeout(resolve, AGENT_TIMEOUT * 2))
+      expect(results).toEqual([null])
+    } finally {
+      agent.destroy()
+      server.closeAllConnections()
+      await new Promise(resolve => server.close(resolve))
+    }
+  })
 
   test("doDownload ignores a Location on a response that is not a redirect", () => {
     const executor = new LocationExecutor(200, "ftp://example.com/x")
