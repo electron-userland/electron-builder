@@ -5,7 +5,9 @@ import {
   BlockMapV3Header,
   BlockMapV3Super,
   blockMapV3Size,
+  checkBlockMapV3Groups,
   checkBlockMapV3Header,
+  checkBlockMapV3Supers,
   decodeBlockMapV3,
   GROUP_SIZE,
   groupEntryRanges,
@@ -193,6 +195,8 @@ class BlockMapV3Fetcher {
       prefix = Buffer.concat([prefix, rest.body])
     }
     const supers = parseBlockMapV3Supers(header, prefix)
+    // the group entry ranges are planned from these counts: once they sum to the header's, every range lies within the map
+    checkBlockMapV3Supers(header, supers)
     const buffer = Buffer.alloc(fileSize)
     const prefetched = Math.min(prefix.length, fileSize)
     prefix.copy(buffer, 0, 0, prefetched)
@@ -215,6 +219,8 @@ class BlockMapV3Fetcher {
       }
     }
     const groups = parseBlockMapV3Groups(header, buffer)
+    // the record ranges are planned from these counts: once they sum to the header's, every range lies within the map
+    checkBlockMapV3Groups(header, groups)
 
     // 3. groups: copy the records of matched ones from the old map, fetch the rest
     const recordStage = planRecordStage(oldMap, header, supers, groups, superStage.superMatch, prefetched)
@@ -343,6 +349,11 @@ class BlockMapV3Fetcher {
    */
   private async rangeRequest(ranges: Array<ByteRange>, allowShort = false): Promise<RangeResponse> {
     const requested = ranges.reduce((sum, it) => sum + it.end - it.start, 0)
+    // every range planned from a checked header and tables lies within the map, so for them this is defense in depth; the first
+    // request is sized from the old map, before the new header is known
+    if (requested > this.maxSize) {
+      throw new Error(`block map v3: ${requested} bytes requested, more than the ${this.maxSize}-byte limit`)
+    }
     const response = await this.doRequest(ranges, ranges.length === 1 ? requested : requested + ranges.length * MULTIPART_PART_OVERHEAD)
     if (response.status === 206) {
       if (ranges.length === 1) {
