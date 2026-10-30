@@ -88,6 +88,10 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
     try {
       releaseResponse = await this.httpRequest(latestReleaseUrl, header, cancellationToken)
     } catch (e: any) {
+      // a response over the size limit of update info keeps its own code
+      if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
+        throw e
+      }
       throw newError(`Unable to find latest release on GitLab (${latestReleaseUrl}): ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
 
