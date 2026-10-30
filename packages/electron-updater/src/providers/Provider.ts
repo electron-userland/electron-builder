@@ -9,6 +9,10 @@ import escapeRegExp from "lodash.escaperegexp"
 
 export type ProviderPlatform = "darwin" | "linux" | "win32"
 
+// The update info (channel file, release feed, API response) is read into memory and parsed before anything verifies it: a larger
+// response fails the request (see ApiRequestOptions.maxResponseSize). Real ones are a few KB, a GitHub release list a few MB.
+const MAX_UPDATE_INFO_RESPONSE_SIZE = 10 * 1024 * 1024
+
 export interface ProviderRuntimeOptions {
   isUseMultipleRangeRequest: boolean
   platform: ProviderPlatform
@@ -94,7 +98,7 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
-    const result: RequestOptions = {}
+    const result: RequestOptions & { maxResponseSize?: number } = { maxResponseSize: MAX_UPDATE_INFO_RESPONSE_SIZE }
     if (this.requestHeaders == null) {
       if (headers != null) {
         result.headers = headers
