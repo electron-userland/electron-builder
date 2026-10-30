@@ -39,7 +39,7 @@ export interface DifferentialDownloaderOptions {
  * an embedded one that are read. A v2 map costs about 33 bytes of JSON per block, so even the finest chunker for file data (stored
  * archive members, 8 KiB average) writes about fileSize / 250: the limit leaves ample headroom, while a body crafted to inflate
  * to gigabytes is rejected once it passes the limit, before it can exhaust the memory of (or block) the main process. 64 MiB
- * when the size is unknown.
+ * when the size is unknown. A v3 map, about 10 bytes per block, is held to the same limit.
  * @internal
  */
 export function blockMapSizeLimit(fileSize: number | null | undefined): number {
