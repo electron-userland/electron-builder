@@ -34,7 +34,7 @@ import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor.js"
 import { GenericProvider } from "./providers/GenericProvider.js"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory.js"
-import { Provider, ProviderPlatform } from "./providers/Provider.js"
+import { Provider, ProviderPlatform, ProviderRuntimeOptions } from "./providers/Provider.js"
 import type { TypedEmitter } from "tiny-typed-emitter"
 type Session = Electron.Session
 import type { AuthInfo } from "electron"
@@ -810,11 +810,20 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     return true
   }
 
-  private createProviderRuntimeOptions() {
+  private createProviderRuntimeOptions(): ProviderRuntimeOptions {
     return {
       isUseMultipleRangeRequest: true,
       platform: this._testOnlyOptions == null ? (process.platform as ProviderPlatform) : this._testOnlyOptions.platform,
       executor: this.httpExecutor,
+      // announced like a cross-origin download (see announceCrossOriginDownload): names and origins only, never values
+      onCrossOriginHeadersRemoved: (url, feedBaseUrl, headerNames) => {
+        this.limitedLogger("cross-origin-update-info-headers").warn(
+          `electron-updater 7 (electron-builder v27) sends the credential headers from requestHeaders / addAuthHeader only to the update feed's origin (${feedBaseUrl.origin}): ` +
+            `${headerNames.join(", ")} not sent with the update info request to ${url.origin}, which is another origin. ` +
+            `If that server needs them, serve the channel file from the feed origin or use a pre-signed URL. ` +
+            `https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin`
+        )
+      },
     }
   }
 

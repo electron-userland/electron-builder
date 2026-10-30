@@ -1,5 +1,15 @@
-import { CancellationToken, configureRequestUrl, newError, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
-import { OutgoingHttpHeaders, RequestOptions } from "http"
+import {
+  ApiRequestOptions,
+  CancellationToken,
+  configureRequestUrl,
+  HttpExecutor,
+  newError,
+  safeStringifyJson,
+  UpdateFileInfo,
+  UpdateInfo,
+  WindowsUpdateInfo,
+} from "builder-util-runtime"
+import { OutgoingHttpHeaders } from "http"
 import { load } from "js-yaml"
 import { URL } from "url"
 import { ElectronHttpExecutor } from "../electronHttpExecutor.js"
@@ -18,6 +28,12 @@ export interface ProviderRuntimeOptions {
   platform: ProviderPlatform
 
   executor: ElectronHttpExecutor
+
+  /**
+   * Called when an update info request (e.g. a channel file) goes to another origin than `Provider.feedBaseUrl` and so is sent
+   * without the credential headers `headerNames` (names only, never values). The updater warns about it once.
+   */
+  onCrossOriginHeadersRemoved?: (url: URL, feedBaseUrl: URL, headerNames: Array<string>) => void
 }
 
 // Shared by the GitHub/GitLab/PrivateGitHub providers when a release channel file (e.g. latest.yml) 404s.
@@ -74,7 +90,8 @@ export abstract class Provider<T extends UpdateInfo> {
 
   /**
    * Base URL of the update feed: the credential-bearing request headers (the ones stripped on a cross-origin redirect) are only sent to
-   * download URLs on its origin. `null` sends the request headers to every download URL.
+   * download URLs, and to the URLs of the provider's own update info requests (e.g. the channel file), on its origin. `null` sends the
+   * request headers to every URL.
    * The default, `undefined`, means not declared: a download with credential headers (from `requestHeaders` / `addAuthHeader`) then fails
    * with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, so a custom provider used with credentials must override this getter.
    */
@@ -97,14 +114,24 @@ export abstract class Provider<T extends UpdateInfo> {
     return this.executor.request(this.createRequestOptions(url, headers), cancellationToken)
   }
 
-  protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
-    const result: RequestOptions & { maxResponseSize?: number } = { maxResponseSize: MAX_UPDATE_INFO_RESPONSE_SIZE }
-    if (this.requestHeaders == null) {
+  protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): ApiRequestOptions {
+    const result: ApiRequestOptions = { maxResponseSize: MAX_UPDATE_INFO_RESPONSE_SIZE }
+    // the same feed-origin rule as for downloads: e.g. a channel file on another origin gets no credential headers
+    const feedBaseUrl = this.feedBaseUrl
+    let requestHeaders = this.requestHeaders
+    if (requestHeaders != null && feedBaseUrl != null && HttpExecutor.isCrossOrigin(feedBaseUrl, url)) {
+      const headerNames = HttpExecutor.sensitiveHeaderNames(requestHeaders)
+      requestHeaders = HttpExecutor.removeCrossOriginSensitiveHeaders(requestHeaders, feedBaseUrl, url)
+      if (headerNames.length !== 0) {
+        this.runtimeOptions.onCrossOriginHeadersRemoved?.(url, feedBaseUrl, headerNames)
+      }
+    }
+    if (requestHeaders == null) {
       if (headers != null) {
         result.headers = headers
       }
     } else {
-      result.headers = headers == null ? this.requestHeaders : { ...this.requestHeaders, ...headers }
+      result.headers = headers == null ? requestHeaders : { ...requestHeaders, ...headers }
     }
 
     configureRequestUrl(url, result)
