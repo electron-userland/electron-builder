@@ -196,6 +196,21 @@ test.for([
   expect(performance.now() - start).toBeLessThan(1000)
 })
 
+test.for([
+  ["rawData null", null],
+  ["invalid YAML", `${mockYaml("1.0.1")}releaseNotes: [unclosed\n`],
+  ["aliases past the budget", mockAliasChainYaml("1.0.1", 40)],
+])("parseUpdateInfo - the error for %s names the channel file URL without its query", ([_name, rawData], { expect }) => {
+  let error: unknown
+  try {
+    parseUpdateInfo(rawData, "latest.yml", new URL("https://example.com/feed/latest.yml?token=secret#fragment"))
+  } catch (e: unknown) {
+    error = e
+  }
+  expect(error).toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringContaining("(https://example.com/feed/latest.yml)") })
+  expect(error instanceof Error ? `${error.message}\n${error.stack}` : String(error)).not.toContain("secret")
+})
+
 test("parseUpdateInfo - the alias-budget error names the v27 change, the replacement and the migration guide", ({ expect }) => {
   let error: unknown
   try {

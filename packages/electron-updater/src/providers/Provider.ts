@@ -125,9 +125,16 @@ export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string
   }
 }
 
+// The channel file URL as error messages name it: newUrlFromBase copies the feed URL's query (which may carry a token such as `?token=`)
+// onto it, and the updater logs these errors, so only its origin and path are named.
+function describeChannelFileUrl(channelFileUrl: URL): string {
+  return `${channelFileUrl.origin}${channelFileUrl.pathname}`
+}
+
 export function parseUpdateInfo(rawData: string | null, channelFile: string, channelFileUrl: URL): UpdateInfo {
+  const location = describeChannelFileUrl(channelFileUrl)
   if (rawData == null) {
-    throw newError(`Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): rawData: null`, "ERR_UPDATER_INVALID_UPDATE_INFO")
+    throw newError(`Cannot parse update info from ${channelFile} in the latest release artifacts (${location}): rawData: null`, "ERR_UPDATER_INVALID_UPDATE_INFO")
   }
 
   let result: UpdateInfo
@@ -135,7 +142,7 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
     result = load(rawData) as UpdateInfo
   } catch (e: any) {
     throw newError(
-      `Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}, rawData: ${rawData}`,
+      `Cannot parse update info from ${channelFile} in the latest release artifacts (${location}): ${e.stack || e.message}, rawData: ${rawData}`,
       "ERR_UPDATER_INVALID_UPDATE_INFO"
     )
   }
@@ -146,7 +153,7 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
   // Without aliases, a document's keys and values, a string counted by its length, add up to at most its number of characters, so a legitimate channel file is never rejected.
   const budget = Math.max(100_000, rawData.length)
   if (exceedsExpansionBudget(result, budget)) {
-    throw yamlAliasBudgetError(channelFile, channelFileUrl, budget)
+    throw yamlAliasBudgetError(channelFile, location, budget)
   }
   return result
 }
@@ -157,9 +164,10 @@ export const YAML_ALIAS_BUDGET_DOCS = "https://www.electron.build/docs/migration
 // the errors parseUpdateInfo throws for the alias budget, so that AppUpdater can announce the v27 change without matching the message
 const yamlAliasBudgetErrors = new WeakSet<Error>()
 
-function yamlAliasBudgetError(channelFile: string, channelFileUrl: URL, budget: number): Error {
+// location: the channel file URL without its query (describeChannelFileUrl)
+function yamlAliasBudgetError(channelFile: string, location: string, budget: number): Error {
   const error = newError(
-    `Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): YAML aliases expand to more than ${budget} values and string characters. ` +
+    `Cannot parse update info from ${channelFile} in the latest release artifacts (${location}): YAML aliases expand to more than ${budget} values and string characters. ` +
       `electron-updater 7 (electron-builder v27) rejects such a manifest: publish it without YAML aliases (js-yaml \`dump\` with \`noRefs: true\`, as electron-builder writes it) ` +
       `or with the shared values repeated inline. ${YAML_ALIAS_BUDGET_DOCS}`,
     "ERR_UPDATER_INVALID_UPDATE_INFO"
