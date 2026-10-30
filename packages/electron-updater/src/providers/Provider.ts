@@ -135,11 +135,7 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
   // Anything that walks the update info (a deep comparison, JSON serialization) would then block the main process.
   // Without aliases, a document's keys and values, a string counted by its length, add up to at most its number of characters, so a legitimate channel file is never rejected.
   const budget = Math.max(100_000, rawData.length)
-  const budgetExceeded = (): Error =>
-    newError(
-      `Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): YAML aliases expand to more than ${budget} values and string characters`,
-      "ERR_UPDATER_INVALID_UPDATE_INFO"
-    )
+  const budgetExceeded = (): Error => yamlAliasBudgetError(channelFile, channelFileUrl, budget)
 
   // js-yaml itself expands aliases while loading: it converts a complex mapping key (`? [*a, *a]`) to a string,
   // so a few hundred KB of aliases in keys would build strings of hundreds of MB before load returns.
@@ -173,6 +169,31 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
     throw budgetExceeded()
   }
   return result
+}
+
+/** @internal */
+export const YAML_ALIAS_BUDGET_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-manifest-yaml-aliases-are-limited"
+
+// the errors parseUpdateInfo throws for the alias budget, so that AppUpdater can announce the v27 change without matching the message
+const yamlAliasBudgetErrors = new WeakSet<Error>()
+
+function yamlAliasBudgetError(channelFile: string, channelFileUrl: URL, budget: number): Error {
+  const error = newError(
+    `Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): YAML aliases expand to more than ${budget} values and string characters. ` +
+      `electron-updater 7 (electron-builder v27) rejects such a manifest: publish it without YAML aliases (js-yaml \`dump\` with \`noRefs: true\`, as electron-builder writes it) ` +
+      `or with the shared values repeated inline. ${YAML_ALIAS_BUDGET_DOCS}`,
+    "ERR_UPDATER_INVALID_UPDATE_INFO"
+  )
+  yamlAliasBudgetErrors.add(error)
+  return error
+}
+
+/**
+ * Whether `error` is the `ERR_UPDATER_INVALID_UPDATE_INFO` that {@link parseUpdateInfo} throws for YAML aliases that expand past the budget.
+ * @internal
+ */
+export function isYamlAliasBudgetError(error: unknown): boolean {
+  return error instanceof Error && yamlAliasBudgetErrors.has(error)
 }
 
 // adds to total every value reachable from root, root included and an aliased one each time it is referenced:
