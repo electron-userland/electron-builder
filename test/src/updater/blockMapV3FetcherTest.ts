@@ -474,7 +474,7 @@ describe("blockMapV3Fetcher", () => {
     const NEW = editedMap("redirect")
     cdn.files.set("cdn/new.blockmap", NEW)
     const result = await fetchWith("new.blockmap", OLD, false, {
-      requestHeaders: { authorization: "token secret", "x-custom": "kept" },
+      requestHeaders: { authorization: "token secret", "x-custom": "dropped", "if-match": "kept" },
       setUp: () => {
         server.redirects.set("new.blockmap", new URL("redirect/hop.blockmap", cdn.url).href)
         cdn.redirects.set("redirect/hop.blockmap", "../cdn/new.blockmap")
@@ -485,11 +485,15 @@ describe("blockMapV3Fetcher", () => {
     // the feed's origin got the credentials once, then every range went to the CDN without them
     expect(server.requests).toHaveLength(1)
     expect(server.headers[0].authorization).toBe("token secret")
+    expect(server.headers[0]["x-custom"]).toBe("dropped")
     expect(cdn.requests.length).toBeGreaterThan(2)
     expect(cdn.requests.filter(it => it.status === 302)).toHaveLength(1)
+    // only the cross-origin allowlist of headers goes on to the CDN, Range included
     for (const headers of cdn.headers) {
       expect(headers.authorization).toBeUndefined()
-      expect(headers["x-custom"]).toBe("kept")
+      expect(headers["x-custom"]).toBeUndefined()
+      expect(headers["if-match"]).toBe("kept")
+      expect(headers.range).toBeDefined()
     }
   })
 

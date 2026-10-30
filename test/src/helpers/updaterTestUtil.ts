@@ -2,7 +2,7 @@ import { NodeHttpExecutor, serializeToYaml, TmpDir } from "builder-util"
 import { AllPublishOptions, BlockMap, DownloadOptions } from "builder-util-runtime"
 import { AppUpdater, NsisUpdater, type NonThrowableLogger, type VerifyUpdateFile, type VerifyUpdateFileResult } from "electron-updater"
 import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/src/AppUpdater"
-import { ElectronHttpExecutor } from "electron-updater/src/electronHttpExecutor"
+import { type CrossOriginRedirectListener, ElectronHttpExecutor } from "electron-updater/src/electronHttpExecutor"
 import { createHash } from "crypto"
 import { EventEmitter } from "events"
 import fsExtra from "fs-extra"
@@ -318,8 +318,11 @@ export class FakeElectronHttpExecutor extends ElectronHttpExecutor {
   /** createRequest throws for these URLs, as net.request does for options it cannot make a request of */
   readonly unrequestableUrls = new Set<string>()
 
-  constructor(private readonly answer: (url: string, headers: OutgoingHttpHeaders) => FakeNetAnswer) {
-    super()
+  constructor(
+    private readonly answer: (url: string, headers: OutgoingHttpHeaders) => FakeNetAnswer,
+    crossOriginRedirectListener?: CrossOriginRedirectListener
+  ) {
+    super(undefined, crossOriginRedirectListener)
   }
 
   // the return type of the overridden method is Electron's ClientRequest, which the fake does not implement

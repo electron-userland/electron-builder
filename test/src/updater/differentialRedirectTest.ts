@@ -43,7 +43,8 @@ const REQUEST_HEADERS: OutgoingHttpHeaders = {
   Cookie: "session=secret",
   "X-Tenant": "acme",
 }
-const CREDENTIAL_HEADERS = ["authorization", "PRIVATE-TOKEN", "X-Api-Key", "Cookie"]
+// every header off the cross-origin allowlist, a custom one (X-Tenant) included, is treated as a credential
+const CREDENTIAL_HEADERS = ["authorization", "PRIVATE-TOKEN", "X-Api-Key", "Cookie", "X-Tenant"]
 
 function parseRanges(header: unknown): Array<[number, number]> {
   return String(header)
@@ -142,7 +143,7 @@ function expectCredentials(expect: ExpectStatic, headers: OutgoingHttpHeaders, i
       expect(headers).not.toHaveProperty(name)
     }
   }
-  expect(headers).toMatchObject({ "X-Tenant": "acme", accept: "*/*" })
+  expect(headers).toMatchObject({ accept: "*/*" })
 }
 
 describe("differential download redirects", () => {

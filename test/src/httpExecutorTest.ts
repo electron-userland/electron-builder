@@ -1,7 +1,7 @@
 import { expect, test, describe } from "vitest"
 import { CancellationToken, DigestTransform, HttpError, HttpExecutor } from "builder-util-runtime"
 import { hashSensitiveValue, REDACTED_VALUE, safeStringifyJson } from "builder-util-runtime/internal"
-import { addSensitiveFieldPattern, addSensitiveRedirectHeader, detectSha512Encoding, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
+import { addSensitiveFieldPattern, detectSha512Encoding, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
 import { createHash } from "crypto"
 import { EventEmitter } from "events"
 import { RequestOptions } from "http"
@@ -702,6 +702,56 @@ describe("sensitive header stripping", () => {
   })
 })
 
+describe("cross-origin header allowlist", () => {
+  const options = (): RequestOptions => ({
+    protocol: "https:",
+    hostname: "feed.example.com",
+    path: "/updates/app.exe",
+    headers: {
+      "X-Api-Token": "custom-secret",
+      "X-My-Auth": "other-secret",
+      Range: "bytes=0-99",
+      "If-Range": '"etag"',
+      Accept: "*/*",
+      "Accept-Encoding": "gzip",
+      "Content-Type": "application/octet-stream",
+    },
+  })
+  const allowlisted = { Range: "bytes=0-99", "If-Range": '"etag"', Accept: "*/*", "Accept-Encoding": "gzip", "Content-Type": "application/octet-stream" }
+
+  test("a cross-origin redirect drops a custom header and keeps the allowlisted ones, Range included", ({ expect }) => {
+    const result = HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", options())
+    expect(result.headers).toEqual({ ...allowlisted, "User-Agent": "electron-builder", "Cache-Control": "no-cache" })
+  })
+
+  test("a same-origin redirect keeps a custom header", ({ expect }) => {
+    const result = HttpExecutor.prepareRedirectUrlOptions("https://feed.example.com/other/app.exe", options())
+    expect(result.headers).toMatchObject({ "X-Api-Token": "custom-secret", "X-My-Auth": "other-secret", Range: "bytes=0-99" })
+  })
+
+  test("a cross-origin redirect reports the dropped header names, never their values", ({ expect }) => {
+    const calls: Array<[Array<string>, string, string]> = []
+    const withEmpty = { ...options(), headers: { ...options().headers, "X-Empty": undefined } }
+    HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", withEmpty, (names, origin, target) => calls.push([names, origin.origin, target.origin]))
+    expect(calls).toEqual([[["X-Api-Token", "X-My-Auth"], "https://feed.example.com", "https://cdn.example.net"]])
+  })
+
+  test("a same-origin redirect, or one that drops nothing, reports nothing", ({ expect }) => {
+    const calls: Array<Array<string>> = []
+    HttpExecutor.prepareRedirectUrlOptions("https://feed.example.com/other/app.exe", options(), names => calls.push(names))
+    HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", { ...options(), headers: allowlisted }, names => calls.push(names))
+    expect(calls).toEqual([])
+  })
+
+  test("a download on another origin gets only the allowlisted headers", ({ expect }) => {
+    const headers = options().headers as Record<string, string>
+    const feedUrl = new URL("https://feed.example.com/updates/")
+    expect(HttpExecutor.removeCrossOriginSensitiveHeaders(headers, feedUrl, new URL("https://cdn.example.net/app.exe"))).toEqual(allowlisted)
+    expect(HttpExecutor.removeCrossOriginSensitiveHeaders(headers, feedUrl, new URL("https://feed.example.com/updates/app.exe"))).toBe(headers)
+    expect(HttpExecutor.sensitiveHeaderNames(headers)).toEqual(["X-Api-Token", "X-My-Auth"])
+  })
+})
+
 describe("HttpExecutor.removeCrossOriginSensitiveHeaders", () => {
   const feedUrl = new URL("https://feed.example.com/updates/")
   const credentialHeaders = () => ({
@@ -860,22 +910,7 @@ describe("safeStringifyJson field redaction", () => {
   })
 })
 
-describe("addSensitiveRedirectHeader / addSensitiveFieldPattern", () => {
-  test("addSensitiveRedirectHeader causes custom header to be stripped on cross-origin redirect", () => {
-    addSensitiveRedirectHeader("X-Zz-Test-Custom-Auth")
-
-    const originalOptions: RequestOptions = {
-      protocol: "https:",
-      hostname: "api.example.com",
-      path: "/endpoint",
-      headers: { "X-Zz-Test-Custom-Auth": "secret-value", "User-Agent": "test" },
-    }
-    const result = HttpExecutor.prepareRedirectUrlOptions("https://cdn.other.com/asset.zip", originalOptions)
-
-    expect(result.headers?.["X-Zz-Test-Custom-Auth"]).toBeUndefined()
-    expect(result.headers?.["User-Agent"]).toBe("test")
-  })
-
+describe("addSensitiveFieldPattern", () => {
   test("addSensitiveFieldPattern causes matching fields to be redacted by safeStringifyJson", () => {
     addSensitiveFieldPattern("zzTestCustomCred")
 
