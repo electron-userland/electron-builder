@@ -139,7 +139,41 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
       "ERR_UPDATER_INVALID_UPDATE_INFO"
     )
   }
+
+  // js-yaml returns an aliased node by reference, so a few hundred bytes of nested aliases can reach a value exponentially often,
+  // and a long string referenced by many aliases is read in full each time.
+  // Anything that walks the update info (a deep comparison, JSON serialization) would then block the main process.
+  // Without aliases, a document's keys and values, a string counted by its length, add up to at most its number of characters, so a legitimate channel file is never rejected.
+  const budget = Math.max(100_000, rawData.length)
+  if (exceedsExpansionBudget(result, budget)) {
+    throw newError(
+      `Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): YAML aliases expand to more than ${budget} values and string characters`,
+      "ERR_UPDATER_INVALID_UPDATE_INFO"
+    )
+  }
   return result
+}
+
+// charges every value reachable from root, an aliased one each time it is referenced: a string by its length, anything else as 1,
+// and a mapping entry also by the length of its key. Stops once the total exceeds the budget.
+function exceedsExpansionBudget(root: unknown, budget: number): boolean {
+  let total = 0
+  const stack: Array<unknown> = [root]
+  while (stack.length > 0) {
+    const value = stack.pop()
+    if (value === null || typeof value !== "object") {
+      continue
+    }
+    const isMapping = !Array.isArray(value)
+    for (const [key, child] of Object.entries(value)) {
+      total += (isMapping ? key.length : 0) + (typeof child === "string" ? Math.max(1, child.length) : 1)
+      if (total > budget) {
+        return true
+      }
+      stack.push(child)
+    }
+  }
+  return false
 }
 
 export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {
