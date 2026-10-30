@@ -67,6 +67,19 @@ const require = createRequire(import.meta.url ?? process.execPath)
 // shared rather than per-instance so that `updater.verifyUpdateFile === DEFAULT_VERIFY_UPDATE_FILE` identifies "no custom verifier"
 const DEFAULT_VERIFY_UPDATE_FILE: VerifyUpdateFile = _params => Promise.resolve({ response: "success" })
 
+// The headers electron-updater 6 already left out on a redirect to another origin (lowercase, without - and _), so dropping them is not news.
+const V6_CROSS_ORIGIN_DROPPED_HEADERS = new Set([
+  "authorization",
+  "proxyauthorization",
+  "privatetoken",
+  "xapikey",
+  "xauthtoken",
+  "xaccesstoken",
+  "xgitlabtoken",
+  "cookie",
+  "xcsrftoken",
+])
+
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
   login: (info: AuthInfo, callback: LoginCallback) => void
@@ -1066,7 +1079,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   /**
-   * Headers for a download from `url`: when the provider has a `feedBaseUrl`, the credential-bearing ones are dropped if `url` is on
+   * Headers for a download from `url`: when the provider has a `feedBaseUrl`, the ones off the cross-origin allowlist are dropped if `url` is on
    * another origin than `originUrl` (the feed by default). `null` keeps them for every URL.
    */
   protected downloadRequestHeaders(url: URL, downloadUpdateOptions: DownloadUpdateOptions, originUrl?: URL): OutgoingHttpHeaders {
@@ -1108,13 +1121,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   /**
    * A redirect to another origin sends on only the cross-origin allowlist of headers (such as Accept, User-Agent and Range): announces, once
-   * per updater, the headers set by the app (`requestHeaders`) that one did not send, by name only. Authorization (`addAuthHeader`) was
-   * never sent to another origin, so it is not news.
+   * per updater, the headers set by the app (`requestHeaders`) that one did not send, by name only. The ones electron-updater 6 already
+   * left out (such as Authorization from `addAuthHeader`, or PRIVATE-TOKEN) are not news.
    * @internal
    */
   protected announceCrossOriginRedirect(droppedHeaderNames: Array<string>, originUrl: URL, targetUrl: URL): void {
     const appHeaderNames = new Set(Object.keys(this.requestHeaders ?? {}).map(it => it.toLowerCase()))
-    const names = droppedHeaderNames.filter(it => it.toLowerCase() !== "authorization" && appHeaderNames.has(it.toLowerCase()))
+    const names = droppedHeaderNames.filter(it => !V6_CROSS_ORIGIN_DROPPED_HEADERS.has(it.toLowerCase().replace(/[-_]/g, "")) && appHeaderNames.has(it.toLowerCase()))
     if (names.length === 0) {
       return
     }

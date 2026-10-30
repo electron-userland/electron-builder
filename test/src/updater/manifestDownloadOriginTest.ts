@@ -583,6 +583,20 @@ describe("differential downloads use the per-download headers", () => {
 
       expect(warnings()).toEqual([])
     })
+
+    // electron-updater 6 already left out a fixed list of credential headers on a cross-origin redirect, whatever their spelling
+    test("a cross-origin redirect announces only the app's headers that electron-updater 6 sent on", async ({ tmpDir, expect }) => {
+      const { updater, warnings } = await setUp(tmpDir)
+      updater.requestHeaders = { "PRIVATE-TOKEN": "glpat", x_api_key: "k", Cookie: "c", "X-Tenant": "acme" }
+      const announce = (names: Array<string>) => (updater as any).announceCrossOriginRedirect(names, new URL("https://feed.example.com/"), new URL("https://cdn.example.net/"))
+
+      announce(["PRIVATE-TOKEN", "x_api_key", "Cookie"])
+      expect(warnings()).toEqual([])
+
+      announce(["PRIVATE-TOKEN", "X-Tenant"])
+      expect(warnings()).toHaveLength(1)
+      expect(warnings()[0]).toContain("did not send X-Tenant from requestHeaders")
+    })
   })
 })
 
