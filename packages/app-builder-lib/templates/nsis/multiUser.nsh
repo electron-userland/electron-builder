@@ -64,11 +64,13 @@ Var installMode
     SetShellVarContext all
 
     !ifdef BUILD_UNINSTALLER
-      ${IfNot} ${UAC_IsAdmin}
-        ShowWindow $HWNDPARENT ${SW_HIDE}
-        !insertmacro UAC_RunElevated
-        Quit
-      ${endif}
+      !ifndef UNELEVATED_PER_MACHINE_UPDATE
+        ${IfNot} ${UAC_IsAdmin}
+          ShowWindow $HWNDPARENT ${SW_HIDE}
+          !insertmacro UAC_RunElevated
+          Quit
+        ${endif}
+      !endif
     !endif
 
     # сheck registry for previous installation path
@@ -96,6 +98,21 @@ Var installMode
       StrCpy $INSTDIR $R0
     ${endif}
 
+    !ifdef BUILD_UNINSTALLER
+      !ifdef UNELEVATED_PER_MACHINE_UPDATE
+        # the probes need $INSTDIR, so elevation is decided here rather than before it is read
+        ${IfNot} ${UAC_IsAdmin}
+          !insertmacro checkUnelevatedPerMachineUpdate
+          ${if} $unelevatedAccess == "1"
+            ${LogText} "Per-machine uninstall for an update without elevation (nsis.allowUnelevatedPerMachineUpdate): $INSTDIR and its registration are writable"
+          ${else}
+            ShowWindow $HWNDPARENT ${SW_HIDE}
+            !insertmacro UAC_RunElevated
+            Quit
+          ${endif}
+        ${endif}
+      !endif
+    !endif
   !macroend
 !endif
 

@@ -4847,6 +4847,11 @@
           "description": "*assisted installer only.* Whether to allow user to change installation directory.",
           "type": "boolean"
         },
+        "allowUnelevatedPerMachineUpdate": {
+          "default": false,
+          "description": "*assisted installer only, with `perMachine` not set.* Let a silent update (`--updated`) of a per-machine installation run without a UAC\nprompt when the user already holds every access right the update uses. Off by default: the update elevates, as before.\n\nAn update removes and re-creates the installation folder, the app's `HKLM` registration and the all-users shortcuts, so this applies\nonly where an administrator granted standard users those rights: on the folder and its files, its parent folder, the\n`INSTALL_REGISTRY_KEY` and Uninstall keys and their parent keys (`HKLM\\Software`,\n`HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall`), and the Start Menu folder and Public Desktop. The installer and\nthe uninstaller check each right without changing anything, and elevate when one is missing, when a per-user installation exists too,\nand for an interactive install or uninstall.\n\nelectron-builder does not recommend granting these rights: an unelevated process could then change the `UninstallString` that the\nelevated uninstaller, and deployment tools running as SYSTEM, later execute. The option is for machines whose administrators already\ndid. The uninstaller part takes effect from the update after the one that installs a build with this option, as an update runs the\nuninstaller of the installed version.",
+          "type": "boolean"
+        },
         "artifactName": {
           "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.",
           "type": [
@@ -5192,6 +5197,11 @@
         "allowToChangeInstallationDirectory": {
           "default": false,
           "description": "*assisted installer only.* Whether to allow user to change installation directory.",
+          "type": "boolean"
+        },
+        "allowUnelevatedPerMachineUpdate": {
+          "default": false,
+          "description": "*assisted installer only, with `perMachine` not set.* Let a silent update (`--updated`) of a per-machine installation run without a UAC\nprompt when the user already holds every access right the update uses. Off by default: the update elevates, as before.\n\nAn update removes and re-creates the installation folder, the app's `HKLM` registration and the all-users shortcuts, so this applies\nonly where an administrator granted standard users those rights: on the folder and its files, its parent folder, the\n`INSTALL_REGISTRY_KEY` and Uninstall keys and their parent keys (`HKLM\\Software`,\n`HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall`), and the Start Menu folder and Public Desktop. The installer and\nthe uninstaller check each right without changing anything, and elevate when one is missing, when a per-user installation exists too,\nand for an interactive install or uninstall.\n\nelectron-builder does not recommend granting these rights: an unelevated process could then change the `UninstallString` that the\nelevated uninstaller, and deployment tools running as SYSTEM, later execute. The option is for machines whose administrators already\ndid. The uninstaller part takes effect from the update after the one that installs a build with this option, as an update runs the\nuninstaller of the installed version.",
           "type": "boolean"
         },
         "allowUnverifiedAppPackage": {

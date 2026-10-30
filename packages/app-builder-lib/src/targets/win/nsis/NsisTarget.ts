@@ -724,6 +724,15 @@ export class NsisTarget extends Target {
       defines.INSTALL_MODE_PER_ALL_USERS_REQUIRED = null
     }
 
+    if (options.allowUnelevatedPerMachineUpdate === true) {
+      if (oneClick || options.perMachine === true) {
+        // a one-click or perMachine installer is per-machine from the start, so there is no per-user mode to update without elevation
+        log.warn({ reason: oneClick ? "oneClick is set" : "perMachine is set" }, "nsis.allowUnelevatedPerMachineUpdate has no effect")
+      }
+      // the templates check oneClick and perMachine as well
+      defines.ALLOW_UNELEVATED_PER_MACHINE_UPDATE = null
+    }
+
     if (options.allowToChangeInstallationDirectory) {
       if (oneClick) {
         throw new InvalidConfigurationError("allowToChangeInstallationDirectory makes sense only for assisted installer (please set oneClick to false)")
