@@ -1,12 +1,11 @@
 import { UpdateInfo } from "builder-util-runtime"
 import { createHash } from "crypto"
 import { createReadStream } from "fs"
-// @ts-ignore
-import * as isEqual from "lodash.isequal"
 import { ResolvedUpdateFileInfo } from "./types"
 import { Logger } from "./types"
 import { pathExists, readJson, emptyDir, outputJson, unlink } from "fs-extra"
 import * as path from "path"
+import { isDeepStrictEqual } from "util"
 
 /** @private **/
 export class DownloadedUpdateHelper {
@@ -39,7 +38,9 @@ export class DownloadedUpdateHelper {
     if (this.versionInfo != null && this.file === updateFile && this.fileInfo != null) {
       // update has already been downloaded from this running instance
       // check here only existence, not checksum
-      if (isEqual(this.versionInfo, updateInfo) && isEqual(this.fileInfo.info, fileInfo.info) && (await pathExists(updateFile))) {
+      // update info is plain data parsed from the channel file (YAML), so a structural comparison is enough: key order does not matter,
+      // a key set to `undefined` differs from a missing one
+      if (isDeepStrictEqual(this.versionInfo, updateInfo) && isDeepStrictEqual(this.fileInfo.info, fileInfo.info) && (await pathExists(updateFile))) {
         return updateFile
       } else {
         return null
