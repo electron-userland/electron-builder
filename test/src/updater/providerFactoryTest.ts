@@ -4,6 +4,7 @@ import { GenericProvider } from "electron-updater/src/providers/GenericProvider"
 import type { AppUpdater } from "electron-updater/src/AppUpdater"
 import type { ProviderRuntimeOptions } from "electron-updater/src/providers/Provider"
 import { describe, expect, test } from "vitest"
+import { FakeElectronHttpExecutor } from "../helpers/updaterTestUtil.js"
 
 // electron-updater resolves an `app-update.yml` publish config into a Provider on the END-USER
 // machine. The s3/spaces/r2 providers all fall through to a GenericProvider pointed at the
@@ -114,5 +115,54 @@ describe("createClient — feedBaseUrl", () => {
   test.each(cases)("$name", ({ options, expected }) => {
     const feedBaseUrl = createClient(options, updater, runtimeOptions).feedBaseUrl
     expect(expected == null ? feedBaseUrl : feedBaseUrl?.href).toBe(expected)
+  })
+})
+
+// The update info (channel file, release feed or API response) is read into memory and parsed before anything verifies it: its size is limited.
+describe("createClient — update info response size", () => {
+  const MAX_UPDATE_INFO_RESPONSE_SIZE = 10 * 1024 * 1024
+  const tooLarge = { statusCode: 200, body: Buffer.alloc(MAX_UPDATE_INFO_RESPONSE_SIZE + 1, "a") }
+
+  test("a channel file larger than the limit fails the check", async () => {
+    const executor = new FakeElectronHttpExecutor(() => tooLarge)
+    const provider = createClient({ provider: "generic", url: "https://feed.example.com/updates" }, updater, { ...runtimeOptions, executor })
+    await expect(provider.getLatestVersion()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
+  })
+
+  test("so does one behind a redirect", async () => {
+    const executor = new FakeElectronHttpExecutor(url => (url.startsWith("https://feed.example.com/") ? { location: "https://cdn.example.com/latest-mac.yml" } : tooLarge))
+    const provider = createClient({ provider: "generic", url: "https://feed.example.com/updates" }, updater, { ...runtimeOptions, executor })
+    await expect(provider.getLatestVersion()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
+    expect(executor.sent.map(it => it.url)).toEqual(["https://feed.example.com/updates/latest-mac.yml", "https://cdn.example.com/latest-mac.yml"])
+  })
+
+  // the API answers with a response over the limit: its code is kept, not wrapped in a "latest version not found" error
+  test("a GitHub /releases/latest response larger than the limit fails the check", async () => {
+    const feed = `<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom"><entry><link href="https://github.com/owner/repo/releases/tag/v1.1.0"/><title>1.1.0</title></entry></feed>`
+    const executor = new FakeElectronHttpExecutor(url => (url.endsWith(".atom") ? { statusCode: 200, body: Buffer.from(feed) } : tooLarge))
+    const provider = createClient({ provider: "github", owner: "owner", repo: "repo" }, updater, { ...runtimeOptions, executor })
+    await expect(provider.getLatestVersion()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
+    expect(executor.sent.map(it => it.url)).toEqual(["https://github.com/owner/repo/releases.atom", "https://github.com/owner/repo/releases/latest"])
+  })
+
+  test("a private GitHub release response larger than the limit fails the check", async () => {
+    const executor = new FakeElectronHttpExecutor(() => tooLarge)
+    const provider = createClient({ provider: "github", owner: "owner", repo: "repo", token: "t" }, updater, { ...runtimeOptions, executor })
+    await expect(provider.getLatestVersion()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
+    expect(executor.sent.map(it => it.url)).toEqual(["https://api.github.com/repos/owner/repo/releases/latest"])
+  })
+
+  const providers: Array<{ name: string; options: AllPublishOptions }> = [
+    { name: "generic", options: { provider: "generic", url: "https://feed.example.com/updates" } },
+    { name: "github", options: { provider: "github", owner: "owner", repo: "repo" } },
+    { name: "private github", options: { provider: "github", owner: "owner", repo: "repo", token: "t" } },
+    { name: "gitlab", options: { provider: "gitlab", projectId: 1 } },
+    { name: "bitbucket", options: { provider: "bitbucket", owner: "owner", slug: "repo" } },
+    { name: "keygen", options: { provider: "keygen", account: "acc", product: "prod" } },
+  ]
+
+  test.each(providers)("$name requests carry the limit", ({ options }) => {
+    const provider = createClient(options, updater, runtimeOptions) as any
+    expect(provider.createRequestOptions(new URL("https://example.com/latest.yml")).maxResponseSize).toBe(MAX_UPDATE_INFO_RESPONSE_SIZE)
   })
 })

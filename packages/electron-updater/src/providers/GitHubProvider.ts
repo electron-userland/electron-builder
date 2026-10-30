@@ -78,6 +78,10 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     try {
       release = this.updater.allowPrerelease ? this.findHighestEligibleRelease(releaseEntries) : await this.findLatestRelease(releaseEntries, cancellationToken)
     } catch (e: any) {
+      // a response over the size limit of update info keeps its own code
+      if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
+        throw e
+      }
       throw newError(`Cannot parse releases feed: ${e.stack || e.message},\nXML:\n${feedXml}`, "ERR_UPDATER_INVALID_RELEASE_FEED")
     }
 
@@ -107,14 +111,8 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
   // allowPrerelease=true: the highest semver release eligible for the current channel. The Atom feed is ordered by
   // publication date, not by version, so the first eligible entry is not necessarily the newest one (#10287).
   private findHighestEligibleRelease(releaseEntries: Array<XElement>): FeedRelease {
-    const currentChannel = this.updater?.channel || prereleaseChannelOf(this.updater.currentVersion)
-    // No explicit channel and a stable current version: any semver release (pre-release or stable) is a candidate,
-    // non-semver tags (e.g. unrelated package releases in a monorepo) are skipped. Whether the newest release is
-    // actually an update is decided later by AppUpdater.isUpdateAvailable.
-    if (currentChannel === null) {
-      return pickHighestRelease(releaseEntries, () => true)
-    }
-    return pickHighestRelease(releaseEntries, tag => isEligibleForChannel(prereleaseChannelOf(tag), currentChannel))
+    const { tag, item: entry } = pickHighestRelease(releaseEntries, releaseTagOf, releaseEligibility(this.updater))
+    return { tag, entry }
   }
 
   // allowPrerelease=false: the tag comes from the /releases/latest API; the feed only supplies the release name/notes.
@@ -173,6 +171,9 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
       const releaseInfo: GithubReleaseInfo = JSON.parse(rawData)
       return releaseInfo.tag_name
     } catch (e: any) {
+      if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
+        throw e
+      }
       throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
   }
@@ -219,10 +220,11 @@ function releaseTagOf(releaseEntry: XElement): string | undefined {
   return hrefRegExp.exec(releaseEntry.element("link").attribute("href"))?.[1]
 }
 
-// First pre-release identifier ("beta" for 1.0.0-beta.1), or null for a stable version. Numeric identifiers are kept
-// as-is (so 1.0.0-0 counts as stable, as 0 is falsy).
-function prereleaseChannelOf(version: string | semver.SemVer): string | null {
-  return (semver.prerelease(version)?.[0] as string) || null
+// First pre-release identifier ("beta" for 1.0.0-beta.1), or null for a stable version. A numeric identifier is returned
+// as a string ("1" for 1.0.0-1), except 0: 1.0.0-0 counts as stable.
+export function prereleaseChannelOf(version: string | semver.SemVer): string | null {
+  const identifier = semver.prerelease(version)?.[0]
+  return identifier == null || identifier === 0 ? null : String(identifier)
 }
 
 // A release is eligible when it is on the current channel. Alpha/beta clients additionally accept stable releases
@@ -241,21 +243,37 @@ function isEligibleForChannel(releaseChannel: string | null, currentChannel: str
   return releaseChannel === null || (PROMOTABLE_CHANNELS.includes(String(releaseChannel)) && !(currentChannel === "beta" && releaseChannel === "alpha"))
 }
 
-// Highest semver-valid release accepted by `isEligible`; on equal versions the earlier feed entry wins.
-function pickHighestRelease(releaseEntries: Array<XElement>, isEligible: (tag: string) => boolean): FeedRelease {
+// The releases an allowPrerelease=true client may move to: those eligible for its explicit channel, or else for the channel
+// of its current pre-release version. No explicit channel and a stable current version: any semver release (pre-release
+// or stable) is a candidate. Whether the newest release is actually an update is decided later by AppUpdater.isUpdateAvailable.
+export function releaseEligibility(updater: AppUpdater): (tag: string) => boolean {
+  const currentChannel = updater.channel || prereleaseChannelOf(updater.currentVersion)
+  if (currentChannel === null) {
+    return () => true
+  }
+  return tag => isEligibleForChannel(prereleaseChannelOf(tag), currentChannel)
+}
+
+// Highest semver-valid release tag accepted by `isEligible`, with its item; items without a semver tag (e.g. unrelated
+// package releases in a monorepo) are skipped, and on equal versions the earlier item wins.
+export function pickHighestRelease<T>(
+  items: Array<T>,
+  tagOf: (item: T) => string | null | undefined,
+  isEligible: (tag: string) => boolean
+): { tag: string | null; item: T | null } {
   let tag: string | null = null
-  let entry: XElement | null = null
-  for (const releaseEntry of releaseEntries) {
-    const releaseTag = releaseTagOf(releaseEntry)
-    if (releaseTag == null || !semver.valid(releaseTag) || !isEligible(releaseTag)) {
+  let item: T | null = null
+  for (const candidate of items) {
+    const candidateTag = tagOf(candidate)
+    if (candidateTag == null || !semver.valid(candidateTag) || !isEligible(candidateTag)) {
       continue
     }
-    if (tag == null || semver.gt(releaseTag, tag)) {
-      tag = releaseTag
-      entry = releaseEntry
+    if (tag == null || semver.gt(candidateTag, tag)) {
+      tag = candidateTag
+      item = candidate
     }
   }
-  return { tag, entry }
+  return { tag, item }
 }
 
 function getNoteValue(parent: XElement): string {

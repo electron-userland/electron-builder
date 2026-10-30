@@ -1,4 +1,4 @@
-import { mkdir, readdir, symlink, writeFile } from "fs/promises"
+import { mkdir, readdir, readFile, symlink, writeFile } from "fs/promises"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { spawn, spawnSync } from "child_process"
@@ -327,13 +327,13 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
     it("keeps the wrapped command string and the escaped path for helpers that cannot take argv", async () => {
       setRawPath("/tmp/a b/update-1.0.2.deb")
-      vi.spyOn(updater as any, "determineSudoCommand").mockReturnValue("gksudo")
+      vi.spyOn(updater as any, "determineSudoCommand").mockReturnValue("kdesudo")
       const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue(undefined)
 
       await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
 
-      // gksudo takes a single command string, so the bash wrapper, the shell and the escaping stay
-      expect(spawnAsyncLog).toHaveBeenCalledWith("gksudo", ["--message", expect.any(String), `"/bin/bash`, "-c", `'dpkg -i /tmp/a\\ b/update-1.0.2.deb'"`], {}, true)
+      // kdesudo takes a single command string, so the bash wrapper, the shell and the escaping stay
+      expect(spawnAsyncLog).toHaveBeenCalledWith("kdesudo", ["--comment", expect.any(String), "-c", `"/bin/bash`, "-c", `'dpkg -i /tmp/a\\ b/update-1.0.2.deb'"`], {}, true)
     })
 
     it("resolves the elevation helper once per install, for every command of the plan", async () => {
@@ -566,13 +566,13 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
     it("keeps the wrapped command string and the escaped path for helpers that cannot take argv", () => {
       prepareDownloadedUpdate("/tmp/a b/update-1.0.2.deb")
-      vi.spyOn(updater as any, "determineSudoCommand").mockReturnValue("gksudo")
+      vi.spyOn(updater as any, "determineSudoCommand").mockReturnValue("kdesudo")
       const spawnSyncLog = vi.spyOn(updater as any, "spawnSyncLog").mockReturnValue("")
 
       expect((updater as any).doInstall(options)).toBe(true)
 
       expect(spawnSyncLog.mock.calls.filter(([cmd]) => cmd !== "command")).toEqual([
-        ["gksudo", ["--message", expect.any(String), `"/bin/bash`, "-c", `'dpkg -i /tmp/a\\ b/update-1.0.2.deb'"`], {}, true],
+        ["kdesudo", ["--comment", expect.any(String), "-c", `"/bin/bash`, "-c", `'dpkg -i /tmp/a\\ b/update-1.0.2.deb'"`], {}, true],
       ])
     })
 
@@ -699,6 +699,125 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       expect(await (pacman as any).doInstallAsync(options)).toBe(false)
       expect(spawnAsyncLog).toHaveBeenCalledTimes(1)
       expect(dispatchError).toHaveBeenCalledWith(expect.any(ElevationDeniedError))
+    })
+  })
+
+  describe("an installer path the wrapped helpers cannot take", () => {
+    const options = { isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false }
+
+    // gksudo, kdesudo and beesu get the install command as one string that is parsed again (by gksu's own tokenizer, or
+    // a shell): a quote in the path ends the quoting there, and the double-quoted wrapper drops the escape before ` and $
+    const unsafePaths = ["/tmp/a';touch PWNED;'b.deb", "/tmp/a`touch${IFS}PWNED`b.deb", "/tmp/a;touch PWNED;b.deb", "/home/o'brien/.cache/x-updater/pending/x.deb"]
+
+    /** Installs `rawPath` with dpkg, elevated by `helper`. Returns the privileged commands run and the errors dispatched. */
+    async function install(mode: "sync" | "async", helper: string, rawPath: string) {
+      ;(updater as any).downloadedUpdateHelper = { file: rawPath, downloadedFileInfo: { isAdminRightsRequired: false } }
+      vi.spyOn(updater as any, "determineSudoCommand").mockReturnValue(helper)
+      const spawnSyncLog = vi.spyOn(updater as any, "spawnSyncLog").mockReturnValue("")
+      const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue(undefined)
+      const dispatchError = vi.spyOn(updater as any, "dispatchError").mockReturnValue(undefined)
+      const installed = mode === "sync" ? (updater as any).doInstall(options) : await (updater as any).doInstallAsync(options)
+      const privileged = [...spawnSyncLog.mock.calls.filter(([cmd]) => cmd !== "command"), ...spawnAsyncLog.mock.calls]
+      return { installed, privileged, dispatchError }
+    }
+
+    beforeEach(() => {
+      updater.logger = new NoOpLogger()
+      vi.spyOn(updater as any, "isRunningAsRoot").mockReturnValue(false)
+      vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === "dpkg")
+      vi.spyOn(updater as any, "resolveTrustedCommand").mockImplementation((...args: unknown[]) => `/usr/bin/${String(args[0])}`)
+    })
+
+    describe.each(["sync", "async"] as const)("%s install", mode => {
+      it.each(["gksudo", "kdesudo", "beesu"].flatMap(helper => unsafePaths.map(rawPath => [helper, rawPath])))(
+        "does not run %s with %j, and reports why",
+        async (helper, rawPath) => {
+          const { installed, privileged, dispatchError } = await install(mode, helper, rawPath)
+
+          expect(installed).toBe(false)
+          expect(privileged).toEqual([])
+          expect(dispatchError).toHaveBeenCalledTimes(1)
+          expect(dispatchError.mock.calls[0][0]).toMatchObject({ code: "ERR_UPDATER_UNSAFE_INSTALLER_PATH" })
+        }
+      )
+
+      // gksu's tokenizer drops the backslash before the space, so dpkg would get two arguments; how beesu parses it is not known
+      it.each(["gksudo", "beesu"])("does not run %s with a space in the path", async helper => {
+        const { installed, privileged, dispatchError } = await install(mode, helper, "/tmp/a b/update-1.0.2.deb")
+
+        expect(installed).toBe(false)
+        expect(privileged).toEqual([])
+        expect(dispatchError.mock.calls[0][0]).toMatchObject({ code: "ERR_UPDATER_UNSAFE_INSTALLER_PATH" })
+      })
+
+      it.each([
+        ["gksudo", ["--message", expect.any(String)]],
+        ["beesu", []],
+      ])("runs %s with letters, digits and punctuation that no parser of the command string treats specially, unchanged", async (helper, helperArgs) => {
+        const rawPath = "/home/zoë/.cache/my-app-updater/pending/my_app-1.0.2+build.7,x86_64:a=b@c%d.deb"
+        const { installed, privileged } = await install(mode, helper, rawPath)
+
+        expect(installed).toBe(true)
+        expect(privileged).toEqual([[helper, [...helperArgs, `"/bin/bash`, "-c", `'dpkg -i ${rawPath}'"`], {}, true]])
+      })
+
+      it.each(["pkexec", "sudo"].flatMap(helper => unsafePaths.map(rawPath => [helper, rawPath])))("still passes %s the path %j as one argv element", async (helper, rawPath) => {
+        const { installed, privileged } = await install(mode, helper, rawPath)
+
+        expect(installed).toBe(true)
+        expect(privileged).toEqual([[helper, [...(helper === "pkexec" ? ["--disable-internal-agent"] : []), "/usr/bin/dpkg", "-i", rawPath], {}, false]])
+      })
+    })
+
+    // the command line goes through the real shells; kdesudo and the package managers are stand-ins
+    describe.skipIf(process.platform === "win32")("run through the shells", () => {
+      afterEach(() => {
+        vi.unstubAllEnvs()
+      })
+
+      /** A DebUpdater that installs `rawPathIn(dir)` with dpkg, elevated by kdesudo; `dir` holds the stand-ins and their log. */
+      async function prepare(tmpDir: TmpDir, rawPathIn: (dir: string) => string) {
+        const dir = await tmpDir.createTempDir({ prefix: "wrapped-helper" })
+        // kdesudo --comment <comment> -c <command> runs `sudo sh -c <command>`
+        await writeFile(path.join(dir, "kdesudo"), `#!/bin/sh\n[ "$1" = --comment ] && [ "$3" = -c ] || exit 64\nexec sh -c "$4"\n`, { mode: 0o755 })
+        // the package managers log the arguments they get, one per line
+        for (const name of ["dpkg", "apt-get"]) {
+          await writeFile(path.join(dir, name), `#!/bin/sh\nprintf '%s\\n' "$(basename "$0")" "$@" >> "$(dirname "$0")/commands.log"\n`, { mode: 0o755 })
+        }
+        vi.stubEnv("PATH", `${dir}${path.delimiter}${process.env.PATH ?? ""}`)
+        const target = new DebUpdater(null, stubApp)
+        target.logger = new NoOpLogger()
+        ;(target as any).downloadedUpdateHelper = { file: rawPathIn(dir), downloadedFileInfo: { isAdminRightsRequired: false } }
+        vi.spyOn(target as any, "isRunningAsRoot").mockReturnValue(false)
+        vi.spyOn(target as any, "determineSudoCommand").mockReturnValue("kdesudo")
+        vi.spyOn(target as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === "dpkg")
+        const dispatchError = vi.spyOn(target as any, "dispatchError").mockReturnValue(undefined)
+        const commandsRun = () => readFile(path.join(dir, "commands.log"), "utf8").catch(() => "")
+        return { dir, target, dispatchError, commandsRun }
+      }
+
+      describe.each(["sync", "async"] as const)("%s install", mode => {
+        const install = (target: DebUpdater): Promise<boolean> => (mode === "sync" ? Promise.resolve((target as any).doInstall(options)) : (target as any).doInstallAsync(options))
+
+        it("gets dpkg a path with a space and punctuation as one argument", async ({ tmpDir }) => {
+          const rawPathIn = (dir: string) => path.join(dir, "My Cache", "my_app-1.0.2+build.7,x86_64:a=b@c%d.deb")
+          const { dir, target, commandsRun } = await prepare(tmpDir, rawPathIn)
+
+          expect(await install(target)).toBe(true)
+          expect(await commandsRun()).toBe(`dpkg\n-i\n${rawPathIn(dir)}\n`)
+        })
+
+        it("does not run a command that the path carries", async ({ tmpDir }) => {
+          const { dir, target, dispatchError, commandsRun } = await prepare(tmpDir, dir => `${dir}/a';touch ${dir}/PWNED;'b.deb`)
+
+          const installed = await install(target)
+
+          expect(await readdir(dir)).not.toContain("PWNED")
+          expect(await commandsRun()).toBe("")
+          expect(installed).toBe(false)
+          expect(dispatchError.mock.calls[0][0]).toMatchObject({ code: "ERR_UPDATER_UNSAFE_INSTALLER_PATH" })
+        })
+      })
     })
   })
 

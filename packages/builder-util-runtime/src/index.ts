@@ -13,6 +13,7 @@ export { CancellationError, CancellationToken } from "./CancellationToken.js"
 export { newError } from "./error.js"
 export { hashFile } from "./hash.js"
 export {
+  ApiRequestOptions,
   configureRequestOptions,
   configureRequestOptionsFromUrl,
   configureRequestUrl,

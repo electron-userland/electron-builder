@@ -23,6 +23,18 @@ releaseDate: '2024-01-01T00:00:00.000Z'
 }
 
 /**
+ * mockYaml plus a chain of YAML aliases as releaseNotes: each level references the previous one twice,
+ * so a few hundred bytes reach 2^depth values.
+ */
+export function mockAliasChainYaml(version: string, depth: number): string {
+  let yaml = `${mockYaml(version)}l0: &l0 [x, x]\n`
+  for (let i = 1; i <= depth; i++) {
+    yaml += `l${i}: &l${i} [*l${i - 1}, *l${i - 1}]\n`
+  }
+  return `${yaml}releaseNotes: *l${depth}\n`
+}
+
+/**
  * Type-safe accessor for the provider instance stored inside an updater
  * after checkForUpdates() has been called.
  */

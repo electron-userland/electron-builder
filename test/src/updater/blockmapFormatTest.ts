@@ -1,6 +1,16 @@
 import { blake2b } from "@noble/hashes/blake2.js"
 import { BlockMap, CancellationToken, GenericServerOptions, UpdateInfo } from "builder-util-runtime"
-import { BlockInput, encodeBlockMapV3 } from "builder-util-runtime/internal"
+import {
+  BLOCK_MAP_V3_MAGIC,
+  BLOCK_MAP_V3_VERSION,
+  BlockInput,
+  encodeBlockMapV3,
+  GROUP_SIZE,
+  HASH_LEN,
+  HEADER_FIXED_SIZE,
+  RECORD_SIZE,
+  SUPER_SIZE,
+} from "builder-util-runtime/internal"
 import { AppUpdater } from "electron-updater"
 import type { DownloadUpdateOptions } from "electron-updater/src/AppUpdater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
@@ -14,7 +24,7 @@ import type { AddressInfo } from "net"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
 import { afterEach, describe, test, vi } from "vitest"
-import { gzipSync } from "zlib"
+import { gunzipSync, gzipSync } from "zlib"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { createNsisUpdater, httpExecutor, makeLogger, tuneTestUpdater } from "../helpers/updaterTestUtil.js"
 
@@ -51,6 +61,41 @@ function v2Map(blocks: Array<BlockInput>): Buffer {
     files: [{ name: "file", offset: 0, checksums: blocks.map(b => Buffer.from(b.digest).toString("base64")), sizes: blocks.map(b => b.size) }],
   }
   return gzipSync(JSON.stringify(map))
+}
+
+/** A v3 map of a 2^50-byte file: one super-group, one group and `blockCount` records, all zero (about 1000:1 under gzip). */
+function hostileV3Map(blockCount: number): Buffer {
+  const map = Buffer.alloc(HEADER_FIXED_SIZE + SUPER_SIZE + GROUP_SIZE + blockCount * RECORD_SIZE)
+  map.write(BLOCK_MAP_V3_MAGIC, 0, 4, "latin1")
+  map.writeUInt8(BLOCK_MAP_V3_VERSION, 4)
+  map.writeUInt8(HASH_LEN, 5)
+  map.writeUInt8(HASH_LEN, 6)
+  map.writeBigUInt64LE(BigInt(2 ** 50), 8)
+  map.writeUInt32LE(1, 16)
+  map.writeUInt32LE(blockCount, 20)
+  map.writeUInt32LE(HEADER_FIXED_SIZE, 24)
+  map.writeUInt32LE(1, 42)
+  return map
+}
+
+/**
+ * A valid v3 map of a `fileSize`-byte file in `blockCount` blocks of (nearly) equal size, its digests a counter: enough blocks
+ * (about 840,000) make a map just past the 8 MiB limit of these updates.
+ */
+function v3MapOfManyBlocks(fileSize: number, blockCount: number): Buffer {
+  const blocks: Array<BlockInput> = []
+  for (let i = 0; i < blockCount; i++) {
+    const offset = Math.floor((fileSize * i) / blockCount)
+    const digest = Buffer.alloc(HASH_LEN)
+    digest.writeUInt32LE(i)
+    blocks.push({ digest, size: Math.floor((fileSize * (i + 1)) / blockCount) - offset, offset })
+  }
+  return v3Map(blocks)
+}
+
+/** `map` (a v2 map) padded with 100 MiB of whitespace: still a valid map, a few hundred KB of gzip that inflates far past any blockmap's size. */
+function inflatingV2Map(map: Buffer): Buffer {
+  return gzipSync(Buffer.concat([gunzipSync(map), Buffer.alloc(100 * 1024 * 1024, " ")]))
 }
 
 describe("block map format detection", () => {
@@ -292,6 +337,113 @@ describe("block map format detection", () => {
     expect(maps).toHaveLength(1)
     expect(maps[0].new.files[0].sizes).toEqual(NEW_BLOCKS.map(b => b.size))
     expect((await pending(helper)).equals(NEW_V3)).toBe(true)
+  })
+
+  test.for([
+    { name: "no cached map", cached: null },
+    { name: "v2 cached", cached: OLD_V2 },
+    { name: "v3 cached (the new map is range-fetched first)", cached: OLD_V3 },
+  ])("$name: a new map that inflates past the size limit for the update is rejected before it is inflated in full", async ({ cached }, { tmpDir, expect }) => {
+    const server = await serve(tmpDir, { old: OLD_V2, new: inflatingV2Map(NEW_V2) })
+    const { updater, helper, maps } = await setUp(tmpDir, cached)
+    captureLog(updater)
+
+    // outside test mode this is the fallback to a full download
+    await expect(run(updater, server.url, tmpDir)).rejects.toThrow(/Cannot parse blockmap ".*app-1\.1\.0\.exe\.blockmap".*ERR_BUFFER_TOO_LARGE/)
+
+    expect(maps).toHaveLength(0)
+    expect(await fsExtra.pathExists(path.join(helper.cacheDirForPendingUpdate, "current.blockmap"))).toBe(false)
+  })
+
+  test.for([
+    { name: "no cached map", cached: null },
+    { name: "v3 cached (the Range fetch rejects the header, then the map is downloaded whole)", cached: OLD_V3 },
+  ])("$name: a v3 map of a file of another size is rejected before its records are decoded", async ({ cached }, { tmpDir, expect }) => {
+    const server = await serve(tmpDir, { old: OLD_V3, new: hostileV3Map(200_000) })
+    const { updater, helper, maps } = await setUp(tmpDir, cached)
+    captureLog(updater)
+
+    // outside test mode this is the fallback to a full download; the error is the header's, not one found after decoding every record
+    await expect(run(updater, server.url, tmpDir)).rejects.toThrow(
+      new RegExp(`Cannot parse blockmap ".*app-1\\.1\\.0\\.exe\\.blockmap".*the map describes a ${2 ** 50}-byte file, the update is ${NEW_SIZE} bytes`)
+    )
+
+    expect(maps).toHaveLength(0)
+    expect(await fsExtra.pathExists(path.join(helper.cacheDirForPendingUpdate, "current.blockmap"))).toBe(false)
+  })
+
+  // a well-formed map of the update (its fileSize matches) that is larger than the limit for the update's size
+  let overLimitV3: Buffer | null = null
+  const overLimitV3Map = () => (overLimitV3 ??= v3MapOfManyBlocks(NEW_SIZE, 840_000))
+
+  test("no cached map: a v3 map of the update past the size limit for the update is rejected before its records are decoded", async ({ tmpDir, expect }) => {
+    const server = await serve(tmpDir, { old: OLD_V3, new: overLimitV3Map() })
+    const { updater, helper, maps } = await setUp(tmpDir, null)
+    captureLog(updater)
+
+    // outside test mode this is the fallback to a full download
+    await expect(run(updater, server.url, tmpDir)).rejects.toThrow(/Cannot parse blockmap ".*app-1\.1\.0\.exe\.blockmap".*more than the 8388608-byte limit/)
+
+    expect(server.requests.map(it => [it.pathname, it.headers.range ?? null])).toEqual([["/app-1.1.0.exe.blockmap", null]])
+    expect(maps).toHaveLength(0)
+    expect(await fsExtra.pathExists(path.join(helper.cacheDirForPendingUpdate, "current.blockmap"))).toBe(false)
+  })
+
+  test("v3 cached: a v3 map of the update past the size limit for the update is rejected by its header, before any of its tables is range-fetched", async ({ tmpDir, expect }) => {
+    const server = await serve(tmpDir, { old: OLD_V3, new: overLimitV3Map() })
+    const { updater, maps } = await setUp(tmpDir, OLD_V3)
+    captureLog(updater)
+
+    await expect(run(updater, server.url, tmpDir)).rejects.toThrow(/Cannot parse blockmap ".*app-1\.1\.0\.exe\.blockmap".*more than the 8388608-byte limit/)
+
+    // one Range request for the header, then the plain GET of the fallback, which is rejected too
+    expect(server.requests.map(it => [it.pathname, it.headers.range ?? null])).toEqual([
+      ["/app-1.1.0.exe.blockmap", expect.stringMatching(/^bytes=0-/)],
+      ["/app-1.1.0.exe.blockmap", null],
+    ])
+    expect(maps).toHaveLength(0)
+  })
+
+  test("a cached v3 map past the size limit is ignored, and the installed release's map is downloaded", async ({ tmpDir, expect }) => {
+    const server = await serve(tmpDir, { old: OLD_V3, new: NEW_V3 })
+    const { updater, maps } = await setUp(tmpDir, overLimitV3Map())
+    captureLog(updater)
+
+    await expect(run(updater, server.url, tmpDir)).resolves.toBe(false)
+
+    // no cached map to range-fetch against: the new map whole, then the installed release's map
+    expect(server.requests.map(it => [it.pathname, it.headers.range ?? null])).toEqual([
+      ["/app-1.1.0.exe.blockmap", null],
+      ["/app-1.0.0.exe.blockmap", null],
+    ])
+    expect(maps).toHaveLength(1)
+    expect(maps[0].old.files[0].sizes).toEqual(OLD_BLOCKS.map(b => b.size))
+  })
+
+  test("no cached map: a downloaded v3 map of the installed release past the size limit is rejected", async ({ tmpDir, expect }) => {
+    const server = await serve(tmpDir, { old: overLimitV3Map(), new: NEW_V3 })
+    const { updater, maps } = await setUp(tmpDir, null)
+    captureLog(updater)
+
+    await expect(run(updater, server.url, tmpDir)).rejects.toThrow(/Cannot parse blockmap ".*app-1\.0\.0\.exe\.blockmap".*more than the 8388608-byte limit/)
+
+    expect(maps).toHaveLength(0)
+  })
+
+  test("a cached map that inflates past the size limit is ignored, and the installed release's map is downloaded", async ({ tmpDir, expect }) => {
+    const server = await serve(tmpDir, { old: OLD_V2, new: NEW_V2 })
+    const { updater, maps } = await setUp(tmpDir, inflatingV2Map(OLD_V2))
+    const log = captureLog(updater)
+
+    await expect(run(updater, server.url, tmpDir)).resolves.toBe(false)
+
+    expect(log.warn).toEqual([expect.stringMatching(/Cannot parse blockmap ".*current\.blockmap".*ERR_BUFFER_TOO_LARGE/)])
+    expect(server.requests.map(it => [it.pathname, it.headers.range ?? null])).toEqual([
+      ["/app-1.1.0.exe.blockmap", null],
+      ["/app-1.0.0.exe.blockmap", null],
+    ])
+    expect(maps).toHaveLength(1)
+    expect(maps[0].old.files[0].sizes).toEqual(OLD_BLOCKS.map(b => b.size))
   })
 
   test("a cached v3 map of another release (it does not end at the cached installer's size) is ignored, and the installed release's map is downloaded", async ({

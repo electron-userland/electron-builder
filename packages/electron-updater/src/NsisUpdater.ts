@@ -22,7 +22,8 @@ import {
 } from "./windowsExecutableCodeSignatureVerifier.js"
 import { URL } from "url"
 
-const require = createRequire(import.meta.url)
+// import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
+const require = createRequire(import.meta.url ?? process.execPath)
 
 export class NsisUpdater extends BaseUpdater {
   /**

@@ -1,11 +1,13 @@
 import { expect, test, describe } from "vitest"
-import { CancellationToken, DigestTransform, HttpExecutor } from "builder-util-runtime"
+import { CancellationToken, DigestTransform, HttpError, HttpExecutor } from "builder-util-runtime"
 import { hashSensitiveValue, REDACTED_VALUE, safeStringifyJson } from "builder-util-runtime/internal"
 import { addSensitiveFieldPattern, addSensitiveRedirectHeader, detectSha512Encoding, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
 import { createHash } from "crypto"
+import { EventEmitter } from "events"
 import { RequestOptions } from "http"
 import { Readable, Writable } from "stream"
 import { pipeline } from "stream/promises"
+import * as http from "http"
 
 describe("HttpExecutor.prepareRedirectUrlOptions", () => {
   describe("basic functionality", () => {
@@ -832,6 +834,19 @@ describe("safeStringifyJson field redaction", () => {
     expect(parsed.name).toBe(hashSensitiveValue("myapp"))
     expect(parsed.url).toBe("https://example.com")
   })
+
+  // a fingerprint is costly to compute, and the data can come from a server (an error response body or its headers)
+  test("computes at most 16 fingerprints per call and logs the other sensitive values as <redacted>", () => {
+    const data = Array.from({ length: 1000 }, (_, i) => ({ key: `v${i}`, secretKey: { nested: true }, name: `n${i}` }))
+    const parsed = JSON.parse(safeStringifyJson(data))
+
+    expect(parsed.slice(0, 16).map((it: any) => it.key)).toEqual(data.slice(0, 16).map(it => hashSensitiveValue(it.key)))
+    expect(parsed.slice(16).every((it: any) => it.key === REDACTED_VALUE)).toBe(true)
+    expect(parsed.every((it: any, i: number) => it.secretKey === "<stripped sensitive data>" && it.name === `n${i}`)).toBe(true)
+
+    // the limit is per call
+    expect(JSON.parse(safeStringifyJson({ token: "x" })).token).toBe(hashSensitiveValue("x"))
+  })
 })
 
 describe("addSensitiveRedirectHeader / addSensitiveFieldPattern", () => {
@@ -937,6 +952,7 @@ describe("HttpExecutor redirect limit", () => {
         statusMessage: "Found",
         headers: { location: "https://example.com/loop" },
         on() {},
+        resume() {},
         setEncoding() {},
       }
       // synchronous is fine at depth ~maxRedirects; exercises the recursion path directly
@@ -973,6 +989,191 @@ describe("HttpExecutor redirect limit", () => {
     )
     // Same limit as doDownload: maxRedirects recursions + the initial request
     expect(executor.requestCount).toBe(executor["maxRedirects"] + 1)
+  })
+})
+
+describe("HttpExecutor download Location handling", () => {
+  // Answers every request synchronously with `statusCode` and a Location to `location`; like http.request, createRequest throws for a
+  // protocol other than http(s). Without the guard, that throw escaped from the response listener (an uncaught exception).
+  class LocationExecutor extends HttpExecutor<any> {
+    requestCount = 0
+
+    constructor(
+      private readonly statusCode: number,
+      private readonly location: string,
+      // when set, what createRequest throws for the request of a redirect
+      private readonly thrownOnRedirect: unknown = null
+    ) {
+      super()
+    }
+
+    createRequest(options: RequestOptions, callback: (response: any) => void): any {
+      if (options.protocol !== "http:" && options.protocol !== "https:") {
+        throw new TypeError(`Protocol "${options.protocol}" not supported. Expected "http:"`)
+      }
+      if (this.requestCount > 0 && this.thrownOnRedirect != null) {
+        // oxlint-disable-next-line typescript/only-throw-error -- the test needs a non-Error throw
+        throw this.thrownOnRedirect
+      }
+      this.requestCount++
+      callback({ statusCode: this.statusCode, statusMessage: "", headers: { location: this.location }, on() {}, resume() {}, setEncoding() {} })
+      return { on() {}, end() {}, abort() {} }
+    }
+
+    runDownload(callback: (error: Error | null) => void): void {
+      this.doDownload(
+        { protocol: "https:", hostname: "example.com", path: "/start" },
+        { responseHandler: (_response, done) => done(null), onCancel: () => {}, callback, options: {} as any, destination: null },
+        0
+      )
+    }
+  }
+
+  for (const [label, location, message] of [
+    ["to a protocol other than http(s)", "ftp://example.com/x", 'Cannot follow the redirect to the "ftp:" protocol'],
+    ["that is not a valid URL", "http://exa mple.com/x", "Invalid URL"],
+  ] as const) {
+    test(`doDownload fails, rather than throws, on a redirect ${label}`, () => {
+      const executor = new LocationExecutor(302, location)
+      const errors: Array<Error | null> = []
+      expect(() => executor.runDownload(e => errors.push(e))).not.toThrow()
+      expect(errors).toHaveLength(1)
+      expect(errors[0]).toBeInstanceOf(Error)
+      expect(errors[0]!.message).toContain(message)
+      expect(executor.requestCount).toBe(1)
+    })
+  }
+
+  test("doDownload fails with an Error when following a redirect throws something else", () => {
+    const executor = new LocationExecutor(302, "https://example.com/next", "not an Error")
+    const errors: Array<Error | null> = []
+    expect(() => executor.runDownload(e => errors.push(e))).not.toThrow()
+    expect(errors).toHaveLength(1)
+    expect(errors[0]).toBeInstanceOf(Error)
+    expect(errors[0]?.message).toBe("Cannot follow the redirect: not an Error")
+    expect(executor.requestCount).toBe(1)
+  })
+
+  // A real request through Node's keep-alive agent: a redirect's body that is not read keeps its socket busy, and the socket's timeout
+  // then calls back a second time, after the download has settled
+  class NodeExecutor extends HttpExecutor<http.ClientRequest> {
+    createRequest(options: RequestOptions, callback: (response: http.IncomingMessage) => void): http.ClientRequest {
+      return http.request(options, callback)
+    }
+
+    runDownload(url: URL, timeout: number, callback: (error: Error | null) => void): void {
+      this.doDownload(
+        { protocol: url.protocol, hostname: url.hostname, port: url.port, path: url.pathname, timeout },
+        {
+          responseHandler: (response, done) => {
+            response.resume()
+            response.on("end", () => done(null))
+          },
+          onCancel: () => {},
+          callback,
+          options: { cancellationToken: new CancellationToken() },
+          destination: null,
+        },
+        0
+      )
+    }
+  }
+
+  for (const [label, location, error] of [
+    ["is followed", "/target", null],
+    ["cannot be followed", "ftp://example.com/x", 'Cannot follow the redirect to the "ftp:" protocol'],
+  ] as const) {
+    test(`doDownload calls back once when a redirect ${label}`, async () => {
+      const TIMEOUT = 200
+      const server = http.createServer((request, response) => {
+        if (request.url === "/start") {
+          response.writeHead(302, { Location: location, "Content-Length": 5 })
+          response.end("moved")
+        } else {
+          response.end("body")
+        }
+      })
+      await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+      try {
+        const address = server.address()
+        if (address == null || typeof address === "string") {
+          throw new Error("server has no port")
+        }
+        const results: Array<string | null> = []
+        await new Promise<void>(resolve => {
+          new NodeExecutor().runDownload(new URL(`http://127.0.0.1:${address.port}/start`), TIMEOUT, e => {
+            results.push(e == null ? null : e.message)
+            resolve()
+          })
+        })
+        // nothing to wait for but the request's timeout passing without a second call
+        await new Promise(resolve => setTimeout(resolve, TIMEOUT * 4))
+        expect(results).toEqual([error])
+      } finally {
+        server.closeAllConnections()
+        await new Promise(resolve => server.close(resolve))
+      }
+    })
+  }
+
+  test("doDownload ignores a Location on a response that is not a redirect", () => {
+    const executor = new LocationExecutor(200, "ftp://example.com/x")
+    const errors: Array<Error | null> = []
+    executor.runDownload(e => errors.push(e))
+    expect(errors).toEqual([null])
+    expect(executor.requestCount).toBe(1)
+  })
+})
+
+describe("HttpExecutor error response redaction", () => {
+  // Answers the request with `statusCode`, `headers` and `body`. The error message of a response of 400 or more logs its headers and
+  // a JSON body with sensitive values replaced by fingerprints.
+  class ErrorExecutor extends HttpExecutor<any> {
+    constructor(
+      private readonly statusCode: number,
+      private readonly headers: Record<string, string>,
+      private readonly body: string
+    ) {
+      super()
+    }
+
+    createRequest(_options: RequestOptions, callback: (response: any) => void): any {
+      const response = Object.assign(new EventEmitter(), { statusCode: this.statusCode, statusMessage: "", headers: this.headers, setEncoding() {} })
+      return Object.assign(new EventEmitter(), {
+        abort() {},
+        end: () => {
+          callback(response)
+          response.emit("data", this.body)
+          response.emit("end")
+        },
+      })
+    }
+  }
+
+  const FINGERPRINTS = /[a-f0-9]{32} \(redacted fingerprint\)/g
+
+  function requestError(executor: ErrorExecutor): Promise<any> {
+    return executor.request({ protocol: "https:", hostname: "example.com", path: "/latest.yml" }).catch(e => e)
+  }
+
+  test("a JSON error body with many sensitive values fails the request without fingerprinting each of them", async () => {
+    const body = JSON.stringify(Array.from({ length: 2000 }, (_, i) => ({ key: `v${i}` })))
+    const error = await requestError(new ErrorExecutor(500, { "content-type": "application/json" }, body))
+
+    expect(error).toBeInstanceOf(HttpError)
+    expect(error.statusCode).toBe(500)
+    expect(error.message.match(FINGERPRINTS)).toHaveLength(16)
+    expect(error.message).toContain(REDACTED_VALUE)
+  })
+
+  test("a 404 with many sensitive headers fails the request without fingerprinting each of them", async () => {
+    const headers = Object.fromEntries(Array.from({ length: 500 }, (_, i) => [`x${i}-key`, `v${i}`]))
+    const error = await requestError(new ErrorExecutor(404, headers, ""))
+
+    expect(error).toBeInstanceOf(HttpError)
+    expect(error.statusCode).toBe(404)
+    expect(error.message.match(FINGERPRINTS)).toHaveLength(16)
+    expect(error.message).toContain(REDACTED_VALUE)
   })
 })
 

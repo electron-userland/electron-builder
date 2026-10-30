@@ -1,9 +1,15 @@
+import { serializeToYaml } from "builder-util"
 import { CancellationToken, UpdateInfo } from "builder-util-runtime"
 import { Provider, ProviderRuntimeOptions } from "electron-updater"
+import { parseUpdateInfo } from "electron-updater/src/providers/Provider"
 import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
+import { readFileSync } from "fs"
 import { OutgoingHttpHeaders } from "http"
+import * as path from "path"
+import * as semver from "semver"
 import { URL } from "url"
 import { MockInstance, afterEach, beforeEach, vi } from "vitest"
+import { mockAliasChainYaml, mockYaml } from "../helpers/providerTestUtil.js"
 import { httpExecutor } from "../helpers/updaterTestUtil.js"
 
 let requestSpy: MockInstance
@@ -169,4 +175,93 @@ test("createRequestOptions - no headers set when both are null", ({ expect }) =>
   const opts = provider.callCreateRequestOptions(url)
 
   expect(opts.headers).toBeUndefined()
+})
+
+const CHANNEL_FILE_URL = new URL("https://example.com/latest.yml")
+
+test.for([
+  ["a 40-level alias chain", mockAliasChainYaml("1.0.1", 40)],
+  ["a 5000x5000 alias fan-out", `${mockYaml("1.0.1")}big: &b [${Array(5000).fill("x").join(", ")}]\nrefs: [${Array(5000).fill("*b").join(", ")}]\n`],
+  ["a self-referencing alias", `${mockYaml("1.0.1")}releaseNotes: &l [*l]\n`],
+  ["a 100000-character string aliased 20 times", `${mockYaml("1.0.1")}s: &s ${"A".repeat(100_000)}\nreleaseNotes: [${Array(20).fill("*s").join(", ")}]\n`],
+  [
+    "a mapping with a 100000-character key referenced through an alias chain",
+    `${mockYaml("1.0.1")}k0: &k0 { ${"K".repeat(100_000)}: 1 }\nk1: &k1 [*k0, *k0]\nreleaseNotes: [*k1, *k1]\n`,
+  ],
+])("parseUpdateInfo - rejects YAML aliases that expand to too many values or characters: %s", ([_name, yaml], { expect }) => {
+  const start = performance.now()
+  expect(() => parseUpdateInfo(yaml, "latest.yml", CHANNEL_FILE_URL)).toThrow(
+    expect.objectContaining({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringMatching(/YAML aliases expand to more than/) })
+  )
+  expect(performance.now() - start).toBeLessThan(1000)
+})
+
+test("parseUpdateInfo - accepts aliases as serializeToYaml writes them up to the budget", ({ expect }) => {
+  // each reference to the notes is charged about 43000 keys, values and string characters, and the file stays under 100000 characters
+  const notes = Array.from({ length: 200 }, (_, i) => ({ version: `0.${i}.0`, note: "n".repeat(200) }))
+  const info = { version: "1.0.1", files: [{ url: "TestApp-Setup-1.0.1.exe", sha512: "sha512abc", size: 1024 }], path: "TestApp-Setup-1.0.1.exe", sha512: "sha512abc" }
+
+  const twice = serializeToYaml({ ...info, releaseNotes: notes, previousReleaseNotes: notes })
+  expect(twice).toContain("*ref_0")
+  expect(parseUpdateInfo(twice, "latest.yml", CHANNEL_FILE_URL)).toEqual({ ...info, releaseNotes: notes, previousReleaseNotes: notes })
+
+  const threeTimes = serializeToYaml({ ...info, releaseNotes: notes, previousReleaseNotes: notes, olderReleaseNotes: notes })
+  expect(() => parseUpdateInfo(threeTimes, "latest.yml", CHANNEL_FILE_URL)).toThrow(expect.objectContaining({ code: "ERR_UPDATER_INVALID_UPDATE_INFO" }))
+})
+
+test("parseUpdateInfo - accepts alias-free channel files of any size and a benign alias", ({ expect }) => {
+  const channelFile = [
+    "version: 1.0.1",
+    "files:",
+    "  - url: TestApp-Setup-1.0.1.exe",
+    "    sha512: sha512abc",
+    "    size: 1024",
+    "    blockMapSize: 128",
+    "path: TestApp-Setup-1.0.1.exe",
+    "sha512: sha512abc",
+    "releaseDate: '2026-01-01T00:00:00.000Z'",
+    "releaseNotes:",
+    "  - version: 1.0.1",
+    "    note: fixes",
+    "  - version: 1.0.0",
+    "    note: null",
+    "",
+  ].join("\n")
+  expect(parseUpdateInfo(channelFile, "latest.yml", CHANNEL_FILE_URL).releaseNotes).toHaveLength(2)
+
+  // about 1 MB of release notes
+  const notes = Array.from({ length: 5000 }, (_, i) => `  - version: 0.${i}.0\n    note: "${"n".repeat(200)}"\n`).join("")
+  expect(parseUpdateInfo(`${mockYaml("1.0.1")}releaseNotes:\n${notes}`, "latest.yml", CHANNEL_FILE_URL).releaseNotes).toHaveLength(5000)
+
+  // more than 100000 values without aliases: the budget grows with the size of the file
+  const many = Array(150_000).fill("x").join(",")
+  expect(parseUpdateInfo(`${mockYaml("1.0.1")}releaseNotes: [${many}]\n`, "latest.yml", CHANNEL_FILE_URL).releaseNotes).toHaveLength(150_000)
+
+  // a string longer than 100000 characters without aliases: it is never longer than the text it was parsed from
+  const note = "z".repeat(300_000)
+  expect(parseUpdateInfo(`${mockYaml("1.0.1")}releaseNotes: ${note}\n`, "latest.yml", CHANNEL_FILE_URL).releaseNotes).toBe(note)
+  const block = `${mockYaml("1.0.1")}releaseNotes: |\n${"  line of the release notes\n".repeat(20_000)}`
+  expect(parseUpdateInfo(block, "latest.yml", CHANNEL_FILE_URL).releaseNotes).toBe("line of the release notes\n".repeat(20_000))
+
+  const withAlias = parseUpdateInfo(`${mockYaml("1.0.1")}other: &f [a, b]\nreleaseNotes: *f\n`, "latest.yml", CHANNEL_FILE_URL) as any
+  expect(withAlias.releaseNotes).toEqual(["a", "b"])
+})
+
+// js-yaml before 4.3.2 spends seconds of CPU on a few hundred KB of YAML merge keys, and the channel file is parsed before its signature is checked
+test("electron-updater requires a js-yaml that bounds YAML merge keys", ({ expect }) => {
+  const { dependencies } = JSON.parse(readFileSync(path.join(import.meta.dirname, "../../../packages/electron-updater/package.json"), "utf8"))
+  expect(dependencies["js-yaml"]).toSatisfy((range: string) => semver.subset(range, ">=4.3.2"))
+})
+
+test.for([
+  ["20000 empty merge sources", `${mockYaml("1.0.1")}arr: &arr [${Array(20_000).fill("{}").join(", ")}]\ntargets:\n${"  - <<: *arr\n".repeat(20_000)}`],
+  [
+    "a chain of 8000 merge keys",
+    `${mockYaml("1.0.1")}a0: &a0 { k0: 0 }\n${Array.from({ length: 7999 }, (_, i) => `a${i + 1}: &a${i + 1} { <<: *a${i}, k${i + 1}: 0 }\n`).join("")}`,
+  ],
+])("parseUpdateInfo - rejects YAML merge keys that would take seconds to parse: %s", ([_name, yaml], { expect }) => {
+  const start = performance.now()
+  // the message embeds the whole channel file, so only the code is checked
+  expect(() => parseUpdateInfo(yaml, "latest.yml", CHANNEL_FILE_URL)).toThrow(expect.objectContaining({ code: "ERR_UPDATER_INVALID_UPDATE_INFO" }))
+  expect(performance.now() - start).toBeLessThan(1000)
 })

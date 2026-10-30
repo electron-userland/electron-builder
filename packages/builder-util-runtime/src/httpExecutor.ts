@@ -53,6 +53,16 @@ export interface RequestHeaders extends OutgoingHttpHeaders {
   [key: string]: OutgoingHttpHeader | undefined
 }
 
+/** The options of an API request, see {@link HttpExecutor.request}. */
+export interface ApiRequestOptions extends RequestOptions {
+  /**
+   * The largest body, in bytes, read into memory (set by electron-updater for update info, which is parsed before it is verified):
+   * a larger response fails the request with `ERR_HTTP_RESPONSE_TOO_LARGE` and aborts it. Applies when it is a finite number of at
+   * least 0, and is kept on redirects, whose options are copied from these.
+   */
+  maxResponseSize?: number
+}
+
 export interface DownloadOptions {
   readonly headers?: OutgoingHttpHeaders | null
   readonly sha2?: string | null
@@ -119,7 +129,7 @@ interface Request {
 export abstract class HttpExecutor<T extends Request> {
   protected readonly maxRedirects = 10
 
-  request(options: RequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any } | null): Promise<string | null> {
+  request(options: ApiRequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any } | null): Promise<string | null> {
     configureRequestOptions(options)
     const json = data == null ? undefined : JSON.stringify(data)
     const encodedData = json ? Buffer.from(json) : undefined
@@ -142,7 +152,7 @@ export abstract class HttpExecutor<T extends Request> {
   }
 
   doApiRequest(
-    options: RequestOptions,
+    options: ApiRequestOptions,
     cancellationToken: CancellationToken,
     requestProcessor: (request: T, reject: (error: Error) => void) => void,
     redirectCount = 0
@@ -155,7 +165,7 @@ export abstract class HttpExecutor<T extends Request> {
     return cancellationToken.createPromise<string>((resolve, reject, onCancel) => {
       const request = this.createRequest(options, (response: any) => {
         try {
-          this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
+          this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor, () => request.abort())
         } catch (e: any) {
           reject(e)
         }
@@ -194,12 +204,13 @@ export abstract class HttpExecutor<T extends Request> {
 
   private handleResponse(
     response: IncomingMessage,
-    options: RequestOptions,
+    options: ApiRequestOptions,
     cancellationToken: CancellationToken,
     resolve: (data?: any) => void,
     reject: (error: Error) => void,
     redirectCount: number,
-    requestProcessor: (request: T, reject: (error: Error) => void) => void
+    requestProcessor: (request: T, reject: (error: Error) => void) => void,
+    abort: () => void
   ) {
     if (debug.enabled) {
       const { headers: _headers, auth: _auth, ...safeOptions } = options as any
@@ -242,10 +253,38 @@ Please double check that your authentication token is correct. Due to security r
 
     response.setEncoding("utf8")
 
+    const limit = options.maxResponseSize
+    const maxResponseSize = limit != null && Number.isFinite(limit) && limit >= 0 ? limit : null
     let data = ""
+    let size = 0
+    let isTooLarge = false
     response.on("error", reject)
-    response.on("data", (chunk: string) => (data += chunk))
+    response.on("data", (chunk: string) => {
+      if (isTooLarge) {
+        return
+      }
+      if (maxResponseSize != null) {
+        size += Buffer.byteLength(chunk)
+        if (size > maxResponseSize) {
+          isTooLarge = true
+          data = ""
+          reject(
+            newError(
+              // the path without its query, which can carry credentials
+              `Response from ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${(options.path ?? "").replace(/[?#].*$/s, "")} exceeds the maximum allowed size of ${maxResponseSize} bytes`,
+              "ERR_HTTP_RESPONSE_TOO_LARGE"
+            )
+          )
+          abort()
+          return
+        }
+      }
+      data += chunk
+    })
     response.on("end", () => {
+      if (isTooLarge) {
+        return
+      }
       try {
         if (response.statusCode != null && response.statusCode >= 400) {
           const contentType = safeGetHeader(response, "content-type")
@@ -329,7 +368,8 @@ Please double check that your authentication token is correct. Due to security r
 
   protected doDownload(requestOptions: RequestOptions, options: DownloadCallOptions, redirectCount: number) {
     const request = this.createRequest(requestOptions, (response: IncomingMessage) => {
-      if (response.statusCode! >= 400) {
+      const code = response.statusCode ?? 0
+      if (code >= 400) {
         options.callback(
           new Error(
             `Cannot download "${requestOptions.protocol || "https:"}//${requestOptions.hostname}${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`
@@ -342,13 +382,27 @@ Please double check that your authentication token is correct. Due to security r
       // response stream is in progress. Stop waiting and reject so consumer can catch the error.
       response.on("error", options.callback)
 
-      // this code not relevant for Electron (redirect event instead handled)
-      const redirectUrl = safeGetHeader(response, "location")
+      // Node.js reports a redirect as a 3xx response, Electron's net reports 301/302/303/307/308 as "redirect" events (see
+      // addRedirectHandlers) and any other 3xx as a response: a Location on a response that is not 3xx is ignored
+      const redirectUrl = code >= 300 && code < 400 ? safeGetHeader(response, "location") : null
       if (redirectUrl != null) {
-        if (redirectCount < this.maxRedirects) {
-          this.doDownload(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions), options, redirectCount + 1)
-        } else {
+        // the body of the redirect is not used: drain it, so the response ends and releases its socket, whose timeout would otherwise
+        // call back a second time
+        response.resume()
+        if (redirectCount >= this.maxRedirects) {
           options.callback(this.createMaxRedirectError())
+          return
+        }
+        // a response listener: a throw (from preparing the options, or from sending the new request) would escape as an uncaught
+        // exception and the download would never settle
+        try {
+          const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions)
+          if (redirectOptions.protocol !== "http:" && redirectOptions.protocol !== "https:") {
+            throw new Error(`Cannot follow the redirect to the "${redirectOptions.protocol ?? ""}" protocol`)
+          }
+          this.doDownload(redirectOptions, options, redirectCount + 1)
+        } catch (e: unknown) {
+          options.callback(e instanceof Error ? e : new Error(`Cannot follow the redirect: ${String(e)}`))
         }
         return
       }
@@ -363,6 +417,9 @@ Please double check that your authentication token is correct. Due to security r
     this.addRedirectHandlers(request, requestOptions, options.callback, redirectCount, requestOptions => {
       this.doDownload(requestOptions, options, redirectCount + 1)
     })
+    // a cancel aborts the request in flight, or its response would go on downloading into the destination. The promise keeps one cancel
+    // handler: a redirect's new request replaces this one, which the redirect has already ended
+    options.onCancel(() => request.abort())
     request.end()
   }
 
@@ -730,11 +787,16 @@ let fingerprintKey: Buffer | null = null
 /** What a sensitive value is logged as when its fingerprint cannot be computed. */
 export const REDACTED_VALUE = "<redacted>"
 
+// The data given to safeStringifyJson can come from a server (an error response body or its headers), with any number of sensitive
+// values: each fingerprint takes a few milliseconds of synchronous work, so one call computes at most this many
+const MAX_FINGERPRINTS_PER_CALL = 16
+
 /**
  * Stands in for a secret (a password, token or key) in logs and error messages: a fingerprint that is the same for the same
  * value within this process, so log lines can be compared, but that cannot be checked against guesses offline, since it is
- * keyed with a random secret of this process. Derived with scrypt at a low cost: it runs whenever a secret is logged. Never
- * throws: it returns {@link REDACTED_VALUE} when the fingerprint cannot be computed.
+ * keyed with a random secret of this process. Derived with scrypt at a low cost: it runs whenever a secret is logged, and
+ * {@link safeStringifyJson} computes at most {@link MAX_FINGERPRINTS_PER_CALL} per call, logging the other values as
+ * {@link REDACTED_VALUE}. Never throws: it returns {@link REDACTED_VALUE} when the fingerprint cannot be computed.
  */
 export function hashSensitiveValue(value: string): string {
   try {
@@ -749,11 +811,15 @@ export function hashSensitiveValue(value: string): string {
 }
 
 export function safeStringifyJson(data: any, skippedNames?: Set<string>): string {
+  let fingerprintCount = 0
   return JSON.stringify(
     data,
     (name, value) => {
       if (isSensitiveFieldName(name) || (skippedNames != null && skippedNames.has(name))) {
-        return typeof value === "string" ? hashSensitiveValue(value) : "<stripped sensitive data>"
+        if (typeof value !== "string") {
+          return "<stripped sensitive data>"
+        }
+        return fingerprintCount++ < MAX_FINGERPRINTS_PER_CALL ? hashSensitiveValue(value) : REDACTED_VALUE
       }
       return value
     },
