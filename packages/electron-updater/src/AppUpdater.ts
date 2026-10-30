@@ -208,6 +208,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   allowDowngrade = false
 
   /**
+   * Whether update requests may use plain `http`. Since electron-updater 7 every request of the updater (the update feed, the update
+   * file downloads, blockmaps and every redirect they follow) must use `https`, except to a loopback host (`localhost`, `127.0.0.0/8`,
+   * `::1`): any other request, including an `https` request redirected to `http`, fails with `ERR_UPDATER_INSECURE_FEED`.
+   *
+   * Set it to `true` only for a feed that cannot be served over `https`: anyone on the network path can then tamper with the update
+   * information and files, so only a [signed update manifest](https://www.electron.build/docs/features/signed-update-manifests) and the
+   * code signature of the update protect it.
+   *
+   * @default false
+   */
+  allowInsecureFeed = false
+
+  /**
    * *Linux only.* Whether to allow installing unverified (unsigned / failing-GPG) `.deb` and `.rpm` packages during auto-update.
    *
    * electron-builder does not sign Linux packages, so this defaults to `true` to preserve working auto-updates: the
@@ -552,7 +565,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     if (app == null) {
       this.app = new ElectronAppAdapter()
-      this.httpExecutor = new ElectronHttpExecutor((authInfo, callback) => this.emit("login", authInfo, callback))
+      this.httpExecutor = new ElectronHttpExecutor(
+        (authInfo, callback) => this.emit("login", authInfo, callback),
+        () => this.allowInsecureFeed
+      )
     } else {
       this.app = app
       this.httpExecutor = null as any

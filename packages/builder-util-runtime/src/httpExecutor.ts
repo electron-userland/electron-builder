@@ -3,7 +3,7 @@ import { sleep } from "./retry.js"
 import _debug from "debug"
 import { createWriteStream } from "fs"
 import { IncomingMessage, OutgoingHttpHeader, OutgoingHttpHeaders, RequestOptions } from "http"
-import { Socket } from "net"
+import { isIPv4, Socket } from "net"
 import { Transform } from "stream"
 import { URL } from "url"
 import { Nullish } from "./index.js"
@@ -779,6 +779,15 @@ export function configureRequestOptions(options: RequestOptions, token?: string 
     options.protocol = "https:"
   }
   return options
+}
+
+/**
+ * Whether `hostname` (a URL hostname: an IPv6 address may be in brackets) names the loopback interface: `localhost`, an address
+ * in `127.0.0.0/8` or `::1`. A plain `http` update feed on such a host never leaves the machine.
+ */
+export function isLoopbackHostname(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^\[(.*)\]$/, "$1")
+  return host === "localhost" || host === "::1" || (isIPv4(host) && host.startsWith("127."))
 }
 
 export function isSensitiveFieldName(name: string): boolean {

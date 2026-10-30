@@ -22,6 +22,7 @@ import {
   githubTagPrefix,
   githubUrl,
   GitlabOptions,
+  isLoopbackHostname,
   isValidMaxUpdateInfoSize,
   KeygenOptions,
   normalizePublicKeyList,
@@ -112,6 +113,42 @@ export function warnAboutGenericFeedQuery(publishConfig: PublishConfiguration): 
       "Nothing changes for the relative URLs electron-builder writes. " +
       "See https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
   )
+}
+
+/**
+ * electron-updater 7 rejects an update request over plain http to a host that is not loopback (`ERR_UPDATER_INSECURE_FEED`) unless
+ * the app sets `allowInsecureFeed`: a generic or custom feed url in app-update.yml that uses http fails every update check of the
+ * shipped app. The build still succeeds (the app may opt in); only the feed origin is logged, never its path, query or user info.
+ *
+ * @internal exported for tests
+ */
+export function warnAboutInsecureFeed(publishConfig: PublishConfiguration): void {
+  if (publishConfig.provider !== "generic" && publishConfig.provider !== "custom") {
+    return
+  }
+  const url: unknown = (publishConfig as GenericServerOptions).url
+  if (typeof url !== "string") {
+    return
+  }
+  let feed: URL
+  try {
+    feed = new URL(url)
+  } catch {
+    return
+  }
+  if (feed.protocol !== "http:" || isLoopbackHostname(feed.hostname)) {
+    return
+  }
+  const origin = `${feed.protocol}//${feed.host}`
+  // once per feed origin per process — app-update.yml is written for every pack
+  log
+    .once(`insecure-feed:${origin}`)
+    .warn(
+      { feed: origin, solution: "serve the updates over https, or set autoUpdater.allowInsecureFeed = true in the app (not recommended)" },
+      "the publish url written to app-update.yml uses plain http. electron-updater 7 (electron-builder v27) rejects every update request over http to a host " +
+        "that is not loopback (localhost, 127.0.0.0/8, ::1) with ERR_UPDATER_INSECURE_FEED, unless the app sets autoUpdater.allowInsecureFeed = true. " +
+        "See https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https"
+    )
 }
 
 /**
@@ -559,6 +596,7 @@ async function createAppUpdateConfiguration(
     updaterCacheDirName: packager.appInfo.updaterCacheDirName,
   }
   warnAboutGenericFeedQuery(publishConfig)
+  warnAboutInsecureFeed(publishConfig)
 
   // electron-updater fails every update check of an installed app whose app-update.yml has an invalid limit
   const maxUpdateInfoSize: unknown = publishConfig.maxUpdateInfoSize

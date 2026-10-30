@@ -18,6 +18,8 @@ Several security-relevant defaults changed in v27 — auto-update web installers
 
 - **Update credentials stay on the feed's origin.** The credential headers from `requestHeaders` / `addAuthHeader` (headers such as `Authorization`, the same set that is removed on a cross-origin redirect) and the query string of the feed URL are only sent to the update feed's origin. A download on another origin, including the same host on another port or over `http` instead of `https`, is requested without them, as is a channel file (`latest*.yml`) on another origin. See [Auto Update](./auto-update.md#custom-options-instantiating-updater-directly).
 
+- **Update requests require `https`.** electron-updater rejects any update request over plain `http` — the feed, the update files, blockmaps, differential range requests and every redirect, so an `https` request redirected to `http` too — with `ERR_UPDATER_INSECURE_FEED`, except to a loopback host (`localhost`, `127.0.0.0/8`, `::1`). `AppUpdater.allowInsecureFeed = true` opts out. See [Auto Update](./auto-update.md#allowinsecurefeed-new-defaults-to-false).
+
 - **Linux package signatures.** `AppUpdater.allowUnverifiedLinuxPackages` (default **`true`**) preserves historical behavior, since electron-builder does not sign Linux packages itself. Set it to **`false`** to enforce GPG signature checks when installing `.deb` / `.rpm` auto-updates on package managers that support verification.
 
 - **Modern, verified update metadata.** Generated `latest*.yml` targets the `files[]` format and the default `electronUpdaterCompatibility` is now `>=2.16`. Update metadata validated only by the legacy SHA-256 `sha2` checksum is deprecated.

@@ -312,18 +312,24 @@ export class FakeNetRequest extends EventEmitter {
   }
 }
 
-/** An ElectronHttpExecutor whose requests are {@link FakeNetRequest}s answered by `answer`; `sent` lists what they sent. */
+/**
+ * An ElectronHttpExecutor whose requests, once ElectronHttpExecutor.createRequest has checked them, are {@link FakeNetRequest}s
+ * answered by `answer`; `sent` lists what they sent.
+ */
 export class FakeElectronHttpExecutor extends ElectronHttpExecutor {
   readonly sent: Array<FakeNetSentRequest> = []
   /** createRequest throws for these URLs, as net.request does for options it cannot make a request of */
   readonly unrequestableUrls = new Set<string>()
 
-  constructor(private readonly answer: (url: string, headers: OutgoingHttpHeaders) => FakeNetAnswer) {
-    super()
+  constructor(
+    private readonly answer: (url: string, headers: OutgoingHttpHeaders) => FakeNetAnswer,
+    isInsecureFeedAllowed?: () => boolean
+  ) {
+    super(undefined, isInsecureFeedAllowed)
   }
 
   // the return type of the overridden method is Electron's ClientRequest, which the fake does not implement
-  createRequest(options: RequestOptions, callback: (response: any) => void): any {
+  protected createNetRequest(options: RequestOptions, callback: (response: any) => void): any {
     // like net.request: `host` (with its port) wins over `hostname` and `port`
     const host = options.host ?? `${options.hostname}${options.port == null ? "" : `:${options.port}`}`
     const redirect = "redirect" in options && typeof options.redirect === "string" ? options.redirect : undefined

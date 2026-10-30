@@ -1,5 +1,5 @@
 import { createRequire } from "node:module"
-import { DownloadOptions, HttpExecutor, configureRequestOptions, configureRequestUrl } from "builder-util-runtime"
+import { DownloadOptions, HttpExecutor, configureRequestOptions, configureRequestUrl, isLoopbackHostname, newError } from "builder-util-runtime"
 
 // import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
 const require = createRequire(import.meta.url ?? process.execPath)
@@ -20,7 +20,13 @@ export function getNetSession(): Session {
 export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
   private cachedSession: Session | null = null
 
-  constructor(private readonly proxyLoginCallback?: (authInfo: AuthInfo, callback: LoginCallback) => void) {
+  /**
+   * @param isInsecureFeedAllowed whether a request may use plain `http` to a host that is not loopback (`AppUpdater.allowInsecureFeed`)
+   */
+  constructor(
+    private readonly proxyLoginCallback?: (authInfo: AuthInfo, callback: LoginCallback) => void,
+    private readonly isInsecureFeedAllowed: () => boolean = () => false
+  ) {
     super()
   }
 
@@ -52,6 +58,10 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     })
   }
 
+  /**
+   * Every request of the updater, a redirected one included, is created here: one that is not https throws `ERR_UPDATER_INSECURE_FEED`
+   * unless it goes to a loopback host or the app set `allowInsecureFeed`.
+   */
   createRequest(options: any, callback: (response: any) => void): Electron.ClientRequest {
     // fix (node 7+) for making electron updater work when using AWS private buckets, check if headers contain Host property
     if (options.headers && options.headers.Host) {
@@ -60,7 +70,13 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
       // remove header property 'Host', if not removed causes net::ERR_INVALID_ARGUMENT exception
       delete options.headers.Host
     }
+    if (options.protocol !== "https:" && !this.isInsecureFeedAllowed()) {
+      checkInsecureRequestIsLoopback(options)
+    }
+    return this.createNetRequest(options, callback)
+  }
 
+  protected createNetRequest(options: any, callback: (response: any) => void): Electron.ClientRequest {
     // differential downloader can call this method very often, so, better to cache session
     if (this.cachedSession == null) {
       this.cachedSession = getNetSession()
@@ -121,6 +137,28 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
       }
     })
   }
+}
+
+const INSECURE_FEED_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https"
+
+function checkInsecureRequestIsLoopback(options: RequestOptions): void {
+  // net.request connects to `host` (with its port) when it is set, else to `hostname` and `port`; without a protocol it uses http
+  const host = options.host ?? `${options.hostname ?? ""}${options.port == null ? "" : `:${options.port}`}`
+  let hostname: string | null = null
+  try {
+    hostname = new URL(`http://${host}`).hostname
+  } catch {
+    // not a host: not loopback
+  }
+  if (hostname != null && isLoopbackHostname(hostname)) {
+    return
+  }
+  throw newError(
+    `electron-updater 7 rejects the update request to ${options.protocol ?? "http:"}//${host}: the update feed, its downloads and every redirect must use https, ` +
+      "except to a loopback host (localhost, 127.0.0.0/8, ::1). Serve your updates over https, or set autoUpdater.allowInsecureFeed = true to accept plain http (not recommended). " +
+      `See ${INSECURE_FEED_DOCS}`,
+    "ERR_UPDATER_INSECURE_FEED"
+  )
 }
 
 function addIdleTimeout(request: ClientRequest, reject: (error: Error) => void, timeout: number): void {
