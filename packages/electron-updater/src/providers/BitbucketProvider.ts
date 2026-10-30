@@ -32,12 +32,14 @@ export class BitbucketProvider extends Provider<UpdateInfo> {
     const cancellationToken = new CancellationToken()
     const channelFile = getChannelFilename(this.getCustomChannelName(this.channel))
     const channelUrl = newUrlFromBase(channelFile, this.baseUrl, this.updater.isAddNoCacheQuery)
+    let updateInfo: string | null
     try {
-      const updateInfo = await this.httpRequest(channelUrl, undefined, cancellationToken)
-      return parseUpdateInfo(updateInfo, channelFile, channelUrl)
+      updateInfo = await this.httpRequest(channelUrl, undefined, cancellationToken)
     } catch (e: any) {
       throw newError(`Unable to find latest version on ${this.toString()}, please ensure release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
+    // parsed outside the try: a manifest that cannot be parsed fails with ERR_UPDATER_INVALID_UPDATE_INFO
+    return parseUpdateInfo(updateInfo, channelFile, channelUrl)
   }
 
   resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo> {
