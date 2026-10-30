@@ -992,6 +992,30 @@ describe("HttpExecutor redirect limit", () => {
   })
 })
 
+// A real request through Node's http module, by default through its keep-alive global agent
+class NodeExecutor extends HttpExecutor<http.ClientRequest> {
+  createRequest(options: RequestOptions, callback: (response: http.IncomingMessage) => void): http.ClientRequest {
+    return http.request(options, callback)
+  }
+
+  runDownload(url: URL, timeout: number, callback: (error: Error | null) => void, agent?: http.Agent): void {
+    this.doDownload(
+      { protocol: url.protocol, hostname: url.hostname, port: url.port, path: url.pathname, timeout, agent },
+      {
+        responseHandler: (response, done) => {
+          response.resume()
+          response.on("end", () => done(null))
+        },
+        onCancel: () => {},
+        callback,
+        options: { cancellationToken: new CancellationToken() },
+        destination: null,
+      },
+      0
+    )
+  }
+}
+
 describe("HttpExecutor download Location handling", () => {
   // Answers every request synchronously with `statusCode` and a Location to `location`; like http.request, createRequest throws for a
   // protocol other than http(s). Without the guard, that throw escaped from the response listener (an uncaught exception).
@@ -1056,29 +1080,6 @@ describe("HttpExecutor download Location handling", () => {
 
   // A real request through Node's keep-alive agent: a redirect's body that is not read keeps its socket busy, and the socket's timeout
   // then calls back a second time, after the download has settled
-  class NodeExecutor extends HttpExecutor<http.ClientRequest> {
-    createRequest(options: RequestOptions, callback: (response: http.IncomingMessage) => void): http.ClientRequest {
-      return http.request(options, callback)
-    }
-
-    runDownload(url: URL, timeout: number, callback: (error: Error | null) => void): void {
-      this.doDownload(
-        { protocol: url.protocol, hostname: url.hostname, port: url.port, path: url.pathname, timeout },
-        {
-          responseHandler: (response, done) => {
-            response.resume()
-            response.on("end", () => done(null))
-          },
-          onCancel: () => {},
-          callback,
-          options: { cancellationToken: new CancellationToken() },
-          destination: null,
-        },
-        0
-      )
-    }
-  }
-
   for (const [label, location, error] of [
     ["is followed", "/target", null],
     ["cannot be followed", "ftp://example.com/x", 'Cannot follow the redirect to the "ftp:" protocol'],
@@ -1122,6 +1123,118 @@ describe("HttpExecutor download Location handling", () => {
     executor.runDownload(e => errors.push(e))
     expect(errors).toEqual([null])
     expect(executor.requestCount).toBe(1)
+  })
+})
+
+describe("HttpExecutor request timeout on a kept-alive socket", () => {
+  // the agent keeps a finished request's socket and sets its own idle timeout on it: that timeout must not reach the request's callback
+  const AGENT_TIMEOUT = 100
+
+  async function withServer(handler: http.RequestListener, task: (url: URL, agent: http.Agent) => Promise<void>, agentTimeout = AGENT_TIMEOUT): Promise<void> {
+    const server = http.createServer(handler)
+    const agent = new http.Agent({ keepAlive: true, timeout: agentTimeout })
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    try {
+      const address = server.address()
+      if (address == null || typeof address === "string") {
+        throw new Error("server has no port")
+      }
+      await task(new URL(`http://127.0.0.1:${address.port}/file`), agent)
+    } finally {
+      agent.destroy()
+      server.closeAllConnections()
+      await new Promise(resolve => server.close(resolve))
+    }
+  }
+
+  function download(url: URL, agent: http.Agent, timeout: number, results: Array<string | null>): Promise<void> {
+    return new Promise<void>(resolve => {
+      new NodeExecutor().runDownload(
+        url,
+        timeout,
+        e => {
+          results.push(e == null ? null : e.message)
+          resolve()
+        },
+        agent
+      )
+    })
+  }
+
+  function freeSocket(agent: http.Agent) {
+    const sockets = Object.values(agent.freeSockets).flat()
+    expect(sockets).toHaveLength(1)
+    const socket = sockets[0]
+    if (socket == null) {
+      throw new Error("the agent keeps no socket")
+    }
+    return socket
+  }
+
+  test("doDownload calls back once when the agent's idle timeout passes after the download", async () => {
+    await withServer(
+      (_request, response) => response.end("body"),
+      async (url, agent) => {
+        const results: Array<string | null> = []
+        await download(url, agent, 5000, results)
+        await new Promise(resolve => setTimeout(resolve, AGENT_TIMEOUT * 4))
+        expect(results).toEqual([null])
+      }
+    )
+  })
+
+  test("doDownload calls back once for an error status, whose body it does not use", async () => {
+    const TIMEOUT = 200
+    await withServer(
+      (_request, response) => {
+        response.writeHead(404, { "Content-Length": 9 })
+        response.end("not found")
+      },
+      async (url, agent) => {
+        const results: Array<string | null> = []
+        await download(url, agent, TIMEOUT, results)
+        await new Promise(resolve => setTimeout(resolve, TIMEOUT * 4))
+        expect(results).toHaveLength(1)
+        expect(results[0]).toContain("status 404")
+      }
+    )
+  })
+
+  test("requests over one kept-alive socket do not add up timeout listeners on it", async () => {
+    await withServer(
+      (_request, response) => response.end("body"),
+      async (url, agent) => {
+        const results: Array<string | null> = []
+        await download(url, agent, 5000, results)
+        // the agent takes the socket back after the request closes
+        await new Promise(resolve => setImmediate(resolve))
+        const socket = freeSocket(agent)
+        const listeners = socket.listenerCount("timeout")
+        for (let i = 0; i < 3; i++) {
+          await download(url, agent, 5000, results)
+          await new Promise(resolve => setImmediate(resolve))
+        }
+        expect(freeSocket(agent)).toBe(socket)
+        expect(socket.listenerCount("timeout")).toBe(listeners)
+        expect(results).toEqual([null, null, null, null])
+      },
+      // an idle timeout long enough to keep the socket between the requests
+      5000
+    )
+  })
+
+  test("a stalled body still times out", async () => {
+    await withServer(
+      (_request, response) => {
+        response.writeHead(200, { "Content-Length": 100 })
+        response.write("start")
+      },
+      async (url, agent) => {
+        const results: Array<string | null> = []
+        await download(url, agent, 200, results)
+        expect(results[0]).toBe("Request timed out")
+      }
+    )
   })
 })
 
