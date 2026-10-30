@@ -317,6 +317,10 @@ import { autoUpdater } from "electron-updater"
 autoUpdater.allowUnverifiedLinuxPackages = false
 ```
 
+### Linux installs with gksudo, kdesudo or beesu
+
+To install a deb, rpm or pacman update, electron-updater elevates the package manager with the first helper it finds: `pkexec`, then `gksudo`, `kdesudo` and `beesu`, else `sudo`. `pkexec` and `sudo` take the command as separate arguments, so any installer path works with them. `gksudo`, `kdesudo` and `beesu` take the install command as a single string that a shell and the helper parse again, so with one of them the path of the downloaded package (in the updater's cache directory, file name included) may only hold letters and digits (of any script) and the characters `.` `_` `/` `+` `,` `:` `=` `@` `%` `-`; with `kdesudo` a space is allowed too. Any other path fails the install with `ERR_UPDATER_UNSAFE_INSTALLER_PATH` before the helper runs. Installing polkit, which provides `pkexec`, avoids this: electron-updater then elevates with `pkexec` whatever the path.
+
 ## Staged Rollouts
 
 Staged rollouts allow you to distribute the latest version of your app to a subset of users that you can increase over time, similar to rollouts on platforms like Google Play.
