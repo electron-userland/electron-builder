@@ -8,6 +8,7 @@ import * as path from "path"
 const nsisTemplates = path.resolve(__dirname, "../../../packages/app-builder-lib/templates/nsis")
 const multiUserPath = path.join(nsisTemplates, "multiUser.nsh")
 const installUtilPath = path.join(nsisTemplates, "include", "installUtil.nsh")
+const assistedInstallerPath = path.join(nsisTemplates, "assistedInstaller.nsh")
 
 async function makensis(dir: string, script: string[], nsis?: ToolsetConfig["nsis"]): Promise<void> {
   const tool = await getMakeNsisPath(nsis, dir)
@@ -77,6 +78,54 @@ async function compileInstallModes(dir: string, nsis?: ToolsetConfig["nsis"]): P
   )
 }
 
+// initMultiUser of assistedInstaller.nsh, which reads InstallLocation for the install mode page. Compiled only, never run.
+async function compileAssistedInstallModes(dir: string, name: string, isUninstaller: boolean, nsis?: ToolsetConfig["nsis"]): Promise<void> {
+  const plugins = await getNsisPluginsPath(nsis, dir)
+  const messages = (await fs.readFile(path.join(nsisTemplates, "assistedMessages.yml"), "utf8")).match(/^\w+(?=:$)/gm) ?? []
+  await makensis(
+    dir,
+    [
+      "Unicode true",
+      "RequestExecutionLevel user",
+      `!addincludedir "${nsisTemplates}"`,
+      `!addincludedir "${path.join(nsisTemplates, "include")}"`,
+      `!addplugindir /x86-unicode "${path.join(plugins, "x86-unicode")}"`,
+      ...(isUninstaller ? ["!define BUILD_UNINSTALLER", "SilentInstall silent"] : []),
+      "!include LogicLib.nsh",
+      "!include StdUtils.nsh",
+      "!include MUI2.nsh",
+      '!define APP_GUID "nsis-d-parameter-test"',
+      '!define APP_FILENAME "test-app"',
+      "!define INSTALL_MODE_PER_ALL_USERS_REQUIRED",
+      "!define HIDE_RUN_AFTER_FINISH",
+      // the generated command-line flags, not run here
+      "!define isUpdated '$R9 == 1'",
+      "!define isForAllUsers '$R9 == 1'",
+      "!define isForCurrentUser '$R9 == 1'",
+      `!include "${multiUserPath}"`,
+      `!include "${assistedInstallerPath}"`,
+      '!insertmacro MUI_LANGUAGE "English"',
+      ...messages.map(it => `LangString ${it} \${LANG_ENGLISH} "${it}"`),
+      `OutFile "${path.join(dir, `${name}.exe`)}"`,
+      ...(isUninstaller
+        ? [
+            "Function .onInit",
+            `  WriteUninstaller "${path.join(dir, `${name}-uninstaller.exe`)}"`,
+            "FunctionEnd",
+            "Function un.onInit",
+            "  !insertmacro initMultiUser",
+            "FunctionEnd",
+            "Section Uninstall",
+            "SectionEnd",
+          ]
+        : ["Function .onInit", "  !insertmacro initMultiUser", "FunctionEnd"]),
+      "Section",
+      "SectionEnd",
+    ],
+    nsis
+  )
+}
+
 // starts the probe like electron-updater starts the installer: child_process.spawn quotes an argument that contains a space
 function run(file: string, args: string[], windowsVerbatimArguments = false): Promise<number | null> {
   return new Promise((resolve, reject) => {
@@ -120,6 +169,25 @@ describe("multiUser.nsh — GetDParameter", { concurrent: false }, () => {
     }
   })
 
+  test("drops a double quote from the InstallLocation that the assisted installer shows on the install mode page", async ({ expect }) => {
+    const template = await fs.readFile(assistedInstallerPath, "utf8")
+    expect(template).toContain("!include WordFunc.nsh")
+    const macro = template.match(/!macro initMultiUser[\s\S]*?!macroend/)
+    expect(macro).not.toBeNull()
+    const body = macro![0]
+    for (const [root, variable] of [
+      ["HKLM", "$perMachineInstallationFolder"],
+      ["HKCU", "$perUserInstallationFolder"],
+    ]) {
+      const readIndex = body.indexOf(`ReadRegStr ${variable} ${root} "\${INSTALL_REGISTRY_KEY}" InstallLocation`)
+      const stripIndex = body.indexOf(`\${WordReplace} ${variable} '"' "" "+" ${variable}`)
+      expect(readIndex).toBeGreaterThan(-1)
+      expect(stripIndex).toBeGreaterThan(readIndex)
+      // the install mode page shows the value of the mode that setInstallModePer* did not re-read
+      expect(body.indexOf(`\${if} ${variable} != ""`)).toBeGreaterThan(stripIndex)
+    }
+  })
+
   test("removes an old version whose registry values kept the quote", async ({ expect }) => {
     const template = await fs.readFile(installUtilPath, "utf8")
     expect(template).toContain("!include WordFunc.nsh")
@@ -148,6 +216,11 @@ describe("multiUser.nsh — GetDParameter", { concurrent: false }, () => {
     await compileProbe(dir, "probe-legacy", path.join(dir, "result.txt"), "0.0.0")
     await compileInstallModes(dir)
     await compileInstallModes(dir, "0.0.0")
+    for (const isUninstaller of [false, true]) {
+      const name = isUninstaller ? "assisted-uninstaller" : "assisted-installer"
+      await compileAssistedInstallModes(dir, name, isUninstaller)
+      await compileAssistedInstallModes(dir, `${name}-legacy`, isUninstaller, "0.0.0")
+    }
   })
 
   test.ifWindows("returns the install directory electron-updater passes, with or without spaces", async ({ expect, tmpDir }) => {
