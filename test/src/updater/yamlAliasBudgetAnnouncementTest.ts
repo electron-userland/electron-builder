@@ -95,3 +95,22 @@ test("a manifest rejected while loading for aliases in a complex mapping key is 
   await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringContaining(DOCS) })
   expect(announcements(logger)).toEqual([ANNOUNCEMENT])
 })
+
+// the feed URL's query is copied onto the channel file URL, and the updater logs the error with its stack
+test.for([
+  ["a manifest whose YAML aliases expand past the budget", mockAliasChainYaml("1.0.1", 40)],
+  ["a manifest that is not valid YAML", `${mockYaml("1.0.1")}releaseNotes: [unclosed\n`],
+  ["a manifest rejected while loading for aliases in a complex mapping key", mockComplexKeyYaml("1.0.1")],
+])("the update info error for %s names the channel file without the feed URL's query", async ([_name, manifest], { tmpDir, expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGenericUpdater(tmpDir, requestSpy, createLogger())
+
+  requestSpy.mockResolvedValueOnce(manifest)
+
+  const error: unknown = await updater.checkForUpdates().then(
+    () => null,
+    (e: unknown) => e
+  )
+  expect(error).toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringContaining("(https://updates.example.com/feed/latest.yml)") })
+  expect(error instanceof Error ? `${error.message}\n${error.stack}` : String(error)).not.toContain(FEED_TOKEN)
+})
