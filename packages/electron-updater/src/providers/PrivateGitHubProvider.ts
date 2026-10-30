@@ -1,11 +1,11 @@
-import { CancellationToken, GithubOptions, HttpError, newError, UpdateInfo } from "builder-util-runtime"
+import { CancellationToken, GithubOptions, githubTagPrefix, HttpError, newError, UpdateInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { load } from "js-yaml"
 import * as path from "path"
 import { AppUpdater } from "../AppUpdater.js"
 import { URL } from "url"
 import { getChannelFilename, newUrlFromBase } from "../util.js"
-import { BaseGitHubProvider } from "./GitHubProvider.js"
+import { BaseGitHubProvider, pickHighestRelease, prereleaseChannelOf, releaseEligibility } from "./GitHubProvider.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { channelFileNotFoundError, getFileList, ProviderRuntimeOptions } from "./Provider.js"
 
@@ -36,15 +36,21 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
 
   async getLatestVersion(): Promise<PrivateGitHubUpdateInfo> {
     const cancellationToken = new CancellationToken()
-    const channelFile = getChannelFilename(this.getDefaultChannelName())
+    const { release: releaseInfo, version } = await this.getLatestVersionInfo(cancellationToken)
 
-    const releaseInfo = await this.getLatestVersionInfo(cancellationToken)
-    const asset = releaseInfo.assets.find(it => it.name === channelFile)
+    // as in GitHubProvider: a selected pre-release reads its own channel file (beta.yml for 1.0.0-beta.1), any other release
+    // the configured channel's; a release without that file falls back to the default channel file
+    const channel = (version == null ? null : prereleaseChannelOf(version)) ?? (this.updater.channel || this.options.channel)
+    const preferredChannelFile = getChannelFilename(channel == null ? this.getDefaultChannelName() : this.getCustomChannelName(channel))
+    const defaultChannelFile = getChannelFilename(this.getDefaultChannelName())
+    const asset = releaseInfo.assets.find(it => it.name === preferredChannelFile) ?? releaseInfo.assets.find(it => it.name === defaultChannelFile)
     if (asset == null) {
+      const channelFiles = preferredChannelFile === defaultChannelFile ? defaultChannelFile : `${preferredChannelFile} or ${defaultChannelFile}`
       // html_url must be always, but just to be sure
-      throw newError(`Cannot find ${channelFile} in the release ${releaseInfo.html_url || releaseInfo.name}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
+      throw newError(`Cannot find ${channelFiles} in the release ${releaseInfo.html_url || releaseInfo.name}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
     }
 
+    const channelFile = asset.name
     const url = new URL(asset.url)
     let result: any
     try {
@@ -71,7 +77,8 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     }
   }
 
-  private async getLatestVersionInfo(cancellationToken: CancellationToken): Promise<ReleaseInfo> {
+  // `version` is the selected release's version on the allowPrerelease path, null for the /latest release
+  private async getLatestVersionInfo(cancellationToken: CancellationToken): Promise<{ release: ReleaseInfo; version: string | null }> {
     const allowPrerelease = this.updater.allowPrerelease
     let basePath = this.basePath
     if (!allowPrerelease) {
@@ -79,18 +86,31 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     }
 
     const url = newUrlFromBase(basePath, this.baseUrl)
+    let selected: { tag: string | null; item: ReleaseInfo | null }
     try {
-      const version = JSON.parse((await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken))!)
+      const body = await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken)
+      const version = body == null ? null : JSON.parse(body)
       // only `latest` can return a single ReleaseInfo. Otherwise, a list of ReleaseInfo is returned and we need to find the latest one ourselves
       if (allowPrerelease) {
-        const candidates = (version as Array<ReleaseInfo>).filter(it => !it.draft)
-        return candidates.find(it => it.prerelease) || candidates[0]
+        if (!Array.isArray(version)) {
+          throw new Error(`expected a list of releases, got ${version === null ? "null" : typeof version}`)
+        }
+        // the list is ordered by creation date, not by version: like GitHubProvider, pick the highest semver release eligible for the current channel.
+        // An entry that is not an object with a string tag_name and a list of assets is skipped.
+        const candidates: Array<ReleaseInfo> = version.filter(it => it != null && typeof it.tag_name === "string" && Array.isArray(it.assets) && !it.draft)
+        const tagPrefix = githubTagPrefix(this.options)
+        selected = pickHighestRelease(candidates, it => (it.tag_name.startsWith(tagPrefix) ? it.tag_name.slice(tagPrefix.length) : it.tag_name), releaseEligibility(this.updater))
       } else {
-        return version
+        return { release: version, version: null }
       }
     } catch (e: any) {
       throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
+
+    if (selected.item == null) {
+      throw newError(`No published versions on GitHub`, "ERR_UPDATER_NO_PUBLISHED_VERSIONS")
+    }
+    return { release: selected.item, version: selected.tag }
   }
 
   private get basePath(): string {
@@ -114,6 +134,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
 }
 
 interface ReleaseInfo {
+  tag_name: string
   name: string
   html_url: string
   draft: boolean
