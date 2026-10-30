@@ -60,13 +60,21 @@ export function copyData(task: Operation, out: Writable, oldFileFd: number, reje
     reject(new Error("Cannot copy data: the output stream is destroyed"))
     return
   }
-  const readStream = fs.createReadStream("", {
-    fd: oldFileFd,
-    fs: { read: fs.read, close: keepOldFileOpen },
-    start: task.start,
-    // end is inclusive
-    end: task.end - 1,
-  })
+  let readStream: fs.ReadStream
+  try {
+    readStream = fs.createReadStream("", {
+      fd: oldFileFd,
+      fs: { read: fs.read, close: keepOldFileOpen },
+      start: task.start,
+      // end is inclusive
+      end: task.end - 1,
+    })
+  } catch (e: unknown) {
+    // an invalid range throws synchronously, usually inside the `end` listener of a response or of the previous copy, where it
+    // would be an uncaught exception that leaves the download pending
+    reject(e instanceof Error ? e : new Error(String(e)))
+    return
+  }
   const copies = copiesInProgress.get(oldFileFd) ?? new Set<Readable>()
   copies.add(readStream)
   copiesInProgress.set(oldFileFd, copies)
@@ -102,6 +110,38 @@ export async function stopCopies(oldFileFd: number): Promise<void> {
         })
     )
   )
+}
+
+/**
+ * Returns the `boundary` parameter of a `multipart/*` Content-Type, or null when the type is not multipart or names no valid
+ * boundary (1 to 70 characters, RFC 2046). Type and parameter names compare case-insensitively; the boundary may be quoted.
+ * Parsed without a regular expression over the whole value: one with a lazy subtype followed by optional whitespace backtracks
+ * quadratically on a long whitespace run, and a response header can be as long as the HTTP stack accepts (about 256 KB in
+ * Electron).
+ */
+export function parseMultipartBoundary(contentType: string | null | undefined): string | null {
+  if (contentType == null) {
+    return null
+  }
+  const [mediaType, ...parameters] = contentType.split(";")
+  const type = mediaType.trim().toLowerCase()
+  if (!type.startsWith("multipart/") || type.length === "multipart/".length) {
+    return null
+  }
+  for (const parameter of parameters) {
+    const separator = parameter.indexOf("=")
+    if (separator === -1 || parameter.substring(0, separator).trim().toLowerCase() !== "boundary") {
+      continue
+    }
+    const value = parameter.substring(separator + 1).trim()
+    const isQuoted = value.length > 2 && value.startsWith('"') && value.endsWith('"')
+    const boundary = isQuoted ? value.substring(1, value.length - 1) : value
+    if (boundary.length === 0 || boundary.length > 70 || (isQuoted ? boundary.includes('"') : /[\s"]/.test(boundary))) {
+      return null
+    }
+    return boundary
+  }
+  return null
 }
 
 export class DataSplitter extends Writable {

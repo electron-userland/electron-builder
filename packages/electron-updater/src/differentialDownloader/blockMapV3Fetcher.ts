@@ -25,6 +25,7 @@ import {
 import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
 import { Logger } from "../types.js"
+import { parseMultipartBoundary } from "./DataSplitter.js"
 
 /** Upper bound of the first Range request: header + super-group table of maps up to ~4k super-groups (≈ 2 GB of 16 KiB blocks). */
 export const FIRST_RANGE_SIZE = 64 * 1024
@@ -334,11 +335,11 @@ class BlockMapV3Fetcher {
         continue
       }
       const contentType = response.contentType || ""
-      const m = /^multipart\/.+?\s*;\s*boundary=(?:"([^"]+)"|([^\s";]+))\s*$/i.exec(contentType)
-      if (m == null) {
-        throw new Error(`Content-Type "multipart/byteranges" is expected, but got "${contentType}"`)
+      const boundary = parseMultipartBoundary(contentType)
+      if (boundary == null) {
+        throw new Error(`Content-Type "multipart/byteranges" is expected, but got "${contentType.substring(0, 200)}"`)
       }
-      const parts = parseMultipartByteRanges(response.body, m[1] || m[2], batch)
+      const parts = parseMultipartByteRanges(response.body, boundary, batch)
       if (parts.length !== batch.length) {
         throw new Error(`block map v3: multipart response is missing ${batch.length - parts.length} of ${batch.length} requested ranges`)
       }
