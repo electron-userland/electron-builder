@@ -1,3 +1,15 @@
+## [26.18.2](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.18.1...electron-builder@26.18.2) (2026-10-30)
+
+
+### Bug Fixes
+
+* **builder-util:** handle EPIPE on child stdin in spawnAndWriteWithOutput (v26 backport of [#10275](https://github.com/electron-userland/electron-builder/issues/10275)) ([#10456](https://github.com/electron-userland/electron-builder/issues/10456)) ([8348b16](https://github.com/electron-userland/electron-builder/commit/8348b165b05273e8fa0d07763180d39017ddfbff))
+* log secrets as a keyed fingerprint instead of plain sha256 (v26 backport of [#10441](https://github.com/electron-userland/electron-builder/issues/10441)) ([#10457](https://github.com/electron-userland/electron-builder/issues/10457)) ([f3c7077](https://github.com/electron-userland/electron-builder/commit/f3c7077c6e86c63ac27898a10fbfab319d87c1b6))
+* **rpm:** disable build-id links and pin rpm v4 format for host-independent output (v26 backport of [#10472](https://github.com/electron-userland/electron-builder/issues/10472)) ([#10476](https://github.com/electron-userland/electron-builder/issues/10476)) ([7f293a9](https://github.com/electron-userland/electron-builder/commit/7f293a90f31ed020ee6bea26fd87b03e2ee21f2b))
+* **updater:** replace lodash.isequal with util.isDeepStrictEqual (v26 backport of [#10484](https://github.com/electron-userland/electron-builder/issues/10484)) ([#10502](https://github.com/electron-userland/electron-builder/issues/10502)) ([ea56437](https://github.com/electron-userland/electron-builder/commit/ea56437d4f6cc1f2ef2db4ac4a34d605dbf6ace6))
+
+
+
 ## [26.18.1](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.18.0...electron-builder@26.18.1) (2026-10-25)
 
 

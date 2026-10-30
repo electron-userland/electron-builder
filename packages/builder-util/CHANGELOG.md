@@ -1,5 +1,24 @@
 # builder-util
 
+## 26.18.2
+
+### Patch Changes
+
+- Fix: handle EPIPE on child stdin in `spawnAndWrite` / `spawnAndWriteWithOutput` when the process exits before all input is written _[`#10456`](https://github.com/electron-userland/electron-builder/pull/10456) [`8348b16`](https://github.com/electron-userland/electron-builder/commit/8348b165b05273e8fa0d07763180d39017ddfbff) [@claude](https://github.com/apps/claude)_
+- Fix: secrets in logs and error messages (passwords, tokens and keys in redacted command lines, environments and request options) are shown as a fingerprint keyed with a random secret of the process, derived with scrypt: the same value has the same fingerprint within a run, but a fingerprint cannot be checked against guessed values offline. A value whose fingerprint cannot be computed is shown as `<redacted>`. _[`#10457`](https://github.com/electron-userland/electron-builder/pull/10457) [`f3c7077`](https://github.com/electron-userland/electron-builder/commit/f3c7077c6e86c63ac27898a10fbfab319d87c1b6) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`f3c7077`](https://github.com/electron-userland/electron-builder/commit/f3c7077c6e86c63ac27898a10fbfab319d87c1b6)
+
+</small>
+
+- `builder-util-runtime@9.7.2`
+
+</details>
+
 ## 26.18.1
 
 ### Patch Changes

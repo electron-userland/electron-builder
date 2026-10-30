@@ -1,5 +1,21 @@
 # electron-forge-maker-appimage
 
+## 26.18.2
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`7f293a9`](https://github.com/electron-userland/electron-builder/commit/7f293a90f31ed020ee6bea26fd87b03e2ee21f2b)
+
+</small>
+
+- `app-builder-lib@26.18.2`
+
+</details>
+
 ## 26.18.1
 
 ### Patch Changes
