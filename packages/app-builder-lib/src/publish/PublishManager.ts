@@ -765,11 +765,9 @@ export async function createPublisher(
   options: PublishOptions,
   packager: Packager
 ): Promise<Publisher | null> {
-  if (debug.enabled) {
-    debug(`Create publisher: ${safeStringifyJson(publishConfig)}`)
-  }
-
   const provider = publishConfig.provider
+  debug(`Create publisher: ${provider}`)
+
   switch (provider) {
     case "github": {
       const releaseBody = await resolveReleaseBody(packager)
