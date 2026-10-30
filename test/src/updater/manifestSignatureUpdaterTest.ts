@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from "vitest"
+import { createPrivateKey, sign as cryptoSign } from "crypto"
+import { dump, load } from "js-yaml"
 import { DebUpdater } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import type { UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
-import { resolveFiles } from "electron-updater/src/providers/Provider"
-import { computeUpdateManifestKeyId } from "builder-util-runtime"
-import { createUpdateManifestSignatures, generateUpdateSigningKeypair, signUpdateManifest } from "builder-util"
+import { parseUpdateInfo, resolveFiles } from "electron-updater/src/providers/Provider"
+import { canonicalizeForSigning, computeUpdateManifestKeyId, createManifestSignatureEntry } from "builder-util-runtime"
+import { createUpdateManifestSignatures, generateUpdateSigningKeypair, serializeToYaml, signUpdateManifest } from "builder-util"
 
 const stubApp: AppAdapter = {
   name: "TestApp",
@@ -288,6 +290,73 @@ describe("AppUpdater.verifyManifestSignature: blockMapUrl", () => {
     const error = await verify(makeUpdater(), { ...plain, files: [{ ...plain.files[0], sha512: "tampered" }] }).catch((e: Error) => e)
     expect(error).toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
     expect(error.message).not.toContain("blockMapUrl")
+  })
+})
+
+// ── stagingPercentage: a staged rollout of a signed release (website/docs/features/auto-update.md#staged-rollouts) ──
+
+// staging value of this user id (bytes 12..15 of the UUID / 0xffffffff) is ≈0.878: inside a 90% rollout, outside a 10% one
+const STAGING_USER_ID = "12a70172-80f8-5cc4-8131-28f5e0edd2a1"
+
+/** The script of the Staged Rollouts docs: sets stagingPercentage in latest*.yml and signs it again with the release's key(s). */
+function setStagingPercentageAndSign(yml: string, stagingPercentage: number, privateKeyPems: Array<string>): string {
+  const info = load(yml) as any
+  info.stagingPercentage = stagingPercentage
+  const payload = Buffer.from(canonicalizeForSigning(info), "utf8")
+  info.signatures = privateKeyPems.map(pem => {
+    const key = createPrivateKey(pem)
+    return createManifestSignatureEntry(key, cryptoSign(null, payload, key).toString("base64"))
+  })
+  info.signature = info.signatures[0].signature
+  return dump(info, { lineWidth: -1 })
+}
+
+describe("AppUpdater: stagingPercentage in a signed manifest", () => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  // latest.yml as electron-builder writes it: signed, and without a stagingPercentage, which no build option sets
+  const publishedYml = serializeToYaml(multiSigned(makeInfo(), [privateKeyPem]), false, true)
+  const parse = (yml: string) => parseUpdateInfo(yml, "latest.yml", new URL("https://example.com/latest.yml"))
+
+  function makeUpdater(info: UpdateInfo) {
+    const updater = new DebUpdater(null, stubApp)
+    updater.updateManifestPublicKey = publicKeyPem
+    updater.logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
+    ;(updater as any).clientPromise = Promise.resolve({ setRequestHeaders: vi.fn(), getLatestVersion: () => Promise.resolve(info) })
+    ;(updater as any).stagingUserIdPromise = { value: Promise.resolve(STAGING_USER_ID) }
+    return updater
+  }
+  // the update check up to the rollout decision: fetch and verify the manifest, then decide whether this install takes it
+  async function isUpdateAvailable(info: UpdateInfo): Promise<boolean> {
+    const updater = makeUpdater(info)
+    const result = await (updater as any).getUpdateInfoAndProvider()
+    return (updater as any).isUpdateAvailable(result.info)
+  }
+
+  it("rejects a stagingPercentage written into a signed latest.yml without signing it again, for every install, naming the cause", async ({ expect }) => {
+    for (const stagingPercentage of [10, 0]) {
+      const edited = parse(`${publishedYml}stagingPercentage: ${stagingPercentage}\n`)
+      await expect(isUpdateAvailable(edited)).rejects.toMatchObject({
+        code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID",
+        message: expect.stringContaining(
+          "stagingPercentage is covered by the signature. If it was set or changed after latest*.yml was signed, sign latest*.yml again: https://www.electron.build/docs/features/auto-update#staged-rollouts"
+        ),
+      })
+    }
+  })
+
+  it("names stagingPercentage only for a manifest that has one", async ({ expect }) => {
+    const tampered = parse(publishedYml.replace("sha512: hash", "sha512: tampered"))
+    const error = await isUpdateAvailable(tampered).catch((e: Error) => e)
+    expect(error).toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+    expect((error as Error).message).not.toContain("stagingPercentage")
+  })
+
+  it("rolls the release out to the configured share of installs once latest.yml is signed again, as the docs describe", async ({ expect }) => {
+    await expect(isUpdateAvailable(parse(setStagingPercentageAndSign(publishedYml, 90, [privateKeyPem])))).resolves.toBe(true)
+    await expect(isUpdateAvailable(parse(setStagingPercentageAndSign(publishedYml, 10, [privateKeyPem])))).resolves.toBe(false)
+    // the new entry carries the id of the key that made it, like an entry written at build time
+    const signedAgain = parse(setStagingPercentageAndSign(publishedYml, 10, [privateKeyPem]))
+    expect(signedAgain.signatures).toEqual([{ keyId: computeUpdateManifestKeyId(publicKeyPem), signature: signedAgain.signature }])
   })
 })
 
