@@ -1,6 +1,7 @@
 import { CancellationToken, hashFile } from "builder-util-runtime"
 import type { UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { outputFile, pathExists, readJson } from "fs-extra"
+import { Lazy } from "lazy-val"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { DebUpdater, NsisUpdater } from "electron-updater"
@@ -714,6 +715,16 @@ describe("install on next launch", { concurrent: false }, () => {
       await (updater as any).removeInstalledWebPackage()
 
       expect((updater as any).downloadedUpdateHelper).toBeNull()
+    })
+
+    test("settles and keeps the package when loading the update config rejects with a non-Error value", async context => {
+      const seeded = await seedDownloadedWebUpdate(helper, { version: "1.0.1" })
+      // the app is never ready here, so only the call below runs the cleanup
+      const { updater } = await createPackagedNsisUpdater("1.0.1", context)
+      updater.configOnDisk = new Lazy<any>(() => Promise.reject(undefined))
+
+      await expect((updater as any).removeInstalledWebPackage()).resolves.toBeUndefined()
+      expect(await pathExists(seeded.packagePath)).toBe(true)
     })
   })
 })
