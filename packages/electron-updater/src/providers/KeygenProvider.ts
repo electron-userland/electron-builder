@@ -34,7 +34,7 @@ export class KeygenProvider extends Provider<UpdateInfo> {
     const channelFile = getChannelFilename(this.getCustomChannelName(this.channel))
     const channelUrl = newUrlFromBase(channelFile, this.baseUrl, this.updater.isAddNoCacheQuery)
     try {
-      const updateInfo = await this.httpRequest(
+      const updateInfo = await this.channelFileRequest(
         channelUrl,
         {
           Accept: "application/vnd.api+json",
@@ -44,7 +44,7 @@ export class KeygenProvider extends Provider<UpdateInfo> {
       )
       return parseUpdateInfo(updateInfo, channelFile, channelUrl)
     } catch (e: any) {
-      // a response over the size limit of update info keeps its own code
+      // a channel file over the size limit keeps its own code
       if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
         throw e
       }

@@ -78,10 +78,6 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     try {
       release = this.updater.allowPrerelease ? this.findHighestEligibleRelease(releaseEntries) : await this.findLatestRelease(releaseEntries, cancellationToken)
     } catch (e: any) {
-      // a response over the size limit of update info keeps its own code
-      if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
-        throw e
-      }
       throw newError(`Cannot parse releases feed: ${e.stack || e.message},\nXML:\n${feedXml}`, "ERR_UPDATER_INVALID_RELEASE_FEED")
     }
 
@@ -151,7 +147,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     const channelFile = getChannelFilename(channelName)
     const channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(String(tag), channelFile), this.baseUrl)
     try {
-      const rawData = (await this.httpRequest(channelFileUrl, undefined, cancellationToken))!
+      const rawData = (await this.channelFileRequest(channelFileUrl, undefined, cancellationToken))!
       return { rawData, channelFile, channelFileUrl }
     } catch (e: any) {
       if (e instanceof HttpError && e.statusCode === 404) {
@@ -177,9 +173,6 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
       const releaseInfo: GithubReleaseInfo = JSON.parse(rawData)
       return releaseInfo.tag_name
     } catch (e: any) {
-      if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
-        throw e
-      }
       throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
   }

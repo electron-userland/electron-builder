@@ -564,7 +564,7 @@ async function createAppUpdateConfiguration(
   const maxUpdateInfoSize: unknown = publishConfig.maxUpdateInfoSize
   if (maxUpdateInfoSize != null && !isValidMaxUpdateInfoSize(maxUpdateInfoSize)) {
     throw new InvalidConfigurationError(
-      `publish.maxUpdateInfoSize must be a positive integer (bytes) or Infinity, but got: ${typeof maxUpdateInfoSize === "string" ? JSON.stringify(maxUpdateInfoSize) : typeof maxUpdateInfoSize === "number" ? maxUpdateInfoSize : typeof maxUpdateInfoSize}`
+      `publish.maxUpdateInfoSize must be a positive integer (bytes) or 0 for no limit, but got: ${typeof maxUpdateInfoSize === "string" ? JSON.stringify(maxUpdateInfoSize) : typeof maxUpdateInfoSize === "number" ? maxUpdateInfoSize : typeof maxUpdateInfoSize}`
     )
   }
 

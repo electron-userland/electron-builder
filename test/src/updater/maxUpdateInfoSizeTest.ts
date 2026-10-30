@@ -65,8 +65,8 @@ describe("electron-updater maxUpdateInfoSize", () => {
     await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE", message: expect.stringContaining("1024 bytes") })
   })
 
-  test("Infinity (.inf) in app-update.yml disables the limit", async ({ tmpDir, expect }) => {
-    const { updater } = await createUpdater(tmpDir, { maxUpdateInfoSize: Infinity }, DEFAULT_MAX_UPDATE_INFO_SIZE + 1)
+  test("0 in app-update.yml disables the limit", async ({ tmpDir, expect }) => {
+    const { updater } = await createUpdater(tmpDir, { maxUpdateInfoSize: 0 }, DEFAULT_MAX_UPDATE_INFO_SIZE + 1)
     expect((await updater.checkForUpdates())?.updateInfo.version).toBe("1.1.0")
   })
 
@@ -84,9 +84,9 @@ describe("electron-updater maxUpdateInfoSize", () => {
     expect((await lowered.checkForUpdates())?.updateInfo.version).toBe("1.1.0")
   })
 
-  test("autoUpdater.maxUpdateInfoSize Infinity disables the limit", async ({ tmpDir, expect }) => {
+  test("autoUpdater.maxUpdateInfoSize 0 disables the limit", async ({ tmpDir, expect }) => {
     const { updater } = await createUpdater(tmpDir, {}, DEFAULT_MAX_UPDATE_INFO_SIZE + 1)
-    updater.maxUpdateInfoSize = Infinity
+    updater.maxUpdateInfoSize = 0
     expect((await updater.checkForUpdates())?.updateInfo.version).toBe("1.1.0")
   })
 
@@ -96,7 +96,7 @@ describe("electron-updater maxUpdateInfoSize", () => {
     await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
   })
 
-  test.for([0, -1, 1.5, NaN, -Infinity, "1024", true])("autoUpdater.maxUpdateInfoSize = %s throws", async (value, { tmpDir, expect }) => {
+  test.for([-1, 1.5, NaN, Infinity, -Infinity, 2 ** 53, "1024", true])("autoUpdater.maxUpdateInfoSize = %s throws", async (value, { tmpDir, expect }) => {
     const { updater } = await createUpdater(tmpDir, {}, 1)
     expect(() => {
       updater.maxUpdateInfoSize = value as any
@@ -108,6 +108,50 @@ describe("electron-updater maxUpdateInfoSize", () => {
     const { updater, executor } = await createUpdater(tmpDir, { maxUpdateInfoSize: -1 }, 2048)
     await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_MAX_UPDATE_INFO_SIZE" })
     expect(executor.sent).toHaveLength(0)
+
+    updater.maxUpdateInfoSize = 4096
+    expect((await updater.checkForUpdates())?.updateInfo.version).toBe("1.1.0")
+  })
+})
+
+// a custom updateProvider that is not built on electron-updater's Provider (e.g. one from another copy of electron-updater)
+class ForeignProvider {
+  constructor(..._args: Array<unknown>) {}
+
+  get feedBaseUrl(): null {
+    return null
+  }
+
+  setRequestHeaders(): void {
+    // nothing to do
+  }
+
+  getLatestVersion() {
+    return Promise.resolve({
+      version: "1.1.0",
+      files: [{ url: "TestApp-Setup-1.1.0.exe", sha512: "c2hhNTEy", size: 1 }],
+      path: "",
+      sha512: "",
+      releaseDate: "2024-01-01T00:00:00.000Z",
+    })
+  }
+
+  resolveFiles(): Array<never> {
+    return []
+  }
+}
+
+describe("electron-updater maxUpdateInfoSize with a custom provider without setMaxUpdateInfoSize", () => {
+  test("the check succeeds with the default limit", async ({ tmpDir, expect }) => {
+    const { updater } = await createUpdater(tmpDir, null, 1)
+    updater.setFeedURL({ provider: "custom", updateProvider: ForeignProvider })
+    expect((await updater.checkForUpdates())?.updateInfo.version).toBe("1.1.0")
+  })
+
+  test("the check succeeds with a limit set in the publish configuration or at runtime", async ({ tmpDir, expect }) => {
+    const { updater } = await createUpdater(tmpDir, null, 1)
+    updater.setFeedURL({ provider: "custom", updateProvider: ForeignProvider, maxUpdateInfoSize: 2048 })
+    expect((await updater.checkForUpdates())?.updateInfo.version).toBe("1.1.0")
 
     updater.maxUpdateInfoSize = 4096
     expect((await updater.checkForUpdates())?.updateInfo.version).toBe("1.1.0")
@@ -128,7 +172,7 @@ describe("electron-builder maxUpdateInfoSize", () => {
     }
   }
 
-  test.for([20 * 1024 * 1024, Infinity])("app-update.yml carries maxUpdateInfoSize %s", async (maxUpdateInfoSize, { tmpDir, expect }) => {
+  test.for([20 * 1024 * 1024, 0])("app-update.yml carries maxUpdateInfoSize %s", async (maxUpdateInfoSize, { tmpDir, expect }) => {
     const publishConfig = await getAppUpdatePublishConfiguration(makePackager({ ...FEED, maxUpdateInfoSize }), null, Arch.x64, false)
     expect(publishConfig).toMatchObject({ ...FEED, maxUpdateInfoSize })
     if (publishConfig == null) {
@@ -139,9 +183,9 @@ describe("electron-builder maxUpdateInfoSize", () => {
     expect(load(await fsExtra.readFile(path.join(dir, "app-update.yml"), "utf8"))).toMatchObject({ maxUpdateInfoSize })
   })
 
-  test.for([0, -1, 1.5, "10MB"])("an invalid maxUpdateInfoSize %s is a configuration error", async (maxUpdateInfoSize, { expect }) => {
+  test.for([-1, 1.5, Infinity, "10MB"])("an invalid maxUpdateInfoSize %s is a configuration error", async (maxUpdateInfoSize, { expect }) => {
     await expect(getAppUpdatePublishConfiguration(makePackager({ ...FEED, maxUpdateInfoSize }), null, Arch.x64, false)).rejects.toThrow(
-      /publish\.maxUpdateInfoSize must be a positive integer \(bytes\) or Infinity/
+      /publish\.maxUpdateInfoSize must be a positive integer \(bytes\) or 0 for no limit/
     )
   })
 })

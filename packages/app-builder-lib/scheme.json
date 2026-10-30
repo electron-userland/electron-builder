@@ -480,7 +480,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -605,7 +605,7 @@
       "properties": {
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -2299,7 +2299,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -2411,7 +2411,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -2580,7 +2580,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -2731,7 +2731,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -6712,7 +6712,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -7325,7 +7325,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -8244,7 +8244,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -8745,7 +8745,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest update info response electron-updater reads, in bytes: the channel file (`latest*.yml`), the GitHub releases feed or a\nprovider API response, which are read into memory and parsed before anything verifies them. A larger response fails the update\ncheck with `ERR_HTTP_RESPONSE_TOO_LARGE`. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `Infinity` (`.inf` in YAML) for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
