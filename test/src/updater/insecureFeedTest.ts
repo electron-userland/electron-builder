@@ -1,9 +1,12 @@
 import { CancellationToken, isLoopbackHostname } from "builder-util-runtime"
 import { DOWNLOAD_GAP_COALESCE_THRESHOLD } from "electron-updater/src/differentialDownloader/downloadPlanBuilder"
 import { GenericDifferentialDownloader } from "electron-updater/src/differentialDownloader/GenericDifferentialDownloader"
+import { NsisUpdater } from "electron-updater/src/NsisUpdater"
 import { createHash } from "crypto"
+import { EventEmitter } from "events"
 import fsExtra from "fs-extra"
 import type { OutgoingHttpHeaders, RequestOptions } from "http"
+import Module from "node:module"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
 import { describe, test } from "vitest"
@@ -136,6 +139,48 @@ describe("ElectronHttpExecutor rejects plain http", () => {
     isAllowed = false
     await expect(executor.request(apiRequestOptions(HTTP_URL))).rejects.toMatchObject(INSECURE_FEED)
     expect(executor.sent.map(it => it.url)).toEqual([HTTP_URL])
+  })
+})
+
+// An updater created without an app adapter, as in a real app, builds its own ElectronHttpExecutor: it must read the property. Electron
+// loads "electron" through require (see ElectronAppAdapter), so a stub of what the constructor and net.request touch stands in for it.
+describe("AppUpdater.allowInsecureFeed", () => {
+  test("is read by the updater's own executor on every request", ({ expect }) => {
+    const sent: Array<unknown> = []
+    const electron = {
+      app: Object.assign(new EventEmitter(), {
+        whenReady: () => new Promise<void>(() => undefined),
+        getVersion: () => "1.0.0",
+        getName: () => "insecure-feed-app",
+        getAppPath: () => __dirname,
+        getPath: () => __dirname,
+        isPackaged: false,
+      }),
+      session: { fromPartition: () => ({}) },
+      net: {
+        request: (options: unknown) => {
+          sent.push(options)
+          return new EventEmitter()
+        },
+      },
+    }
+    const moduleInternals = Module as unknown as { _load: (request: string, ...rest: Array<unknown>) => unknown }
+    const load = moduleInternals._load
+    moduleInternals._load = function (this: unknown, request: string, ...rest: Array<unknown>) {
+      return request === "electron" ? electron : load.call(this, request, ...rest)
+    }
+    try {
+      const updater = new NsisUpdater()
+      const send = () => updater.httpExecutor.createRequest(apiRequestOptions(HTTP_URL), () => undefined)
+
+      expect(updater.allowInsecureFeed).toBe(false)
+      expect(send).toThrow(expect.objectContaining(INSECURE_FEED))
+      updater.allowInsecureFeed = true
+      send()
+      expect(sent).toMatchObject([{ protocol: "http:", hostname: "feed.example.com" }])
+    } finally {
+      moduleInternals._load = load
+    }
   })
 })
 
