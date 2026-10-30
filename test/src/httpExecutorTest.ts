@@ -1,8 +1,9 @@
 import { expect, test, describe } from "vitest"
-import { CancellationToken, DigestTransform, HttpExecutor } from "builder-util-runtime"
+import { CancellationToken, DigestTransform, HttpError, HttpExecutor } from "builder-util-runtime"
 import { hashSensitiveValue, REDACTED_VALUE, safeStringifyJson } from "builder-util-runtime/internal"
 import { addSensitiveFieldPattern, addSensitiveRedirectHeader, detectSha512Encoding, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
 import { createHash } from "crypto"
+import { EventEmitter } from "events"
 import { RequestOptions } from "http"
 import { Readable, Writable } from "stream"
 import { pipeline } from "stream/promises"
@@ -833,6 +834,19 @@ describe("safeStringifyJson field redaction", () => {
     expect(parsed.name).toBe(hashSensitiveValue("myapp"))
     expect(parsed.url).toBe("https://example.com")
   })
+
+  // a fingerprint is costly to compute, and the data can come from a server (an error response body or its headers)
+  test("computes at most 16 fingerprints per call and logs the other sensitive values as <redacted>", () => {
+    const data = Array.from({ length: 1000 }, (_, i) => ({ key: `v${i}`, secretKey: { nested: true }, name: `n${i}` }))
+    const parsed = JSON.parse(safeStringifyJson(data))
+
+    expect(parsed.slice(0, 16).map((it: any) => it.key)).toEqual(data.slice(0, 16).map(it => hashSensitiveValue(it.key)))
+    expect(parsed.slice(16).every((it: any) => it.key === REDACTED_VALUE)).toBe(true)
+    expect(parsed.every((it: any, i: number) => it.secretKey === "<stripped sensitive data>" && it.name === `n${i}`)).toBe(true)
+
+    // the limit is per call
+    expect(JSON.parse(safeStringifyJson({ token: "x" })).token).toBe(hashSensitiveValue("x"))
+  })
 })
 
 describe("addSensitiveRedirectHeader / addSensitiveFieldPattern", () => {
@@ -1150,6 +1164,58 @@ describe("HttpExecutor download Location handling", () => {
     executor.runDownload(e => errors.push(e))
     expect(errors).toEqual([null])
     expect(executor.requestCount).toBe(1)
+  })
+})
+
+describe("HttpExecutor error response redaction", () => {
+  // Answers the request with `statusCode`, `headers` and `body`. The error message of a response of 400 or more logs its headers and
+  // a JSON body with sensitive values replaced by fingerprints.
+  class ErrorExecutor extends HttpExecutor<any> {
+    constructor(
+      private readonly statusCode: number,
+      private readonly headers: Record<string, string>,
+      private readonly body: string
+    ) {
+      super()
+    }
+
+    createRequest(_options: RequestOptions, callback: (response: any) => void): any {
+      const response = Object.assign(new EventEmitter(), { statusCode: this.statusCode, statusMessage: "", headers: this.headers, setEncoding() {} })
+      return Object.assign(new EventEmitter(), {
+        abort() {},
+        end: () => {
+          callback(response)
+          response.emit("data", this.body)
+          response.emit("end")
+        },
+      })
+    }
+  }
+
+  const FINGERPRINTS = /[a-f0-9]{32} \(redacted fingerprint\)/g
+
+  function requestError(executor: ErrorExecutor): Promise<any> {
+    return executor.request({ protocol: "https:", hostname: "example.com", path: "/latest.yml" }).catch(e => e)
+  }
+
+  test("a JSON error body with many sensitive values fails the request without fingerprinting each of them", async () => {
+    const body = JSON.stringify(Array.from({ length: 2000 }, (_, i) => ({ key: `v${i}` })))
+    const error = await requestError(new ErrorExecutor(500, { "content-type": "application/json" }, body))
+
+    expect(error).toBeInstanceOf(HttpError)
+    expect(error.statusCode).toBe(500)
+    expect(error.message.match(FINGERPRINTS)).toHaveLength(16)
+    expect(error.message).toContain(REDACTED_VALUE)
+  })
+
+  test("a 404 with many sensitive headers fails the request without fingerprinting each of them", async () => {
+    const headers = Object.fromEntries(Array.from({ length: 500 }, (_, i) => [`x${i}-key`, `v${i}`]))
+    const error = await requestError(new ErrorExecutor(404, headers, ""))
+
+    expect(error).toBeInstanceOf(HttpError)
+    expect(error.statusCode).toBe(404)
+    expect(error.message.match(FINGERPRINTS)).toHaveLength(16)
+    expect(error.message).toContain(REDACTED_VALUE)
   })
 })
 
