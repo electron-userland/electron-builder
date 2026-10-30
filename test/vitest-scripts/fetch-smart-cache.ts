@@ -82,10 +82,17 @@ function setGithubOutput(key: string, value: string) {
 
 const DOWNLOAD_ATTEMPTS = 3
 const DOWNLOAD_RETRY_DELAY_MS = 5000
+// GitHub's artifact blob storage throttles the whole account when many jobs download at once ("HTTP 503: Egress is over the
+// account limit"). That lasts minutes, not seconds, so those failures get more attempts and an exponential backoff with jitter
+// (15s, 30s, 60s, 120s plus up to 20% each, under 5 minutes in total) to keep the many shards of one run from retrying in lockstep.
+const THROTTLED_DOWNLOAD_ATTEMPTS = 5
+const THROTTLED_RETRY_BASE_DELAY_MS = 15_000
+const THROTTLED_RETRY_MAX_DELAY_MS = 120_000
+const THROTTLED_ERROR_PATTERN = /HTTP 503|Egress is over the account limit/i
 
 // `gh run download` fails now and then on a transient GitHub API or blob storage error, so it is tried a few times, and
 // what gh reports is printed: without it, the failure of a pinned restore says nothing about its cause.
-function downloadArtifact(runId: number, artifactName: string, dest: string): boolean {
+export function downloadArtifact(runId: number, artifactName: string, dest: string): boolean {
   const tmpDir = path.join(path.dirname(dest), ".cache-download-tmp")
   try {
     for (let attempt = 1; ; attempt++) {
@@ -96,11 +103,19 @@ function downloadArtifact(runId: number, artifactName: string, dest: string): bo
         break
       }
       const reason = (result.stderr || result.error?.message || `exit code ${result.status}`).trim()
-      console.log(`  gh run download failed (attempt ${attempt}/${DOWNLOAD_ATTEMPTS}): ${reason}`)
-      if (attempt === DOWNLOAD_ATTEMPTS) {
+      const throttled = THROTTLED_ERROR_PATTERN.test(reason)
+      const maxAttempts = throttled ? THROTTLED_DOWNLOAD_ATTEMPTS : DOWNLOAD_ATTEMPTS
+      console.log(`  gh run download failed (attempt ${attempt}/${maxAttempts}): ${reason}`)
+      if (attempt >= maxAttempts) {
         return false
       }
-      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, DOWNLOAD_RETRY_DELAY_MS)
+      let delayMs = DOWNLOAD_RETRY_DELAY_MS
+      if (throttled) {
+        const baseDelayMs = Math.min(THROTTLED_RETRY_BASE_DELAY_MS * 2 ** (attempt - 1), THROTTLED_RETRY_MAX_DELAY_MS)
+        delayMs = Math.round(baseDelayMs * (1 + Math.random() * 0.2))
+        console.log(`  Artifact storage is throttling downloads; retrying in ${Math.round(delayMs / 1000)}s`)
+      }
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delayMs)
     }
     const downloaded = fs.readdirSync(tmpDir).find(f => f === "_vitest-smart-cache.json")
     if (!downloaded) {
@@ -202,4 +217,6 @@ function main() {
   console.log("No smart cache artifact found. Run 'pnpm ci:test:count' to see the default plan.")
 }
 
-main()
+if (require.main === module) {
+  main()
+}
