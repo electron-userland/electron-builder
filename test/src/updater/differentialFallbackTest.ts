@@ -693,7 +693,11 @@ describe("differential download failures fall back to a verified full download, 
       ])
       // the stall is on the retry, not on the multi-range request
       expect(logs.some(it => it.includes("retrying with one range per request"))).toBe(true)
-      expect(rangeRequests().map(it => it.range?.includes(",") === true)).toEqual([true, false])
+      // (the answered headers of the first retry request let the ranges after it be read ahead, all of them stalled as well)
+      const isMultiRange = rangeRequests().map(it => it.range?.includes(",") === true)
+      expect(isMultiRange[0]).toBe(true)
+      expect(isMultiRange.length).toBeGreaterThan(1)
+      expect(isMultiRange.slice(1).every(it => !it)).toBe(true)
       expect(logs.filter(it => it.includes("fallback to full download"))).toEqual([])
       expect(outcome).toMatch(/^rejected: CancellationError/)
       expect(fullDownloads()).toHaveLength(0)

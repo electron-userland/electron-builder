@@ -1,18 +1,22 @@
 import { blake2b } from "@noble/hashes/blake2.js"
 import { CancellationToken } from "builder-util-runtime"
-import { BlockInput, decodeBlockMapV3, encodeBlockMapV3, isBlockMapV3, RECORD_SIZE, recordsStart, SUPER_SIZE } from "builder-util-runtime/internal"
+import { BlockInput, decodeBlockMapV3, encodeBlockMapV3, GROUP_SIZE, isBlockMapV3, RECORD_SIZE, recordRangeOfGroup, recordsStart, SUPER_SIZE } from "builder-util-runtime/internal"
 import {
   coalesce,
+  COALESCE_GAP_BYTES,
   fetchBlockMapV3,
   FIRST_RANGE_SIZE,
   firstRangeSize,
+  GROUP_TABLE_PREFETCH_LIMIT,
   MIN_FIRST_RANGE_SIZE,
   parseMultipartByteRanges,
   verifyBlockMapV3,
 } from "electron-updater/src/differentialDownloader/blockMapV3Fetcher"
+import { DOWNLOAD_GAP_COALESCE_THRESHOLD } from "electron-updater/src/differentialDownloader/downloadPlanBuilder"
+import { SINGLE_RANGE_CONCURRENCY } from "electron-updater/src/differentialDownloader/singleRangeReadAhead"
 import * as http from "http"
 import { AddressInfo } from "net"
-import { afterAll, beforeAll, describe, expect, test } from "vitest"
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest"
 import { gzipSync } from "zlib"
 import { httpExecutor } from "../helpers/updaterTestUtil"
 
@@ -63,6 +67,10 @@ interface TestServer {
   redirects: Map<string, string>
   /** answers the request instead of the file server when it returns true */
   override: ((req: http.IncomingMessage, res: http.ServerResponse) => boolean) | null
+  /** delay of every answer of the file server, so requests sent together are in flight together */
+  latencyMs: number
+  /** the most requests in flight at the same time since the last reset */
+  maxInFlight: number
   close(): Promise<void>
 }
 
@@ -86,8 +94,23 @@ function parseRanges(header: string, size: number): Array<[number, number]> | nu
 
 /** In-memory file server with single- and multi-range support (206 + Content-Range, 416 when unsatisfiable) and a switch to disable Range support. */
 function startServer(): Promise<TestServer> {
-  const state: TestServer = { url: null as any, requests: [], headers: [], rangeSupport: true, files: new Map(), redirects: new Map(), override: null, close: null as any }
+  const state: TestServer = {
+    url: null as any,
+    requests: [],
+    headers: [],
+    rangeSupport: true,
+    files: new Map(),
+    redirects: new Map(),
+    override: null,
+    latencyMs: 0,
+    maxInFlight: 0,
+    close: null as any,
+  }
+  let inFlight = 0
   const server = http.createServer((req, res) => {
+    inFlight++
+    state.maxInFlight = Math.max(state.maxInFlight, inFlight)
+    res.on("close", () => inFlight--)
     const name = new URL(req.url!, "http://localhost").pathname.replace(/^\/+/, "")
     const file = state.files.get(name)
     const rangeHeader = req.headers["range"] ?? null
@@ -96,6 +119,13 @@ function startServer(): Promise<TestServer> {
     state.headers.push(req.headers)
     const send = (status: number, headers: http.OutgoingHttpHeaders, body?: Buffer) => {
       log.status = status
+      if (state.latencyMs > 0) {
+        setTimeout(() => {
+          res.writeHead(status, headers)
+          res.end(body)
+        }, state.latencyMs)
+        return
+      }
       res.writeHead(status, headers)
       res.end(body)
     }
@@ -174,6 +204,8 @@ describe("blockMapV3Fetcher", () => {
       it.headers.length = 0
       it.redirects.clear()
       it.override = null
+      it.latencyMs = 0
+      it.maxInFlight = 0
     }
     const { setUp, ...options } = extra
     setUp?.()
@@ -189,11 +221,23 @@ describe("blockMapV3Fetcher", () => {
 
   /** NEW map with a few edited groups, so a fetch against OLD issues several Range requests */
   function editedMap(tag: string): Buffer {
+    return editGroups([40, 200], tag)
+  }
+
+  /** NEW map whose groups `groupIndexes` changed (their second block: the grouping stays put) */
+  function editGroups(groupIndexes: Array<number>, tag: string): Buffer {
     const blocks = OLD_BLOCKS.map(b => ({ ...b }))
-    for (const groupIndex of [40, 200]) {
+    for (const groupIndex of groupIndexes) {
       edit(blocks, firstBlockOf(groupIndex) + 1, tag)
     }
     return encode(reoffset(blocks))
+  }
+
+  /** bytes between the records of consecutive groups of `groupIndexes` in `map` */
+  function recordGaps(map: Buffer, groupIndexes: Array<number>): Array<number> {
+    const decoded = decodeBlockMapV3(map)
+    const ranges = groupIndexes.map(it => recordRangeOfGroup(decoded.header, decoded.groups, it))
+    return ranges.slice(1).map((it, i) => it.start - ranges[i].end)
   }
 
   /** first block index of group `groupIndex` */
@@ -219,8 +263,139 @@ describe("blockMapV3Fetcher", () => {
     const first = firstRangeSize(oldMap.header)
     expect(first).toBeGreaterThan(oldMap.header.headerLen + oldMap.supers.length * SUPER_SIZE)
     expect(first).toBeLessThan(OLD.length / 10)
-    expect(firstRangeSize({ ...oldMap.header, superCount: 1 })).toBe(MIN_FIRST_RANGE_SIZE)
+    expect(firstRangeSize({ ...oldMap.header, superCount: 1, groupCount: 1 })).toBe(MIN_FIRST_RANGE_SIZE)
     expect(firstRangeSize({ ...oldMap.header, superCount: 100000 })).toBe(FIRST_RANGE_SIZE)
+  })
+
+  test("the first range covers the whole group table when it is small enough, else the super-group table and the first group entries", () => {
+    const header = oldMap.header
+    const groupTableEnd = header.headerLen + header.superCount * SUPER_SIZE + header.groupCount * GROUP_SIZE
+    expect(firstRangeSize(header)).toBeGreaterThan(groupTableEnd)
+    expect(firstRangeSize(header)).toBeLessThanOrEqual(GROUP_TABLE_PREFETCH_LIMIT)
+    // ~4000 groups (a ~2 GB file at 16 KiB blocks) do not fit: header + super-group table + 8 group entries
+    const large = { ...header, groupCount: 4000 }
+    expect(firstRangeSize(large)).toBe(Math.max(MIN_FIRST_RANGE_SIZE, header.headerLen + Math.ceil(header.superCount * 1.25 + 16) * SUPER_SIZE + 8 * GROUP_SIZE))
+  })
+
+  test("a changed map is fetched in two round trips: the first range holds the group table, so only records follow", async () => {
+    const NEW = editGroups([30, 200], "prefetch")
+    server.files.set("new.blockmap", NEW)
+    for (const multipart of [false, true]) {
+      const result = await fetchWith("new.blockmap", OLD, multipart)
+      expect(result.buffer.equals(NEW)).toBe(true)
+      expect(result.fetchedGroups).toBe(2)
+      expect(server.requests[0].range).toBe(`bytes=0-${firstRangeSize(oldMap.header) - 1}`)
+      // every later range is a record range: no request for group entries
+      const recordStart = recordsStart(decodeBlockMapV3(NEW).header)
+      for (const request of server.requests.slice(1)) {
+        for (const range of request.range!.slice("bytes=".length).split(",")) {
+          expect(parseInt(range, 10)).toBeGreaterThanOrEqual(recordStart)
+        }
+      }
+      expect(result.requests).toBe(multipart ? 2 : 3)
+    }
+  })
+
+  test("single-range host: record ranges up to DOWNLOAD_GAP_COALESCE_THRESHOLD apart are fetched as one; a multipart host keeps them apart", async () => {
+    const groups = [100, 109]
+    const NEW = editGroups(groups, "gap")
+    const [gap] = recordGaps(NEW, groups)
+    expect(gap).toBeGreaterThan(COALESCE_GAP_BYTES)
+    expect(gap).toBeLessThanOrEqual(DOWNLOAD_GAP_COALESCE_THRESHOLD)
+    server.files.set("new.blockmap", NEW)
+
+    const single = await fetchWith("new.blockmap", OLD, false)
+    expect(single.buffer.equals(NEW)).toBe(true)
+    expect(single.requests).toBe(2)
+    const decoded = decodeBlockMapV3(NEW)
+    const [first, last] = groups.map(it => recordRangeOfGroup(decoded.header, decoded.groups, it))
+    expect(server.requests[1].range).toBe(`bytes=${first.start}-${last.end - 1}`)
+
+    const multipart = await fetchWith("new.blockmap", OLD, true)
+    expect(multipart.buffer.equals(NEW)).toBe(true)
+    expect(multipart.requests).toBe(2)
+    expect(server.requests[1].range).toBe(`bytes=${first.start}-${first.end - 1}, ${last.start}-${last.end - 1}`)
+  })
+
+  describe("single-range host: concurrent range requests", () => {
+    // changed groups whose records are too far apart to be coalesced
+    const GROUPS: Array<number> = [10]
+    for (let g = 11; g < oldMap.groups.length && GROUPS.length < 10; g++) {
+      const previous = recordRangeOfGroup(oldMap.header, oldMap.groups, GROUPS[GROUPS.length - 1])
+      if (recordRangeOfGroup(oldMap.header, oldMap.groups, g).start - previous.end > DOWNLOAD_GAP_COALESCE_THRESHOLD * 1.5) {
+        GROUPS.push(g)
+      }
+    }
+    const NEW = editGroups(GROUPS, "concurrent")
+
+    test("the record ranges are fetched SINGLE_RANGE_CONCURRENCY at a time and reassembled in place", async () => {
+      expect(Math.min(...recordGaps(NEW, GROUPS))).toBeGreaterThan(DOWNLOAD_GAP_COALESCE_THRESHOLD)
+      server.files.set("new.blockmap", NEW)
+      const result = await fetchWith("new.blockmap", OLD, false, { setUp: () => (server.latencyMs = 30) })
+      expect(GROUPS.length).toBeGreaterThan(2 * SINGLE_RANGE_CONCURRENCY)
+      expect(result.buffer.equals(NEW)).toBe(true)
+      expect(result.fetchedGroups).toBe(GROUPS.length)
+      expect(result.requests).toBe(1 + GROUPS.length)
+      expect(server.requests.every(it => it.status === 206 && !it.range!.includes(","))).toBe(true)
+      expect(server.maxInFlight).toBe(SINGLE_RANGE_CONCURRENCY)
+    })
+
+    test("a failed range request fails the fetch at once, aborts the requests in flight and requests no further range", async () => {
+      server.files.set("new.blockmap", NEW)
+      let count = 0
+      let isHungClosed = false
+      const failThirdHangFourth = (_req: http.IncomingMessage, res: http.ServerResponse) => {
+        count++
+        if (count === 3) {
+          // while the other requests of the wave are in flight
+          setTimeout(() => {
+            res.writeHead(500)
+            res.end("boom")
+          }, 50)
+          return true
+        }
+        if (count === 4) {
+          // never answered: only an abort ends it
+          res.on("close", () => (isHungClosed = true))
+          return true
+        }
+        return false
+      }
+      await expect(
+        fetchWith("new.blockmap", OLD, false, {
+          setUp: () => {
+            server.latencyMs = 300
+            server.override = failThirdHangFourth
+          },
+        })
+      ).rejects.toThrow(/500/)
+      // the first range, then one wave of SINGLE_RANGE_CONCURRENCY record ranges: nothing after the failure
+      expect(server.requests).toHaveLength(1 + SINGLE_RANGE_CONCURRENCY)
+      await vi.waitFor(() => expect(isHungClosed).toBe(true))
+    })
+
+    test("a 200 answer (the whole file) to one of the concurrent range requests is the result", async () => {
+      server.files.set("new.blockmap", NEW)
+      let count = 0
+      const wholeFileOnThird = (_req: http.IncomingMessage, res: http.ServerResponse) => {
+        if (++count !== 3) {
+          return false
+        }
+        setTimeout(() => {
+          res.writeHead(200, { "Content-Length": NEW.length })
+          res.end(NEW)
+        }, 50)
+        return true
+      }
+      const result = await fetchWith("new.blockmap", OLD, false, {
+        setUp: () => {
+          server.latencyMs = 300
+          server.override = wholeFileOnThird
+        },
+      })
+      expect(result.buffer.equals(NEW)).toBe(true)
+      expect(server.requests).toHaveLength(1 + SINGLE_RANGE_CONCURRENCY)
+    })
   })
 
   test("no old map → one plain GET of the whole file", async () => {

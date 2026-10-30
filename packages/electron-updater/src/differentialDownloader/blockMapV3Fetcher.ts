@@ -25,12 +25,25 @@ import {
 import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
 import { Logger } from "../types.js"
+import { DOWNLOAD_GAP_COALESCE_THRESHOLD } from "./downloadPlanBuilder.js"
+import { SINGLE_RANGE_CONCURRENCY } from "./singleRangeReadAhead.js"
 
 /** Upper bound of the first Range request: header + super-group table of maps up to ~4k super-groups (≈ 2 GB of 16 KiB blocks). */
 export const FIRST_RANGE_SIZE = 64 * 1024
 /** Lower bound of the first Range request: the header, the super-group table and the first group entries of a typical map. */
 export const MIN_FIRST_RANGE_SIZE = 2 * 1024
-/** Unmatched record ranges separated by a gap up to this size are fetched as one range (a request costs ~1 KB of headers + 1 RTT). */
+/**
+ * The first Range request also covers the whole group table when header, super-group table and group table (with the same
+ * margin) fit into this many bytes — up to ~2000 groups, a ~1 GB file at the default 16 KiB blocks. That saves the request for
+ * the group entries of the changed super-groups, a round trip, at the price of the group entries that would have been copied
+ * from the old map: ~32 KiB take about as long as one round trip of ~50 ms at ~5 Mbit/s.
+ */
+export const GROUP_TABLE_PREFETCH_LIMIT = 32 * 1024
+/**
+ * On a multipart host, unmatched ranges separated by a gap up to this size are fetched as one range (an extra range costs
+ * ~100 B of part framing). On a single-range host every range is a request of its own, so the gap is the file download's
+ * (`DOWNLOAD_GAP_COALESCE_THRESHOLD`, 8 KiB): a few KiB of map bytes cost less than a request (~1 KB of headers + 1 RTT).
+ */
 export const COALESCE_GAP_BYTES = 1024
 /** Apache's default MaxRanges is 200 and header buffers are 8 KB; stay under both. */
 export const MAX_RANGES_PER_REQUEST = 200
@@ -97,12 +110,13 @@ interface DecodedOldMap {
 
 /**
  * Fetches the NEW v3 block map with minimal wire cost:
- * 1. Range-GET the first `firstRangeSize` bytes → header + super-group table (+ the first group entries).
+ * 1. Range-GET the first `firstRangeSize` bytes → header + super-group table + the group table of a map of up to ~2000 groups
+ *    (else the first group entries).
  * 2. Match new super-groups against the old map by (hash, groupCount, blockCount) → their group entries and records
- *    are copied from the old map; Range-fetch the group entries of the unmatched super-groups.
+ *    are copied from the old map; Range-fetch the group entries of the unmatched super-groups the first request did not cover.
  * 3. Match the remaining groups against the old map by (hash, byteLength, blockCount) → their records are copied;
  *    Range-fetch the records of unmatched groups (adjacent/near ranges coalesced; multipart requests of ≤ 200 ranges
- *    on hosts that support them).
+ *    on hosts that support them, else up to SINGLE_RANGE_CONCURRENCY single-range requests at a time).
  * 4. Assemble and verify every super-group and group hash before returning.
  *
  * Any HTTP error, 416, missing range support that cannot be recovered by a full GET, parse error or verification
@@ -118,6 +132,8 @@ export async function fetchBlockMapV3(options: BlockMapV3FetchOptions): Promise<
 class BlockMapV3Fetcher {
   private wireBytes = 0
   private requests = 0
+  /** requests that have not closed yet, aborted when a concurrent range request fails */
+  private readonly requestsInFlight = new Set<{ abort(): void }>()
   /** options of the current target: retargeted by every redirect (later ranges go directly to e.g. the CDN a feed redirects to) */
   private requestOptions: RequestOptions
   private currentUrl: URL
@@ -200,7 +216,8 @@ class BlockMapV3Fetcher {
         old.data.copy(buffer, newGroupEntryRanges[index].start, from.start, from.end)
       }
     })
-    const groupRanges = coalesce(superStage.fetch)
+    const maxGap = this.isUseMultipleRangeRequest ? COALESCE_GAP_BYTES : DOWNLOAD_GAP_COALESCE_THRESHOLD
+    const groupRanges = coalesce(superStage.fetch, maxGap)
     if (groupRanges.length > 0) {
       const full = await this.fetchRanges(groupRanges, buffer)
       if (full != null) {
@@ -219,7 +236,7 @@ class BlockMapV3Fetcher {
         old.data.copy(buffer, newRecordRanges[index].start, from.start, from.end)
       }
     })
-    const ranges = coalesce(recordStage.fetch)
+    const ranges = coalesce(recordStage.fetch, maxGap)
     if (ranges.length > 0) {
       const full = await this.fetchRanges(ranges, buffer)
       if (full != null) {
@@ -237,6 +254,10 @@ class BlockMapV3Fetcher {
         `${this.wireBytes} bytes / ${this.requests} request(s) for a ${fileSize}-byte map`
     )
     return this.result(buffer, matched, fetched)
+  }
+
+  private get isUseMultipleRangeRequest(): boolean {
+    return this.options.isUseMultipleRangeRequest !== false
   }
 
   private decodeOldMap(): DecodedOldMap | null {
@@ -311,16 +332,8 @@ class BlockMapV3Fetcher {
    * Fetches `ranges` into `target`. Returns the whole file if the server answered a Range request with 200 (no Range support), else null.
    */
   private async fetchRanges(ranges: Array<ByteRange>, target: Buffer): Promise<Buffer | null> {
-    const useMultipart = this.options.isUseMultipleRangeRequest !== false
-    if (!useMultipart || ranges.length === 1) {
-      for (const range of ranges) {
-        const response = await this.rangeRequest([range])
-        if (response.status === 200) {
-          return response.body
-        }
-        response.body.copy(target, range.start)
-      }
-      return null
+    if (!this.isUseMultipleRangeRequest || ranges.length === 1) {
+      return await this.fetchSingleRanges(ranges, target)
     }
 
     for (let i = 0; i < ranges.length; i += MAX_RANGES_PER_REQUEST) {
@@ -347,6 +360,74 @@ class BlockMapV3Fetcher {
       }
     }
     return null
+  }
+
+  /**
+   * Fetches `ranges` into `target` with one request per range, up to SINGLE_RANGE_CONCURRENCY at a time (the ranges are
+   * independent: each lands at its own offset). Returns the whole file if the server answered with 200. The first failure
+   * aborts the requests still in flight and rejects; no further range is requested after a failure or a 200.
+   */
+  private fetchSingleRanges(ranges: Array<ByteRange>, target: Buffer): Promise<Buffer | null> {
+    return new Promise<Buffer | null>((resolve, reject) => {
+      let next = 0
+      let running = 0
+      let settled = false
+      // an aborted request may never settle (Node's http reports no error for a request aborted before its answer), so the
+      // result does not wait for the requests still in flight once it is known
+      const settle = (error: unknown, whole: Buffer | null): void => {
+        settled = true
+        if (error != null || whole != null) {
+          this.abortRequestsInFlight()
+        }
+        if (error == null) {
+          resolve(whole)
+        } else {
+          reject(error)
+        }
+      }
+      const startNext = (): void => {
+        while (!settled && running < SINGLE_RANGE_CONCURRENCY && next < ranges.length) {
+          const range = ranges[next++]
+          running++
+          this.rangeRequest([range]).then(
+            response => {
+              running--
+              if (settled) {
+                return
+              }
+              if (response.status === 200) {
+                settle(null, response.body)
+                return
+              }
+              response.body.copy(target, range.start)
+              if (running === 0 && next >= ranges.length) {
+                settle(null, null)
+              } else {
+                startNext()
+              }
+            },
+            (e: unknown) => {
+              running--
+              if (!settled) {
+                settle(e, null)
+              }
+            }
+          )
+        }
+      }
+      if (ranges.length === 0) {
+        resolve(null)
+        return
+      }
+      startNext()
+    })
+  }
+
+  private abortRequestsInFlight(): void {
+    for (const request of this.requestsInFlight) {
+      request.abort()
+    }
+    this.requestsInFlight.clear()
   }
 
   /**
@@ -450,6 +531,8 @@ class BlockMapV3Fetcher {
       httpExecutor.addRedirectHandlers(request, requestOptions, reject, redirectCount, followRedirect)
       httpExecutor.addErrorAndTimeoutHandlers(request, reject)
       onCancel(() => request.abort())
+      this.requestsInFlight.add(request)
+      request.on("close", () => this.requestsInFlight.delete(request))
       request.end()
     })
   }
@@ -492,12 +575,15 @@ function checkSingleRange(requested: ByteRange, response: RangeResponse, allowSh
 
 /**
  * Size of the first Range request: enough for the header, a super-group table 25 % (+16 super-groups) larger than the old
- * map's and the first few group entries — the new map is usually about the same size — clamped to
- * [MIN_FIRST_RANGE_SIZE, FIRST_RANGE_SIZE]. Bytes beyond the super-group table are group entry / record bytes and are
- * used; if the super-group table is larger than guessed, its rest costs one more request.
+ * map's and a group table 25 % (+16 groups) larger than the old map's — the new map is usually about the same size — when
+ * that is at most GROUP_TABLE_PREFETCH_LIMIT bytes, else the header, the super-group table and the first few group entries;
+ * clamped to [MIN_FIRST_RANGE_SIZE, FIRST_RANGE_SIZE]. Bytes beyond the super-group table are group entry / record bytes and
+ * are used; if the super-group table is larger than guessed, its rest costs one more request.
  */
 export function firstRangeSize(oldHeader: BlockMapV3Header): number {
-  const estimate = oldHeader.headerLen + Math.ceil(oldHeader.superCount * 1.25 + 16) * SUPER_SIZE + 8 * GROUP_SIZE
+  const supersEnd = oldHeader.headerLen + Math.ceil(oldHeader.superCount * 1.25 + 16) * SUPER_SIZE
+  const withGroupTable = supersEnd + Math.ceil(oldHeader.groupCount * 1.25 + 16) * GROUP_SIZE
+  const estimate = withGroupTable <= GROUP_TABLE_PREFETCH_LIMIT ? withGroupTable : supersEnd + 8 * GROUP_SIZE
   return Math.min(FIRST_RANGE_SIZE, Math.max(MIN_FIRST_RANGE_SIZE, estimate))
 }
 
