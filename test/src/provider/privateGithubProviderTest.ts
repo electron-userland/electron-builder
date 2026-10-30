@@ -160,6 +160,57 @@ test.for([
     expected: "1.3.0",
     isUpdateAvailable: true,
   },
+  {
+    name: "with a custom tagNamePrefix, a higher tag without the prefix belongs to another package and is skipped",
+    currentVersion: "1.2.0-beta.1",
+    options: { tagNamePrefix: "app-" },
+    releases: [mockRelease("9.0.0", { tagName: "v9.0.0" }), mockRelease("5.0.0", { tagName: "5.0.0" }), mockRelease("1.3.0", { tagName: "app-1.3.0" })],
+    expected: "1.3.0",
+    isUpdateAvailable: true,
+  },
+  {
+    name: 'with the default tagNamePrefix, tags with and without the "v" are compared',
+    currentVersion: "1.0.0-beta.1",
+    releases: [mockRelease("1.1.0"), mockRelease("1.2.0", { tagName: "1.2.0" })],
+    expected: "1.2.0",
+    isUpdateAvailable: true,
+  },
+  {
+    name: "a numeric pre-release client (1.0.1-1) is offered a higher numeric pre-release",
+    currentVersion: "1.0.1-1",
+    releases: [mockRelease("1.0.1-2", { prerelease: true }), mockRelease("1.0.1-1", { prerelease: true })],
+    expected: "1.0.1-2",
+    isUpdateAvailable: true,
+  },
+  {
+    name: "a numeric pre-release client (1.0.1-1) is offered the stable release",
+    currentVersion: "1.0.1-1",
+    releases: [mockRelease("1.0.1"), mockRelease("1.0.1-2", { prerelease: true }), mockRelease("1.0.1-1", { prerelease: true })],
+    expected: "1.0.1",
+    isUpdateAvailable: true,
+  },
+  {
+    name: "releases whose tags are not versions: the first pre-release in the list",
+    currentVersion: "1.0.0",
+    releases: [mockRelease("1.2.0", { tagName: "release-1.2.0" }), mockRelease("1.3.0-beta.1", { prerelease: true, tagName: "release-1.3.0-beta.1" })],
+    expected: "1.3.0-beta.1",
+    isUpdateAvailable: true,
+  },
+  {
+    name: "releases whose tags are not versions and no pre-release: the first release in the list",
+    currentVersion: "1.0.0",
+    releases: [mockRelease("1.2.0", { tagName: "release-1.2.0" }), mockRelease("1.1.0", { tagName: "release-1.1.0" })],
+    expected: "1.2.0",
+    isUpdateAvailable: true,
+  },
+  {
+    name: "with a custom tagNamePrefix and no tag carrying it: the first pre-release in the list",
+    currentVersion: "1.0.0",
+    options: { tagNamePrefix: "app-" },
+    releases: [mockRelease("2.0.0"), mockRelease("1.3.0-beta.1", { prerelease: true })],
+    expected: "1.3.0-beta.1",
+    isUpdateAvailable: true,
+  },
 ])("allowPrerelease=true - $name", async ({ currentVersion, channel, options, releases, expected, isUpdateAvailable }, { expect }) => {
   const requestSpy = createMockRequest()
   const updater = await createPrivateUpdater(requestSpy, currentVersion, options)
@@ -251,6 +302,23 @@ test("allowPrerelease=true with a release list that is not an array - throws ERR
   await expect(updater.checkForUpdates()).rejects.toMatchObject({
     code: "ERR_UPDATER_LATEST_VERSION_NOT_FOUND",
     message: expect.stringContaining("expected a list of releases, got object"),
+  })
+})
+
+test.for([
+  { name: "an empty body", body: null },
+  { name: "a null release", body: "null" },
+  { name: "a release without assets", body: JSON.stringify({ tag_name: "v1.1.0", name: "v1.1.0" }) },
+])("allowPrerelease=false with $name from /releases/latest - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", async ({ body }, { expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPrivateUpdater(requestSpy)
+  updater.allowPrerelease = false
+
+  requestSpy.mockResolvedValueOnce(body)
+
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({
+    code: "ERR_UPDATER_LATEST_VERSION_NOT_FOUND",
+    message: expect.stringContaining("expected a release with a list of assets"),
   })
 })
 

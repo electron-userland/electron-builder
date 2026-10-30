@@ -237,10 +237,13 @@ function isEligibleForChannel(releaseChannel: string | null, currentChannel: str
 }
 
 // The releases an allowPrerelease=true client may move to: those eligible for its explicit channel, or else for the channel
-// of its current pre-release version. No explicit channel and a stable current version: any semver release (pre-release
-// or stable) is a candidate. Whether the newest release is actually an update is decided later by AppUpdater.isUpdateAvailable.
+// of its current pre-release version. A numeric first identifier (1.0.1-1, as `npm version prerelease` produces) is a
+// pre-release number, not a channel. No channel and a stable or numbered pre-release current version: any semver release
+// (pre-release or stable) is a candidate. Whether the newest release is actually an update is decided later by
+// AppUpdater.isUpdateAvailable.
 export function releaseEligibility(updater: AppUpdater): (tag: string) => boolean {
-  const currentChannel = updater.channel || prereleaseChannelOf(updater.currentVersion)
+  const versionIdentifier = semver.prerelease(updater.currentVersion)?.[0]
+  const currentChannel = updater.channel || (typeof versionIdentifier === "string" ? versionIdentifier : null)
   if (currentChannel === null) {
     return () => true
   }

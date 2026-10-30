@@ -2,6 +2,7 @@ import { CancellationToken, GithubOptions, githubTagPrefix, HttpError, newError,
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { load } from "js-yaml"
 import * as path from "path"
+import * as semver from "semver"
 import { AppUpdater } from "../AppUpdater.js"
 import { URL } from "url"
 import { getChannelFilename, newUrlFromBase } from "../util.js"
@@ -86,27 +87,45 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     }
 
     const url = newUrlFromBase(basePath, this.baseUrl)
-    let selected: { tag: string | null; item: ReleaseInfo | null }
+    let candidates: Array<ReleaseInfo>
     try {
       const body = await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken)
       const version = body == null ? null : JSON.parse(body)
       // only `latest` can return a single ReleaseInfo. Otherwise, a list of ReleaseInfo is returned and we need to find the latest one ourselves
-      if (allowPrerelease) {
-        if (!Array.isArray(version)) {
-          throw new Error(`expected a list of releases, got ${version === null ? "null" : typeof version}`)
+      if (!allowPrerelease) {
+        if (!hasAssetList(version)) {
+          throw new Error(`expected a release with a list of assets, got ${version === null ? "null" : typeof version}`)
         }
-        // the list is ordered by creation date, not by version: like GitHubProvider, pick the highest semver release eligible for the current channel.
-        // An entry that is not an object with a string tag_name and a list of assets is skipped.
-        const candidates: Array<ReleaseInfo> = version.filter(it => it != null && typeof it.tag_name === "string" && Array.isArray(it.assets) && !it.draft)
-        const tagPrefix = githubTagPrefix(this.options)
-        selected = pickHighestRelease(candidates, it => (it.tag_name.startsWith(tagPrefix) ? it.tag_name.slice(tagPrefix.length) : it.tag_name), releaseEligibility(this.updater))
-      } else {
         return { release: version, version: null }
       }
+      if (!Array.isArray(version)) {
+        throw new Error(`expected a list of releases, got ${version === null ? "null" : typeof version}`)
+      }
+      // An entry that is not an object with a string tag_name and a list of assets is skipped.
+      candidates = version.filter((it: unknown): it is ReleaseInfo => hasAssetList(it) && typeof it.tag_name === "string" && !it.draft)
     } catch (e: any) {
       throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
 
+    // the list is ordered by creation date, not by version: like GitHubProvider, pick the highest semver release eligible for the current channel.
+    // A tag is read without the configured tagNamePrefix; with a prefix other than the default "v", a tag without it belongs to another package and is skipped.
+    const tagPrefix = githubTagPrefix(this.options)
+    const versionOf = (release: ReleaseInfo): string | null => {
+      if (release.tag_name.startsWith(tagPrefix)) {
+        return release.tag_name.slice(tagPrefix.length)
+      }
+      return tagPrefix === "v" ? release.tag_name : null
+    }
+    // releases whose tags are not versions (e.g. created by other tooling): the first pre-release in the list, else the first release
+    if (!candidates.some(it => semver.valid(versionOf(it)) != null)) {
+      const release = candidates.find(it => it.prerelease) ?? candidates[0]
+      if (release == null) {
+        throw newError(`No published versions on GitHub`, "ERR_UPDATER_NO_PUBLISHED_VERSIONS")
+      }
+      return { release, version: null }
+    }
+
+    const selected = pickHighestRelease(candidates, versionOf, releaseEligibility(this.updater))
     if (selected.item == null) {
       throw newError(`No published versions on GitHub`, "ERR_UPDATER_NO_PUBLISHED_VERSIONS")
     }
@@ -145,4 +164,9 @@ interface ReleaseInfo {
 export interface Asset {
   name: string
   url: string
+}
+
+// a release as the GitHub API returns it: an object with a list of assets
+function hasAssetList(value: unknown): value is ReleaseInfo {
+  return typeof value === "object" && value !== null && "assets" in value && Array.isArray(value.assets)
 }
