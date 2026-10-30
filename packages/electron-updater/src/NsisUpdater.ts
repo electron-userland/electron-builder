@@ -77,10 +77,10 @@ export class NsisUpdater extends BaseUpdater {
         downloadedUpdateHelper = new DownloadedUpdateHelper(path.join(this.app.baseCachePath, dirName), this.log)
       }
       await downloadedUpdateHelper.removeInstalledWebPackage(this.currentVersion.version)
-    } catch (e: any) {
+    } catch (e: unknown) {
       // best effort: no readable app-update.yml (e.g. forceDevUpdateConfig without dev-app-update.yml) means no cache to clean, and an
       // unusable config is reported by the update check itself
-      this.log.debug(`Cannot look for the web installer package of an installed update: ${e.message || e}`)
+      this.log.debug(`Cannot look for the web installer package of an installed update: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 

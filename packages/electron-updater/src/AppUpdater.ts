@@ -1140,7 +1140,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     await fsExtra.mkdir(cacheDir, { recursive: true })
     const updateFileName = getCacheUpdateFileName(taskOptions.fileInfo, taskOptions.fileExtension)
     let updateFile = path.join(cacheDir, updateFileName)
-    const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}${path.extname(packageInfo.path) || ".7z"}`)
+    let packageFile = packageInfo == null ? null : path.join(cacheDir, getCachePackageFileName(version, packageInfo.path))
 
     const pendingBlockMapFile = path.join(cacheDir, "current.blockmap")
     const cachedBlockMapFile = path.join(downloadedUpdateHelper.cacheDir, "current.blockmap")
@@ -1196,6 +1196,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const cachedUpdateFile = await downloadedUpdateHelper.validateDownloadedPath(updateFile, updateInfo, fileInfo)
     if (cachedUpdateFile != null) {
       updateFile = cachedUpdateFile
+      // the package validated together with the cached installer, under the name it was saved with
+      packageFile = downloadedUpdateHelper.packageFile
       // an update downloaded by an earlier session is about to be announced as ready to install without being
       // downloaded again, so the custom verifier has to gate it here too — its only other gate is the sha512 taken
       // from the very update metadata a custom verifier exists to distrust
@@ -1545,6 +1547,20 @@ export function getCacheUpdateFileName(fileInfo: ResolvedUpdateFileInfo, fileExt
     throw newError(`Invalid update file name: ${JSON.stringify(fileName)}`, "ERR_UPDATER_INVALID_FILE_NAME")
   }
   return fileName
+}
+
+/** @internal */
+export function getCachePackageFileName(version: string, packageUrl: string): string {
+  // the extension is taken from the URL path only: a query (an auth token, a pre-signed URL, Keygen's `?product=`) must not reach the
+  // file name, and characters such as `?` and `:` are not allowed in a Windows file name
+  let pathname: string
+  try {
+    pathname = new URL(packageUrl).pathname
+  } catch {
+    pathname = packageUrl
+  }
+  const extension = path.posix.extname(pathname)
+  return `package-${version}${/^\.[a-z0-9]{1,8}$/i.test(extension) ? extension : ".7z"}`
 }
 
 export interface DownloadUpdateOptions {
