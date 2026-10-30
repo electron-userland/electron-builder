@@ -1178,6 +1178,54 @@ describe("HttpExecutor download Location handling", () => {
   })
 })
 
+describe("HttpExecutor request auth option on a redirect", () => {
+  // Node's `auth` option is sent as a Basic Authorization header. Two servers on different ports are two origins.
+  async function listen(server: http.Server): Promise<number> {
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    const address = server.address()
+    if (address == null || typeof address === "string") {
+      throw new Error("server has no port")
+    }
+    return address.port
+  }
+
+  async function authorizationAtTarget(crossOrigin: boolean): Promise<string | undefined> {
+    let received: string | undefined = "<not requested>"
+    const target = http.createServer((request, response) => {
+      received = request.headers.authorization
+      response.end("ok")
+    })
+    const targetPort = await listen(target)
+    const origin = http.createServer((request, response) => {
+      if (request.url === "/start") {
+        response.writeHead(302, { Location: crossOrigin ? `http://127.0.0.1:${targetPort}/target` : "/target" })
+        response.end()
+      } else {
+        received = request.headers.authorization
+        response.end("ok")
+      }
+    })
+    const originPort = await listen(origin)
+    try {
+      await new NodeExecutor().request({ protocol: "http:", hostname: "127.0.0.1", port: originPort, path: "/start", auth: "user:secret" })
+      return received
+    } finally {
+      for (const server of [origin, target]) {
+        server.closeAllConnections()
+        await new Promise(resolve => server.close(resolve))
+      }
+    }
+  }
+
+  test("is kept on a same-origin redirect", async () => {
+    expect(await authorizationAtTarget(false)).toBe(`Basic ${Buffer.from("user:secret").toString("base64")}`)
+  })
+
+  test("is dropped on a cross-origin redirect", async () => {
+    expect(await authorizationAtTarget(true)).toBeUndefined()
+  })
+})
+
 describe("HttpExecutor request timeout on a kept-alive socket", () => {
   // the agent keeps a finished request's socket and sets its own idle timeout on it: that timeout must not reach the request's callback
   const AGENT_TIMEOUT = 100

@@ -457,6 +457,8 @@ Please double check that your authentication token is correct. Due to security r
       if (debug.enabled) {
         debug(`Cross-origin redirect (${originalUrl.host} → ${parsedRedirectUrl.host}): stripping sensitive headers`)
       }
+      // Node's `auth` option becomes a Basic Authorization header on the request, so it is a credential for the original origin too
+      delete newOptions.auth
       for (const key of Object.keys(headers)) {
         if (SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key))) {
           delete (headers as Record<string, unknown>)[key]
