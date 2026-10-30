@@ -346,8 +346,8 @@ export class PublishManager implements PublishContext {
   }
 
   private getOrCreatePublisher(publishConfig: PublishConfiguration, appInfo: AppInfo): Promise<Publisher | null> {
-    // to not include token into cache key
-    const providerCacheKey = safeStringifyJson(publishConfig)
+    // to not include token into cache key; every sensitive value is fingerprinted, so configs that differ in one get different keys
+    const providerCacheKey = safeStringifyJson(publishConfig, undefined, Number.POSITIVE_INFINITY)
     let publisher = this.nameToPublisher.get(providerCacheKey)
     if (publisher == null) {
       publisher = createPublisher(this, appInfo.version, publishConfig, this.publishOptions, this.packager).then(it => {

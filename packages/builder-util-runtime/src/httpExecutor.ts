@@ -751,11 +751,16 @@ let fingerprintKey: Buffer | null = null
 /** What a sensitive value is logged as when its fingerprint cannot be computed. */
 export const REDACTED_VALUE = "<redacted>"
 
+// The data given to safeStringifyJson can come from a server (an error response body or its headers), with any number of sensitive
+// values: each fingerprint takes a few milliseconds of synchronous work, so one call computes at most this many
+const MAX_FINGERPRINTS_PER_CALL = 16
+
 /**
  * Stands in for a secret (a password, token or key) in logs and error messages: a fingerprint that is the same for the same
  * value within this process, so log lines can be compared, but that cannot be checked against guesses offline, since it is
- * keyed with a random secret of this process. Derived with scrypt at a low cost: it runs whenever a secret is logged. Never
- * throws: it returns {@link REDACTED_VALUE} when the fingerprint cannot be computed.
+ * keyed with a random secret of this process. Derived with scrypt at a low cost: it runs whenever a secret is logged, and
+ * {@link safeStringifyJson} computes at most 16 fingerprints per call by default, logging the other values
+ * as {@link REDACTED_VALUE}. Never throws: it returns {@link REDACTED_VALUE} when the fingerprint cannot be computed.
  */
 export function hashSensitiveValue(value: string): string {
   try {
@@ -769,12 +774,22 @@ export function hashSensitiveValue(value: string): string {
   }
 }
 
-export function safeStringifyJson(data: any, skippedNames?: Set<string>): string {
+/**
+ * The JSON of `data` with the values of sensitive fields (and of `skippedNames`) replaced: a string by its fingerprint (see
+ * {@link hashSensitiveValue}), anything else by a placeholder. At most `maxFingerprints` (by default 16) values are fingerprinted, the other
+ * sensitive strings are written as {@link REDACTED_VALUE}: a caller that uses the result as an identity key passes
+ * `Number.POSITIVE_INFINITY`, so data that differ in any sensitive value give different keys.
+ */
+export function safeStringifyJson(data: any, skippedNames?: Set<string>, maxFingerprints: number = MAX_FINGERPRINTS_PER_CALL): string {
+  let fingerprintCount = 0
   return JSON.stringify(
     data,
     (name, value) => {
       if (isSensitiveFieldName(name) || (skippedNames != null && skippedNames.has(name))) {
-        return typeof value === "string" ? hashSensitiveValue(value) : "<stripped sensitive data>"
+        if (typeof value !== "string") {
+          return "<stripped sensitive data>"
+        }
+        return fingerprintCount++ < maxFingerprints ? hashSensitiveValue(value) : REDACTED_VALUE
       }
       return value
     },
