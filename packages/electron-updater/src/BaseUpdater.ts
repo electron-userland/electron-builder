@@ -8,6 +8,7 @@ import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion } from "semver"
 import { AppAdapter, CancellableQuitEvent } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask, UpdateInfoAndProvider } from "./AppUpdater.js"
+import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper.js"
 import type { Logger, VerifyUpdateFileResult } from "./types.js"
 import { QuitAndInstallOptions, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
 
@@ -168,6 +169,8 @@ export abstract class BaseUpdater extends AppUpdater {
    * cached by an earlier launch that the app's `verifyUpdateFile` has not accepted yet, so the quit handler must not install it.
    */
   private isDownloadInProgress = false
+  /** The install of an update marked for install on next launch that runs, if any: they run one at a time, see {@link runPendingInstall}. */
+  private pendingInstall: Promise<unknown> = Promise.resolve()
 
   /**
    * Whether an install started in this session: it runs, or it handed the update off (installed it, started its
@@ -187,12 +190,63 @@ export abstract class BaseUpdater extends AppUpdater {
 
   protected constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
-    void this.app.whenReady().then(() => {
-      if (this.autoInstallEvent === "onNextLaunch") {
-        return this.installPendingUpdate(true).catch((e: any) => this.log.warn(`Cannot install pending update on launch: ${e.message || e}`))
+    void this.app
+      .whenReady()
+      // a tick later, so that what the app configures in its own ready handler (autoInstallEvent, the feed, its headers) applies
+      .then(() => new Promise<void>(resolve => setImmediate(resolve)))
+      .then(() => this.installPendingUpdateOnLaunch())
+      .catch((e: unknown) => this.log.warn(`Cannot install pending update on launch: ${e instanceof Error ? e.message : String(e)}`))
+  }
+
+  /**
+   * The automatic install at launch of an update that a previous launch marked for it: its quit with `autoInstallEvent:
+   * "onNextLaunch"`, or its `quitAndInstall({ waitUntilNextLaunch: true })` whatever `autoInstallEvent` was. The marker
+   * records what that launch asked for, so it is installed with any `autoInstallEvent` but `"manual"`, which never installs
+   * automatically: the app calls `installPendingUpdateIfAvailable()` then.
+   */
+  private installPendingUpdateOnLaunch(): Promise<boolean> {
+    return this.runPendingInstall(async () => {
+      if (this.autoInstallEvent === "manual" || !(await this.isPendingInstallMarked())) {
+        return false
       }
-      return Promise.resolve(false)
+      return this.installPendingUpdate(true)
     })
+  }
+
+  /**
+   * Runs `install` once the install of the marked update that runs settled: the install at launch and the app's own
+   * `installPendingUpdateIfAvailable()` must not both validate the update and install it. The second one finds no marker
+   * when the first one installed the update (or rejected it), and installs it when the first one skipped it.
+   */
+  private runPendingInstall(install: () => Promise<boolean>): Promise<boolean> {
+    const result = this.pendingInstall.then(install)
+    this.pendingInstall = result.catch(() => false)
+    return result
+  }
+
+  /**
+   * Whether a previous launch marked an update for install on next launch. Without a marker nothing happens at launch:
+   * nothing is logged, and the download helper is not created, which would fix the cache directory before the app had a
+   * chance to set updateConfigPath.
+   */
+  private async isPendingInstallMarked(): Promise<boolean> {
+    // like isUpdaterActive, without its log line: nothing is cached for an unpackaged app
+    if (!this.app.isPackaged && !this.forceDevUpdateConfig) {
+      return false
+    }
+    let downloadedUpdateHelper = this.downloadedUpdateHelper
+    if (downloadedUpdateHelper == null) {
+      let dirName: string | null | undefined
+      try {
+        dirName = (await this.configOnDisk.value).updaterCacheDirName
+      } catch (e: unknown) {
+        // no readable app-update.yml: nothing was downloaded with it, and the update check reports it
+        this.log.debug(`Cannot look for an update marked for install on launch: ${e instanceof Error ? e.message : String(e)}`)
+        return false
+      }
+      downloadedUpdateHelper = new DownloadedUpdateHelper(path.join(this.app.baseCachePath, dirName || this.app.name), this.log)
+    }
+    return (await downloadedUpdateHelper.getPendingInstallInfo()) != null
   }
 
   quitAndInstall(options: QuitAndInstallOptions | boolean = {}, legacyIsForceRunAfter?: boolean): void {
@@ -227,13 +281,14 @@ export abstract class BaseUpdater extends AppUpdater {
   }
 
   installPendingUpdateIfAvailable(): Promise<boolean> {
-    return this.installPendingUpdate(false)
+    return this.runPendingInstall(() => this.installPendingUpdate(false))
   }
 
   /**
-   * Whether this target supports the automatic `autoInstallEvent: "onNextLaunch"` install at startup. Targets whose install
-   * always requires elevation (deb/rpm/pacman via pkexec/sudo) must not show an authentication prompt at app launch,
-   * so they keep the pending update for an explicit `installPendingUpdateIfAvailable()` call instead.
+   * Whether this target supports the automatic install at launch of an update marked for the next launch (see
+   * {@link installPendingUpdateOnLaunch}). Targets whose install always requires elevation (deb/rpm/pacman via pkexec/sudo)
+   * must not show an authentication prompt at app launch, so they keep the pending update for an explicit
+   * `installPendingUpdateIfAvailable()` call.
    */
   protected get isAutoInstallOnNextLaunchSupported(): boolean {
     return false
@@ -411,7 +466,7 @@ export abstract class BaseUpdater extends AppUpdater {
   /**
    * Validates a pending update marked for install on next launch and installs it. Never trusts the cached installer
    * alone: fresh update info is fetched first and the cached file is validated against it. `isAutomatic` (the
-   * `autoInstallEvent: "onNextLaunch"` startup path) is additionally restricted to targets that can install without an
+   * automatic install at launch, see {@link installPendingUpdateOnLaunch}) is additionally restricted to targets that can install without an
    * elevation prompt (`isAutoInstallOnNextLaunchSupported`) and to per-user installs, because an unattended
    * elevation prompt at startup is not acceptable.
    */
