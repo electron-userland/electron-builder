@@ -6,6 +6,7 @@ import { createHash } from "crypto"
 import { RequestOptions } from "http"
 import { Readable, Writable } from "stream"
 import { pipeline } from "stream/promises"
+import * as http from "http"
 
 describe("HttpExecutor.prepareRedirectUrlOptions", () => {
   describe("basic functionality", () => {
@@ -937,6 +938,7 @@ describe("HttpExecutor redirect limit", () => {
         statusMessage: "Found",
         headers: { location: "https://example.com/loop" },
         on() {},
+        resume() {},
         setEncoding() {},
       }
       // synchronous is fine at depth ~maxRedirects; exercises the recursion path directly
@@ -973,6 +975,139 @@ describe("HttpExecutor redirect limit", () => {
     )
     // Same limit as doDownload: maxRedirects recursions + the initial request
     expect(executor.requestCount).toBe(executor["maxRedirects"] + 1)
+  })
+})
+
+describe("HttpExecutor download Location handling", () => {
+  // Answers every request synchronously with `statusCode` and a Location to `location`; like http.request, createRequest throws for a
+  // protocol other than http(s). Without the guard, that throw escaped from the response listener (an uncaught exception).
+  class LocationExecutor extends HttpExecutor<any> {
+    requestCount = 0
+
+    constructor(
+      private readonly statusCode: number,
+      private readonly location: string,
+      // when set, what createRequest throws for the request of a redirect
+      private readonly thrownOnRedirect: unknown = null
+    ) {
+      super()
+    }
+
+    createRequest(options: RequestOptions, callback: (response: any) => void): any {
+      if (options.protocol !== "http:" && options.protocol !== "https:") {
+        throw new TypeError(`Protocol "${options.protocol}" not supported. Expected "http:"`)
+      }
+      if (this.requestCount > 0 && this.thrownOnRedirect != null) {
+        // oxlint-disable-next-line typescript/only-throw-error -- the test needs a non-Error throw
+        throw this.thrownOnRedirect
+      }
+      this.requestCount++
+      callback({ statusCode: this.statusCode, statusMessage: "", headers: { location: this.location }, on() {}, resume() {}, setEncoding() {} })
+      return { on() {}, end() {}, abort() {} }
+    }
+
+    runDownload(callback: (error: Error | null) => void): void {
+      this.doDownload(
+        { protocol: "https:", hostname: "example.com", path: "/start" },
+        { responseHandler: (_response, done) => done(null), onCancel: () => {}, callback, options: {} as any, destination: null },
+        0
+      )
+    }
+  }
+
+  for (const [label, location, message] of [
+    ["to a protocol other than http(s)", "ftp://example.com/x", 'Cannot follow the redirect to the "ftp:" protocol'],
+    ["that is not a valid URL", "http://exa mple.com/x", "Invalid URL"],
+  ] as const) {
+    test(`doDownload fails, rather than throws, on a redirect ${label}`, () => {
+      const executor = new LocationExecutor(302, location)
+      const errors: Array<Error | null> = []
+      expect(() => executor.runDownload(e => errors.push(e))).not.toThrow()
+      expect(errors).toHaveLength(1)
+      expect(errors[0]).toBeInstanceOf(Error)
+      expect(errors[0]!.message).toContain(message)
+      expect(executor.requestCount).toBe(1)
+    })
+  }
+
+  test("doDownload fails with an Error when following a redirect throws something else", () => {
+    const executor = new LocationExecutor(302, "https://example.com/next", "not an Error")
+    const errors: Array<Error | null> = []
+    expect(() => executor.runDownload(e => errors.push(e))).not.toThrow()
+    expect(errors).toHaveLength(1)
+    expect(errors[0]).toBeInstanceOf(Error)
+    expect(errors[0]?.message).toBe("Cannot follow the redirect: not an Error")
+    expect(executor.requestCount).toBe(1)
+  })
+
+  // A real request through Node's keep-alive agent: a redirect's body that is not read keeps its socket busy, and the socket's timeout
+  // then calls back a second time, after the download has settled
+  class NodeExecutor extends HttpExecutor<http.ClientRequest> {
+    createRequest(options: RequestOptions, callback: (response: http.IncomingMessage) => void): http.ClientRequest {
+      return http.request(options, callback)
+    }
+
+    runDownload(url: URL, timeout: number, callback: (error: Error | null) => void): void {
+      this.doDownload(
+        { protocol: url.protocol, hostname: url.hostname, port: url.port, path: url.pathname, timeout },
+        {
+          responseHandler: (response, done) => {
+            response.resume()
+            response.on("end", () => done(null))
+          },
+          onCancel: () => {},
+          callback,
+          options: { cancellationToken: new CancellationToken() },
+          destination: null,
+        },
+        0
+      )
+    }
+  }
+
+  for (const [label, location, error] of [
+    ["is followed", "/target", null],
+    ["cannot be followed", "ftp://example.com/x", 'Cannot follow the redirect to the "ftp:" protocol'],
+  ] as const) {
+    test(`doDownload calls back once when a redirect ${label}`, async () => {
+      const TIMEOUT = 200
+      const server = http.createServer((request, response) => {
+        if (request.url === "/start") {
+          response.writeHead(302, { Location: location, "Content-Length": 5 })
+          response.end("moved")
+        } else {
+          response.end("body")
+        }
+      })
+      await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+      try {
+        const address = server.address()
+        if (address == null || typeof address === "string") {
+          throw new Error("server has no port")
+        }
+        const results: Array<string | null> = []
+        await new Promise<void>(resolve => {
+          new NodeExecutor().runDownload(new URL(`http://127.0.0.1:${address.port}/start`), TIMEOUT, e => {
+            results.push(e == null ? null : e.message)
+            resolve()
+          })
+        })
+        // nothing to wait for but the request's timeout passing without a second call
+        await new Promise(resolve => setTimeout(resolve, TIMEOUT * 4))
+        expect(results).toEqual([error])
+      } finally {
+        server.closeAllConnections()
+        await new Promise(resolve => server.close(resolve))
+      }
+    })
+  }
+
+  test("doDownload ignores a Location on a response that is not a redirect", () => {
+    const executor = new LocationExecutor(200, "ftp://example.com/x")
+    const errors: Array<Error | null> = []
+    executor.runDownload(e => errors.push(e))
+    expect(errors).toEqual([null])
+    expect(executor.requestCount).toBe(1)
   })
 })
 

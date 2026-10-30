@@ -2,6 +2,7 @@ import { CancellationToken } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import type { RequestOptions } from "http"
 import * as path from "path"
+import type { TmpDir } from "temp-file"
 import { describe, test } from "vitest"
 import { FakeElectronHttpExecutor } from "../helpers/updaterTestUtil.js"
 
@@ -11,6 +12,7 @@ import { FakeElectronHttpExecutor } from "../helpers/updaterTestUtil.js"
 const FILE_URL = "https://feed.example.com/updates/app-1.1.0.exe"
 const TARGET_URL = "https://bucket.example.net/app-1.1.0.exe"
 const FTP_URL = "ftp://files.example.net/app-1.1.0.exe"
+const UNPARSEABLE_URL = "http://files.example .net/app-1.1.0.exe"
 const BODY = Buffer.from("update")
 // without the fix, a redirect that cannot be followed leaves the request pending forever: fail fast instead
 const GUARD_TIMEOUT = 10_000
@@ -71,4 +73,63 @@ describe("ElectronHttpExecutor redirects", () => {
     expect(await executor.request(apiRequestOptions())).toBe(BODY.toString())
     expect(executor.sent.map(it => it.url)).toEqual([FILE_URL, TARGET_URL])
   })
+})
+
+// Electron reports only 301/302/303/307/308 as "redirect" events: a Location on any other response reaches the response listener
+// of a download, which follows it only for a 3xx status, and must fail the download (rather than throw from the listener) when it
+// cannot follow it.
+
+function createResponseExecutor(statusCode: number, location: string): FakeElectronHttpExecutor {
+  return new FakeElectronHttpExecutor(url => (url === FILE_URL ? { statusCode, headers: { location }, body: BODY } : { statusCode: 200, body: BODY }))
+}
+
+const DOWNLOADS: ReadonlyArray<readonly [string, (executor: FakeElectronHttpExecutor, tmpDir: TmpDir) => Promise<Buffer>]> = [
+  [
+    "a download",
+    async (executor, tmpDir) => {
+      const destination = path.join(await tmpDir.createTempDir({ prefix: "electron-http-executor-redirect" }), "app.exe")
+      await executor.download(new URL(FILE_URL), destination, { cancellationToken: new CancellationToken() })
+      return await fsExtra.readFile(destination)
+    },
+  ],
+  ["a download to a buffer", executor => executor.downloadToBuffer(new URL(FILE_URL), { cancellationToken: new CancellationToken() })],
+]
+
+describe("ElectronHttpExecutor Location on a response", () => {
+  for (const [kind, download] of DOWNLOADS) {
+    for (const [label, location, error] of [
+      ["to a protocol other than http(s)", FTP_URL, 'Cannot follow the redirect to the "ftp:" protocol'],
+      ["that is not a valid URL", UNPARSEABLE_URL, "Invalid URL"],
+    ] as const) {
+      test(
+        `a 300 response with a Location ${label} fails ${kind}`,
+        async ({ tmpDir, expect }) => {
+          const executor = createResponseExecutor(300, location)
+          await expect(download(executor, tmpDir)).rejects.toThrow(error)
+          expect(executor.sent.map(it => it.url)).toEqual([FILE_URL])
+        },
+        GUARD_TIMEOUT
+      )
+    }
+
+    test(
+      `a 300 response with a Location to https is followed by ${kind}`,
+      async ({ tmpDir, expect }) => {
+        const executor = createResponseExecutor(300, TARGET_URL)
+        expect(await download(executor, tmpDir)).toEqual(BODY)
+        expect(executor.sent.map(it => it.url)).toEqual([FILE_URL, TARGET_URL])
+      },
+      GUARD_TIMEOUT
+    )
+
+    test(
+      `a 200 response with a Location is not a redirect: ${kind} keeps its body`,
+      async ({ tmpDir, expect }) => {
+        const executor = createResponseExecutor(200, FTP_URL)
+        expect(await download(executor, tmpDir)).toEqual(BODY)
+        expect(executor.sent.map(it => it.url)).toEqual([FILE_URL])
+      },
+      GUARD_TIMEOUT
+    )
+  }
 })
