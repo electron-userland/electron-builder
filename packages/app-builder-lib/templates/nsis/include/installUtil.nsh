@@ -165,9 +165,13 @@ Function uninstallOldVersion
     ${endif}
   ${endif}
 
-  # a quoted path is followed by a space or the end, never by a backslash: drop the quote that an earlier installer kept from a
-  # quoted /D= argument ("C:\App"\Uninstall App.exe"), so the uninstaller path below is the full path
-  ${WordReplace} $uninstallString '"\' "\" "+" $uninstallString
+  # a closing quote is followed by a space or the end, never by a backslash: drop the quote that an earlier installer kept from a
+  # quoted /D= argument ("C:\App"\Uninstall App.exe"), so the uninstaller path below is the full path. The first character, the opening
+  # quote, stays: a UNC path follows it with a backslash ("\\server\share\App\Uninstall App.exe")
+  StrCpy $uninstallerFileName $uninstallString 1
+  StrCpy $uninstallerFileNameTemp $uninstallString "" 1
+  ${WordReplace} $uninstallerFileNameTemp '"\' "\" "+" $uninstallerFileNameTemp
+  StrCpy $uninstallString "$uninstallerFileName$uninstallerFileNameTemp"
 
   # uninstaller should be copied out of app installation dir (because this dir will be deleted), so, extract uninstaller file name
   !insertmacro GetInQuotes $uninstallerFileName "$uninstallString"

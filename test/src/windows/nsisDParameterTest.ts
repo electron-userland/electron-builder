@@ -77,6 +77,49 @@ async function compileInstallModes(dir: string, nsis?: ToolsetConfig["nsis"]): P
   )
 }
 
+// Runs the lines of uninstallOldVersion that read the old uninstaller path from UninstallString, once per value, and writes each path
+// on its own line to resultFile. The lines and GetInQuotes are taken from installUtil.nsh, so the probe runs the template's code.
+async function compileUninstallerPathProbe(dir: string, resultFile: string, uninstallStrings: string[], nsis?: ToolsetConfig["nsis"]): Promise<string> {
+  const template = await fs.readFile(installUtilPath, "utf8")
+  const getInQuotes = template.match(/Function GetInQuotes[\s\S]*?FunctionEnd\s*!macro GetInQuotes[\s\S]*?!macroend/)
+  const uninstallOldVersion = template.match(/Function uninstallOldVersion[\s\S]*?FunctionEnd/)
+  if (getInQuotes == null || uninstallOldVersion == null) {
+    throw new Error("GetInQuotes or uninstallOldVersion not found in installUtil.nsh")
+  }
+  const body = uninstallOldVersion[0]
+  const firstLine = "StrCpy $uninstallerFileName $uninstallString 1"
+  const lastLine = '!insertmacro GetInQuotes $uninstallerFileName "$uninstallString"'
+  const start = body.indexOf(firstLine)
+  const end = body.indexOf(lastLine)
+  if (start < 0 || end < start) {
+    throw new Error("the uninstaller path lines of uninstallOldVersion not found in installUtil.nsh")
+  }
+  const readUninstallerPath = body.slice(start, end + lastLine.length)
+
+  const probe = path.join(dir, "uninstaller-path.exe")
+  await makensis(
+    dir,
+    [
+      "Unicode true",
+      "RequestExecutionLevel user",
+      "SilentInstall silent",
+      "!include WordFunc.nsh",
+      getInQuotes[0],
+      "Var uninstallerFileName",
+      "Var uninstallerFileNameTemp",
+      "Var uninstallString",
+      `OutFile "${probe}"`,
+      "Section",
+      `  FileOpen $0 "${resultFile}" w`,
+      ...uninstallStrings.flatMap(it => [`  StrCpy $uninstallString \`${it}\``, readUninstallerPath, '  FileWrite $0 "$uninstallerFileName$\\n"']),
+      "  FileClose $0",
+      "SectionEnd",
+    ],
+    nsis
+  )
+  return probe
+}
+
 // starts the probe like electron-updater starts the installer: child_process.spawn quotes an argument that contains a space
 function run(file: string, args: string[], windowsVerbatimArguments = false): Promise<number | null> {
   return new Promise((resolve, reject) => {
@@ -129,7 +172,9 @@ describe("multiUser.nsh — GetDParameter", { concurrent: false }, () => {
 
     // "C:\Program Files\App"\Uninstall App.exe" /currentuser: the uninstaller path is read from the quotes, so the stray quote goes first
     const uninstallStringReadIndex = body.lastIndexOf("UninstallString")
-    const uninstallStringStripIndex = body.indexOf(`\${WordReplace} $uninstallString '"\\' "\\" "+" $uninstallString`)
+    // the opening quote stays, so the strip runs on the rest of the value
+    expect(body).not.toContain("${WordReplace} $uninstallString")
+    const uninstallStringStripIndex = body.indexOf(`\${WordReplace} $uninstallerFileNameTemp '"\\' "\\" "+" $uninstallerFileNameTemp`)
     const getInQuotesIndex = body.indexOf('!insertmacro GetInQuotes $uninstallerFileName "$uninstallString"')
     expect(uninstallStringStripIndex).toBeGreaterThan(uninstallStringReadIndex)
     expect(getInQuotesIndex).toBeGreaterThan(uninstallStringStripIndex)
@@ -148,6 +193,26 @@ describe("multiUser.nsh — GetDParameter", { concurrent: false }, () => {
     await compileProbe(dir, "probe-legacy", path.join(dir, "result.txt"), "0.0.0")
     await compileInstallModes(dir)
     await compileInstallModes(dir, "0.0.0")
+    await compileUninstallerPathProbe(dir, path.join(dir, "result.txt"), ['"C:\\Test App\\Uninstall Test App.exe" /currentuser'])
+    await compileUninstallerPathProbe(dir, path.join(dir, "result.txt"), ['"C:\\Test App\\Uninstall Test App.exe" /currentuser'], "0.0.0")
+  })
+
+  test.ifWindows("reads the old uninstaller path from an UninstallString with a stray quote, a UNC path or both", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir({ prefix: "nsis-uninstaller-path-probe" })
+    const resultFile = path.join(dir, "result.txt")
+    const cases: Array<[string, string]> = [
+      ['"C:\\Program Files\\Test App\\Uninstall Test App.exe" /currentuser', "C:\\Program Files\\Test App\\Uninstall Test App.exe"],
+      ['"C:\\Program Files\\Test App"\\Uninstall Test App.exe" /currentuser', "C:\\Program Files\\Test App\\Uninstall Test App.exe"],
+      ['"\\\\server\\share\\Test App\\Uninstall Test App.exe" /currentuser', "\\\\server\\share\\Test App\\Uninstall Test App.exe"],
+      ['"\\\\server\\share\\Test App"\\Uninstall Test App.exe" /allusers', "\\\\server\\share\\Test App\\Uninstall Test App.exe"],
+    ]
+    const probe = await compileUninstallerPathProbe(
+      dir,
+      resultFile,
+      cases.map(it => it[0])
+    )
+    expect(await run(probe, [])).toBe(0)
+    expect((await fs.readFile(resultFile, "utf8")).split("\n").slice(0, -1)).toEqual(cases.map(it => it[1]))
   })
 
   test.ifWindows("returns the install directory electron-updater passes, with or without spaces", async ({ expect, tmpDir }) => {
