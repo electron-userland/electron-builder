@@ -761,6 +761,33 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
         expect(privileged).toEqual([[helper, [...helperArgs, `"/bin/bash`, "-c", `'dpkg -i ${rawPath}'"`], {}, true]])
       })
 
+      // every UTF-8 byte of a non-ASCII character is 0x80 or above; ā (C4 81) and ™ (E2 84 A2) hold bytes that dash uses internally
+      it.each([
+        ["gksudo", ["--message", expect.any(String)]],
+        ["kdesudo", ["--comment", expect.any(String), "-c"]],
+        ["beesu", []],
+      ])("runs %s with non-ASCII letters and symbols, unchanged", async (helper, helperArgs) => {
+        const rawPath = "/home/zoë/.cache/acme™-updater/pending/Acme–O’Brien😀ā中.deb"
+        const { installed, privileged } = await install(mode, helper, rawPath)
+
+        expect(installed).toBe(true)
+        expect(privileged).toEqual([[helper, [...helperArgs, `"/bin/bash`, "-c", `'dpkg -i ${rawPath}'"`], {}, true]])
+      })
+
+      // controls (C0, DEL, C1 such as NEL), format characters (zero-width, bidi, BOM), a lone surrogate, and separators
+      // (no-break and ideographic spaces, U+2028, U+2029), which a tokenizer splitting on Unicode whitespace splits on
+      const refusedCharacters = ["\t", "\x01", "\x1b", "\x7f", "\u0085", "\u009b", "\u00a0", "\u3000", "\u2028", "\u2029", "\u200b", "\u202e", "\u2066", "\ufeff", "\ud800"]
+      it.each(["gksudo", "kdesudo", "beesu"].flatMap(helper => refusedCharacters.map(character => [helper, character])))(
+        "does not run %s with %j in the path",
+        async (helper, character) => {
+          const { installed, privileged, dispatchError } = await install(mode, helper, `/tmp/a${character}b.deb`)
+
+          expect(installed).toBe(false)
+          expect(privileged).toEqual([])
+          expect(dispatchError.mock.calls[0][0]).toMatchObject({ code: "ERR_UPDATER_UNSAFE_INSTALLER_PATH" })
+        }
+      )
+
       it.each(["pkexec", "sudo"].flatMap(helper => unsafePaths.map(rawPath => [helper, rawPath])))("still passes %s the path %j as one argv element", async (helper, rawPath) => {
         const { installed, privileged } = await install(mode, helper, rawPath)
 
@@ -801,6 +828,14 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
         it("gets dpkg a path with a space and punctuation as one argument", async ({ tmpDir }) => {
           const rawPathIn = (dir: string) => path.join(dir, "My Cache", "my_app-1.0.2+build.7,x86_64:a=b@c%d.deb")
+          const { dir, target, commandsRun } = await prepare(tmpDir, rawPathIn)
+
+          expect(await install(target)).toBe(true)
+          expect(await commandsRun()).toBe(`dpkg\n-i\n${rawPathIn(dir)}\n`)
+        })
+
+        it("gets dpkg a path with non-ASCII letters and symbols as one argument, unchanged", async ({ tmpDir }) => {
+          const rawPathIn = (dir: string) => path.join(dir, "Acme™ Cache", "Acme – O’Brien 😀 ā中.deb")
           const { dir, target, commandsRun } = await prepare(tmpDir, rawPathIn)
 
           expect(await install(target)).toBe(true)

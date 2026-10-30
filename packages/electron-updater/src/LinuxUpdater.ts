@@ -65,11 +65,15 @@ export type Elevation = { readonly kind: "root" } | { readonly kind: "argv" | "w
 
 /**
  * The installer paths that can be passed to a `wrapped` helper: characters that none of the parsers of its command string
- * treats specially. Letters and digits of every script are included, as their UTF-8 bytes are all outside ASCII.
+ * treats specially. These are ASCII letters, digits and `._/+,:=@%-`, and every non-ASCII character except the controls,
+ * format characters (bidi and zero-width ones among them), surrogates, private-use and unassigned code points (`\p{C}`)
+ * and the separators (`\p{Z}`: Unicode spaces, U+2028 and U+2029). The UTF-8 bytes of a non-ASCII character are all 0x80
+ * or above, which no shell treats specially; a separator is refused as a tokenizer that splits on Unicode whitespace
+ * would split the path there.
  */
-const WRAPPED_SAFE_PATH = /^[\p{L}\p{M}\p{N}._/+,:=@%-]+$/u
+const WRAPPED_SAFE_PATH = /^(?:[A-Za-z0-9._/+,:=@%-]|[^\p{C}\p{Z}\p{ASCII}])+$/u
 /** {@link WRAPPED_SAFE_PATH} and a space, which kdesudo's `sh -c` keeps in one word once it is backslash-escaped. */
-const KDESUDO_SAFE_PATH = /^[\p{L}\p{M}\p{N}._/+,:=@% -]+$/u
+const KDESUDO_SAFE_PATH = /^(?:[A-Za-z0-9._/+,:=@% -]|[^\p{C}\p{Z}\p{ASCII}])+$/u
 
 /**
  * Throws when `rawPath` cannot be passed to `helper`, a `wrapped` elevation helper. The install command reaches it as one
@@ -235,7 +239,8 @@ export abstract class LinuxUpdater extends BaseUpdater {
    * Sanitizes the installer path for use with shell:true spawn calls.
    * Backslash-escapes metacharacters that have special meaning in POSIX shell.
    * Note: this is not enough for the command string of a wrapped helper (gksudo, kdesudo, beesu), so an install with one
-   * of those refuses a path with any other character than letters, digits, `._/+,:=@%-` and, for kdesudo, a space.
+   * of those refuses a path with an ASCII character other than letters, digits, `._/+,:=@%-` and, for kdesudo, a space,
+   * or with a non-ASCII control, format or separator character (see {@link WRAPPED_SAFE_PATH}).
    */
   protected get installerPath(): string | null {
     const raw = super.installerPath
