@@ -4,7 +4,7 @@ import type { RequestOptions } from "http"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
 import { describe, test } from "vitest"
-import { FakeElectronHttpExecutor } from "../helpers/updaterTestUtil.js"
+import { FakeElectronHttpExecutor, FakeNetRequest } from "../helpers/updaterTestUtil.js"
 
 // ElectronHttpExecutor follows the redirects of its full downloads and of manual-redirect API requests (GitLab, private GitHub)
 // itself, in a "redirect" event listener: a redirect it cannot follow must fail the request rather than throw from the listener.
@@ -132,4 +132,43 @@ describe("ElectronHttpExecutor Location on a response", () => {
       GUARD_TIMEOUT
     )
   }
+})
+
+// A cancel aborts the request in flight: after a redirect event, that is the request sent to the redirect's target, not the first one.
+describe("ElectronHttpExecutor cancel after a redirect", () => {
+  // redirects FILE_URL to TARGET_URL, whose request it never answers
+  class StallingTargetExecutor extends FakeElectronHttpExecutor {
+    private onTargetRequest: (request: FakeNetRequest) => void = () => {}
+    // settles once the request to the target is created, sent and given its cancel handler (all synchronous in doDownload)
+    readonly targetRequest = new Promise<FakeNetRequest>(resolve => {
+      this.onTargetRequest = resolve
+    })
+
+    constructor() {
+      super(() => ({ location: TARGET_URL }))
+    }
+
+    createRequest(options: RequestOptions, callback: (response: any) => void): any {
+      if (`${options.protocol}//${options.hostname}${options.path}` !== TARGET_URL) {
+        return super.createRequest(options, callback)
+      }
+      const request = new FakeNetRequest({ url: TARGET_URL })
+      request.on("response", callback)
+      this.onTargetRequest(request)
+      return request
+    }
+  }
+
+  test("a cancel aborts the request of the redirect", async ({ tmpDir, expect }) => {
+    const destination = path.join(await tmpDir.createTempDir({ prefix: "electron-http-executor-redirect" }), "app.exe")
+    const executor = new StallingTargetExecutor()
+    const cancellationToken = new CancellationToken()
+    const download = executor.download(new URL(FILE_URL), destination, { cancellationToken })
+    const targetRequest = await executor.targetRequest
+    expect(targetRequest.aborted).toBe(false)
+
+    cancellationToken.cancel()
+    await expect(download).rejects.toThrow("cancelled")
+    expect(targetRequest.aborted).toBe(true)
+  })
 })
