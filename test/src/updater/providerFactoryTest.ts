@@ -162,8 +162,29 @@ describe("createClient — update info response size", () => {
   test.each(wrappingProviders)("a $name response larger than the limit fails the check with its own code", async ({ options }) => {
     const executor = new FakeElectronHttpExecutor(() => tooLarge)
     const provider = createClient(options, updater, { ...runtimeOptions, executor })
-    await expect(provider.getLatestVersion()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
+    await expect(provider.getLatestVersion()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE", message: expect.stringContaining("autoUpdater.maxUpdateInfoSize") })
     expect(executor.sent).toHaveLength(1)
+  })
+
+  // the GitHub channel file is fetched after the feed and the latest release
+  test("a GitHub channel file larger than the limit fails the check with an error naming the option", async () => {
+    const feed = `<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom"><entry><link href="https://github.com/owner/repo/releases/tag/v1.1.0"/><title>1.1.0</title></entry></feed>`
+    const executor = new FakeElectronHttpExecutor(url => {
+      if (url.endsWith(".atom")) {
+        return { statusCode: 200, body: Buffer.from(feed) }
+      }
+      return url.endsWith("/releases/latest") ? { statusCode: 200, body: Buffer.from(JSON.stringify({ tag_name: "v1.1.0" })) } : tooLarge
+    })
+    const provider = createClient({ provider: "github", owner: "owner", repo: "repo" }, updater, { ...runtimeOptions, executor })
+    await expect(provider.getLatestVersion()).rejects.toMatchObject({
+      code: "ERR_HTTP_RESPONSE_TOO_LARGE",
+      message: expect.stringContaining("maxUpdateInfoSize in the publish configuration"),
+    })
+    expect(executor.sent.map(it => it.url)).toEqual([
+      "https://github.com/owner/repo/releases.atom",
+      "https://github.com/owner/repo/releases/latest",
+      "https://github.com/owner/repo/releases/download/v1.1.0/latest-mac.yml",
+    ])
   })
 
   const providers: Array<{ name: string; options: AllPublishOptions }> = [
@@ -178,5 +199,11 @@ describe("createClient — update info response size", () => {
   test.each(providers)("$name requests carry the limit", ({ options }) => {
     const provider = createClient(options, updater, runtimeOptions) as any
     expect(provider.createRequestOptions(new URL("https://example.com/latest.yml")).maxResponseSize).toBe(MAX_UPDATE_INFO_RESPONSE_SIZE)
+  })
+
+  test.each(providers)("$name requests carry the limit set by the updater", ({ options }) => {
+    const provider = createClient(options, updater, runtimeOptions) as any
+    provider.setMaxUpdateInfoSize(20 * 1024 * 1024)
+    expect(provider.createRequestOptions(new URL("https://example.com/latest.yml")).maxResponseSize).toBe(20 * 1024 * 1024)
   })
 })

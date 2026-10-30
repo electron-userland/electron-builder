@@ -1,4 +1,14 @@
-import { CancellationToken, configureRequestUrl, newError, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import {
+  ApiRequestOptions,
+  CancellationToken,
+  configureRequestUrl,
+  DEFAULT_MAX_UPDATE_INFO_SIZE,
+  newError,
+  safeStringifyJson,
+  UpdateFileInfo,
+  UpdateInfo,
+  WindowsUpdateInfo,
+} from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { load } from "js-yaml"
 import { URL } from "url"
@@ -8,10 +18,6 @@ import { newUrlFromBase } from "../util.js"
 import escapeRegExp from "lodash.escaperegexp"
 
 export type ProviderPlatform = "darwin" | "linux" | "win32"
-
-// The update info (channel file, release feed, API response) is read into memory and parsed before anything verifies it: a larger
-// response fails the request (see ApiRequestOptions.maxResponseSize). Real ones are a few KB, a GitHub release list a few MB.
-const MAX_UPDATE_INFO_RESPONSE_SIZE = 10 * 1024 * 1024
 
 export interface ProviderRuntimeOptions {
   isUseMultipleRangeRequest: boolean
@@ -27,6 +33,9 @@ export function channelFileNotFoundError(channelFile: string, channelFileUrl: UR
 
 export abstract class Provider<T extends UpdateInfo> {
   private requestHeaders: OutgoingHttpHeaders | null = null
+  // The update info (channel file, release feed, API response) is read into memory and parsed before anything verifies it: a larger
+  // response fails the request (see ApiRequestOptions.maxResponseSize). Real ones are a few KB, a GitHub release list a few MB.
+  private maxUpdateInfoSize = DEFAULT_MAX_UPDATE_INFO_SIZE
   protected readonly executor: ElectronHttpExecutor
 
   protected constructor(private readonly runtimeOptions: ProviderRuntimeOptions) {
@@ -86,6 +95,14 @@ export abstract class Provider<T extends UpdateInfo> {
     this.requestHeaders = value
   }
 
+  /**
+   * The largest update info response read, in bytes (`Infinity` for no limit). Set by AppUpdater before each update check, from
+   * `autoUpdater.maxUpdateInfoSize` or the `maxUpdateInfoSize` of the publish configuration.
+   */
+  setMaxUpdateInfoSize(value: number): void {
+    this.maxUpdateInfoSize = value
+  }
+
   abstract getLatestVersion(): Promise<T>
 
   abstract resolveFiles(updateInfo: T): Array<ResolvedUpdateFileInfo>
@@ -93,12 +110,23 @@ export abstract class Provider<T extends UpdateInfo> {
   /**
    * Method to perform API request only to resolve update info, but not to download update.
    */
-  protected httpRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken): Promise<string | null> {
-    return this.executor.request(this.createRequestOptions(url, headers), cancellationToken)
+  protected async httpRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken): Promise<string | null> {
+    try {
+      return await this.executor.request(this.createRequestOptions(url, headers), cancellationToken)
+    } catch (e: unknown) {
+      // names the options that raise the limit
+      if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
+        throw newError(
+          `${e.message}: raise the limit with maxUpdateInfoSize in the publish configuration (app-update.yml) or autoUpdater.maxUpdateInfoSize`,
+          "ERR_HTTP_RESPONSE_TOO_LARGE"
+        )
+      }
+      throw e
+    }
   }
 
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
-    const result: RequestOptions & { maxResponseSize?: number } = { maxResponseSize: MAX_UPDATE_INFO_RESPONSE_SIZE }
+    const result: ApiRequestOptions = { maxResponseSize: this.maxUpdateInfoSize }
     if (this.requestHeaders == null) {
       if (headers != null) {
         result.headers = headers
