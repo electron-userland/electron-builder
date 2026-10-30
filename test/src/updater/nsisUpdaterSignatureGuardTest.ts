@@ -6,7 +6,7 @@ import { createNsisUpdater, writeRawUpdateConfig, writeUpdateConfig } from "../h
 // verifyUpdateCodeSignature hooks), first silently, then with a deprecation warning. Since electron-updater 7 it fails closed:
 // the update is rejected unless the config opts out explicitly with `verifyUpdateCodeSignature: false` (written by electron-builder
 // for win.verifyUpdateCodeSignature: false), or the app sets NsisUpdater.publisherName. An unpackaged app (dev mode) without any update
-// config file is not verified. A packaged app without app-update.yml (a feed set only with setFeedURL) is, since electron-updater 7:
+// config file is not verified. A packaged app whose update config file is missing (e.g. updateConfigPath names a missing file) is, since electron-updater 7:
 // against NsisUpdater.publisherName, else by its custom verifier (called with an empty list), else the update is rejected.
 
 const MISSING_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#missing-publishername-fails-update-verification"
@@ -116,7 +116,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
     expect(messages(logger.warn).filter(it => it.includes(DISABLED_FRAGMENT))).toHaveLength(0)
   })
 
-  // no update config file at all: an unpackaged app (dev mode) is not verified; a packaged one (a feed set only with setFeedURL) is,
+  // no update config file at all: an unpackaged app (dev mode) is not verified; a packaged one (e.g. updateConfigPath names a missing file) is,
   // since electron-updater 7
   describe("no update config file", () => {
     const NO_CONFIG_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#packaged-nsis-apps-without-an-update-config-verify-updates"
