@@ -932,11 +932,12 @@ describe("NsisUpdater — disableWebInstaller", () => {
     }
   })
 
-  // NSIS takes the rest of the command line after /D= as the install directory, so every other argument comes before it
+  // NSIS takes the rest of the command line after /D= as the install directory, so every other argument comes before it. A directory
+  // with a space stays one unquoted argument: child_process.spawn quotes it, and the installer's GetDParameter handles that form
   for (const web of [true, false]) {
-    for (const installDirectory of ["C:\\Apps\\TestApp", undefined]) {
+    for (const installDirectory of ["C:\\Apps\\TestApp", "C:\\Program Files\\Test App", undefined]) {
       test(
-        `installer arguments of a ${web ? "web" : "full"} installer ${installDirectory == null ? "without installDirectory" : "with installDirectory (/D= last)"}`,
+        `installer arguments of a ${web ? "web" : "full"} installer ${installDirectory == null ? "without installDirectory" : `with installDirectory (/D= last)${installDirectory.includes(" ") ? ", containing a space" : ""}`}`,
         config,
         async ({ expect }) => {
           const { server, port, tmpDir } = await serveUpdate(web, WEB_PAYLOAD)
@@ -976,9 +977,9 @@ describe("NsisUpdater — disableWebInstaller", () => {
 
   // the update info of a per-machine build has isAdminRightsRequired in the installer's file entry: the installer is started through
   // elevate.exe from the resources of the running app, with the arguments it would get directly
-  for (const installDirectory of [undefined, "C:\\Apps\\TestApp"]) {
+  for (const installDirectory of [undefined, "C:\\Apps\\TestApp", "C:\\Program Files\\Test App"]) {
     test(
-      `an update with isAdminRightsRequired is installed through elevate.exe, --package-file included${installDirectory == null ? "" : " and /D= last"}`,
+      `an update with isAdminRightsRequired is installed through elevate.exe, --package-file included${installDirectory == null ? "" : ` and /D= last${installDirectory.includes(" ") ? ", containing a space" : ""}`}`,
       config,
       async ({ expect }) => {
         const { server, port, tmpDir } = await serveUpdate(true, { ...WEB_PAYLOAD, isAdminRightsRequired: true })
