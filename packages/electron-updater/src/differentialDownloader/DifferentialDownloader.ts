@@ -34,6 +34,20 @@ export interface DifferentialDownloaderOptions {
   onProgress?: (progress: ProgressInfo) => void
 }
 
+/**
+ * The most bytes a compressed (v2 or embedded) block map of a `fileSize`-byte file may inflate to, and the most compressed bytes of
+ * an embedded one that are read. A v2 map costs about 33 bytes of JSON per block, so even the finest chunker for file data (stored
+ * archive members, 8 KiB average) writes about fileSize / 250: the limit leaves ample headroom, while a body crafted to inflate
+ * to gigabytes is rejected once it passes the limit, before it can exhaust the memory of (or block) the main process. 64 MiB
+ * when the size is unknown.
+ * @internal
+ */
+export function blockMapSizeLimit(fileSize: number | null | undefined): number {
+  const max = 64 * 1024 * 1024
+  // a NaN maxOutputLength would mean no limit at all to zlib
+  return typeof fileSize === "number" && fileSize > 0 ? Math.min(max, Math.max(8 * 1024 * 1024, Math.ceil(fileSize / 16))) : max
+}
+
 export abstract class DifferentialDownloader {
   fileMetadataBuffer: Buffer | null = null
 
