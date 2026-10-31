@@ -18,16 +18,21 @@ const PROVIDER_HOSTS: Record<TokenHostProvider, { readonly defaults: ReadonlyArr
 export const PUBLISH_TOKEN_HOST_ENV_NAMES: ReadonlyArray<string> = [PUBLISH_TOKEN_HOSTS_ENV, ...Object.values(PROVIDER_HOSTS).flatMap(it => it.ciEnv)]
 
 /**
- * Returns the lower-case host name of a configured `host` option (a name, optionally with a port).
- * Only ASCII host name characters, a port and an IPv6 literal are accepted, so user info, a path, a query, a fragment or
- * anything that another URL parser could read differently is rejected. The value is not echoed: user info may hold a password.
+ * Returns the lower-case host name of a configured `host` option (a name, optionally with a port, and with `allowPath` a path).
+ * Only ASCII host name characters, a port and an IPv6 literal are accepted, so user info, a query, a fragment or
+ * anything that another URL parser could read differently is rejected. A path (GitLab under a relative URL root) may hold only
+ * unreserved characters in non-empty segments, so it cannot change the host. The value is not echoed: user info may hold a password.
  */
-export function parseConfiguredHost(host: string, option: string): string {
-  const url = /^[A-Za-z0-9.:[\]-]+$/.test(host) ? URL.parse(`https://${host}`) : null
+export function parseConfiguredHost(host: string, option: string, allowPath = false): string {
+  const pathStart = allowPath ? host.indexOf("/") : -1
+  const authority = pathStart === -1 ? host : host.substring(0, pathStart)
+  const path = pathStart === -1 ? "" : host.substring(pathStart)
+  const url = /^[A-Za-z0-9.:[\]-]+$/.test(authority) && /^(\/[A-Za-z0-9._~-]+)*\/?$/.test(path) ? URL.parse(`https://${authority}`) : null
   if (url == null || url.hostname === "") {
-    throw new InvalidConfigurationError(
-      `${option} must be a host name in ASCII (punycode for an internationalized name), optionally with a port (e.g. "git.example.com:8443"), without user info, path, query or fragment`
-    )
+    const shape = allowPath
+      ? 'optionally with a port and a path (e.g. "git.example.com:8443/gitlab"), without user info, query or fragment'
+      : 'optionally with a port (e.g. "git.example.com:8443"), without user info, path, query or fragment'
+    throw new InvalidConfigurationError(`${option} must be a host name in ASCII (punycode for an internationalized name), ${shape}`)
   }
   return url.hostname
 }

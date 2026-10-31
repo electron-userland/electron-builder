@@ -101,7 +101,7 @@ describe("GitHub", () => {
 
   test.each([
     ["user info", "user:password@ghe.example.com"],
-    ["a path", "ghe.example.com/api"],
+    ["a path (accepted only for GitLab)", "ghe.example.com/api"],
     ["a backslash", "ghe.example.com\\api"],
     ["a query", "ghe.example.com?x=1"],
     ["a fragment", "ghe.example.com#x"],
@@ -161,8 +161,35 @@ describe("GitLab", () => {
     expect(() => gitlab("gitlab.example.com", "config-token")).not.toThrow()
   })
 
-  test("a host with a path is rejected, even with a token in the configuration", () => {
-    expect(() => gitlab("example.com/gitlab", "config-token")).toThrow("gitlab.host must be a host name")
+  test.each(["example.com/gitlab", "example.com:8443/group/gitlab", "example.com/gitlab/"])("a host with a path (relative URL root) %s is kept in the API URL", host => {
+    expect((gitlab(host, "config-token") as any).baseApiPath).toBe(`https://${host}/api/v4`)
+  })
+
+  test("GITLAB_TOKEN is bound to the host name of a host with a path", () => {
+    vi.stubEnv("GITLAB_TOKEN", SECRET)
+    expect(() => gitlab("example.com/gitlab")).toThrow('GITLAB_TOKEN is not sent to "example.com"')
+    vi.stubEnv("CI_SERVER_URL", "https://example.com/gitlab")
+    expect(() => gitlab("example.com:8443/gitlab")).not.toThrow()
+  })
+
+  test.each([
+    ["user info", "user:password@example.com/gitlab"],
+    ["user info in the path", "example.com/user:password@evil.example.com"],
+    ["a query", "example.com/gitlab?x=1"],
+    ["a fragment", "example.com/gitlab#x"],
+    ["a backslash", "example.com\\gitlab"],
+    ["an empty path segment", "example.com//evil.example.com"],
+    ["a percent-encoded character", "example.com/%2e%2e"],
+    ["no host name", "/gitlab"],
+  ])("a host with %s is rejected, even with a token in the configuration", (_label, host) => {
+    let message = ""
+    try {
+      gitlab(host, "config-token")
+    } catch (e: any) {
+      message = e.message
+    }
+    expect(message).toContain("gitlab.host must be a host name")
+    expect(message).not.toContain("password")
   })
 })
 
