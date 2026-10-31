@@ -302,6 +302,8 @@ A channel file (`latest*.yml`) larger than 10 MiB fails the update check with `E
 
 Changing a signing key or certificate that installs in the field already trust requires a transition release — see [Key Rotation](./key-rotation.md).
 
+The manifest is parsed before its signature is checked, so electron-updater rejects a `latest*.yml` whose YAML aliases (`&name` / `*name`) expand to more than 100000 values plus key and string characters (or more than the file's length, if that is larger) with `ERR_UPDATER_INVALID_UPDATE_INFO`, with every built-in provider. A manifest without aliases is never rejected for its size. Aliases are counted while the manifest is loaded, including aliases inside a non-scalar mapping key (`? [*a, *a]`), which is expanded into a string as it is parsed. An alias counts at least as many characters as it adds to that string (an aliased timestamp, for example, about 60), so such a manifest is rejected before the string is built. electron-updater 6 accepted manifests over this limit; see [the v27 migration notes](../migration/v27-runtime-changes.md#update-manifest-yaml-aliases-are-limited).
+
 ### `disableWebInstaller` (now defaults to `true`)
 
 NSIS **web** installers download their full payload at install time from a manifest-supplied URL, which may not undergo signature verification. As of v27, `AppUpdater.disableWebInstaller` defaults to **`true`**, so a web-installer update is not loaded unless you opt in.
@@ -402,6 +404,10 @@ The default list is `DEFAULT_CROSS_ORIGIN_HEADERS` of builder-util-runtime: `Acc
 - Add a header only if every origin your feed redirects to, and every origin `latest*.yml` points at, may receive it, or return it only for the origins that may (`request.to`). A custom provider that does not extend a built-in one implements `Provider.crossOriginHeaders` and declares its feed's origin with `Provider.feedBaseUrl` (see [above](#custom-options-instantiating-updater-directly)).
 
 See [Only an explicit list of headers goes to another origin](../migration/v27-runtime-changes.md#cross-origin-header-allowlist).
+
+### Linux installs with gksudo, kdesudo or beesu
+
+To install a deb, rpm or pacman update, electron-updater elevates the package manager with the first helper it finds: `pkexec`, then `gksudo`, `kdesudo` and `beesu`, else `sudo`. `pkexec` and `sudo` take the command as separate arguments, so any installer path works with them. `gksudo`, `kdesudo` and `beesu` take the install command as a single string that a shell and the helper parse again, so with one of them the path of the downloaded package (in the updater's cache directory, file name included) may only hold ASCII letters and digits, the characters `.` `_` `/` `+` `,` `:` `=` `@` `%` `-` (with `kdesudo`, a space too) and non-ASCII characters such as `é`, `中`, `™`, `–`, `’` or emoji. Non-ASCII control, format (such as bidi controls) and separator characters (such as a no-break space or U+2028) are not allowed. Any other path fails the install with `ERR_UPDATER_UNSAFE_INSTALLER_PATH` before the helper runs. Installing polkit, which provides `pkexec`, avoids this: electron-updater then elevates with `pkexec` whatever the path. See [the migration note](../migration/v27-runtime-changes.md#linux-gksudo-kdesudo-and-beesu-refuse-unsafe-installer-paths).
 
 ## Staged Rollouts
 
