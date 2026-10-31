@@ -15,7 +15,7 @@ import {
 import AppXTarget from "../../targets/win/AppxTarget.js"
 import MsixTarget from "../../targets/win/MsixTarget.js"
 import { getSignToolPath } from "../../toolsets/winCodeSign.js"
-import { ToolInfo } from "../../util/bundledTool.js"
+import { envWithoutPublishCredentials, ToolInfo } from "../../util/bundledTool.js"
 import { resolveFunction } from "../../util/resolve.js"
 import { withSigntoolLock } from "../../util/toolsetLock.js"
 import { readCertInfo, readCertInfoFromX509 } from "../certInfo.js"
@@ -555,7 +555,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
 
     // signtool.exe (`/f`) is not safe to run concurrently — it races on the shared per-user crypto store.
     // Serialize real-Windows signtool invocations across processes; osslsigncode (`!isWin`) is file-isolated.
-    const execSign = () => vm.exec(tool, args, { timeout, env: { ...process.env, ...(toolInfo.env || {}) } })
+    const execSign = () => vm.exec(tool, args, { timeout, env: envWithoutPublishCredentials(toolInfo.env) })
     await retry(() => (isWin ? withSigntoolLock(execSign) : execSign()), {
       retries: 2,
       interval: 15000,

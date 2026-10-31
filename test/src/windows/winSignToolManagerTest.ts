@@ -7,7 +7,8 @@ import { readCertInfoFromX509 } from "app-builder-lib/src/codeSign/certInfo"
 import { WindowsSignAzureManager } from "app-builder-lib/src/codeSign/win/windowsSignAzureManager"
 import AppXTarget from "app-builder-lib/src/targets/win/AppxTarget"
 import MsixTarget from "app-builder-lib/src/targets/win/MsixTarget"
-import { getAtsBundleDir, getDotnetRuntimeDir, getWindowsKitsBundle } from "app-builder-lib/src/toolsets/winCodeSign"
+import { getAtsBundleDir, getDotnetRuntimeDir, getSignToolPath, getWindowsKitsBundle } from "app-builder-lib/src/toolsets/winCodeSign"
+import { VmManager } from "app-builder-lib/src/vm/vm"
 import type { WinPackager } from "app-builder-lib/src/winPackager"
 import { exec, InvalidConfigurationError } from "builder-util"
 import { matchPublisherName, parseDn } from "builder-util-runtime"
@@ -18,7 +19,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 vi.mock("app-builder-lib/src/toolsets/winCodeSign", async importOriginal => {
   const actual = await importOriginal<typeof import("app-builder-lib/src/toolsets/winCodeSign")>()
-  return { ...actual, getWindowsKitsBundle: vi.fn(), getAtsBundleDir: vi.fn(), getDotnetRuntimeDir: vi.fn() }
+  return { ...actual, getWindowsKitsBundle: vi.fn(), getAtsBundleDir: vi.fn(), getDotnetRuntimeDir: vi.fn(), getSignToolPath: vi.fn(actual.getSignToolPath) }
 })
 
 function makeManager(winCodeSign?: string): SigntoolSignManager {
@@ -560,6 +561,42 @@ describe("PKCS#11 certificateFile passed as -certs to osslsigncode", () => {
     const hashIdx = args.indexOf("-h")
     expect(certsIdx).toBeGreaterThan(keyIdx)
     expect(certsIdx).toBeLessThan(hashIdx)
+  })
+})
+
+// ─── doSign: environment of the signing tool ─────────────────────────────────
+
+describe("doSign passes the signing tool no publish credentials", { concurrent: false }, () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.restoreAllMocks()
+  })
+
+  test("publish credentials are removed; signing variables and the tool's own variables are kept", async () => {
+    vi.stubEnv("GH_TOKEN", "gh-secret")
+    vi.stubEnv("GITHUB_RELEASE_TOKEN", "release-secret")
+    vi.stubEnv("KEYGEN_TOKEN", "keygen-secret")
+    vi.stubEnv("DO_SECRET_KEY", "spaces-secret")
+    vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", "update-key")
+    // Windows env names are case-insensitive
+    vi.stubEnv("Gitlab_Token", "gitlab-secret")
+    vi.stubEnv("CSC_KEY_PASSWORD", "csc-password")
+    // read by signing providers (a cloud KSP, a KMS PKCS#11 module) to authenticate
+    vi.stubEnv("SM_API_KEY", "provider-key")
+    vi.stubEnv("AWS_ACCESS_KEY_ID", "aws-key")
+    vi.mocked(getSignToolPath).mockResolvedValueOnce({ path: "/tools/osslsigncode", env: { DYLD_LIBRARY_PATH: "/tools/lib" } })
+    const exec = vi.spyOn(VmManager.prototype, "exec").mockResolvedValue("")
+
+    const config = { ...makeTaskConfig(), computeSignToolArgs: () => ["sign"] }
+    await makeManager().doSign(config, {} as WinPackager)
+
+    expect(exec).toHaveBeenCalledTimes(1)
+    const env = exec.mock.calls[0][2]?.env ?? {}
+    const names = Object.keys(env).map(it => it.toUpperCase())
+    for (const name of ["GH_TOKEN", "GITHUB_RELEASE_TOKEN", "KEYGEN_TOKEN", "DO_SECRET_KEY", "ELECTRON_BUILDER_UPDATE_SIGN_KEY", "GITLAB_TOKEN"]) {
+      expect(names).not.toContain(name)
+    }
+    expect(env).toMatchObject({ CSC_KEY_PASSWORD: "csc-password", SM_API_KEY: "provider-key", AWS_ACCESS_KEY_ID: "aws-key", DYLD_LIBRARY_PATH: "/tools/lib" })
   })
 })
 

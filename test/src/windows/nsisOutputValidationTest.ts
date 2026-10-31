@@ -2,6 +2,21 @@ import { promises as fsp } from "fs"
 import * as path from "path"
 import { checkMakensisOutput, verifyInstallerSize } from "app-builder-lib/internal"
 import type { Defines } from "app-builder-lib/internal"
+import { NsisTarget } from "app-builder-lib/src/targets/win/nsis/NsisTarget"
+import { getMakeNsisPath } from "app-builder-lib/src/toolsets/nsis"
+import { spawnAndWriteWithOutput } from "builder-util"
+import { afterEach, vi } from "vitest"
+
+// makensis itself is stubbed for the environment test below; the checks above never start it
+vi.mock("builder-util", async importOriginal => {
+  const actual = await importOriginal<typeof import("builder-util")>()
+  return { ...actual, spawnAndWriteWithOutput: vi.fn(), ensureNotBusy: vi.fn() }
+})
+
+vi.mock("app-builder-lib/src/toolsets/nsis", async importOriginal => {
+  const actual = await importOriginal<typeof import("app-builder-lib/src/toolsets/nsis")>()
+  return { ...actual, getMakeNsisPath: vi.fn() }
+})
 
 // ─── checkMakensisOutput ────────────────────────────────────────────────────
 
@@ -166,5 +181,41 @@ describe("verifyInstallerSize", () => {
     const defines = { ...baseDefines(tmpDirPath), APP_64: archive }
     const missingOut = path.join(tmpDirPath, "missing.exe")
     await expect(verifyInstallerSize(missingOut, defines)).rejects.toThrow("missing.exe")
+  })
+})
+
+// ─── makensis environment ───────────────────────────────────────────────────
+
+describe("makensis environment", { concurrent: false }, () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test("publish credentials are removed; signing variables and the toolset's own variables are kept", async ({ expect }) => {
+    vi.stubEnv("GH_TOKEN", "gh-secret")
+    vi.stubEnv("GITHUB_TOKEN", "actions-secret")
+    vi.stubEnv("BITBUCKET_TOKEN", "bitbucket-secret")
+    vi.stubEnv("CF_R2_SECRET_ACCESS_KEY", "r2-secret")
+    vi.stubEnv("SNAPCRAFT_STORE_CREDENTIALS", "snap-secret")
+    // Windows env names are case-insensitive
+    vi.stubEnv("Keygen_Token", "keygen-secret")
+    // `!finalize` / `!uninstfinalize` commands run with the makensis environment and may sign
+    vi.stubEnv("WIN_CSC_KEY_PASSWORD", "csc-password")
+    vi.stubEnv("AZURE_CLIENT_SECRET", "azure-secret")
+    vi.mocked(getMakeNsisPath).mockResolvedValueOnce({ path: "/nsis/makensis", env: { NSISDIR: "/nsis" } })
+    const spawn = vi.mocked(spawnAndWriteWithOutput)
+    spawn.mockResolvedValueOnce({ stdout: "", stderr: "" })
+
+    const target = { options: {}, packager: { config: {}, buildResourcesDir: "/build", debugLogger: { isEnabled: false } }, nsisToolsetOptions: {} }
+    // BUILD_UNINSTALLER: no installer size check after the (stubbed) compile
+    await (NsisTarget.prototype as any).executeMakensis.call(target, { BUILD_UNINSTALLER: null }, { OutFile: '"/out/installer.exe"' }, "")
+
+    expect(spawn).toHaveBeenCalledTimes(1)
+    const env = spawn.mock.calls[0][3]?.env ?? {}
+    const names = Object.keys(env).map(it => it.toUpperCase())
+    for (const name of ["GH_TOKEN", "GITHUB_TOKEN", "BITBUCKET_TOKEN", "CF_R2_SECRET_ACCESS_KEY", "SNAPCRAFT_STORE_CREDENTIALS", "KEYGEN_TOKEN"]) {
+      expect(names).not.toContain(name)
+    }
+    expect(env).toMatchObject({ WIN_CSC_KEY_PASSWORD: "csc-password", AZURE_CLIENT_SECRET: "azure-secret", NSISDIR: "/nsis" })
   })
 })
