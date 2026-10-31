@@ -15,7 +15,7 @@ import escapeRegExp from "lodash.escaperegexp"
 import { AppUpdater } from "../AppUpdater.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
-import { channelFileNotFoundError, getFileList, parseUpdateInfo, Provider, ProviderRuntimeOptions } from "./Provider.js"
+import { carryUpdateManifestSource, channelFileNotFoundError, getFileList, parseUpdateInfo, Provider, ProviderRuntimeOptions } from "./Provider.js"
 
 interface GitlabUpdateInfo extends UpdateInfo {
   tag: string
@@ -172,11 +172,11 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
       result.releaseNotes = latestRelease.description || null
     }
 
-    const gitlabUpdateInfo = {
+    const gitlabUpdateInfo = carryUpdateManifestSource(result, {
       tag: tag,
       assets: this.convertAssetsToMap(latestRelease.assets),
       ...result,
-    }
+    })
 
     // Cache the latest version info
     this.cachedLatestVersion = gitlabUpdateInfo

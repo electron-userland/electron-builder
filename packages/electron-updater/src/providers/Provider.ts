@@ -240,7 +240,57 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
   if (chargeExpansion(result, 0, budget, valueCost) > budget) {
     throw budgetExceeded()
   }
+  rememberUpdateManifestSource(result, rawData)
   return result
+}
+
+/**
+ * The text each `UpdateInfo` was parsed from, keyed by the object. A WeakMap rather than a property, so the text never
+ * shows up in the object (`Object.keys`, JSON, YAML, deep equality, snapshots, IPC) and is released with it.
+ */
+const updateManifestSources = new WeakMap<object, string>()
+
+/**
+ * Records the manifest text `info` was parsed from, so that signature verification can work on the manifest exactly as
+ * published rather than on the object a provider has since added fields to (`tag`, `assets`, `releaseName`, ...).
+ * Only parseUpdateInfo calls it, after the text passed the YAML alias budget, so parsing it again costs no more.
+ */
+function rememberUpdateManifestSource(info: unknown, rawData: string): void {
+  if (info != null && typeof info === "object") {
+    updateManifestSources.set(info, rawData)
+  }
+}
+
+/** For a provider that returns a copy of the parsed manifest (`{ tag, ...result }`): the copy keeps the original's source text. */
+export function carryUpdateManifestSource<T extends object>(from: object, to: T): T {
+  const source = updateManifestSources.get(from)
+  if (source != null) {
+    updateManifestSources.set(to, source)
+  }
+  return to
+}
+
+function isMapping(value: unknown): value is UpdateInfo {
+  // only the container is checked here; verifyManifestSignatures validates every field it relies on
+  return value != null && typeof value === "object" && !Array.isArray(value)
+}
+
+/**
+ * Parses the manifest text recorded for `info` (see {@link rememberUpdateManifestSource}) again, giving the manifest as
+ * published, before any provider changed it. Null when no text was recorded (e.g. a custom provider that builds the
+ * `UpdateInfo` itself) or it does not parse to a mapping.
+ */
+export function reparseUpdateManifest(info: UpdateInfo): UpdateInfo | null {
+  const source = updateManifestSources.get(info)
+  if (source == null) {
+    return null
+  }
+  try {
+    const parsed: unknown = load(source)
+    return isMapping(parsed) ? parsed : null
+  } catch {
+    return null
+  }
 }
 
 /** @internal */

@@ -19,10 +19,12 @@ import {
   collectManifestSignatures,
   normalizePublicKeyList,
   verifyManifestSignatures,
+  UPDATE_MANIFEST_UNSIGNED_FIELDS,
   type LimitedLogger,
 } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { release } from "os"
+import { isDeepStrictEqual } from "util"
 import { EventEmitter } from "events"
 import fsExtra from "fs-extra"
 import { OutgoingHttpHeaders } from "http"
@@ -36,7 +38,7 @@ import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor.js"
 import { GenericProvider } from "./providers/GenericProvider.js"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory.js"
-import { isYamlAliasBudgetError, Provider, ProviderPlatform, ProviderRuntimeOptions, YAML_ALIAS_BUDGET_DOCS } from "./providers/Provider.js"
+import { isYamlAliasBudgetError, Provider, ProviderPlatform, ProviderRuntimeOptions, reparseUpdateManifest, YAML_ALIAS_BUDGET_DOCS } from "./providers/Provider.js"
 import type { TypedEmitter } from "tiny-typed-emitter"
 type Session = Electron.Session
 import type { AuthInfo } from "electron"
@@ -842,7 +844,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * a release to be dual-signed while installs trust `[old, new]` during key rotation. Never fails open once
    * a key is configured. A throw here propagates before any download starts (fail-closed).
    *
-   * Resolves to `true` when a trusted key verified the manifest, `false` when verification was skipped (no key configured).
+   * Resolves to `true` when a trusted key verified the manifest — through an EBUM2 signature, or an EBUM1 signature for a manifest
+   * whose fields EBUM1 vouches for — and `false` when verification was skipped (no key configured).
    */
   private async verifyManifestSignature(info: UpdateInfo): Promise<boolean> {
     let trustedKeys = normalizePublicKeyList(this.updateManifestPublicKey)
@@ -865,16 +868,30 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return false
     }
 
-    if (collectManifestSignatures(info).length === 0) {
+    // Verify the manifest as published: EBUM2 signs every field, so it must not see the fields a provider adds after
+    // parsing (a GitHub `tag`, PrivateGitHub `assets`, a release name from the feed). A custom provider that builds the
+    // UpdateInfo itself has no recorded text; its object is verified as it is.
+    const published = reparseUpdateManifest(info) ?? info
+    if (collectManifestSignatures(published).length === 0) {
       throw newError(`Update manifest for version ${info.version} is not signed, but updateManifestPublicKey is configured. Refusing to update.`, "ERR_UPDATER_MANIFEST_NOT_SIGNED")
     }
 
-    const result = verifyManifestSignatures(info, trustedKeys)
+    let result = verifyManifestSignatures(published, trustedKeys)
+    if (result.ok && published !== info) {
+      // the updater goes on to use `info`, so every signed field must still be what was verified
+      const changed = Object.keys(published).filter(
+        key => !UPDATE_MANIFEST_UNSIGNED_FIELDS.includes(key) && !isDeepStrictEqual(Reflect.get(published, key), Reflect.get(info, key))
+      )
+      if (changed.length > 0) {
+        result = { ok: false, reason: `the update provider changed signed field(s) ${changed.map(it => JSON.stringify(it)).join(", ")} after parsing` }
+      }
+    }
     if (!result.ok) {
-      // `reason` is set when the manifest fails the structural checks a signed manifest must pass (e.g. an empty
-      // `files` list or control characters in a signed field) — those are rejected before any key is tried.
+      // `reason` is set when the manifest is refused for a reason other than a plain signature mismatch: it fails the
+      // structural checks a signed manifest must pass (e.g. an empty `files` list or control characters in a signed field),
+      // it has fields only an EBUM2 signature covers but no valid one, or its EBUM2 payload cannot be computed.
       const cause =
-        result.reason == null ? `none of the ${trustedKeys.length} trusted key(s) validates any of its signatures` : `the signed manifest is malformed (${result.reason})`
+        result.reason == null ? `none of the ${trustedKeys.length} trusted key(s) validates any of its signatures` : `the signed manifest was refused (${result.reason})`
       // download URLs written into latest*.yml after signing (e.g. pre-signed URLs) are the likely cause, rather than tampering
       const blockMapUrlHint = (info.files ?? []).some(it => it?.blockMapUrl != null)
         ? " files[].blockMapUrl is covered by the signature, like files[].url, so it has to be in latest*.yml before the manifest is signed: " +
@@ -892,8 +909,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       )
     }
 
-    this.log.debug(`Update manifest for version ${info.version} verified with trusted key ${result.keyId}`)
-    this.log.info(`Update manifest signature verified for version ${info.version}`)
+    this.log.debug(`Update manifest for version ${info.version} verified with trusted key ${result.keyId} (${result.format})`)
+    this.log.info(`Update manifest signature verified for version ${info.version} (${result.format})`)
     return true
   }
 
