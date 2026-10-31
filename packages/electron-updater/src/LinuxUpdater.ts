@@ -1,4 +1,4 @@
-import { AllPublishOptions } from "builder-util-runtime"
+import { AllPublishOptions, newError } from "builder-util-runtime"
 import { accessSync, constants as fsConstants, realpathSync, statSync } from "fs"
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter.js"
@@ -62,6 +62,36 @@ function isTrustedExecutable(candidate: string, trustedRealDirs: readonly string
  * - `wrapped`: the helper (gksudo, kdesudo, beesu) takes a single command string: `/bin/bash -c '…'` and an escaped path.
  */
 export type Elevation = { readonly kind: "root" } | { readonly kind: "argv" | "wrapped"; readonly helper: string[] }
+
+/**
+ * The installer paths that can be passed to a `wrapped` helper: characters that none of the parsers of its command string
+ * treats specially. These are ASCII letters, digits and `._/+,:=@%-`, and every non-ASCII character except the controls,
+ * format characters (bidi and zero-width ones among them), surrogates, private-use and unassigned code points (`\p{C}`)
+ * and the separators (`\p{Z}`: Unicode spaces, U+2028 and U+2029). The UTF-8 bytes of a non-ASCII character are all 0x80
+ * or above, which no shell treats specially; a separator is refused as a tokenizer that splits on Unicode whitespace
+ * would split the path there.
+ */
+const WRAPPED_SAFE_PATH = /^(?:[A-Za-z0-9._/+,:=@%-]|[^\p{C}\p{Z}\p{ASCII}])+$/u
+/** {@link WRAPPED_SAFE_PATH} and a space, which kdesudo's `sh -c` keeps in one word once it is backslash-escaped. */
+const KDESUDO_SAFE_PATH = /^(?:[A-Za-z0-9._/+,:=@% -]|[^\p{C}\p{Z}\p{ASCII}])+$/u
+const UNSAFE_INSTALLER_PATH_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#linux-gksudo-kdesudo-and-beesu-refuse-unsafe-installer-paths"
+
+/**
+ * Throws when `rawPath` cannot be passed to `helper`, a `wrapped` elevation helper. The install command reaches it as one
+ * string that is parsed several times: by the `/bin/sh -c` of `shell: true`, inside the double-quoted wrapper (where `\$`
+ * and `` \` `` lose their backslash), then by gksu's own tokenizer (which drops every backslash and splits on spaces) or
+ * kdesudo's `sh -c`, then by `/bin/bash -c`. No escaping is right for all of them, so the path may only hold characters
+ * that none of them treats specially. How beesu parses the string is not known, so it gets no space either.
+ */
+function checkWrappedInstallerPath(helper: string, rawPath: string): void {
+  const safePath = /kdesudo/i.test(helper) ? KDESUDO_SAFE_PATH : WRAPPED_SAFE_PATH
+  if (!safePath.test(rawPath)) {
+    throw newError(
+      `${helper} takes the install command as a single string, and the installer path ${JSON.stringify(rawPath)} contains characters that cannot be passed through it safely, so electron-updater does not install it. To install this update, install polkit (pkexec). See ${UNSAFE_INSTALLER_PATH_DOCS}`,
+      "ERR_UPDATER_UNSAFE_INSTALLER_PATH"
+    )
+  }
+}
 
 /**
  * The commands that install a package, declared once per package manager so that the synchronous on-quit install
@@ -209,7 +239,9 @@ export abstract class LinuxUpdater extends BaseUpdater {
   /**
    * Sanitizes the installer path for use with shell:true spawn calls.
    * Backslash-escapes metacharacters that have special meaning in POSIX shell.
-   * Note: paths containing single-quotes (') are not supported.
+   * Note: this is not enough for the command string of a wrapped helper (gksudo, kdesudo, beesu), so an install with one
+   * of those refuses a path with an ASCII character other than letters, digits, `._/+,:=@%-` and, for kdesudo, a space,
+   * or with a non-ASCII control, format or separator character (see {@link WRAPPED_SAFE_PATH}).
    */
   protected get installerPath(): string | null {
     const raw = super.installerPath
@@ -343,13 +375,18 @@ export abstract class LinuxUpdater extends BaseUpdater {
   /**
    * Resolves once per install how its commands are elevated, and the plan they run. The installer path is only escaped
    * when the commands go through the `/bin/bash -c` wrapper; as an argv element the escapes would reach the package
-   * manager literally. Throws when the package cannot be installed.
+   * manager literally. Throws when the package cannot be installed, or when its path cannot be passed safely to a wrapped
+   * helper.
    */
   private prepareInstall(): { elevation: Elevation; plan: InstallPlan } {
     const elevation = this.resolveElevation()
-    const installerPath = elevation.kind === "wrapped" ? this.installerPath : this.rawInstallerPath
-    if (installerPath == null) {
+    const rawInstallerPath = this.rawInstallerPath
+    const installerPath = elevation.kind === "wrapped" ? this.installerPath : rawInstallerPath
+    if (installerPath == null || rawInstallerPath == null) {
       throw new Error("No update filepath provided, can't quit and install")
+    }
+    if (elevation.kind === "wrapped") {
+      checkWrappedInstallerPath(elevation.helper[0], rawInstallerPath)
     }
     return { elevation, plan: this.resolveInstallPlan(installerPath) }
   }
