@@ -294,6 +294,8 @@ The update manifest (`latest*.yml`) itself **is** cryptographically signed and v
 
 A channel file (`latest*.yml`) larger than 10 MiB fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`: it is read into memory and parsed before the manifest signature is verified. Release feeds and provider API responses (such as the GitHub releases feed or a list of releases) are not limited, since their size grows with the release history. To allow larger channel files, set `maxUpdateInfoSize` (in bytes) in the `publish` configuration, which electron-builder writes into `app-update.yml` so installed apps use it, or `autoUpdater.maxUpdateInfoSize` in the app, which overrides it. Both take a positive integer, or `0` for no limit.
 
+A full download of an update file (installer, zip, Linux package or web package) stops with `ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED` as soon as it receives more bytes than the `size` the manifest declares for that file, instead of receiving whatever the server sends before the SHA-512 is compared at the end. A file without a `size` in the manifest is not limited. electron-builder always writes the `size` of the file it generated.
+
 Changing a signing key or certificate that installs in the field already trust requires a transition release — see [Key Rotation](./key-rotation.md).
 
 ### `disableWebInstaller` (now defaults to `true`)

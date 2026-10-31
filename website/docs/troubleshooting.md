@@ -120,6 +120,9 @@ asar:
 **"sha512 checksum mismatch"**
 : The downloaded update file is corrupt or the wrong file is being served. Verify that the artifact and the `.yml` metadata file were generated together in the same build and not mixed from different builds. As of electron-builder 27, the manifest `sha512` should be base64-encoded — a 128-hex-character "expected" value in the error message is the tell that a hand-rolled manifest still uses hex, which is accepted but deprecated in v27 and will be removed in v28; convert it with `sha512sum file.ext | cut -d' ' -f1 | xxd -r -p | base64 -w0`.
 
+**`ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED`: "The download is larger than the … bytes declared for it"**
+: The server sent more bytes than the `size` that `latest*.yml` declares for the file, so electron-updater 7 stopped the download. As with a checksum mismatch, the artifact and the `.yml` were not generated together, or the file was changed after the `.yml` was written. Publish the `.yml` generated with the file. See [Full downloads stop at the declared size](./migration/v27-runtime-changes.md#full-downloads-stop-at-the-declared-size).
+
 **Delta updates (AppImage / NSIS-Web) fail**
 : For AppImage delta updates, electron-builder embeds a blockmap directly in the AppImage binary — no separate file needs to be published. If delta updates aren't working, verify the AppImage was built with electron-builder and that a publish provider is configured. For NSIS differential packages, `nsis.differentialPackage` must not be `false` (any other value — `true`, `"compressed"`, `"store-asar"`, or unset — builds a differential-aware package; `"store-asar"` additionally stores `resources/app.asar` uncompressed so app-code deltas stay proportional to what changed).
 

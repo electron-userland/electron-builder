@@ -1196,6 +1196,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       cancellationToken: taskOptions.downloadUpdateOptions.cancellationToken,
       sha2: (fileInfo.info as any).sha2,
       sha512: fileInfo.info.sha512,
+      maxSize: fileInfo.info.size,
     }
 
     if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {

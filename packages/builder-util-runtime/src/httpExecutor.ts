@@ -67,6 +67,12 @@ export interface DownloadOptions {
   readonly headers?: OutgoingHttpHeaders | null
   readonly sha2?: string | null
   readonly sha512?: string | null
+  /**
+   * The largest file, in bytes, a download into a file accepts (set by electron-updater to the `size` of the file in the update info):
+   * once more bytes arrive, the download fails with `ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED` and is aborted. Applies when it is a number of
+   * at least 0.
+   */
+  readonly maxSize?: number | null
 
   readonly cancellationToken: CancellationToken
 
@@ -704,6 +710,28 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage)
   }
 
   const streams: Array<any> = []
+  const maxSize = options.options.maxSize
+  if (maxSize != null && maxSize >= 0) {
+    let receivedSize = 0
+    const sizeLimit = new Transform({
+      transform(chunk: Buffer, _encoding, callback) {
+        receivedSize += chunk.length
+        if (receivedSize > maxSize) {
+          callback(
+            newError(
+              `The download is larger than the ${maxSize} bytes declared for it (size in the update info): electron-updater 7 stops a full download once it receives more bytes than that. Publish the update info generated together with the file, so that its size matches. See https://www.electron.build/docs/migration/v27-runtime-changes#full-downloads-stop-at-the-declared-size`,
+              "ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED"
+            )
+          )
+          return
+        }
+        callback(null, chunk)
+      },
+    })
+    // a failing pipe destination only unpipes the response: destroy it, so that the rest of the body is not received
+    sizeLimit.on("error", () => response.destroy())
+    streams.push(sizeLimit)
+  }
   if (options.options.onProgress != null) {
     const contentLength = safeGetHeader(response, "content-length")
     if (contentLength != null) {
