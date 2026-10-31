@@ -64,11 +64,9 @@ async function createUpdater(tmpDir: TmpDir) {
   const updater = new NsisUpdater(null, new TestAppAdapter("1.0.0", await tmpDir.getTempDir({ prefix: "login-challenge-app" })))
   tuneTestUpdater(updater)
   updater.autoDownload = false
-  ;(updater as any).httpExecutor = new FakeElectronHttpExecutor(
-    () => ({ statusCode: 200, body: Buffer.from(CHANNEL_FILE) }),
-    undefined,
-    () => updater.allowInsecureFeed
-  )
+  ;(updater as any).httpExecutor = new FakeElectronHttpExecutor(() => ({ statusCode: 200, body: Buffer.from(CHANNEL_FILE) }), {
+    isInsecureFeedAllowed: () => updater.allowInsecureFeed,
+  })
   const logger = makeLogger()
   updater.logger = logger
   const forwarded: Array<AuthInfo> = []

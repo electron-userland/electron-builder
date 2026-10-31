@@ -21,18 +21,25 @@ export function getNetSession(): Session {
 /** Gets the names (never the values) of the headers a cross-origin redirect did not send on to its target. */
 export type CrossOriginRedirectListener = (droppedHeaderNames: Array<string>, originUrl: URL, targetUrl: URL) => void
 
+export interface ElectronHttpExecutorOptions {
+  /** Gets the names of the headers a cross-origin redirect did not send on. */
+  readonly crossOriginRedirectListener?: CrossOriginRedirectListener
+  /** Whether a request may use plain `http` to a host that is not loopback (`AppUpdater.allowInsecureFeed`); not by default. */
+  readonly isInsecureFeedAllowed?: () => boolean
+}
+
 export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
   private cachedSession: Session | null = null
+  private readonly crossOriginRedirectListener?: CrossOriginRedirectListener
+  private readonly isInsecureFeedAllowed: () => boolean
 
-  /**
-   * @param isInsecureFeedAllowed whether a request may use plain `http` to a host that is not loopback (`AppUpdater.allowInsecureFeed`)
-   */
   constructor(
     private readonly proxyLoginCallback?: (authInfo: AuthInfo, callback: LoginCallback) => void,
-    private readonly crossOriginRedirectListener?: CrossOriginRedirectListener,
-    private readonly isInsecureFeedAllowed: () => boolean = () => false
+    options: ElectronHttpExecutorOptions = {}
   ) {
     super()
+    this.crossOriginRedirectListener = options.crossOriginRedirectListener
+    this.isInsecureFeedAllowed = options.isInsecureFeedAllowed ?? (() => false)
   }
 
   async download(url: URL, destination: string, options: DownloadOptions): Promise<string> {

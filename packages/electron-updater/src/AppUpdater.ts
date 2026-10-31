@@ -580,11 +580,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     if (app == null) {
       this.app = new ElectronAppAdapter()
-      this.httpExecutor = new ElectronHttpExecutor(
-        (authInfo, callback) => this.onLoginChallenge(authInfo, callback),
-        (droppedHeaderNames, originUrl, targetUrl) => this.announceCrossOriginRedirect(droppedHeaderNames, originUrl, targetUrl),
-        () => this.allowInsecureFeed
-      )
+      this.httpExecutor = new ElectronHttpExecutor((authInfo, callback) => this.onLoginChallenge(authInfo, callback), {
+        crossOriginRedirectListener: (droppedHeaderNames, originUrl, targetUrl) => this.announceCrossOriginRedirect(droppedHeaderNames, originUrl, targetUrl),
+        isInsecureFeedAllowed: () => this.allowInsecureFeed,
+      })
     } else {
       this.app = app
       this.httpExecutor = null as any

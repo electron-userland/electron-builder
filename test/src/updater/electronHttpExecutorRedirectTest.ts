@@ -81,10 +81,9 @@ describe("ElectronHttpExecutor cross-origin redirect headers", () => {
 
   function createListeningExecutor(target: string) {
     const dropped: Array<[Array<string>, string, string]> = []
-    const executor = new FakeElectronHttpExecutor(
-      url => (url === FILE_URL ? { location: target } : { statusCode: 200, body: BODY }),
-      (names, origin, targetUrl) => dropped.push([names, origin.origin, targetUrl.origin])
-    )
+    const executor = new FakeElectronHttpExecutor(url => (url === FILE_URL ? { location: target } : { statusCode: 200, body: BODY }), {
+      crossOriginRedirectListener: (names, origin, targetUrl) => dropped.push([names, origin.origin, targetUrl.origin]),
+    })
     return { executor, dropped }
   }
 

@@ -33,8 +33,7 @@ function createExecutor(redirects: Record<string, string> = {}, isInsecureFeedAl
       const location = redirects[url]
       return location == null ? { statusCode: 200, body: BODY } : { location }
     },
-    undefined,
-    isInsecureFeedAllowed
+    { isInsecureFeedAllowed }
   )
 }
 
