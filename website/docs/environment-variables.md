@@ -77,7 +77,7 @@ The Ed25519 private key that signs `latest*.yml`, required on publishing builds 
 
 Publish providers read their credentials from the environment. Publishing is **never** automatic — you must pass `--publish` explicitly (see [Publish](./publish.md)).
 
-The variables in this section, and `ELECTRON_BUILDER_UPDATE_SIGN_KEY`, are not passed to the Windows signing tools (signtool, osslsigncode) or to makensis, including the `!finalize` / `!uninstfinalize` commands makensis runs. Code-signing variables (`CSC_*`, `WIN_CSC_*`) and the variables a signing provider reads to authenticate (e.g. `AWS_*` or `AZURE_*` for a cloud key store) are still passed.
+The publish tokens and keys below (`GH_TOKEN`, `GITHUB_TOKEN`, `GITHUB_RELEASE_TOKEN`, `GITLAB_TOKEN`, `BITBUCKET_TOKEN`, `KEYGEN_TOKEN`, `CF_R2_ACCESS_KEY_ID`, `CF_R2_SECRET_ACCESS_KEY`, `DO_KEY_ID`, `DO_SECRET_KEY`, `SNAP_CSC_LINK`, `SNAPCRAFT_STORE_CREDENTIALS`, `SNAPCRAFT_STORE_AUTH`), and `ELECTRON_BUILDER_UPDATE_SIGN_KEY`, are not passed to the Windows signing tools (signtool, osslsigncode) or to makensis, including the `!finalize` / `!uninstfinalize` commands makensis runs. Code-signing variables (`CSC_*`, `WIN_CSC_*`) and the variables a signing provider reads to authenticate are still passed. This includes the S3 variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN`, because an AWS KMS signing module reads the same names, and `AZURE_*` for a cloud key store.
 
 ### GitHub
 
