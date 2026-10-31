@@ -1,7 +1,7 @@
 import { DebugLogger } from "builder-util"
 import { log } from "builder-util"
 import { Platform } from "electron-builder"
-import { getLinuxVm } from "app-builder-lib/internal"
+import { getLinuxVm, type ParallelsVmManager } from "app-builder-lib/internal"
 import { readdir } from "fs/promises"
 import * as path from "path"
 import { assertPack, EXTENDED_TIMEOUT } from "../helpers/packTester"
@@ -9,8 +9,9 @@ import { canSudoSnap, deliverAndInstallSnapInVm, installAndLaunchSnapLocally } f
 
 const isEnabled = process.env.RUN_SNAP_TESTS === "true" && process.platform !== "win32"
 
-const linuxVmPromise: Promise<Awaited<ReturnType<typeof getLinuxVm>>> =
-  process.platform === "darwin" && isEnabled ? getLinuxVm(new DebugLogger(false)).catch(() => undefined) : Promise.resolve(undefined)
+// getLinuxVm only returns a Parallels guest; `bash -c` below runs in it via prlctl, never in a host shell
+const linuxVmPromise: Promise<ParallelsVmManager | undefined> =
+  process.platform === "darwin" && isEnabled ? (getLinuxVm(new DebugLogger(false)) as Promise<ParallelsVmManager | undefined>).catch(() => undefined) : Promise.resolve(undefined)
 
 const vitestOptions = { concurrent: false, timeout: EXTENDED_TIMEOUT }
 
