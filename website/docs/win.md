@@ -85,9 +85,28 @@ export default class AppUpdater {
 
 The built-in default uses [`windowsExecutableCodeSignatureVerifier`](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts), which runs Windows PowerShell's `Get-AuthenticodeSignature` and rejects an update it cannot verify (`ERR_UPDATER_SIGNATURE_UNVERIFIABLE`) — for example when `powershell.exe` is blocked, which electron-updater 6 answered by installing the update with a warning. Where PowerShell may not run on your users' machines, a native verifier like the one above keeps updates working: ship it in your first release built with electron-updater 7, since installs that cannot verify an update cannot receive a later release that adds it.
 The default verify function also rejects an update whose signature Windows reports from a security catalog instead of one embedded in the installer, since an update installer is in no catalog. If your installers are catalog-signed on purpose, set `autoUpdater.allowCatalogSignature = true` (`false` by default): a valid catalog signature is then accepted, with a warning, when its signer matches `publisherName`. To decide it per release instead, build with `win.allowCatalogSignature: true`, which writes `allowCatalogSignature: true` into the `latest.yml` of the `nsis` and `nsis-web` targets: electron-updater honors it only when the [signature of that manifest](./features/signed-update-manifests.md) was verified against a trusted key, and ignores it with a warning otherwise. It is covered by the manifest signature, so turning it on or off for a published release means re-signing or republishing its `latest.yml`. electron-updater 7.0.0-alpha.8 to alpha.11 installs with an update key configured reject a signed manifest that sets `allowCatalogSignature: true` (`ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`), the same way alpha.8 treats a signed `files[].blockMapUrl`. A custom verify function ignores both.
-A custom verify function is called only with a `publisherName`: the one of `app-update.yml`, else `autoUpdater.publisherName` (see below). Without either, electron-updater rejects the update before any verify function runs, unless `app-update.yml` opts out because the app was built with `win.verifyUpdateCodeSignature: false` (see [the v27 migration guide](./migration/v27-build-changes.md#missing-publishername-fails-update-verification)).
-An app can also set the subject of the certificate that signs its updates at runtime with `autoUpdater.publisherName = ["CN=My Company, O=My Company, C=US"]`: the `publisherName` of `app-update.yml` wins over it, and it is used when `app-update.yml` has no `publisherName` (also when `app-update.yml` carries `verifyUpdateCodeSignature: false`: the update is then verified), and when the update config file of a packaged app (`app-update.yml` or the `updateConfigPath` file) is missing when an update is verified. In that last case without it, the update is rejected without calling any verify function (`ERR_UPDATER_NO_PUBLISHER_NAME`, see [the v27 migration guide](./migration/v27-runtime-changes.md#packaged-nsis-apps-without-an-update-config-verify-updates)).
+A custom verify function is called only with a `publisherName`: the one of `app-update.yml`, else [`autoUpdater.publisherName`](#how-do-you-set-the-publishername-of-updates-at-runtime). Without either, electron-updater rejects the update before any verify function runs, unless `app-update.yml` opts out because the app was built with `win.verifyUpdateCodeSignature: false` (see [the v27 migration guide](./migration/v27-build-changes.md#missing-publishername-fails-update-verification)).
 The older property `verifyUpdateCodeSignature`, which differs only in name and return interface, is deprecated and kept only as a compatibility shim (shall be removed in electron-builder v28). The protected `_verifyUpdateCodeSignature` member is likewise deprecated in favour of `_verifyUpdateFileAuthenticodeSignature`.
+
+## How do you set the publisherName of updates at runtime? {#how-do-you-set-the-publishername-of-updates-at-runtime}
+
+`autoUpdater.publisherName` (`NsisUpdater.publisherName`, `null` by default) is the subject of the certificate that signs your updates, in distinguished name (DN) format, as a string, or an array of strings for several certificates (e.g. during a certificate rotation):
+
+```ts
+autoUpdater.publisherName = ["CN=My Company, O=My Company, C=US"]
+```
+
+electron-updater verifies the Authenticode signature of a downloaded NSIS update against the first of these that is set:
+
+1. the `publisherName` of the update config file (`app-update.yml`, or the `dev-app-update.yml` / `updateConfigPath` file), which electron-builder writes at build time;
+2. `autoUpdater.publisherName`. It also applies when the update config file opts out with `verifyUpdateCodeSignature: false` (written for `win.verifyUpdateCodeSignature: false`): the update is then verified.
+
+Without either, the update is rejected and no verify function is called:
+
+- when the update config file has no `publisherName`, with `ERR_UPDATER_INVALID_SIGNATURE`, unless the file opts out with `verifyUpdateCodeSignature: false` (see [the v27 migration guide](./migration/v27-build-changes.md#missing-publishername-fails-update-verification));
+- when the update config file of a packaged app is missing at the time the update is verified (for example, `updateConfigPath` names a file that does not exist), with `ERR_UPDATER_NO_PUBLISHER_NAME`.
+
+An app that is not packaged (development mode) and has no `dev-app-update.yml` is not verified.
 
 ## How do you create a Parallels Windows 10 Virtual Machine?
 
