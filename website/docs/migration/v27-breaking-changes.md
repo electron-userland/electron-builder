@@ -33,8 +33,8 @@ The changes are split by where you fix them. Each page opens with its own at-a-g
 | Page | What's on it | Changes |
 |---|---|:---:|
 | **[Config](./v27-config-changes.md)** | Removed, renamed and restructured config keys. `migrate-schema` rewrites most of them; any left behind fail the build. | 25 |
-| **[Build & Publish](./v27-build-changes.md)** | Node.js and CLI, toolsets and environment variables, dependency collection and validation, signing checks, publishing and update metadata, Flatpak build tooling. | 32 |
-| **[Runtime (Shipped App)](./v27-runtime-changes.md)** | What changes on users' machines: auto-update defaults and the electron-updater API, macOS entitlements and DMG, NSIS file associations, the Linux launcher, Flatpak and Snap defaults. | 21 |
+| **[Build & Publish](./v27-build-changes.md)** | Node.js and CLI, toolsets and environment variables, dependency collection and validation, signing checks, publishing and update metadata, Flatpak build tooling. | 33 |
+| **[Runtime (Shipped App)](./v27-runtime-changes.md)** | What changes on users' machines: auto-update defaults and the electron-updater API, macOS entitlements and DMG, NSIS file associations, the Linux launcher, Flatpak and Snap defaults. | 23 |
 | **[Developer-Only](./v27-developer-changes.md)** | Only if you write code against electron-builder: ESM packaging, the programmatic and plugin APIs, build hooks and custom signers, custom NSIS and maintainer scripts, type exports. | 10 |
 
 ---
