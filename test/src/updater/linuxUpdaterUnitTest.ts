@@ -711,7 +711,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
     /** Installs `rawPath` with dpkg, elevated by `helper`. Returns the privileged commands run and the errors dispatched. */
     async function install(mode: "sync" | "async", helper: string, rawPath: string) {
-      ;(updater as any).downloadedUpdateHelper = { file: rawPath, downloadedFileInfo: { isAdminRightsRequired: false } }
+      ;(updater as any).downloadedUpdateHelper = { verifyDownloadedFilesSync: () => null, file: rawPath, downloadedFileInfo: { isAdminRightsRequired: false } }
       vi.spyOn(updater as any, "determineSudoCommand").mockReturnValue(helper)
       const spawnSyncLog = vi.spyOn(updater as any, "spawnSyncLog").mockReturnValue("")
       const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue(undefined)
@@ -820,7 +820,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
         vi.stubEnv("PATH", `${dir}${path.delimiter}${process.env.PATH ?? ""}`)
         const target = new DebUpdater(null, stubApp)
         target.logger = new NoOpLogger()
-        ;(target as any).downloadedUpdateHelper = { file: rawPathIn(dir), downloadedFileInfo: { isAdminRightsRequired: false } }
+        ;(target as any).downloadedUpdateHelper = { verifyDownloadedFilesSync: () => null, file: rawPathIn(dir), downloadedFileInfo: { isAdminRightsRequired: false } }
         vi.spyOn(target as any, "isRunningAsRoot").mockReturnValue(false)
         vi.spyOn(target as any, "determineSudoCommand").mockReturnValue("kdesudo")
         vi.spyOn(target as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === "dpkg")
