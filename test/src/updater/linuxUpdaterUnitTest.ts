@@ -885,7 +885,8 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
         it("runs the dpkg of the system directories, not one in the user's PATH", async ({ tmpDir }) => {
           const { dir, target, commandsRun } = await prepare(tmpDir, dir => path.join(dir, "update-1.0.2.deb"))
-          const userBin = await tmpDir.createTempDir({ prefix: "user-bin" })
+          const userBin = await tmpDir.getTempDir({ prefix: "user-bin" })
+          await mkdir(userBin, { recursive: true })
           await writeFile(path.join(userBin, "dpkg"), `#!/bin/sh\ntouch "${dir}/PWNED"\n`, { mode: 0o755 })
           vi.stubEnv("PATH", `${userBin}${path.delimiter}${process.env.PATH ?? ""}`)
 
