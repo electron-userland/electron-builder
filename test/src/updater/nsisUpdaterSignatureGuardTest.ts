@@ -7,7 +7,7 @@ import { createNsisUpdater, writeRawUpdateConfig, writeUpdateConfig } from "../h
 // the update is rejected unless the config opts out explicitly with `verifyUpdateCodeSignature: false` (written by electron-builder
 // for win.verifyUpdateCodeSignature: false), or the app sets NsisUpdater.publisherName. An unpackaged app (dev mode) without any update
 // config file is not verified. A packaged app whose update config file is missing (e.g. updateConfigPath names a missing file) is, since electron-updater 7:
-// against NsisUpdater.publisherName, else by its custom verifier (called with an empty list), else the update is rejected.
+// against NsisUpdater.publisherName, else the update is rejected (ERR_UPDATER_NO_PUBLISHER_NAME) without calling a custom verifier.
 
 const MISSING_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#missing-publishername-fails-update-verification"
 const DISABLED_FRAGMENT = "disabled by configuration"
@@ -160,27 +160,22 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
       expect(message).toContain("electron-updater 7 (electron-builder v27)")
       expect(message).toContain("app-update.yml")
       expect(message).toContain("autoUpdater.publisherName")
-      expect(message).toContain("autoUpdater.verifyUpdateFileAuthenticodeSignature")
       expect(message.endsWith(NO_CONFIG_DOCS)).toBe(true)
     })
 
-    test("a packaged app without app-update.yml calls a custom verifier with an empty list and uses its result", async () => {
+    // a custom verifier would get no names to match (one checking them with e.g. `every` would accept any signer), so it is not called,
+    // whatever it would answer
+    test.each([
+      ["accepts every file", { response: "success" as const }],
+      ["rejects the file", { response: "failure" as const, message: "not our signer" }],
+    ])("a packaged app without app-update.yml rejects the update without calling a custom verifier that %s", async (_name, verifierResult) => {
       const { updater } = await createUpdaterWithoutConfig(true)
-      const verifyHook = vi.fn(async () => ({ response: "failure" as const, message: "not our signer" }))
+      const verifyHook = vi.fn(async () => verifierResult)
       updater.verifyUpdateFileAuthenticodeSignature = verifyHook
 
       // @ts-expect-error accessing a private method
-      await expect(updater.verifySignature("/path/to/installer.exe")).resolves.toEqual({ response: "failure", message: "not our signer" })
-      expect(verifyHook).toHaveBeenCalledTimes(1)
-      expect(verifyHook).toHaveBeenCalledWith([], "/path/to/installer.exe")
-    })
-
-    test("a packaged app without app-update.yml opts out explicitly with a custom verifier that accepts every file", async () => {
-      const { updater } = await createUpdaterWithoutConfig(true)
-      updater.verifyUpdateFileAuthenticodeSignature = async () => ({ response: "success" })
-
-      // @ts-expect-error accessing a private method
-      await expect(updater.verifySignature("/path/to/installer.exe")).resolves.toEqual({ response: "success" })
+      await expect(updater.verifySignature("/path/to/installer.exe")).rejects.toMatchObject({ code: "ERR_UPDATER_NO_PUBLISHER_NAME" })
+      expect(verifyHook).not.toHaveBeenCalled()
     })
 
     test("a packaged app without app-update.yml verifies against autoUpdater.publisherName with a custom verifier", async () => {
