@@ -1,6 +1,6 @@
 import { blake2b } from "@noble/hashes/blake2.js"
 import { CancellationToken } from "builder-util-runtime"
-import { BlockInput, decodeBlockMapV3, encodeBlockMapV3, isBlockMapV3, RECORD_SIZE, recordsStart, SUPER_SIZE } from "builder-util-runtime/internal"
+import { BlockInput, decodeBlockMapV3, encodeBlockMapV3, groupTableStart, isBlockMapV3, RECORD_SIZE, recordsStart, SUPER_SIZE } from "builder-util-runtime/internal"
 import {
   coalesce,
   fetchBlockMapV3,
@@ -14,7 +14,7 @@ import * as http from "http"
 import { AddressInfo } from "net"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 import { gzipSync } from "zlib"
-import { httpExecutor } from "../helpers/updaterTestUtil"
+import { httpExecutor, TestNodeHttpExecutor } from "../helpers/updaterTestUtil"
 
 // Deterministic synthetic blocks: content-derived digests, sizes around a mean (same generator as blockMapV3Test).
 function makeBlocks(count: number, seed: number, avgSize = 4096, startOffset = 0): Array<BlockInput> {
@@ -82,6 +82,13 @@ function parseRanges(header: string, size: number): Array<[number, number]> | nu
     ranges.push([start, end])
   }
   return ranges
+}
+
+/** Node's client accepts response headers of 16 KB by default, Electron's net about 256 KB. */
+class LargeHeaderHttpExecutor extends TestNodeHttpExecutor {
+  createRequest(options: any, callback: (response: any) => void): http.ClientRequest {
+    return super.createRequest({ ...options, maxHeaderSize: 1024 * 1024 }, callback)
+  }
 }
 
 /** In-memory file server with single- and multi-range support (206 + Content-Range, 416 when unsatisfiable) and a switch to disable Range support. */
@@ -167,7 +174,7 @@ describe("blockMapV3Fetcher", () => {
     name: string,
     old: Buffer | null,
     isUseMultipleRangeRequest?: boolean,
-    extra: { expectedFileSize?: number; requestHeaders?: http.OutgoingHttpHeaders; setUp?: () => void } = {}
+    extra: { expectedFileSize?: number; requestHeaders?: http.OutgoingHttpHeaders; httpExecutor?: TestNodeHttpExecutor; setUp?: () => void } = {}
   ) {
     for (const it of [server, cdn]) {
       it.requests.length = 0
@@ -513,6 +520,43 @@ describe("blockMapV3Fetcher", () => {
     expect(server.requests).toHaveLength(1)
   })
 
+  /** [start, end] (inclusive) of every range the server was asked for */
+  function requestedRanges(): Array<[number, number]> {
+    return server.requests.flatMap(it => [...(it.range ?? "").matchAll(/(\d+)-(\d+)/g)].map((m): [number, number] => [parseInt(m[1], 10), parseInt(m[2], 10)]))
+  }
+
+  test("super-group counts that do not sum to the header are rejected before any group entry is requested", async () => {
+    const corrupt = Buffer.from(OLD)
+    // super-group 0 claims 65535 groups (~1 MB of group entries); its key changes, so it is unmatched and its entries would be fetched
+    corrupt.writeUInt16LE(0xffff, oldMap.header.headerLen + 12)
+    server.files.set("corrupt.blockmap", corrupt)
+    await expect(fetchWith("corrupt.blockmap", OLD, false)).rejects.toThrow(/super-group counts do not sum/)
+    // the super-group table fits into the first range
+    expect(server.requests).toHaveLength(1)
+    expect(requestedRanges().every(([, end]) => end < corrupt.length)).toBe(true)
+  })
+
+  test("group block counts that do not sum to the header are rejected before any record is requested", async () => {
+    const corrupt = Buffer.from(OLD)
+    // super-group 0's hash changes, so its group entries are taken from the server rather than copied from OLD
+    corrupt[oldMap.header.headerLen] ^= 0xff
+    // group 0 claims 65535 blocks (~640 KB of records)
+    corrupt.writeUInt16LE(0xffff, groupTableStart(oldMap.header) + 12)
+    server.files.set("corrupt.blockmap", corrupt)
+    await expect(fetchWith("corrupt.blockmap", OLD, false)).rejects.toThrow(/group block counts do not sum to blockCount/)
+    expect(requestedRanges().every(([start, end]) => start < recordsStart(oldMap.header) && end < corrupt.length)).toBe(true)
+  })
+
+  test("a Range request larger than the size limit is refused before it is sent", async () => {
+    // the first request is sized from the old map, before the new header is checked: a limit below it is how this check is reached
+    server.files.set("new.blockmap", editedMap("over-limit-request"))
+    const limit = firstRangeSize(oldMap.header) - 1
+    const requestsBefore = server.requests.length
+    const fetching = fetchBlockMapV3({ url: new URL("new.blockmap", server.url), oldMap: OLD, maxBlockMapSize: limit, httpExecutor, cancellationToken: new CancellationToken() })
+    await expect(fetching).rejects.toThrow(`bytes requested, more than the ${limit}-byte limit`)
+    expect(server.requests).toHaveLength(requestsBefore)
+  })
+
   test("a single-range answer must name the requested range in Content-Range", async () => {
     const NEW = editedMap("content-range")
     server.files.set("new.blockmap", NEW)
@@ -543,6 +587,25 @@ describe("blockMapV3Fetcher", () => {
       return true
     }
     await expect(fetchWith("big.blockmap", OLD, false, { setUp: () => (server.override = oversized) })).rejects.toThrow(/response exceeds \d+ bytes/)
+  })
+
+  test("a multipart answer whose long Content-Type names no boundary is rejected without backtracking over it", async () => {
+    server.files.set("new.blockmap", editedMap("long-content-type"))
+    // a whitespace run followed by a non-space character (Electron trims only trailing whitespace)
+    const longContentType = (req: http.IncomingMessage, res: http.ServerResponse) => {
+      if (req.headers.range?.includes(",") !== true) {
+        return false
+      }
+      res.writeHead(206, { "Content-Type": `multipart/x${" ".repeat(100_000)}x` })
+      res.end()
+      return true
+    }
+    const start = performance.now()
+    // the error message quotes only the first 200 characters of the header
+    await expect(fetchWith("new.blockmap", OLD, true, { httpExecutor: new LargeHeaderHttpExecutor(), setUp: () => (server.override = longContentType) })).rejects.toThrow(
+      /^Content-Type "multipart\/byteranges" is expected, but got "multipart\/x {189}"$/
+    )
+    expect(performance.now() - start).toBeLessThan(3000)
   })
 
   test("verification rejects empty super-groups, groups and blocks", () => {

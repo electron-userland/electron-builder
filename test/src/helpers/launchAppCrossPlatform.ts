@@ -1,4 +1,4 @@
-import type { VmManager } from "app-builder-lib/internal"
+import type { ParallelsVmManager, VmManager } from "app-builder-lib/internal"
 import { ChildProcess, execSync, spawn, StdioOptions } from "child_process"
 import { createHash, randomUUID } from "crypto"
 import * as fs from "fs"
@@ -496,8 +496,9 @@ export interface VmSnapOptions {
  * Delivers a locally-built .snap to a Parallels Ubuntu VM via HTTP, installs it
  * with --dangerous (unsigned), launches it under Xvfb with SNAP_LAUNCH_TEST=1,
  * verifies the app emits ELECTRON_READY:<version>, then uninstalls the snap.
+ * Takes a ParallelsVmManager: the script runs in the guest via `prlctl exec … bash -c`, never in a host shell.
  */
-export async function deliverAndInstallSnapInVm(vm: VmManager, snapPath: string, opts: VmSnapOptions): Promise<{ version: string }> {
+export async function deliverAndInstallSnapInVm(vm: ParallelsVmManager, snapPath: string, opts: VmSnapOptions): Promise<{ version: string }> {
   const hostIp = getParallelsHostIP()
   if (!hostIp) {
     throw new Error("Cannot find Parallels host IP — is Parallels Desktop running?")

@@ -30,7 +30,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
     const channelUrl = newUrlFromBase(channelFile, this.baseUrl, this.updater.isAddNoCacheQuery)
     for (let attemptNumber = 0; ; attemptNumber++) {
       try {
-        return parseUpdateInfo(await this.httpRequest(channelUrl), channelFile, channelUrl)
+        return parseUpdateInfo(await this.channelFileRequest(channelUrl), channelFile, channelUrl)
       } catch (e: any) {
         if (e instanceof HttpError && e.statusCode === 404) {
           throw newError(`Cannot find channel "${channelFile}" update info: ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")

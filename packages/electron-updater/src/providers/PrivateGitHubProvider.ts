@@ -47,7 +47,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     const url = new URL(asset.url)
     let result: any
     try {
-      result = parseUpdateInfo(await this.httpRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken), channelFile, url)
+      result = parseUpdateInfo(await this.channelFileRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken), channelFile, url)
     } catch (e: any) {
       if (e instanceof HttpError && e.statusCode === 404) {
         throw channelFileNotFoundError(channelFile, url, e)
