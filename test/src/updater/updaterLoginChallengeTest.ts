@@ -1,6 +1,8 @@
 import { serializeToYaml } from "builder-util"
 import { NsisUpdater } from "electron-updater"
 import type { AuthInfo } from "electron"
+import { EventEmitter } from "events"
+import Module from "node:module"
 import type { TmpDir } from "temp-file"
 import { describe, test, vi } from "vitest"
 import { FakeElectronHttpExecutor, makeLogger, tuneTestUpdater } from "../helpers/updaterTestUtil.js"
@@ -162,5 +164,61 @@ describe("electron-updater login event", () => {
     const { answer: other, logger: otherLogger } = await checkedUpdater(tmpDir, { provider: "generic", url: "https://feed.example.com/updates" })
     other(challenge("downloads.example.net", 443))
     expect(loginWarnings(otherLogger.warns)).toHaveLength(1)
+  })
+})
+
+// Without an app adapter, the updater builds its own ElectronHttpExecutor: Electron's `login` event on its requests goes through the same check.
+describe("the updater's own executor", () => {
+  test("routes Electron's login event of a request to the check", async ({ expect }) => {
+    const requests: Array<EventEmitter> = []
+    const electron = {
+      app: Object.assign(new EventEmitter(), {
+        whenReady: () => new Promise<void>(() => undefined),
+        getVersion: () => "1.0.0",
+        getName: () => "login-challenge-app",
+        getAppPath: () => __dirname,
+        getPath: () => __dirname,
+        isPackaged: false,
+      }),
+      session: { fromPartition: () => ({}) },
+      net: {
+        request: () => {
+          const request = new EventEmitter()
+          requests.push(request)
+          return request
+        },
+      },
+    }
+    const moduleInternals = Module as unknown as { _load: (request: string, ...rest: Array<unknown>) => unknown }
+    const load = moduleInternals._load
+    moduleInternals._load = function (this: unknown, request: string, ...rest: Array<unknown>) {
+      return request === "electron" ? electron : load.call(this, request, ...rest)
+    }
+    try {
+      const updater = new NsisUpdater()
+      updater.logger = makeLogger()
+      updater.setFeedURL({ provider: "generic", url: "https://feed.example.com/updates" })
+      const onLogin = vi.fn()
+      // the documented way to cancel: call the callback without credentials
+      updater.on("login", (authInfo, callback) => {
+        onLogin(authInfo, callback)
+        callback()
+      })
+      updater.httpExecutor.createRequest({ protocol: "https:", hostname: "downloads.example.net", path: "/TestApp-Setup-1.1.0.exe" }, () => undefined)
+
+      const serverCallback = vi.fn()
+      requests[0].emit("login", challenge("downloads.example.net", 443), serverCallback)
+      expect(serverCallback).toHaveBeenCalledTimes(1)
+      expect(serverCallback.mock.calls[0]).toEqual([])
+      expect(onLogin).not.toHaveBeenCalled()
+
+      const proxyCallback = vi.fn()
+      requests[0].emit("login", challenge("proxy.corp.example", 3128, true), proxyCallback)
+      expect(onLogin).toHaveBeenCalledTimes(1)
+      expect(onLogin.mock.calls[0][1]).toBe(proxyCallback)
+      expect(proxyCallback.mock.calls).toEqual([[]])
+    } finally {
+      moduleInternals._load = load
+    }
   })
 })
