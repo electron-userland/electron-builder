@@ -316,7 +316,7 @@ A web update cached by a previous launch, or pending an install on next launch, 
 
 ### `allowInsecureFeed` (new, defaults to `false`)
 
-Every request electron-updater sends — the update feed (`app-update.yml` or `setFeedURL`), the update files, blockmaps, differential range requests and every redirect they follow — must use `https`. A request over plain `http`, including an `https` request redirected to `http`, fails with `ERR_UPDATER_INSECURE_FEED` before anything is sent to that URL. Requests to a loopback host (`localhost`, `127.0.0.0/8`, `::1`) are always allowed, so a local test server keeps working. electron-builder warns during the build when a `generic` or `custom` publish `url` written to `app-update.yml` uses `http` to a host that is not loopback.
+Every request electron-updater sends — the update feed (`app-update.yml` or `setFeedURL`), the update files, blockmaps, differential range requests and every redirect they follow — must use `https`. A request over plain `http`, including an `https` request redirected to `http`, fails with `ERR_UPDATER_INSECURE_FEED` before anything is sent to that URL. Requests to a loopback host (`localhost`, `127.0.0.0/8`, `::1`) are always allowed, so a local test server keeps working. electron-builder warns during the build when the feed written to `app-update.yml` (a `generic` or `custom` publish `url`, a `github` `protocol: "http"` or an `s3` `endpoint`) uses `http` to a host that is not loopback.
 
 Serve your updates over `https`. Only if a feed cannot be served over `https`, opt out:
 
