@@ -214,7 +214,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
           "updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out explicitly with " +
           (forced
             ? `\`updateManifest: false\`, or pass ${forceCodeSigningOverrideHint(this)} to build without forceCodeSigning. See ${FORCE_CODE_SIGNING_DOCS}`
-            : `\`updateManifest: false\`. Signed manifests are required since electron-builder 27. See ${BUILD_CHANGES_URL}#signed-update-manifests-are-required`)
+            : `\`updateManifest: false\`. Publishing requires signed update manifests. See ${BUILD_CHANGES_URL}#signed-update-manifests-are-required`)
       )
     }
 
@@ -228,7 +228,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       "auto-update manifests will be unsigned: anyone who can overwrite latest*.yml on your update server can point installs at an arbitrary payload. " +
         (optedOut
           ? "Remove `updateManifest: false` and provide a key with `electron-builder create-update-key` to enable signing. "
-          : "Publishing this configuration will fail (and so will a build with forceCodeSigning) until you provide a key with `electron-builder create-update-key`, or opt out explicitly with `updateManifest: false`; signed manifests are required since electron-builder 27. ") +
+          : "Publishing this configuration will fail (and so will a build with forceCodeSigning) until you provide a key with `electron-builder create-update-key`, or opt out explicitly with `updateManifest: false`; publishing requires signed update manifests. ") +
         "Note that installs which already embed a public key reject unsigned manifests (ERR_UPDATER_MANIFEST_NOT_SIGNED). " +
         (optedOut ? "See https://www.electron.build/features/signed-update-manifests" : `See ${BUILD_CHANGES_URL}#signed-update-manifests-are-required`)
     )

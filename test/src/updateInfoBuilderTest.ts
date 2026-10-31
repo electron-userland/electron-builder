@@ -437,8 +437,10 @@ test("requireUpdateSigningKeys throws when publishing and no key resolves", asyn
   expect(error!.message).toContain("electron-builder create-update-key")
   expect(error!.message).toContain("ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded PEM file)")
   expect(error!.message).toContain("`updateManifest: false`")
-  // a v27 break: the error links its migration section
-  expect(error!.message).toContain("https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required")
+  // the error states the requirement and links its migration section
+  expect(error!.message).toContain(
+    "`updateManifest: false`. Publishing requires signed update manifests. See https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required"
+  )
 })
 
 test("requireUpdateSigningKeys only warns when the build is not publishing", async ({ expect }) => {
@@ -449,8 +451,9 @@ test("requireUpdateSigningKeys only warns when the build is not publishing", asy
     expect(warn).toHaveBeenCalledTimes(1)
     // the advisory must say that publishing WILL fail, so it works as a fail-fast preview
     expect(warn.mock.calls[0][1]).toContain("Publishing this configuration will fail")
-    // it previews a v27 break, so it links the migration section
-    expect(warn.mock.calls[0][1]).toContain("https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required")
+    // it states the requirement and links its migration section
+    expect(warn.mock.calls[0][1]).toContain("opt out explicitly with `updateManifest: false`; publishing requires signed update manifests.")
+    expect(warn.mock.calls[0][1]).toContain("See https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required")
   } finally {
     warn.mockRestore()
   }
