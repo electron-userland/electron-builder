@@ -10,6 +10,10 @@ These options are also applicable for the [Web installer](#web-installer), use t
 
 Unicode enabled by default. Large strings are supported (maximum string length of 8192 bytes instead of the default of 1024 bytes).
 
+:::note[File paths written into the generated script]
+electron-builder writes file paths into the generated NSIS script inside double quotes: the output installer, icons, license files, custom `include` scripts, plugin and include directories, and the pre-compressed files it copies. If one of these paths contains a double quote (`"`), a backtick (`` ` ``), a line break or a NUL character, the build fails and names the path. Rename the file or directory.
+:::
+
 ## 32 bit + 64 bit
 
 If you build both ia32 and x64 arch (`--x64 --ia32`), you will always get one installer. The appropriate arch will be installed automatically.

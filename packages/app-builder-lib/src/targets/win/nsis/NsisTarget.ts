@@ -46,7 +46,7 @@ import { Defines } from "./Defines.js"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang.js"
 import { computeLicensePage } from "./nsisLicense.js"
 import { NsisOptions, PortableOptions } from "./nsisOptions.js"
-import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator.js"
+import { NsisScriptGenerator, nsisEscapeString, nsisQuotePath } from "./nsisScriptGenerator.js"
 import { ELECTRON_BUILDER_NS_UUID, ProgIdMaker } from "./progId.js"
 import { assertInstallerDebugLoggingSupported, getMakeNsisPath, getNsisPluginsPath, NsisToolsetOptions } from "../../../toolsets/nsis.js"
 import { AppPackageHelper, CopyElevateHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js"
@@ -399,7 +399,7 @@ export class NsisTarget extends Target {
     use(options.uninstallUrlReadme || homepage, it => (defines.UNINSTALL_URL_README = it))
 
     const commands: Commands = {
-      OutFile: `"${installerPath}"`,
+      OutFile: nsisQuotePath(installerPath),
       VIProductVersion: appInfo.getVersionInWeirdWindowsForm(),
       VIAddVersionKey: this.computeVersionKey(),
       Unicode: this.isUnicodeEnabled,
@@ -409,7 +409,7 @@ export class NsisTarget extends Target {
     const iconPath = (isPortable ? null : await packager.getResource(options.installerIcon, "installerIcon.ico")) || (await packager.getIconPath())
     if (iconPath != null) {
       if (isPortable) {
-        commands.Icon = `"${iconPath}"`
+        commands.Icon = nsisQuotePath(iconPath)
       } else {
         defines.MUI_ICON = iconPath
         defines.MUI_UNICON = iconPath

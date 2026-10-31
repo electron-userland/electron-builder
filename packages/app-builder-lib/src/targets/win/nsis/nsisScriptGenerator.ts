@@ -1,18 +1,18 @@
-import { log } from "builder-util"
+import { InvalidConfigurationError, log } from "builder-util"
 
 export class NsisScriptGenerator {
   private readonly lines: Array<string> = []
 
   addIncludeDir(file: string) {
-    this.lines.push(`!addincludedir "${file}"`)
+    this.lines.push(`!addincludedir ${nsisQuotePath(file)}`)
   }
 
   addPluginDir(pluginArch: string, dir: string) {
-    this.lines.push(`!addplugindir /${pluginArch} "${dir}"`)
+    this.lines.push(`!addplugindir /${pluginArch} ${nsisQuotePath(dir)}`)
   }
 
   include(file: string) {
-    this.lines.push(`!include "${file}"`)
+    this.lines.push(`!include ${nsisQuotePath(file)}`)
   }
 
   macro(name: string, lines: Array<string> | NsisScriptGenerator) {
@@ -20,7 +20,7 @@ export class NsisScriptGenerator {
   }
 
   file(outputName: string | null, file: string) {
-    this.lines.push(`File${outputName == null ? "" : ` "/oname=${outputName}"`} "${file}"`)
+    this.lines.push(`File${outputName == null ? "" : ` "/oname=${outputName}"`} ${nsisQuotePath(file)}`)
   }
 
   insertMacro(name: string, parameters: string) {
@@ -43,6 +43,19 @@ export class NsisScriptGenerator {
   build() {
     return this.lines.join("\n") + "\n"
   }
+}
+
+/**
+ * Quotes a file path for the generated NSIS script. A double quote, backtick, line break or NUL in the path would end the
+ * quoted string and the rest of the path would be read as script, so such a path fails the build instead of being escaped.
+ */
+export function nsisQuotePath(file: string): string {
+  if (/["`\r\n\0]/.test(file)) {
+    throw new InvalidConfigurationError(
+      `Cannot write ${JSON.stringify(file)} into the NSIS script: the path contains a double quote, backtick, line break or NUL character. Rename the file or directory.`
+    )
+  }
+  return `"${file}"`
 }
 
 export function nsisEscapeString(s: string): string {
