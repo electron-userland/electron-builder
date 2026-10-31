@@ -644,7 +644,7 @@ A token taken from the environment is now sent only to a host it belongs to. Bef
 
 - **the provider's public host:** `github.com`, `api.github.com` and `uploads.github.com`; `gitlab.com`; `api.keygen.sh`.
 - **the host the CI runner reports:** on GitHub Actions the hosts of `GITHUB_SERVER_URL` and `GITHUB_API_URL` (for a GitHub token), on GitLab CI the hosts of `CI_SERVER_URL` and `CI_API_V4_URL` (for a GitLab token). A GitHub Enterprise or self-managed GitLab runner therefore needs no change.
-- **a host listed in `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS`:** comma-separated host names (a port is allowed and ignored), e.g. `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS=github.example.com,gitlab.example.com`. Set it in the publishing job, not in the project, so a change to the project alone cannot redirect the token. For the same reason this variable, `GITHUB_SERVER_URL`, `GITHUB_API_URL`, `CI_SERVER_URL` and `CI_API_V4_URL` are ignored in `electron-builder.env`, with a warning.
+- **a host listed in `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS`:** comma-separated host names (a port is allowed and ignored), e.g. `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS=github.example.com,gitlab.example.com`. Set it in the publishing job, not in the project. For the same reason this variable, `GITHUB_SERVER_URL`, `GITHUB_API_URL`, `CI_SERVER_URL` and `CI_API_V4_URL` are ignored in `electron-builder.env`, with a warning.
 
 A token set in the configuration (`github.token`, `gitlab.token`, `squirrelWindows.remoteToken`) is explicit and still goes to the configured host. `GITHUB_RELEASE_TOKEN` still overrides `github.token`, and it is checked as a token from the environment.
 
