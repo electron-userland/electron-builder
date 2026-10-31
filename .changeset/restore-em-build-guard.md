@@ -2,4 +2,4 @@
 "app-builder-lib": patch
 ---
 
-fix(cli): fail the build again when `extraMetadata.build` or `extraMetadata.directories` is set (what the old `--em.build` / `--em.directories` flags produced), and give a literal `--em.*` flag the same targeted error, naming `-c` / `-c.directories` and linking to the v27 build-changes migration page
+fix(cli): a `build` or `directories` key under `extraMetadata` fails the build, and a literal `--em.build` / `--em.directories` flag gets a targeted error too; both errors name `-c` / `-c.directories` and link to the build-changes migration page
