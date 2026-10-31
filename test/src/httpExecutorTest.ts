@@ -10,7 +10,7 @@ import {
 } from "builder-util-runtime/src/httpExecutor"
 import { CancellationToken } from "builder-util-runtime/src/CancellationToken"
 import { createHash } from "crypto"
-import { ClientRequest, IncomingMessage, RequestOptions, Server, ServerResponse, createServer, request as httpRequest } from "http"
+import { Agent, ClientRequest, IncomingMessage, RequestListener, RequestOptions, Server, ServerResponse, createServer, request as httpRequest } from "http"
 import { AddressInfo } from "net"
 
 describe("HttpExecutor.prepareRedirectUrlOptions", () => {
@@ -924,6 +924,293 @@ describe("HttpExecutor redirect limit (Node.js)", () => {
       })
     })
   }
+})
+
+// A real request through Node's http module, by default through its keep-alive global agent
+class NodeExecutor extends HttpExecutor<ClientRequest> {
+  createRequest(options: RequestOptions, callback: (response: IncomingMessage) => void): ClientRequest {
+    return httpRequest(options, callback)
+  }
+
+  runDownload(url: URL, timeout: number, callback: (error: Error | null) => void, agent?: Agent): void {
+    this.doDownload(
+      { protocol: url.protocol, hostname: url.hostname, port: url.port, path: url.pathname, timeout, agent },
+      {
+        responseHandler: (response, done) => {
+          response.resume()
+          response.on("end", () => done(null))
+        },
+        onCancel: () => {},
+        callback,
+        options: { cancellationToken: new CancellationToken() },
+        destination: null,
+      },
+      0
+    )
+  }
+}
+
+describe("HttpExecutor download Location handling", () => {
+  // Answers every request synchronously with `statusCode` and a Location to `location`; like http.request, createRequest throws for a
+  // protocol other than http(s). Without the guard, that throw escaped from the response listener (an uncaught exception).
+  class LocationExecutor extends HttpExecutor<any> {
+    requestCount = 0
+
+    constructor(
+      private readonly statusCode: number,
+      private readonly location: string,
+      // when set, what createRequest throws for the request of a redirect
+      private readonly thrownOnRedirect: unknown = null
+    ) {
+      super()
+    }
+
+    createRequest(options: RequestOptions, callback: (response: any) => void): any {
+      if (options.protocol !== "http:" && options.protocol !== "https:") {
+        throw new TypeError(`Protocol "${options.protocol}" not supported. Expected "http:"`)
+      }
+      if (this.requestCount > 0 && this.thrownOnRedirect != null) {
+        // eslint-disable-next-line @typescript-eslint/only-throw-error -- the test needs a non-Error throw
+        throw this.thrownOnRedirect
+      }
+      this.requestCount++
+      callback({ statusCode: this.statusCode, statusMessage: "", headers: { location: this.location }, on() {}, resume() {}, setEncoding() {} })
+      return { on() {}, end() {}, abort() {} }
+    }
+
+    runDownload(callback: (error: Error | null) => void): void {
+      this.doDownload(
+        { protocol: "https:", hostname: "example.com", path: "/start" },
+        { responseHandler: (_response, done) => done(null), onCancel: () => {}, callback, options: {} as any, destination: null },
+        0
+      )
+    }
+  }
+
+  for (const [label, location, message] of [
+    ["to a protocol other than http(s)", "ftp://example.com/x", 'Cannot follow the redirect to the "ftp:" protocol'],
+    ["that is not a valid URL", "http://exa mple.com/x", "Invalid URL"],
+  ] as const) {
+    test(`doDownload fails, rather than throws, on a redirect ${label}`, () => {
+      const executor = new LocationExecutor(302, location)
+      const errors: Array<Error | null> = []
+      expect(() => executor.runDownload(e => errors.push(e))).not.toThrow()
+      expect(errors).toHaveLength(1)
+      expect(errors[0]).toBeInstanceOf(Error)
+      expect(errors[0]?.message).toContain(message)
+      expect(executor.requestCount).toBe(1)
+    })
+  }
+
+  test("doDownload fails with an Error when following a redirect throws something else", () => {
+    const executor = new LocationExecutor(302, "https://example.com/next", "not an Error")
+    const errors: Array<Error | null> = []
+    expect(() => executor.runDownload(e => errors.push(e))).not.toThrow()
+    expect(errors).toHaveLength(1)
+    expect(errors[0]).toBeInstanceOf(Error)
+    expect(errors[0]?.message).toBe("Cannot follow the redirect: not an Error")
+    expect(executor.requestCount).toBe(1)
+  })
+
+  // A real request through Node's keep-alive agent: a redirect's body that is not read keeps its socket busy, and the socket's timeout
+  // then calls back a second time, after the download has settled
+  for (const [label, location, error] of [
+    ["is followed", "/target", null],
+    ["cannot be followed", "ftp://example.com/x", 'Cannot follow the redirect to the "ftp:" protocol'],
+  ] as const) {
+    test(`doDownload calls back once when a redirect ${label}`, async () => {
+      const TIMEOUT = 200
+      const server = createServer((request, response) => {
+        if (request.url === "/start") {
+          response.writeHead(302, { Location: location, "Content-Length": 5 })
+          response.end("moved")
+        } else {
+          response.end("body")
+        }
+      })
+      await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+      try {
+        const address = server.address()
+        if (address == null || typeof address === "string") {
+          throw new Error("server has no port")
+        }
+        const results: Array<string | null> = []
+        await new Promise<void>(resolve => {
+          new NodeExecutor().runDownload(new URL(`http://127.0.0.1:${address.port}/start`), TIMEOUT, e => {
+            results.push(e == null ? null : e.message)
+            resolve()
+          })
+        })
+        // nothing to wait for but the request's timeout passing without a second call
+        await new Promise(resolve => setTimeout(resolve, TIMEOUT * 4))
+        expect(results).toEqual([error])
+      } finally {
+        server.closeAllConnections()
+        await new Promise(resolve => server.close(resolve))
+      }
+    })
+  }
+
+  // the redirect's drained socket goes back to the agent, which sets its own idle timeout on it while the target is still streaming
+  test("doDownload is not failed by the agent's idle timeout on the redirect's socket", async () => {
+    const AGENT_TIMEOUT = 100
+    const server = createServer((request, response) => {
+      if (request.url === "/start") {
+        response.writeHead(302, { Location: "/target", "Content-Length": 5 })
+        response.end("moved")
+      } else {
+        response.writeHead(200, { "Content-Length": 8 })
+        response.write("body")
+        setTimeout(() => response.end("done"), AGENT_TIMEOUT * 4)
+      }
+    })
+    const agent = new Agent({ keepAlive: true, timeout: AGENT_TIMEOUT })
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    try {
+      const address = server.address()
+      if (address == null || typeof address === "string") {
+        throw new Error("server has no port")
+      }
+      const results: Array<string | null> = []
+      await new Promise<void>(resolve => {
+        new NodeExecutor().runDownload(
+          new URL(`http://127.0.0.1:${address.port}/start`),
+          5000,
+          e => {
+            results.push(e == null ? null : e.message)
+            resolve()
+          },
+          agent
+        )
+      })
+      await new Promise(resolve => setTimeout(resolve, AGENT_TIMEOUT * 2))
+      expect(results).toEqual([null])
+    } finally {
+      agent.destroy()
+      server.closeAllConnections()
+      await new Promise(resolve => server.close(resolve))
+    }
+  })
+
+  test("doDownload ignores a Location on a response that is not a redirect", () => {
+    const executor = new LocationExecutor(200, "ftp://example.com/x")
+    const errors: Array<Error | null> = []
+    executor.runDownload(e => errors.push(e))
+    expect(errors).toEqual([null])
+    expect(executor.requestCount).toBe(1)
+  })
+})
+
+describe("HttpExecutor request timeout on a kept-alive socket", () => {
+  // the agent keeps a finished request's socket and sets its own idle timeout on it: that timeout must not reach the request's callback
+  const AGENT_TIMEOUT = 100
+
+  async function withServer(handler: RequestListener, task: (url: URL, agent: Agent) => Promise<void>, agentTimeout = AGENT_TIMEOUT): Promise<void> {
+    const server = createServer(handler)
+    const agent = new Agent({ keepAlive: true, timeout: agentTimeout })
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    try {
+      const address = server.address()
+      if (address == null || typeof address === "string") {
+        throw new Error("server has no port")
+      }
+      await task(new URL(`http://127.0.0.1:${address.port}/file`), agent)
+    } finally {
+      agent.destroy()
+      server.closeAllConnections()
+      await new Promise(resolve => server.close(resolve))
+    }
+  }
+
+  function download(url: URL, agent: Agent, timeout: number, results: Array<string | null>): Promise<void> {
+    return new Promise<void>(resolve => {
+      new NodeExecutor().runDownload(
+        url,
+        timeout,
+        e => {
+          results.push(e == null ? null : e.message)
+          resolve()
+        },
+        agent
+      )
+    })
+  }
+
+  function freeSocket(agent: Agent) {
+    const sockets = Object.values(agent.freeSockets).flat()
+    expect(sockets).toHaveLength(1)
+    const socket = sockets[0]
+    if (socket == null) {
+      throw new Error("the agent keeps no socket")
+    }
+    return socket
+  }
+
+  test("doDownload calls back once when the agent's idle timeout passes after the download", async () => {
+    await withServer(
+      (_request, response) => response.end("body"),
+      async (url, agent) => {
+        const results: Array<string | null> = []
+        await download(url, agent, 5000, results)
+        await new Promise(resolve => setTimeout(resolve, AGENT_TIMEOUT * 4))
+        expect(results).toEqual([null])
+      }
+    )
+  })
+
+  test("doDownload calls back once for an error status, whose body it does not use", async () => {
+    const TIMEOUT = 200
+    await withServer(
+      (_request, response) => {
+        response.writeHead(404, { "Content-Length": 9 })
+        response.end("not found")
+      },
+      async (url, agent) => {
+        const results: Array<string | null> = []
+        await download(url, agent, TIMEOUT, results)
+        await new Promise(resolve => setTimeout(resolve, TIMEOUT * 4))
+        expect(results).toHaveLength(1)
+        expect(results[0]).toContain("status 404")
+      }
+    )
+  })
+
+  test("requests over one kept-alive socket do not add up timeout listeners on it", async () => {
+    await withServer(
+      (_request, response) => response.end("body"),
+      async (url, agent) => {
+        const results: Array<string | null> = []
+        await download(url, agent, 5000, results)
+        // the agent takes the socket back after the request closes
+        await new Promise(resolve => setImmediate(resolve))
+        const socket = freeSocket(agent)
+        const listeners = socket.listenerCount("timeout")
+        for (let i = 0; i < 3; i++) {
+          await download(url, agent, 5000, results)
+          await new Promise(resolve => setImmediate(resolve))
+        }
+        expect(freeSocket(agent)).toBe(socket)
+        expect(socket.listenerCount("timeout")).toBe(listeners)
+        expect(results).toEqual([null, null, null, null])
+      },
+      // an idle timeout long enough to keep the socket between the requests
+      5000
+    )
+  })
+
+  test("a stalled body still times out", async () => {
+    await withServer(
+      (_request, response) => {
+        response.writeHead(200, { "Content-Length": 100 })
+        response.write("start")
+      },
+      async (url, agent) => {
+        const results: Array<string | null> = []
+        await download(url, agent, 200, results)
+        expect(results[0]).toBe("Request timed out")
+      }
+    )
+  })
 })
 
 describe("hashSensitiveValue", () => {

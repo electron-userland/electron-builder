@@ -14,18 +14,21 @@ import { afterEach, describe, expect, test } from "vitest"
 const FILE_URL = "https://feed.example.com/updates/app-1.1.0.exe"
 const TARGET_URL = "https://bucket.example.net/app-1.1.0.exe"
 const FTP_URL = "ftp://files.example.net/app-1.1.0.exe"
+const UNPARSEABLE_URL = "http://files.example .net/app-1.1.0.exe"
 const BODY = Buffer.from("update")
 // without the fix, a redirect that cannot be followed leaves the request pending forever: fail fast instead
 const GUARD_TIMEOUT = 10_000
 
 // Stands in for Electron's net ClientRequest with `redirect: "manual"`: a redirect is reported as a "redirect" event (after which
-// ElectronHttpExecutor aborts the request and sends a new one), anything else is answered with a 200 and BODY.
+// ElectronHttpExecutor aborts the request and sends a new one), a URL in `responses` is answered with that status and headers, and
+// anything else with a 200; every response has BODY.
 class FakeNetRequest extends EventEmitter {
   aborted = false
 
   constructor(
     private readonly url: string,
-    private readonly redirects: Record<string, string>
+    private readonly redirects: Record<string, string>,
+    private readonly responses: Record<string, FakeResponse>
   ) {
     super()
   }
@@ -37,7 +40,8 @@ class FakeNetRequest extends EventEmitter {
         this.emit("redirect", 302, "GET", location)
         return
       }
-      const response = Object.assign(new PassThrough(), { statusCode: 200, headers: {} })
+      const answer = this.responses[this.url] ?? { statusCode: 200, headers: {} }
+      const response = Object.assign(new PassThrough(), { statusCode: answer.statusCode, headers: answer.headers })
       this.emit("response", response)
       response.end(BODY)
     })
@@ -49,12 +53,20 @@ class FakeNetRequest extends EventEmitter {
   }
 }
 
+interface FakeResponse {
+  readonly statusCode: number
+  readonly headers: Record<string, string>
+}
+
 class FakeElectronHttpExecutor extends ElectronHttpExecutor {
   readonly sent: Array<string> = []
   /** createRequest throws for these URLs, as net.request does for options it cannot make a request of */
   readonly unrequestableUrls = new Set<string>()
 
-  constructor(private readonly redirects: Record<string, string>) {
+  constructor(
+    private readonly redirects: Record<string, string>,
+    private readonly responses: Record<string, FakeResponse> = {}
+  ) {
     super()
   }
 
@@ -69,7 +81,7 @@ class FakeElectronHttpExecutor extends ElectronHttpExecutor {
       throw new Error(`Cannot create a request for ${url}`)
     }
     this.sent.push(url)
-    const request = new FakeNetRequest(url, this.redirects)
+    const request = new FakeNetRequest(url, this.redirects, this.responses)
     request.on("response", callback)
     return request
   }
@@ -132,6 +144,68 @@ describe("ElectronHttpExecutor redirects", () => {
   })
 })
 
+// Electron reports only 301/302/303/307/308 as "redirect" events: a Location on any other response reaches the response listener
+// of a download, which follows it only for a 3xx status, and must fail the download (rather than throw from the listener) when it
+// cannot follow it.
+
+function createResponseExecutor(statusCode: number, location: string): FakeElectronHttpExecutor {
+  return new FakeElectronHttpExecutor({}, { [FILE_URL]: { statusCode, headers: { location } } })
+}
+
+describe("ElectronHttpExecutor Location on a response", () => {
+  const tmpDir = new TmpDir("electron-http-executor-location")
+  afterEach(() => tmpDir.cleanup())
+
+  const DOWNLOADS: ReadonlyArray<readonly [string, (executor: FakeElectronHttpExecutor) => Promise<Buffer>]> = [
+    [
+      "a download",
+      async executor => {
+        const destination = path.join(await tmpDir.createTempDir({ prefix: "electron-http-executor-redirect" }), "app.exe")
+        await executor.download(new URL(FILE_URL), destination, { cancellationToken: new CancellationToken() })
+        return await fsExtra.readFile(destination)
+      },
+    ],
+    ["a download to a buffer", executor => executor.downloadToBuffer(new URL(FILE_URL), { cancellationToken: new CancellationToken() })],
+  ]
+
+  for (const [kind, download] of DOWNLOADS) {
+    for (const [label, location, error] of [
+      ["to a protocol other than http(s)", FTP_URL, 'Cannot follow the redirect to the "ftp:" protocol'],
+      ["that is not a valid URL", UNPARSEABLE_URL, "Invalid URL"],
+    ] as const) {
+      test(
+        `a 300 response with a Location ${label} fails ${kind}`,
+        async () => {
+          const executor = createResponseExecutor(300, location)
+          await expect(download(executor)).rejects.toThrow(error)
+          expect(executor.sent).toEqual([FILE_URL])
+        },
+        GUARD_TIMEOUT
+      )
+    }
+
+    test(
+      `a 300 response with a Location to https is followed by ${kind}`,
+      async () => {
+        const executor = createResponseExecutor(300, TARGET_URL)
+        expect(await download(executor)).toEqual(BODY)
+        expect(executor.sent).toEqual([FILE_URL, TARGET_URL])
+      },
+      GUARD_TIMEOUT
+    )
+
+    test(
+      `a 200 response with a Location is not a redirect: ${kind} keeps its body`,
+      async () => {
+        const executor = createResponseExecutor(200, FTP_URL)
+        expect(await download(executor)).toEqual(BODY)
+        expect(executor.sent).toEqual([FILE_URL])
+      },
+      GUARD_TIMEOUT
+    )
+  }
+})
+
 // A cancel aborts the request in flight: after a redirect event, that is the request sent to the redirect's target, not the first one.
 describe("ElectronHttpExecutor cancel after a redirect", () => {
   const tmpDir = new TmpDir("electron-http-executor-cancel")
@@ -158,7 +232,7 @@ describe("ElectronHttpExecutor cancel after a redirect", () => {
       if (`${options.protocol}//${options.hostname}${options.path}` !== TARGET_URL) {
         return super.createRequest(options, callback)
       }
-      const request = new StalledNetRequest(TARGET_URL, {})
+      const request = new StalledNetRequest(TARGET_URL, {}, {})
       request.on("response", callback)
       this.onTargetRequest(request)
       return request
