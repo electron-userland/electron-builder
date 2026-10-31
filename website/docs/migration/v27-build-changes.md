@@ -47,7 +47,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [Block map format follows `electronUpdaterCompatibility` (default `>=7`)](#block-map-format-follows-electronupdatercompatibility) | Fails build / warns | Apps on electron-updater 6 fail the build: upgrade electron-updater to 7, or set `electronUpdaterCompatibility` to a range that includes them (e.g. `">=6"`), which keeps the JSON `.blockmap` and warns. Installs still on electron-updater 6 download the first release with a binary map in full once |
 | [S3 publishing requires an explicit `awsCredentials.source`](#s3-publishing-requires-an-explicit-awscredentialssource) | Fails at publish | Add `awsCredentials: { source: "env" }` (for `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`), `{ source: "profile", profile: "<name>" }` (for `AWS_PROFILE` / `~/.aws` / SSO) or `{ source: "sso-role-chain", profile: "<name>" }` (for a role assumed from an SSO `source_profile`) |
 | [Bitbucket Cloud publishing: token without username → Bearer auth](#bitbucket-cloud-publishing-token-without-username-uses-bearer-auth) | Warns at publish | Set `BITBUCKET_USERNAME` if your token is an app password / API token |
-| [Publish tokens from the environment are bound to the provider host](#publish-tokens-from-the-environment-are-bound-to-the-provider-host) | Fails at publish (Squirrel.Windows: warns) | Only with a custom `host` (GitHub Enterprise, self-managed GitLab, self-hosted Keygen) or a non-GitHub `squirrelWindows.remoteReleases`: add the host to `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS` in the publishing job (GitHub Actions and GitLab CI runners of that host need nothing) |
+| [`github.host` / `gitlab.host` / `keygen.host` must be a host name](#publish-host-must-be-a-host-name) | Fails at publish | Remove user info, a query or a fragment from `host`, and a path from `github.host` / `keygen.host`; write an internationalized host name in punycode |
 | [Flatpak target requires `flatpak` >= 1.12.4 and `flatpak-builder` >= 1.2.2](#flatpak-tooling-requirements) | Fails build | Only for tools older than the stock packages of Ubuntu 22.04 and Debian 12: update them (the `electronuserland/builder` images with a date tag newer than `-05.26` include them, those up to `-05.26` none); replace `DEBUG=@malept/flatpak-bundler` with `DEBUG=electron-builder` |
 | [Flatpak `runtimeVersion` / `baseVersion` default to `26.08`](#flatpak-tooling-requirements) | Warns | A build that sets neither is built for the `26.08` runtime and installs the three `26.08` refs (about 3.2 GB) on the build machine if they are missing — install them in images and on offline machines that held the `20.08` ones. Set both to `"20.08"` to keep the previous, end-of-life runtime |
 | [Flatpak `files` and `symlinks` must stay inside the app](#flatpak-tooling-requirements) | Fails build | A `flatpak.files` destination or `flatpak.symlinks` link that leaves the app prefix with `..`, or a directory in `flatpak.files` copied onto a symlink to a directory, now fails the build |
@@ -636,37 +636,13 @@ The Bitbucket publisher now selects its authentication scheme by whether a usern
 
 **Action is required only if** your CI sets `BITBUCKET_TOKEN` (or `bitbucket.token`) to an **app password / API token without a username** — those requests now go out as Bearer and will fail authentication. Set `BITBUCKET_USERNAME` (or `bitbucket.username`) so Basic auth is used. Genuine access tokens need no username.
 
-### Publish tokens from the environment are bound to the provider host {#publish-tokens-from-the-environment-are-bound-to-the-provider-host}
+### `github.host`, `gitlab.host` and `keygen.host` must be a host name {#publish-host-must-be-a-host-name}
 
-**How you'll find out:** **Fails at publish** with an `InvalidConfigurationError` that names the variable and the host (never the token), with a link here. Squirrel.Windows **warns** instead. Builds that don't publish are silent.
+**How you'll find out:** **Fails at publish** with an `InvalidConfigurationError` that names the option (never its value). Builds that don't publish are silent.
 
-A token taken from the environment is now sent only to a host it belongs to. Before, it went to whatever `host` the publish configuration named, so a changed `host` in the project could send the CI token elsewhere. This applies to `GH_TOKEN`, `GITHUB_TOKEN` and `GITHUB_RELEASE_TOKEN` (`github` publisher and `squirrelWindows.remoteReleases`), `GITLAB_TOKEN` (`gitlab`) and `KEYGEN_TOKEN` (`keygen`). Such a token is sent only to:
+`github.host`, `gitlab.host` and `keygen.host` must be an ASCII host name (punycode for an internationalized name), optionally with a port. `gitlab.host` may also have a path, for a GitLab instance under a relative URL root (e.g. `example.com/gitlab`); the path is kept in the API URL. A value with user info (`user@host`), a query, a fragment, a backslash, `%` or an empty path segment, or a path in `github.host` or `keygen.host`, fails at publish.
 
-- **the provider's public host:** `github.com`, `api.github.com` and `uploads.github.com`; `gitlab.com`; `api.keygen.sh`.
-- **the host the CI runner reports:** on GitHub Actions the hosts of `GITHUB_SERVER_URL` and `GITHUB_API_URL` (for a GitHub token), on GitLab CI the hosts of `CI_SERVER_URL` and `CI_API_V4_URL` (for a GitLab token). A GitHub Enterprise or self-managed GitLab runner therefore needs no change.
-- **a host listed in `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS`:** comma-separated host names (a port is allowed and ignored), e.g. `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS=github.example.com,gitlab.example.com`. Set it in the publishing job, not in the project. For the same reason this variable, `GITHUB_SERVER_URL`, `GITHUB_API_URL`, `CI_SERVER_URL` and `CI_API_V4_URL` are ignored in `electron-builder.env`, with a warning.
-
-A token set in the configuration (`github.token`, `gitlab.token`, `squirrelWindows.remoteToken`) is explicit and still goes to the configured host. `GITHUB_RELEASE_TOKEN` still overrides `github.token`, and it is checked as a token from the environment.
-
-<details>
-<summary>What changed compared with v26</summary>
-
-- With a custom `github.host`, `gitlab.host` or `keygen.host` that is not allowed as above, publishing with a token from the environment **fails** before any request is sent.
-- `github.host`, `gitlab.host` and `keygen.host` must be an ASCII host name (punycode for an internationalized name), optionally with a port. `gitlab.host` may also have a path, for a GitLab instance under a relative URL root (e.g. `example.com/gitlab`); the path is appended to the API URL as before, and the token is bound to the host name. A value with user info (`user@host`), a query or a fragment, or a path in `github.host` or `keygen.host`, **fails**, with or without a token from the environment. v26 dropped a GitHub path silently.
-- `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS`, `GITHUB_SERVER_URL`, `GITHUB_API_URL`, `CI_SERVER_URL` and `CI_API_V4_URL` in `electron-builder.env` are **ignored**, with a warning; set them in the environment of the publishing job.
-- `squirrelWindows.remoteReleases` on a host that is not allowed gets **no** token from the environment, with a warning; Squirrel.Windows then downloads the previous releases without authentication, which works for a public repository or a non-GitHub server. Without `remoteReleases` no token is passed.
-
-</details>
-
-**Action is required only if** you publish to a custom host with a token from the environment and the CI runner does not report that host. Add the host to `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS` in the publishing job:
-
-```yaml
-env:
-  GH_TOKEN: ${{ secrets.GHE_TOKEN }}
-  ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS: github.example.com
-```
-
-For a private `squirrelWindows.remoteReleases` repository on another host, add the host the same way or set `squirrelWindows.remoteToken`. Remove user info, a query or a fragment from `host`, and a path from `github.host` or `keygen.host`; a path in `gitlab.host` is kept.
+**Action is required only if** `host` holds more than a host name and port: remove user info, a query or a fragment, and a path from `github.host` or `keygen.host`. Write an internationalized host name in punycode (e.g. `xn--bcher-kva.example`).
 
 ---
 
