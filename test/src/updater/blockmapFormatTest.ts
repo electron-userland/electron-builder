@@ -376,13 +376,13 @@ describe("block map format detection", () => {
   let overLimitV3: Buffer | null = null
   const overLimitV3Map = () => (overLimitV3 ??= v3MapOfManyBlocks(NEW_SIZE, 840_000))
 
-  test("no cached map: a v3 map of the update past the size limit for the update is rejected before its records are decoded", async ({ tmpDir, expect }) => {
+  test("no cached map: a v3 map of the update past the size limit for the update is not downloaded past the limit", async ({ tmpDir, expect }) => {
     const server = await serve(tmpDir, { old: OLD_V3, new: overLimitV3Map() })
     const { updater, helper, maps } = await setUp(tmpDir, null)
     captureLog(updater)
 
     // outside test mode this is the fallback to a full download
-    await expect(run(updater, server.url, tmpDir)).rejects.toThrow(/Cannot parse blockmap ".*app-1\.1\.0\.exe\.blockmap".*more than the 8388608-byte limit/)
+    await expect(run(updater, server.url, tmpDir)).rejects.toThrow(/Maximum allowed size is 8388608 bytes/)
 
     expect(server.requests.map(it => [it.pathname, it.headers.range ?? null])).toEqual([["/app-1.1.0.exe.blockmap", null]])
     expect(maps).toHaveLength(0)
@@ -394,14 +394,53 @@ describe("block map format detection", () => {
     const { updater, maps } = await setUp(tmpDir, OLD_V3)
     captureLog(updater)
 
-    await expect(run(updater, server.url, tmpDir)).rejects.toThrow(/Cannot parse blockmap ".*app-1\.1\.0\.exe\.blockmap".*more than the 8388608-byte limit/)
+    await expect(run(updater, server.url, tmpDir)).rejects.toThrow(/Maximum allowed size is 8388608 bytes/)
 
-    // one Range request for the header, then the plain GET of the fallback, which is rejected too
+    // one Range request for the header, then the plain GET of the fallback, which stops at the limit
     expect(server.requests.map(it => [it.pathname, it.headers.range ?? null])).toEqual([
       ["/app-1.1.0.exe.blockmap", expect.stringMatching(/^bytes=0-/)],
       ["/app-1.1.0.exe.blockmap", null],
     ])
     expect(maps).toHaveLength(0)
+  })
+
+  test("no cached map: the download of a new map stops once it passes the size limit for the update, before the rest of the body is read", async ({ tmpDir, expect }) => {
+    // 128 MiB, written 1 MiB at a time as the client reads it, of a body that any parse would reject: only the download itself
+    // can stop near the 8 MiB limit
+    const chunk = Buffer.alloc(1024 * 1024)
+    const chunkCount = 128
+    let sent = 0
+    let isClosed = false
+    const server = http.createServer((req, res) => {
+      res.on("close", () => (isClosed = true))
+      res.writeHead(200, { "Content-Length": chunk.length * chunkCount })
+      const write = () => {
+        while (!isClosed && sent < chunkCount) {
+          sent++
+          if (!res.write(chunk)) {
+            res.once("drain", write)
+            return
+          }
+        }
+        if (sent === chunkCount) {
+          res.end()
+        }
+      }
+      write()
+    })
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    servers.push(server)
+    const { updater, helper, maps } = await setUp(tmpDir, null)
+    captureLog(updater)
+
+    // outside test mode this is the fallback to a full download
+    await expect(run(updater, `http://127.0.0.1:${(server.address() as AddressInfo).port}/`, tmpDir)).rejects.toThrow(/Maximum allowed size is 8388608 bytes/)
+
+    await vi.waitFor(() => expect(isClosed).toBe(true))
+    // socket buffers hold a few MiB more than the client read
+    expect(sent).toBeLessThan(32)
+    expect(maps).toHaveLength(0)
+    expect(await fsExtra.pathExists(path.join(helper.cacheDirForPendingUpdate, "current.blockmap"))).toBe(false)
   })
 
   test("a cached v3 map past the size limit is ignored, and the installed release's map is downloaded", async ({ tmpDir, expect }) => {
@@ -425,7 +464,7 @@ describe("block map format detection", () => {
     const { updater, maps } = await setUp(tmpDir, null)
     captureLog(updater)
 
-    await expect(run(updater, server.url, tmpDir)).rejects.toThrow(/Cannot parse blockmap ".*app-1\.0\.0\.exe\.blockmap".*more than the 8388608-byte limit/)
+    await expect(run(updater, server.url, tmpDir)).rejects.toThrow(/Maximum allowed size is 8388608 bytes/)
 
     expect(maps).toHaveLength(0)
   })

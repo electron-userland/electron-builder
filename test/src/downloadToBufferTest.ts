@@ -139,3 +139,44 @@ describe("API request size limit (maxResponseSize)", () => {
     expect(executor.requests[0].abort).not.toHaveBeenCalled()
   })
 })
+
+test("stops reading a buffer download once it passes a smaller maxSize", async () => {
+  const executor = new BufferExecutor()
+  const download = executor.downloadToBuffer(new URL("https://example.com/update.blockmap"), { cancellationToken: new CancellationToken() }, 10)
+
+  executor.response.emit("data", Buffer.alloc(6))
+  executor.response.emit("data", Buffer.alloc(5))
+  executor.response.emit("data", Buffer.from("ignored"))
+  executor.response.emit("end")
+
+  await expect(download).rejects.toThrow("Maximum allowed size is 10 bytes")
+  expect(executor.response.destroy).toHaveBeenCalledOnce()
+})
+
+test("accepts a buffer download of exactly maxSize bytes", async () => {
+  const executor = new BufferExecutor()
+  const download = executor.downloadToBuffer(new URL("https://example.com/update.blockmap"), { cancellationToken: new CancellationToken() }, 10)
+
+  executor.response.emit("data", Buffer.alloc(6, 1))
+  executor.response.emit("data", Buffer.alloc(4, 2))
+  executor.response.emit("end")
+
+  await expect(download).resolves.toEqual(Buffer.concat([Buffer.alloc(6, 1), Buffer.alloc(4, 2)]))
+  expect(executor.response.destroy).not.toHaveBeenCalled()
+})
+
+test.for([
+  { name: "NaN", maxSize: Number.NaN },
+  { name: "zero", maxSize: 0 },
+  { name: "negative", maxSize: -1 },
+  { name: "larger than 500 MB", maxSize: 2 * 524288000 },
+])("a $name maxSize keeps the 500 MB limit", async ({ maxSize }) => {
+  const executor = new BufferExecutor()
+  const download = executor.downloadToBuffer(new URL("https://example.com/update"), { cancellationToken: new CancellationToken() }, maxSize)
+
+  executor.response.emit("data", { length: 524288001 })
+  executor.response.emit("end")
+
+  await expect(download).rejects.toThrow("Maximum allowed size is 500 MB")
+  expect(executor.response.destroy).toHaveBeenCalledOnce()
+})

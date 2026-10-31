@@ -49,6 +49,9 @@ export function addSensitiveFieldPattern(pattern: string): void {
   SENSITIVE_FIELD_PATTERNS.push(pattern.toLowerCase().replace(/[-_]/g, ""))
 }
 
+/** The most bytes `downloadToBuffer` holds in memory by default: 500 MB. */
+const MAX_BUFFER_DOWNLOAD_SIZE = 524288000
+
 export interface RequestHeaders extends OutgoingHttpHeaders {
   [key: string]: OutgoingHttpHeader | undefined
 }
@@ -311,7 +314,12 @@ Please double check that your authentication token is correct. Due to security r
   // noinspection JSUnusedLocalSymbols
   abstract createRequest(options: RequestOptions, callback: (response: any) => void): T
 
-  async downloadToBuffer(url: URL, options: DownloadOptions): Promise<Buffer> {
+  /**
+   * Downloads `url` into memory. A response of more than `maxSize` bytes (500 MB by default; a larger, zero, negative or NaN `maxSize`
+   * means the default) fails the download as soon as it passes the limit, before the rest is read.
+   */
+  async downloadToBuffer(url: URL, options: DownloadOptions, maxSize: number = MAX_BUFFER_DOWNLOAD_SIZE): Promise<Buffer> {
+    const limit = maxSize > 0 && maxSize < MAX_BUFFER_DOWNLOAD_SIZE ? maxSize : MAX_BUFFER_DOWNLOAD_SIZE
     return await options.cancellationToken.createPromise<Buffer>((resolve, reject, onCancel) => {
       const responseChunks: Buffer[] = []
       const requestOptions = {
@@ -349,8 +357,8 @@ Please double check that your authentication token is correct. Due to security r
                 return
               }
               receivedLength += chunk.length
-              if (receivedLength > 524288000) {
-                finish(new Error("Maximum allowed size is 500 MB"))
+              if (receivedLength > limit) {
+                finish(new Error(limit === MAX_BUFFER_DOWNLOAD_SIZE ? "Maximum allowed size is 500 MB" : `Maximum allowed size is ${limit} bytes`))
                 response.destroy()
                 return
               }
