@@ -309,9 +309,8 @@ export abstract class LinuxUpdater extends BaseUpdater {
   }
 
   /**
-   * Resolves a relative command name in {@link trustedCommandDirs}, for a command passed as argv to an elevation
-   * helper: the first executable regular file of that name, which, symlinks followed, lies in a trusted directory as
-   * well. Only a bare name is looked up: one with a `/`, `.` and `..` would reach outside those directories. Throws when
+   * Resolves a relative command name in {@link trustedCommandDirs}, for a command run by an elevation helper: the first
+   * executable regular file of that name, which, symlinks followed, lies in a trusted directory as well. Only a bare name is looked up: one with a `/`, `.` and `..` would reach outside those directories. Throws when
    * it is not found there; the install plan treats that as a failed command.
    */
   protected resolveTrustedCommand(command: string): string {
@@ -339,7 +338,10 @@ export abstract class LinuxUpdater extends BaseUpdater {
    * pkexec and sudo take an argv array: no shell is involved, so their authentication dialog shows the command being
    * authorized (`/usr/bin/dpkg -i /path/app.deb`) instead of a `/bin/bash -c '…'` wrapper, the installer path needs no
    * escaping, and no `shell: true` deprecation applies. gksudo, kdesudo and beesu take the command as a single string, so
-   * those keep the wrapped form, which goes through a shell.
+   * those keep the wrapped form, which goes through a shell. Its root command runs the package manager by the absolute path
+   * {@link resolveTrustedCommand} found, and `env -i` starts `/bin/bash` with an empty environment but for a PATH of
+   * {@link TRUSTED_COMMAND_DIRS}: whatever of the app's environment the helper passes on to root (`BASH_ENV`, which
+   * `bash -c` sources, `ENV`, `LD_PRELOAD`, `PYTHONPATH` …) reaches neither the shell nor the package manager.
    */
   protected elevatedCommand(commandWithArgs: string[], elevation: Elevation): { cmd: string; args: string[]; useShell: boolean } {
     const [command, ...args] = commandWithArgs
@@ -353,7 +355,9 @@ export abstract class LinuxUpdater extends BaseUpdater {
     }
 
     const wrapper = this.commandWrapperFor(elevation.helper)
-    return { cmd: sudo, args: [...sudoArgs, `${wrapper}/bin/bash`, "-c", `'${commandWithArgs.join(" ")}'${wrapper}`], useShell: true }
+    const rootCommand = [this.resolveTrustedCommand(command), ...args].join(" ")
+    const cleanEnv = ["-i", `PATH=${TRUSTED_COMMAND_DIRS.join(":")}`]
+    return { cmd: sudo, args: [...sudoArgs, `${wrapper}/usr/bin/env`, ...cleanEnv, "/bin/bash", "-c", `'${rootCommand}'${wrapper}`], useShell: true }
   }
 
   /** {@link runCommandWithSudoIfNeeded} without blocking the main process while the elevation dialog is open. */

@@ -14,6 +14,9 @@ vi.mock("child_process", async importOriginal => {
   return { ...actual, spawn: vi.fn(actual.spawn), spawnSync: vi.fn(actual.spawnSync) }
 })
 
+/** How a wrapped helper's command string starts: bash with an empty environment and a PATH of system directories only. */
+const cleanRootShell = [`"/usr/bin/env`, "-i", "PATH=/usr/sbin:/usr/bin:/sbin:/bin", "/bin/bash", "-c"]
+
 const stubApp: AppAdapter = {
   name: "TestApp",
   version: "1.0.0",
@@ -332,8 +335,9 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
       await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
 
-      // kdesudo takes a single command string, so the bash wrapper, the shell and the escaping stay
-      expect(spawnAsyncLog).toHaveBeenCalledWith("kdesudo", ["--comment", expect.any(String), "-c", `"/bin/bash`, "-c", `'dpkg -i /tmp/a\\ b/update-1.0.2.deb'"`], {}, true)
+      // kdesudo takes a single command string, so the bash wrapper, the shell and the escaping stay; dpkg is resolved
+      // in the system directories and runs in a clean environment, as under pkexec
+      expect(spawnAsyncLog).toHaveBeenCalledWith("kdesudo", ["--comment", expect.any(String), "-c", ...cleanRootShell, `'/usr/bin/dpkg -i /tmp/a\\ b/update-1.0.2.deb'"`], {}, true)
     })
 
     it("resolves the elevation helper once per install, for every command of the plan", async () => {
@@ -362,6 +366,21 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       expect(await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })).toBe(false)
       expect(spawnAsyncLog).not.toHaveBeenCalled()
       // like the wrapped form's `command not found`, a missing dpkg leads to the apt-get repair, which is not found either
+      expect(dispatchError).toHaveBeenCalledWith(expect.objectContaining({ message: "apt-get not found in /usr/sbin:/usr/bin:/sbin:/bin" }))
+    })
+
+    it.each(["gksudo", "kdesudo", "beesu"])("does not run %s with a command that is not in the system directories", async helper => {
+      setRawPath("/tmp/update-1.0.2.deb")
+      vi.spyOn(updater as any, "determineSudoCommand").mockReturnValue(helper)
+      vi.spyOn(updater as any, "resolveTrustedCommand").mockImplementation((...args: unknown[]) => {
+        throw new Error(`${args[0] as string} not found in /usr/sbin:/usr/bin:/sbin:/bin`)
+      })
+      const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue(undefined)
+      const dispatchError = vi.spyOn(updater as any, "dispatchError").mockReturnValue(undefined)
+
+      expect(await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })).toBe(false)
+      // the root shell would otherwise look dpkg up in the user's PATH
+      expect(spawnAsyncLog).not.toHaveBeenCalled()
       expect(dispatchError).toHaveBeenCalledWith(expect.objectContaining({ message: "apt-get not found in /usr/sbin:/usr/bin:/sbin:/bin" }))
     })
 
@@ -572,7 +591,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       expect((updater as any).doInstall(options)).toBe(true)
 
       expect(spawnSyncLog.mock.calls.filter(([cmd]) => cmd !== "command")).toEqual([
-        ["kdesudo", ["--comment", expect.any(String), "-c", `"/bin/bash`, "-c", `'dpkg -i /tmp/a\\ b/update-1.0.2.deb'"`], {}, true],
+        ["kdesudo", ["--comment", expect.any(String), "-c", ...cleanRootShell, `'/usr/bin/dpkg -i /tmp/a\\ b/update-1.0.2.deb'"`], {}, true],
       ])
     })
 
@@ -761,7 +780,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
         const { installed, privileged } = await install(mode, helper, rawPath)
 
         expect(installed).toBe(true)
-        expect(privileged).toEqual([[helper, [...helperArgs, `"/bin/bash`, "-c", `'dpkg -i ${rawPath}'"`], {}, true]])
+        expect(privileged).toEqual([[helper, [...helperArgs, ...cleanRootShell, `'/usr/bin/dpkg -i ${rawPath}'"`], {}, true]])
       })
 
       // every UTF-8 byte of a non-ASCII character is 0x80 or above; ā (C4 81) and ™ (E2 84 A2) hold bytes that dash uses internally
@@ -774,7 +793,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
         const { installed, privileged } = await install(mode, helper, rawPath)
 
         expect(installed).toBe(true)
-        expect(privileged).toEqual([[helper, [...helperArgs, `"/bin/bash`, "-c", `'dpkg -i ${rawPath}'"`], {}, true]])
+        expect(privileged).toEqual([[helper, [...helperArgs, ...cleanRootShell, `'/usr/bin/dpkg -i ${rawPath}'"`], {}, true]])
       })
 
       // controls (C0, DEL, C1 such as NEL), format characters (zero-width, bidi, BOM), a lone surrogate, and separators
@@ -810,9 +829,11 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
         const dir = await tmpDir.createTempDir({ prefix: "wrapped-helper" })
         // kdesudo --comment <comment> -c <command> runs `sudo sh -c <command>`
         await writeFile(path.join(dir, "kdesudo"), `#!/bin/sh\n[ "$1" = --comment ] && [ "$3" = -c ] || exit 64\nexec sh -c "$4"\n`, { mode: 0o755 })
-        // the package managers log the arguments they get, one per line
+        // the package managers log the arguments they get, one per line, and the environment they run in
         for (const name of ["dpkg", "apt-get"]) {
-          await writeFile(path.join(dir, name), `#!/bin/sh\nprintf '%s\\n' "$(basename "$0")" "$@" >> "$(dirname "$0")/commands.log"\n`, { mode: 0o755 })
+          await writeFile(path.join(dir, name), `#!/bin/sh\nprintf '%s\\n' "$(basename "$0")" "$@" >> "$(dirname "$0")/commands.log"\nenv > "$(dirname "$0")/env.log"\n`, {
+            mode: 0o755,
+          })
         }
         vi.stubEnv("PATH", `${dir}${path.delimiter}${process.env.PATH ?? ""}`)
         const target = new DebUpdater(null, stubApp)
@@ -821,9 +842,12 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
         vi.spyOn(target as any, "isRunningAsRoot").mockReturnValue(false)
         vi.spyOn(target as any, "determineSudoCommand").mockReturnValue("kdesudo")
         vi.spyOn(target as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === "dpkg")
+        // the stand-ins' directory is the only system directory
+        vi.spyOn(target as any, "trustedCommandDirs", "get").mockReturnValue([dir])
         const dispatchError = vi.spyOn(target as any, "dispatchError").mockReturnValue(undefined)
         const commandsRun = () => readFile(path.join(dir, "commands.log"), "utf8").catch(() => "")
-        return { dir, target, dispatchError, commandsRun }
+        const rootEnv = () => readFile(path.join(dir, "env.log"), "utf8").catch(() => "")
+        return { dir, target, dispatchError, commandsRun, rootEnv }
       }
 
       describe.each(["sync", "async"] as const)("%s install", mode => {
@@ -854,6 +878,33 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
           expect(await commandsRun()).toBe("")
           expect(installed).toBe(false)
           expect(dispatchError.mock.calls[0][0]).toMatchObject({ code: "ERR_UPDATER_UNSAFE_INSTALLER_PATH" })
+        })
+
+        it("runs the dpkg of the system directories, not one in the user's PATH", async ({ tmpDir }) => {
+          const { dir, target, commandsRun } = await prepare(tmpDir, dir => path.join(dir, "update-1.0.2.deb"))
+          const userBin = await tmpDir.createTempDir({ prefix: "user-bin" })
+          await writeFile(path.join(userBin, "dpkg"), `#!/bin/sh\ntouch "${dir}/PWNED"\n`, { mode: 0o755 })
+          vi.stubEnv("PATH", `${userBin}${path.delimiter}${process.env.PATH ?? ""}`)
+
+          expect(await install(target)).toBe(true)
+          expect(await readdir(dir)).not.toContain("PWNED")
+          expect(await commandsRun()).toBe(`dpkg\n-i\n${path.join(dir, "update-1.0.2.deb")}\n`)
+        })
+
+        it("runs dpkg in a clean environment, with a PATH of system directories only", async ({ tmpDir }) => {
+          const { dir, target, rootEnv } = await prepare(tmpDir, dir => path.join(dir, "update-1.0.2.deb"))
+          // a non-interactive bash sources BASH_ENV before it runs its command
+          await writeFile(path.join(dir, "bash-env"), `touch "${dir}/PWNED"\n`)
+          vi.stubEnv("BASH_ENV", path.join(dir, "bash-env"))
+          vi.stubEnv("ENV", path.join(dir, "bash-env"))
+          vi.stubEnv("LD_LIBRARY_PATH", dir)
+          vi.stubEnv("PYTHONPATH", dir)
+
+          expect(await install(target)).toBe(true)
+          expect(await readdir(dir)).not.toContain("PWNED")
+          const env = (await rootEnv()).split("\n")
+          expect(env).toContain("PATH=/usr/sbin:/usr/bin:/sbin:/bin")
+          expect(env.filter(line => /^(BASH_ENV|ENV|LD_LIBRARY_PATH|PYTHONPATH)=/.test(line))).toEqual([])
         })
       })
     })
