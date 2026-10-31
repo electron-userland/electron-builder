@@ -302,6 +302,48 @@ test.for([
   expect(performance.now() - start).toBeLessThan(1000)
 })
 
+// js-yaml's String() turns an aliased timestamp into about 60 characters of key text and a number into up to 24, so each such alias is charged that much:
+// charged as one value each, these build keys of about 60 times the budget, and fail as a duplicated mapping key once they are built
+test.for([
+  ["timestamps", `${mockYaml("1.0.1")}d: &d 2001-12-14\n${`? [${Array(4000).fill("*d").join(", ")}]\n: 0\n`.repeat(2)}`],
+  ["numbers", `${mockYaml("1.0.1")}n: &n -1.2345678901234567e+300\n${`? [${Array(8000).fill("*n").join(", ")}]\n: 0\n`.repeat(2)}`],
+  ["empty mappings", `${mockYaml("1.0.1")}o: &o {}\n${`? [${Array(8000).fill("*o").join(", ")}]\n: 0\n`.repeat(2)}`],
+  ["a sequence of timestamps", `${mockYaml("1.0.1")}d: &d 2001-12-14\ns: &s [${Array(1000).fill("*d").join(", ")}]\n${"? *s\n: 0\n".repeat(2)}`],
+])("parseUpdateInfo - charges aliases in complex mapping keys by the text they become: %s", ([_name, yaml], { expect }) => {
+  const start = performance.now()
+  expect(() => parseUpdateInfo(yaml, "latest.yml", CHANNEL_FILE_URL)).toThrow(
+    expect.objectContaining({
+      code: "ERR_UPDATER_INVALID_UPDATE_INFO",
+      message: expect.stringMatching(/^[^\n]*: YAML aliases expand to more than 100000 values and string characters\. /),
+    })
+  )
+  expect(performance.now() - start).toBeLessThan(1000)
+})
+
+test("parseUpdateInfo - accepts timestamps without aliases, and aliased timestamps and numbers within the budget", ({ expect }) => {
+  const info = {
+    version: "1.0.1",
+    files: [{ url: "TestApp-Setup-1.0.1.exe", sha512: "sha512abc", size: 1024 }],
+    path: "TestApp-Setup-1.0.1.exe",
+    sha512: "sha512abc",
+    releaseDate: "2026-01-01T00:00:00.000Z",
+  }
+  // serializeToYaml quotes releaseDate; a hand-written file may leave it a YAML timestamp, which js-yaml loads as a Date
+  const written = serializeToYaml(info)
+  expect(parseUpdateInfo(written, "latest.yml", CHANNEL_FILE_URL)).toEqual(info)
+  const unquoted = written.replace("'2026-01-01T00:00:00.000Z'", "2026-01-01T00:00:00.000Z")
+  expect(unquoted).not.toBe(written)
+  expect(parseUpdateInfo(unquoted, "latest.yml", CHANNEL_FILE_URL).releaseDate).toEqual(new Date("2026-01-01T00:00:00.000Z"))
+
+  // the whole document is still charged one per timestamp: 300000 characters of timestamps without aliases are not rejected
+  const dates = Array(25_000).fill("2001-12-14").join(", ")
+  expect(parseUpdateInfo(`${mockYaml("1.0.1")}releaseNotes: [${dates}]\n`, "latest.yml", CHANNEL_FILE_URL).releaseNotes).toHaveLength(25_000)
+
+  const withKeys = parseUpdateInfo(`${mockYaml("1.0.1")}d: &d 2001-12-14\nn: &n 42\n? [*d, *d, *n, *n]\n: 0\n`, "latest.yml", CHANNEL_FILE_URL) as any
+  const date = String(new Date("2001-12-14T00:00:00.000Z"))
+  expect(withKeys[`${date},${date},42,42`]).toBe(0)
+})
+
 test("parseUpdateInfo - accepts a channel file as electron-builder writes it, and aliases in a key within the budget", ({ expect }) => {
   const info = {
     version: "1.0.1",
