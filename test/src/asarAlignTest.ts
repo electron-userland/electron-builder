@@ -169,15 +169,15 @@ describe("alignAsarContent", () => {
     expect(() => validateContentAlignment(512)).not.toThrow()
   })
 
-  test("leaves the original untouched and removes the temp file when the rewrite fails", async ({ expect, tmpDir }) => {
+  test("leaves a truncated archive untouched and writes no temp file", async ({ expect, tmpDir }) => {
     const tmp = await tmpDir.createTempDir()
     const file = await packTree(tmp, "broken", makeTree())
     const original = await fs.readFile(file)
-    // truncate the content region: copying the last file must hit EOF and abort the rewrite
+    // truncate the content region: the size check against the header refuses it before any copy starts
     await fs.truncate(file, original.length - 1)
     const truncated = await fs.readFile(file)
 
-    await expect(alignAsarContent(file, 512)).rejects.toThrow("Unexpected end of asar content")
+    await expect(alignAsarContent(file, 512)).rejects.toThrow("refusing to align it")
     expect((await fs.readFile(file)).equals(truncated), "input must not be replaced").toBe(true)
     await expect(fs.stat(`${file}.aligning`)).rejects.toThrow()
   })
