@@ -471,12 +471,12 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       await flush()
 
       expect(quit).not.toHaveBeenCalled()
-      expect((updater as any).quitAndInstallCalled).toBe(true)
+      expect((updater as any).installState.kind).toBe("installing")
 
       finishInstall(false)
       await flush()
       expect(quit).not.toHaveBeenCalled()
-      expect((updater as any).quitAndInstallCalled).toBe(false)
+      expect((updater as any).installState).toEqual({ kind: "idle" })
     })
 
     it("is not left stuck when reporting the install failure throws", async () => {
@@ -492,7 +492,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       await flush()
 
       expect(quit).not.toHaveBeenCalled()
-      expect((updater as any).quitAndInstallCalled).toBe(false)
+      expect((updater as any).installState).toEqual({ kind: "idle" })
       expect(updater.logger?.error).toHaveBeenCalledWith(expect.stringContaining("Cannot install update"))
     })
   })

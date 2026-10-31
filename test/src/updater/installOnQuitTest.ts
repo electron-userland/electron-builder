@@ -177,7 +177,7 @@ describe("install on quit", { concurrent: false }, () => {
       expect(log.errors.some(it => it.includes("Cannot install update"))).toBe(false)
       expect(log.warns.some(it => it.includes("the app quits without it"))).toBe(true)
       expect(log.warns.some(it => it.includes("the quit is cancelled"))).toBe(false)
-      expect((updater as any).quitAndInstallCalled).toBe(false)
+      expect((updater as any).installState).toEqual({ kind: "idle" })
     })
 
     test("does not repair with apt-get when authorization was not obtained (pkexec exit code 127)", async () => {
@@ -262,7 +262,7 @@ describe("install on quit", { concurrent: false }, () => {
       expect(log.errors.some(it => it.includes("Cannot install update"))).toBe(false)
       expect(log.warns.some(it => it.includes("the quit is cancelled"))).toBe(true)
       // an explicit quitAndInstall() can still install
-      expect((updater as any).quitAndInstallCalled).toBe(false)
+      expect((updater as any).installState).toEqual({ kind: "idle" })
     })
 
     test("does not repair with apt-get when authorization was not obtained (pkexec exit code 127)", async () => {
@@ -351,7 +351,7 @@ describe("install on quit", { concurrent: false }, () => {
       await flush()
 
       expect(doInstallAsync).toHaveBeenCalledTimes(1)
-      expect(log.warns).not.toContain("install call ignored: quitAndInstallCalled is set to true")
+      expect(log.warns).not.toContain("install call ignored: an install already runs or handed the update off")
     })
 
     test("cancels the quit when an 'error' listener throws", async () => {
@@ -849,7 +849,7 @@ describe("install on quit", { concurrent: false }, () => {
 
       expect((updater as any).beginInstall(true, false)).toBeNull()
       expect(stateOf(updater)).toBe(started.install)
-      expect(log.warns).toContain("install call ignored: quitAndInstallCalled is set to true")
+      expect(log.warns).toContain("install call ignored: an install already runs or handed the update off")
 
       ;(updater as any).endInstall(started.install, true, "install")
       expect(stateOf(updater)).toEqual({ kind: "handedOff" })
@@ -924,11 +924,13 @@ describe("install on quit", { concurrent: false }, () => {
       const app = makeStubApp()
       const { updater } = createDebUpdater(app, 0)
       const started = (updater as any).beginInstall(true, false)
-      ;(updater as any).quitAndInstallCalled = false
+      // the app defers the update to the next launch while the install runs
+      updater.quitAndInstall({ waitUntilNextLaunch: true })
+      expect(stateOf(updater)).toEqual({ kind: "handedOff" })
 
-      ;(updater as any).endInstall(started.install, true, "install")
+      ;(updater as any).endInstall(started.install, false, "install")
 
-      expect(stateOf(updater)).toEqual({ kind: "idle" })
+      expect(stateOf(updater)).toEqual({ kind: "handedOff" })
     })
 
     describe.each(["install", "installAsync"] as const)("a failed %s()", method => {
@@ -989,49 +991,60 @@ describe("install on quit", { concurrent: false }, () => {
       })
     })
 
-    describe("the deprecated quitAndInstallCalled", () => {
-      test("reads whether an install started: running or handed off", async () => {
+    describe("the removed quitAndInstallCalled", () => {
+      const REMOVED = "BaseUpdater.quitAndInstallCalled was removed in electron-updater 7"
+
+      test("reads undefined while an install runs, and warns once per updater", async () => {
         await seedDownloadedUpdate()
         const app = makeStubApp()
         const { updater } = createDebUpdater(app, 0)
-        let finish: (isInstalled: boolean) => void = () => {}
-        vi.spyOn(updater as any, "doInstallAsync").mockReturnValue(new Promise<boolean>(resolve => (finish = resolve)))
-        expect((updater as any).quitAndInstallCalled).toBe(false)
+        vi.spyOn(updater as any, "doInstallAsync").mockReturnValue(new Promise<boolean>(() => {}))
 
-        const installed = updater.installAsync(true, false)
-        expect((updater as any).quitAndInstallCalled).toBe(true)
+        void updater.installAsync(true, false)
+        expect((updater as any).quitAndInstallCalled).toBeUndefined()
+        expect((updater as any).quitAndInstallCalled).toBeUndefined()
 
-        finish(true)
-        await expect(installed).resolves.toBe(true)
-        expect((updater as any).quitAndInstallCalled).toBe(true)
-        expect(stateOf(updater)).toEqual({ kind: "handedOff" })
+        expect(stateOf(updater).kind).toBe("installing")
+        const warnings = log.warns.filter(it => it.includes(REMOVED))
+        expect(warnings.length).toBe(1)
+        expect(warnings[0]).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#baseupdaterquitandinstallcalled-is-removed")
+
+        // another updater instance announces it again
+        const other = createDebUpdater(makeStubApp(), 0).updater
+        expect((other as any).quitAndInstallCalled).toBeUndefined()
+        expect(log.warns.filter(it => it.includes(REMOVED)).length).toBe(2)
       })
 
-      test("set to true, stops every later install, also on quit", async () => {
+      test("set to true, does not stop a later install", async () => {
         await seedDownloadedUpdate()
         const app = makeStubApp()
         const { updater, pkexecCalls } = createDebUpdater(app, 0)
 
         ;(updater as any).quitAndInstallCalled = true
-
-        expect(stateOf(updater)).toEqual({ kind: "handedOff" })
-        expect(updater.install(true, false)).toBe(false)
-        expect(app.quitApp()).toBe(true)
-        expect(pkexecCalls).toEqual([])
-        expect(log.infos).toContain("Update installer has already been triggered. Quitting application.")
-      })
-
-      test("set to false, lets an install start again", async () => {
-        await seedDownloadedUpdate()
-        const app = makeStubApp()
-        const { updater, pkexecCalls } = createDebUpdater(app, 0)
-        ;(updater as any).quitAndInstallCalled = true
-
-        ;(updater as any).quitAndInstallCalled = false
 
         expect(stateOf(updater)).toEqual({ kind: "idle" })
         expect(updater.install(true, false)).toBe(true)
         expect(pkexecCalls.length).toBe(1)
+        expect(log.warns.filter(it => it.includes(REMOVED)).length).toBe(1)
+      })
+
+      test("set to false, does not let a second install start", async () => {
+        await seedDownloadedUpdate()
+        const app = makeStubApp()
+        const { updater, pkexecCalls } = createDebUpdater(app, 0)
+        expect(updater.install(true, false)).toBe(true)
+
+        ;(updater as any).quitAndInstallCalled = false
+
+        expect(stateOf(updater)).toEqual({ kind: "handedOff" })
+        expect(updater.install(true, false)).toBe(false)
+        expect(pkexecCalls.length).toBe(1)
+      })
+
+      test("is not an own or enumerable property of the updater", () => {
+        const { updater } = createDebUpdater(makeStubApp(), 0)
+        expect(Object.keys(updater)).not.toContain("quitAndInstallCalled")
+        expect(Object.prototype.hasOwnProperty.call(updater, "quitAndInstallCalled")).toBe(false)
       })
     })
   })

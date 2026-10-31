@@ -21,6 +21,8 @@ What the installed app, its installer or its auto-updater does differently on yo
 | [`quitAndInstall` takes an options object (electron-updater)](#quitandinstall-takes-an-options-object) | TS error, runtime log | Replace positional args: `quitAndInstall(true, false)` → `quitAndInstall({ isSilent: true, isForceRunAfter: false })` |
 | [`autoInstallOnAppQuit` replaced by `autoInstallEvent` enum (electron-updater)](#autoinstallevent-replaces-autoinstallonappquit) | TS error, runtime log | `autoInstallOnAppQuit = false` → `autoInstallEvent = "manual"`; default `"onQuit"` preserves behavior |
 | [`downloadUpdate()` resolves with an object, not an array (electron-updater)](#downloadupdate-resolves-with-a-downloadexecutorresult-object) | TS error, runtime log | `const [installer] = await downloadUpdate()` → `const { updateFile } = await downloadUpdate()`; same for `checkForUpdates()` → `downloadPromise` |
+| [`UpdateCheckResult.versionInfo` removed (electron-updater)](#updatecheckresultversioninfo-is-removed) | TS error, runtime log | `result.versionInfo` → `result.updateInfo` |
+| [`BaseUpdater.quitAndInstallCalled` removed (electron-updater)](#baseupdaterquitandinstallcalled-is-removed) | TS error, runtime log | Custom updater subclasses only: remove the code that reads or sets it; a failed install can be retried as is |
 | [`verifyUpdateCodeSignature` renamed and returns a result object (electron-updater)](#verifyupdatecodesignature-renamed-to-verifyupdatefileauthenticodesignature) | Silent (shim) | `NsisUpdater.verifyUpdateCodeSignature` → `verifyUpdateFileAuthenticodeSignature`; return `{ response: "success" }` / `{ response: "failure", message }` instead of `null` / `string` |
 | [macOS default entitlements tightened](#macos-default-entitlements-tightened) | Advisory, partial warning | The bundled default now grants only `allow-jit`; add `allow-unsigned-executable-memory` / `disable-library-validation` back in `build/entitlements.mac.plist` (and `.inherit.plist`) only if your app needs them |
 | [macOS: the ASAR integrity digest is embedded](#macos-asar-integrity-digest) | Warns (with `afterPack`) | With Electron 41+, the Electron Framework is patched and signed again ad hoc after `afterPack`; set `mac.asarIntegrityDigest: false` if you sign the app yourself in `afterPack`, change `app.asar` / `Info.plist` after it, or merge separately built x64 and arm64 apps with `@electron/universal` yourself |
@@ -191,6 +193,34 @@ const downloaded = (await result?.downloadPromise)?.updateFile
 ```
 
 Code that only awaits the promise for its side effects, or that relies on the `update-downloaded` event, needs no change. Additively, the `update-downloaded` event payload (`UpdateDownloadedEvent`) now also carries `packageFile` for web installers, next to the existing `downloadedFile`.
+
+### `UpdateCheckResult.versionInfo` is removed {#updatecheckresultversioninfo-is-removed}
+
+**How you'll find out:** **TypeScript error.** Plain JavaScript callers that read it get `undefined` and a **runtime warning**, once per updater instance.
+
+The deprecated `versionInfo` member of the `UpdateCheckResult` that `checkForUpdates()` and `checkForUpdatesAndNotify()` resolve with is removed. It always held the same object as `updateInfo`, which replaces it:
+
+```ts
+// Before (v26 / electron-updater 6)
+const result = await autoUpdater.checkForUpdates()
+const version = result?.versionInfo.version
+
+// After (v27 / electron-updater 7)
+const result = await autoUpdater.checkForUpdates()
+const version = result?.updateInfo.version
+```
+
+Reading `versionInfo` now returns `undefined`, so code such as `result.versionInfo.version` throws a `TypeError`; the warning logged right before it names `updateInfo` and links here. `versionInfo` is not an enumerable property of the result, which serializes as `{ isUpdateAvailable, updateInfo, ... }`.
+
+**Action:** replace `versionInfo` with `updateInfo`.
+
+### `BaseUpdater.quitAndInstallCalled` is removed {#baseupdaterquitandinstallcalled-is-removed}
+
+**How you'll find out:** **TypeScript error** in a subclass. A plain JavaScript subclass that reads or sets it gets a **runtime warning**, once per updater instance.
+
+The protected `quitAndInstallCalled` flag of `BaseUpdater`, deprecated earlier in the v27 pre-releases, is removed. The updater tracks the install in its own private state: a failed install leaves no flag behind and can be retried as is, and an install started while another one runs, or after one installed the update, started its installer or marked it for the next launch, is ignored with a warning. Reading `this.quitAndInstallCalled` now returns `undefined`, and setting it does nothing: setting it to `true` no longer stops later installs, and setting it to `false` no longer lets a second install start.
+
+**Action:** remove the code that reads or sets `quitAndInstallCalled` in a custom updater subclass. To stop the update from being installed when the app quits, set `autoInstallEvent = "manual"`.
 
 ### `verifyUpdateCodeSignature` renamed to `verifyUpdateFileAuthenticodeSignature`
 

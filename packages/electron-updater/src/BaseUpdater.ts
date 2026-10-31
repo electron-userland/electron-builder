@@ -174,19 +174,26 @@ export abstract class BaseUpdater extends AppUpdater {
   private pendingInstall: Promise<unknown> = Promise.resolve()
 
   /**
-   * Whether an install started in this session: it runs, or it handed the update off (installed it, started its
-   * installer, or marked it for the next launch). Setting it to `true` stops every later install in this session,
-   * setting it to `false` lets one start again.
-   *
-   * @deprecated Kept for subclasses until the next major version: the install lifecycle is tracked in one private state
-   * now, and a failed install no longer leaves this set. Do not set it: an install that failed can be retried as is.
+   * Removed in electron-updater 7: kept, without a type, only to tell a plain JavaScript subclass that still reads or sets
+   * it. Reading returns `undefined` and setting does nothing; the install lifecycle is {@link installState}.
+   * @internal
    */
-  protected get quitAndInstallCalled(): boolean {
-    return this.installState.kind !== "idle"
+  protected get quitAndInstallCalled(): undefined {
+    this.warnQuitAndInstallCalledRemoved()
+    return undefined
   }
 
-  protected set quitAndInstallCalled(value: boolean) {
-    this.installState = value ? HANDED_OFF : IDLE
+  /** @internal */
+  protected set quitAndInstallCalled(_value: unknown) {
+    this.warnQuitAndInstallCalledRemoved()
+  }
+
+  private warnQuitAndInstallCalledRemoved(): void {
+    this.limitedLogger("removed-quit-and-install-called").warn(
+      "BaseUpdater.quitAndInstallCalled was removed in electron-updater 7 (electron-builder v27): reading it returns undefined and setting it does nothing. " +
+        "The updater tracks the install itself: an install that failed can be retried as is, and one started while another runs or after one handed the update off is ignored, so remove the code that reads or sets it. " +
+        "https://www.electron.build/docs/migration/v27-runtime-changes#baseupdaterquitandinstallcalled-is-removed"
+    )
   }
 
   protected constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
@@ -347,7 +354,7 @@ export abstract class BaseUpdater extends AppUpdater {
    */
   private beginInstall(isSilent: boolean, isForceRunAfter: boolean): { readonly install: Installing; readonly options: InstallOptions } | null {
     if (this.installState.kind !== "idle") {
-      this.log.warn("install call ignored: quitAndInstallCalled is set to true")
+      this.log.warn("install call ignored: an install already runs or handed the update off")
       return null
     }
 
@@ -376,7 +383,7 @@ export abstract class BaseUpdater extends AppUpdater {
 
   /**
    * `installing` → `handedOff` when `install` installed the update, → `idle` when it failed, so that a later install
-   * can try again; unless the state moved on meanwhile (the deprecated {@link quitAndInstallCalled} was set).
+   * can try again; unless the state moved on meanwhile (a `quitAndInstall({ waitUntilNextLaunch: true })` handed the update off).
    *
    * A failed install is not tried again on quit (see {@link skipInstallOnQuitUpdateId}) when a quit waited for it, or
    * when `install()` or `installAsync()` ran it on a target whose install shows an elevation dialog ({@link isQuitCancellable}):

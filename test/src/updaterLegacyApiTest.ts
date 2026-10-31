@@ -1,3 +1,8 @@
+import type { UpdateInfo } from "builder-util-runtime"
+import type { TmpDir } from "temp-file"
+import { DebUpdater } from "electron-updater"
+import type { AppAdapter } from "electron-updater/src/AppAdapter"
+import * as path from "path"
 import { describe, expect, test, vi } from "vitest"
 
 /**
@@ -172,5 +177,79 @@ describe("quitAndInstall positional-argument normalization", () => {
     const logger = createLogger()
     expect(normalize(logger)).toEqual({})
     expect(logger.warn).not.toHaveBeenCalled()
+  })
+})
+
+describe("the removed UpdateCheckResult.versionInfo", () => {
+  const REMOVED = "UpdateCheckResult.versionInfo was removed in electron-updater 7"
+  const latest: UpdateInfo = {
+    version: "2.0.0",
+    files: [{ url: "App-2.0.0.deb", sha512: "hash", size: 100 }],
+    path: "App-2.0.0.deb",
+    sha512: "hash",
+    releaseDate: "2026-01-01T00:00:00.000Z",
+  }
+
+  async function createUpdater(tmpDir: TmpDir, currentVersion: string) {
+    const userDataPath = await tmpDir.getTempDir({ prefix: "updater-legacy-api" })
+    const app: AppAdapter = {
+      name: "TestApp",
+      version: currentVersion,
+      isPackaged: true,
+      appUpdateConfigPath: path.join(userDataPath, "app-update.yml"),
+      userDataPath,
+      baseCachePath: userDataPath,
+      whenReady: () => Promise.resolve(),
+      relaunch: () => {},
+      quit: () => {},
+      onQuit: () => {},
+    }
+    const logger = createLogger()
+    const updater = new DebUpdater(null, app)
+    updater.logger = logger
+    updater.updateManifestPublicKey = null
+    updater.autoDownload = false
+    ;(updater as any).clientPromise = Promise.resolve({ setRequestHeaders: () => {}, getLatestVersion: () => Promise.resolve(latest) })
+    const removedWarnings = () => logger.warn.mock.calls.map(it => String(it[0])).filter(it => it.includes(REMOVED))
+    return { updater, removedWarnings }
+  }
+
+  test("reads undefined on an available update and warns once per updater; updateInfo carries the update", async ({ tmpDir }) => {
+    const { updater, removedWarnings } = await createUpdater(tmpDir, "1.0.0")
+
+    const result = await updater.checkForUpdates()
+    expect(result?.isUpdateAvailable).toBe(true)
+    expect(result?.updateInfo).toEqual(latest)
+    expect((result as any).versionInfo).toBeUndefined()
+    expect((result as any).versionInfo).toBeUndefined()
+    const second = await updater.checkForUpdates()
+    expect((second as any).versionInfo).toBeUndefined()
+
+    expect(removedWarnings().length).toBe(1)
+    expect(removedWarnings()[0]).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#updatecheckresultversioninfo-is-removed")
+
+    // another updater instance announces it again
+    const other = await createUpdater(tmpDir, "1.0.0")
+    expect(((await other.updater.checkForUpdates()) as any).versionInfo).toBeUndefined()
+    expect(other.removedWarnings().length).toBe(1)
+  })
+
+  test("reads undefined when no update is available", async ({ tmpDir }) => {
+    const { updater, removedWarnings } = await createUpdater(tmpDir, "2.0.0")
+
+    const result = await updater.checkForUpdates()
+    expect(result?.isUpdateAvailable).toBe(false)
+    expect(result?.updateInfo).toEqual(latest)
+    expect((result as any).versionInfo).toBeUndefined()
+    expect(removedWarnings().length).toBe(1)
+  })
+
+  test("is not enumerable, so the result serializes without it", async ({ tmpDir }) => {
+    const { updater, removedWarnings } = await createUpdater(tmpDir, "2.0.0")
+
+    const result = await updater.checkForUpdates()
+    expect(Object.keys(result ?? {})).toEqual(["isUpdateAvailable", "updateInfo"])
+    expect(JSON.parse(JSON.stringify(result))).toEqual({ isUpdateAvailable: false, updateInfo: latest })
+    expect(removedWarnings()).toEqual([])
   })
 })

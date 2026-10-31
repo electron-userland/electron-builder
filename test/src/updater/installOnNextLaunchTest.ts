@@ -571,7 +571,7 @@ describe("install on next launch", { concurrent: false }, () => {
       expect(await helper.getPendingInstallInfo()).toBeNull()
     })
 
-    test("resets quitAndInstallCalled so a later install is not wedged when the launch-time install fails", async () => {
+    test("returns the install state to idle so a later install is not wedged when the launch-time install fails", async () => {
       const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
       const { updater, doInstall } = createUpdater(seeded.updateInfo)
       helper.markInstallOnNextLaunchSync(log)
@@ -584,7 +584,7 @@ describe("install on next launch", { concurrent: false }, () => {
       await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
       // marker was cleared before the (failed) spawn and the flag must not stay latched
       expect(await helper.getPendingInstallInfo()).toBeNull()
-      expect((updater as any).quitAndInstallCalled).toBe(false)
+      expect((updater as any).installState).toEqual({ kind: "idle" })
 
       // not wedged: a subsequent install of the still-cached update runs to completion
       helper.markInstallOnNextLaunchSync(log)
