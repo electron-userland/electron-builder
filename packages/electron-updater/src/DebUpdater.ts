@@ -66,12 +66,15 @@ export class DebUpdater extends LinuxUpdater {
       }
     }
     if (packageManager === "apt") {
+      // apt checks no signature on a local .deb file: --allow-unauthenticated only affects dependencies it fetches from repositories
       if (allowUnverified) {
         logger.info(
-          "Installing a local .deb with apt; package signature verification is bypassed (allowUnverifiedLinuxPackages defaults to true since electron-builder does not sign Linux packages). Set it to false to enforce verification if you sign your packages."
+          "Installing a local .deb with apt; apt verifies no signature on a local .deb file, and dependencies from unauthenticated repositories are accepted (allowUnverifiedLinuxPackages=true). The package is checked only against the sha512 in the update manifest."
         )
       } else {
-        logger.info("Installing a local .deb with apt with package signature verification enforced (allowUnverifiedLinuxPackages=false).")
+        logger.warn(
+          "allowUnverifiedLinuxPackages=false does not verify the .deb itself when installing with apt: apt verifies no signature on a local .deb file and only refuses dependencies from unauthenticated repositories. Enforcing .deb signature verification requires a debsig-verify/debsigs policy on the target system."
+        )
       }
       return {
         execCommand: [
