@@ -1,5 +1,6 @@
 !include FileFunc.nsh
 !include UAC.nsh
+!include WordFunc.nsh
 
 !define FOLDERID_UserProgramFiles {5CD7AEE2-2219-4A67-B85D-6C9CE15660CB}
 !define KF_FLAG_CREATE 0x00008000
@@ -24,6 +25,8 @@ Var installMode
 
     # сhecks registry for previous installation path
     ReadRegStr $perUserInstallationFolder HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
+    # a double quote is invalid in a path: drop the closing quote that an earlier installer kept from a quoted /D= argument
+    ${WordReplace} $perUserInstallationFolder '"' "" "+" $perUserInstallationFolder
     ${if} $perUserInstallationFolder != ""
       StrCpy $INSTDIR $perUserInstallationFolder
     ${else}
@@ -73,6 +76,8 @@ Var installMode
 
     # сheck registry for previous installation path
     ReadRegStr $perMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
+    # a double quote is invalid in a path: drop the closing quote that an earlier installer kept from a quoted /D= argument
+    ${WordReplace} $perMachineInstallationFolder '"' "" "+" $perMachineInstallationFolder
     ${if} $perMachineInstallationFolder != ""
       StrCpy $INSTDIR $perMachineInstallationFolder
     ${else}
@@ -100,8 +105,10 @@ Var installMode
 !endif
 
 # Custom function to handle /D parameter with spaces
-# The /D parameter is special in NSIS - it must be the last parameter and cannot have quotes
-# Use StdUtils.GetParameter to get the full command line, then parse /D= manually
+# The /D parameter is special in NSIS - it must be the last parameter and is not quoted: /S /D=C:\Program Files\App
+# Use StdUtils.GetAllParameters to get the full command line, then parse /D= manually
+# A caller that quotes the whole argument ("/D=C:\Program Files\App", as child_process.spawn does for a path with a space)
+# leaves the closing quote in the rest of the command line, so the parsed argument is used for that form
 !macro GetDParameter outVar
   Push $R8
   Push $R9
@@ -124,9 +131,20 @@ Var installMode
     StrCpy $R5 $R8 3 $R6  # Get 3 characters starting at position $R6
     ${If} $R5 == "/D="
     ${OrIf} $R5 == "/d="
-      # Found /D= or /d=, extract everything after it
-      IntOp $R6 $R6 + 3
-      StrCpy $R9 $R8 "" $R6
+      # the character before /D= tells whether the caller quoted the argument
+      StrCpy $R7 ""
+      ${If} $R6 > 0
+        IntOp $R7 $R6 - 1
+        StrCpy $R7 $R8 1 $R7
+      ${EndIf}
+      ${If} $R7 == '"'
+        # quoted: the rest of the command line ends with the closing quote, take the parsed argument instead
+        ${StdUtils.GetParameter} $R9 "D" ""
+      ${Else}
+        # Found /D= or /d=, extract everything after it
+        IntOp $R6 $R6 + 3
+        StrCpy $R9 $R8 "" $R6
+      ${EndIf}
       ${Break}
     ${EndIf}
     IntOp $R6 $R6 + 1

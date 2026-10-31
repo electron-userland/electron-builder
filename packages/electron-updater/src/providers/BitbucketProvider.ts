@@ -34,8 +34,12 @@ export class BitbucketProvider extends Provider<UpdateInfo> {
     const channelUrl = newUrlFromBase(channelFile, this.baseUrl, this.updater.isAddNoCacheQuery)
     let updateInfo: string | null
     try {
-      updateInfo = await this.httpRequest(channelUrl, undefined, cancellationToken)
+      updateInfo = await this.channelFileRequest(channelUrl, undefined, cancellationToken)
     } catch (e: any) {
+      // a channel file over the size limit keeps its own code
+      if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
+        throw e
+      }
       throw newError(`Unable to find latest version on ${this.toString()}, please ensure release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
     // parsed outside the try: a manifest that cannot be parsed fails with ERR_UPDATER_INVALID_UPDATE_INFO

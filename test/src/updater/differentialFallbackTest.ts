@@ -2,6 +2,7 @@ import { serializeToYaml } from "builder-util"
 import { CancellationToken, CURRENT_APP_INSTALLER_FILE_NAME, DownloadOptions, HttpExecutor } from "builder-util-runtime"
 import { AppImageUpdater, BaseUpdater, NsisUpdater } from "electron-updater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
+import { DifferentialDownloader } from "electron-updater/src/differentialDownloader/DifferentialDownloader"
 import { createHash } from "crypto"
 import fs from "fs"
 import fsExtra from "fs-extra"
@@ -348,6 +349,71 @@ describe("differential download failures fall back to a verified full download, 
       expect((await fsExtra.readFile(updateFile)).equals(NEW)).toBe(true)
       expect(requests.some(it => it.path === OLD_BLOCKMAP_PATH)).toBe(true)
     })
+
+    // Both maps come from the host (no cached one) and their sizes add up, but a zero-size or fractional block, or a negative offset,
+    // makes a range that cannot be copied or requested. The plan is rejected before any range request, so no copy throws inside a
+    // stream callback (an uncaught exception that would leave the download pending) and the update is downloaded in full.
+    const blockMap = (checksums: Array<string>, sizes: Array<number>, offset = 0) => gzipSync(JSON.stringify({ version: "2", files: [{ name: "file", offset, checksums, sizes }] }))
+    const serveBlockMaps =
+      (oldBlockMap: Buffer, newBlockMap: Buffer): Override =>
+      (req, res) => {
+        if (req.url === OLD_BLOCKMAP_PATH || req.url === NEW_BLOCKMAP_PATH) {
+          res.end(req.url === OLD_BLOCKMAP_PATH ? oldBlockMap : newBlockMap)
+          return true
+        }
+        return false
+      }
+    const oldWithEmptyBlock = blockMap(["A", "X", "C", "Y", "Z"], [BLOCK, BLOCK, BLOCK, BLOCK, 0])
+    const malformedPlans: Array<[string, Override]> = [
+      ["a zero-size block after a downloaded range", serveBlockMaps(oldWithEmptyBlock, blockMap(["A", "B", "C", "D", "Z"], [BLOCK, BLOCK, BLOCK, BLOCK, 0]))],
+      ["a zero-size block after a copied one", serveBlockMaps(oldWithEmptyBlock, blockMap(["A", "Z", "B", "C", "D"], [BLOCK, 0, BLOCK, BLOCK, BLOCK]))],
+      ["a zero-size block between two copies inside a multipart response", serveBlockMaps(oldWithEmptyBlock, blockMap(["B", "A", "Z", "C", "D"], [BLOCK, BLOCK, 0, BLOCK, BLOCK]))],
+      [
+        "a fractional block size in the old blockmap",
+        serveBlockMaps(blockMap(["A", "H", "C", "Y"], [BLOCK, 0.5, BLOCK, 2 * BLOCK - 0.5]), blockMap(["A", "C", "B", "D"], [BLOCK, BLOCK, BLOCK, BLOCK])),
+      ],
+      [
+        // the first block is downloaded from [-BLOCK, 0): only its start is out of range
+        "a negative file offset in the new blockmap",
+        serveBlockMaps(blockMap(["A", "X", "C", "Y"], [BLOCK, BLOCK, BLOCK, BLOCK]), blockMap(["B", "A", "C", "D"], [BLOCK, BLOCK, BLOCK, BLOCK], -BLOCK)),
+      ],
+    ]
+    for (const [name, override] of malformedPlans) {
+      for (const multiRange of [true, false]) {
+        test(`${name} is rejected before any range request (${multiRange ? "multi" : "single"}-range)`, async ({ tmpDir }) => {
+          const uncaught: Array<unknown> = []
+          const onUncaught = (e: unknown) => uncaught.push(e)
+          process.on("uncaughtException", onUncaught)
+          let hangTimer: NodeJS.Timeout | undefined
+          const doDownload = vi.spyOn(DifferentialDownloader.prototype, "doDownload")
+          try {
+            const url = await startServer(override)
+            const { updater } = await createUpdater(tmpDir, url, { multiRange })
+            await updater.checkForUpdates()
+            const outcome = await Promise.race([
+              updater.downloadUpdate().then(
+                async ({ updateFile }) => ((await fsExtra.readFile(updateFile)).equals(NEW) ? "resolved with the new file" : "resolved with a WRONG file"),
+                (e: any) => `rejected: ${e?.message}`
+              ),
+              new Promise<string>(resolve => {
+                hangTimer = setTimeout(() => resolve("still pending after 5s (hang)"), 5000)
+              }),
+            ])
+            expect(outcome).toBe("resolved with the new file")
+            expect(uncaught).toEqual([])
+            expect(rangeRequests()).toEqual([])
+            expect(fullDownloads()).toHaveLength(1)
+            expect(doDownload.mock.results).toEqual([
+              { type: "throw", value: expect.objectContaining({ message: expect.stringMatching(/^Invalid (COPY|DOWNLOAD) range .*: malformed blockmap$/) }) },
+            ])
+          } finally {
+            doDownload.mockRestore()
+            clearTimeout(hangTimer)
+            process.off("uncaughtException", onUncaught)
+          }
+        }, 15000)
+      }
+    }
   })
 
   // c. range responses
