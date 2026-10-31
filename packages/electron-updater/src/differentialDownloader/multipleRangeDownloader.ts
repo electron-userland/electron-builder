@@ -245,12 +245,12 @@ export function requestRange(
     }
     // sent from stream and response callbacks too: a request that cannot be created (a URL the updater rejects, a protocol net.request
     // does not support) would escape from them as an uncaught exception, and the download would never settle
-    let request: any
+    let request: AbortableRequest & { end(): void }
     try {
       request = differentialDownloader.createRangeRequest(requestOptions, (response: IncomingMessage) => onResponse(response, request))
-    } catch (e: any) {
-      // as is, like a throw from the first request, which is sent inside the download's promise executor
-      reject(e)
+    } catch (e: unknown) {
+      // like a throw from the first request, which is sent inside the download's promise executor
+      reject(e instanceof Error ? e : new Error(String(e)))
       return
     }
     httpExecutor.addErrorAndTimeoutHandlers(request, reject)
