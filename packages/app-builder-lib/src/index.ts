@@ -118,7 +118,7 @@ export function checkBuildRequestOptions(options: PackagerOptions & PublishOptio
   for (const optionName of Object.keys(options)) {
     if (!expectedOptions.has(optionName) && (options as any)[optionName] !== undefined) {
       if (optionName === "em") {
-        // a literal `--em.build=…` / `--em.directories=…` on the command line (the flags were removed in v22)
+        // any literal `--em.*` flag on the command line (the flags were removed in v22)
         throw new InvalidConfigurationError(
           "The `--em.*` flags (`--em.build`, `--em.directories`) are not supported in electron-builder v27.\n" +
             "  Pass build configuration with `-c` (e.g. `-c.directories.output=dist`), and package.json properties with `-c.extraMetadata.<name>`.\n" +

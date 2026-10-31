@@ -21,9 +21,9 @@ import {
  * aggregates every legacy key into a single error: a config with a dozen moved mac options should
  * not take a dozen build attempts to fix.
  *
- * Nothing here rejects a value a valid v27 config can contain — every guarded path is covered by a
- * test asserting the v27 schema rejects it too. The one exception is `checkExtraMetadata`: the schema
- * accepts any `extraMetadata`, so it cannot reject the `build` / `directories` keys itself.
+ * Apart from `extraMetadata.build` / `extraMetadata.directories` (`checkExtraMetadata`: the schema accepts
+ * any `extraMetadata`, so this pass is what rejects those two keys), nothing here rejects a value the v27
+ * schema accepts — every other guarded path is covered by a test asserting the v27 schema rejects it too.
  */
 
 const PLATFORMS_WITH_PUBLISH = ["mac", "win", "linux"] as const
