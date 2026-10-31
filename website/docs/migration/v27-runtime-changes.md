@@ -198,19 +198,15 @@ Code that only awaits the promise for its side effects, or that relies on the `u
 
 **How you'll find out:** **TypeScript error.** Plain JavaScript callers that read it get `undefined` and a **runtime warning**, once per updater instance.
 
-The deprecated `versionInfo` member of the `UpdateCheckResult` that `checkForUpdates()` and `checkForUpdatesAndNotify()` resolve with is removed. It always held the same object as `updateInfo`, which replaces it:
+The `versionInfo` member of the `UpdateCheckResult` that `checkForUpdates()` and `checkForUpdatesAndNotify()` resolve with is removed. Read `updateInfo`, which holds the same object:
 
 ```ts
-// Before (v26 / electron-updater 6)
-const result = await autoUpdater.checkForUpdates()
-const version = result?.versionInfo.version
-
-// After (v27 / electron-updater 7)
+// result?.versionInfo.version → result?.updateInfo.version
 const result = await autoUpdater.checkForUpdates()
 const version = result?.updateInfo.version
 ```
 
-Reading `versionInfo` now returns `undefined`, so code such as `result.versionInfo.version` throws a `TypeError`; the warning logged right before it names `updateInfo` and links here. `versionInfo` is not an enumerable property of the result, which serializes as `{ isUpdateAvailable, updateInfo, ... }`.
+Reading `versionInfo` returns `undefined`, so code such as `result.versionInfo.version` throws a `TypeError`; the warning logged right before it names `updateInfo` and links here. `versionInfo` is not an enumerable property of the result, which serializes as `{ isUpdateAvailable, updateInfo, ... }`.
 
 **Action:** replace `versionInfo` with `updateInfo`.
 
@@ -218,7 +214,7 @@ Reading `versionInfo` now returns `undefined`, so code such as `result.versionIn
 
 **How you'll find out:** **TypeScript error** in a subclass. A plain JavaScript subclass that reads or sets it gets a **runtime warning**, once per updater instance.
 
-The protected `quitAndInstallCalled` flag of `BaseUpdater`, deprecated earlier in the v27 pre-releases, is removed. The updater tracks the install in its own private state: a failed install leaves no flag behind and can be retried as is, and an install started while another one runs, or after one installed the update, started its installer or marked it for the next launch, is ignored with a warning. Reading `this.quitAndInstallCalled` now returns `undefined`, and setting it does nothing: setting it to `true` no longer stops later installs, and setting it to `false` no longer lets a second install start.
+The protected `quitAndInstallCalled` flag of `BaseUpdater` is removed. The updater tracks the install in its own private state: a failed install can be retried as is, and an install started while another one runs, or after one installed the update, started its installer or marked it for the next launch, is ignored with a warning. Reading `this.quitAndInstallCalled` returns `undefined`, and setting it does nothing: it neither stops later installs nor lets a second install start.
 
 **Action:** remove the code that reads or sets `quitAndInstallCalled` in a custom updater subclass. To stop the update from being installed when the app quits, set `autoInstallEvent = "manual"`.
 
