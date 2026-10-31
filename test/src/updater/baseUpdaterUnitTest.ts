@@ -245,8 +245,8 @@ function setupAppImageDownload({ cacheDir, verifyUpdateFile, cancellationToken =
     downloadUpdateOptions: {
       updateInfoAndProvider: {
         info: { version: "2.0.0", files: [], path: "", sha512: "", releaseDate: "" },
-        // @ts-expect-error the provider only supplies the feed origin for the download headers, so a stub without one is enough
-        provider: { feedBaseUrl: null },
+        // @ts-expect-error the provider only supplies the feed origin for the download headers: the download is on it, so a stub is enough
+        provider: { feedBaseUrl: new URL("https://example.com/") },
       },
       requestHeaders: {},
       cancellationToken,

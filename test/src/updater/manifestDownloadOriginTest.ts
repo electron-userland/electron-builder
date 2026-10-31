@@ -1,4 +1,14 @@
-import { CancellationToken, DEFAULT_CROSS_ORIGIN_HEADERS, DownloadOptions, GenericServerOptions, GithubOptions, PublishConfiguration, UpdateInfo } from "builder-util-runtime"
+import {
+  CancellationToken,
+  type CrossOriginHeadersCallback,
+  type CrossOriginRequest,
+  DEFAULT_CROSS_ORIGIN_HEADERS,
+  DownloadOptions,
+  GenericServerOptions,
+  GithubOptions,
+  PublishConfiguration,
+  UpdateInfo,
+} from "builder-util-runtime"
 import { serializeToYaml } from "builder-util"
 import { AppImageUpdater, AppUpdater } from "electron-updater"
 import type { DownloadUpdateOptions } from "electron-updater/src/AppUpdater"
@@ -382,13 +392,17 @@ describe("differential downloads use the per-download headers", () => {
     expect(rangeRequestHeaders[0]).toHaveProperty("accept", "*/*")
   })
 
-  test("private GitHub declares feedBaseUrl null: the request headers go to every download URL", async ({ tmpDir, expect }) => {
+  // no feed URL: its crossOriginHeaders sends every header to the GitHub API only
+  test("private GitHub: the request headers go to the API's asset URLs, only the default list elsewhere", async ({ tmpDir, expect }) => {
     const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
     const provider = createProvider(updater, { provider: "github", owner: "owner", repo: "repo", token: "t" } as GithubOptions)
     const options = downloadUpdateOptions(updater, provider, updateInfo("app-1.1.0.exe"))
+    const headersFor = (url: string): OutgoingHttpHeaders => (updater as any).downloadRequestHeaders(new URL(url), options)
 
     expect(provider.feedBaseUrl).toBeNull()
-    expect((updater as any).downloadRequestHeaders(new URL("https://objects.example.net/app-1.1.0.exe"), options)).toBe(options.requestHeaders)
+    expect(headersFor("https://api.github.com/repos/owner/repo/releases/assets/1")).toEqual(options.requestHeaders)
+    expect(options.requestHeaders).toMatchObject({ authorization: "Bearer s", "X-Tenant": "acme" })
+    expect(headersFor("https://objects.example.net/app-1.1.0.exe")).toEqual({ accept: "application/octet-stream" })
   })
 
   // ── blockMapUrl: the update manifest names the file's blockmap (e.g. separately pre-signed) ──
@@ -572,7 +586,8 @@ describe("differential downloads use the per-download headers", () => {
   })
 })
 
-// The updater's own executor (built when no app adapter is passed) follows a cross-origin redirect with the crossOriginHeaders of the last check.
+// The updater's own executor (built when no app adapter is passed) follows a cross-origin redirect with the crossOriginHeaders of the
+// provider of the latest check, then the one of the last check.
 describe("the updater's own executor sends on the crossOriginHeaders on a cross-origin redirect", () => {
   test("a redirect to another origin through Electron's net sends on the headers crossOriginHeaders lists", async ({ expect }) => {
     const requests: Array<EventEmitter> = []
@@ -625,21 +640,59 @@ describe("the updater's own executor sends on the crossOriginHeaders on a cross-
       // the function of a later check takes effect on the next redirect
       ;(updater as any).checkCrossOriginHeaders = () => null
       expect((await redirect({ "X-Tenant": "acme", Authorization: "Bearer s" })).headers).toMatchObject({ "X-Tenant": "acme", Authorization: "Bearer s" })
+
+      // once a check has a provider, it chooses first, and the app gets its choice
+      const calls: Array<readonly [string, ReadonlyArray<string>, CrossOriginRequest]> = []
+      ;(updater as any).checkProvider = {
+        crossOriginHeaders: (defaults: ReadonlyArray<string>, request: CrossOriginRequest) => {
+          calls.push(["provider", defaults, request])
+          return [...defaults, "x-tenant"]
+        },
+      }
+      ;(updater as any).checkCrossOriginHeaders = (defaults: ReadonlyArray<string>, request: CrossOriginRequest) => {
+        calls.push(["app", defaults, request])
+        return defaults.filter(it => it !== "accept")
+      }
+      const layered = await redirect({ "X-Tenant": "acme", Authorization: "Bearer s", accept: "*/*" })
+      expect(layered.headers).toMatchObject({ "X-Tenant": "acme" })
+      expect(layered.headers).not.toHaveProperty("Authorization")
+      expect(layered.headers).not.toHaveProperty("accept")
+      const request = { from: new URL("https://feed.example.com/updates/latest.yml"), to: new URL("https://cdn.example.net/latest.yml"), kind: "redirect" }
+      expect(calls).toEqual([
+        ["provider", DEFAULT_CROSS_ORIGIN_HEADERS, request],
+        ["app", [...DEFAULT_CROSS_ORIGIN_HEADERS, "x-tenant"], request],
+      ])
     } finally {
       moduleInternals._load = load
     }
   })
 })
 
-// A custom provider declares where the headers other than the crossOriginHeaders may go (Provider.feedBaseUrl); a download with such headers
-// through a provider that does not declare it is a configuration error, not a silent fallback to sending them everywhere.
-describe("a custom provider must declare feedBaseUrl to send credentials", () => {
+// A provider chooses the headers of its requests to another origin first (Provider.crossOriginHeaders), and the app's crossOriginHeaders
+// of checkForUpdates gets that choice and decides. Provider.feedBaseUrl only gives the requests their `from`: without it, both are asked
+// about every request.
+describe("the provider's and the app's crossOriginHeaders choose the headers sent to another origin", () => {
   const FEED = "https://feed.example.com/updates/"
   const INFO: UpdateInfo = { version: "1.1.0", files: [{ url: "app-1.1.0.exe", sha512: "x", size: 10 }], releaseDate: "2024-01-01T00:00:00.000Z" }
 
-  class UndeclaredProvider extends Provider<UpdateInfo> {
-    constructor() {
+  // records the calls of both layers, in order
+  const calls: Array<readonly ["provider" | "app", ReadonlyArray<string>, CrossOriginRequest]> = []
+
+  class TestProvider extends Provider<UpdateInfo> {
+    constructor(
+      private readonly declared: URL | null | undefined,
+      private readonly choose: CrossOriginHeadersCallback = defaults => defaults
+    ) {
       super({ isUseMultipleRangeRequest: false, platform: "win32", executor: {} as any })
+    }
+
+    get feedBaseUrl(): URL | null | undefined {
+      return this.declared
+    }
+
+    crossOriginHeaders(defaults: ReadonlyArray<string>, request: CrossOriginRequest): ReadonlyArray<string> | null {
+      calls.push(["provider", defaults, request])
+      return this.choose(defaults, request)
     }
 
     getLatestVersion(): Promise<UpdateInfo> {
@@ -651,27 +704,19 @@ describe("a custom provider must declare feedBaseUrl to send credentials", () =>
     }
   }
 
-  class DeclaredProvider extends UndeclaredProvider {
-    constructor(private readonly declared: URL | null) {
-      super()
-    }
-
-    get feedBaseUrl(): URL | null {
-      return this.declared
-    }
-  }
-
   afterEach(() => {
+    calls.splice(0)
     vi.restoreAllMocks()
   })
 
-  async function createUpdater(provider: Provider<any>, withAuthHeader: boolean, requestHeaders: OutgoingHttpHeaders = { "X-Tenant": "acme" }) {
+  async function createUpdater(provider: Provider<any>, app: CrossOriginHeadersCallback = defaults => defaults) {
     const updater = await createNsisUpdater("1.0.0")
-    updater.requestHeaders = requestHeaders
-    // the crossOriginHeaders a checkForUpdates({ crossOriginHeaders: defaults => defaults }) keeps for the download
-    ;(updater as any).checkCrossOriginHeaders = (defaults: ReadonlyArray<string>) => defaults
-    if (withAuthHeader) {
-      updater.addAuthHeader("Bearer s")
+    updater.requestHeaders = { "X-Tenant": "acme" }
+    updater.addAuthHeader("Bearer s")
+    // the crossOriginHeaders a checkForUpdates({ crossOriginHeaders }) keeps for the download
+    ;(updater as any).checkCrossOriginHeaders = (defaults: ReadonlyArray<string>, request: CrossOriginRequest) => {
+      calls.push(["app", defaults, request])
+      return app(defaults, request)
     }
     ;(updater as any).updateInfoAndProvider = { info: INFO, provider }
     const doDownloadUpdate = vi.spyOn(updater as any, "doDownloadUpdate").mockResolvedValue([])
@@ -684,118 +729,165 @@ describe("a custom provider must declare feedBaseUrl to send credentials", () =>
     return { updater, doDownloadUpdate, options, downloadRequestHeaders }
   }
 
-  test("undeclared with a credential header: the download fails with a configuration error before any request", async ({ expect }) => {
-    const { updater, doDownloadUpdate, downloadRequestHeaders } = await createUpdater(new UndeclaredProvider(), true)
-    const events = trackEvents(updater)
+  test("the provider is asked first, and its choice is the app's defaults", async ({ expect }) => {
+    const { downloadRequestHeaders } = await createUpdater(new TestProvider(new URL(FEED), defaults => [...defaults, "x-tenant"]))
 
-    await expect(updater.downloadUpdate()).rejects.toMatchObject({
-      code: "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED",
-      message: expect.stringMatching(
-        /^The custom update provider UndeclaredProvider does not declare feedBaseUrl.*https:\/\/www\.electron\.build\/docs\/migration\/v27-runtime-changes#cross-origin-header-allowlist$/
-      ),
-    })
-    expect(doDownloadUpdate).not.toHaveBeenCalled()
-    expect(events).toEqual(["error"])
-    // the per-download headers refuse too, should a download start without downloadUpdate
-    expect(() => downloadRequestHeaders(`${FEED}app-1.1.0.exe`)).toThrow(expect.objectContaining({ code: "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED" }))
-  })
-
-  // any header off the cross-origin allowlist may be a credential
-  test("undeclared with a custom header: the download fails with a configuration error naming it", async ({ expect }) => {
-    const { updater, doDownloadUpdate } = await createUpdater(new UndeclaredProvider(), false)
-
-    await expect(updater.downloadUpdate()).rejects.toMatchObject({
-      code: "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED",
-      message: expect.stringContaining("would send the headers X-Tenant (from requestHeaders, addAuthHeader or fileExtraDownloadHeaders), which stay on the feed's origin"),
-    })
-    expect(doDownloadUpdate).not.toHaveBeenCalled()
-  })
-
-  test("undeclared with only allowlisted headers: the download runs with the request headers", async ({ expect }) => {
-    const { updater, doDownloadUpdate, options, downloadRequestHeaders } = await createUpdater(new UndeclaredProvider(), false, { "Accept-Language": "en" })
-
-    await expect(updater.downloadUpdate()).resolves.toEqual([])
-    expect(doDownloadUpdate).toHaveBeenCalledTimes(1)
-    expect(doDownloadUpdate.mock.calls[0][0]).toMatchObject({ requestHeaders: { "Accept-Language": "en" } })
-    expect(downloadRequestHeaders("https://cdn.example.net/app-1.1.0.exe")).toBe(options.requestHeaders)
-  })
-
-  // without a feed URL there is no origin to send the other headers to, whatever crossOriginHeaders returns
-  test.for([
-    ["lists the header", (defaults: ReadonlyArray<string>) => [...defaults, "X-TENANT"]],
-    ["returns null", () => null],
-  ] as const)("undeclared with a custom header and a crossOriginHeaders that %s: the download fails naming it", async ([, crossOriginHeaders], { expect }) => {
-    const { updater, doDownloadUpdate } = await createUpdater(new UndeclaredProvider(), false)
-    ;(updater as any).checkCrossOriginHeaders = crossOriginHeaders
-
-    await expect(updater.downloadUpdate()).rejects.toMatchObject({ code: "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED", message: expect.stringContaining("the headers X-Tenant") })
-    expect(doDownloadUpdate).not.toHaveBeenCalled()
-  })
-
-  test("explicit null: the request headers go to every download URL", async ({ expect }) => {
-    const { updater, doDownloadUpdate, options, downloadRequestHeaders } = await createUpdater(new DeclaredProvider(null), true)
-
-    await expect(updater.downloadUpdate()).resolves.toEqual([])
-    expect(doDownloadUpdate).toHaveBeenCalledTimes(1)
     const headers = downloadRequestHeaders("https://cdn.example.net/app-1.1.0.exe")
-    expect(headers).toBe(options.requestHeaders)
-    expect(headers).toHaveProperty("authorization", "Bearer s")
+    const request = { from: new URL(FEED), to: new URL("https://cdn.example.net/app-1.1.0.exe"), kind: "request" }
+    expect(calls).toEqual([
+      ["provider", DEFAULT_CROSS_ORIGIN_HEADERS, request],
+      ["app", [...DEFAULT_CROSS_ORIGIN_HEADERS, "x-tenant"], request],
+    ])
+    expect(headers).toEqual({ accept: "*/*", "X-Tenant": "acme" })
   })
 
-  test("explicit null: an update info request on another origin keeps the request headers", async ({ expect }) => {
-    const provider = new DeclaredProvider(null)
-    provider.setRequestHeaders({ authorization: "Bearer s", "X-Tenant": "acme" })
+  test("a provider choosing null gives the app the names of every header of the request", async ({ expect }) => {
+    const { downloadRequestHeaders } = await createUpdater(new TestProvider(new URL(FEED), () => null))
 
-    const options: RequestOptions = (provider as any).createRequestOptions(new URL("https://cdn.example.net/latest.yml"))
-    expect(options.hostname).toBe("cdn.example.net")
-    expect(options.headers).toEqual({ authorization: "Bearer s", "X-Tenant": "acme" })
+    downloadRequestHeaders("https://cdn.example.net/app-1.1.0.exe")
+    expect(calls.map(([layer, defaults]) => [layer, defaults])).toEqual([
+      ["provider", DEFAULT_CROSS_ORIGIN_HEADERS],
+      ["app", ["accept", "X-Tenant", "authorization"]],
+    ])
   })
 
-  test("a feed URL: an update info request on another origin keeps only the allowlisted request headers", async ({ expect }) => {
-    const provider = new DeclaredProvider(new URL(FEED))
-    provider.setRequestHeaders({ authorization: "Bearer s", "X-Tenant": "acme", "Accept-Language": "de", "Cache-Control": "no-cache" })
+  test("the app decides: it can leave out what the provider chose, or send what it left out", async ({ expect }) => {
+    const providerSendsAll = await createUpdater(new TestProvider(new URL(FEED), () => null), defaults => defaults.filter(it => it !== "authorization"))
+    expect(providerSendsAll.downloadRequestHeaders("https://cdn.example.net/app-1.1.0.exe")).toEqual({ accept: "*/*", "X-Tenant": "acme" })
+
+    const providerSendsDefaults = await createUpdater(new TestProvider(new URL(FEED)), () => null)
+    expect(providerSendsDefaults.downloadRequestHeaders("https://cdn.example.net/app-1.1.0.exe")).toEqual({ accept: "*/*", "X-Tenant": "acme", authorization: "Bearer s" })
+  })
+
+  test("the feed's origin asks neither and gets every header", async ({ expect }) => {
+    const { downloadRequestHeaders, options } = await createUpdater(new TestProvider(new URL(FEED), () => []), () => [])
+
+    expect(downloadRequestHeaders(`${FEED}app-1.1.0.exe`)).toBe(options.requestHeaders)
+    expect(calls).toEqual([])
+  })
+
+  // feedBaseUrl only fills `from`: a provider without one is asked about every request, and the download is not refused
+  test.for([
+    ["undefined (the default)", undefined],
+    ["null", null],
+  ] as const)("a feedBaseUrl of %s: both are asked about every download URL, with from null", async ([, declared], { expect }) => {
+    const { updater, doDownloadUpdate, downloadRequestHeaders } = await createUpdater(new TestProvider(declared, defaults => [...defaults, "x-tenant"]))
+
+    await expect(updater.downloadUpdate()).resolves.toEqual([])
+    expect(doDownloadUpdate).toHaveBeenCalledTimes(1)
+    expect(downloadRequestHeaders(`${FEED}app-1.1.0.exe`)).toEqual({ accept: "*/*", "X-Tenant": "acme" })
+    expect(calls.map(([layer, , request]) => [layer, request.from, request.to.href])).toEqual([
+      ["provider", null, `${FEED}app-1.1.0.exe`],
+      ["app", null, `${FEED}app-1.1.0.exe`],
+    ])
+  })
+
+  test("an update info request on another origin: the provider, then the runtime options' crossOriginHeaders", async ({ expect }) => {
+    const provider = new TestProvider(new URL(FEED), defaults => [...defaults, "x-tenant"])
+    ;(provider as any).runtimeOptions.crossOriginHeaders = (defaults: ReadonlyArray<string>, request: CrossOriginRequest) => {
+      calls.push(["app", defaults, request])
+      return defaults
+    }
+    provider.setRequestHeaders({ authorization: "Bearer s", "X-Tenant": "acme", "Accept-Language": "de" })
 
     const options: RequestOptions = (provider as any).createRequestOptions(new URL("https://cdn.example.net/latest.yml"), { "X-Explicit": "e" })
     expect(options.hostname).toBe("cdn.example.net")
     // headers passed for the one request are sent as given
-    expect(options.headers).toEqual({ "Accept-Language": "de", "Cache-Control": "no-cache", "X-Explicit": "e" })
+    expect(options.headers).toEqual({ "X-Tenant": "acme", "Accept-Language": "de", "X-Explicit": "e" })
+    expect(calls.map(([layer, defaults]) => [layer, defaults])).toEqual([
+      ["provider", DEFAULT_CROSS_ORIGIN_HEADERS],
+      ["app", [...DEFAULT_CROSS_ORIGIN_HEADERS, "x-tenant"]],
+    ])
 
-    // same origin: every request header
+    // same origin: every request header, neither asked
+    calls.splice(0)
     const sameOrigin: RequestOptions = (provider as any).createRequestOptions(new URL(`${FEED}latest.yml`))
-    expect(sameOrigin.headers).toEqual({ authorization: "Bearer s", "X-Tenant": "acme", "Accept-Language": "de", "Cache-Control": "no-cache" })
+    expect(sameOrigin.headers).toEqual({ authorization: "Bearer s", "X-Tenant": "acme", "Accept-Language": "de" })
+    expect(calls).toEqual([])
   })
 
-  test("a feed URL: an update info request on another origin keeps the request headers the runtime options' crossOriginHeaders lists", async ({ expect }) => {
-    const provider = new DeclaredProvider(new URL(FEED))
-    const crossOriginHeaders = vi.fn((defaults: ReadonlyArray<string>) => [...defaults, "x-tenant"])
-    ;(provider as any).runtimeOptions.crossOriginHeaders = crossOriginHeaders
-    provider.setRequestHeaders({ authorization: "Bearer s", "X-Tenant": "acme", "Accept-Language": "de" })
+  // fail closed: the request is not made, and the app is not asked
+  test.for([
+    [
+      "throws",
+      () => {
+        throw new Error("Bearer value-secret")
+      },
+      "crossOriginHeaders of the update provider TestProvider threw for the request from https://feed.example.com to https://cdn.example.net, which is not sent.",
+    ],
+    [
+      "returns a header value",
+      () => "Bearer value-secret" as unknown as ReadonlyArray<string>,
+      "crossOriginHeaders of the update provider TestProvider must return an array of header names",
+    ],
+  ] as const)("a provider crossOriginHeaders that %s fails that request with ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS", async ([, choose, message], { expect }) => {
+    const { downloadRequestHeaders } = await createUpdater(new TestProvider(new URL(FEED), choose))
 
-    const options: RequestOptions = (provider as any).createRequestOptions(new URL("https://cdn.example.net/latest.yml"))
-    expect(options.headers).toEqual({ "X-Tenant": "acme", "Accept-Language": "de" })
-    expect(crossOriginHeaders).toHaveBeenCalledExactlyOnceWith(DEFAULT_CROSS_ORIGIN_HEADERS, {
-      from: new URL(FEED),
-      to: new URL("https://cdn.example.net/latest.yml"),
-      kind: "request",
-    })
-
-    ;(provider as any).runtimeOptions.crossOriginHeaders = () => null
-    expect(((provider as any).createRequestOptions(new URL("https://cdn.example.net/latest.yml")) as RequestOptions).headers).toEqual({
-      authorization: "Bearer s",
-      "X-Tenant": "acme",
-      "Accept-Language": "de",
-    })
+    let error: unknown = null
+    try {
+      downloadRequestHeaders("https://cdn.example.net/app-1.1.0.exe")
+    } catch (e: unknown) {
+      error = e
+    }
+    expect(error).toMatchObject({ code: "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS", message: expect.stringContaining(message) })
+    expect(String((error as Error).message)).not.toContain("value-secret")
+    expect(calls.map(([layer]) => layer)).toEqual(["provider"])
   })
 
-  test("a feed URL: the headers off the allowlist only go to its origin", async ({ expect }) => {
-    const { updater, doDownloadUpdate, downloadRequestHeaders } = await createUpdater(new DeclaredProvider(new URL(FEED)), true)
+  // e.g. a custom provider written in plain JavaScript, or its method removed: named, rather than a "threw" error
+  test("a provider without a crossOriginHeaders method fails the request with ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED naming it", async ({ expect }) => {
+    const provider = new TestProvider(new URL(FEED))
+    Object.defineProperty(provider, "crossOriginHeaders", { value: undefined })
+    provider.setRequestHeaders({ authorization: "Bearer s" })
 
-    await expect(updater.downloadUpdate()).resolves.toEqual([])
-    expect(doDownloadUpdate).toHaveBeenCalledTimes(1)
-    expect(downloadRequestHeaders(`${FEED}app-1.1.0.exe`)).toMatchObject({ authorization: "Bearer s", "X-Tenant": "acme" })
-    const foreign = downloadRequestHeaders("https://cdn.example.net/app-1.1.0.exe")
-    expect(foreign).not.toHaveProperty("authorization")
-    expect(foreign).not.toHaveProperty("X-Tenant")
-    expect(foreign).toHaveProperty("accept", "*/*")
+    expect(() => (provider as any).createRequestOptions(new URL("https://cdn.example.net/latest.yml"))).toThrow(
+      expect.objectContaining({
+        code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED",
+        message: expect.stringMatching(
+          /^The update provider TestProvider has no crossOriginHeaders method: .*https:\/\/www\.electron\.build\/docs\/migration\/v27-developer-changes#custom-provider-cross-origin-headers$/
+        ),
+      })
+    )
+  })
+})
+
+// The built-in providers send the default list to another origin, and leave the decision to the app.
+describe("the built-in providers' crossOriginHeaders", () => {
+  const request: CrossOriginRequest = { from: new URL("https://feed.example.com/"), to: new URL("https://cdn.example.net/app.exe"), kind: "request" }
+  const defaults: ReadonlyArray<string> = ["accept", "x-from-the-test"]
+
+  test.for([
+    ["generic", { provider: "generic", url: "https://feed.example.com/" }],
+    ["s3", { provider: "s3", bucket: "bucket" }],
+    ["spaces", { provider: "spaces", name: "space", region: "nyc3" }],
+    ["github", { provider: "github", owner: "owner", repo: "repo" }],
+    ["gitlab", { provider: "gitlab", projectId: 1 }],
+    ["bitbucket", { provider: "bitbucket", owner: "owner", slug: "slug" }],
+    ["keygen", { provider: "keygen", account: "account", product: "product" }],
+  ] as const)("%s returns defaults", async ([, options], { expect }) => {
+    const updater = await createNsisUpdater("1.0.0")
+    const provider = createClient(options, updater, { isUseMultipleRangeRequest: false, platform: "win32", executor: {} as any })
+
+    expect(provider.crossOriginHeaders(defaults, request)).toBe(defaults)
+  })
+
+  // private GitHub has no feed URL: its release lookup, channel file and downloads use the GitHub API's asset URLs, which need the token
+  test.for([
+    ["api.github.com", undefined, "https://api.github.com"],
+    ["a GitHub Enterprise host", "github.example.com", "https://github.example.com"],
+  ] as const)("private GitHub sends every header to the API on %s, defaults elsewhere", async ([, host, api], { expect }) => {
+    const updater = await createNsisUpdater("1.0.0")
+    const provider = createClient({ provider: "github", owner: "owner", repo: "repo", token: "t", host }, updater, {
+      isUseMultipleRangeRequest: false,
+      platform: "win32",
+      executor: {} as any,
+    })
+    const choose = (to: string, kind: CrossOriginRequest["kind"] = "request", from: URL | null = null) => provider.crossOriginHeaders(defaults, { from, to: new URL(to), kind })
+
+    expect(provider.feedBaseUrl).toBeNull()
+    expect(choose(`${api}/repos/owner/repo/releases/assets/1`)).toBeNull()
+    // the storage a download is redirected to
+    expect(choose("https://objects.githubusercontent.com/app.exe", "redirect", new URL(`${api}/repos/owner/repo/releases/assets/1`))).toBe(defaults)
+    expect(choose("https://cdn.example.net/app.exe")).toBe(defaults)
   })
 })

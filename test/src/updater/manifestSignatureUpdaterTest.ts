@@ -321,7 +321,11 @@ describe("AppUpdater: stagingPercentage in a signed manifest", () => {
     const updater = new DebUpdater(null, stubApp)
     updater.updateManifestPublicKey = publicKeyPem
     updater.logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
-    ;(updater as any).clientPromise = Promise.resolve({ setRequestHeaders: vi.fn(), getLatestVersion: () => Promise.resolve(info) })
+    ;(updater as any).clientPromise = Promise.resolve({
+      setRequestHeaders: vi.fn(),
+      crossOriginHeaders: (defaults: ReadonlyArray<string>) => defaults,
+      getLatestVersion: () => Promise.resolve(info),
+    })
     ;(updater as any).stagingUserIdPromise = { value: Promise.resolve(STAGING_USER_ID) }
     return updater
   }
@@ -371,7 +375,11 @@ describe("AppUpdater.getUpdateInfoAndProvider: manifestSignatureVerified", () =>
     updater.updateManifestPublicKey = publicKey
     updater.logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
     // no feed and no staging id file: the provider returns the manifest as served
-    ;(updater as any).clientPromise = Promise.resolve({ setRequestHeaders: vi.fn(), getLatestVersion: () => Promise.resolve(info) })
+    ;(updater as any).clientPromise = Promise.resolve({
+      setRequestHeaders: vi.fn(),
+      crossOriginHeaders: (defaults: ReadonlyArray<string>) => defaults,
+      getLatestVersion: () => Promise.resolve(info),
+    })
     ;(updater as any).stagingUserIdPromise = { value: Promise.resolve("staging-id") }
     return updater
   }

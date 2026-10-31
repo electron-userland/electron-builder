@@ -1,5 +1,5 @@
 import { createRequire } from "node:module"
-import { CrossOriginHeadersCallback, DownloadOptions, HttpExecutor, configureRequestOptions, configureRequestUrl } from "builder-util-runtime"
+import { CrossOriginHeadersCallback, CrossOriginHeadersLayer, DownloadOptions, HttpExecutor, configureRequestOptions, configureRequestUrl } from "builder-util-runtime"
 
 // import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
 const require = createRequire(import.meta.url ?? process.execPath)
@@ -21,14 +21,22 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
   private cachedSession: Session | null = null
 
   /**
-   * @param crossOriginHeaders chooses the headers each redirect to another origin sends on (the `crossOriginHeaders` of
-   * `AppUpdater.checkForUpdates`); without it, builder-util-runtime's `DEFAULT_CROSS_ORIGIN_HEADERS`
+   * @param crossOriginHeaders chooses the headers each redirect to another origin sends on; without it, builder-util-runtime's
+   * `DEFAULT_CROSS_ORIGIN_HEADERS`
+   * @param crossOriginHeadersLayers in place of `crossOriginHeaders`, the layers that choose them for each redirect (AppUpdater: the
+   * update provider's `crossOriginHeaders`, then the app's)
    */
   constructor(
     private readonly proxyLoginCallback?: (authInfo: AuthInfo, callback: LoginCallback) => void,
-    crossOriginHeaders?: CrossOriginHeadersCallback
+    crossOriginHeaders?: CrossOriginHeadersCallback,
+    private readonly crossOriginHeadersLayers?: () => ReadonlyArray<CrossOriginHeadersLayer>
   ) {
     super(crossOriginHeaders)
+  }
+
+  crossOriginRedirectHeaders(): CrossOriginHeadersCallback | ReadonlyArray<CrossOriginHeadersLayer> {
+    const crossOriginHeadersLayers = this.crossOriginHeadersLayers
+    return crossOriginHeadersLayers == null ? this.crossOriginHeaders : crossOriginHeadersLayers()
   }
 
   async download(url: URL, destination: string, options: DownloadOptions): Promise<string> {
@@ -100,8 +108,8 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
 
   /**
    * A redirect aborts `request` and `handler` sends a new one to the target: followRedirect() would resend every header,
-   * while {@link HttpExecutor.prepareRedirectUrlOptions} keeps only the headers {@link HttpExecutor.crossOriginHeaders} returns when the
-   * target is on another origin.
+   * while {@link HttpExecutor.prepareRedirectUrlOptions} keeps only the headers {@link ElectronHttpExecutor.crossOriginRedirectHeaders}
+   * chooses when the target is on another origin.
    * Up to `maxRedirects` redirects are followed; `redirectCount` is the number already followed. A redirect to a protocol other than
    * http(s) is rejected, and so is anything `handler` throws.
    */
@@ -118,7 +126,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
       // an event listener: a throw (from preparing the options, or from the handler, which sends the new request) would escape as an
       // uncaught exception and the request would never settle
       try {
-        const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options, this.crossOriginHeaders)
+        const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options, this.crossOriginRedirectHeaders())
         // net.request throws for another protocol, where Electron following the redirect itself fails the request
         if (redirectOptions.protocol !== "http:" && redirectOptions.protocol !== "https:") {
           throw new Error(`Cannot follow the redirect to the "${redirectOptions.protocol ?? ""}" protocol`)

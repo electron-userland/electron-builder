@@ -1,4 +1,4 @@
-import { CancellationToken, GithubOptions, HttpError, newError, UpdateInfo } from "builder-util-runtime"
+import { CancellationToken, CrossOriginRequest, GithubOptions, HttpError, HttpExecutor, newError, UpdateInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { load } from "js-yaml"
 import * as path from "path"
@@ -23,9 +23,19 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     super(options, "api.github.com", runtimeOptions)
   }
 
-  // the asset URLs come from the GitHub API (api.github.com or the Enterprise host), not from latest*.yml, and need the token
+  // no feed URL: the asset URLs come from the GitHub API (api.github.com or the Enterprise host), not from latest*.yml, so
+  // crossOriginHeaders chooses the headers of every request
   get feedBaseUrl(): null {
     return null
+  }
+
+  /**
+   * Every header (the token too) for the GitHub API's origin (api.github.com, or the Enterprise host), where the release lookup, the
+   * channel file and the downloads go: they use its asset URLs, which need the token. `defaults` for any other origin, such as the
+   * storage the API redirects a download to.
+   */
+  crossOriginHeaders(defaults: ReadonlyArray<string>, request: CrossOriginRequest): ReadonlyArray<string> | null {
+    return HttpExecutor.isCrossOrigin(this.baseUrl, request.to) ? defaults : null
   }
 
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {

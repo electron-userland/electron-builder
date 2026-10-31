@@ -1,4 +1,13 @@
-import { CancellationToken, configureRequestOptions, configureRequestUrl, createHttpError, CrossOriginHeadersCallback, HttpExecutor, safeGetHeader } from "builder-util-runtime"
+import {
+  CancellationToken,
+  configureRequestOptions,
+  configureRequestUrl,
+  createHttpError,
+  CrossOriginHeadersCallback,
+  CrossOriginHeadersLayer,
+  HttpExecutor,
+  safeGetHeader,
+} from "builder-util-runtime"
 import {
   BlockMapV3,
   BlockMapV3Group,
@@ -403,7 +412,7 @@ class BlockMapV3Fetcher {
           // a response listener: a throw (a malformed Location) would escape as an uncaught exception and never settle the request
           let redirectOptions: RequestOptions
           try {
-            redirectOptions = prepareRedirect(new URL(location, this.currentUrl), requestOptions, httpExecutor.crossOriginHeaders)
+            redirectOptions = prepareRedirect(new URL(location, this.currentUrl), requestOptions, httpExecutor.crossOriginRedirectHeaders())
           } catch (e: unknown) {
             reject(e instanceof Error ? e : new Error(`Cannot follow the redirect: ${String(e)}`))
             return
@@ -463,8 +472,8 @@ class BlockMapV3Fetcher {
   }
 }
 
-/** Options for a request to `target`, redirected from `options`: keeps only the headers `crossOriginHeaders` returns when `target` is on another origin. */
-function prepareRedirect(target: URL, options: RequestOptions, crossOriginHeaders: CrossOriginHeadersCallback): RequestOptions {
+/** Options for a request to `target`, redirected from `options`: keeps only the headers `crossOriginHeaders` chooses when `target` is on another origin. */
+function prepareRedirect(target: URL, options: RequestOptions, crossOriginHeaders: CrossOriginHeadersCallback | ReadonlyArray<CrossOriginHeadersLayer>): RequestOptions {
   if (target.protocol !== "http:" && target.protocol !== "https:") {
     throw new Error(`Cannot follow the redirect to the "${target.protocol}" protocol`)
   }
