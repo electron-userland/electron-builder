@@ -105,6 +105,7 @@ export abstract class Provider<T extends UpdateInfo> {
    * status). `url` is the URL of the request that got the challenge (a redirect's target after a redirect). The updater asks the provider
    * of its latest update check. Override it to answer only the servers your app's `login` handler is meant for, e.g.
    * `return authInfo.isProxy || url.origin === "https://downloads.example.com"`. Any value other than `true`, or a throw, cancels.
+   * With `AppUpdater.allowInsecureFeed`, a server's challenge on a request that is not `https` is cancelled without calling this.
    * See [Event: `login`](https://www.electron.build/docs/features/auto-update#event-login).
    */
   onLoginChallenge(_authInfo: AuthInfo, _url: URL): boolean {

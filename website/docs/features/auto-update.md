@@ -327,6 +327,8 @@ autoUpdater.allowInsecureFeed = true // anyone on the network path can then tamp
 
 Over `http`, only a [signed update manifest](./signed-update-manifests.md) and the code signature of the update protect it.
 
+With `allowInsecureFeed`, a server's authentication challenge on a request that is not `https` is cancelled without emitting [`login`](#event-login), as its authenticity cannot be determined, and electron-updater logs a warning the first time. A proxy's challenge is emitted. For your `login` handler to answer a server, serve the feed and the update files over `https`.
+
 ### `allowUnverifiedLinuxPackages` (new)
 
 `AppUpdater.allowUnverifiedLinuxPackages` (default **`true`**, preserving historical behavior) controls GPG signature enforcement when installing `.deb` / `.rpm` auto-updates. Because electron-builder does not sign Linux packages itself, the default is permissive; set it to **`false`** to enforce signature checks where the package manager supports them:
@@ -467,6 +469,8 @@ Emitted when there is an error while updating.
 * `callback` Function — `callback(username, password)`; called without arguments, it cancels the authentication
 
 Emitted when an update request gets an authentication challenge, from a proxy (`authInfo.isProxy`) or from a server. Call `callback(username, password)` to answer it, or `callback()` to cancel it; the request then fails with the challenge's status.
+
+With [`allowInsecureFeed`](#allowinsecurefeed-new-defaults-to-false), a server's challenge on a request that is not `https` is cancelled without emitting `login` or asking the provider, as its authenticity cannot be determined; electron-updater logs a warning the first time. Serve the feed and the update files over `https` to answer it.
 
 Before emitting `login`, electron-updater asks the provider of the latest update check: `Provider.onLoginChallenge(authInfo, url)` gets the challenge and the URL of the request that got it (after a redirect, the redirect's target). It returns `true` to emit `login`; any other value, or a throw, cancels the challenge without emitting `login`. Before the first update check, and with the built-in providers, every challenge is emitted. A custom provider can override it to send your handler's credentials only to the servers they are meant for:
 

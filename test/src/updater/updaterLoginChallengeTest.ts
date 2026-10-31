@@ -175,6 +175,37 @@ describe("electron-updater login event", () => {
   })
 })
 
+// With allowInsecureFeed, a server's challenge on a request that is not https cannot be told from one by anyone on the network path.
+describe("login event with allowInsecureFeed", () => {
+  const HTTP_URL = new URL("http://downloads.example.net/TestApp-Setup-1.1.0.exe")
+
+  test("a server's challenge on an http request is cancelled without asking the provider, and announced once", async ({ tmpDir, expect }) => {
+    withProviderAnswer(() => true)
+    const { updater, answer, logger } = await checkedUpdater(tmpDir, { provider: "custom", updateProvider: TestProvider })
+    updater.allowInsecureFeed = true
+    expect(answer(challenge("downloads.example.net", 80), HTTP_URL)).toBe(false)
+    expect(answer(challenge("cdn.example.org", 80), new URL("http://cdn.example.org/a.exe"))).toBe(false)
+    expect(TestProvider.challenges).toEqual([])
+    const warnings = logger.warns.filter(it => it.includes("login event"))
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0]).toContain("downloads.example.net:80")
+    expect(warnings[0]).toContain("Serve the update feed and files over https")
+  })
+
+  test("a server's challenge on an https request and a proxy's challenge on an http request are emitted", async ({ tmpDir, expect }) => {
+    const { updater, answer, logger } = await checkedUpdater(tmpDir, { provider: "generic", url: "https://feed.example.com/updates" })
+    updater.allowInsecureFeed = true
+    expect(answer(challenge("downloads.example.net", 443), DOWNLOAD_URL)).toBe(true)
+    expect(answer(challenge("proxy.corp.example", 3128, true), HTTP_URL)).toBe(true)
+    expect(logger.warns.filter(it => it.includes("login event"))).toEqual([])
+  })
+
+  test("without allowInsecureFeed, a server's challenge on an http request (to a loopback host) is emitted", async ({ tmpDir, expect }) => {
+    const { answer } = await checkedUpdater(tmpDir, { provider: "generic", url: "https://feed.example.com/updates" })
+    expect(answer(challenge("127.0.0.1", 8080), new URL("http://127.0.0.1:8080/TestApp-Setup-1.1.0.exe"))).toBe(true)
+  })
+})
+
 // a stand-in for the "electron" module while `run` runs: its net.request returns an EventEmitter, pushed to `requests`
 function withElectron(requests: Array<EventEmitter>, run: () => void): void {
   const electron = {
