@@ -22,8 +22,8 @@ import {
  * not take a dozen build attempts to fix.
  *
  * Apart from `extraMetadata.build` / `extraMetadata.directories` (`checkExtraMetadata`: the schema accepts
- * any `extraMetadata`, so this pass is what rejects those two keys), nothing here rejects a value the v27
- * schema accepts — every other guarded path is covered by a test asserting the v27 schema rejects it too.
+ * any `extraMetadata`, so this pass is what rejects those two keys), nothing here rejects a value the schema
+ * accepts — every other guarded path is covered by a test asserting the schema rejects it too.
  */
 
 const PLATFORMS_WITH_PUBLISH = ["mac", "win", "linux"] as const
@@ -220,9 +220,9 @@ function checkFileOptionsShape(config: Record<string, any>, errors: string[]): v
 }
 
 /**
- * `extraMetadata` is merged into the packaged app's `package.json`, so a `build` or `directories` key there (what the
- * v22-era `--em.build` / `--em.directories` flags produced) never configures the build. v26 rejected both; keep doing so
- * instead of silently shipping them in the app.
+ * `extraMetadata` is merged into the packaged app's `package.json`, so a `build` or `directories` key there (the keys
+ * `--em.build` / `--em.directories` set) never configures the build. Both are rejected so that they are not silently
+ * shipped in the app.
  */
 function checkExtraMetadata(config: Record<string, any>, errors: string[]): void {
   const extraMetadata = config.extraMetadata
@@ -236,7 +236,7 @@ function checkExtraMetadata(config: Record<string, any>, errors: string[]): void
   for (const [key, replacement] of replacements) {
     if (extraMetadata[key] != null) {
       errors.push(
-        `\`extraMetadata.${key}\` (the old \`--em.${key}\` flag) is not supported in electron-builder v27: it would only be copied into the packaged app's package.json, not used to configure the build.\n` +
+        `\`extraMetadata.${key}\` (the \`--em.${key}\` flag) is not supported: it is only copied into the packaged app's package.json and does not configure the build.\n` +
           `  Put that configuration in ${replacement} instead.\n` +
           `  ${BUILD_CHANGES_URL}#removed-flags-embuild-emdirectories`
       )

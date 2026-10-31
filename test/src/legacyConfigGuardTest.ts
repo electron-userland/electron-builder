@@ -326,7 +326,7 @@ describe("checkLegacyConfiguration — extraMetadata.build / extraMetadata.direc
     const config = { extraMetadata: { build: { appId: "com.example.app" } } }
     await expect(validateConfiguration(config as any, logger)).rejects.toThrow(InvalidConfigurationError)
     const message = expectRejected(config)
-    expect(message).toContain("`extraMetadata.build` (the old `--em.build` flag) is not supported in electron-builder v27")
+    expect(message).toContain("`extraMetadata.build` (the `--em.build` flag) is not supported: it is only copied into the packaged app's package.json")
     expect(message).toContain("pass it with `-c`")
     expect(message).toContain(link)
   })
@@ -335,7 +335,7 @@ describe("checkLegacyConfiguration — extraMetadata.build / extraMetadata.direc
     const config = { extraMetadata: { directories: { output: "dist" } } }
     await expect(validateConfiguration(config as any, logger)).rejects.toThrow(InvalidConfigurationError)
     const message = expectRejected(config)
-    expect(message).toContain("`extraMetadata.directories` (the old `--em.directories` flag)")
+    expect(message).toContain("`extraMetadata.directories` (the `--em.directories` flag) is not supported")
     expect(message).toContain("`-c.directories`")
     expect(message).toContain(link)
   })
@@ -360,7 +360,7 @@ describe("checkLegacyConfiguration — extraMetadata.build / extraMetadata.direc
     for (const flag of ["--em.build.appId=com.example.app", "--em.directories.output=dist"]) {
       const options = normalizeOptions(yargs.parse(flag) as any)
       expect(() => checkBuildRequestOptions(options)).toThrow(InvalidConfigurationError)
-      expect(() => checkBuildRequestOptions(options)).toThrow(/`--em\.\*` flags .* not supported in electron-builder v27[\s\S]*`-c`[\s\S]*removed-flags-embuild-emdirectories/)
+      expect(() => checkBuildRequestOptions(options)).toThrow(/`--em\.\*` flags .* are not supported\.\n[\s\S]*`-c`[\s\S]*removed-flags-embuild-emdirectories/)
     }
   })
 
