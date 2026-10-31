@@ -34,9 +34,7 @@ export interface SquirrelWindowsOptions extends TargetSpecificOptions {
   readonly remoteReleases?: string | boolean | null
 
   /**
-   * Authentication token for remote updates. It is sent to the `remoteReleases` URL as is.
-   * When unset, `GH_TOKEN` or `GITHUB_TOKEN` is used only for a `remoteReleases` URL on a GitHub host (`github.com`, the host
-   * GitHub Actions reports, or a host in `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS`).
+   * Authentication token for remote updates
    */
   readonly remoteToken?: string | null
 

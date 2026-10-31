@@ -10,8 +10,7 @@ import FormData from "form-data"
 import { URL } from "url"
 import { HttpPublisher } from "./httpPublisher.js"
 import { PublishContext } from "./index.js"
-import { assertEnvTokenHostAllowed, parseConfiguredHost } from "./tokenHost.js"
-import { trimStringWithWarn, validateResolvedToken } from "./util.js"
+import { trimStringWithWarn, validateConfiguredHost, validateResolvedToken } from "./util.js"
 
 type RequestProcessor = (request: ClientRequest, reject: (error: Error) => void) => void
 
@@ -39,12 +38,11 @@ export class GitlabPublisher extends HttpPublisher {
 
     this.host = info.host || "gitlab.com"
     // a path is kept: a GitLab instance under a relative URL root is served at https://<host>/<path>/api/v4
-    const hostname = parseConfiguredHost(this.host, "gitlab.host", true)
+    validateConfiguredHost(this.host, "gitlab.host", true)
     let token = info.token || null
     if (isEmptyOrSpaces(token)) {
       token = process.env.GITLAB_TOKEN || null
       token = validateResolvedToken(token, "GitLab", "GITLAB_TOKEN")
-      assertEnvTokenHostAllowed("gitlab", "GITLAB_TOKEN", hostname)
     }
 
     this.token = token

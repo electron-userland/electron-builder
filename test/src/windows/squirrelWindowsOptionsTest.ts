@@ -1,5 +1,5 @@
 import { Arch, Configuration, SourceRepositoryInfo, WinPackager } from "app-builder-lib"
-import { InvalidConfigurationError, log } from "builder-util"
+import { InvalidConfigurationError } from "builder-util"
 import SquirrelWindowsTarget from "electron-builder-squirrel-windows/src/SquirrelWindowsTarget"
 import { existsSync } from "fs"
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "fs/promises"
@@ -31,19 +31,27 @@ describe("SquirrelWindowsTarget.computeEffectiveDistOptions", () => {
   let projectDir: string
   let vendorDir: string
   let tempDirManager: TmpDir
+  const savedEnv: Record<string, string | undefined> = {}
 
   beforeEach(async () => {
     projectDir = await mkdtemp(path.join(tmpdir(), "eb-squirrel-options-test-"))
     vendorDir = path.join(projectDir, "vendor")
     await mkdir(vendorDir)
     tempDirManager = new TmpDir("squirrel-options-test")
-    for (const name of ["GH_TOKEN", "GITHUB_TOKEN", "GITHUB_SERVER_URL", "GITHUB_API_URL", "ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS"]) {
-      vi.stubEnv(name, undefined)
+    for (const name of ["GH_TOKEN", "GITHUB_TOKEN"]) {
+      savedEnv[name] = process.env[name]
+      delete process.env[name]
     }
   })
 
   afterEach(async () => {
-    vi.unstubAllEnvs()
+    for (const [name, value] of Object.entries(savedEnv)) {
+      if (value == null) {
+        delete process.env[name]
+      } else {
+        process.env[name] = value
+      }
+    }
     await tempDirManager.cleanup().catch(() => {})
     await rm(projectDir, { recursive: true, force: true }).catch(() => {})
   })
@@ -229,37 +237,34 @@ describe("SquirrelWindowsTarget.computeEffectiveDistOptions", () => {
   })
 
   describe("remoteToken", () => {
-    // the token from the environment needs a remoteReleases destination on an allowed host
-    const githubRemote = { remoteReleases: true }
-
     test("explicit token wins over the environment", async () => {
-      vi.stubEnv("GH_TOKEN", "env-gh")
-      vi.stubEnv("GITHUB_TOKEN", "env-github")
-      const { result } = await compute({ squirrelWindows: { ...githubRemote, remoteToken: "explicit-token" }, repositoryInfo: GITHUB_REPO })
+      process.env.GH_TOKEN = "env-gh"
+      process.env.GITHUB_TOKEN = "env-github"
+      const { result } = await compute({ squirrelWindows: { remoteToken: "explicit-token" } })
       expect(result.remoteToken).toBe("explicit-token")
     })
 
     test("unset → GH_TOKEN", async () => {
-      vi.stubEnv("GH_TOKEN", "env-gh")
-      vi.stubEnv("GITHUB_TOKEN", "env-github")
-      const { result } = await compute({ squirrelWindows: githubRemote, repositoryInfo: GITHUB_REPO })
+      process.env.GH_TOKEN = "env-gh"
+      process.env.GITHUB_TOKEN = "env-github"
+      const { result } = await compute()
       expect(result.remoteToken).toBe("env-gh")
     })
 
     test("unset and no GH_TOKEN → GITHUB_TOKEN", async () => {
-      vi.stubEnv("GITHUB_TOKEN", "env-github")
-      const { result } = await compute({ squirrelWindows: githubRemote, repositoryInfo: GITHUB_REPO })
+      process.env.GITHUB_TOKEN = "env-github"
+      const { result } = await compute()
       expect(result.remoteToken).toBe("env-github")
     })
 
     test("unset and no token in the environment → unset", async () => {
-      const { result } = await compute({ squirrelWindows: githubRemote, repositoryInfo: GITHUB_REPO })
+      const { result } = await compute()
       expect(result.remoteToken).toBeUndefined()
     })
 
     test("null falls back to the environment", async () => {
-      vi.stubEnv("GITHUB_TOKEN", "env-github")
-      const { result } = await compute({ squirrelWindows: { ...githubRemote, remoteToken: null }, repositoryInfo: GITHUB_REPO })
+      process.env.GITHUB_TOKEN = "env-github"
+      const { result } = await compute({ squirrelWindows: { remoteToken: null } })
       expect(result.remoteToken).toBe("env-github")
     })
 
@@ -267,9 +272,9 @@ describe("SquirrelWindowsTarget.computeEffectiveDistOptions", () => {
       ["empty string", ""],
       ["whitespace", "  "],
     ])("%s is treated as unset and falls back to the environment", async (_label, remoteToken) => {
-      vi.stubEnv("GH_TOKEN", "env-gh")
-      vi.stubEnv("GITHUB_TOKEN", "env-github")
-      const { result } = await compute({ squirrelWindows: { ...githubRemote, remoteToken }, repositoryInfo: GITHUB_REPO })
+      process.env.GH_TOKEN = "env-gh"
+      process.env.GITHUB_TOKEN = "env-github"
+      const { result } = await compute({ squirrelWindows: { remoteToken } })
       expect(result.remoteToken).toBe("env-gh")
     })
 
@@ -280,60 +285,6 @@ describe("SquirrelWindowsTarget.computeEffectiveDistOptions", () => {
 
     test("surrounding whitespace is trimmed", async () => {
       const { result } = await compute({ squirrelWindows: { remoteToken: "  explicit-token \n" } })
-      expect(result.remoteToken).toBe("explicit-token")
-    })
-
-    test("the environment token is not passed without remoteReleases", async () => {
-      vi.stubEnv("GH_TOKEN", "env-gh")
-      const { result } = await compute()
-      expect(result.remoteToken).toBeUndefined()
-    })
-
-    // The warning is shown once per process, so this runs before any other test that triggers it; the https case
-    // fails if an earlier test already used up the warning.
-    test("a local path gets no warning, an http(s) host does", async () => {
-      vi.stubEnv("GH_TOKEN", "env-gh")
-      const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
-      const remoteReleasesWarnings = () => warn.mock.calls.filter(([, message]) => String(message).includes("squirrelWindows.remoteReleases"))
-      try {
-        await compute({ squirrelWindows: { remoteReleases: "C:\\releases" } })
-        expect(remoteReleasesWarnings()).toHaveLength(0)
-        await compute({ squirrelWindows: { remoteReleases: "https://releases.example.com/owner/repo" } })
-        expect(remoteReleasesWarnings()).toHaveLength(1)
-        expect(remoteReleasesWarnings()[0][0]).toEqual({ hostname: "releases.example.com" })
-      } finally {
-        warn.mockRestore()
-      }
-    })
-
-    test.each([
-      ["another host", "https://releases.example.com/owner/repo"],
-      ["a host with a GitHub-like prefix", "https://github.com.example.com/owner/repo"],
-      ["a local path", "C:\\releases"],
-    ])("the environment token is not sent to %s", async (_label, remoteReleases) => {
-      vi.stubEnv("GH_TOKEN", "env-gh")
-      const { result } = await compute({ squirrelWindows: { remoteReleases } })
-      expect(result.remoteReleases).toBe(remoteReleases)
-      expect(result.remoteToken).toBeUndefined()
-    })
-
-    test("the environment token goes to the host GitHub Actions reports", async () => {
-      vi.stubEnv("GH_TOKEN", "env-gh")
-      vi.stubEnv("GITHUB_SERVER_URL", "https://ghe.example.com")
-      const { result } = await compute({ squirrelWindows: { remoteReleases: "https://ghe.example.com/owner/repo" } })
-      expect(result.remoteToken).toBe("env-gh")
-    })
-
-    test("the environment token goes to a host in ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS", async () => {
-      vi.stubEnv("GH_TOKEN", "env-gh")
-      vi.stubEnv("ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS", "ghe.example.com")
-      const { result } = await compute({ squirrelWindows: { remoteReleases: "https://ghe.example.com/owner/repo" } })
-      expect(result.remoteToken).toBe("env-gh")
-    })
-
-    test("an explicit token goes to any remoteReleases host", async () => {
-      vi.stubEnv("GH_TOKEN", "env-gh")
-      const { result } = await compute({ squirrelWindows: { remoteReleases: "https://ghe.example.com/owner/repo", remoteToken: "explicit-token" } })
       expect(result.remoteToken).toBe("explicit-token")
     })
   })

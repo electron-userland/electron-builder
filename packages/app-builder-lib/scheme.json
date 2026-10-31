@@ -8931,7 +8931,7 @@
           ]
         },
         "remoteToken": {
-          "description": "Authentication token for remote updates. It is sent to the `remoteReleases` URL as is.\nWhen unset, `GH_TOKEN` or `GITHUB_TOKEN` is used only for a `remoteReleases` URL on a GitHub host (`github.com`, the host\nGitHub Actions reports, or a host in `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS`).",
+          "description": "Authentication token for remote updates",
           "type": [
             "null",
             "string"

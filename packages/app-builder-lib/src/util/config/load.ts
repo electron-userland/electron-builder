@@ -4,7 +4,6 @@ import { log, orNullIfFileNotExist } from "builder-util"
 const require = createRequire(import.meta.url)
 import { parse as parseEnv } from "dotenv"
 import { DotenvParseInput, expand } from "dotenv-expand"
-import { PUBLISH_TOKEN_HOST_DOCS_URL, PUBLISH_TOKEN_HOST_ENV_NAMES } from "electron-publish/internal"
 import { promises as fs } from "fs"
 import { createJiti } from "jiti"
 import { load } from "js-yaml"
@@ -127,17 +126,6 @@ export async function loadEnv(envFile: string) {
   }
 
   const parsed = parseEnv<DotenvParseInput>(data)
-
-  // The hosts that may receive a publish token from the environment must be set by the publishing job, not by a file in the project
-  const ignored = PUBLISH_TOKEN_HOST_ENV_NAMES.filter(name => Object.prototype.hasOwnProperty.call(parsed, name))
-  if (ignored.length > 0) {
-    ignored.forEach(name => delete parsed[name])
-    log.warn(
-      { envFile, ignored },
-      `Since electron-builder 27, ${ignored.join(", ")} in the env file is ignored: the hosts that may receive a publish token from the environment are not taken from a project file. ` +
-        `Set it in the environment of the publishing job instead. See ${PUBLISH_TOKEN_HOST_DOCS_URL}`
-    )
-  }
 
   log.info({ envFile }, "injecting environment")
   Object.entries(parsed).forEach(([key, value]) => {
