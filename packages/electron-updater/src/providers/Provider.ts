@@ -100,7 +100,7 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 
   /**
-   * Called for each authentication challenge (a proxy's or a server's) of an update request, before the updater emits its `login` event:
+   * Called for each authentication challenge (a proxy's or a server's) of an update request, to decide whether the updater emits its `login` event:
    * return `true` to emit `login`, or `false` to cancel the challenge without emitting it (the request then fails with the challenge's
    * status). `url` is the URL of the request that got the challenge (a redirect's target after a redirect). The updater asks the provider
    * of its latest update check. Override it to answer only the servers your app's `login` handler is meant for, e.g.
