@@ -78,6 +78,8 @@ export default class AppUpdater {
             return result.signed ? { response: "success" } : { response: "failure", message: result.message }
         }
         autoUpdater.addAuthHeader(`Bearer ${token}`)
+        // required with request headers: which of them may go to another origin
+        autoUpdater.crossOriginHeaders = defaults => defaults
         autoUpdater.checkForUpdatesAndNotify()
     }
 }

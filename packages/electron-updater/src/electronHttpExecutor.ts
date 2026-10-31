@@ -1,5 +1,5 @@
 import { createRequire } from "node:module"
-import { DownloadOptions, HttpExecutor, configureRequestOptions, configureRequestUrl } from "builder-util-runtime"
+import { CrossOriginHeaders, DownloadOptions, HttpExecutor, configureRequestOptions, configureRequestUrl } from "builder-util-runtime"
 
 // import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
 const require = createRequire(import.meta.url ?? process.execPath)
@@ -24,17 +24,18 @@ export function getNetSession(): Session {
  */
 export type LoginChallengeListener = (authInfo: AuthInfo, callback: LoginCallback, requestUrl: URL | null) => void
 
-/** Gets the names (never the values) of the headers a cross-origin redirect did not send on to its target. */
-export type CrossOriginRedirectListener = (droppedHeaderNames: Array<string>, originUrl: URL, targetUrl: URL) => void
-
 export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
   private cachedSession: Session | null = null
 
+  /**
+   * @param crossOriginHeaders chooses the headers a redirect to another origin sends on (`AppUpdater.crossOriginHeaders`); without it,
+   * builder-util-runtime's `DEFAULT_CROSS_ORIGIN_HEADERS`
+   */
   constructor(
     private readonly loginChallengeListener?: LoginChallengeListener,
-    private readonly crossOriginRedirectListener?: CrossOriginRedirectListener
+    crossOriginHeaders?: CrossOriginHeaders
   ) {
-    super()
+    super(crossOriginHeaders ?? null)
   }
 
   async download(url: URL, destination: string, options: DownloadOptions): Promise<string> {
@@ -120,8 +121,8 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
 
   /**
    * A redirect aborts `request` and `handler` sends a new one to the target: followRedirect() would resend every header,
-   * while {@link HttpExecutor.prepareRedirectUrlOptions} keeps only the cross-origin allowlist of headers when the target is on another
-   * origin (the names of the others go to the `crossOriginRedirectListener`).
+   * while {@link HttpExecutor.prepareRedirectUrlOptions} keeps only the headers of {@link HttpExecutor.allowedCrossOriginHeaders} when the
+   * target is on another origin.
    * Up to `maxRedirects` redirects are followed; `redirectCount` is the number already followed. A redirect to a protocol other than
    * http(s) is rejected, and so is anything `handler` throws.
    */
@@ -138,7 +139,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
       // an event listener: a throw (from preparing the options, or from the handler, which sends the new request) would escape as an
       // uncaught exception and the request would never settle
       try {
-        const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options, this.crossOriginRedirectListener)
+        const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options, this.allowedCrossOriginHeaders())
         // net.request throws for another protocol, where Electron following the redirect itself fails the request
         if (redirectOptions.protocol !== "http:" && redirectOptions.protocol !== "https:") {
           throw new Error(`Cannot follow the redirect to the "${redirectOptions.protocol ?? ""}" protocol`)
