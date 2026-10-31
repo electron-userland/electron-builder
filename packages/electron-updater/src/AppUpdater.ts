@@ -858,8 +858,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         ? " files[].blockMapUrl is covered by the signature, like files[].url, so it has to be in latest*.yml before the manifest is signed: " +
           "https://www.electron.build/docs/features/signed-update-manifests#what-is-signed"
         : ""
+      // as is a stagingPercentage set or changed by hand in a signed latest*.yml, which is how staged rollouts of unsigned manifests are run
+      const stagingPercentageHint =
+        info.stagingPercentage == null
+          ? ""
+          : " stagingPercentage is covered by the signature. If it was set or changed after latest*.yml was signed, sign latest*.yml again: " +
+            "https://www.electron.build/docs/features/auto-update#staged-rollouts"
       throw newError(
-        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.${blockMapUrlHint}`,
+        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.${blockMapUrlHint}${stagingPercentageHint}`,
         "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID"
       )
     }

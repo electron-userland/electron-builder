@@ -327,7 +327,7 @@ autoUpdater.allowUnverifiedLinuxPackages = false
 
 Staged rollouts allow you to distribute the latest version of your app to a subset of users that you can increase over time, similar to rollouts on platforms like Google Play.
 
-Staged rollouts are controlled by manually editing your `latest.yml` / `latest-mac.yml` (channel update info file).
+Staged rollouts are controlled by the `stagingPercentage` field of your `latest.yml` / `latest-mac.yml` (channel update info file), which electron-builder does not write itself.
 
 ```yml
 version: 1.1.0
@@ -339,6 +339,36 @@ stagingPercentage: 10
 ```
 
 Update will be shipped to 10% of userbase.
+
+:::warning[Sign `latest.yml` again after changing `stagingPercentage`]
+electron-builder [signs update manifests](./signed-update-manifests.md) by default, and `stagingPercentage` is [covered by the signature](./signed-update-manifests.md#what-is-signed). Adding or changing it in a signed `latest.yml` by hand, without signing the file again, makes every install that embeds the public key reject the manifest with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`: the release then reaches none of your users instead of 10% of them. The same applies to every later change, such as raising the percentage or setting it to `0` to pause the rollout. Only an unsigned manifest (`updateManifest: false`) can be edited by hand.
+:::
+
+To set or change the percentage of a signed release, sign `latest.yml` again with the key(s) the release was signed with before you upload it. electron-builder has no command for this; a short Node.js script does it with `canonicalizeForSigning` from `builder-util-runtime` (the version that comes with the electron-builder that built the release) and `js-yaml`:
+
+```js
+// set-staging-percentage.mjs — usage: node set-staging-percentage.mjs dist/latest.yml 10
+import { readFileSync, writeFileSync } from "node:fs"
+import { createPrivateKey, sign } from "node:crypto"
+import { canonicalizeForSigning, createManifestSignatureEntry } from "builder-util-runtime"
+import { dump, load } from "js-yaml"
+
+const [file, value = ""] = process.argv.slice(2)
+const percentage = value.trim() === "" ? NaN : Number(value)
+if (!Number.isFinite(percentage) || percentage < 0 || percentage > 100) {
+  throw new Error(`stagingPercentage must be a number from 0 to 100, got "${value}"`)
+}
+const info = load(readFileSync(file, "utf8"))
+info.stagingPercentage = percentage
+const payload = Buffer.from(canonicalizeForSigning(info), "utf8")
+// every key the release was signed with, in the same order (one PEM file per key)
+const keys = ["update-private-key.pem"].map(keyFile => createPrivateKey(readFileSync(keyFile)))
+info.signatures = keys.map(key => createManifestSignatureEntry(key, sign(null, payload, key).toString("base64")))
+info.signature = info.signatures[0].signature
+writeFileSync(file, dump(info, { lineWidth: -1 }))
+```
+
+Then upload the signed `latest.yml`. While the build output is still at hand, [`electron-builder verify`](../cli.md#verify) checks it against the key the packaged app embeds.
 
 If you want to pull a staged release because it hasn't gone well, you **must** increment the version number higher than your broken release.
 Because some of your users will be on the broken 1.0.1, releasing a new 1.0.1 would result in them staying on a broken version.

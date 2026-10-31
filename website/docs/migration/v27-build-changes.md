@@ -491,6 +491,8 @@ Once a release embeds a public key, its installs are **fail-closed**: an unsigne
 
 Note that installs already in the field are unaffected but also unprotected: they carry whatever `app-update.yml` they shipped with, so those built before you adopted signing keep accepting unsigned manifests. Full protection begins with the installs built after the public key was embedded.
 
+If you run [staged rollouts](../features/auto-update.md#staged-rollouts) by editing `stagingPercentage` in `latest*.yml`, sign the file again after every change: `stagingPercentage` is covered by the signature, and a manifest edited without signing it again is rejected with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID` by every install that embeds the public key.
+
 See [Signed Update Manifests](../features/signed-update-manifests.md) and [Key Rotation](../features/key-rotation.md).
 
 ### Signing key must be in `updateManifest.publicKey` {#signing-key-must-be-in-updatemanifestpublickey}
