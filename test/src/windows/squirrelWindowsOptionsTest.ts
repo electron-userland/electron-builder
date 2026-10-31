@@ -1,5 +1,5 @@
 import { Arch, Configuration, SourceRepositoryInfo, WinPackager } from "app-builder-lib"
-import { InvalidConfigurationError } from "builder-util"
+import { InvalidConfigurationError, log } from "builder-util"
 import SquirrelWindowsTarget from "electron-builder-squirrel-windows/src/SquirrelWindowsTarget"
 import { existsSync } from "fs"
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "fs/promises"
@@ -287,6 +287,23 @@ describe("SquirrelWindowsTarget.computeEffectiveDistOptions", () => {
       vi.stubEnv("GH_TOKEN", "env-gh")
       const { result } = await compute()
       expect(result.remoteToken).toBeUndefined()
+    })
+
+    // The warning is shown once per process, so this runs before any other test that triggers it; the https case
+    // fails if an earlier test already used up the warning.
+    test("a local path gets no warning, an http(s) host does", async () => {
+      vi.stubEnv("GH_TOKEN", "env-gh")
+      const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+      const remoteReleasesWarnings = () => warn.mock.calls.filter(([, message]) => String(message).includes("squirrelWindows.remoteReleases"))
+      try {
+        await compute({ squirrelWindows: { remoteReleases: "C:\\releases" } })
+        expect(remoteReleasesWarnings()).toHaveLength(0)
+        await compute({ squirrelWindows: { remoteReleases: "https://releases.example.com/owner/repo" } })
+        expect(remoteReleasesWarnings()).toHaveLength(1)
+        expect(remoteReleasesWarnings()[0][0]).toEqual({ hostname: "releases.example.com" })
+      } finally {
+        warn.mockRestore()
+      }
     })
 
     test.each([

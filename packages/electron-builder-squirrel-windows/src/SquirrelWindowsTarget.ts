@@ -376,7 +376,7 @@ let warnedEnvRemoteTokenHost = false
 
 // An explicit `remoteToken` is configuration and goes to `remoteReleases` as is. GH_TOKEN / GITHUB_TOKEN go only to a host
 // allowed for a GitHub token from the environment; otherwise SyncReleases runs without a token (enough for a public
-// repository or a non-GitHub server), with a warning once per process.
+// repository or a non-GitHub server), with a warning once per process for an http(s) host.
 function resolveRemoteToken(remoteToken: string | null | undefined, remoteReleases: string | undefined): string | undefined {
   const explicit = firstNonBlank(remoteToken)
   if (explicit != null || remoteReleases == null) {
@@ -386,11 +386,14 @@ function resolveRemoteToken(remoteToken: string | null | undefined, remoteReleas
   if (envName == null) {
     return undefined
   }
-  const hostname = URL.parse(remoteReleases)?.hostname ?? ""
+  const url = URL.parse(remoteReleases)
+  const hostname = url?.hostname ?? ""
   if (isEnvTokenHostAllowed("github", hostname)) {
     return firstNonBlank(process.env[envName])
   }
-  if (!warnedEnvRemoteTokenHost) {
+  // a local path (e.g. C:\releases) has no host a token could go to: nothing to warn about
+  const isHttpHost = (url?.protocol === "https:" || url?.protocol === "http:") && hostname !== ""
+  if (isHttpHost && !warnedEnvRemoteTokenHost) {
     warnedEnvRemoteTokenHost = true
     log.warn(
       { hostname },
