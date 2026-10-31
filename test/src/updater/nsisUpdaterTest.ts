@@ -1228,7 +1228,10 @@ describe("NsisUpdater — installer start failure", () => {
     const errors: Array<Error> = []
     updater.on("error", (e: Error) => errors.push(e))
     // the first spawn is the installer itself; an elevated retry succeeds
-    const spawnLog = vi.spyOn(updater as any, "spawnLog").mockRejectedValueOnce(error).mockResolvedValue(true)
+    const spawnLog = vi
+      .spyOn(updater as any, "spawnLog")
+      .mockRejectedValueOnce(error)
+      .mockResolvedValue(true)
 
     const originalExecPath = Object.getOwnPropertyDescriptor(process, "execPath")
     const originalResourcesPath = Object.getOwnPropertyDescriptor(process, "resourcesPath")
