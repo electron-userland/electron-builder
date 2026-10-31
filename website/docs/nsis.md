@@ -42,6 +42,18 @@ A mismatch, a `--package-file` package that cannot be copied, or a package that 
 
 For auto-update, electron-updater installs web-installer updates only when `disableWebInstaller` is `false`; installs made by an `nsis-web` installer built with electron-builder v27+ default to `false` automatically — see [Auto Update](./features/auto-update.md#disablewebinstaller-now-defaults-to-true). Don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./features/signed-update-manifests.md) cover the web package's path, SHA-512 and size.
 
+## Application-running checks
+
+The built-in app-running check exits with code `2` if a PowerShell availability probe is inconclusive, a process query fails, or a path-filtered termination times out or cannot start. This also applies to silent (`/S`) and update (`--updated`) runs, and to newly built uninstallers. An inconclusive operation does not enable name-based termination. Numeric termination exit codes are followed by another process check and the existing force/retry loop: a process that already exited does not fail the installation, while a process still running after forced attempts offers Retry/Cancel (silent runs default to Cancel and exit `2`). The check-failed dialog uses an OK button and exits; only the manual-close dialog asks the user to click Retry. Missing or unavailable PowerShell and execution-policy restrictions retain the existing fallback.
+
+Each PowerShell invocation uses a 30-second **inactivity** timeout. Output resets the timer; it is not a wall-clock deadline. To override it, define `APP_PROCESS_QUERY_TIMEOUT` in milliseconds at the top level of your [custom include](#custom-nsis-script), before the built-in template is included, for example:
+
+```nsis
+!define APP_PROCESS_QUERY_TIMEOUT 60000
+```
+
+An update still runs the uninstaller embedded in the previously installed version; these safeguards do not change that older uninstaller.
+
 ## Custom NSIS script
 
 Two options are available — [include](#include) and [script](#script). `script` allows you to provide completely different NSIS script. For most cases it is not required as you need only to customise some aspects, but still use well-tested and maintained default NSIS script. So, `include` is recommended.
