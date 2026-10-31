@@ -10411,7 +10411,7 @@
       "description": "One or more configuration presets or file paths to merge into this configuration.\n\nAccepts a string or array of strings, each of which is either:\n- A built-in preset name (`\"react-cra\"` is the only currently supported value).\n- A path to a JS/JSON config file relative to the project directory.\n\nConfigs are merged left-to-right using a deep-assign strategy that properly combines `files`\nglob patterns rather than replacing them.\n\nThe `react-cra` preset is applied automatically when `react-scripts` is found in\n`dependencies`. Set `extends: null` to opt out of automatic preset detection."
     },
     "extraMetadata": {
-      "description": "Additional properties to deep-merge into the app's `package.json` at build time.\n\nUseful for injecting build-time metadata (e.g., a git commit hash or CI build URL) that\nshould be readable at runtime via `require('./package.json')` or `import.meta.url`."
+      "description": "Additional properties to deep-merge into the app's `package.json` at build time.\n\nUseful for injecting build-time metadata (e.g., a git commit hash or CI build URL) that\nshould be readable at runtime via `require('./package.json')` or `import.meta.url`.\n\nA `build` or `directories` key here fails the build: set build configuration in the electron-builder config (or with `-c`) instead."
     },
     "fileAssociations": {
       "anyOf": [

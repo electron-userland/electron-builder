@@ -87,9 +87,9 @@ electron-builder no longer inspects `npm_lifecycle_event`: naming your npm/yarn/
 
 ### Removed flags: `--em.build`, `--em.directories` {#removed-flags-embuild-emdirectories}
 
-**How you'll find out:** **Fails the build** (these flags have thrown since v22).
+**How you'll find out:** **Fails the build** with an error that links here.
 
-These flags are removed (they have thrown since v22).
+These flags are removed (they have thrown since v22). A `build` or `directories` key under `extraMetadata`, which is what these flags set, fails the build whether it comes from the command line (`-c.extraMetadata.build…`) or from your config file. `extraMetadata` is only copied into the packaged app's `package.json`, so those keys never configured the build. Other `extraMetadata` keys are unaffected.
 
 | Removed flag | Replacement |
 |---|---|

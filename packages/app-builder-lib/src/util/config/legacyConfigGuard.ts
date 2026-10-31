@@ -4,6 +4,7 @@ import { hasFlatFileOption, isPlainObject } from "./fileOptions.js"
 import {
   ALL_PLATFORM_KEYS,
   BREAKING_CHANGES_URL,
+  BUILD_CHANGES_URL,
   CONFIG_CHANGES_URL,
   FILE_OPTION_KEYS,
   FILE_OPTIONS_ANCHOR,
@@ -21,7 +22,8 @@ import {
  * not take a dozen build attempts to fix.
  *
  * Nothing here rejects a value a valid v27 config can contain — every guarded path is covered by a
- * test asserting the v27 schema rejects it too.
+ * test asserting the v27 schema rejects it too. The one exception is `checkExtraMetadata`: the schema
+ * accepts any `extraMetadata`, so it cannot reject the `build` / `directories` keys itself.
  */
 
 const PLATFORMS_WITH_PUBLISH = ["mac", "win", "linux"] as const
@@ -218,6 +220,31 @@ function checkFileOptionsShape(config: Record<string, any>, errors: string[]): v
 }
 
 /**
+ * `extraMetadata` is merged into the packaged app's `package.json`, so a `build` or `directories` key there (what the
+ * v22-era `--em.build` / `--em.directories` flags produced) never configures the build. v26 rejected both; keep doing so
+ * instead of silently shipping them in the app.
+ */
+function checkExtraMetadata(config: Record<string, any>, errors: string[]): void {
+  const extraMetadata = config.extraMetadata
+  if (!isPlainObject(extraMetadata)) {
+    return
+  }
+  const replacements: Array<[key: string, replacement: string]> = [
+    ["build", "your electron-builder config file, or pass it with `-c`"],
+    ["directories", "`directories` in your electron-builder config, or pass it with `-c.directories`"],
+  ]
+  for (const [key, replacement] of replacements) {
+    if (extraMetadata[key] != null) {
+      errors.push(
+        `\`extraMetadata.${key}\` (the old \`--em.${key}\` flag) is not supported in electron-builder v27: it would only be copied into the packaged app's package.json, not used to configure the build.\n` +
+          `  Put that configuration in ${replacement} instead.\n` +
+          `  ${BUILD_CHANGES_URL}#removed-flags-embuild-emdirectories`
+      )
+    }
+  }
+}
+
+/**
  * Throws a single aggregated {@link InvalidConfigurationError} naming every v26 option found, and
  * warns about the ones that are merely discouraged. Runs before schema validation.
  */
@@ -232,6 +259,7 @@ export function checkLegacyConfiguration(config: Configuration): void {
   checkSnapcraftShape(raw, errors)
   checkPublishEntries(raw, errors)
   checkFileOptionsShape(raw, errors)
+  checkExtraMetadata(raw, errors)
 
   for (const warning of warnings) {
     log.warn(warning)

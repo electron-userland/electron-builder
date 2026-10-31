@@ -449,6 +449,8 @@ export interface CommonConfiguration {
    * Useful for injecting build-time metadata (e.g., a git commit hash or CI build URL) that
    * should be readable at runtime via `require('./package.json')` or `import.meta.url`.
    *
+   * A `build` or `directories` key here fails the build: set build configuration in the electron-builder config (or with `-c`) instead.
+   *
    * @example
    * ```json
    * { "extraMetadata": { "commitHash": "abc1234", "buildDate": "2025-01-01" } }

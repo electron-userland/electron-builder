@@ -316,6 +316,48 @@ describe("PackagerOptions — removed programmatic fields", () => {
   })
 })
 
+describe("checkLegacyConfiguration — extraMetadata.build / extraMetadata.directories (the old --em.* flags)", () => {
+  const logger = new DebugLogger(false)
+  const link = "https://www.electron.build/docs/migration/v27-build-changes#removed-flags-embuild-emdirectories"
+
+  test("extraMetadata.build fails the build, naming -c and the build-changes section", async () => {
+    const config = { extraMetadata: { build: { appId: "com.example.app" } } }
+    await expect(validateConfiguration(config as any, logger)).rejects.toThrow(InvalidConfigurationError)
+    const message = expectRejected(config)
+    expect(message).toContain("`extraMetadata.build` (the old `--em.build` flag) is not supported in electron-builder v27")
+    expect(message).toContain("pass it with `-c`")
+    expect(message).toContain(link)
+  })
+
+  test("extraMetadata.directories fails the build, naming -c.directories and the build-changes section", async () => {
+    const config = { extraMetadata: { directories: { output: "dist" } } }
+    await expect(validateConfiguration(config as any, logger)).rejects.toThrow(InvalidConfigurationError)
+    const message = expectRejected(config)
+    expect(message).toContain("`extraMetadata.directories` (the old `--em.directories` flag)")
+    expect(message).toContain("`-c.directories`")
+    expect(message).toContain(link)
+  })
+
+  test("both keys are reported in one throw", () => {
+    const message = expectRejected({ extraMetadata: { build: {}, directories: {} } })
+    expect(message).toContain("`extraMetadata.build`")
+    expect(message).toContain("`extraMetadata.directories`")
+  })
+
+  test("other extraMetadata keys, and directories at the root, are still accepted", async () => {
+    await expect(validateConfiguration({ extraMetadata: { commitHash: "abc1234", main: "dist/main.js" }, directories: { output: "dist" } } as any, logger)).resolves.toBeUndefined()
+  })
+
+  test("a null extraMetadata (e.g. -c.extraMetadata=null) passes the guard", () => {
+    expect(() => checkLegacyConfiguration({ extraMetadata: null } as any)).not.toThrow()
+  })
+
+  test("the build-changes page has the linked section", () => {
+    const doc = readFileSync(path.join(import.meta.dirname, "../../website/docs/migration/v27-build-changes.md"), "utf8")
+    expect(doc).toContain("{#removed-flags-embuild-emdirectories}")
+  })
+})
+
 // Issue #10274: v26 customNsisBinary / customNsisResources are removed in favour of toolsets.nsis + installerDebugLogging.
 describe("checkLegacyConfiguration — removed custom NSIS bundle keys", () => {
   const url = "https://downloads.example.com/nsisbi.7z?token=s3cr3t-token"
