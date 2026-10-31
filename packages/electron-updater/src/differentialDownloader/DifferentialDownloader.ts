@@ -6,7 +6,7 @@ import { createWriteStream, WriteStream } from "fs"
 import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
 import { ProgressInfo, CancellationError, CancellationToken } from "builder-util-runtime"
 import { Logger, NonThrowableLogger } from "../types.js"
-import { nonThrowingLogger, throwIfCancelled } from "../util.js"
+import { nonThrowingLogger, throwIfCancelled, urlForLog } from "../util.js"
 import { copyData, stopCopies } from "./DataSplitter.js"
 import { URL } from "url"
 import { coalesceDownloadGaps, computeOperations, downloadGapCoalesceThreshold, Operation, OperationKind } from "./downloadPlanBuilder.js"
@@ -262,7 +262,7 @@ export abstract class DifferentialDownloader {
       }
 
       let downloadOperationCount = 0
-      this.logger.info(`Differential download: ${this.options.newUrl}`)
+      this.logger.info(`Differential download: ${urlForLog(this.options.newUrl)}`)
 
       // once a request is redirected, the remaining ranges are requested from the redirect target
       const target: RangeRequestTarget = { options: this.createRequestOptions() }

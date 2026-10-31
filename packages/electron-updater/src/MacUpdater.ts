@@ -12,6 +12,7 @@ import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js"
 import { QuitAndInstallOptions, ResolvedUpdateFileInfo, DownloadExecutorResult } from "./types.js"
 import { UpdateDownloadedEvent } from "./types.js"
 import { findFile } from "./providers/Provider.js"
+import { urlForLog } from "./util.js"
 type AutoUpdater = Electron.AutoUpdater
 import { execFileSync } from "child_process"
 import { randomBytes } from "crypto"
@@ -141,7 +142,7 @@ export class MacUpdater extends AppUpdater {
     const downloadedFile = event.downloadedFile
     const updateFileSize = zipFileInfo.info.size ?? (await fsExtra.stat(downloadedFile)).size
 
-    const logContext = `fileToProxy=${zipFileInfo.url.href}`
+    const logContext = `fileToProxy=${urlForLog(zipFileInfo.url)}`
     this.closeServerIfExists()
     this.log.debug(`Creating proxy server for native Squirrel.Mac (${logContext})`)
     this.server = createServer()

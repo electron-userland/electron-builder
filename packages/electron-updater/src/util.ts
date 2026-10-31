@@ -31,6 +31,20 @@ export function newUrlFromBase(pathname: string, baseUrl: URL, addRandomQueryToA
   return result
 }
 
+/**
+ * `url` as written to a log line or error message: without its user info, query string and fragment, which can hold credentials
+ * (e.g. the signature of a pre-signed URL). A relative URL (e.g. a file name from the update manifest) is cut at its first `?` or `#`.
+ * @internal
+ */
+export function urlForLog(url: URL | string): string {
+  try {
+    const parsed = typeof url === "string" ? new URL(url) : url
+    return `${parsed.protocol}//${parsed.host}${parsed.pathname}`
+  } catch (_relative) {
+    return String(url).split(/[?#]/, 1)[0]
+  }
+}
+
 export function getChannelFilename(channel: string): string {
   return `${channel}.yml`
 }

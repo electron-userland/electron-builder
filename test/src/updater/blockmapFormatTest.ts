@@ -355,6 +355,17 @@ describe("block map format detection", () => {
     expect(await fsExtra.pathExists(path.join(helper.cacheDirForPendingUpdate, "current.blockmap"))).toBe(false)
   })
 
+  test("the error for a map that cannot be parsed names its URL without the query string, which can hold a signature", async ({ tmpDir, expect }) => {
+    const server = await serve(tmpDir, { new: Buffer.from("not a block map") })
+    const { updater } = await setUp(tmpDir, null)
+    captureLog(updater)
+
+    // the generic provider adds the feed's query to the file and blockmap URLs on the feed's origin
+    await expect(run(updater, `${server.url}?X-Amz-Signature=secret-signature`, tmpDir)).rejects.toThrow(
+      /^Cannot parse blockmap "http:\/\/127\.0\.0\.1:\d+\/app-1\.1\.0\.exe\.blockmap", error:/
+    )
+  })
+
   test.for([
     { name: "no cached map", cached: null },
     { name: "v3 cached (the Range fetch rejects the header, then the map is downloaded whole)", cached: OLD_V3 },

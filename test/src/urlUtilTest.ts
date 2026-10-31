@@ -7,6 +7,24 @@ test("newUrlFromBase", ({ expect }) => {
   expect(newBlockMapUrl.href).toBe("https://aws_s3_host/bucket-yashraj/electron%20Setup%2011.0.3.exe.blockmap")
 })
 
+describe("urlForLog", () => {
+  test("drops the user info, query string and fragment of a URL", ({ expect }) => {
+    expect(utils.urlForLog(new URL("https://user:pass@bucket.s3.amazonaws.com:8443/dir/app.exe?X-Amz-Signature=abc&token=t#frag"))).toBe(
+      "https://bucket.s3.amazonaws.com:8443/dir/app.exe"
+    )
+  })
+
+  test("parses an absolute URL string", ({ expect }) => {
+    expect(utils.urlForLog("https://cdn.example.net/app.exe?X-Amz-Signature=abc")).toBe("https://cdn.example.net/app.exe")
+  })
+
+  test("cuts a relative URL at its query string or fragment", ({ expect }) => {
+    expect(utils.urlForLog("app Setup 1.0.0.exe?token=abc")).toBe("app Setup 1.0.0.exe")
+    expect(utils.urlForLog("app.exe#token=abc")).toBe("app.exe")
+    expect(utils.urlForLog("app.exe")).toBe("app.exe")
+  })
+})
+
 test("add no cache", ({ expect }) => {
   const baseUrl = new URL("https://gitlab.com/artifacts/master/raw/dist?job=build_electron_win")
   const newBlockMapUrl = utils.newUrlFromBase("latest.yml", baseUrl, true)
