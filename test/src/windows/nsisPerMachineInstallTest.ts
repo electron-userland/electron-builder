@@ -17,7 +17,7 @@ async function statements(file: string): Promise<string[]> {
     .filter(line => line !== "" && !line.startsWith("#") && !line.startsWith(";"))
 }
 
-// The per-user uninstaller and its directory can be written by the current user, so the elevated per-machine installer must not run it.
+// A per-machine installer does not run the uninstaller of a per-user installation.
 test("installSection.nsh uninstalls only the installed version of the install mode, not a per-user one", async ({ expect }) => {
   const section = await statements("installSection.nsh")
   expect(section.filter(line => /uninstallOldVersion|handleUninstallResult/.test(line))).toEqual([
@@ -27,7 +27,7 @@ test("installSection.nsh uninstalls only the installed version of the install mo
   expect(section.filter(line => line.includes("HKEY_CURRENT_USER") || line.includes("HKCU"))).toEqual([])
 })
 
-// A custom script that still calls uninstallOldVersion HKEY_CURRENT_USER gets nothing run in per-machine mode: the function returns
+// A custom script that calls uninstallOldVersion HKEY_CURRENT_USER gets nothing run in per-machine mode: the function returns
 // with $R0 = 0 (success) before it reads the per-user registry.
 test("uninstallOldVersion returns before reading the per-user registry in per-machine mode", async ({ expect }) => {
   const installUtil = await statements("include/installUtil.nsh")
@@ -93,7 +93,8 @@ describe("warning for custom scripts that act on a per-user installation", () =>
     expect(warn).toHaveBeenCalledTimes(1)
     const [fields, message] = warn.mock.calls[0]
     expect(fields).toMatchObject({ uses: "customUnInstallCheckCurrentUser" })
-    expect(message).toMatch(/^electron-builder v27: a per-machine NSIS installer no longer runs or acts on a per-user installation of the app\./)
+    expect(message).toMatch(/^A per-machine NSIS installer does not run or act on a per-user installation of the app, /)
+    expect(message).toContain("so in your custom NSIS script customUnInstallCheckCurrentUser is not reached in per-machine mode.")
     expect(message).toMatch(new RegExp(`See ${LINK.replace(/[.?]/g, "\\$&")}$`))
   })
 
@@ -102,7 +103,7 @@ describe("warning for custom scripts that act on a per-user installation", () =>
     const target = await createTarget(tmpDir, { nsis: { oneClick: false } }, { "installer.nsi": script })
     const messages = await warnings(target)
     expect(messages).toHaveLength(1)
-    expect(messages[0]).toContain("uninstallOldVersion HKEY_CURRENT_USER returns without running anything in per-machine mode")
+    expect(messages[0]).toContain("so in your custom NSIS script uninstallOldVersion HKEY_CURRENT_USER returns without running anything in per-machine mode.")
   })
 
   test("does not warn without a custom script, for one that does not use them, or for the portable target", async ({ expect, tmpDir }) => {

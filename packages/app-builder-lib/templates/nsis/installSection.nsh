@@ -72,8 +72,7 @@ ${endif}
 !insertmacro uninstallOldVersion SHELL_CONTEXT
 !insertmacro handleUninstallResult SHELL_CONTEXT
 
-# a per-machine install does not uninstall a per-user install of the app: its uninstaller is named in the current user's registry and
-# lives in a directory the user can write, so the elevated installer must not run it. The per-user copy stays until the user removes it.
+# a per-machine install does not uninstall a per-user install of the app; the per-user copy stays until the user removes it
 
 SetOutPath $INSTDIR
 

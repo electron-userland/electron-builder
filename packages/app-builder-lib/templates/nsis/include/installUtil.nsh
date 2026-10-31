@@ -154,7 +154,7 @@ Function uninstallOldVersion
   Push 0
   Pop $R0
 
-  # a per-machine (elevated) installer never runs an uninstaller named in the current user's registry: the user can write it
+  # a per-machine installer does not run the uninstaller of a per-user installation
   ${if} $installMode == "all"
   ${andIf} $rootKey == "HKEY_CURRENT_USER"
     ClearErrors

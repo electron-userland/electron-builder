@@ -164,10 +164,10 @@ describe("allowOnlyOneInstallerInstance.nsh", { concurrent: false }, () => {
         .split("\n")
         .map(line => line.trim())
         .filter(line => line !== "")
-      // the current user can write the per-user InstallLocation, so only a per-user installer reads it
+      // only a per-user installer reads the per-user InstallLocation
       const hkcu = lines.indexOf("!insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKCU")
       expect(lines.slice(hkcu - 1, hkcu + 2)).toEqual(['${if} $installMode != "all"', "!insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKCU", "${endIf}"])
-      // the per-machine InstallLocation (admin-only) is matched in both modes
+      // the per-machine InstallLocation is matched in both modes
       expect(lines[hkcu + 2]).toBe("!insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKLM")
     })
   })
