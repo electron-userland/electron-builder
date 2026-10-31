@@ -1,4 +1,3 @@
-import { createRequire } from "node:module"
 import { AllPublishOptions, newError, PackageFileInfo, CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME } from "builder-util-runtime"
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter.js"
@@ -21,9 +20,6 @@ import {
   verifySignature,
 } from "./windowsExecutableCodeSignatureVerifier.js"
 import { URL } from "url"
-
-// import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
-const require = createRequire(import.meta.url ?? process.execPath)
 
 export class NsisUpdater extends BaseUpdater {
   /**
@@ -367,22 +363,36 @@ export class NsisUpdater extends BaseUpdater {
       return true
     }
 
-    this.spawnLog(installerPath, args).catch((e: Error) => {
-      // https://github.com/electron-userland/electron-builder/issues/1129
-      // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
-      const errorCode = (e as NodeJS.ErrnoException).code
-      this.log.info(
-        `Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using elevate if EACCES, and will try to use electron.shell.openItem if ENOENT`
-      )
-      if (errorCode === "UNKNOWN" || errorCode === "EACCES") {
-        callUsingElevation()
-      } else if (errorCode === "ENOENT") {
-        require("electron")
-          .shell.openPath(installerPath)
-          .catch((err: Error) => this.dispatchError(err))
-      } else {
-        this.dispatchError(e)
+    this.spawnLog(installerPath, args).catch((e: unknown) => {
+      const errorCode = e instanceof Error && "code" in e ? e.code : undefined
+      const message = e instanceof Error ? e.message : String(e)
+      // EACCES (the installer asks for elevation) is retried through elevate.exe only for an app installed for all users under Program
+      // Files: there, elevate.exe cannot be replaced by the user. UNKNOWN (e.g. an AppLocker, WDAC or antivirus block) and ENOENT are
+      // not retried at all: neither elevated nor opened with the shell
+      if (errorCode === "EACCES") {
+        if (isPerMachineInstallLocation()) {
+          this.log.info(`Cannot run installer (EACCES: "${message}"), the app is installed under Program Files: run installer using elevate.exe`)
+          callUsingElevation()
+          return
+        }
+        this.dispatchError(
+          newError(
+            `Cannot start the update installer: it requires administrator rights (EACCES: ${message}), but the app is not installed under Program Files. Since electron-updater 7 the installer is started through elevate.exe after this error only for an app installed for all users under Program Files; build per-machine apps with nsis.perMachine: true to start their updates through elevate.exe right away. See https://www.electron.build/docs/migration/v27-runtime-changes#nsis-a-failed-installer-start-is-no-longer-retried`,
+            "ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"
+          )
+        )
+        return
       }
+      if (errorCode === "UNKNOWN" || errorCode === "ENOENT") {
+        this.dispatchError(
+          newError(
+            `Cannot start the update installer (${errorCode}: ${message}). Since electron-updater 7 the installer is no longer started again through elevate.exe or opened with the shell after this error; check whether security software (AppLocker, WDAC, antivirus) blocks the installer, or install the update manually. See https://www.electron.build/docs/migration/v27-runtime-changes#nsis-a-failed-installer-start-is-no-longer-retried`,
+            "ERR_UPDATER_INSTALLER_START_FAILED"
+          )
+        )
+        return
+      }
+      this.dispatchError(e instanceof Error ? e : new Error(message))
     })
     return true
   }
@@ -423,4 +433,13 @@ export class NsisUpdater extends BaseUpdater {
     }
     return false
   }
+}
+
+// whether the running app is installed under one of the Program Files folders, where only an administrator can change it (and its
+// elevate.exe). Judged by the install location only, never by the update info or the cached files
+function isPerMachineInstallLocation(): boolean {
+  const exeDir = path.join(path.dirname(process.execPath), path.sep).toLowerCase()
+  return [process.env.ProgramW6432, process.env.ProgramFiles, process.env["ProgramFiles(x86)"]].some(
+    programFiles => programFiles != null && path.isAbsolute(programFiles) && exeDir.startsWith(path.join(programFiles, path.sep).toLowerCase())
+  )
 }

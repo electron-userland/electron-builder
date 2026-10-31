@@ -227,6 +227,8 @@ The *automatic* install at startup only runs for targets that can install the pe
 
 electron-builder v27 sets `isAdminRightsRequired` in the update info of every per-machine `nsis` and `nsis-web` build (`perMachine: true`), including assisted installers (`oneClick: false`) and builds with `differentialPackage: false`, so their updates are started with `elevate.exe` and skipped by the automatic install at launch.
 
+An NSIS update installer that Windows refuses to start is not started again elevated or opened with the shell: the install emits an `error` (`ERR_UPDATER_INSTALLER_START_FAILED`). Only an `EACCES` error (the installer asks for administrator rights) is retried through `elevate.exe`, and only when the app is installed under a Program Files folder; elsewhere the install fails with `ERR_UPDATER_INSTALLER_ELEVATION_REFUSED`. See [the migration notes](../migration/v27-runtime-changes.md#nsis-a-failed-installer-start-is-no-longer-retried).
+
 :::note[Planned default change in v28]
 `autoInstallEvent` defaults to `"onQuit"` in v27; `"onNextLaunch"` is planned to become the **default** in v28 to resolve this class of session-end corruption once and for all. macOS is unaffected: Squirrel.Mac natively stages downloaded updates and applies them on relaunch, without a killable installer process (there `"onQuit"` and `"onNextLaunch"` behave identically).
 :::

@@ -20,7 +20,7 @@ import {
 } from "../helpers/updaterTestUtil.js"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { serializeToYaml, TmpDir } from "builder-util"
-import { ExpectStatic, vi } from "vitest"
+import { afterEach, ExpectStatic, vi } from "vitest"
 
 const config = { retry: 3 }
 
@@ -1199,5 +1199,104 @@ describe("NsisUpdater — package-type pre-seeds disableWebInstaller", () => {
 
   test("missing marker leaves the secure default (disableWebInstaller=true)", config, async ({ expect }) => {
     await withResourcesMarker(null, disableWebInstaller => expect(disableWebInstaller).toBe(true))
+  })
+})
+
+// a failed start of the update installer is not retried elevated or with the shell; only EACCES is retried through elevate.exe, and only
+// for an app installed under a Program Files folder (where the user cannot replace elevate.exe)
+describe("NsisUpdater — installer start failure", () => {
+  afterEach(() => vi.unstubAllEnvs())
+
+  const args = ["--updated", "/S"]
+
+  function spawnError(code: string): Error {
+    return Object.assign(new Error(`spawn ${code}`), { code })
+  }
+
+  // installs with spawnLog rejecting the first start with `error`, the app running from `execPath` and its resources in `resourcesPath`
+  async function install(tmpDir: TmpDir, error: Error, execPath: (programFiles: string) => string, programFilesEnv: (programFiles: string) => string = it => it) {
+    const root = await tmpDir.getTempDir({ prefix: "installer-start" })
+    const programFiles = path.join(root, "Program Files")
+    vi.stubEnv("ProgramW6432", undefined)
+    vi.stubEnv("ProgramFiles", programFilesEnv(programFiles))
+    vi.stubEnv("ProgramFiles(x86)", undefined)
+    const resourcesPath = path.join(execPath(programFiles), "..", "resources")
+    const installerPath = path.join(root, "pending", "TestApp Setup 1.1.0.exe")
+
+    const updater = await createNsisUpdater("1.0.0")
+    Object.defineProperty(updater, "installerPath", { get: () => installerPath })
+    const errors: Array<Error> = []
+    updater.on("error", (e: Error) => errors.push(e))
+    // the first spawn is the installer itself; an elevated retry succeeds
+    const spawnLog = vi.spyOn(updater as any, "spawnLog").mockRejectedValueOnce(error).mockResolvedValue(true)
+
+    const originalExecPath = Object.getOwnPropertyDescriptor(process, "execPath")
+    const originalResourcesPath = Object.getOwnPropertyDescriptor(process, "resourcesPath")
+    Object.defineProperty(process, "execPath", { value: execPath(programFiles), configurable: true, writable: true })
+    Object.defineProperty(process, "resourcesPath", { value: resourcesPath, configurable: true, writable: true })
+    try {
+      const result = (updater as any).doInstall({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
+      // the start failure is handled asynchronously, after doInstall returned
+      await new Promise(resolve => setImmediate(resolve))
+      return { result, errors, spawnLog, installerPath, elevatePath: path.join(resourcesPath, "elevate.exe") }
+    } finally {
+      if (originalExecPath != null) {
+        Object.defineProperty(process, "execPath", originalExecPath)
+      }
+      if (originalResourcesPath == null) {
+        delete (process as any).resourcesPath
+      } else {
+        Object.defineProperty(process, "resourcesPath", originalResourcesPath)
+      }
+    }
+  }
+
+  const underProgramFiles = (programFiles: string) => path.join(programFiles, "TestApp", "TestApp.exe")
+
+  for (const code of ["UNKNOWN", "ENOENT"]) {
+    test(`${code} is not retried, not even for an app installed under Program Files`, config, async ({ expect, tmpDir }) => {
+      const { result, errors, spawnLog, installerPath } = await install(tmpDir, spawnError(code), underProgramFiles)
+      expect(result).toBe(true)
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_START_FAILED"])
+      expect(errors[0].message).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#nsis-a-failed-installer-start-is-no-longer-retried")
+    })
+  }
+
+  test("EACCES is retried through elevate.exe for an app installed under Program Files", config, async ({ expect, tmpDir }) => {
+    const { errors, spawnLog, installerPath, elevatePath } = await install(tmpDir, spawnError("EACCES"), underProgramFiles)
+    expect(spawnLog).toHaveBeenCalledTimes(2)
+    expect(spawnLog).toHaveBeenLastCalledWith(elevatePath, [installerPath, ...args])
+    expect(errors).toEqual([])
+  })
+
+  // Windows paths are case-insensitive
+  test("EACCES is retried through elevate.exe when the Program Files variable differs in case", config, async ({ expect, tmpDir }) => {
+    const { errors, spawnLog, elevatePath } = await install(tmpDir, spawnError("EACCES"), underProgramFiles, it => it.toUpperCase())
+    expect(spawnLog).toHaveBeenLastCalledWith(elevatePath, expect.anything())
+    expect(errors).toEqual([])
+  })
+
+  for (const [name, execPath, programFilesEnv] of [
+    ["an app installed elsewhere", (programFiles: string) => path.join(programFiles, "..", "Users", "user", "AppData", "Local", "Programs", "TestApp", "TestApp.exe"), undefined],
+    ["an app in a sibling folder whose name starts with Program Files", (programFiles: string) => path.join(`${programFiles} (user)`, "TestApp", "TestApp.exe"), undefined],
+    // an empty variable must not match every path
+    ["an empty Program Files variable", (programFiles: string) => path.join(programFiles, "..", "Apps", "TestApp", "TestApp.exe"), () => ""],
+  ] as const) {
+    test(`EACCES is refused for ${name}`, config, async ({ expect, tmpDir }) => {
+      const { errors, spawnLog, installerPath } = await install(tmpDir, spawnError("EACCES"), execPath, programFilesEnv)
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"])
+      expect(errors[0].message).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#nsis-a-failed-installer-start-is-no-longer-retried")
+    })
+  }
+
+  test("any other start error is emitted as it is", config, async ({ expect, tmpDir }) => {
+    const error = spawnError("EPERM")
+    const { errors, spawnLog } = await install(tmpDir, error, underProgramFiles)
+    expect(spawnLog).toHaveBeenCalledTimes(1)
+    expect(errors).toEqual([error])
   })
 })
