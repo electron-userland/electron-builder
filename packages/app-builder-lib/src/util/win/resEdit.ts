@@ -53,7 +53,7 @@ export async function editWindowsResources(opts: ResourceEditOptions): Promise<v
 const REQUESTED_EXECUTION_LEVELS = new Set<string>(["asInvoker", "highestAvailable", "requireAdministrator"])
 
 function patchManifestExecutionLevel(res: NtExecutableResource, level: string, file: string): void {
-  // the schema enum only guards JSON/YAML configs; programmatic configs reach here unchecked and the value is spliced into the manifest XML
+  // the schema enum is only checked when the configuration loads; re-check here because the value is spliced into the manifest XML
   if (!REQUESTED_EXECUTION_LEVELS.has(level)) {
     throw new InvalidConfigurationError(`Invalid win.requestedExecutionLevel ${JSON.stringify(level)}: expected one of ${[...REQUESTED_EXECUTION_LEVELS].join(", ")}`)
   }
