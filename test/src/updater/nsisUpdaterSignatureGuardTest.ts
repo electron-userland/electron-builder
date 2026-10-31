@@ -213,6 +213,17 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
       await expect(updater.verifySignature("/path/to/installer.exe")).resolves.toEqual({ response: "success" })
       expect(verify).toHaveBeenCalledWith(["CN=Acme Corp"], "/path/to/installer.exe", null)
     })
+
+    test("a packaged app without app-update.yml verifies against an autoUpdater.publisherName given as a single string", async () => {
+      const { updater } = await createUpdaterWithoutConfig(true)
+      updater.publisherName = "CN=Acme Corp"
+      const verifyHook = vi.fn(async () => ({ response: "success" as const }))
+      updater.verifyUpdateFileAuthenticodeSignature = verifyHook
+
+      // @ts-expect-error accessing a private method
+      await expect(updater.verifySignature("/path/to/installer.exe")).resolves.toEqual({ response: "success" })
+      expect(verifyHook).toHaveBeenCalledWith(["CN=Acme Corp"], "/path/to/installer.exe")
+    })
   })
 
   test("autoUpdater.publisherName is used when app-update.yml has none, and the publisherName of app-update.yml wins over it", async () => {

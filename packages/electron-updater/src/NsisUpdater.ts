@@ -64,7 +64,7 @@ export class NsisUpdater extends BaseUpdater {
    * unless it sets this property.
    * @default null
    */
-  publisherName: Array<string> | null = null
+  publisherName: string | Array<string> | null = null
 
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
