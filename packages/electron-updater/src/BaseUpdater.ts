@@ -9,7 +9,7 @@ import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersio
 import { AppAdapter, CancellableQuitEvent } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask, UpdateInfoAndProvider } from "./AppUpdater.js"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper.js"
-import type { Logger, VerifyUpdateFileResult } from "./types.js"
+import type { Logger, ResolvedUpdateFileInfo, VerifyUpdateFileResult } from "./types.js"
 import { QuitAndInstallOptions, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
 
 // import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
@@ -296,6 +296,16 @@ export abstract class BaseUpdater extends AppUpdater {
   }
 
   /**
+   * The file of the update info that this target downloads and installs, out of the files the provider resolved. An update
+   * marked for install on next launch is matched against the file this picks from the latest update info, so the pending
+   * cache cannot choose another file of that update info. Each built-in target overrides it with its own rule; the default
+   * picks the first file.
+   */
+  protected findUpdateFile(files: Array<ResolvedUpdateFileInfo>): ResolvedUpdateFileInfo | null | undefined {
+    return files[0]
+  }
+
+  /**
    * Whether a quit can be cancelled for this target (see {@link handleWillQuit}): a quit waits for an install that is
    * running, and with {@link cancelQuitOnInstallFailure} the install on quit runs while the quit can still be cancelled,
    * which a failed install then does. Only for targets whose {@link doInstall} has finished, and knows whether it
@@ -516,13 +526,6 @@ export abstract class BaseUpdater extends AppUpdater {
       return false
     }
 
-    if (isAutomatic && pendingInfo.isAdminRightsRequired) {
-      this.log.info(
-        "Skipping automatic install of the pending update on launch: it is a per-machine installation (isAdminRightsRequired is true). Call installPendingUpdateIfAvailable() explicitly to install it."
-      )
-      return false
-    }
-
     this.log.info("Update is marked for install on next launch, validating it against the latest update info")
     const updateInfoAndProvider = await this.getUpdateInfoAndProvider()
     const latestInfo = updateInfoAndProvider.info
@@ -541,12 +544,22 @@ export abstract class BaseUpdater extends AppUpdater {
       return false
     }
 
-    const fileInfo = updateInfoAndProvider.provider.resolveFiles(latestInfo).find(it => it.info.sha512 === pendingInfo.sha512)
-    if (fileInfo == null) {
+    // the file this target installs, picked from the latest update info as a download picks it: the pending cache only says
+    // which checksum it saved, and must not choose another file of that update info
+    const fileInfo = this.findUpdateFile(updateInfoAndProvider.provider.resolveFiles(latestInfo))
+    if (fileInfo == null || fileInfo.info.sha512 !== pendingInfo.sha512) {
       this.log.warn(
-        `Pending update doesn't match any file of the latest update info (version ${latestInfo.version}), clearing install-on-next-launch state. The new update must be downloaded again.`
+        `Pending update doesn't match the update file of the latest update info (version ${latestInfo.version}), clearing install-on-next-launch state. The new update must be downloaded again.`
       )
       await downloadedUpdateHelper.clearPendingInstallMarker(this.log)
+      return false
+    }
+
+    // read from the latest update info, not from the pending cache, which the user can write to
+    if (isAutomatic && fileInfo.info.isAdminRightsRequired === true) {
+      this.log.info(
+        "Skipping automatic install of the pending update on launch: it is a per-machine installation (isAdminRightsRequired is true). Call installPendingUpdateIfAvailable() explicitly to install it."
+      )
       return false
     }
 

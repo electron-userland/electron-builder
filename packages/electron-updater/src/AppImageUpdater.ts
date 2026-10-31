@@ -33,10 +33,14 @@ export class AppImageUpdater extends BaseUpdater {
     return true
   }
 
+  protected findUpdateFile(files: Array<ResolvedUpdateFileInfo>): ResolvedUpdateFileInfo | null | undefined {
+    return findFile(files, "AppImage", ["rpm", "deb", "pacman"])
+  }
+
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "AppImage", ["rpm", "deb", "pacman"])!
+    const fileInfo = this.findUpdateFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info))!
     return this.executeDownload({
       fileExtension: "AppImage",
       fileInfo,

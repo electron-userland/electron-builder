@@ -378,7 +378,8 @@ export class DownloadedUpdateHelper {
         return null
       }
     }
-    this._downloadedFileInfo = cachedInfo
+    // how the installer is started comes from the update info just fetched, not from update-info.json, which the user can write to
+    this._downloadedFileInfo = { ...cachedInfo, isAdminRightsRequired: fileInfo.info.isAdminRightsRequired === true }
     this._downloadedUpdateId = updateFileId(fileInfo.info, updateFile, cachedInfo.version ?? null)
     this._packageFile = packageFile
     return updateFile

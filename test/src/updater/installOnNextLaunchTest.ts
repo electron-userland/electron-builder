@@ -1,6 +1,6 @@
 import { CancellationToken, hashFile } from "builder-util-runtime"
 import type { UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
-import { mkdir, outputFile, pathExists, readJson } from "fs-extra"
+import { mkdir, outputFile, outputJson, pathExists, readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
@@ -343,9 +343,9 @@ describe("install on next launch", { concurrent: false }, () => {
         getUpdateInfoAndProvider.mockResolvedValue({
           info: latestUpdateInfo,
           provider: {
-            // like Provider.resolveFiles: web-installer updates carry the package of the current arch (undefined otherwise)
+            // like Provider.resolveFiles: the file entry as is, and web-installer updates carry the package of the current arch (undefined otherwise)
             resolveFiles: (info: UpdateInfo) =>
-              info.files.map(it => ({ ...makeResolvedFileInfo(it.sha512, it.url), packageInfo: (info as WindowsUpdateInfo).packages?.[process.arch] })),
+              info.files.map(it => ({ url: new URL(`https://example.com/${it.url}`), info: it, packageInfo: (info as WindowsUpdateInfo).packages?.[process.arch] })),
           },
         })
       }
@@ -507,15 +507,21 @@ describe("install on next launch", { concurrent: false }, () => {
       expect(app.quitCalls).toBe(1)
     })
 
+    /** The update info of a per-machine build: its file entry sets `isAdminRightsRequired`. */
+    function perMachineUpdateInfo(updateInfo: UpdateInfo): UpdateInfo {
+      return { ...updateInfo, files: updateInfo.files.map(it => ({ ...it, isAdminRightsRequired: true })) }
+    }
+
     test("automatic startup path skips per-machine installs but explicit call installs them", async () => {
       const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
-      const { updater, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
+      const latestUpdateInfo = perMachineUpdateInfo(seeded.updateInfo)
+      const { updater, doInstall } = createUpdater(latestUpdateInfo, NsisUpdater)
       vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
       // simulate a per-machine install record
       await helper.setDownloadedFile(
         seeded.installerPath,
         null,
-        seeded.updateInfo,
+        latestUpdateInfo,
         { ...seeded.fileInfo, info: { ...seeded.fileInfo.info, isAdminRightsRequired: true } },
         "TestApp-Setup.deb",
         true
@@ -531,6 +537,51 @@ describe("install on next launch", { concurrent: false }, () => {
       await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
       expect(doInstall).toHaveBeenCalledTimes(1)
       expect(doInstall).toHaveBeenCalledWith(expect.objectContaining({ isAdminRightsRequired: true }))
+    })
+
+    test("takes isAdminRightsRequired from the latest update info when the pending cache says the install is per-user", async () => {
+      // the pending cache records a per-user install, the latest update info a per-machine one
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
+      helper.markInstallOnNextLaunchSync(log)
+      expect(await helper.getPendingInstallInfo()).toMatchObject({ isAdminRightsRequired: false })
+      helper = new DownloadedUpdateHelper(cacheDir, log)
+      const { updater, doInstall } = createUpdater(perMachineUpdateInfo(seeded.updateInfo), NsisUpdater)
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
+
+      await expect((updater as any).installPendingUpdate(true)).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(await helper.getPendingInstallInfo()).toMatchObject({ installOnNextLaunch: true })
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
+      expect(doInstall).toHaveBeenCalledTimes(1)
+      expect(doInstall).toHaveBeenCalledWith(expect.objectContaining({ isAdminRightsRequired: true }))
+    })
+
+    test("takes isAdminRightsRequired from the latest update info when the pending cache says the install is per-machine", async () => {
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
+      helper.markInstallOnNextLaunchSync(log)
+      // the pending cache is edited to ask for elevate.exe, which the latest update info does not
+      const infoFile = path.join(helper.cacheDirForPendingUpdate, "update-info.json")
+      await outputJson(infoFile, { ...(await readJson(infoFile)), isAdminRightsRequired: true })
+      helper = new DownloadedUpdateHelper(cacheDir, log)
+      const { updater, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
+      expect(doInstall).toHaveBeenCalledTimes(1)
+      expect(doInstall).toHaveBeenCalledWith(expect.objectContaining({ isAdminRightsRequired: false }))
+    })
+
+    test("the pending cache cannot choose another file of the latest update info than the one the target installs", async () => {
+      // the pending cache holds the AppImage of the update, which a deb install would not download
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1", fileName: "TestApp.AppImage" })
+      helper.markInstallOnNextLaunchSync(log)
+      const latestUpdateInfo: UpdateInfo = { ...seeded.updateInfo, files: [{ url: "TestApp-Setup.deb", sha512: "sha512-of-the-deb" }, ...seeded.updateInfo.files] }
+      const { updater, doInstall } = createUpdater(latestUpdateInfo, DebUpdater)
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(await helper.getPendingInstallInfo()).toBeNull()
     })
 
     test("automatic startup path skips targets that install via an elevating package manager (deb) but explicit call installs them", async () => {

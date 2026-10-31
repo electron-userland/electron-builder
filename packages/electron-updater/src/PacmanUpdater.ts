@@ -1,7 +1,7 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter.js"
 import { DownloadUpdateOptions } from "./AppUpdater.js"
-import { DOWNLOAD_PROGRESS, Logger, DownloadExecutorResult } from "./types.js"
+import { DOWNLOAD_PROGRESS, Logger, DownloadExecutorResult, ResolvedUpdateFileInfo } from "./types.js"
 import { findFile } from "./providers/Provider.js"
 import { InstallPlan, LinuxUpdater, runInstallPlan } from "./LinuxUpdater.js"
 
@@ -10,10 +10,14 @@ export class PacmanUpdater extends LinuxUpdater {
     super(options, app)
   }
 
+  protected findUpdateFile(files: Array<ResolvedUpdateFileInfo>): ResolvedUpdateFileInfo | null | undefined {
+    return findFile(files, "pacman", ["AppImage", "deb", "rpm"])
+  }
+
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "pacman", ["AppImage", "deb", "rpm"])!
+    const fileInfo = this.findUpdateFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info))!
     return this.executeDownload({
       fileExtension: "pacman",
       fileInfo,

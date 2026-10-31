@@ -2,7 +2,7 @@ import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter.js"
 import { DownloadUpdateOptions } from "./AppUpdater.js"
 import { findFile } from "./providers/Provider.js"
-import { DOWNLOAD_PROGRESS, Logger, DownloadExecutorResult } from "./types.js"
+import { DOWNLOAD_PROGRESS, Logger, DownloadExecutorResult, ResolvedUpdateFileInfo } from "./types.js"
 import { InstallPlan, isSupportedPackageManager, LinuxUpdater, runInstallPlan } from "./LinuxUpdater.js"
 
 const DEB_PACKAGE_MANAGERS = ["dpkg", "apt"] as const
@@ -12,10 +12,14 @@ export class DebUpdater extends LinuxUpdater {
     super(options, app)
   }
 
+  protected findUpdateFile(files: Array<ResolvedUpdateFileInfo>): ResolvedUpdateFileInfo | null | undefined {
+    return findFile(files, "deb", ["AppImage", "rpm", "pacman"])
+  }
+
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "deb", ["AppImage", "rpm", "pacman"])!
+    const fileInfo = this.findUpdateFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info))!
     return this.executeDownload({
       fileExtension: "deb",
       fileInfo,
