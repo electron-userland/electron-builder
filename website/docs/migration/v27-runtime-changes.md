@@ -18,7 +18,7 @@ What the installed app, its installer or its auto-updater does differently on yo
 | [NSIS: per-machine builds set `isAdminRightsRequired` in the update info](#nsis-per-machine-builds-set-isadminrightsrequired) | Advisory | None for most apps. Their updates are started with `elevate.exe`; with `autoInstallEvent: "onNextLaunch"`, per-machine apps call `installPendingUpdateIfAvailable()` to install a pending update |
 | [Update credentials are only sent to the feed's origin (electron-updater)](#update-credentials-stay-on-the-feeds-origin) | Warns, advisory, runtime log | Only if `latest*.yml` points downloads at another origin (another host, or another port or scheme) that needs your `requestHeaders` / `addAuthHeader` credentials or a token in the feed URL's query: serve the files from the feed origin or use pre-signed URLs. A custom provider used with credential headers must override `Provider.feedBaseUrl` (else `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`) |
 | [Windows update signature verification fails closed (electron-updater)](#windows-update-signature-verification-fails-closed) | Runtime error | An NSIS update is installed only when PowerShell verifies it: one electron-updater 6 installed with a warning (PowerShell could not be started or run, Windows 7/8) is now rejected (`ERR_UPDATER_SIGNATURE_UNVERIFIABLE`); a catalog signature is rejected as an invalid signature (`ERR_UPDATER_INVALID_SIGNATURE`) unless the app opts in with `allowCatalogSignature = true` (or the release with `win.allowCatalogSignature` in a signed manifest). If PowerShell may be blocked on your users' machines, assign a native `verifyUpdateFileAuthenticodeSignature` in your first electron-updater 7 release |
-| [Packaged NSIS apps without an update config verify updates (electron-updater)](#packaged-nsis-apps-without-an-update-config-verify-updates) | Runtime error | Only for a Windows app whose update config file (`app-update.yml` or the `updateConfigPath` file) is missing when a downloaded update is verified: set `autoUpdater.publisherName`, assign `verifyUpdateFileAuthenticodeSignature`, or make sure the file exists; otherwise the update is rejected (`ERR_UPDATER_NO_PUBLISHER_NAME`) |
+| [Packaged NSIS apps without an update config verify updates (electron-updater)](#packaged-nsis-apps-without-an-update-config-verify-updates) | Runtime error | Only for a Windows app whose update config file (`app-update.yml` or the `updateConfigPath` file) is missing when a downloaded update is verified: set `autoUpdater.publisherName` or make sure the file exists; otherwise the update is rejected (`ERR_UPDATER_NO_PUBLISHER_NAME`), and a custom `verifyUpdateFileAuthenticodeSignature` is not called |
 | [`quitAndInstall` takes an options object (electron-updater)](#quitandinstall-takes-an-options-object) | TS error, runtime log | Replace positional args: `quitAndInstall(true, false)` → `quitAndInstall({ isSilent: true, isForceRunAfter: false })` |
 | [`autoInstallOnAppQuit` replaced by `autoInstallEvent` enum (electron-updater)](#autoinstallevent-replaces-autoinstallonappquit) | TS error, runtime log | `autoInstallOnAppQuit = false` → `autoInstallEvent = "manual"`; default `"onQuit"` preserves behavior |
 | [`downloadUpdate()` resolves with an object, not an array (electron-updater)](#downloadupdate-resolves-with-a-downloadexecutorresult-object) | TS error, runtime log | `const [installer] = await downloadUpdate()` → `const { updateFile } = await downloadUpdate()`; same for `checkForUpdates()` → `downloadPromise` |
@@ -125,9 +125,10 @@ This applies only where electron-updater verifies an update against a `publisher
 
 electron-updater 6 (and the earlier v27 alphas) installed an NSIS update **without verifying its Authenticode signature** when the update config file of the packaged app (`app-update.yml`, or the file `updateConfigPath` names) did not exist at the time the downloaded update was verified. A custom `verifyUpdateFileAuthenticodeSignature` was skipped there too, without a warning. A download reads the updater cache directory from that file before it starts, so an app without `app-update.yml` (for example one that sets its feed only with `setFeedURL`) still fails earlier, reading `app-update.yml` (`ENOENT`), as before. The verification was reached when the app assigned `updateConfigPath` a file that does not exist after an earlier download of the same updater had read the config. electron-updater 7 verifies these updates as well:
 
-- When the app sets `autoUpdater.publisherName` (a new `NsisUpdater` property, `null` by default), the update is verified against it, with the default or a custom verify function. It is also used when an `app-update.yml` has no `publisherName`; the `publisherName` that electron-builder writes to `app-update.yml` wins over it.
-- Otherwise a custom `verifyUpdateFileAuthenticodeSignature` is called with an empty `publisherName` list, and its result decides.
-- Otherwise the update is rejected with `ERR_UPDATER_NO_PUBLISHER_NAME`.
+- When the app sets `autoUpdater.publisherName` (a new `NsisUpdater` property, `null` by default), the update is verified against it, with the default or a custom verify function.
+- Otherwise the update is rejected with `ERR_UPDATER_NO_PUBLISHER_NAME`. A custom `verifyUpdateFileAuthenticodeSignature` is not called: it is called only with a `publisherName`.
+
+`autoUpdater.publisherName` also applies when the update config file exists: electron-updater verifies an update against the `publisherName` of `app-update.yml` (or the `updateConfigPath` file), else against `autoUpdater.publisherName`, and rejects it otherwise. It wins over `verifyUpdateCodeSignature: false` in that file, which opts out only when no `publisherName` resolves.
 
 An app that is not packaged (development mode) without a `dev-app-update.yml` is still not verified.
 
@@ -137,11 +138,7 @@ An app that is not packaged (development mode) without a `dev-app-update.yml` is
 autoUpdater.publisherName = ["CN=My Company, O=My Company, C=US"]
 ```
 
-A custom verify function also works; it is called with an empty list when `publisherName` is not set. To install updates without verifying them, opt out explicitly with a verify function that accepts every file:
-
-```js
-autoUpdater.verifyUpdateFileAuthenticodeSignature = async () => ({ response: "success" })
-```
+A custom verify function alone does not help: it is called only with a `publisherName`.
 
 ---
 
