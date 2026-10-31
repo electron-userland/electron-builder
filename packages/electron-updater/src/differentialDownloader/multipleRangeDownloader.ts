@@ -1,7 +1,7 @@
 import { CancellationError, createHttpError, newError, safeGetHeader } from "builder-util-runtime"
 import { IncomingMessage, RequestOptions } from "http"
 import { Writable } from "stream"
-import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter.js"
+import { copyData, DataSplitter, parseMultipartBoundary, PartListDataTask } from "./DataSplitter.js"
 import { DifferentialDownloader } from "./DifferentialDownloader.js"
 import { Operation, OperationKind } from "./downloadPlanBuilder.js"
 
@@ -148,11 +148,16 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
     // Hosts that serve only one range per request answer a multi-range request with an error (GitHub release assets: 501,
     // GCS: 400), the whole file (S3: 200) or a single coalesced part. Stop reading and let the caller retry range by range.
     const contentType = safeGetHeader(response, "content-type")
-    const m = statusCode === 206 ? /^multipart\/.+?\s*;\s*boundary=(?:"([^"]+)"|([^\s";]+))\s*$/i.exec(contentType) : null
-    if (m == null) {
+    const boundary = statusCode === 206 ? parseMultipartBoundary(contentType) : null
+    if (boundary == null) {
       response.destroy()
       request.abort()
-      reject(newError(`Server does not support multiple ranges in one request (status ${statusCode}, Content-Type "${contentType}")`, ERR_MULTIPLE_RANGES_NOT_SUPPORTED))
+      reject(
+        newError(
+          `Server does not support multiple ranges in one request (status ${statusCode}, Content-Type "${String(contentType).substring(0, 200)}")`,
+          ERR_MULTIPLE_RANGES_NOT_SUPPORTED
+        )
+      )
       return
     }
 
@@ -174,7 +179,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       out,
       options,
       partIndexToTaskIndex,
-      m[1] || m[2],
+      boundary,
       partIndexToLength,
       onBatchFinished,
       grandTotalBytes,
