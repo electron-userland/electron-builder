@@ -10,6 +10,7 @@ import {
   UpdateInfo,
   WindowsUpdateInfo,
 } from "builder-util-runtime"
+import type { AuthInfo } from "electron"
 import { OutgoingHttpHeaders } from "http"
 import { load } from "js-yaml"
 import { URL } from "url"
@@ -93,11 +94,21 @@ export abstract class Provider<T extends UpdateInfo> {
    * (e.g. the channel file), on its origin. `null` sends the request headers to every URL.
    * The default, `undefined`, means not declared: a download with such headers (from `requestHeaders` / `addAuthHeader`) then fails
    * with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, so a custom provider used with credentials or custom headers must override this getter.
-   * A server's authentication challenge from this origin reaches the updater's `login` event. With `null` or `undefined`, only a proxy's
-   * challenge and those from `AppUpdater.loginChallengeOrigins` do.
    */
   get feedBaseUrl(): URL | null | undefined {
     return undefined
+  }
+
+  /**
+   * Called for each authentication challenge (a proxy's or a server's) of an update request, before the updater emits its `login` event:
+   * return `true` to emit `login`, or `false` to cancel the challenge without emitting it (the request then fails with the challenge's
+   * status). `url` is the URL of the request that got the challenge (a redirect's target after a redirect). The updater asks the provider
+   * of its latest update check. Override it to answer only the servers your app's `login` handler is meant for, e.g.
+   * `return authInfo.isProxy || url.origin === "https://downloads.example.com"`. Any value other than `true`, or a throw, cancels.
+   * See [Event: `login`](https://www.electron.build/docs/features/auto-update#event-login).
+   */
+  onLoginChallenge(_authInfo: AuthInfo, _url: URL): boolean {
+    return true
   }
 
   setRequestHeaders(value: OutgoingHttpHeaders | null): void {
