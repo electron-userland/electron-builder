@@ -87,7 +87,7 @@ function checkWrappedInstallerPath(helper: string, rawPath: string): void {
   const safePath = /kdesudo/i.test(helper) ? KDESUDO_SAFE_PATH : WRAPPED_SAFE_PATH
   if (!safePath.test(rawPath)) {
     throw newError(
-      `${helper} takes the install command as a single string, and the installer path ${JSON.stringify(rawPath)} contains characters that cannot be passed through it safely, so electron-updater 7 (electron-builder v27) does not install it; install polkit (pkexec) to install this update: ${UNSAFE_INSTALLER_PATH_DOCS}`,
+      `${helper} takes the install command as a single string, and the installer path ${JSON.stringify(rawPath)} contains characters that cannot be passed through it safely, so electron-updater does not install it. To install this update, install polkit (pkexec). See ${UNSAFE_INSTALLER_PATH_DOCS}`,
       "ERR_UPDATER_UNSAFE_INSTALLER_PATH"
     )
   }
