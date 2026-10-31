@@ -33,7 +33,7 @@ The changes are split by where you fix them. Each page opens with its own at-a-g
 | Page | What's on it | Changes |
 |---|---|:---:|
 | **[Config](./v27-config-changes.md)** | Removed, renamed and restructured config keys. `migrate-schema` rewrites most of them; any left behind fail the build. | 25 |
-| **[Build & Publish](./v27-build-changes.md)** | Node.js and CLI, toolsets and environment variables, dependency collection and validation, signing checks, publishing and update metadata, Flatpak build tooling. | 32 |
+| **[Build & Publish](./v27-build-changes.md)** | Node.js and CLI, toolsets and environment variables, dependency collection and validation, signing checks, publishing and update metadata, Flatpak build tooling. | 34 |
 | **[Runtime (Shipped App)](./v27-runtime-changes.md)** | What changes on users' machines: auto-update defaults and the electron-updater API, macOS entitlements and DMG, NSIS file associations, the Linux launcher, Flatpak and Snap defaults. | 21 |
 | **[Developer-Only](./v27-developer-changes.md)** | Only if you write code against electron-builder: ESM packaging, the programmatic and plugin APIs, build hooks and custom signers, custom NSIS and maintainer scripts, type exports. | 10 |
 
@@ -90,6 +90,7 @@ The quickest way through an upgrade is:
 |---|---|---|
 | [macOS default entitlements drop `allow-unsigned-executable-memory`](./v27-runtime-changes.md#macos-default-entitlements-tightened) | Your app needs that entitlement. Only the library-validation part gets a build warning | Runtime |
 | [S3 publishing needs `awsCredentials.source`](./v27-build-changes.md#s3-publishing-requires-an-explicit-awscredentialssource) | You publish to S3. Builds that don't publish don't check it | Build |
+| [Publish tokens from the environment are bound to the provider host](./v27-build-changes.md#publish-tokens-from-the-environment-are-bound-to-the-provider-host) | You publish to a custom `host` with a token from the environment. Builds that don't publish don't check it | Build |
 | [macOS: the ASAR integrity digest is embedded](./v27-runtime-changes.md#macos-asar-integrity-digest) | You merge separately built x64 and arm64 apps with `@electron/universal` yourself. The build only warns when you have an `afterPack` hook | Runtime |
 
 ---
