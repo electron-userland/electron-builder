@@ -210,7 +210,7 @@ nsis:
 
 :::tip[What happens to a per-user installation when the app is installed for all users?]
 
-It stays. Since electron-builder 27, a per-machine installer (`perMachine: true`, or the all-users mode of an assisted installer) does not run the uninstaller of a per-user installation of the app and, where PowerShell is available, does not close the app's processes that run from it. That uninstaller and its directory can be changed by the user without administrator rights, so the elevated installer does not run them. Installing over an installation of the same mode still uninstalls the previous version.
+It stays. A per-machine installer (`perMachine: true`, or the all-users mode of an assisted installer) does not run the uninstaller of a per-user installation of the app and, where PowerShell is available, does not close the app's processes that run from it. Installing over an installation of the same mode uninstalls the previous version.
 
 Users who move from a per-user to a per-machine install remove the per-user copy themselves, before or after the per-machine install: uninstall the current user's entry of the app in Settings → Apps → Installed apps, or run its uninstaller as that user (by default `"%LOCALAPPDATA%\Programs\<app>\Uninstall <productName>.exe" /S /currentuser`). See [the v27 migration notes](./migration/v27-runtime-changes.md#nsis-a-per-machine-install-leaves-a-per-user-install-in-place).
 

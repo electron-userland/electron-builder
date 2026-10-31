@@ -26,7 +26,7 @@ What the installed app, its installer or its auto-updater does differently on yo
 | [macOS: the ASAR integrity digest is embedded](#macos-asar-integrity-digest) | Warns (with `afterPack`) | With Electron 41+, the Electron Framework is patched and signed again ad hoc after `afterPack`; set `mac.asarIntegrityDigest: false` if you sign the app yourself in `afterPack`, change `app.asar` / `Info.plist` after it, or merge separately built x64 and arm64 apps with `@electron/universal` yourself |
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | Silent | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
 | [NSIS file-association ProgID format changed](#nsis-file-association-progid-format-changed) | Warns (custom script only) | Update custom NSIS scripts that hard-code the old ProgID |
-| [NSIS: a per-machine install leaves a per-user install in place](#nsis-a-per-machine-install-leaves-a-per-user-install-in-place) | Warns (custom script only) | Only if users move from a per-user to a per-machine install of your app: the per-machine installer no longer uninstalls the per-user copy or, where PowerShell is available, closes its running processes; users remove the per-user copy themselves (Settings → Apps, or its uninstaller with `/S /currentuser`) |
+| [NSIS: a per-machine install leaves a per-user install in place](#nsis-a-per-machine-install-leaves-a-per-user-install-in-place) | Warns (custom script only) | Only if users move from a per-user to a per-machine install of your app: the per-machine installer does not uninstall the per-user copy or, where PowerShell is available, close its running processes; users remove the per-user copy themselves (Settings → Apps, or its uninstaller with `/S /currentuser`) |
 | [Linux `.desktop` `Exec` now runs a generated `*-launcher` script](#linux-launcher-entrypoint) | Silent | Update custom `.desktop`/AppArmor/MIME tooling that hard-codes the `Exec` command (the flatpak target is not affected) |
 | [Linux `executableArgs` field codes are now literal](#linux-launcher-entrypoint) | Warns | Remove `%F`/`%U` from `executableArgs`; use `linux.desktop.entry.Exec` |
 | [`http-parser` dropped from default pacman `depends`](#pacman-default-dependencies-changed) | Silent | Add it back with `"depends": ["default", "http-parser"]` only if your app really needs it |
@@ -284,13 +284,13 @@ The generated ProgID has the form `<program>.<component>`: `<program>` is derive
 
 ### NSIS: a per-machine install leaves a per-user install in place {#nsis-a-per-machine-install-leaves-a-per-user-install-in-place}
 
-**How you'll find out:** **Warns during the build** when a custom NSIS script (`nsis.include` / `nsis.script`) defines `customUnInstallCheckCurrentUser` or calls `uninstallOldVersion HKEY_CURRENT_USER`. Otherwise silent: the change shows only on your users' machines.
+**How you'll find out:** **Warns during the build** when a custom NSIS script (`nsis.include` / `nsis.script`) defines `customUnInstallCheckCurrentUser` or calls `uninstallOldVersion HKEY_CURRENT_USER`. Otherwise silent: it shows only on your users' machines.
 
-A per-machine (all users) installation of your app no longer uninstalls a per-user installation of the same app, and no longer closes the app's processes that run from the per-user installation directory. Before v27, the elevated per-machine installer read the per-user uninstaller and installation directory from the current user's registry (`HKEY_CURRENT_USER`), ran that uninstaller and stopped processes under that directory. A per-user installation, its registry entries and its uninstaller can all be changed by the user without administrator rights, so the elevated installer no longer runs or acts on anything they name. This applies to one-click and assisted per-machine installers (`perMachine: true`) and to an assisted installer when the user chooses the all-users install mode.
+A per-machine (all users) installation of your app does not uninstall a per-user installation of the same app, and does not close the app's processes that run from the per-user installation directory. This applies to one-click and assisted per-machine installers (`perMachine: true`) and to an assisted installer when the user chooses the all-users install mode.
 
-Installing per-user over a per-user installation, and per-machine over a per-machine installation, still uninstalls the previous version as before.
+Installing per-user over a per-user installation, or per-machine over a per-machine installation, uninstalls the previous version.
 
-Where PowerShell is not available, the installer still finds and closes the app by its executable name, as in v26, so a running per-user copy is closed too. Its files and uninstaller are left alone.
+Where PowerShell is not available, the installer finds and closes the app by its executable name, so a running per-user copy is closed too. Its files and uninstaller are left alone.
 
 **What users see:** someone who had the app installed for their account and then installs it for all users ends up with both copies: two entries in Settings → Apps → Installed apps, and Start menu and desktop shortcuts for both. File associations and protocol (deep-link) handlers registered for the per-user copy keep opening it, because Windows prefers the current user's registrations (`HKEY_CURRENT_USER\Software\Classes`) over the per-machine ones. If your app uses electron-updater, the per-user copy also keeps updating itself, separately from the per-machine copy.
 
@@ -299,7 +299,7 @@ Where PowerShell is not available, the installer still finds and closes the app 
 - In Settings → Apps → Installed apps, uninstall the entry of your app that is installed for the current user (the per-machine entry stays).
 - Or run its uninstaller as that user, without elevation. By default it is in `%LOCALAPPDATA%\Programs\<app>`: `"%LOCALAPPDATA%\Programs\<app>\Uninstall <productName>.exe" /S /currentuser`.
 
-A custom NSIS script that defines `customUnInstallCheckCurrentUser` no longer has it called by the built-in install section, and a script that calls `uninstallOldVersion HKEY_CURRENT_USER` itself gets nothing run in per-machine mode.
+The built-in install section does not call a `customUnInstallCheckCurrentUser` macro defined in a custom NSIS script, and a script that calls `uninstallOldVersion HKEY_CURRENT_USER` itself gets nothing run in per-machine mode.
 
 This is an installer behavior, not a config key, so `migrate-schema` does not change it.
 

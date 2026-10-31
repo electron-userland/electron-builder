@@ -174,7 +174,7 @@ These are documented on other pages:
 
 A custom NSIS script that hard-codes a file-association ProgID is affected by the [NSIS ProgID format change](./v27-runtime-changes.md#nsis-file-association-progid-format-changed).
 
-A custom NSIS script that defines `customUnInstallCheckCurrentUser` or calls `uninstallOldVersion HKEY_CURRENT_USER` is affected by [a per-machine install leaving a per-user install in place](./v27-runtime-changes.md#nsis-a-per-machine-install-leaves-a-per-user-install-in-place): a per-machine installer no longer calls the macro, and the call runs nothing there.
+A custom NSIS script that defines `customUnInstallCheckCurrentUser` or calls `uninstallOldVersion HKEY_CURRENT_USER` is affected by [a per-machine install leaving a per-user install in place](./v27-runtime-changes.md#nsis-a-per-machine-install-leaves-a-per-user-install-in-place): a per-machine installer does not call the macro, and the call runs nothing there.
 
 ### NSIS `customInstallMode` macro guard casing corrected {#nsis-custominstallmode-macro-guard-casing-corrected}
 
