@@ -44,12 +44,12 @@ test("a manifest whose YAML aliases expand past the budget is rejected with the 
   requestSpy.mockResolvedValue(mockAliasChainYaml("1.0.1", 40))
 
   for (let i = 0; i < 3; i++) {
-    await expect(updater.checkForUpdates()).rejects.toMatchObject({
+    await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
       code: "ERR_UPDATER_INVALID_UPDATE_INFO",
       message: expect.stringContaining(`electron-updater 7 (electron-builder v27) rejects such a manifest`),
     })
   }
-  await expect(updater.checkForUpdates()).rejects.toThrow(DOCS)
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toThrow(DOCS)
 
   expect(announcements(logger)).toEqual([ANNOUNCEMENT])
   // the feed URL may carry credentials in its query: the announcement never names it
@@ -58,7 +58,7 @@ test("a manifest whose YAML aliases expand past the budget is rejected with the 
   // counted per updater instance
   const otherLogger = createLogger()
   const otherUpdater = await createGenericUpdater(tmpDir, requestSpy, otherLogger)
-  await expect(otherUpdater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO" })
+  await expect(otherUpdater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO" })
   expect(announcements(otherLogger)).toEqual([ANNOUNCEMENT])
 })
 
@@ -69,7 +69,10 @@ test("a manifest that is not valid YAML is not announced as the v27 alias limit"
 
   requestSpy.mockResolvedValueOnce(`${mockYaml("1.0.1")}releaseNotes: [unclosed\n`)
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.not.stringContaining(DOCS) })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
+    code: "ERR_UPDATER_INVALID_UPDATE_INFO",
+    message: expect.not.stringContaining(DOCS),
+  })
   expect(announcements(logger)).toEqual([])
 })
 
@@ -82,7 +85,10 @@ test("a logger that throws does not replace the alias-budget error", async ({ tm
 
   requestSpy.mockResolvedValueOnce(mockAliasChainYaml("1.0.1", 40))
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringContaining(DOCS) })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
+    code: "ERR_UPDATER_INVALID_UPDATE_INFO",
+    message: expect.stringContaining(DOCS),
+  })
 })
 
 test("a manifest rejected while loading for aliases in a complex mapping key is announced as the v27 alias limit", async ({ tmpDir, expect }) => {
@@ -92,7 +98,10 @@ test("a manifest rejected while loading for aliases in a complex mapping key is 
 
   requestSpy.mockResolvedValueOnce(mockComplexKeyYaml("1.0.1"))
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringContaining(DOCS) })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
+    code: "ERR_UPDATER_INVALID_UPDATE_INFO",
+    message: expect.stringContaining(DOCS),
+  })
   expect(announcements(logger)).toEqual([ANNOUNCEMENT])
 })
 
@@ -107,7 +116,7 @@ test.for([
 
   requestSpy.mockResolvedValueOnce(manifest)
 
-  const error: unknown = await updater.checkForUpdates().then(
+  const error: unknown = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults }).then(
     () => null,
     (e: unknown) => e
   )

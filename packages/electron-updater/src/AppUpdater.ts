@@ -38,7 +38,15 @@ import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor.js"
 import { GenericProvider } from "./providers/GenericProvider.js"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory.js"
-import { checkCrossOriginHeadersImplemented, crossOriginHeadersLayers, isYamlAliasBudgetError, Provider, ProviderPlatform, ProviderRuntimeOptions, YAML_ALIAS_BUDGET_DOCS } from "./providers/Provider.js"
+import {
+  checkCrossOriginHeadersImplemented,
+  crossOriginHeadersLayers,
+  isYamlAliasBudgetError,
+  Provider,
+  ProviderPlatform,
+  ProviderRuntimeOptions,
+  YAML_ALIAS_BUDGET_DOCS,
+} from "./providers/Provider.js"
 import type { TypedEmitter } from "tiny-typed-emitter"
 type Session = Electron.Session
 import type { AuthInfo } from "electron"
