@@ -176,12 +176,7 @@ for (const incomplete of [false, true]) {
 
 // installSection.nsh prepares the web package before it uninstalls the installed version; installApplicationFiles only extracts it.
 test("installSection.nsh prepares the web package before uninstalling the installed version", async ({ expect }) => {
-  const order = [
-    "!insertmacro prepareWebPackage",
-    "!insertmacro uninstallOldVersion SHELL_CONTEXT",
-    "!insertmacro uninstallOldVersion HKEY_CURRENT_USER",
-    "!insertmacro installApplicationFiles",
-  ]
+  const order = ["!insertmacro prepareWebPackage", "!insertmacro uninstallOldVersion SHELL_CONTEXT", "!insertmacro installApplicationFiles"]
   const section = statements(await fs.readFile(path.join(templates, "..", "installSection.nsh"), "utf8")).filter(line => !line.startsWith("#") && !line.startsWith(";"))
   expect(section.filter(line => order.includes(line))).toEqual(order)
 

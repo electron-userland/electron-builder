@@ -91,8 +91,12 @@
     # also match processes running from the previous per-user and per-machine installation directories,
     # because the previous installation is uninstalled during install
     # https://github.com/electron-userland/electron-builder/issues/10022
+    # a per-machine install leaves a per-user installation in place (the current user can write its registry value), so the
+    # elevated per-machine installer does not stop processes running from it
     Push $R7
-    !insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKCU
+    ${if} $installMode != "all"
+      !insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKCU
+    ${endIf}
     !insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKLM
     Pop $R7
   !endif

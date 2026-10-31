@@ -154,6 +154,13 @@ Function uninstallOldVersion
   Push 0
   Pop $R0
 
+  # a per-machine (elevated) installer never runs an uninstaller named in the current user's registry: the user can write it
+  ${if} $installMode == "all"
+  ${andIf} $rootKey == "HKEY_CURRENT_USER"
+    ClearErrors
+    Return
+  ${endIf}
+
   !insertmacro readReg $uninstallString "$rootKey" "${UNINSTALL_REGISTRY_KEY}" UninstallString
   ${if} $uninstallString == ""
     !ifdef UNINSTALL_REGISTRY_KEY_2

@@ -26,6 +26,7 @@ What the installed app, its installer or its auto-updater does differently on yo
 | [macOS: the ASAR integrity digest is embedded](#macos-asar-integrity-digest) | Warns (with `afterPack`) | With Electron 41+, the Electron Framework is patched and signed again ad hoc after `afterPack`; set `mac.asarIntegrityDigest: false` if you sign the app yourself in `afterPack`, change `app.asar` / `Info.plist` after it, or merge separately built x64 and arm64 apps with `@electron/universal` yourself |
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | Silent | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
 | [NSIS file-association ProgID format changed](#nsis-file-association-progid-format-changed) | Warns (custom script only) | Update custom NSIS scripts that hard-code the old ProgID |
+| [NSIS: a per-machine install leaves a per-user install in place](#nsis-a-per-machine-install-leaves-a-per-user-install-in-place) | Silent | Only if users move from a per-user to a per-machine install of your app: the per-machine installer no longer uninstalls the per-user copy or closes its running processes; users remove the per-user copy themselves (Settings → Apps, or its uninstaller with `/S /currentuser`) |
 | [Linux `.desktop` `Exec` now runs a generated `*-launcher` script](#linux-launcher-entrypoint) | Silent | Update custom `.desktop`/AppArmor/MIME tooling that hard-codes the `Exec` command (the flatpak target is not affected) |
 | [Linux `executableArgs` field codes are now literal](#linux-launcher-entrypoint) | Warns | Remove `%F`/`%U` from `executableArgs`; use `linux.desktop.entry.Exec` |
 | [`http-parser` dropped from default pacman `depends`](#pacman-default-dependencies-changed) | Silent | Add it back with `"depends": ["default", "http-parser"]` only if your app really needs it |
@@ -280,6 +281,25 @@ The generated ProgID has the form `<program>.<component>`: `<program>` is derive
 **Action is required only if** you ship a custom NSIS script (`nsis.include` / `nsis.script`) or external tooling that hard-codes the old ProgID — the association `name` or extension — for example to add extra shell verbs or registry entries under that key. Update those references to the new generated value.
 
 > On upgrade, an installer built with v27 registers the new ProgID. One-click installers run the previous version's uninstaller during the upgrade, which removes the old-format entry; with assisted installers that do not uninstall the prior version first, the old ProgID may remain in the registry until that version is removed.
+
+### NSIS: a per-machine install leaves a per-user install in place {#nsis-a-per-machine-install-leaves-a-per-user-install-in-place}
+
+**How you'll find out:** **Silent.** The installer runs on your users' machines, so the build cannot warn about it.
+
+A per-machine (all users) installation of your app no longer uninstalls a per-user installation of the same app, and no longer closes the app's processes that run from the per-user installation directory. Before v27, the elevated per-machine installer read the per-user uninstaller and installation directory from the current user's registry (`HKEY_CURRENT_USER`), ran that uninstaller and stopped processes under that directory. A per-user installation, its registry entries and its uninstaller can all be changed by the user without administrator rights, so the elevated installer no longer runs or acts on anything they name. This applies to one-click and assisted per-machine installers (`perMachine: true`) and to an assisted installer when the user chooses the all-users install mode.
+
+Installing per-user over a per-user installation, and per-machine over a per-machine installation, still uninstalls the previous version as before.
+
+**What users see:** someone who had the app installed for their account and then installs it for all users ends up with both copies: two entries in Settings → Apps → Installed apps, and Start menu and desktop shortcuts for both.
+
+**Action:** only if your users move from a per-user to a per-machine install (for example, you switch your build to `perMachine: true`, or let users pick the install mode with `oneClick: false`). Tell them to remove the per-user copy, before or after the per-machine install:
+
+- In Settings → Apps → Installed apps, uninstall the entry of your app that is installed for the current user (the per-machine entry stays).
+- Or run its uninstaller as that user, without elevation. By default it is in `%LOCALAPPDATA%\Programs\<app>`: `"%LOCALAPPDATA%\Programs\<app>\Uninstall <productName>.exe" /S /currentuser`.
+
+A custom NSIS script that defines `customUnInstallCheckCurrentUser` no longer has it called by the built-in install section, and a script that calls `uninstallOldVersion HKEY_CURRENT_USER` itself gets nothing run in per-machine mode.
+
+This is an installer behavior, not a config key, so `migrate-schema` does not change it.
 
 ---
 
