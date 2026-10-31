@@ -20,7 +20,8 @@ export function getNetSession(): Session {
 export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
   private cachedSession: Session | null = null
 
-  constructor(private readonly proxyLoginCallback?: (authInfo: AuthInfo, callback: LoginCallback) => void) {
+  // Electron's callback: called without credentials, it cancels the authentication
+  constructor(private readonly proxyLoginCallback?: (authInfo: AuthInfo, callback: (username?: string, password?: string) => void) => void) {
     super()
   }
 

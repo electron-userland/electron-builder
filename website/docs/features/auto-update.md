@@ -448,6 +448,13 @@ The `autoUpdater` object emits the following events:
 
 Emitted when there is an error while updating.
 
+#### Event: `login`
+
+* `authInfo` [AuthInfo](https://www.electronjs.org/docs/latest/api/structures/auth-info)
+* `callback` Function — `callback(username, password)`; called without arguments, it cancels the authentication
+
+Emitted when an update request gets an authentication challenge from a proxy (`authInfo.isProxy`) or from the update feed's origin (the host and port of the provider's `feedBaseUrl`; any origin when it is `null`). A challenge from any other server, such as a download host named in `latest*.yml` or a redirect target, is cancelled without emitting `login`, and electron-updater logs a warning the first time. See [`login` only gets proxy and feed-origin challenges](../migration/v27-runtime-changes.md#login-only-gets-proxy-and-feed-origin-challenges).
+
 #### Event: `checking-for-update`
 
 Emitted when checking if an update has started.

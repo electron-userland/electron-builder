@@ -526,6 +526,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   private clientPromise: Promise<Provider<any>> | null = null
+  // the provider of the latest update check, whose feedBaseUrl decides which server authentication challenges reach the `login` event
+  private loginChallengeProvider: Provider<any> | null = null
 
   protected readonly stagingUserIdPromise = new Lazy<string>(() => this.getOrCreateStagingUserId())
 
@@ -552,7 +554,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     if (app == null) {
       this.app = new ElectronAppAdapter()
-      this.httpExecutor = new ElectronHttpExecutor((authInfo, callback) => this.emit("login", authInfo, callback))
+      this.httpExecutor = new ElectronHttpExecutor((authInfo, callback) => this.onLoginChallenge(authInfo, callback))
     } else {
       this.app = app
       this.httpExecutor = null as any
@@ -770,6 +772,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
 
     const client = await this.clientPromise
+    this.loginChallengeProvider = client
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({ "x-user-staging-id": stagingUserId }))
     // autoUpdater.maxUpdateInfoSize wins over the publish configuration, so an app can raise the limit even when its config is invalid
@@ -873,6 +876,37 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this.log.debug(`Update manifest for version ${info.version} verified with trusted key ${result.keyId}`)
     this.log.info(`Update manifest signature verified for version ${info.version}`)
     return true
+  }
+
+  /**
+   * Electron's `login` event of an update request. Only a proxy's challenge, or one from the feed's origin (`Provider.feedBaseUrl`;
+   * every origin when it is `null`), is emitted as `login`: a download host named by the update info, or a redirect target, must not
+   * get the credentials the app's handler gives. Any other challenge is cancelled, and the request fails with the server's status.
+   * @internal
+   */
+  protected onLoginChallenge(authInfo: AuthInfo, callback: (username?: string, password?: string) => void): void {
+    const provider = this.loginChallengeProvider
+    const feedBaseUrl = provider == null ? undefined : provider.feedBaseUrl
+    let isFeedOrigin = feedBaseUrl === null
+    if (feedBaseUrl != null) {
+      // AuthInfo has no scheme: host and port identify the origin. URL.hostname keeps the brackets of an IPv6 address, AuthInfo.host may not
+      const feedPort = feedBaseUrl.port === "" ? (feedBaseUrl.protocol === "http:" ? 80 : 443) : Number(feedBaseUrl.port)
+      const withoutBrackets = (host: string) => host.toLowerCase().replace(/^\[(.*)\]$/, "$1")
+      isFeedOrigin = withoutBrackets(authInfo.host) === withoutBrackets(feedBaseUrl.hostname) && authInfo.port === feedPort
+    }
+    if (authInfo.isProxy || isFeedOrigin) {
+      this.emit("login", authInfo, callback)
+      return
+    }
+    // host and port only: the realm comes from the server
+    this.limitedLogger("login-challenge-refused").warn(
+      `electron-updater 7 (electron-builder v27) emits the login event only for a proxy's authentication challenge or one from the update feed's origin` +
+        `${feedBaseUrl == null ? " (not declared: a custom provider declares it by overriding Provider.feedBaseUrl)" : ` (${feedBaseUrl.origin})`}: ` +
+        `the challenge from ${authInfo.host}:${authInfo.port} was cancelled. If that server needs credentials, serve the update files from the feed origin or use pre-signed URLs. ` +
+        `https://www.electron.build/docs/migration/v27-runtime-changes#login-only-gets-proxy-and-feed-origin-challenges`
+    )
+    // no credentials: Electron cancels the authentication
+    callback()
   }
 
   private createProviderRuntimeOptions(): ProviderRuntimeOptions {
