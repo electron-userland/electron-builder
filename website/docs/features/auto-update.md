@@ -474,7 +474,7 @@ To let a server's challenge through, list its origin (scheme, host and optional 
 autoUpdater.loginChallengeOrigins = ["https://downloads.example.com"]
 ```
 
-`loginChallengeOrigins` defaults to `[]` and reads back as a frozen array of normalized origins; assign a new array to change it. An entry that is not an `http` or `https` URL, or that has user info, a path other than `/`, a query or a fragment, throws `ERR_UPDATER_INVALID_LOGIN_CHALLENGE_ORIGIN` when assigned. See [`login` only gets proxy and feed-origin challenges](../migration/v27-runtime-changes.md#login-only-gets-proxy-and-feed-origin-challenges).
+`loginChallengeOrigins` defaults to `[]` and reads back as a frozen array of normalized origins; assign a new array to change it. An entry that is not an `http` or `https` URL, or that has user info, a path other than `/`, a query or a fragment, throws `ERR_UPDATER_INVALID_LOGIN_CHALLENGE_ORIGIN` when assigned. Listing an `http` origin does not allow plain `http` requests to it: without [`allowInsecureFeed`](#allowinsecurefeed-new-defaults-to-false), such a request fails with `ERR_UPDATER_INSECURE_FEED` before it is sent. See [`login` only gets proxy and feed-origin challenges](../migration/v27-runtime-changes.md#login-only-gets-proxy-and-feed-origin-challenges).
 
 #### Event: `checking-for-update`
 

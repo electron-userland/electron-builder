@@ -304,6 +304,13 @@ describe("the updater's own executor", () => {
       expect(onLogin).toHaveBeenCalledTimes(1)
       expect(onLogin.mock.calls[0][1]).toBe(proxyCallback)
       expect(proxyCallback.mock.calls).toEqual([[]])
+
+      // listing an http origin does not allow plain http: the request is rejected before it is sent, so no challenge can come from it
+      updater.loginChallengeOrigins = ["http://downloads.example.net"]
+      expect(() => updater.httpExecutor.createRequest({ protocol: "http:", hostname: "downloads.example.net", path: "/TestApp-Setup-1.1.0.exe" }, () => undefined)).toThrow(
+        expect.objectContaining({ code: "ERR_UPDATER_INSECURE_FEED" })
+      )
+      expect(requests).toHaveLength(1)
     } finally {
       moduleInternals._load = load
     }
