@@ -270,7 +270,7 @@ describe("differential multipart download", () => {
       const bigOldFileFd = await openOldFile(tmpDir, bigOldFile)
       try {
         const { out, data } = collector()
-        let failure: Error | null = null
+        let failure: unknown = null
         const finished = new Promise<void>(resolve => out.on("finish", resolve))
         executeTasksUsingMultipleRangeRequests(differentialDownloader, tasks, out, bigOldFileFd, error => {
           failure = error

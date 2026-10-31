@@ -362,7 +362,7 @@ describe("differential download redirects", () => {
           resolve()
         },
         error => {
-          outcomes.push(`rejected: ${error.message}`)
+          outcomes.push(`rejected: ${error instanceof Error ? error.message : String(error)}`)
           resolve()
         },
         out

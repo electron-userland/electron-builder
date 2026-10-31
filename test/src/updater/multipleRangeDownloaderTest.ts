@@ -165,14 +165,14 @@ describe("executeTasksUsingMultipleRangeRequests", () => {
     response.statusCode = 206
     response.headers = { "content-type": "multipart/byteranges; boundary=boundary" }
 
-    const error = await new Promise<Error>(resolve => {
+    const error = await new Promise<unknown>(resolve => {
       const w = executeTasksUsingMultipleRangeRequests(createFakeDifferentialDownloader(response), tasks, out, 0, resolve)
       w(0)
       // simulate a network failure (e.g. sleep/wake, Wi-Fi roam) after part of the body arrived
       response.write("--boundary")
       setImmediate(() => response.emit("error", new Error("read ECONNRESET")))
     })
-    expect(error.message).toBe("read ECONNRESET")
+    expect(error).toMatchObject({ message: "read ECONNRESET" })
   })
 
   test("rejects a 206 whose long Content-Type names no boundary without backtracking over it", () => {
@@ -186,13 +186,17 @@ describe("executeTasksUsingMultipleRangeRequests", () => {
     // response headers of about 256 KB
     response.headers = { "content-type": `multipart/x${" ".repeat(100_000)}x` }
 
-    const errors: Array<Error & { code?: string }> = []
+    const errors: Array<unknown> = []
     const start = performance.now()
     executeTasksUsingMultipleRangeRequests(createFakeDifferentialDownloader(response), tasks, out, 0, e => errors.push(e))(0)
     expect(performance.now() - start).toBeLessThan(3000)
-    expect(errors.map(it => it.code)).toEqual([ERR_MULTIPLE_RANGES_NOT_SUPPORTED])
     // the error message quotes only the first 200 characters of the header
-    expect(errors.map(it => it.message)).toEqual([`Server does not support multiple ranges in one request (status 206, Content-Type "multipart/x${" ".repeat(189)}")`])
+    expect(errors).toEqual([
+      expect.objectContaining({
+        code: ERR_MULTIPLE_RANGES_NOT_SUPPORTED,
+        message: `Server does not support multiple ranges in one request (status 206, Content-Type "multipart/x${" ".repeat(189)}")`,
+      }),
+    ])
   })
 
   test("splits a plan with more than 200 ranges into several multipart requests and assembles the file", async ({ tmpDir }) => {

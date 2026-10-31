@@ -48,7 +48,7 @@ export function executeTasksUsingMultipleRangeRequests(
   tasks: Array<Operation>,
   out: Writable,
   oldFileFd: number,
-  reject: (error: Error) => void
+  reject: (error: unknown) => void
 ): (taskOffset: number) => void {
   const w = (taskOffset: number): void => {
     if (taskOffset >= tasks.length) {
@@ -78,7 +78,7 @@ export function executeTasksUsingMultipleRangeRequests(
 
 // Each request starts at the update URL and follows its own redirects: a redirect target can be a pre-signed URL that
 // expires before a later batch of a long download.
-function doExecuteTasks(differentialDownloader: DifferentialDownloader, options: PartListDataTask, out: Writable, resolve: () => void, reject: (error: Error) => void): void {
+function doExecuteTasks(differentialDownloader: DifferentialDownloader, options: PartListDataTask, out: Writable, resolve: () => void, reject: (error: unknown) => void): void {
   let ranges = "bytes="
   let partCount = 0
   let grandTotalBytes = 0
@@ -230,7 +230,7 @@ export function requestRange(
   target: RangeRequestTarget,
   range: string,
   onResponse: (response: IncomingMessage, request: AbortableRequest) => void,
-  reject: (error: Error) => void,
+  reject: (error: unknown) => void,
   out?: Writable
 ): void {
   const { httpExecutor } = differentialDownloader
@@ -249,8 +249,8 @@ export function requestRange(
     try {
       request = differentialDownloader.createRangeRequest(requestOptions, (response: IncomingMessage) => onResponse(response, request))
     } catch (e: unknown) {
-      // like a throw from the first request, which is sent inside the download's promise executor
-      reject(e instanceof Error ? e : new Error(String(e)))
+      // as is, like a throw from the first request, which is sent inside the download's promise executor
+      reject(e)
       return
     }
     httpExecutor.addErrorAndTimeoutHandlers(request, reject)
