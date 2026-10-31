@@ -1008,6 +1008,7 @@ describe("install on quit", { concurrent: false }, () => {
         const warnings = log.warns.filter(it => it.includes(REMOVED))
         expect(warnings.length).toBe(1)
         expect(warnings[0]).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#baseupdaterquitandinstallcalled-is-removed")
+        expect(warnings[0]).toContain('set autoInstallEvent = "manual"')
 
         // another updater instance announces it again
         const other = createDebUpdater(makeStubApp(), 0).updater

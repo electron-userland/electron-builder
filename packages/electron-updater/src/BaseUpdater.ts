@@ -192,6 +192,7 @@ export abstract class BaseUpdater extends AppUpdater {
     this.limitedLogger("removed-quit-and-install-called").warn(
       "BaseUpdater.quitAndInstallCalled was removed in electron-updater 7 (electron-builder v27): reading it returns undefined and setting it does nothing. " +
         "The updater tracks the install itself: an install that failed can be retried as is, and one started while another runs or after one handed the update off is ignored, so remove the code that reads or sets it. " +
+        'To keep the update from installing when the app quits, set autoInstallEvent = "manual". ' +
         "https://www.electron.build/docs/migration/v27-runtime-changes#baseupdaterquitandinstallcalled-is-removed"
     )
   }
