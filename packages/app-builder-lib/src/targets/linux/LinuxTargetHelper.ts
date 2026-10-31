@@ -12,12 +12,8 @@ import { SnapCore24 } from "./snap/core24.js"
 import { SnapCoreCustom } from "./snap/coreCustom.js"
 import { SnapCoreLegacy } from "./snap/coreLegacy.js"
 import { IconInfo } from "../../util/iconConverter.js"
-import { BUILD_CHANGES_URL } from "../../util/config/legacyOptions.js"
 import _fsExtra from "fs-extra"
 const { outputFile } = _fsExtra
-
-// appended to every validation error of a desktop entry, which electron-builder 26 wrote as given
-const DESKTOP_ENTRY_VALIDATION_HINT = ` Since electron-builder 27, such a .desktop entry fails the build instead of being written as given. See ${BUILD_CHANGES_URL}#linux-desktop-entries-are-validated`
 
 /**
  * Escape a string value for use in a freedesktop .desktop file string field
@@ -54,13 +50,13 @@ function desktopEntryLine(group: string, key: string, value: unknown): string {
   // leading and trailing blanks are trimmed when the file is read, but not a blank before the locale
   if (!/^[ \t]*[^=[\]\s](?:[^=[\]\r\n]*[^=[\]\s])?(?:\[[\p{L}\p{Nd}_.@-]+\])?[ \t]*$/u.test(key)) {
     throw new InvalidConfigurationError(
-      `Invalid key ${JSON.stringify(key)} in the ${group} group of the .desktop file — a key must not be empty or contain "=" or a line break, and brackets are only allowed around a trailing locale of letters, digits, "-", "_", "." and "@", right after the key, such as Name[de] or Name[sr@latin].${DESKTOP_ENTRY_VALIDATION_HINT}`
+      `Invalid key ${JSON.stringify(key)} in the ${group} group of the .desktop file — a key must not be empty or contain "=" or a line break, and brackets are only allowed around a trailing locale of letters, digits, "-", "_", "." and "@", right after the key, such as Name[de] or Name[sr@latin].`
     )
   }
   const text = String(value).replace(/[\r\n]+$/, "")
   if (/[\r\n]/.test(text)) {
     throw new InvalidConfigurationError(
-      `The value of ${key} in the ${group} group of the .desktop file contains a line break — a value must be on one line (write a newline in a string value as \\n).${DESKTOP_ENTRY_VALIDATION_HINT}`
+      `The value of ${key} in the ${group} group of the .desktop file contains a line break — a value must be on one line (write a newline in a string value as \\n).`
     )
   }
   return `\n${key}=${text}`
@@ -397,9 +393,7 @@ export class LinuxTargetHelper {
       // the name ends up in a group header, which may not contain brackets or control characters
       // eslint-disable-next-line no-control-regex
       if (/[[\]\x00-\x1f\x7f]/.test(actionName)) {
-        throw new InvalidConfigurationError(
-          `Invalid desktop action name ${JSON.stringify(actionName)} — it must not contain "[", "]" or control characters.${DESKTOP_ENTRY_VALIDATION_HINT}`
-        )
+        throw new InvalidConfigurationError(`Invalid desktop action name ${JSON.stringify(actionName)} — it must not contain "[", "]" or control characters.`)
       }
       const group = `[Desktop Action ${actionName}]`
       data += `\n${group}`
