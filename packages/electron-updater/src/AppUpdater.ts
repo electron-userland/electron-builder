@@ -67,6 +67,19 @@ const require = createRequire(import.meta.url ?? process.execPath)
 // shared rather than per-instance so that `updater.verifyUpdateFile === DEFAULT_VERIFY_UPDATE_FILE` identifies "no custom verifier"
 const DEFAULT_VERIFY_UPDATE_FILE: VerifyUpdateFile = _params => Promise.resolve({ response: "success" })
 
+// The headers electron-updater 6 already left out on a redirect to another origin (lowercase, without - and _), so dropping them is not news.
+const V6_CROSS_ORIGIN_DROPPED_HEADERS = new Set([
+  "authorization",
+  "proxyauthorization",
+  "privatetoken",
+  "xapikey",
+  "xauthtoken",
+  "xaccesstoken",
+  "xgitlabtoken",
+  "cookie",
+  "xcsrftoken",
+])
+
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
   login: (info: AuthInfo, callback: LoginCallback) => void
@@ -554,7 +567,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     if (app == null) {
       this.app = new ElectronAppAdapter()
-      this.httpExecutor = new ElectronHttpExecutor((authInfo, callback) => this.onLoginChallenge(authInfo, callback))
+      this.httpExecutor = new ElectronHttpExecutor(
+        (authInfo, callback) => this.onLoginChallenge(authInfo, callback),
+        (droppedHeaderNames, originUrl, targetUrl) => this.announceCrossOriginRedirect(droppedHeaderNames, originUrl, targetUrl)
+      )
     } else {
       this.app = app
       this.httpExecutor = null as any
@@ -914,11 +930,17 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       isUseMultipleRangeRequest: true,
       platform: this._testOnlyOptions == null ? (process.platform as ProviderPlatform) : this._testOnlyOptions.platform,
       executor: this.httpExecutor,
-      // announced like a cross-origin download (see announceCrossOriginDownload): names and origins only, never values
+      // announced like a cross-origin download (see announceCrossOriginDownload): names and origins only, never values. Only the app's
+      // headers: x-user-staging-id, which electron-updater adds itself, is dropped too but not announced (as on a redirect)
       onCrossOriginHeadersRemoved: (url, feedBaseUrl, headerNames) => {
+        const appHeaderNames = this.appRequestHeaderNames()
+        const names = headerNames.filter(it => appHeaderNames.has(it.toLowerCase()))
+        if (names.length === 0) {
+          return
+        }
         this.limitedLogger("cross-origin-update-info-headers").warn(
-          `electron-updater 7 (electron-builder v27) sends the credential headers from requestHeaders / addAuthHeader only to the update feed's origin (${feedBaseUrl.origin}): ` +
-            `${headerNames.join(", ")} not sent with the update info request to ${url.origin}, which is another origin. ` +
+          `electron-updater 7 (electron-builder v27) sends the request headers from requestHeaders / addAuthHeader, other than an allowlist such as Accept, User-Agent and Range, only to the update feed's origin (${feedBaseUrl.origin}): ` +
+            `${names.join(", ")} not sent with the update info request to ${url.origin}, which is another origin. ` +
             `If that server needs them, serve the channel file from the feed origin or use a pre-signed URL; a custom provider whose update check calls an API on that origin passes them in httpRequest's headers argument or returns null from feedBaseUrl. ` +
             `https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin`
         )
@@ -1097,7 +1119,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   /**
-   * Headers for a download from `url`: when the provider has a `feedBaseUrl`, the credential-bearing ones are dropped if `url` is on
+   * Headers for a download from `url`: when the provider has a `feedBaseUrl`, the ones off the cross-origin allowlist are dropped if `url` is on
    * another origin than `originUrl` (the feed by default). `null` keeps them for every URL.
    */
   protected downloadRequestHeaders(url: URL, downloadUpdateOptions: DownloadUpdateOptions, originUrl?: URL): OutgoingHttpHeaders {
@@ -1122,7 +1144,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     // v27 behaviour changes a plain-JavaScript app would otherwise not notice: each is announced once per updater
     if (names.length !== 0) {
       this.limitedLogger("cross-origin-headers").warn(
-        `electron-updater 7 (electron-builder v27) sends the credential headers from requestHeaders / addAuthHeader only to the update feed's origin (${credentialOrigin.origin}): ` +
+        `electron-updater 7 (electron-builder v27) sends the request headers from requestHeaders / addAuthHeader, other than an allowlist such as Accept, User-Agent and Range, only to the update feed's origin (${credentialOrigin.origin}): ` +
           `${names.join(", ")} not sent to ${url.origin}, which is another origin. ` +
           `If that server needs them, serve the update files from the feed origin or use pre-signed URLs. ${docs}`
       )
@@ -1137,7 +1159,32 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
   }
 
-  // Credential headers are only sent where the provider says (Provider.feedBaseUrl); a provider that does not say is a configuration error.
+  /**
+   * A redirect to another origin sends on only the cross-origin allowlist of headers (such as Accept, User-Agent and Range): announces, once
+   * per updater, the headers set by the app (`requestHeaders`) that one did not send, by name only. The ones electron-updater 6 already
+   * left out (such as Authorization from `addAuthHeader`, or PRIVATE-TOKEN) are not news.
+   * @internal
+   */
+  protected announceCrossOriginRedirect(droppedHeaderNames: Array<string>, originUrl: URL, targetUrl: URL): void {
+    const appHeaderNames = this.appRequestHeaderNames()
+    const names = droppedHeaderNames.filter(it => !V6_CROSS_ORIGIN_DROPPED_HEADERS.has(it.toLowerCase().replace(/[-_]/g, "")) && appHeaderNames.has(it.toLowerCase()))
+    if (names.length === 0) {
+      return
+    }
+    this.limitedLogger("cross-origin-redirect-headers").warn(
+      `electron-updater 7 (electron-builder v27) sends only an allowlist of request headers (such as Accept, User-Agent and Range) on to another origin: ` +
+        `the redirect from ${originUrl.origin} to ${targetUrl.origin} did not send ${names.join(", ")} from requestHeaders. ` +
+        `If that server needs them, serve the update files from the feed origin or use pre-signed URLs. ` +
+        `https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-header-allowlist`
+    )
+  }
+
+  /** The lowercase names of the headers the app set (`requestHeaders`, including the Authorization from `addAuthHeader`). */
+  private appRequestHeaderNames(): Set<string> {
+    return new Set(Object.keys(this.requestHeaders ?? {}).map(it => it.toLowerCase()))
+  }
+
+  // Headers off the cross-origin allowlist are only sent where the provider says (Provider.feedBaseUrl); a provider that does not say is a configuration error.
   private static checkFeedBaseUrlDeclared(provider: Provider<any>, headers: OutgoingHttpHeaders): void {
     if (provider.feedBaseUrl !== undefined) {
       return
@@ -1145,10 +1192,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const names = HttpExecutor.sensitiveHeaderNames(headers)
     if (names.length !== 0) {
       throw newError(
-        `The custom update provider ${provider.constructor.name} does not declare feedBaseUrl, but its downloads would send the credential headers ${names.join(", ")} ` +
-          `(from requestHeaders, addAuthHeader or fileExtraDownloadHeaders). Override Provider.feedBaseUrl to return the feed URL ` +
+        `The custom update provider ${provider.constructor.name} does not declare feedBaseUrl, but its downloads would send the headers ${names.join(", ")} ` +
+          `(from requestHeaders, addAuthHeader or fileExtraDownloadHeaders), which are not on the cross-origin allowlist. Override Provider.feedBaseUrl to return the feed URL ` +
           `(the headers are then only sent to its origin), or null to send the request headers to every origin. ` +
-          `https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin`,
+          `https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-header-allowlist`,
         "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED"
       )
     }
