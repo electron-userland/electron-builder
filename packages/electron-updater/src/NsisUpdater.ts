@@ -385,7 +385,7 @@ export class NsisUpdater extends BaseUpdater {
         }
         this.dispatchError(
           newError(
-            `Cannot start the update installer: it requires administrator rights (EACCES: ${message}), but the app is not installed under Program Files. Since electron-updater 7 the installer is started through elevate.exe after this error only for an app installed for all users under Program Files; build per-machine apps with nsis.perMachine: true to start their updates through elevate.exe right away. See https://www.electron.build/docs/migration/v27-runtime-changes#nsis-a-failed-installer-start-is-no-longer-retried`,
+            `Cannot start the update installer: it requires administrator rights (EACCES: ${message}), but the app is not installed under Program Files. electron-updater starts the installer through elevate.exe after this error only for an app installed for all users under Program Files; build per-machine apps with nsis.perMachine: true to start their updates through elevate.exe right away. See https://www.electron.build/docs/migration/v27-runtime-changes#nsis-a-failed-installer-start-is-no-longer-retried`,
             "ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"
           )
         )
@@ -394,7 +394,7 @@ export class NsisUpdater extends BaseUpdater {
       if (errorCode === "UNKNOWN" || errorCode === "ENOENT") {
         this.dispatchError(
           newError(
-            `Cannot start the update installer (${errorCode}: ${message}). Since electron-updater 7 the installer is no longer started again through elevate.exe or opened with the shell after this error; check whether security software (AppLocker, WDAC, antivirus) blocks the installer, or install the update manually. See https://www.electron.build/docs/migration/v27-runtime-changes#nsis-a-failed-installer-start-is-no-longer-retried`,
+            `Cannot start the update installer (${errorCode}: ${message}). electron-updater does not start the installer again through elevate.exe or open it with the shell after this error; check whether security software (AppLocker, WDAC, antivirus) blocks the installer, or install the update manually. See https://www.electron.build/docs/migration/v27-runtime-changes#nsis-a-failed-installer-start-is-no-longer-retried`,
             "ERR_UPDATER_INSTALLER_START_FAILED"
           )
         )
