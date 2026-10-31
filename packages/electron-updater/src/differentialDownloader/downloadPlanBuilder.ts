@@ -21,12 +21,11 @@ export interface Operation {
 
 export function computeOperations(oldBlockMap: BlockMap, newBlockMap: BlockMap, logger: Logger): Array<Operation> {
   const nameToOldBlocks = buildBlockFileMap(oldBlockMap.files)
-  const nameToNewBlocks = buildBlockFileMap(newBlockMap.files)
 
   let lastOperation: Operation | null = null
 
   // for now only one file is supported in block map
-  const blockMapFile: { name: string; offset: number } = newBlockMap.files[0]
+  const blockMapFile: BlockMapFile = newBlockMap.files[0]
   const operations: Array<Operation> = []
   const name = blockMapFile.name
   const oldEntry = nameToOldBlocks.get(name)
@@ -35,10 +34,10 @@ export function computeOperations(oldBlockMap: BlockMap, newBlockMap: BlockMap, 
     throw new Error(`no file ${name} in old blockmap`)
   }
 
-  const newFile = nameToNewBlocks.get(name)!
+  const newFile = blockMapFile
   let changedBlockCount = 0
 
-  const { checksumToOffset: checksumToOldOffset, checksumToOldSize } = buildChecksumMap(nameToOldBlocks.get(name)!, oldEntry.offset, logger)
+  const { checksumToOffset: checksumToOldOffset, checksumToOldSize } = buildChecksumMap(oldEntry, oldEntry.offset, logger)
 
   let newOffset = blockMapFile.offset
   for (let i = 0; i < newFile.checksums.length; newOffset += newFile.sizes[i], i++) {

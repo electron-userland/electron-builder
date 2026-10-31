@@ -195,7 +195,7 @@ export class NsisUpdater extends BaseUpdater {
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "exe")!
+    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "exe")
     const webInstallerDisabled = downloadUpdateOptions.disableWebInstaller ?? true
     // the app set disableWebInstaller to false (read with the options above), not the default of an install made by an nsis-web installer
     const webInstallerEnabledByApp = this.isWebInstallerEnabledByApp
@@ -399,9 +399,10 @@ export class NsisUpdater extends BaseUpdater {
 
     try {
       const newUrl = new URL(packageInfo.path)
+      const downloadedUpdateHelper = await this.getOrCreateDownloadHelper()
       const downloadOptions: DifferentialDownloaderOptions = {
         newUrl,
-        oldFile: path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_APP_PACKAGE_FILE_NAME),
+        oldFile: path.join(downloadedUpdateHelper.cacheDir, CURRENT_APP_PACKAGE_FILE_NAME),
         logger: this.log,
         newFile: packagePath,
         requestHeaders: this.downloadRequestHeaders(newUrl, downloadUpdateOptions),

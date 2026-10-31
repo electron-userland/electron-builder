@@ -1,7 +1,7 @@
 import * as path from "path"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { CancellationToken } from "electron-updater"
-import { AppImageUpdater, DebUpdater, type VerifyUpdateFile } from "electron-updater"
+import { AppImageUpdater, AppUpdater, DebUpdater, PacmanUpdater, RpmUpdater, type VerifyUpdateFile } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import type { InstallOptions } from "electron-updater/src/BaseUpdater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
@@ -436,5 +436,77 @@ describe("BaseUpdater verifyUpdateFile integration", () => {
 
     await expectVerifyUpdateFileFailure({ expect, downloadPromise, verifyUpdateFile: mock, observations, expectedErrorMessageSubstring: "nope" })
     expect(afterVerification).not.toHaveBeenCalled()
+  })
+})
+
+describe("Linux updaters without a file of their package type", () => {
+  // each package type skips the files of the others, so an update that has none of its type has nothing to download
+  it.each([
+    { name: "AppImage", create: () => new AppImageUpdater(null, stubApp), otherFile: "TestApp-2.0.0.deb" },
+    { name: "deb", create: () => new DebUpdater(null, stubApp), otherFile: "TestApp-2.0.0.rpm" },
+    { name: "rpm", create: () => new RpmUpdater(null, stubApp), otherFile: "TestApp-2.0.0.pacman" },
+    { name: "pacman", create: () => new PacmanUpdater(null, stubApp), otherFile: "TestApp-2.0.0.AppImage" },
+  ])("$name: rejects the download with ERR_UPDATER_UPDATE_FILE_NOT_FOUND", async ({ name, create, otherFile }) => {
+    const updater = create()
+    updater.logger = null
+    // @ts-expect-error stubbing a protected method: the download must not start
+    const executeDownload = (updater.executeDownload = vi.fn())
+
+    // @ts-expect-error accessing a protected method
+    const download: Promise<unknown> = updater.doDownloadUpdate({
+      updateInfoAndProvider: {
+        info: { version: "2.0.0", files: [{ url: otherFile, sha512: "sha512-of-2.0.0", size: 1024 }], path: "", sha512: "", releaseDate: "" },
+        provider: {
+          resolveFiles: () => [{ url: new URL(`https://example.com/${otherFile}`), info: { url: otherFile, sha512: "sha512-of-2.0.0", size: 1024 } }],
+        } as any,
+      },
+      requestHeaders: {},
+      cancellationToken: new CancellationToken(),
+      disableDifferentialDownload: true,
+    })
+
+    await expect(download).rejects.toMatchObject({ code: "ERR_UPDATER_UPDATE_FILE_NOT_FOUND", message: `No .${name} file in the files of update 2.0.0` })
+    expect(executeDownload).not.toHaveBeenCalled()
+  })
+})
+
+describe("AppUpdater.executeDownload without a done step", () => {
+  // BaseUpdater and MacUpdater always pass one; the task type leaves it optional
+  it("finishes the download", async context => {
+    const cacheDir = await context.tmpDir.createTempDir()
+    const helper = new DownloadedUpdateHelper(cacheDir, makeLogger())
+    const updater = new AppImageUpdater(null, stubApp)
+    updater.logger = null
+    // @ts-expect-error accessing a protected property
+    updater.downloadedUpdateHelper = helper
+    updater.verifyUpdateFile = createVerifyUpdateFileMock(() => ({ response: "success" })).mock
+
+    const taskOptions: DownloadExecutorTask = {
+      fileExtension: "AppImage",
+      fileInfo: {
+        url: new URL("https://example.com/TestApp-2.0.0.AppImage"),
+        info: { url: "TestApp-2.0.0.AppImage", sha512: "sha512-of-2.0.0", size: 1024 },
+      },
+      downloadUpdateOptions: {
+        updateInfoAndProvider: {
+          info: { version: "2.0.0", files: [], path: "", sha512: "", releaseDate: "" },
+          // @ts-expect-error the provider only supplies the feed origin for the download headers, so a stub without one is enough
+          provider: { feedBaseUrl: null },
+        },
+        requestHeaders: {},
+        cancellationToken: new CancellationToken(),
+      },
+      task: async destinationFile => {
+        await outputFile(destinationFile, "new AppImage bytes")
+      },
+    }
+
+    // AppUpdater's own executeDownload: BaseUpdater's override always adds a done step
+    // @ts-expect-error accessing a protected method
+    const result = await AppUpdater.prototype.executeDownload.call(updater, taskOptions)
+
+    const finalFilePath = path.join(helper.cacheDirForPendingUpdate, "TestApp-2.0.0.AppImage")
+    expect(result).toMatchObject({ updateFile: finalFilePath })
+    expect(await readFile(finalFilePath, "utf8")).toBe("new AppImage bytes")
   })
 })

@@ -171,6 +171,9 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 }
 
+// without `not`, the first file is the fallback, and `files` is not empty: a file is always found
+export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string): ResolvedUpdateFileInfo
+export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>): ResolvedUpdateFileInfo | null | undefined
 export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>): ResolvedUpdateFileInfo | null | undefined {
   if (files.length === 0) {
     throw newError("No files provided", "ERR_UPDATER_NO_FILES_PROVIDED")

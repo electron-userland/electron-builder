@@ -1094,9 +1094,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       )
     }
     const feedQueryNames = feedBaseUrl == null ? [] : [...new Set(feedBaseUrl.searchParams.keys())]
-    if (feedQueryNames.length !== 0) {
+    if (feedBaseUrl != null && feedQueryNames.length !== 0) {
       this.limitedLogger("cross-origin-feed-query").warn(
-        `electron-updater 7 (electron-builder v27) adds the feed URL's query string (${feedQueryNames.join(", ")}) only to URLs on the update feed's origin (${feedBaseUrl!.origin}): ` +
+        `electron-updater 7 (electron-builder v27) adds the feed URL's query string (${feedQueryNames.join(", ")}) only to URLs on the update feed's origin (${feedBaseUrl.origin}): ` +
           `not added to the download from ${url.origin}, which keeps its own query string. ` +
           `If that server needs it, serve the update files from the feed origin or use pre-signed URLs. ${docs}`
       )
@@ -1228,7 +1228,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         // The differential downloader re-fetches the old blockmap from the server when no cached one exists.
         await fsExtra.remove(cachedBlockMapFile)
       }
-      await taskOptions.done!({
+      await taskOptions.done?.({
         ...updateInfo,
         downloadedFile: updateFile,
         ...(packageFile == null ? {} : { packageFile }),
@@ -1389,9 +1389,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return parseBlockMapData(data, url.href, blockMapLimit, expectedFileSize)
       }
 
+      const downloadedUpdateHelper = await this.getOrCreateDownloadHelper()
       const downloadOptions: DifferentialDownloaderOptions = {
         newUrl: fileInfo.url,
-        oldFile: path.join(this.downloadedUpdateHelper!.cacheDir, oldInstallerFileName),
+        oldFile: path.join(downloadedUpdateHelper.cacheDir, oldInstallerFileName),
         logger: this.log,
         newFile: installerPath,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
@@ -1422,7 +1423,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
       // the cached old block map is read first (no request): when it is a v3 map, only the parts of the new map that changed are
       // fetched (Range requests), else the new map is downloaded in full
-      let oldBlockMapData = await getBlockMapFromCacheDir(this.downloadedUpdateHelper!.cacheDir)
+      let oldBlockMapData = await getBlockMapFromCacheDir(downloadedUpdateHelper.cacheDir)
       if (oldBlockMapData != null && !(await isBlockMapOfFile(oldBlockMapData.map, downloadOptions.oldFile))) {
         // The cached blockmap is replaced when a download finishes, but NSIS replaces the cached installer only when the update is
         // installed. A release that arrives before the previous one is installed therefore finds the pending release's blockmap next
@@ -1455,7 +1456,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         }
       }
       newBlockMapData ??= await downloadBlockMap(newBlockMapUrl, newFileSize)
-      await saveBlockMapToCacheDir(newBlockMapData, this.downloadedUpdateHelper!.cacheDirForPendingUpdate)
+      await saveBlockMapToCacheDir(newBlockMapData, downloadedUpdateHelper.cacheDirForPendingUpdate)
 
       if (oldBlockMapData == null) {
         if (oldBlockMapUrl == null) {

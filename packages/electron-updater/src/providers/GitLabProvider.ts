@@ -112,12 +112,8 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
     const tag = latestRelease.tag_name
 
     // Look for channel file in release assets
-    let rawData: string | null = null
-    let channelFile = ""
-    let channelFileUrl: URL | null = null
-
-    const fetchChannelData = async (channelName: string): Promise<string> => {
-      channelFile = getChannelFilename(channelName)
+    const fetchChannelData = async (channelName: string): Promise<{ rawData: string; channelFile: string; channelFileUrl: URL }> => {
+      const channelFile = getChannelFilename(channelName)
 
       // Find the channel file in GitLab release assets
       const channelAsset = latestRelease.assets.links.find(asset => asset.name === channelFile)
@@ -126,7 +122,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
         throw newError(`Cannot find ${channelFile} in the latest release assets`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
       }
 
-      channelFileUrl = new URL(channelAsset.direct_asset_url)
+      const channelFileUrl = new URL(channelAsset.direct_asset_url)
       const authHeaders = getGitlabAuthHeaders(this.options.token || null)
       const isSameOriginAsApi = channelFileUrl.protocol === this.baseApiUrl.protocol && channelFileUrl.host === this.baseApiUrl.host
       const headers = isSameOriginAsApi && Object.keys(authHeaders).length ? authHeaders : undefined
@@ -136,7 +132,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
         if (!result) {
           throw newError(`Empty response from ${channelFileUrl}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
         }
-        return result
+        return { rawData: result, channelFile, channelFileUrl }
       } catch (e: any) {
         if (e instanceof HttpError && e.statusCode === 404) {
           throw channelFileNotFoundError(channelFile, channelFileUrl, e)
@@ -145,22 +141,24 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
       }
     }
 
+    let channelData: { rawData: string; channelFile: string; channelFileUrl: URL }
     try {
-      rawData = await fetchChannelData(this.channel)
+      channelData = await fetchChannelData(this.channel)
     } catch (e: any) {
       // If custom channel fails, try default channel as fallback
       if (this.channel !== this.getDefaultChannelName()) {
-        rawData = await fetchChannelData(this.getDefaultChannelName())
+        channelData = await fetchChannelData(this.getDefaultChannelName())
       } else {
         throw e
       }
     }
+    const { rawData, channelFile, channelFileUrl } = channelData
 
     if (!rawData) {
       throw newError(`Unable to parse channel data from ${channelFile}`, "ERR_UPDATER_INVALID_UPDATE_INFO")
     }
 
-    const result = parseUpdateInfo(rawData, channelFile, channelFileUrl!)
+    const result = parseUpdateInfo(rawData, channelFile, channelFileUrl)
 
     // Set release name from GitLab if not present
     if (result.releaseName == null) {

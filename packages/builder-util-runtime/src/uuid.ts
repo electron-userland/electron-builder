@@ -21,9 +21,10 @@ for (let i = 0; i < 256; i++) {
 
 // UUID class
 export class UUID {
+  private readonly value: string | Buffer
   private ascii: string | null = null
-  private readonly binary: Buffer | null = null
-  private readonly version: number
+  // undefined for the nil UUID
+  private readonly version: number | undefined
 
   // from rfc4122#appendix-C
   static readonly OID: Buffer = UUID.parse("6ba7b812-9dad-11d1-80b4-00c04fd430c8")
@@ -34,13 +35,8 @@ export class UUID {
       throw new Error("not a UUID")
     }
 
-    this.version = check.version!
-
-    if (check.format === "ascii") {
-      this.ascii = uuid as string
-    } else {
-      this.binary = uuid as Buffer
-    }
+    this.version = check.version
+    this.value = uuid
   }
 
   static v5(name: string | Buffer, namespace: Buffer) {
@@ -49,7 +45,7 @@ export class UUID {
 
   toString() {
     if (this.ascii == null) {
-      this.ascii = stringify(this.binary!)
+      this.ascii = typeof this.value === "string" ? this.value : stringify(this.value)
     }
     return this.ascii
   }

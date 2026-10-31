@@ -200,11 +200,12 @@ export class DownloadedUpdateHelper {
       // no pending update
       return false
     }
-    const version = cachedInfo?.packageFileName == null || cachedInfo.version == null ? null : parseVersion(cachedInfo.version)
-    if (version == null || !isVersionsEqual(version, currentVersion)) {
+    const packageFileName = cachedInfo?.packageFileName
+    const version = packageFileName == null || cachedInfo?.version == null ? null : parseVersion(cachedInfo.version)
+    if (packageFileName == null || version == null || !isVersionsEqual(version, currentVersion)) {
       return false
     }
-    const packageFile = path.join(this.cacheDirForPendingUpdate, path.basename(cachedInfo!.packageFileName!))
+    const packageFile = path.join(this.cacheDirForPendingUpdate, path.basename(packageFileName))
     try {
       await fsExtra.unlink(packageFile)
     } catch (e: any) {

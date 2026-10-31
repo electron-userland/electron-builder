@@ -130,6 +130,33 @@ test.ifMac("mac updates", async ({ expect }) => {
   }
 })
 
+test.ifMac("mac update proxy server answers a request without a URL with 404", async ({ expect }) => {
+  const mockNativeUpdater = new TestNativeUpdater()
+  mockForNodeRequire("electron", { autoUpdater: mockNativeUpdater })
+
+  const { port, close } = await serveMacUpdate("mac-updater-no-url-test")
+  const updater = new MacUpdater(undefined, await createTestAppAdapter())
+  try {
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
+      provider: "generic",
+      url: `http://127.0.0.1:${port}`,
+    })
+    tuneTestUpdater(updater)
+    ;(updater as any)._testOnlyOptions.platform = process.platform
+    const updateCheckResult = await updater.checkForUpdates()
+    await updateCheckResult?.downloadPromise
+
+    // http.Server always sets the URL; the proxy must not depend on it
+    const statusCodes: Array<number> = []
+    const response = { writeHead: (statusCode: number) => statusCodes.push(statusCode), end: () => {} }
+    ;(updater as any).server.emit("request", { url: undefined, headers: {} }, response)
+    expect(statusCodes).toEqual([404])
+  } finally {
+    ;(updater as any).closeServerIfExists()
+    await close()
+  }
+})
+
 test.ifMac("mac updates abort when verifyUpdateFile rejects the downloaded temp zip", async ({ expect }) => {
   const mockNativeUpdater = new TestNativeUpdater()
 

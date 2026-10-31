@@ -1,4 +1,4 @@
-import { AllPublishOptions } from "builder-util-runtime"
+import { AllPublishOptions, newError } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter.js"
 import { DownloadUpdateOptions } from "./AppUpdater.js"
 import { DOWNLOAD_PROGRESS, Logger, DownloadExecutorResult } from "./types.js"
@@ -13,7 +13,10 @@ export class PacmanUpdater extends LinuxUpdater {
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "pacman", ["AppImage", "deb", "rpm"])!
+    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "pacman", ["AppImage", "deb", "rpm"])
+    if (fileInfo == null) {
+      return Promise.reject(newError(`No .pacman file in the files of update ${downloadUpdateOptions.updateInfoAndProvider.info.version}`, "ERR_UPDATER_UPDATE_FILE_NOT_FOUND"))
+    }
     return this.executeDownload({
       fileExtension: "pacman",
       fileInfo,

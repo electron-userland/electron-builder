@@ -364,6 +364,16 @@ test("empty Atom feed - throws ERR_XML_MISSED_ELEMENT", async ({ expect }) => {
   await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_XML_MISSED_ELEMENT" })
 })
 
+// an empty body is read as null
+test("empty Atom feed response - throws ERR_UPDATER_INVALID_RELEASE_FEED", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPublicUpdater(requestSpy)
+
+  requestSpy.mockResolvedValueOnce(null)
+
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_RELEASE_FEED", message: "Empty response from the GitHub Atom feed" })
+})
+
 // resolveFiles constructs the GitHub download URL using the tag from the feed
 test("resolveFiles - constructs download URL with tag in path", async ({ expect }) => {
   const requestSpy = createMockRequest()

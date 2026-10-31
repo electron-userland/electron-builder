@@ -699,6 +699,11 @@ export function detectSha512Encoding(sha512: string): BinaryToTextEncoding {
 }
 
 function configurePipes(options: DownloadCallOptions, response: IncomingMessage) {
+  const destination = options.destination
+  if (destination == null) {
+    options.callback(newError("No destination file for the download: set destination, or a responseHandler", "ERR_UPDATER_DOWNLOAD_DESTINATION_NOT_SET"))
+    return
+  }
   if (!checkSha2(safeGetHeader(response, "X-Checksum-Sha2"), options.options.sha2, options.callback)) {
     return
   }
@@ -718,7 +723,7 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage)
     streams.push(new DigestTransform(options.options.sha2, "sha256", "hex"))
   }
 
-  const fileOut = createWriteStream(options.destination!)
+  const fileOut = createWriteStream(destination)
   streams.push(fileOut)
 
   let lastStream = response

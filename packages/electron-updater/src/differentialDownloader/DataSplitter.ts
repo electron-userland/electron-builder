@@ -265,7 +265,14 @@ export class DataSplitter extends Writable {
           }
         }
 
-        const prevTaskIndex = this.partIndex === 0 ? this.options.start : this.partIndexToTaskIndex.get(this.partIndex - 1)! + 1 /* prev part is download, next maybe copy */
+        let prevTaskIndex = this.options.start
+        if (this.partIndex !== 0) {
+          const prevPartTaskIndex = this.partIndexToTaskIndex.get(this.partIndex - 1)
+          if (prevPartTaskIndex == null) {
+            throw newError("prevTaskIndex is null", "ERR_DATA_SPLITTER_TASK_INDEX_IS_NULL")
+          }
+          prevTaskIndex = prevPartTaskIndex + 1 /* prev part is download, next maybe copy */
+        }
         if (prevTaskIndex < taskIndex) {
           await this.copyExistingData(prevTaskIndex, taskIndex)
         } else if (prevTaskIndex > taskIndex) {

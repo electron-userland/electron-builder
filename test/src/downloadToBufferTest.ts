@@ -32,6 +32,26 @@ test("stops reading a buffer download after the size limit", async () => {
   expect(executor.response.destroy).toHaveBeenCalledOnce()
 })
 
+test("fails a file download that has neither a destination nor a response handler", async () => {
+  const executor = new BufferExecutor()
+  const download = new Promise<void>((resolve, reject) => {
+    // @ts-expect-error accessing a protected method
+    executor.doDownload(
+      { protocol: "https:", hostname: "example.com", path: "/update" },
+      {
+        destination: null,
+        responseHandler: null,
+        options: { cancellationToken: new CancellationToken() },
+        onCancel: () => {},
+        callback: (error: Error | null) => (error == null ? resolve() : reject(error)),
+      },
+      0
+    )
+  })
+
+  await expect(download).rejects.toMatchObject({ code: "ERR_UPDATER_DOWNLOAD_DESTINATION_NOT_SET" })
+})
+
 describe("API request size limit (maxResponseSize)", () => {
   function fakeResponse(statusCode = 200, headers: Record<string, string> = {}) {
     return Object.assign(new EventEmitter(), { statusCode, statusMessage: "", headers, setEncoding: vi.fn() })

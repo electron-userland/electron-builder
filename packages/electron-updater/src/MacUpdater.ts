@@ -104,7 +104,7 @@ export class MacUpdater extends AppUpdater {
       fileInfo: zipFileInfo,
       downloadUpdateOptions,
       task: async (destinationFile, downloadOptions) => {
-        const cachedUpdateFilePath = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
+        const cachedUpdateFilePath = path.join((await this.getOrCreateDownloadHelper()).cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
         const canDifferentialDownload = () => {
           if (!fsExtra.pathExistsSync(cachedUpdateFilePath)) {
             this.log.info("Unable to locate previous update.zip for differential download (is this first install?), falling back to full download")
@@ -126,7 +126,7 @@ export class MacUpdater extends AppUpdater {
       done: async event => {
         if (!downloadUpdateOptions.disableDifferentialDownload) {
           try {
-            const cachedUpdateFilePath = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
+            const cachedUpdateFilePath = path.join((await this.getOrCreateDownloadHelper()).cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
             await fsExtra.copyFile(event.downloadedFile, cachedUpdateFilePath)
           } catch (error: any) {
             this.log.warn(`Unable to copy file for caching for future differential downloads: ${error.message}`)
@@ -144,9 +144,10 @@ export class MacUpdater extends AppUpdater {
     const logContext = `fileToProxy=${zipFileInfo.url.href}`
     this.closeServerIfExists()
     this.log.debug(`Creating proxy server for native Squirrel.Mac (${logContext})`)
-    this.server = createServer()
+    const server = createServer()
+    this.server = server
     this.log.debug(`Proxy server for native Squirrel.Mac is created (${logContext})`)
-    this.server.on("close", () => {
+    server.on("close", () => {
       this.log.info(`Proxy server for native Squirrel.Mac is closed (${logContext})`)
     })
 
@@ -165,8 +166,9 @@ export class MacUpdater extends AppUpdater {
 
       // insecure random is ok
       const fileUrl = `/${randomBytes(64).toString("hex")}.zip`
-      this.server!.on("request", (request: IncomingMessage, response: ServerResponse) => {
-        const requestUrl = request.url!
+      server.on("request", (request: IncomingMessage, response: ServerResponse) => {
+        // always set on a request of an http.Server; without one, nothing below matches and it is answered with 404
+        const requestUrl = request.url ?? ""
         this.log.info(`${requestUrl} requested`)
         if (requestUrl === "/") {
           // check for basic auth header
@@ -190,7 +192,7 @@ export class MacUpdater extends AppUpdater {
             return
           }
 
-          const data = Buffer.from(`{ "url": "${getServerUrl(this.server!)}${fileUrl}" }`)
+          const data = Buffer.from(`{ "url": "${getServerUrl(server)}${fileUrl}" }`)
           response.writeHead(200, { "Content-Type": "application/json", "Content-Length": data.length })
           response.end(data)
           return
@@ -234,10 +236,10 @@ export class MacUpdater extends AppUpdater {
 
       this.log.debug(`Proxy server for native Squirrel.Mac is starting to listen (${logContext})`)
 
-      this.server!.listen(0, "127.0.0.1", () => {
-        this.log.debug(`Proxy server for native Squirrel.Mac is listening (address=${getServerUrl(this.server!)}, ${logContext})`)
+      server.listen(0, "127.0.0.1", () => {
+        this.log.debug(`Proxy server for native Squirrel.Mac is listening (address=${getServerUrl(server)}, ${logContext})`)
         this.nativeUpdater.setFeedURL({
-          url: getServerUrl(this.server!),
+          url: getServerUrl(server),
           headers: {
             "Cache-Control": "no-cache",
             Authorization: `Basic ${authInfo.toString("base64")}`,

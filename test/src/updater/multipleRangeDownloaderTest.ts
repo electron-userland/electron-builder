@@ -279,6 +279,46 @@ describe("DataSplitter", () => {
     expect(finishCount).toBe(1)
   })
 
+  test("fails a part whose previous part has no task index", async () => {
+    const out = new Writable({ write: (_chunk, _encoding, callback) => callback() })
+    const partIndexToTaskIndex = new Map([
+      [0, 0],
+      [1, 1],
+    ])
+    let finishCount = 0
+    const splitter = new DataSplitter(
+      out,
+      {
+        oldFileFd: -1,
+        tasks: [
+          { kind: OperationKind.DOWNLOAD, start: 0, end: 3 },
+          { kind: OperationKind.DOWNLOAD, start: 3, end: 6 },
+        ],
+        start: 0,
+        end: 2,
+      },
+      partIndexToTaskIndex,
+      "boundary",
+      [3, 3],
+      () => finishCount++,
+      6
+    )
+    // the stream also emits the error it hands to the write callback
+    splitter.on("error", () => {})
+    const write = (chunk: string) =>
+      new Promise<void>((resolve, reject) => {
+        splitter.write(Buffer.from(chunk), error => (error == null ? resolve() : reject(error)))
+      })
+
+    await write("--boundary\r\nContent-Range: bytes 0-2/6\r\n\r\nabc")
+    // the copy range before the second part starts after the task of the first: without it, the range cannot be computed
+    partIndexToTaskIndex.delete(0)
+    await expect(write("\r\n--boundary\r\nContent-Range: bytes 3-5/6\r\n\r\ndef\r\n--boundary--\r\n")).rejects.toMatchObject({
+      code: "ERR_DATA_SPLITTER_TASK_INDEX_IS_NULL",
+    })
+    expect(finishCount).toBe(0)
+  })
+
   test("acknowledges trailing writes after completion", () => {
     const splitter = new DataSplitter(new Writable(), { oldFileFd: -1, tasks: [], start: 0, end: 0 }, new Map(), "boundary", [], () => {}, 0)
     splitter.partIndex = 0

@@ -60,13 +60,16 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
   async getLatestVersion(): Promise<GithubUpdateInfo> {
     const cancellationToken = new CancellationToken()
 
-    const feedXml: string = (await this.httpRequest(
+    const feedXml = await this.httpRequest(
       newUrlFromBase(`${this.basePath}.atom`, this.baseUrl),
       {
         accept: "application/xml, application/atom+xml, text/xml, */*",
       },
       cancellationToken
-    ))!
+    )
+    if (feedXml == null) {
+      throw newError("Empty response from the GitHub Atom feed", "ERR_UPDATER_INVALID_RELEASE_FEED")
+    }
 
     const feed = parseXml(feedXml)
     const releaseEntries = feed.getElements("entry")
@@ -147,7 +150,8 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     const channelFile = getChannelFilename(channelName)
     const channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(String(tag), channelFile), this.baseUrl)
     try {
-      const rawData = (await this.channelFileRequest(channelFileUrl, undefined, cancellationToken))!
+      // parseUpdateInfo reports an empty response
+      const rawData = await this.channelFileRequest(channelFileUrl, undefined, cancellationToken)
       return { rawData, channelFile, channelFileUrl }
     } catch (e: any) {
       if (e instanceof HttpError && e.statusCode === 404) {
@@ -206,7 +210,7 @@ interface FeedRelease {
 }
 
 interface ChannelFileData {
-  readonly rawData: string
+  readonly rawData: string | null
   readonly channelFile: string
   readonly channelFileUrl: URL
 }
@@ -278,7 +282,8 @@ export function computeReleaseNotes(
 
   let latestVersion: string | undefined = undefined
   try {
-    latestVersion = releaseVersionRegExp.exec(latestRelease.element("link").attribute("href"))![1]
+    const match = releaseVersionRegExp.exec(latestRelease.element("link").attribute("href"))
+    latestVersion = match == null ? undefined : match[1]
     latestVersion = semver.valid(latestVersion) ? latestVersion : undefined
   } catch {
     // If we cannot parse the latest release version, return null — notes cannot be determined

@@ -1,4 +1,4 @@
-import { AllPublishOptions } from "builder-util-runtime"
+import { AllPublishOptions, newError } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter.js"
 import { DownloadUpdateOptions } from "./AppUpdater.js"
 import { findFile } from "./providers/Provider.js"
@@ -15,7 +15,10 @@ export class DebUpdater extends LinuxUpdater {
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "deb", ["AppImage", "rpm", "pacman"])!
+    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "deb", ["AppImage", "rpm", "pacman"])
+    if (fileInfo == null) {
+      return Promise.reject(newError(`No .deb file in the files of update ${downloadUpdateOptions.updateInfoAndProvider.info.version}`, "ERR_UPDATER_UPDATE_FILE_NOT_FOUND"))
+    }
     return this.executeDownload({
       fileExtension: "deb",
       fileInfo,
