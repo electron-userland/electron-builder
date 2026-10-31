@@ -370,7 +370,13 @@ export class NsisUpdater extends BaseUpdater {
       // Files: there, elevate.exe cannot be replaced by the user. UNKNOWN (e.g. an AppLocker, WDAC or antivirus block) and ENOENT are
       // not retried at all: neither elevated nor opened with the shell
       if (errorCode === "EACCES") {
-        if (isPerMachineInstallLocation()) {
+        // whether the running app is installed under one of the Program Files folders, where only an administrator can change it (and its
+        // elevate.exe). Judged by the install location only, never by the update info or the cached files
+        const exeDir = path.join(path.dirname(process.execPath), path.sep).toLowerCase()
+        const isPerMachineInstallLocation = [process.env.ProgramW6432, process.env.ProgramFiles, process.env["ProgramFiles(x86)"]].some(
+          programFiles => programFiles != null && path.isAbsolute(programFiles) && exeDir.startsWith(path.join(programFiles, path.sep).toLowerCase())
+        )
+        if (isPerMachineInstallLocation) {
           this.log.info(`Cannot run installer (EACCES: "${message}"), the app is installed under Program Files: run installer using elevate.exe`)
           callUsingElevation()
           return
@@ -433,13 +439,4 @@ export class NsisUpdater extends BaseUpdater {
     }
     return false
   }
-}
-
-// whether the running app is installed under one of the Program Files folders, where only an administrator can change it (and its
-// elevate.exe). Judged by the install location only, never by the update info or the cached files
-function isPerMachineInstallLocation(): boolean {
-  const exeDir = path.join(path.dirname(process.execPath), path.sep).toLowerCase()
-  return [process.env.ProgramW6432, process.env.ProgramFiles, process.env["ProgramFiles(x86)"]].some(
-    programFiles => programFiles != null && path.isAbsolute(programFiles) && exeDir.startsWith(path.join(programFiles, path.sep).toLowerCase())
-  )
 }
