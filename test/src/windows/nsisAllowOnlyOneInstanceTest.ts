@@ -296,8 +296,9 @@ describe("allowOnlyOneInstallerInstance.nsh", { concurrent: false }, () => {
         }
       }
       env.PSModulePath = path.join(dir, "modules")
+      // Bypass: the default Restricted policy of a Windows client would refuse to load the planted script module in the control run
       const run = (command: string) => {
-        spawnSync(powerShell, ["-NoProfile", "-NonInteractive", "-Command", command], { env, stdio: "ignore", timeout: 60_000 })
+        spawnSync(powerShell, ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", command], { env, stdio: "ignore", timeout: 60_000 })
         return existsSync(marker)
       }
 
