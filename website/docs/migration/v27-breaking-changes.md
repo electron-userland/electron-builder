@@ -66,7 +66,6 @@ The quickest way through an upgrade is:
 | [Linux targets launch through a `*-launcher` script; AppImage adds `--no-sandbox` only for the legacy FUSE2 runtime](./v27-runtime-changes.md#linux-launcher-entrypoint) | You ship a custom `.desktop` file, AppArmor profile or MIME handler, or need the Chromium sandbox off in an AppImage | Runtime |
 | [Windows update signature verification fails closed](./v27-runtime-changes.md#windows-update-signature-verification-fails-closed) | Your users' machines may block PowerShell (AppLocker / WDAC), or your update installers are catalog-signed. Updates fail only on those machines | Runtime |
 | [The `nsis-web` installer verifies its app package](./v27-runtime-changes.md#disablewebinstaller-defaults-to-true) | You run one web installer with a `--package-file` from another build | Runtime |
-| [NSIS: a per-machine install leaves a per-user install in place](./v27-runtime-changes.md#nsis-a-per-machine-install-leaves-a-per-user-install-in-place) | Your users move from a per-user to a per-machine install of your app (`perMachine: true`, or the all-users mode of an assisted installer) | Runtime |
 | [`verifyUpdateCodeSignature` renamed (shim until v28)](./v27-runtime-changes.md#verifyupdatecodesignature-renamed-to-verifyupdatefileauthenticodesignature) | Your app sets `verifyUpdateCodeSignature`, or a subclass redeclares `_verifyUpdateCodeSignature` | Runtime |
 | [macOS names are no longer NFD-normalized](./v27-build-changes.md#macos-productname-and-executablename-are-validated-not-sanitized) | Your product name has accented characters and external tooling matches the bundle filename | Build |
 | [An empty GitHub `tagNamePrefix` is honored](./v27-config-changes.md#githuboptions-gitlaboptions-vprefixedtagname) | You set `tagNamePrefix: ""` (v26 still tagged `v1.2.3`) | Config |
@@ -92,6 +91,7 @@ The quickest way through an upgrade is:
 | [macOS default entitlements drop `allow-unsigned-executable-memory`](./v27-runtime-changes.md#macos-default-entitlements-tightened) | Your app needs that entitlement. Only the library-validation part gets a build warning | Runtime |
 | [S3 publishing needs `awsCredentials.source`](./v27-build-changes.md#s3-publishing-requires-an-explicit-awscredentialssource) | You publish to S3. Builds that don't publish don't check it | Build |
 | [macOS: the ASAR integrity digest is embedded](./v27-runtime-changes.md#macos-asar-integrity-digest) | You merge separately built x64 and arm64 apps with `@electron/universal` yourself. The build only warns when you have an `afterPack` hook | Runtime |
+| [NSIS: a per-machine install leaves a per-user install in place](./v27-runtime-changes.md#nsis-a-per-machine-install-leaves-a-per-user-install-in-place) | Your users move from a per-user to a per-machine install of your app (`perMachine: true`, or the all-users mode of an assisted installer). The build only warns when a custom NSIS script defines `customUnInstallCheckCurrentUser` or calls `uninstallOldVersion HKEY_CURRENT_USER` | Runtime |
 
 ---
 
