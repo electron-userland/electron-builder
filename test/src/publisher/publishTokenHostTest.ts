@@ -1,7 +1,7 @@
 import { loadEnv } from "app-builder-lib/internal"
 import { CancellationToken } from "builder-util-runtime"
 import { GitHubPublisher, GitlabPublisher, KeygenPublisher, PublishContext } from "electron-publish"
-import { writeFile } from "fs/promises"
+import { outputFile } from "fs-extra"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
@@ -219,8 +219,8 @@ describe("Keygen", () => {
 describe("electron-builder.env", () => {
   test("cannot set the variables that decide the token hosts", async ({ tmpDir }) => {
     vi.stubEnv("OTHER_SETTING", undefined)
-    const envFile = path.join(await tmpDir.createTempDir({ prefix: "publish-token-host-env" }), "electron-builder.env")
-    await writeFile(
+    const envFile = path.join(await tmpDir.getTempDir({ prefix: "publish-token-host-env" }), "electron-builder.env")
+    await outputFile(
       envFile,
       [
         "ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS=ghe.example.com",
