@@ -82,6 +82,10 @@ Every toolset accepts the sentinel version **`"0.0.0"`**, which selects the **pr
 
 Pinning `"0.0.0"` also changes a few behaviors that are gated on the bundle version — for example, the legacy AppImage bundle (`appimage: "0.0.0"`) is the FUSE2 runtime and re-adds the automatic `--no-sandbox` launch argument, and a `winCodeSign` below `1.3.0` forces the legacy PowerShell path for Azure Trusted Signing (see [Code signing & toolsets](#code-signing-and-toolsets)).
 
+:::warning[Legacy NSIS bundle]
+`nsis: "0.0.0"` is NSIS 3.0.4.1 from 2019, and its installer stubs predate two NSIS security fixes for elevated installers: NSIS 3.11 retries creating the restricted temporary plugins directory (`$PLUGINSDIR`), so another user cannot create it first and put files in it, and NSIS 3.12 stops using the low-integrity temp directory when the installer is elevated. electron-builder's installer scripts extract the app package into `$PLUGINSDIR` and move the previous install there during an update, so a per-machine installer, or one run as SYSTEM, built with the legacy bundle does not get this protection. The default bundle (`2.0.4`, NSIS 3.13) and `1.2.1` (NSIS 3.12) include both fixes. Pin `nsis: "0.0.0"` only for compatibility, and move off it once the regression that needed it is fixed.
+:::
+
 ## Custom toolsets
 
 Instead of a version string, any toolset can be set to a **`ToolsetCustom`** object to supply your own bundle:
