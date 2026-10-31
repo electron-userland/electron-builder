@@ -116,6 +116,21 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
     expect(messages(logger.warn).filter(it => it.includes(DISABLED_FRAGMENT))).toHaveLength(0)
   })
 
+  test("autoUpdater.publisherName wins over verifyUpdateCodeSignature: false in app-update.yml: the update is verified", async () => {
+    const updater = await createNsisUpdater()
+    updater.updateConfigPath = await writeRawUpdateConfig<GenericServerOptions>({ provider: "generic", url: "https://example.com/updates", verifyUpdateCodeSignature: false })
+    const logger = mockLogger()
+    updater.logger = logger
+    updater.publisherName = ["CN=Runtime Corp"]
+    const verifyHook = vi.fn(async () => ({ response: "failure" as const, message: "wrong signer" }))
+    updater.verifyUpdateFileAuthenticodeSignature = verifyHook
+
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifySignature("/path/to/installer.exe")).resolves.toEqual({ response: "failure", message: "wrong signer" })
+    expect(verifyHook).toHaveBeenCalledWith(["CN=Runtime Corp"], "/path/to/installer.exe")
+    expect(messages(logger.warn).filter(it => it.includes(DISABLED_FRAGMENT))).toHaveLength(0)
+  })
+
   // no update config file at all: an unpackaged app (dev mode) is not verified; a packaged one (e.g. updateConfigPath names a missing file) is,
   // since electron-updater 7
   describe("no update config file", () => {
