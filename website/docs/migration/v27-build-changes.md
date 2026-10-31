@@ -34,7 +34,6 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [`arch: "all"` now expands to x64 + arm64; 32-bit fails fast on Electron 44+](#arch-all-now-expands-to-x64-and-arm64-32-bit-fails-fast-on-electron-44) | Warns / fails | `arch: "all"` drops `ia32` — request `ia32` explicitly; ia32/armv7l require `electronVersion` <= 43.x |
 | [macOS `productName`/`executableName` validated, not silently sanitized](#macos-productname-and-executablename-are-validated-not-sanitized) | Fails build | A name needing filename sanitization now throws — pick a name that needs none |
 | [macOS names are no longer NFD-normalized](#macos-productname-and-executablename-are-validated-not-sanitized) | Silent | Update tooling that matches the normalized on-disk bundle filename |
-| [Linux `.desktop` entries are validated](#linux-desktop-entries-are-validated) | Fails build | A desktop-entry key GLib rejects, a value with a line break inside it, or an action name with `[`, `]` or a control character now throws — write the value on one line and fix the key or action name |
 | [Windows `publisherName` validated against the certificate](#windows-publishername-is-validated-against-the-signing-certificate) | Fails build | Update `publisherName` after a certificate rotation, or drop it. Custom `win.sign.sign` hooks (even with a certificate configured) and certificates without a CN now **require** it when `app-update.yml` is written (or set `win.verifyUpdateCodeSignature: false` if your updates are not Authenticode-signed) |
 | [Windows `publisherName` must be a distinguished name](#windows-publishername-must-be-a-distinguished-name) | Fails build, advisory | Set every `win.sign.publisherName` entry to a distinguished name (e.g. `"CN=My Company, O=My Company, C=US"`) — a bare name now **fails the build**, and electron-updater 7 never matches it. Without `publisherName`, the build now writes `CN=<common name>` of the certificate (a DN) instead of the bare Common Name |
 | [A missing Windows `publisherName` fails update verification](#missing-publishername-fails-update-verification) | Fails build, advisory | A Windows build that writes `app-update.yml` without a `publisherName` (`win.sign: false` / `null`, no certificate, `publisherName: null`) now **fails the build**, and electron-updater 7 rejects updates whose `app-update.yml` has none. Sign the build, set `win.sign.publisherName`, or set `win.verifyUpdateCodeSignature: false` (the only opt-out) |
@@ -348,20 +347,6 @@ electron-builder now **rejects** a macOS `productName` or `executableName` that 
 **Action is required only if** a build starts failing with an "is not a valid macOS app bundle name" error — choose a `productName`/`executableName` that needs no sanitization (avoid path separators, control characters, and other characters stripped by filename sanitization).
 
 **Names are also no longer NFD-normalized.** The `.app` bundle, the helper bundles, and `CFBundleName` now use the product name exactly as configured. For any name containing accented characters this changes the **bytes** of the on-disk filename, which is what external notarization and upload tooling matches on — update anything that hard-codes the normalized form. Relatedly, archive creation falls back from 7z to zip for NFD-normalized filenames.
-
-### Linux `.desktop` entries are validated {#linux-desktop-entries-are-validated}
-
-**How you'll find out:** **Fails the build**, with a link here.
-
-Every Linux target that writes a `.desktop` file now checks the entry before writing it, and throws an `InvalidConfigurationError` naming the group and the key (or the action) for:
-
-- a value with a line break inside it, from `linux.desktop.entry`, `linux.desktop.desktopActions`, `linux.category`, `linux.mimeTypes`, `fileAssociations` or `protocols`. Its second line would become a new key or group of the file;
-- a key that GLib, which most desktops read the file with, rejects: empty, with `=` or a line break, or with brackets other than around a trailing locale such as `Name[de]`. GLib then ignores the whole file;
-- a `desktopActions` name with `[`, `]` or a control character.
-
-v26 wrote such entries as given. Line breaks at the end of a value, as in a YAML block scalar, are dropped, and values are otherwise still written as given, so escapes such as `\;` keep working. Keys the specification does not allow but desktops read, such as `X_Foo`, are kept.
-
-**Action is required only if** a build starts failing here — write the value on one line (a newline in a string value as `\n`) and fix the key or action name the error names. See [Desktop entry validation](../linux.md#desktop-entry-validation).
 
 ---
 
