@@ -8,7 +8,8 @@ import { RequestOptions } from "http"
 type Session = Electron.Session
 type ClientRequest = Electron.ClientRequest
 
-export type LoginCallback = (username: string, password: string) => void
+/** Electron's `login` callback: called without credentials, it cancels the authentication. */
+export type LoginCallback = (username?: string, password?: string) => void
 export const NET_SESSION_NAME = "electron-updater"
 
 export function getNetSession(): Session {
@@ -24,8 +25,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
   private cachedSession: Session | null = null
 
   constructor(
-    // Electron's callback: called without credentials, it cancels the authentication
-    private readonly proxyLoginCallback?: (authInfo: AuthInfo, callback: (username?: string, password?: string) => void) => void,
+    private readonly proxyLoginCallback?: (authInfo: AuthInfo, callback: LoginCallback) => void,
     private readonly crossOriginRedirectListener?: CrossOriginRedirectListener
   ) {
     super()

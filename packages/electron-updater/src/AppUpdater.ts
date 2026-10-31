@@ -900,7 +900,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * get the credentials the app's handler gives. Any other challenge is cancelled, and the request fails with the server's status.
    * @internal
    */
-  protected onLoginChallenge(authInfo: AuthInfo, callback: (username?: string, password?: string) => void): void {
+  protected onLoginChallenge(authInfo: AuthInfo, callback: LoginCallback): void {
     const provider = this.loginChallengeProvider
     const feedBaseUrl = provider == null ? undefined : provider.feedBaseUrl
     let isFeedOrigin = feedBaseUrl === null
