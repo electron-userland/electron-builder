@@ -153,11 +153,12 @@ describe("publisherNameDnNote", () => {
 })
 
 describe("missingPublisherNameMessage", () => {
-  test("states the rejection, how to configure publisherName, the opt-out and the migration guide", () => {
+  test("states the rejection, how to configure publisherName (at build time or with autoUpdater.publisherName), the opt-out and the migration guide", () => {
     const message = missingPublisherNameMessage()
     expect(message.startsWith("The update is rejected: app-update.yml has no publisherName to verify its Authenticode signature against.")).toBe(true)
     expect(message).toContain("sign the build")
     expect(message).toContain("set win.sign.publisherName to the subject of the certificate that signs your updates")
+    expect(message).toContain("the app can set autoUpdater.publisherName to that subject at runtime")
     expect(message).toContain("win.verifyUpdateCodeSignature: false")
     expect(message.endsWith(MISSING_PUBLISHER_NAME_DOCS)).toBe(true)
   })
