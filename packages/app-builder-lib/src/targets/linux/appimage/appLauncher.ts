@@ -53,8 +53,8 @@ export async function copyIcons(options: AppImageBuilderOptions): Promise<void> 
 }
 
 /**
- * The shared-mime-info XML that declares the MIME types of the file associations that have one, or null when none has. Every value
- * is XML-escaped, and an extension with characters other than `A-Za-z0-9_-` is skipped with a warning.
+ * The shared-mime-info XML that declares the MIME types of the file associations that have one, or null when none has. The comment is
+ * the file association's description, or "<productName> document" without one. Every value is XML-escaped, and an extension with characters other than `A-Za-z0-9_-` is skipped with a warning.
  */
 export function generateMimeTypeXml(fileAssociations: ReadonlyArray<FileAssociation>, productName: string): string | null {
   const mimeTypeParts: string[] = []
@@ -66,7 +66,7 @@ export function generateMimeTypeXml(fileAssociations: ReadonlyArray<FileAssociat
 
     // XML-escape to prevent injection
     mimeTypeParts.push(`<mime-type type="${escapeForXml(fileAssociation.mimeType)}">`)
-    mimeTypeParts.push(`  <comment>${escapeForXml(productName)} document</comment>`)
+    mimeTypeParts.push(`  <comment>${escapeForXml(fileAssociation.description || `${productName} document`)}</comment>`)
 
     // Handle extension(s)
     const extensions = Array.isArray(fileAssociation.ext) ? fileAssociation.ext : [fileAssociation.ext]
