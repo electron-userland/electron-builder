@@ -296,6 +296,8 @@ A channel file (`latest*.yml`) larger than 10 MiB fails the update check with `E
 
 Changing a signing key or certificate that installs in the field already trust requires a transition release — see [Key Rotation](./key-rotation.md).
 
+The manifest is parsed before its signature is checked, so electron-updater rejects a `latest*.yml` whose YAML aliases (`&name` / `*name`) expand to more than 100000 values plus key and string characters (or more than the file's length, if that is larger) with `ERR_UPDATER_INVALID_UPDATE_INFO`, with every built-in provider. A manifest without aliases is never rejected for its size. Aliases are counted while the manifest is loaded, including aliases inside a non-scalar mapping key (`? [*a, *a]`), which is expanded into a string as it is parsed. An alias counts at least as many characters as it adds to that string (an aliased timestamp, for example, about 60), so such a manifest is rejected before the string is built. electron-updater 6 accepted manifests over this limit; see [the v27 migration notes](../migration/v27-runtime-changes.md#update-manifest-yaml-aliases-are-limited).
+
 ### `disableWebInstaller` (now defaults to `true`)
 
 NSIS **web** installers download their full payload at install time from a manifest-supplied URL, which may not undergo signature verification. As of v27, `AppUpdater.disableWebInstaller` defaults to **`true`**, so a web-installer update is not loaded unless you opt in.

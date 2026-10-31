@@ -11,7 +11,7 @@ import {
   WindowsUpdateInfo,
 } from "builder-util-runtime"
 import { OutgoingHttpHeaders } from "http"
-import { load } from "js-yaml"
+import { EventType, load, State } from "js-yaml"
 import { URL } from "url"
 import { ElectronHttpExecutor } from "../electronHttpExecutor.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
@@ -188,19 +188,57 @@ export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string
   }
 }
 
+// The channel file URL as error messages name it: newUrlFromBase copies the feed URL's query (which may carry a token such as `?token=`)
+// onto it, and the updater logs these errors, so only its origin and path are named.
+function describeChannelFileUrl(channelFileUrl: URL): string {
+  return `${channelFileUrl.origin}${channelFileUrl.pathname}`
+}
+
 export function parseUpdateInfo(rawData: string | null, channelFile: string, channelFileUrl: URL): UpdateInfo {
+  const location = describeChannelFileUrl(channelFileUrl)
   if (rawData == null) {
-    throw newError(`Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): rawData: null`, "ERR_UPDATER_INVALID_UPDATE_INFO")
+    throw newError(`Cannot parse update info from ${channelFile} in the latest release artifacts (${location}): rawData: null`, "ERR_UPDATER_INVALID_UPDATE_INFO")
+  }
+
+  // js-yaml returns an aliased node by reference, so a few hundred bytes of nested aliases can reach a value exponentially often,
+  // and a long string referenced by many aliases is read in full each time.
+  // Anything that walks the update info (a deep comparison, JSON serialization) would then block the main process.
+  // Without aliases, a document's keys and values, a string counted by its length, add up to at most its number of characters, so a legitimate channel file is never rejected.
+  const budget = Math.max(100_000, rawData.length)
+  const budgetExceeded = (): Error => yamlAliasBudgetError(channelFile, location, budget)
+
+  // js-yaml itself expands aliases while loading: it converts a complex mapping key (`? [*a, *a]`) to a string,
+  // so a few hundred KB of aliases in keys would build strings of hundreds of MB before load returns.
+  // Each alias is charged with everything it reaches as soon as js-yaml reads it, before the key that holds it is converted,
+  // and at least as much as it adds to that string: an aliased timestamp becomes about 60 characters of key text.
+  let aliasTotal = 0
+  const listener = (eventType: EventType, state: State): void => {
+    // an alias is the only node that closes with a value but no kind
+    if (eventType !== "close" || state.kind !== null || state.result == null) {
+      return
+    }
+    aliasTotal = chargeExpansion(state.result, aliasTotal, budget, keyTextCost)
+    if (aliasTotal > budget) {
+      throw budgetExceeded()
+    }
   }
 
   let result: UpdateInfo
   try {
-    result = load(rawData) as UpdateInfo
+    result = load(rawData, { listener }) as UpdateInfo
   } catch (e: any) {
+    if (e?.code === "ERR_UPDATER_INVALID_UPDATE_INFO") {
+      throw e
+    }
     throw newError(
-      `Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}, rawData: ${rawData}`,
+      `Cannot parse update info from ${channelFile} in the latest release artifacts (${location}): ${e.stack || e.message}, rawData: ${rawData}`,
       "ERR_UPDATER_INVALID_UPDATE_INFO"
     )
+  }
+
+  // the update info as a whole is charged by what walking it costs, so a manifest without aliases stays within the budget
+  if (chargeExpansion(result, 0, budget, valueCost) > budget) {
+    throw budgetExceeded()
   }
   rememberUpdateManifestSource(result, rawData)
   return result
@@ -215,8 +253,9 @@ const updateManifestSources = new WeakMap<object, string>()
 /**
  * Records the manifest text `info` was parsed from, so that signature verification can work on the manifest exactly as
  * published rather than on the object a provider has since added fields to (`tag`, `assets`, `releaseName`, ...).
+ * Only parseUpdateInfo calls it, after the text passed the YAML alias budget, so parsing it again costs no more.
  */
-export function rememberUpdateManifestSource(info: unknown, rawData: string): void {
+function rememberUpdateManifestSource(info: unknown, rawData: string): void {
   if (info != null && typeof info === "object") {
     updateManifestSources.set(info, rawData)
   }
@@ -252,6 +291,84 @@ export function reparseUpdateManifest(info: UpdateInfo): UpdateInfo | null {
   } catch {
     return null
   }
+}
+
+/** @internal */
+export const YAML_ALIAS_BUDGET_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-manifest-yaml-aliases-are-limited"
+
+// the errors parseUpdateInfo throws for the alias budget, so that AppUpdater can announce the v27 change without matching the message
+const yamlAliasBudgetErrors = new WeakSet<Error>()
+
+// location: the channel file URL without its query (describeChannelFileUrl)
+function yamlAliasBudgetError(channelFile: string, location: string, budget: number): Error {
+  const error = newError(
+    `Cannot parse update info from ${channelFile} in the latest release artifacts (${location}): YAML aliases expand to more than ${budget} values and string characters. ` +
+      `electron-updater 7 (electron-builder v27) rejects such a manifest: publish it without YAML aliases (js-yaml \`dump\` with \`noRefs: true\`, as electron-builder writes it) ` +
+      `or with the shared values repeated inline. ${YAML_ALIAS_BUDGET_DOCS}`,
+    "ERR_UPDATER_INVALID_UPDATE_INFO"
+  )
+  yamlAliasBudgetErrors.add(error)
+  return error
+}
+
+/**
+ * Whether `error` is the `ERR_UPDATER_INVALID_UPDATE_INFO` that {@link parseUpdateInfo} throws for YAML aliases that expand past the budget.
+ * @internal
+ */
+export function isYamlAliasBudgetError(error: unknown): boolean {
+  return error instanceof Error && yamlAliasBudgetErrors.has(error)
+}
+
+// adds to total every value reachable from root, root included and an aliased one each time it is referenced:
+// each value by cost, and a mapping entry also by the length of its key.
+// Stops once the total exceeds the budget, so a call costs at most budget - total steps.
+function chargeExpansion(root: unknown, total: number, budget: number, cost: (value: unknown) => number): number {
+  total += cost(root)
+  const stack: Array<unknown> = [root]
+  while (stack.length > 0 && total <= budget) {
+    const value = stack.pop()
+    if (value === null || typeof value !== "object") {
+      continue
+    }
+    const isMapping = !Array.isArray(value)
+    for (const [key, child] of Object.entries(value)) {
+      total += (isMapping ? key.length : 0) + cost(child)
+      if (total > budget) {
+        return total
+      }
+      stack.push(child)
+    }
+  }
+  return total
+}
+
+// a string its length, anything else 1: without aliases, a document's values and keys never add up to more than its number of characters
+function valueCost(value: unknown): number {
+  return typeof value === "string" ? Math.max(1, value.length) : 1
+}
+
+// at least what value adds to a complex mapping key, which js-yaml converts with String() (a sequence joins its items with commas):
+// a scalar the length of its string form (a timestamp about 60 characters), a sequence a comma between items, any other object "[object Object]"
+function keyTextCost(value: unknown): number {
+  if (typeof value === "string") {
+    return Math.max(1, value.length)
+  }
+  if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+    return String(value).length
+  }
+  if (typeof value !== "object") {
+    return 1
+  }
+  if (value === null) {
+    return "null".length
+  }
+  if (Array.isArray(value)) {
+    return Math.max(1, value.length - 1)
+  }
+  if (value instanceof Date) {
+    return Math.max(1, String(value).length)
+  }
+  return "[object Object]".length
 }
 
 export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {
