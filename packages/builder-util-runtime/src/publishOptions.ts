@@ -141,7 +141,7 @@ export interface GithubOptions extends PublishConfiguration {
   readonly host?: string | null
 
   /**
-   * The protocol. GitHub Publisher supports only `https`.
+   * The protocol. GitHub Publisher supports only `https`. electron-updater rejects an `http` feed to a host that is not loopback unless the app sets `autoUpdater.allowInsecureFeed = true`.
    * @default https
    */
   readonly protocol?: "https" | "http" | null
