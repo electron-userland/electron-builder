@@ -143,16 +143,56 @@ describe("extractArchive ZIP security guards", () => {
     await expect(fs.access(path.join(root, "escaped.txt"))).rejects.toMatchObject({ code: "ENOENT" })
   })
 
+  test.skipIf(process.platform === "win32")("blocks a symlink whose target passes through an earlier symlink to outside the extraction dir", async ({ expect, tmpDir }) => {
+    // lexically "a/.." is the extraction dir; really it is the parent because "a" -> ".". The link is refused when it is
+    // created, before any entry (or the build, which writes into the extracted tree afterwards) can write through it.
+    const { root, promise } = await extractChained(tmpDir, [
+      symlinkEntry("a", "."),
+      symlinkEntry("resources", "a/.."),
+      { name: "resources/app.asar", content: Buffer.from("outside") },
+    ])
+    await expect(promise).rejects.toThrow("Symlink target escapes extraction dir: a/..")
+    await expect(fs.access(path.join(root, "app.asar"))).rejects.toMatchObject({ code: "ENOENT" })
+  })
+
+  test.skipIf(process.platform === "win32")("blocks a symlink that a later entry redirects outside the extraction dir", async ({ expect, tmpDir }) => {
+    // when "c" is created "x" does not exist yet, so "x/y/../.." is the extraction dir; once "x" -> "." it is the parent
+    const { promise } = await extractChained(tmpDir, [{ name: "y/", mode: 0o40755 }, symlinkEntry("c", "x/y/../.."), symlinkEntry("x", ".")])
+    await expect(promise).rejects.toThrow("Symlink target escapes extraction dir: x/y/../..")
+  })
+
+  test.skipIf(process.platform === "win32")("blocks a symlink target that steps outside the extraction dir and back in", async ({ expect, tmpDir }) => {
+    // "../out.tmp/x" ends inside the temporary extraction dir, but after the move to "out" it would point at a sibling dir
+    const { promise } = await extractChained(tmpDir, [symlinkEntry("link", "../out.tmp/x")])
+    await expect(promise).rejects.toThrow("Symlink target escapes extraction dir: ../out.tmp/x")
+  })
+
+  test.skipIf(process.platform === "win32")("blocks a symlink target that walks through a dangling symlink", async ({ expect, tmpDir }) => {
+    // "sub/d" dangles; lexically "sub/d/../../w" is inside, but once "q" exists it would resolve to the parent dir
+    const { promise } = await extractChained(tmpDir, [{ name: "sub/", mode: 0o40755 }, symlinkEntry("sub/d", "../q"), symlinkEntry("sub/e", "d/../../w")])
+    await expect(promise).rejects.toThrow("Symlink target escapes extraction dir: d/../../w")
+  })
+
   test.skipIf(process.platform === "win32")("blocks a write through a symlink chain that resolves outside the extraction dir", async ({ expect, tmpDir }) => {
-    // lexically "a/.." is the extraction dir; really it is the parent because "a" -> "."
-    const { root, promise } = await extractChained(tmpDir, [symlinkEntry("a", "."), symlinkEntry("c", "a/.."), { name: "c/escaped.txt", content: Buffer.from("outside") }])
+    // "c" is created before "x" -> "." turns its target "x/y/../.." into the parent dir; the write through it must still fail
+    const { root, promise } = await extractChained(tmpDir, [
+      { name: "y/", mode: 0o40755 },
+      symlinkEntry("c", "x/y/../.."),
+      symlinkEntry("x", "."),
+      { name: "c/escaped.txt", content: Buffer.from("outside") },
+    ])
     await expect(promise).rejects.toThrow("Symlinked path escapes extraction dir: c/escaped.txt")
     await expect(fs.access(path.join(root, "escaped.txt"))).rejects.toMatchObject({ code: "ENOENT" })
   })
 
   test.skipIf(process.platform === "win32")("does not follow a symlink already at a file entry's destination", async ({ expect, tmpDir }) => {
-    // "./link" names the same destination as the symlink "link", which really points at the parent dir
-    const { root, promise } = await extractChained(tmpDir, [symlinkEntry("a", "."), symlinkEntry("link", "a/../escaped.txt"), { name: "./link", content: Buffer.from("outside") }])
+    // "./link" names the same destination as the symlink "link", which really points at the parent dir once "x" -> "."
+    const { root, promise } = await extractChained(tmpDir, [
+      { name: "y/", mode: 0o40755 },
+      symlinkEntry("link", "x/y/../../escaped.txt"),
+      symlinkEntry("x", "."),
+      { name: "./link", content: Buffer.from("outside") },
+    ])
     await expect(promise).rejects.toMatchObject({ code: "EEXIST" })
     await expect(fs.access(path.join(root, "escaped.txt"))).rejects.toMatchObject({ code: "ENOENT" })
   })

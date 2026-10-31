@@ -163,6 +163,38 @@ async function mkdirInsideRealDir(target: string, dir: string, realDir: string, 
   return current
 }
 
+/**
+ * Walks a relative symlink `target` from the real directory holding the link the way the OS would: existing components
+ * are followed by real path, components past a missing one are joined lexically. Returns false when any step leaves `realDir`,
+ * or when a dangling symlink is used as an intermediate component (its meaning would change once its target appears).
+ */
+async function isLinkTargetInside(realParent: string, target: string, realDir: string): Promise<boolean> {
+  const parts = target.split(process.platform === "win32" ? /[\\/]/ : "/").filter(part => part !== "" && part !== ".")
+  let current = realParent
+  let missing = false
+  for (let i = 0; i < parts.length; i++) {
+    current = parts[i] === ".." ? path.dirname(current) : path.join(current, parts[i])
+    if (!missing && parts[i] !== "..") {
+      try {
+        current = await fs.realpath(current)
+      } catch (e: any) {
+        if (e.code !== "ENOENT") {
+          throw e
+        }
+        missing = true
+        const stat = await fs.lstat(current).catch(() => null)
+        if (stat?.isSymbolicLink() && i < parts.length - 1) {
+          return false
+        }
+      }
+    }
+    if (!isSafeExtractPath(current, realDir)) {
+      return false
+    }
+  }
+  return true
+}
+
 async function extractZipStreaming(file: string, dir: string): Promise<void> {
   // Pass 1: read central directory once to collect Unix modes (one seek to EOF)
   const zipDir = await unzipper.Open.file(file)
@@ -177,6 +209,7 @@ async function extractZipStreaming(file: string, dir: string): Promise<void> {
 
   // Lexical checks alone miss chained symlinks, so every write is also confined by real path at write time.
   const realDir = await fs.realpath(dir)
+  const symlinks: { realParent: string; target: string }[] = []
 
   // Pass 2: stream from byte 0 — no per-entry seeks, no Docker hang.
   // Destroy the read stream in a finally block so the file handle is always released,
@@ -196,10 +229,11 @@ async function extractZipStreaming(file: string, dir: string): Promise<void> {
           throw new Error(`Absolute symlink target blocked: ${target}`)
         }
         const realParent = await mkdirInsideRealDir(path.dirname(destPath), dir, realDir, entry.path)
-        if (!isSafeExtractPath(path.resolve(realParent, target), realDir)) {
+        if (!(await isLinkTargetInside(realParent, target, realDir))) {
           throw new Error(`Symlink target escapes extraction dir: ${target}`)
         }
         await fs.symlink(target, path.join(realParent, path.basename(destPath)))
+        symlinks.push({ realParent, target })
       } else if (entry.type === "Directory") {
         await mkdirInsideRealDir(destPath, dir, realDir, entry.path)
         entry.autodrain()
@@ -214,6 +248,14 @@ async function extractZipStreaming(file: string, dir: string): Promise<void> {
     }
   } finally {
     readStream.destroy()
+  }
+
+  // A later entry can turn a component of an earlier symlink's target into a symlink, so re-check every link against
+  // the finished tree: the build writes into this directory afterwards and must not be redirected outside it.
+  for (const { realParent, target } of symlinks) {
+    if (!(await isLinkTargetInside(realParent, target, realDir))) {
+      throw new Error(`Symlink target escapes extraction dir: ${target}`)
+    }
   }
 }
 
