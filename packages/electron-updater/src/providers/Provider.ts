@@ -188,9 +188,16 @@ export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string
   }
 }
 
+// The channel file URL as error messages name it: newUrlFromBase copies the feed URL's query (which may carry a token such as `?token=`)
+// onto it, and the updater logs these errors, so only its origin and path are named.
+function describeChannelFileUrl(channelFileUrl: URL): string {
+  return `${channelFileUrl.origin}${channelFileUrl.pathname}`
+}
+
 export function parseUpdateInfo(rawData: string | null, channelFile: string, channelFileUrl: URL): UpdateInfo {
+  const location = describeChannelFileUrl(channelFileUrl)
   if (rawData == null) {
-    throw newError(`Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): rawData: null`, "ERR_UPDATER_INVALID_UPDATE_INFO")
+    throw newError(`Cannot parse update info from ${channelFile} in the latest release artifacts (${location}): rawData: null`, "ERR_UPDATER_INVALID_UPDATE_INFO")
   }
 
   let result: UpdateInfo
@@ -198,11 +205,68 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
     result = load(rawData) as UpdateInfo
   } catch (e: any) {
     throw newError(
-      `Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}, rawData: ${rawData}`,
+      `Cannot parse update info from ${channelFile} in the latest release artifacts (${location}): ${e.stack || e.message}, rawData: ${rawData}`,
       "ERR_UPDATER_INVALID_UPDATE_INFO"
     )
   }
+
+  // js-yaml returns an aliased node by reference, so a few hundred bytes of nested aliases can reach a value exponentially often,
+  // and a long string referenced by many aliases is read in full each time.
+  // Anything that walks the update info (a deep comparison, JSON serialization) would then block the main process.
+  // Without aliases, a document's keys and values, a string counted by its length, add up to at most its number of characters, so a legitimate channel file is never rejected.
+  const budget = Math.max(100_000, rawData.length)
+  if (exceedsExpansionBudget(result, budget)) {
+    throw yamlAliasBudgetError(channelFile, location, budget)
+  }
   return result
+}
+
+/** @internal */
+export const YAML_ALIAS_BUDGET_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-manifest-yaml-aliases-are-limited"
+
+// the errors parseUpdateInfo throws for the alias budget, so that AppUpdater can announce the v27 change without matching the message
+const yamlAliasBudgetErrors = new WeakSet<Error>()
+
+// location: the channel file URL without its query (describeChannelFileUrl)
+function yamlAliasBudgetError(channelFile: string, location: string, budget: number): Error {
+  const error = newError(
+    `Cannot parse update info from ${channelFile} in the latest release artifacts (${location}): YAML aliases expand to more than ${budget} values and string characters. ` +
+      `electron-updater 7 (electron-builder v27) rejects such a manifest: publish it without YAML aliases (js-yaml \`dump\` with \`noRefs: true\`, as electron-builder writes it) ` +
+      `or with the shared values repeated inline. ${YAML_ALIAS_BUDGET_DOCS}`,
+    "ERR_UPDATER_INVALID_UPDATE_INFO"
+  )
+  yamlAliasBudgetErrors.add(error)
+  return error
+}
+
+/**
+ * Whether `error` is the `ERR_UPDATER_INVALID_UPDATE_INFO` that {@link parseUpdateInfo} throws for YAML aliases that expand past the budget.
+ * @internal
+ */
+export function isYamlAliasBudgetError(error: unknown): boolean {
+  return error instanceof Error && yamlAliasBudgetErrors.has(error)
+}
+
+// charges every value reachable from root, an aliased one each time it is referenced: a string by its length, anything else as 1,
+// and a mapping entry also by the length of its key. Stops once the total exceeds the budget.
+function exceedsExpansionBudget(root: unknown, budget: number): boolean {
+  let total = 0
+  const stack: Array<unknown> = [root]
+  while (stack.length > 0) {
+    const value = stack.pop()
+    if (value === null || typeof value !== "object") {
+      continue
+    }
+    const isMapping = !Array.isArray(value)
+    for (const [key, child] of Object.entries(value)) {
+      total += (isMapping ? key.length : 0) + (typeof child === "string" ? Math.max(1, child.length) : 1)
+      if (total > budget) {
+        return true
+      }
+      stack.push(child)
+    }
+  }
+  return false
 }
 
 export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {
