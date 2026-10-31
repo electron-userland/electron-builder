@@ -3,6 +3,8 @@ import {
   CancellationToken,
   configureRequestUrl,
   CrossOriginHeadersCallback,
+  CrossOriginHeadersLayer,
+  CrossOriginRequest,
   DEFAULT_MAX_UPDATE_INFO_SIZE,
   HttpExecutor,
   newError,
@@ -29,10 +31,48 @@ export interface ProviderRuntimeOptions {
   executor: ElectronHttpExecutor
 
   /**
-   * Chooses the request headers each update info request (e.g. a channel file) on another origin than `Provider.feedBaseUrl` gets (the
-   * `crossOriginHeaders` of `AppUpdater.checkForUpdates`); without it, `DEFAULT_CROSS_ORIGIN_HEADERS`.
+   * The app's choice of the request headers each update info request (e.g. a channel file) on another origin than `Provider.feedBaseUrl`
+   * gets, after the provider's {@link Provider.crossOriginHeaders} (the `crossOriginHeaders` of `AppUpdater.checkForUpdates`); without
+   * it, the provider's choice.
    */
   crossOriginHeaders?: CrossOriginHeadersCallback
+}
+
+/**
+ * Throws `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` when `provider` has no `crossOriginHeaders` method (e.g. a custom provider
+ * written in plain JavaScript): every provider chooses the headers its requests send to another origin.
+ */
+export function checkCrossOriginHeadersImplemented(provider: Provider<any>): void {
+  if (typeof Reflect.get(provider, "crossOriginHeaders") !== "function") {
+    throw newError(
+      `The update provider ${provider.constructor.name} has no crossOriginHeaders method: each provider chooses the headers its requests and redirects send to another origin, ` +
+        `before the app's checkForUpdates({ crossOriginHeaders }). Implement crossOriginHeaders(defaults, request) and return defaults to use the built-in list. ` +
+        `https://www.electron.build/docs/migration/v27-developer-changes#custom-provider-cross-origin-headers`,
+      "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED"
+    )
+  }
+}
+
+/**
+ * The two layers that choose the headers of a request or redirect of `provider` to another origin: {@link Provider.crossOriginHeaders}
+ * gets `DEFAULT_CROSS_ORIGIN_HEADERS`, and `app` (the `crossOriginHeaders` of `AppUpdater.checkForUpdates`) gets what the provider returned
+ * (every header name of the request for `null`) and decides. Without a provider (a redirect before any update check), only `app`.
+ */
+export function crossOriginHeadersLayers(provider: Provider<any> | null, app: CrossOriginHeadersCallback): ReadonlyArray<CrossOriginHeadersLayer> {
+  const appLayer: CrossOriginHeadersLayer = { name: "crossOriginHeaders of checkForUpdates", crossOriginHeaders: app }
+  if (provider == null) {
+    return [appLayer]
+  }
+  return [
+    {
+      name: `crossOriginHeaders of the update provider ${provider.constructor.name}`,
+      crossOriginHeaders: (defaults, request) => {
+        checkCrossOriginHeadersImplemented(provider)
+        return provider.crossOriginHeaders(defaults, request)
+      },
+    },
+    appLayer,
+  ]
 }
 
 // Shared by the GitHub/GitLab/PrivateGitHub providers when a release channel file (e.g. latest.yml) 404s.
@@ -90,24 +130,40 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 
   /**
-   * Base URL of the update feed: the request headers other than the cross-origin headers (the `crossOriginHeaders` of `AppUpdater.checkForUpdates`, by default the
-   * likes of Accept, User-Agent and Range, as on a cross-origin redirect) are only sent to download URLs, and to the URLs of the provider's
-   * own update info requests (e.g. the channel file), on its origin. `null` sends the request headers to every URL.
-   * The default, `undefined`, means not declared: a download with such headers (from `requestHeaders` / `addAuthHeader`) then fails
-   * with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, so a custom provider used with credentials or custom headers must override this getter.
+   * Base URL of the update feed: download URLs, and the URLs of the provider's own update info requests (e.g. the channel file), on its
+   * origin get every request header. For any other origin, {@link Provider.crossOriginHeaders} and then the app's `crossOriginHeaders`
+   * (of `AppUpdater.checkForUpdates`) choose the headers, with the feed URL as the request's `from`. `null` or `undefined` (the default):
+   * the provider has no feed URL, so they choose the headers of every request, with `from` set to `null`.
    */
   get feedBaseUrl(): URL | null | undefined {
     return undefined
   }
 
   /**
-   * Called for each authentication challenge (a proxy's or a server's) of an update request, to decide whether the updater emits its `login` event:
-   * return `true` to emit `login`, or `false` to cancel the challenge without emitting it (the request then fails with the challenge's
-   * status). `url` is the URL of the request that got the challenge (a redirect's target after a redirect). The updater asks the provider
-   * of its latest update check. Override it to answer only the servers your app's `login` handler is meant for, e.g.
-   * `return authInfo.isProxy || url.origin === "https://downloads.example.com"`. Any value other than `true`, or a throw, cancels.
-   * With `AppUpdater.allowInsecureFeed`, a server's challenge on a request that is not `https` is cancelled without calling this.
-   * See [Event: `login`](https://www.electron.build/docs/features/auto-update#event-login).
+   * Required. Decides which headers a request or redirect sends to `request.to` when it is not on the feed's origin, or to any URL when
+   * there is no feed URL ({@link Provider.feedBaseUrl}, `request.from` is then `null`): gets `DEFAULT_CROSS_ORIGIN_HEADERS` of
+   * builder-util-runtime (`accept`, `user-agent`, `range` and other content negotiation, caching and conditional headers) and returns the
+   * header names to send (case-insensitive), or `null` for every header of that request. The app's `crossOriginHeaders` (of
+   * `AppUpdater.checkForUpdates`) then gets this result as its `defaults` (the names of every header of the request for `null`) and
+   * decides. Called for each such request, never for the feed's own origin; for a redirect, the updater asks the provider of its latest
+   * update check. A throw, or a result that is not an array of header names or `null`, fails that request with
+   * `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`; a provider without this method fails the update check with
+   * `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`.
+   *
+   * @example crossOriginHeaders(defaults) { return defaults } // the built-in list
+   * @example crossOriginHeaders(defaults, request) { return request.to.origin === "https://api.example.com" ? [...defaults, "authorization"] : defaults }
+   */
+  abstract crossOriginHeaders(defaults: ReadonlyArray<string>, request: CrossOriginRequest): ReadonlyArray<string> | null
+
+  /**
+   * Optional. Decides whether the updater emits its `login` event for an authentication challenge (a proxy's or a server's) of an update
+   * request: return `true` to emit `login`, or `false` to cancel the challenge without emitting it (the request then fails with the
+   * challenge's status). `url` is the URL of the request that got the challenge (a redirect's target after a redirect). Called for each
+   * challenge; the updater asks the provider of its latest update check. The default returns `true`; any value other than `true`, or a
+   * throw, cancels. With `AppUpdater.allowInsecureFeed`, a server's challenge on a request that is not `https` is cancelled without calling
+   * this. See [Event: `login`](https://www.electron.build/docs/features/auto-update#event-login).
+   *
+   * @example onLoginChallenge(authInfo, url) { return authInfo.isProxy || url.origin === "https://downloads.example.com" }
    */
   onLoginChallenge(_authInfo: AuthInfo, _url: URL): boolean {
     return true
@@ -164,14 +220,13 @@ export abstract class Provider<T extends UpdateInfo> {
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): ApiRequestOptions {
     const result: ApiRequestOptions = {}
     // the same feed-origin rule and cross-origin headers as for downloads and redirects: e.g. a channel file on another origin gets only
-    // the cross-origin request headers (by default the likes of Accept and User-Agent)
-    const feedBaseUrl = this.feedBaseUrl
+    // the request headers this provider and then the app choose (by default the likes of Accept and User-Agent)
     let requestHeaders = this.requestHeaders
-    if (requestHeaders != null && feedBaseUrl != null) {
+    if (requestHeaders != null) {
       requestHeaders = HttpExecutor.keepCrossOriginHeaders(
         requestHeaders,
-        { from: feedBaseUrl, to: url, kind: "request" },
-        this.runtimeOptions.crossOriginHeaders ?? (defaults => defaults)
+        { from: this.feedBaseUrl ?? null, to: url, kind: "request" },
+        crossOriginHeadersLayers(this, this.runtimeOptions.crossOriginHeaders ?? (defaults => defaults))
       )
     }
     if (requestHeaders == null) {

@@ -75,7 +75,11 @@ describe("AppUpdater logger", () => {
       sha512: "hash",
       releaseDate: "2026-01-01T00:00:00.000Z",
     }
-    ;(updater as any).clientPromise = Promise.resolve({ setRequestHeaders: () => {}, getLatestVersion: () => Promise.resolve(latest) })
+    ;(updater as any).clientPromise = Promise.resolve({
+      setRequestHeaders: () => {},
+      crossOriginHeaders: (defaults: ReadonlyArray<string>) => defaults,
+      getLatestVersion: () => Promise.resolve(latest),
+    })
 
     await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).resolves.toMatchObject({ isUpdateAvailable: true, updateInfo: { version: "2.0.0" } })
     expect(throwing.warn).toHaveBeenCalledWith(expect.stringContaining(VERIFICATION_DISABLED))

@@ -32,6 +32,10 @@ class TestProvider extends Provider<typeof UPDATE_INFO> {
     return new URL("https://feed.example.com/updates")
   }
 
+  crossOriginHeaders(defaults: ReadonlyArray<string>): ReadonlyArray<string> {
+    return defaults
+  }
+
   getLatestVersion() {
     return Promise.resolve(UPDATE_INFO)
   }
@@ -47,11 +51,15 @@ class TestProvider extends Provider<typeof UPDATE_INFO> {
   }
 }
 
-// a custom provider that does not extend Provider, so has no onLoginChallenge
+// a custom provider that does not extend Provider, so has no onLoginChallenge (crossOriginHeaders is required)
 class DuckTypedProvider {
   constructor(..._args: Array<unknown>) {}
 
   get feedBaseUrl(): null {
+    return null
+  }
+
+  crossOriginHeaders(): null {
     return null
   }
 
@@ -282,7 +290,7 @@ describe("the updater's own executor", () => {
       const updater = new NsisUpdater()
       updater.logger = makeLogger()
       // the provider of an update check (which needs a ready app)
-      ;(updater as any).loginChallengeProvider = new TestProvider(null, null, { isUseMultipleRangeRequest: true, platform: "win32", executor: updater.httpExecutor })
+      ;(updater as any).checkProvider = new TestProvider(null, null, { isUseMultipleRangeRequest: true, platform: "win32", executor: updater.httpExecutor })
       const onLogin = vi.fn()
       // the documented way to cancel: call the callback without credentials
       updater.on("login", (authInfo, callback) => {

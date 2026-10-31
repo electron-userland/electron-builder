@@ -20,7 +20,8 @@ Changes that only matter if you write code that plugs into electron-builder: bui
 | [ProtonFramework & LibUiFramework removed](#removed-exports) | Import / TS error | Migrate to an Electron-based build setup |
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | TS error | Import the new names — no compat aliases |
 | [`SnapOptions`, `ProtonFramework`, `LibUiFramework` exports removed](#removed-exports) | Import / TS error | Use the `snapcraft` config shape / Electron framework |
-| [builder-util-runtime: cross-origin headers come from an explicit list](#builder-util-runtime-cross-origin-headers) | Import / TS error | Custom publishers and providers: pass a `CrossOriginHeaders` function to the `HttpExecutor` constructor, or filter headers with `HttpExecutor.keepCrossOriginHeaders(headers, from, to, DEFAULT_CROSS_ORIGIN_HEADERS)`; there is no `addSensitiveRedirectHeader` |
+| [builder-util-runtime: cross-origin headers come from an explicit list](#builder-util-runtime-cross-origin-headers) | Import / TS error | Custom publishers and providers: pass a `CrossOriginHeadersCallback` to the `HttpExecutor` constructor, or filter headers with `HttpExecutor.keepCrossOriginHeaders(headers, request, crossOriginHeaders)`; there is no `addSensitiveRedirectHeader` |
+| [Custom electron-updater providers implement `crossOriginHeaders`](#custom-provider-cross-origin-headers) | TS error, runtime error | Implement `Provider.crossOriginHeaders(defaults, request)` (return `defaults` for the built-in list); without it, the update check fails with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` |
 | [Hooks reading `files` / `extraResources` / `extraFiles`](#hooks-reading-file-options) | Warns / fails | Read and write `fileOptions.files` / `.extraResources` / `.extraFiles` instead; assigning a flat key throws |
 | [NSIS `customInstallMode` macro guard casing corrected](#nsis-custominstallmode-macro-guard-casing-corrected) | Silent | Rename a `customInstallmode` (lowercase `m`) macro definition in custom NSIS scripts to the documented `customInstallMode` |
 | [Linux maintainer-script EJS syntax removed](#linux-maintainer-script-ejs-template-syntax) | Fails build | Use `${var}` instead of `<%= var %>` |
@@ -157,14 +158,46 @@ These exported TypeScript types were **renamed with no compatibility alias** —
 Custom publishers and custom electron-updater providers that use builder-util-runtime's `HttpExecutor` get the [cross-origin header rule](./v27-runtime-changes.md#cross-origin-header-allowlist) from these exports:
 
 - `DEFAULT_CROSS_ORIGIN_HEADERS`: the frozen default list of lowercase header names sent to another origin (`accept`, `user-agent`, `range` and other content negotiation, caching and conditional headers).
-- `CrossOriginRequest`: `{ from: URL, to: URL, kind: "redirect" | "request" }`, a request or redirect to another origin: the URL its headers are meant for (the feed, or the URL that redirected), the URL on the other origin, and whether it is a redirect or a request electron-updater makes to another origin than its feed.
-- `CrossOriginHeadersCallback`: `(defaults: ReadonlyArray<string>, request: CrossOriginRequest) => ReadonlyArray<string> | null`, the shape of the `crossOriginHeaders` of electron-updater's `checkForUpdates` (which re-exports both types). It returns the header names to send on that request (case-insensitive), or `null` for every header. An `HttpExecutor` takes one as its constructor argument and calls it for each redirect to another origin; without one, it keeps `DEFAULT_CROSS_ORIGIN_HEADERS` (`executor.crossOriginHeaders` is the function in effect).
-- `HttpExecutor.keepCrossOriginHeaders(headers, request, crossOriginHeaders)`: the headers to send to `request.to` for a request whose headers are meant for `request.from`. All of them, without a call, when `to` is on the same origin; else only the names `crossOriginHeaders` returns for the request, or all of them for `null`. A throw, or a result that is not an array of header names or `null`, fails with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`, whose message names the two origins only. It never changes `headers`.
-- `HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options, crossOriginHeaders)` takes the function as its third argument (`DEFAULT_CROSS_ORIGIN_HEADERS` for every redirect when left out).
+- `CrossOriginRequest`: `{ from: URL | null, to: URL, kind: "redirect" | "request" }`, a request or redirect to another origin: the URL its headers are meant for (the feed, or the URL that redirected; `null` when the update provider declares no feed URL, so every request is asked about), the URL on the other origin, and whether it is a redirect or a request electron-updater makes to another origin than its feed.
+- `CrossOriginHeadersCallback`: `(defaults: ReadonlyArray<string>, request: CrossOriginRequest) => ReadonlyArray<string> | null`, the shape of the `crossOriginHeaders` of electron-updater's `checkForUpdates` (which re-exports both types). It returns the header names to send on that request (case-insensitive), or `null` for every header. An `HttpExecutor` takes one as its constructor argument and calls it for each redirect to another origin; without one, it keeps `DEFAULT_CROSS_ORIGIN_HEADERS` (`executor.crossOriginHeaders` is that function, and `executor.crossOriginRedirectHeaders()` what its redirects use: electron-updater's executor asks the update provider first).
+- `CrossOriginHeadersLayer`: `{ name, crossOriginHeaders }`, one step of a layered choice. Given an array of layers, the first gets `DEFAULT_CROSS_ORIGIN_HEADERS`, each later one gets what the one before it returned (the names of every header of the request for `null`), and the last one decides; `name` names the layer in error messages. electron-updater uses two: the provider's `crossOriginHeaders`, then the app's.
+- `HttpExecutor.keepCrossOriginHeaders(headers, request, crossOriginHeaders)`: the headers to send to `request.to` for a request whose headers are meant for `request.from`. All of them, without a call, when `to` is on the same origin; else (and for any `to` when `from` is `null`) only the names `crossOriginHeaders` (a function, or an array of layers) chooses for the request, or all of them for `null`. A throw, or a result that is not an array of header names or `null`, fails with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`, whose message names the layer and the origins only. It never changes `headers`.
+- `HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options, crossOriginHeaders)` takes the function or layers as its third argument (`DEFAULT_CROSS_ORIGIN_HEADERS` for every redirect when left out). On a cross-origin redirect, the `auth` option (sent as a Basic `Authorization` header) is kept only when the choice keeps `authorization`.
 
 builder-util-runtime has no `addSensitiveRedirectHeader`, `HttpExecutor.removeCrossOriginSensitiveHeaders` or `HttpExecutor.sensitiveHeaderNames`: a header is sent to another origin only when the list names it, so return the header from your executor's `CrossOriginHeadersCallback` instead.
 
 **Action:** remove `addSensitiveRedirectHeader(name)` calls (every header off the list stays on the original origin), and pass a `CrossOriginHeadersCallback` such as `(defaults, request) => (request.to.hostname === "cdn.example.com" ? [...defaults, "x-my-header"] : defaults)` to your `HttpExecutor` subclass's constructor for a header that has to follow redirects to that origin.
+
+### Custom electron-updater providers implement `crossOriginHeaders` {#custom-provider-cross-origin-headers}
+
+**How you'll find out:** a custom provider class without it is a **TS error** (`Provider.crossOriginHeaders` is abstract); in plain JavaScript, the update check **fails at run time** with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`, naming the provider class, before any request, with a link here.
+
+Every update provider chooses the headers its requests and redirects send to another origin, before the app's [`crossOriginHeaders` of `checkForUpdates`](./v27-runtime-changes.md#cross-origin-header-allowlist):
+
+```ts
+abstract class Provider<T extends UpdateInfo> {
+  /** Required. Which headers go to `to` when it isn't the feed's origin, or to any URL when there is no feed URL. */
+  abstract crossOriginHeaders(defaults: ReadonlyArray<string>, request: CrossOriginRequest): ReadonlyArray<string> | null
+}
+```
+
+It gets `DEFAULT_CROSS_ORIGIN_HEADERS` and the request, and returns the header names to send (case-insensitive), or `null` for every header of that request. The app's `crossOriginHeaders` gets that result as its `defaults` (the names of every header of the request for `null`) and decides. Neither is asked about the feed's own origin. `Provider.feedBaseUrl` stays optional and only fills `request.from`: without a feed URL (`null`, or not overriding it), both are asked about every download and update info request, with `from` set to `null`. For a redirect the updater follows, the provider is the one of the latest update check. A throw, or a result that is not an array of header names or `null`, fails that request with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`.
+
+The built-in providers (generic, s3, spaces, r2, github, gitlab, bitbucket, keygen) return `defaults`, so a provider that extends one inherits that. Private GitHub returns `null` for the GitHub API's origin (`api.github.com`, or the Enterprise `host`), whose asset URLs its requests use with the token, and `defaults` for any other origin.
+
+**Action:** implement `crossOriginHeaders` in a custom provider that does not extend a built-in one. Return `defaults` for the built-in list; add a header only for the origins that may receive it:
+
+```ts
+class MyProvider extends Provider<UpdateInfo> {
+  get feedBaseUrl(): URL {
+    return new URL("https://updates.example.com/")
+  }
+  crossOriginHeaders(defaults: ReadonlyArray<string>, request: CrossOriginRequest): ReadonlyArray<string> | null {
+    return request.to.origin === "https://api.example.com" ? [...defaults, "authorization"] : defaults
+  }
+  // getLatestVersion(), resolveFiles(), …
+}
+```
 
 ---
 
@@ -183,7 +216,6 @@ These are documented on other pages:
 - **`afterPack` hooks on macOS:** with Electron 41+, the Electron Framework is patched and signed again ad hoc after `afterPack`. If you sign the app in `afterPack`, or change `app.asar` / `Info.plist` after it, see [the ASAR integrity digest](./v27-runtime-changes.md#macos-asar-integrity-digest).
 - **Custom Windows signing hooks** move to `win.sign.sign` ([config change](./v27-config-changes.md#custom-windows-signing-hooks-move-to-winsignsign)) and now need `win.sign.publisherName` ([build check](./v27-build-changes.md#windows-publishername-is-validated-against-the-signing-certificate)).
 - **Custom macOS signing functions** (`mac.sign: "./customSign.js"`) can no longer sit next to sibling signing options: see [macOS signing → `mac.sign`](./v27-config-changes.md#macos-signing-macsign).
-- **Custom electron-updater providers** that don't extend a built-in provider must override `Provider.feedBaseUrl` when used with credential or custom headers (any header off the [cross-origin headers](./v27-runtime-changes.md#cross-origin-header-allowlist)): see [Update credentials stay on the feed's origin](./v27-runtime-changes.md#update-credentials-stay-on-the-feeds-origin).
 
 ---
 

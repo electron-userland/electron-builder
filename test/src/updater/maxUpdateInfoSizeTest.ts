@@ -125,6 +125,10 @@ class ForeignProvider {
     return null
   }
 
+  crossOriginHeaders(): null {
+    return null
+  }
+
   setRequestHeaders(): void {
     // nothing to do
   }

@@ -19,6 +19,7 @@ export {
   configureRequestUrl,
   createHttpError,
   CrossOriginHeadersCallback,
+  CrossOriginHeadersLayer,
   CrossOriginRequest,
   DEFAULT_CROSS_ORIGIN_HEADERS,
   DigestTransform,

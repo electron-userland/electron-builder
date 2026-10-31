@@ -1,4 +1,4 @@
-import { CancellationToken, GithubOptions, githubUrl, HttpError, newError, parseXml, ReleaseNoteInfo, UpdateInfo, XElement } from "builder-util-runtime"
+import { CancellationToken, CrossOriginRequest, GithubOptions, githubUrl, HttpError, newError, parseXml, ReleaseNoteInfo, UpdateInfo, XElement } from "builder-util-runtime"
 import * as semver from "semver"
 import { URL } from "url"
 import { AppUpdater } from "../AppUpdater.js"
@@ -50,6 +50,11 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
 
   get feedBaseUrl(): URL {
     return this.baseUrl
+  }
+
+  /** The built-in list: another origin than the feed's gets the default cross-origin headers (the app's `crossOriginHeaders` decides). */
+  crossOriginHeaders(defaults: ReadonlyArray<string>, _request: CrossOriginRequest): ReadonlyArray<string> | null {
+    return defaults
   }
 
   private get channel(): string {
