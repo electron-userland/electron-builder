@@ -1,7 +1,7 @@
 import { GithubOptions, HttpError } from "builder-util-runtime"
 import { PrivateGitHubProvider } from "electron-updater/src/providers/PrivateGitHubProvider"
 import type { PrivateGitHubUpdateInfo } from "electron-updater/src/providers/PrivateGitHubProvider"
-import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil.js"
+import { assertDownloadNotTriggered, getProvider, mockAliasChainYaml, mockComplexKeyYaml, mockYaml } from "../helpers/providerTestUtil.js"
 import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
 const MOCK_TOKEN = "ghp_test-token-12345"
@@ -120,6 +120,33 @@ test("404 on channel file asset - throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND", as
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockRejectedValueOnce(new HttpError(404))
 
   await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" })
+})
+
+test("channel file with YAML aliases that expand to too many values - throws ERR_UPDATER_INVALID_UPDATE_INFO", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPrivateUpdater(requestSpy)
+
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockAliasChainYaml(STABLE_VERSION, 40))
+
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringMatching(/YAML aliases expand to more than/) })
+})
+
+test("channel file with YAML aliases in complex mapping keys - throws ERR_UPDATER_INVALID_UPDATE_INFO while loading", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPrivateUpdater(requestSpy)
+
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockComplexKeyYaml(STABLE_VERSION))
+
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringMatching(/YAML aliases expand to more than/) })
+})
+
+test("malformed channel file - throws ERR_UPDATER_INVALID_UPDATE_INFO", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPrivateUpdater(requestSpy)
+
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(`${mockYaml(STABLE_VERSION)}releaseNotes: [unclosed\n`)
+
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringMatching(/YAMLException/) })
 })
 
 test("no releases available - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", async ({ expect }) => {
