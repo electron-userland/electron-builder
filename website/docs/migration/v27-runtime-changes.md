@@ -140,7 +140,7 @@ An entry of `loginChallengeOrigins` is an origin such as `https://downloads.exam
 
 **How you'll find out:** **Warns during the build** when the feed written to `app-update.yml` (a `generic` or `custom` publish `url`, a `github` `protocol: "http"` or an `s3` `endpoint`) uses `http` to a host that is not loopback. On users' machines the update check or download fails with `ERR_UPDATER_INSECURE_FEED`, whose message links here.
 
-electron-updater 6 sent update requests over plain `http` when the feed URL, a download URL in `latest*.yml` or a redirect used it. electron-updater 7 rejects every such request before it is sent: the feed (`app-update.yml` or `setFeedURL`), the update files, blockmaps, differential range requests and every redirect they follow, so an `https` request redirected to `http` fails too. Requests to a loopback host (`localhost`, `127.0.0.0/8`, `::1`) are always allowed, so local test servers keep working. This applies to every provider, including a GitHub Enterprise `protocol: "http"` feed and an `s3` `endpoint` that uses `http`. electron-builder's own publishing is not affected.
+electron-updater rejects every update request over plain `http` before it is sent: the feed (`app-update.yml` or `setFeedURL`), the update files, blockmaps, differential range requests and every redirect they follow, so an `https` request redirected to `http` fails too. Requests to a loopback host (`localhost`, `127.0.0.0/8`, `::1`) are always allowed, so local test servers keep working. This applies to every provider, including a GitHub Enterprise `protocol: "http"` feed and an `s3` `endpoint` that uses `http`. electron-builder's own publishing is not affected.
 
 **Action:** serve the feed and the update files over `https`. Only if a feed cannot be served over `https`, opt out in your main process (anyone on the network path can then tamper with the update information and files; a [signed update manifest](../features/signed-update-manifests.md) and the code signature of the update are then all that protect it):
 
@@ -149,7 +149,7 @@ import { autoUpdater } from "electron-updater"
 autoUpdater.allowInsecureFeed = true
 ```
 
-Set the publish `url` to `https` in the release that ships electron-updater 7. Installs still on electron-updater 6 keep polling the old `http` URL, and follow a redirect from it to the `https` feed.
+Set the publish `url` to `https`, and keep the `http` URL redirecting to the `https` feed: installs that have not updated yet poll the `http` URL from their `app-update.yml` and follow that redirect.
 
 ### Windows update signature verification fails closed {#windows-update-signature-verification-fails-closed}
 

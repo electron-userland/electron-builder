@@ -288,7 +288,7 @@ Update metadata validated only by the legacy SHA-256 `sha2` checksum is deprecat
 
 ## Update security options
 
-Three `AppUpdater` settings changed or were added in v27. See the [Security & Hardening](./security.md#update-security-electron-updater) page for the full rationale.
+The `AppUpdater` settings below protect the update path. See the [Security & Hardening](./security.md#update-security-electron-updater) page for the full rationale.
 
 The update manifest (`latest*.yml`) itself **is** cryptographically signed and verified before any download as of v27. Publishing a build that emits update metadata fails unless an Ed25519 signing key resolves; `updateManifest: false` is the only opt-out — see [Signed Update Manifests](./signed-update-manifests.md).
 
@@ -314,7 +314,7 @@ Set it before the app is `ready`, e.g. right after creating the updater, or sync
 
 A web update cached by a previous launch, or pending an install on next launch, is used only if its web package still matches the freshly fetched manifest; otherwise it is discarded. The `nsis-web` installer itself verifies the package electron-updater passes to it and installs its own copy — see [Web Installer](../nsis.md#web-installer). Once the app runs the version of that update, `NsisUpdater` removes the package from its `pending` cache directory at startup (app `ready`); the package of an update that is not installed yet, or whose install failed, is kept for the install or a retry. Because the manifest vouches for the web package, don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./signed-update-manifests.md) cover its path, SHA-512 and size.
 
-### `allowInsecureFeed` (new, defaults to `false`)
+### `allowInsecureFeed` (defaults to `false`) {#allowinsecurefeed-new-defaults-to-false}
 
 Every request electron-updater sends — the update feed (`app-update.yml` or `setFeedURL`), the update files, blockmaps, differential range requests and every redirect they follow — must use `https`. A request over plain `http`, including an `https` request redirected to `http`, fails with `ERR_UPDATER_INSECURE_FEED` before anything is sent to that URL. Requests to a loopback host (`localhost`, `127.0.0.0/8`, `::1`) are always allowed, so a local test server keeps working. electron-builder warns during the build when the feed written to `app-update.yml` (a `generic` or `custom` publish `url`, a `github` `protocol: "http"` or an `s3` `endpoint`) uses `http` to a host that is not loopback.
 
