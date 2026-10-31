@@ -9,15 +9,15 @@ export function newError(message: string, code: string) {
  * Never throws.
  */
 export function errorToString(error: unknown): string {
-  if (error != null && typeof error === "object") {
-    if ("stack" in error && typeof error.stack === "string" && error.stack.length > 0) {
-      return error.stack
-    }
-    if ("message" in error && typeof error.message === "string" && error.message.length > 0) {
-      return error.message
-    }
-  }
   try {
+    if (error != null && typeof error === "object") {
+      if ("stack" in error && typeof error.stack === "string" && error.stack.length > 0) {
+        return error.stack
+      }
+      if ("message" in error && typeof error.message === "string" && error.message.length > 0) {
+        return error.message
+      }
+    }
     return String(error)
   } catch {
     return "[unprintable error]"

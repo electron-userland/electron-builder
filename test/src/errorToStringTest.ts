@@ -27,4 +27,13 @@ describe("errorToString", () => {
   test("does not throw for a value that cannot be converted to a string", ({ expect }) => {
     expect(errorToString(Object.create(null))).toBe("[unprintable error]")
   })
+
+  test("does not throw when reading the stack throws", ({ expect }) => {
+    const throwingStack = {
+      get stack(): string {
+        throw new Error("getter")
+      },
+    }
+    expect(errorToString(throwingStack)).toBe("[unprintable error]")
+  })
 })
