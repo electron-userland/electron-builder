@@ -1,4 +1,4 @@
-import { CancellationToken } from "builder-util-runtime"
+import { CancellationToken, type CrossOriginHeaders } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import type { RequestOptions } from "http"
 import * as path from "path"
@@ -75,39 +75,52 @@ describe("ElectronHttpExecutor redirects", () => {
   })
 })
 
-// A redirect to another origin sends on only the cross-origin allowlist of headers; the executor's listener gets the names of the others.
+// A redirect to another origin sends on only the executor's cross-origin headers (AppUpdater.crossOriginHeaders), by default the allowlist.
 describe("ElectronHttpExecutor cross-origin redirect headers", () => {
-  const HEADERS = { "X-Api-Token": "custom-secret", range: "bytes=0-99", accept: "*/*" }
+  const HEADERS = { "X-Api-Token": "custom-secret", "X-Tenant": "acme", range: "bytes=0-99", accept: "*/*" }
 
-  function createListeningExecutor(target: string) {
-    const dropped: Array<[Array<string>, string, string]> = []
-    const executor = new FakeElectronHttpExecutor(url => (url === FILE_URL ? { location: target } : { statusCode: 200, body: BODY }), {
-      crossOriginRedirectListener: (names, origin, targetUrl) => dropped.push([names, origin.origin, targetUrl.origin]),
-    })
-    return { executor, dropped }
+  function createRedirectingExecutor(target: string, crossOriginHeaders?: CrossOriginHeaders) {
+    return new FakeElectronHttpExecutor(url => (url === FILE_URL ? { location: target } : { statusCode: 200, body: BODY }), { crossOriginHeaders })
   }
 
-  test("a cross-origin redirect drops a custom header, keeps Range, and names the dropped header", async ({ tmpDir, expect }) => {
-    const { executor, dropped } = createListeningExecutor(TARGET_URL)
+  async function download(executor: FakeElectronHttpExecutor, tmpDir: TmpDir): Promise<void> {
     const destination = path.join(await tmpDir.createTempDir({ prefix: "electron-http-executor-redirect" }), "app.exe")
     await executor.download(new URL(FILE_URL), destination, { headers: HEADERS, cancellationToken: new CancellationToken() })
+  }
+
+  test("a cross-origin redirect drops a custom header and keeps Range", async ({ tmpDir, expect }) => {
+    const executor = createRedirectingExecutor(TARGET_URL)
+    await download(executor, tmpDir)
 
     expect(executor.sent.map(it => it.url)).toEqual([FILE_URL, TARGET_URL])
     expect(executor.sent[0].headers).toMatchObject(HEADERS)
     expect(executor.sent[1].headers).not.toHaveProperty("X-Api-Token")
+    expect(executor.sent[1].headers).not.toHaveProperty("X-Tenant")
     expect(executor.sent[1].headers).toMatchObject({ range: "bytes=0-99", accept: "*/*" })
-    expect(dropped).toEqual([[["X-Api-Token"], "https://feed.example.com", "https://bucket.example.net"]])
   })
 
-  test("a same-origin redirect keeps a custom header and names nothing", async ({ tmpDir, expect }) => {
+  test("a cross-origin redirect sends on the headers the executor's crossOriginHeaders lists", async ({ tmpDir, expect }) => {
+    const executor = createRedirectingExecutor(TARGET_URL, defaults => [...defaults, "X-TENANT"])
+    await download(executor, tmpDir)
+
+    expect(executor.sent[1].headers).toMatchObject({ "X-Tenant": "acme", range: "bytes=0-99", accept: "*/*" })
+    expect(executor.sent[1].headers).not.toHaveProperty("X-Api-Token")
+  })
+
+  test("a crossOriginHeaders returning null sends every header on", async ({ tmpDir, expect }) => {
+    const executor = createRedirectingExecutor(TARGET_URL, () => null)
+    await download(executor, tmpDir)
+
+    expect(executor.sent[1].headers).toMatchObject(HEADERS)
+  })
+
+  test("a same-origin redirect keeps a custom header", async ({ tmpDir, expect }) => {
     const sameOrigin = "https://feed.example.com/other/app-1.1.0.exe"
-    const { executor, dropped } = createListeningExecutor(sameOrigin)
-    const destination = path.join(await tmpDir.createTempDir({ prefix: "electron-http-executor-redirect" }), "app.exe")
-    await executor.download(new URL(FILE_URL), destination, { headers: HEADERS, cancellationToken: new CancellationToken() })
+    const executor = createRedirectingExecutor(sameOrigin)
+    await download(executor, tmpDir)
 
     expect(executor.sent.map(it => it.url)).toEqual([FILE_URL, sameOrigin])
     expect(executor.sent[1].headers).toMatchObject(HEADERS)
-    expect(dropped).toEqual([])
   })
 })
 

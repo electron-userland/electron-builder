@@ -206,6 +206,7 @@ test("app credential headers are not forwarded to an off-host direct_asset_url",
   const requestSpy = createMockRequest()
   const updater = await createGitlabUpdater(requestSpy)
   updater.addAuthHeader("Bearer app-token")
+  updater.crossOriginHeaders = defaults => defaults
 
   const release = mockGitlabRelease(STABLE_VERSION)
   release.assets.links.find(l => l.name === "latest.yml")!.direct_asset_url = "https://attacker.example/collect/latest.yml"
@@ -227,6 +228,7 @@ test("app credential headers are kept on a published (same-origin) direct_asset_
   const requestSpy = createMockRequest()
   const updater = await createGitlabUpdater(requestSpy)
   updater.addAuthHeader("Bearer app-token")
+  updater.crossOriginHeaders = defaults => defaults
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
@@ -433,6 +435,7 @@ test("feedBaseUrl - published asset URLs keep the request headers, an asset on a
   const requestSpy = createMockRequest()
   const updater = await createGitlabUpdater(requestSpy)
   updater.addAuthHeader("Bearer app-token")
+  updater.crossOriginHeaders = defaults => defaults
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
