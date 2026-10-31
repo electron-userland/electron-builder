@@ -7,7 +7,7 @@ import type { IncomingMessage } from "http"
 import type { Socket } from "net"
 import * as path from "path"
 import { describe, test } from "vitest"
-import { createNsisUpdater, FakeElectronHttpExecutor, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
+import { createNsisUpdater, FakeElectronHttpExecutor, FakeNetRequest, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
 // A full download into a file stops once it receives more bytes than the size the update info declares for the file, instead of
 // receiving whatever the server sends before the checksum is compared at the end.
@@ -134,6 +134,17 @@ describe("electron-updater full download stops above the declared size", () => {
   const PACKAGE_NAME = "TestApp-1.1.0.nsis.7z"
   const PACKAGE = Buffer.from("download size limit test web package — not a real 7z archive")
 
+  // destroying the response of Electron's net does not end its request: only abort() does
+  class RecordingExecutor extends FakeElectronHttpExecutor {
+    readonly requests: Array<FakeNetRequest> = []
+
+    createRequest(options: http.RequestOptions, callback: (response: any) => void): any {
+      const request = super.createRequest(options, callback)
+      this.requests.push(request)
+      return request
+    }
+  }
+
   // the checksums match the files served, so only the declared size can fail the download
   async function createUpdater(installerSize: number, packageSize?: number) {
     const channelFile = serializeToYaml({
@@ -150,18 +161,20 @@ describe("electron-updater full download stops above the declared size", () => {
     const updater = await createNsisUpdater("1.0.0")
     updater.autoDownload = false
     updater.updateConfigPath = await writeUpdateConfig({ provider: "generic", url: FEED })
-    ;(updater as any).httpExecutor = new FakeElectronHttpExecutor(url => {
+    const executor = new RecordingExecutor(url => {
       // the channel file is requested with a cache-busting query
       const body = files.get(url.replace(/\?.*$/s, ""))
       return body == null ? { statusCode: 404 } : { statusCode: 200, body }
     })
-    return updater
+    ;(updater as any).httpExecutor = executor
+    return Object.assign(updater, { requests: executor.requests })
   }
 
   test("the installer", async ({ expect }) => {
     const updater = await createUpdater(INSTALLER.length - 1)
     await updater.checkForUpdates()
     await expect(updater.downloadUpdate()).rejects.toMatchObject({ code: "ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED" })
+    expect(updater.requests.filter(request => request.aborted)).toHaveLength(1)
 
     // positive control: the declared size of the file is accepted
     const exact = await createUpdater(INSTALLER.length)

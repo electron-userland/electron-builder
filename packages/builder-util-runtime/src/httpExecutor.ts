@@ -416,7 +416,7 @@ Please double check that your authentication token is correct. Due to security r
       }
 
       if (options.responseHandler == null) {
-        configurePipes(options, response)
+        configurePipes(options, response, () => request.abort())
       } else {
         options.responseHandler(response, options.callback)
       }
@@ -704,7 +704,7 @@ export function detectSha512Encoding(sha512: string): BinaryToTextEncoding {
   return "base64"
 }
 
-function configurePipes(options: DownloadCallOptions, response: IncomingMessage) {
+function configurePipes(options: DownloadCallOptions, response: IncomingMessage, abort: () => void) {
   if (!checkSha2(safeGetHeader(response, "X-Checksum-Sha2"), options.options.sha2, options.callback)) {
     return
   }
@@ -728,8 +728,9 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage)
         callback(null, chunk)
       },
     })
-    // a failing pipe destination only unpipes the response: destroy it, so that the rest of the body is not received
-    sizeLimit.on("error", () => response.destroy())
+    // a failing pipe destination only unpipes the response: abort the request, so that the rest of the body is not received (destroying
+    // the response of Electron's net only stops reading it, the request goes on until it is aborted)
+    sizeLimit.on("error", abort)
     streams.push(sizeLimit)
   }
   if (options.options.onProgress != null) {
