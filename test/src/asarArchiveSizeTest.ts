@@ -7,7 +7,7 @@ import * as path from "path"
 type Asar = { createPackage(src: string, dest: string): Promise<void> }
 const asar = () => dynamicImport<Asar>("@electron/asar")
 
-// Packs a small app into `<tmp>/app.asar`. Each test gets its own temp dir, because @electron/asar caches an archive's header by path.
+// Packs a small app into `<tmp>/app.asar`. Each test gets its own temp dir: `readFilesystemSync` caches an archive's header by path (https://github.com/electron/asar/blob/fde819a/src/disk.ts#L357-L365).
 async function packArchive(tmp: string): Promise<string> {
   const src = path.join(tmp, "src")
   await fs.mkdir(src, { recursive: true })
