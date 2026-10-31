@@ -273,7 +273,7 @@ Destinations, targets and links are paths **relative to the app prefix**, which 
 
 `<id>` is the [Flatpak application ID](#application-id): your `appId` with every `-` replaced by `_` and every character other than letters, digits, `.` and `_` removed. For example, `com.mycompany.my-app` becomes `com.mycompany.my_app`.
 
-Give a file association a `mimeType` only for a type of your own, such as `application/x-myapp-project`. Each one is declared with the description `<productName> document` and a generic document icon, and the MIME data that flatpak exports comes before the system's, so for a standard type such as `text/markdown` the desktop can show that description for every such file on the machine. The deb and AppImage targets declare the types the same way. To have the app offered for a standard type, list the type in `linux.mimeTypes`, which only adds it to the desktop entry.
+Give a file association a `mimeType` only for a type of your own, such as `application/x-myapp-project`. Each one is declared with the file association's `description`, or `<productName> document` without one, and a generic document icon, and the MIME data that flatpak exports comes before the system's, so for a standard type such as `text/markdown` the desktop can show that description for every such file on the machine. The deb, rpm, pacman and AppImage targets declare the types the same way. To have the app offered for a standard type, list the type in `linux.mimeTypes`, which only adds it to the desktop entry.
 
 The bundle contains no `<executableName>-launcher` script: the [launcher entrypoint](migration/v27-runtime-changes.md#linux-launcher-entrypoint) introduced in v27 does not apply to the flatpak target, which keeps `electron-wrapper`.
 
