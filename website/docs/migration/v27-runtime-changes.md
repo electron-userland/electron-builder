@@ -292,7 +292,7 @@ Installing per-user over a per-user installation, and per-machine over a per-mac
 
 Where PowerShell is not available, the installer still finds and closes the app by its executable name, as in v26, so a running per-user copy is closed too. Its files and uninstaller are left alone.
 
-**What users see:** someone who had the app installed for their account and then installs it for all users ends up with both copies: two entries in Settings → Apps → Installed apps, and Start menu and desktop shortcuts for both.
+**What users see:** someone who had the app installed for their account and then installs it for all users ends up with both copies: two entries in Settings → Apps → Installed apps, and Start menu and desktop shortcuts for both. File associations and protocol (deep-link) handlers registered for the per-user copy keep opening it, because Windows prefers the current user's registrations (`HKEY_CURRENT_USER\Software\Classes`) over the per-machine ones. If your app uses electron-updater, the per-user copy also keeps updating itself, separately from the per-machine copy.
 
 **Action:** only if your users move from a per-user to a per-machine install (for example, you switch your build to `perMachine: true`, or let users pick the install mode with `oneClick: false`). Tell them to remove the per-user copy, before or after the per-machine install:
 
