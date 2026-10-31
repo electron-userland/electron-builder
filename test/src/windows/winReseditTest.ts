@@ -1,4 +1,5 @@
 import { ResourceEditOptions, editWindowsResources } from "app-builder-lib/internal"
+import { InvalidConfigurationError } from "builder-util"
 import * as fs from "fs/promises"
 import path from "path"
 import { NtExecutable, NtExecutableResource, Resource } from "resedit"
@@ -102,6 +103,26 @@ describe("editWindowsResources", () => {
     const file = await writePe(tmpDir, makePeBuffer({ withManifest: true }))
     await editWindowsResources({ ...baseOpts, file, requestedExecutionLevel: "requireAdministrator" })
     expect(readPeSnapshot(await fs.readFile(file))).toMatchSnapshot()
+  })
+
+  test("patches highestAvailable into manifest", async ({ expect, tmpDir }) => {
+    const file = await writePe(tmpDir, makePeBuffer({ withManifest: true }))
+    await editWindowsResources({ ...baseOpts, file, requestedExecutionLevel: "highestAvailable" })
+    expect(readPeSnapshot(await fs.readFile(file)).manifestXml).toContain(`<requestedExecutionLevel level="highestAvailable" uiAccess="false"/>`)
+  })
+
+  test("rejects an unknown requestedExecutionLevel and leaves the file untouched", async ({ expect, tmpDir }) => {
+    const original = makePeBuffer({ withManifest: true })
+    const file = await writePe(tmpDir, original)
+    const requestedExecutionLevel = "administrator" as ResourceEditOptions["requestedExecutionLevel"]
+    await expect(editWindowsResources({ ...baseOpts, file, requestedExecutionLevel })).rejects.toThrow(InvalidConfigurationError)
+    expect((await fs.readFile(file)).equals(original)).toBe(true)
+  })
+
+  test("rejects an unknown requestedExecutionLevel even when RT_MANIFEST is missing", async ({ expect, tmpDir }) => {
+    const file = await writePe(tmpDir, makePeBuffer({ withManifest: false }))
+    const requestedExecutionLevel = "administrator" as ResourceEditOptions["requestedExecutionLevel"]
+    await expect(editWindowsResources({ ...baseOpts, file, requestedExecutionLevel })).rejects.toThrow(InvalidConfigurationError)
   })
 
   test("does not touch manifest when requestedExecutionLevel is asInvoker", async ({ expect, tmpDir }) => {

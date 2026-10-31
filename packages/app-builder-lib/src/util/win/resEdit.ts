@@ -1,4 +1,4 @@
-import { log } from "builder-util"
+import { InvalidConfigurationError, log } from "builder-util"
 import { readFile, writeFile } from "fs/promises"
 import { Data, NtExecutable, NtExecutableResource, Resource } from "resedit"
 import { RequestedExecutionLevel } from "../../options/winOptions.js"
@@ -50,7 +50,13 @@ export async function editWindowsResources(opts: ResourceEditOptions): Promise<v
   await writeFile(opts.file, Buffer.from(executable.generate()))
 }
 
+const REQUESTED_EXECUTION_LEVELS = new Set<string>(["asInvoker", "highestAvailable", "requireAdministrator"])
+
 function patchManifestExecutionLevel(res: NtExecutableResource, level: string, file: string): void {
+  // the schema enum only guards JSON/YAML configs; programmatic configs reach here unchecked and the value is spliced into the manifest XML
+  if (!REQUESTED_EXECUTION_LEVELS.has(level)) {
+    throw new InvalidConfigurationError(`Invalid win.requestedExecutionLevel ${JSON.stringify(level)}: expected one of ${[...REQUESTED_EXECUTION_LEVELS].join(", ")}`)
+  }
   const manifestEntry = res.entries.find(e => e.type === 24 && e.id === 1)
   if (!manifestEntry) {
     log.warn({ file }, "no RT_MANIFEST resource found; requestedExecutionLevel will not be applied")
