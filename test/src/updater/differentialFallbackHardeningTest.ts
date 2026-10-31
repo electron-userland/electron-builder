@@ -154,7 +154,7 @@ async function update(tmpDir: TmpDir, c: Case): Promise<Outcome> {
     }
     await fsExtra.outputFile(path.join(cacheDir, "current.blockmap"), gzippedBlockMapOf(OLD, BLOCK))
 
-    const check = await updater.checkForUpdates()
+    const check = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
     if (check?.isUpdateAvailable !== true) {
       throw new Error("no update offered")
     }

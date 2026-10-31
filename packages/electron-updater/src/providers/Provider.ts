@@ -2,8 +2,7 @@ import {
   ApiRequestOptions,
   CancellationToken,
   configureRequestUrl,
-  CrossOriginHeaders,
-  DEFAULT_CROSS_ORIGIN_HEADERS,
+  CrossOriginHeadersCallback,
   DEFAULT_MAX_UPDATE_INFO_SIZE,
   HttpExecutor,
   newError,
@@ -30,10 +29,10 @@ export interface ProviderRuntimeOptions {
   executor: ElectronHttpExecutor
 
   /**
-   * Chooses the request headers an update info request (e.g. a channel file) on another origin than `Provider.feedBaseUrl` gets
-   * (`AppUpdater.crossOriginHeaders`); without it, `DEFAULT_CROSS_ORIGIN_HEADERS`.
+   * Chooses the request headers each update info request (e.g. a channel file) on another origin than `Provider.feedBaseUrl` gets (the
+   * `crossOriginHeaders` of `AppUpdater.checkForUpdates`); without it, `DEFAULT_CROSS_ORIGIN_HEADERS`.
    */
-  crossOriginHeaders?: CrossOriginHeaders
+  crossOriginHeaders?: CrossOriginHeadersCallback
 }
 
 // Shared by the GitHub/GitLab/PrivateGitHub providers when a release channel file (e.g. latest.yml) 404s.
@@ -91,7 +90,7 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 
   /**
-   * Base URL of the update feed: the request headers other than the cross-origin headers (`AppUpdater.crossOriginHeaders`, by default the
+   * Base URL of the update feed: the request headers other than the cross-origin headers (the `crossOriginHeaders` of `AppUpdater.checkForUpdates`, by default the
    * likes of Accept, User-Agent and Range, as on a cross-origin redirect) are only sent to download URLs, and to the URLs of the provider's
    * own update info requests (e.g. the channel file), on its origin. `null` sends the request headers to every URL.
    * The default, `undefined`, means not declared: a download with such headers (from `requestHeaders` / `addAuthHeader`) then fails
@@ -168,9 +167,11 @@ export abstract class Provider<T extends UpdateInfo> {
     const feedBaseUrl = this.feedBaseUrl
     let requestHeaders = this.requestHeaders
     if (requestHeaders != null && feedBaseUrl != null) {
-      const crossOriginHeaders = this.runtimeOptions.crossOriginHeaders
-      const allowed = crossOriginHeaders == null ? DEFAULT_CROSS_ORIGIN_HEADERS : crossOriginHeaders(DEFAULT_CROSS_ORIGIN_HEADERS)
-      requestHeaders = HttpExecutor.keepCrossOriginHeaders(requestHeaders, feedBaseUrl, url, allowed)
+      requestHeaders = HttpExecutor.keepCrossOriginHeaders(
+        requestHeaders,
+        { from: feedBaseUrl, to: url, kind: "request" },
+        this.runtimeOptions.crossOriginHeaders ?? (defaults => defaults)
+      )
     }
     if (requestHeaders == null) {
       if (headers != null) {

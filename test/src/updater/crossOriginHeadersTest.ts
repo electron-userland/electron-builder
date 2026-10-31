@@ -1,34 +1,24 @@
 import { serializeToYaml } from "builder-util"
-import { CancellationToken, DEFAULT_CROSS_ORIGIN_HEADERS, UpdateInfo } from "builder-util-runtime"
-import type { AppUpdater, DownloadUpdateOptions } from "electron-updater/src/AppUpdater"
-import { createClient } from "electron-updater/src/providerFactory"
-import { GenericProvider } from "electron-updater/src/providers/GenericProvider"
-import { PrivateGitHubProvider } from "electron-updater/src/providers/PrivateGitHubProvider"
-import type { Provider } from "electron-updater/src/providers/Provider"
+import { type CrossOriginHeadersCallback, type CrossOriginRequest, DEFAULT_CROSS_ORIGIN_HEADERS } from "builder-util-runtime"
+import type { AppUpdater, CheckForUpdatesAndNotifyOptions, CheckForUpdatesOptions } from "electron-updater/src/AppUpdater"
 import { createHash } from "crypto"
 import fsExtra from "fs-extra"
-import type { IncomingHttpHeaders, IncomingMessage, OutgoingHttpHeaders, Server } from "http"
+import type { IncomingHttpHeaders, IncomingMessage, Server } from "http"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
-import { afterEach, describe, type ExpectStatic, test, vi } from "vitest"
+import { afterEach, describe, test, vi } from "vitest"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
-// autoUpdater.crossOriginHeaders chooses the request headers sent to another origin. It is required when the app sets its own headers.
+// checkForUpdates({ crossOriginHeaders }) chooses the request headers of each request and redirect to another origin: required for every app,
+// called per cross-origin request, and kept for the download of the check and the install of an update marked for the next launch.
 
 const DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-header-allowlist"
 const INSTALLER = Buffer.from("cross-origin headers test installer — not a real executable")
-const FEED = "https://feed.example.com/updates/"
-const INFO: UpdateInfo = { version: "1.1.0", files: [{ url: "app-1.1.0.exe", sha512: "x", size: 10 }], releaseDate: "2024-01-01T00:00:00.000Z" }
+const INSTALLER_NAME = "app-1.1.0.exe"
+const useDefaults: CrossOriginHeadersCallback = defaults => defaults
 
-// a custom provider (a generic one) whose downloads carry a header of its own
-class ExtraHeadersProvider extends GenericProvider {
-  get fileExtraDownloadHeaders(): OutgoingHttpHeaders | null {
-    return { "X-Download-Key": "download-secret" }
-  }
-}
-
-describe("autoUpdater.crossOriginHeaders", () => {
+describe("checkForUpdates({ crossOriginHeaders })", () => {
   const servers: Array<Server> = []
   afterEach(() => {
     for (const server of servers.splice(0)) {
@@ -37,252 +27,237 @@ describe("autoUpdater.crossOriginHeaders", () => {
     vi.restoreAllMocks()
   })
 
-  // a local feed with a channel file that offers 1.1.0, recording every request
-  async function serveFeed(tmpDir: TmpDir) {
-    const root = await tmpDir.getTempDir({ prefix: "cross-origin-headers-feed" })
-    await fsExtra.outputFile(
-      path.join(root, "latest.yml"),
-      serializeToYaml({
-        version: "1.1.0",
-        files: [{ url: "app-1.1.0.exe", sha512: createHash("sha512").update(INSTALLER).digest("base64"), size: INSTALLER.length }],
-        releaseDate: "2024-01-01T00:00:00.000Z",
-      })
-    )
+  // a local static server that records every request; two servers on different ports are different origins
+  async function serve(tmpDir: TmpDir) {
+    const root = await tmpDir.getTempDir({ prefix: "cross-origin-headers-server" })
     const { server, port } = await createLocalServer(root)
     servers.push(server)
     const requests: Array<{ pathname: string; headers: IncomingHttpHeaders }> = []
     server.on("request", (request: IncomingMessage) => {
       requests.push({ pathname: new URL(request.url ?? "/", "http://localhost").pathname, headers: request.headers })
     })
-    return { url: `http://127.0.0.1:${port}/`, requests }
+    const url = `http://127.0.0.1:${port}`
+    return { url, origin: new URL(url).origin, requests, write: (name: string, content: string | Buffer) => fsExtra.outputFile(path.join(root, name), content) }
   }
 
-  async function createUpdater(tmpDir: TmpDir) {
-    const feed = await serveFeed(tmpDir)
+  function channelYml(installerUrl: string) {
+    return serializeToYaml({
+      version: "1.1.0",
+      files: [{ url: installerUrl, sha512: createHash("sha512").update(INSTALLER).digest("base64"), size: INSTALLER.length }],
+      releaseDate: "2024-01-01T00:00:00.000Z",
+    })
+  }
+
+  // a feed whose latest.yml points to `installerUrl` (relative: on the feed), with the app's own headers
+  async function createUpdater(tmpDir: TmpDir, installerUrl: (feed: { url: string }) => string = () => INSTALLER_NAME) {
+    const feed = await serve(tmpDir)
+    await feed.write("latest.yml", channelYml(installerUrl(feed)))
+    await feed.write(INSTALLER_NAME, INSTALLER)
     const updater = await createNsisUpdater("1.0.0")
     updater.updateConfigPath = await writeUpdateConfig({ provider: "generic", url: feed.url })
     updater.autoDownload = false
-    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
-    updater.logger = logger
-    return { updater, feed, logger, events: trackEvents(updater) }
+    updater.requestHeaders = { "X-Tenant": "acme" }
+    updater.addAuthHeader("Bearer s")
+    return { updater, feed, events: trackEvents(updater) }
   }
 
-  // the headers the updater sends to a download from `url`, with the feed at FEED
-  function downloadHeadersFor(updater: AppUpdater, url: string, provider: Provider<any> = createFeedProvider(updater)): OutgoingHttpHeaders {
-    const options: DownloadUpdateOptions = {
-      updateInfoAndProvider: { info: INFO, provider },
-      requestHeaders: (updater as any).computeRequestHeaders(provider),
-      cancellationToken: new CancellationToken(),
-    }
-    return (updater as any).downloadRequestHeaders(new URL(url), options)
+  async function rejection(promise: Promise<unknown>): Promise<unknown> {
+    return promise.then(
+      () => null,
+      (e: unknown) => e
+    )
   }
 
-  function createFeedProvider(updater: AppUpdater): Provider<any> {
-    return createClient({ provider: "generic", url: FEED }, updater, { isUseMultipleRangeRequest: false, platform: "win32", executor: {} as any })
-  }
+  describe("is required", () => {
+    const checks: ReadonlyArray<readonly [string, (updater: AppUpdater, options: unknown) => Promise<unknown>]> = [
+      ["checkForUpdates", (updater, options) => updater.checkForUpdates(options as CheckForUpdatesOptions)],
+      ["checkForUpdatesAndNotify", (updater, options) => updater.checkForUpdatesAndNotify(options as CheckForUpdatesAndNotifyOptions)],
+    ]
+    const invalidOptions: ReadonlyArray<readonly [string, unknown]> = [
+      ["no options", undefined],
+      ["no crossOriginHeaders", {}],
+      ["a crossOriginHeaders that is not a function", { crossOriginHeaders: ["accept"] }],
+      ["a notification in place of the options", { title: "Update", body: "{version} is ready" }],
+    ]
+    for (const [method, check] of checks) {
+      for (const [label, options] of invalidOptions) {
+        test(`${method} with ${label} fails before any request`, async ({ tmpDir, expect }) => {
+          const { updater, feed, events } = await createUpdater(tmpDir)
 
-  describe("without custom headers", () => {
-    test("the update check runs with the default list, silently", async ({ tmpDir, expect }) => {
-      const { updater, feed, logger, events } = await createUpdater(tmpDir)
-
-      expect((await updater.checkForUpdates())!.isUpdateAvailable).toBe(true)
-      expect(feed.requests.map(it => it.pathname)).toEqual(["/latest.yml"])
-      expect(events).not.toContain("error")
-      expect(logger.warn.mock.calls.map(it => String(it[0])).filter(it => it.includes("rossOrigin") || it.includes("cross-origin"))).toEqual([])
-      expect(downloadHeadersFor(updater, "https://cdn.example.net/app-1.1.0.exe")).toEqual({ accept: "*/*" })
-    })
-
-    // the private GitHub provider's Accept and token Authorization are electron-updater's own headers
-    test("the private GitHub provider's own headers do not require crossOriginHeaders", async ({ tmpDir, expect }) => {
-      const { updater } = await createUpdater(tmpDir)
-      const provider = createClient({ provider: "github", owner: "owner", repo: "repo", private: true, token: "github-secret" }, updater, {
-        isUseMultipleRangeRequest: false,
-        platform: "win32",
-        executor: {} as any,
-      })
-      expect(provider).toBeInstanceOf(PrivateGitHubProvider)
-      expect(provider.fileExtraDownloadHeaders).toHaveProperty("authorization")
-
-      expect(() => (updater as any).checkCrossOriginHeadersConfigured(provider)).not.toThrow()
-    })
-  })
-
-  describe("required with custom headers", () => {
-    async function expectNotConfigured(expect: ExpectStatic, updater: AppUpdater, feed: { requests: Array<unknown> }, events: Array<string>, names: string, secret: string) {
-      const error = await updater.checkForUpdates().then(
-        () => null,
-        (e: unknown) => e
-      )
-      expect(error).toMatchObject({ code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED" })
-      const message = String((error as Error).message)
-      expect(message).toContain(
-        `Cross-origin requests and redirects of electron-updater carry only an explicit list of request headers, and the app sets its own (${names} from requestHeaders, addAuthHeader or fileExtraDownloadHeaders)`
-      )
-      expect(message).toContain("`autoUpdater.crossOriginHeaders = defaults => defaults`")
-      expect(message.endsWith(DOCS)).toBe(true)
-      expect(message).not.toContain(secret)
-      // before any request
-      expect(feed.requests).toEqual([])
-      expect(events).toContain("error")
-    }
-
-    test("requestHeaders without crossOriginHeaders: the update check fails before any request", async ({ tmpDir, expect }) => {
-      const { updater, feed, events } = await createUpdater(tmpDir)
-      updater.requestHeaders = { "X-Tenant": "tenant-secret" }
-
-      await expectNotConfigured(expect, updater, feed, events, "X-Tenant", "tenant-secret")
-    })
-
-    test("addAuthHeader without crossOriginHeaders: the update check fails before any request", async ({ tmpDir, expect }) => {
-      const { updater, feed, events } = await createUpdater(tmpDir)
-      updater.addAuthHeader("Bearer auth-secret")
-
-      await expectNotConfigured(expect, updater, feed, events, "authorization", "auth-secret")
-    })
-
-    test("a custom provider's fileExtraDownloadHeaders without crossOriginHeaders: the update check fails before any request", async ({ tmpDir, expect }) => {
-      const { updater, feed, events } = await createUpdater(tmpDir)
-      updater.setFeedURL({ provider: "custom", updateProvider: ExtraHeadersProvider, url: feed.url } as any)
-
-      await expectNotConfigured(expect, updater, feed, events, "X-Download-Key", "download-secret")
-    })
-
-    test("set crossOriginHeaders: the update check runs", async ({ tmpDir, expect }) => {
-      const { updater, feed } = await createUpdater(tmpDir)
-      updater.requestHeaders = { "X-Tenant": "acme" }
-      updater.crossOriginHeaders = defaults => defaults
-
-      expect((await updater.checkForUpdates())!.isUpdateAvailable).toBe(true)
-      expect(feed.requests[0].headers).toMatchObject({ "x-tenant": "acme" })
-    })
-
-    test("headers set after the update check: the download fails before any request", async ({ tmpDir, expect }) => {
-      const { updater } = await createUpdater(tmpDir)
-      expect((await updater.checkForUpdates())!.isUpdateAvailable).toBe(true)
-      const doDownloadUpdate = vi.spyOn(updater as any, "doDownloadUpdate").mockResolvedValue({ updateFile: "" })
-
-      updater.requestHeaders = { "X-Tenant": "acme" }
-      await expect(updater.downloadUpdate()).rejects.toMatchObject({ code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED" })
-      expect(doDownloadUpdate).not.toHaveBeenCalled()
-
-      updater.crossOriginHeaders = defaults => defaults
-      await expect(updater.downloadUpdate()).resolves.toEqual({ updateFile: "" })
-    })
-  })
-
-  describe("the list", () => {
-    async function createUpdaterWithHeaders(tmpDir: TmpDir) {
-      const { updater } = await createUpdater(tmpDir)
-      updater.requestHeaders = { "X-Tenant": "acme" }
-      updater.addAuthHeader("Bearer s")
-      return updater
-    }
-
-    test("gets the default list, and sends it unchanged", async ({ tmpDir, expect }) => {
-      const updater = await createUpdaterWithHeaders(tmpDir)
-      const crossOriginHeaders = vi.fn((defaults: ReadonlyArray<string>) => [...defaults])
-      updater.crossOriginHeaders = crossOriginHeaders
-
-      expect(downloadHeadersFor(updater, "https://cdn.example.net/app-1.1.0.exe")).toEqual({ accept: "*/*" })
-      expect(crossOriginHeaders).toHaveBeenCalledExactlyOnceWith(DEFAULT_CROSS_ORIGIN_HEADERS)
-      // the same origin gets every header
-      expect(downloadHeadersFor(updater, `${FEED}app-1.1.0.exe`)).toEqual({ accept: "*/*", "X-Tenant": "acme", authorization: "Bearer s" })
-    })
-
-    test("a header added to the list, in any case, goes to another origin; one taken out does not", async ({ tmpDir, expect }) => {
-      const updater = await createUpdaterWithHeaders(tmpDir)
-
-      updater.crossOriginHeaders = defaults => [...defaults, "x-TENANT"]
-      expect(downloadHeadersFor(updater, "https://cdn.example.net/app-1.1.0.exe")).toEqual({ accept: "*/*", "X-Tenant": "acme" })
-
-      updater.crossOriginHeaders = defaults => defaults.filter(it => it !== "accept")
-      expect(downloadHeadersFor(updater, "https://cdn.example.net/app-1.1.0.exe")).toEqual({})
-    })
-
-    test("null sends every header to every origin", async ({ tmpDir, expect }) => {
-      const updater = await createUpdaterWithHeaders(tmpDir)
-      updater.crossOriginHeaders = () => null
-
-      expect(downloadHeadersFor(updater, "https://cdn.example.net/app-1.1.0.exe")).toEqual({ accept: "*/*", "X-Tenant": "acme", authorization: "Bearer s" })
-    })
-
-    test("is resolved once, and again after the property is set", async ({ tmpDir, expect }) => {
-      const updater = await createUpdaterWithHeaders(tmpDir)
-      const first = vi.fn((defaults: ReadonlyArray<string>) => [...defaults, "x-tenant"])
-      updater.crossOriginHeaders = first
-
-      await updater.checkForUpdates()
-      downloadHeadersFor(updater, "https://cdn.example.net/app-1.1.0.exe")
-      expect(downloadHeadersFor(updater, "https://cdn.example.net/app-1.1.0.exe")).toHaveProperty("X-Tenant")
-      expect(first).toHaveBeenCalledTimes(1)
-
-      const second = vi.fn((defaults: ReadonlyArray<string>) => [...defaults])
-      updater.crossOriginHeaders = second
-      expect(downloadHeadersFor(updater, "https://cdn.example.net/app-1.1.0.exe")).not.toHaveProperty("X-Tenant")
-      expect(second).toHaveBeenCalledTimes(1)
-
-      // the same function set again is called again
-      updater.crossOriginHeaders = first
-      expect(downloadHeadersFor(updater, "https://cdn.example.net/app-1.1.0.exe")).toHaveProperty("X-Tenant")
-      expect(first).toHaveBeenCalledTimes(2)
-    })
-
-    test("is a copy: the app changing its array later does not change the headers sent", async ({ tmpDir, expect }) => {
-      const updater = await createUpdaterWithHeaders(tmpDir)
-      const list = ["accept"]
-      updater.crossOriginHeaders = () => list
-
-      expect(downloadHeadersFor(updater, "https://cdn.example.net/app-1.1.0.exe")).toEqual({ accept: "*/*" })
-      list.push("x-tenant")
-      expect(downloadHeadersFor(updater, "https://cdn.example.net/app-1.1.0.exe")).toEqual({ accept: "*/*" })
-    })
-  })
-
-  describe("validation", () => {
-    for (const [label, value] of [
-      ["undefined", () => undefined],
-      ["a string", () => "Bearer value-secret"],
-      ["an object", () => ({ authorization: "Bearer value-secret" })],
-      ["an empty name", () => ["accept", ""]],
-      ["a name with a space", () => ["accept", "x tenant"]],
-      ["a name that is not a string", () => ["accept", 42]],
-    ] as const) {
-      test(`a result that is ${label} fails the update check before any request`, async ({ tmpDir, expect }) => {
-        const { updater, feed } = await createUpdater(tmpDir)
-        updater.crossOriginHeaders = value as any
-
-        const error = await updater.checkForUpdates().then(
-          () => null,
-          (e: unknown) => e
-        )
-        expect(error).toMatchObject({
-          code: "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS",
-          message: expect.stringMatching(/^autoUpdater\.crossOriginHeaders must return an array of header names \(such as "accept" or "x-tenant"\) or null: got /),
+          const error = await rejection(check(updater, options))
+          expect(error).toMatchObject({
+            code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED",
+            message: `${method} requires { crossOriginHeaders }: requests and redirects to another origin carry only the headers it returns. Pass \`{ crossOriginHeaders: defaults => defaults }\` to use the built-in list. ${DOCS}`,
+          })
+          expect(feed.requests).toEqual([])
+          expect(events).toEqual(["error"])
         })
-        // never the value, which could be a header value by mistake
-        expect(String((error as Error).message)).not.toContain("value-secret")
-        expect(feed.requests).toEqual([])
-      })
+      }
     }
 
-    test("a value that is not a function fails the update check before any request", async ({ tmpDir, expect }) => {
-      const { updater, feed } = await createUpdater(tmpDir)
-      updater.crossOriginHeaders = ["accept"] as any
+    test("downloadUpdate without a check fails before any request", async ({ tmpDir, expect }) => {
+      const { updater, feed, events } = await createUpdater(tmpDir)
+      const doDownloadUpdate = vi.spyOn(updater as any, "doDownloadUpdate")
 
-      await expect(updater.checkForUpdates()).rejects.toMatchObject({
-        code: "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS",
-        message: expect.stringContaining("autoUpdater.crossOriginHeaders must be a function that gets the default header names"),
+      const error = await rejection(updater.downloadUpdate())
+      expect(error).toMatchObject({
+        code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED",
+        message: expect.stringMatching(/^downloadUpdate requires a checkForUpdates\(\{ crossOriginHeaders \}\) before it: /),
       })
+      expect(doDownloadUpdate).not.toHaveBeenCalled()
       expect(feed.requests).toEqual([])
+      expect(events).toEqual(["error"])
     })
 
-    test("a failed result is not kept: a valid one set afterwards is used", async ({ tmpDir, expect }) => {
-      const { updater } = await createUpdater(tmpDir)
-      updater.crossOriginHeaders = (() => "accept") as any
-      await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS" })
+    test("checkForUpdatesAndNotify passes its options on to the check", async ({ tmpDir, expect }) => {
+      const { updater, feed } = await createUpdater(tmpDir)
 
-      updater.crossOriginHeaders = defaults => defaults
-      expect((await updater.checkForUpdates())!.isUpdateAvailable).toBe(true)
+      expect((await updater.checkForUpdatesAndNotify({ crossOriginHeaders: useDefaults, notification: { title: "t", body: "b" } }))!.isUpdateAvailable).toBe(true)
+      expect(feed.requests.map(it => it.pathname)).toEqual(["/latest.yml"])
+    })
+  })
+
+  describe("is called for each request to another origin", () => {
+    test("not for the feed's origin, which gets every header", async ({ tmpDir, expect }) => {
+      const { updater, feed } = await createUpdater(tmpDir)
+      const crossOriginHeaders = vi.fn(useDefaults)
+
+      await updater.checkForUpdates({ crossOriginHeaders })
+      await updater.downloadUpdate()
+
+      expect(crossOriginHeaders).not.toHaveBeenCalled()
+      expect(feed.requests.map(it => it.pathname)).toEqual(["/latest.yml", `/${INSTALLER_NAME}`])
+      for (const { headers } of feed.requests) {
+        expect(headers).toMatchObject({ authorization: "Bearer s", "x-tenant": "acme" })
+      }
+    })
+
+    test("a download on another origin: the default list and the request, with autoDownload", async ({ tmpDir, expect }) => {
+      const cdn = await serve(tmpDir)
+      await cdn.write(INSTALLER_NAME, INSTALLER)
+      const { updater, feed, events } = await createUpdater(tmpDir, () => `${cdn.url}/${INSTALLER_NAME}`)
+      updater.autoDownload = true
+      const crossOriginHeaders = vi.fn((defaults: ReadonlyArray<string>) => [...defaults, "x-tenant"])
+
+      const { updateFile } = (await (await updater.checkForUpdates({ crossOriginHeaders }))!.downloadPromise)!
+      expect(await fsExtra.readFile(updateFile)).toEqual(INSTALLER)
+      expect(events).not.toContain("error")
+
+      expect(crossOriginHeaders).toHaveBeenCalledExactlyOnceWith(DEFAULT_CROSS_ORIGIN_HEADERS, {
+        from: new URL(`${feed.url}/`),
+        to: new URL(`${cdn.url}/${INSTALLER_NAME}`),
+        kind: "request",
+      })
+      expect(cdn.requests).toHaveLength(1)
+      expect(cdn.requests[0].headers).toMatchObject({ "x-tenant": "acme", accept: "*/*" })
+      expect(cdn.requests[0].headers.authorization).toBeUndefined()
+    })
+
+    test("null sends every header on that request only", async ({ tmpDir, expect }) => {
+      const channelHost = await serve(tmpDir)
+      const cdn = await serve(tmpDir)
+      await cdn.write(INSTALLER_NAME, INSTALLER)
+      await channelHost.write("x.yml", channelYml(`${cdn.url}/${INSTALLER_NAME}`))
+      const { updater } = await createUpdater(tmpDir)
+      updater.channel = `${channelHost.url}/x`
+      const crossOriginHeaders = vi.fn((defaults: ReadonlyArray<string>, request: CrossOriginRequest) => (request.to.origin === channelHost.origin ? null : defaults))
+
+      await updater.checkForUpdates({ crossOriginHeaders })
+      await updater.downloadUpdate()
+
+      expect(crossOriginHeaders.mock.calls.map(([, request]) => [request.kind, request.to.href])).toEqual([
+        ["request", `${channelHost.url}/x.yml`],
+        ["request", `${cdn.url}/${INSTALLER_NAME}`],
+      ])
+      expect(channelHost.requests[0].headers).toMatchObject({ authorization: "Bearer s", "x-tenant": "acme" })
+      expect(cdn.requests[0].headers.authorization).toBeUndefined()
+      expect(cdn.requests[0].headers["x-tenant"]).toBeUndefined()
+    })
+
+    // fail closed: the request is not made, rather than made with every header
+    for (const [label, crossOriginHeaders] of [
+      [
+        "throws",
+        () => {
+          throw new Error("Bearer value-secret")
+        },
+      ],
+      ["returns a header value", () => "Bearer value-secret"],
+      ["returns a name that is not a header name", () => ["x tenant"]],
+    ] as const) {
+      test(`a crossOriginHeaders that ${label} fails that request, not the others`, async ({ tmpDir, expect }) => {
+        const cdn = await serve(tmpDir)
+        await cdn.write(INSTALLER_NAME, INSTALLER)
+        const { updater, feed } = await createUpdater(tmpDir, () => `${cdn.url}/${INSTALLER_NAME}`)
+
+        // the channel file is on the feed's origin: the check runs
+        expect((await updater.checkForUpdates({ crossOriginHeaders: crossOriginHeaders as unknown as CrossOriginHeadersCallback }))!.isUpdateAvailable).toBe(true)
+        expect(feed.requests).toHaveLength(1)
+
+        const error = await rejection(updater.downloadUpdate())
+        expect(error).toMatchObject({ code: "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS", message: expect.stringContaining(`the request from ${feed.origin} to ${cdn.origin}`) })
+        expect(String((error as Error).message)).not.toContain("value-secret")
+        expect(cdn.requests).toEqual([])
+      })
+    }
+  })
+
+  describe("is kept from the last check", () => {
+    test("for downloadUpdate after the check, until the next check", async ({ tmpDir, expect }) => {
+      const channelHost = await serve(tmpDir)
+      const cdn = await serve(tmpDir)
+      await cdn.write(INSTALLER_NAME, INSTALLER)
+      await channelHost.write("x.yml", channelYml(`${cdn.url}/${INSTALLER_NAME}`))
+      const { updater } = await createUpdater(tmpDir)
+      updater.channel = `${channelHost.url}/x`
+      const first = vi.fn((defaults: ReadonlyArray<string>, _request: CrossOriginRequest) => [...defaults, "x-tenant"])
+      const second = vi.fn(useDefaults)
+
+      await updater.checkForUpdates({ crossOriginHeaders: first })
+      await updater.downloadUpdate()
+      expect(first.mock.calls.map(([, request]) => request.to.origin)).toEqual([channelHost.origin, cdn.origin])
+      expect(cdn.requests[0].headers["x-tenant"]).toBe("acme")
+
+      await updater.checkForUpdates({ crossOriginHeaders: second })
+      expect(first).toHaveBeenCalledTimes(2)
+      expect(second).toHaveBeenCalledTimes(1)
+      expect(channelHost.requests[1].headers["x-tenant"]).toBeUndefined()
+    })
+
+    // the install of an update marked for the next launch fetches the update info again first
+    async function createUpdaterWithPendingInstall(tmpDir: TmpDir) {
+      const channelHost = await serve(tmpDir)
+      await channelHost.write("x.yml", channelYml(INSTALLER_NAME))
+      const { updater, events } = await createUpdater(tmpDir)
+      updater.channel = `${channelHost.url}/x`
+      const pendingInstall = { getPendingInstallInfo: vi.fn().mockResolvedValue({ sha512: "pending" }), clearPendingInstallMarker: vi.fn().mockResolvedValue(undefined) }
+      vi.spyOn(updater as any, "getOrCreateDownloadHelper").mockResolvedValue(pendingInstall)
+      return { updater, channelHost, pendingInstall, events }
+    }
+
+    test("for the install of an update marked for the next launch", async ({ tmpDir, expect }) => {
+      const { updater, channelHost, pendingInstall } = await createUpdaterWithPendingInstall(tmpDir)
+      const crossOriginHeaders = vi.fn(useDefaults)
+      await updater.checkForUpdates({ crossOriginHeaders })
+      expect(crossOriginHeaders).toHaveBeenCalledTimes(1)
+
+      // the cached update does not match the latest update info: its marker is cleared, after the update info request
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(pendingInstall.clearPendingInstallMarker).toHaveBeenCalled()
+      expect(channelHost.requests).toHaveLength(2)
+      expect(crossOriginHeaders).toHaveBeenCalledTimes(2)
+      expect(crossOriginHeaders.mock.calls[1][1]).toMatchObject({ kind: "request", to: new URL(`${channelHost.url}/x.yml`) })
+    })
+
+    test("without a check, the install of an update marked for the next launch fails at its request to another origin", async ({ tmpDir, expect }) => {
+      const { updater, channelHost, pendingInstall } = await createUpdaterWithPendingInstall(tmpDir)
+
+      await expect(updater.installPendingUpdateIfAvailable()).rejects.toMatchObject({
+        code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED",
+        message: expect.stringMatching(new RegExp(`^The request to ${channelHost.origin} requires a checkForUpdates\\(\\{ crossOriginHeaders \\}\\) before it: `)),
+      })
+      expect(channelHost.requests).toEqual([])
+      expect(pendingInstall.clearPendingInstallMarker).not.toHaveBeenCalled()
     })
   })
 })

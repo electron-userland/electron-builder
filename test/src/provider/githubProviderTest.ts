@@ -63,7 +63,7 @@ test("stable release - checkForUpdates fetches Atom feed and returns correct Upd
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   const info = result?.updateInfo as UpdateInfo & { tag: string }
 
   expect(info.version).toBe(STABLE_VERSION)
@@ -82,7 +82,7 @@ test("allowPrerelease=false - uses /releases/latest for tag resolution", async (
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
   // second call must be to /releases/latest for tag_name lookup
   const secondCallPath = requestSpy.mock.calls[1][0].path as string
@@ -104,7 +104,7 @@ test("allowPrerelease=true with stable current - picks the newest available vali
     )
     .mockResolvedValueOnce(mockYaml(BETA_VERSION))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
   // only 2 calls: feed + channel file (no getLatestTagName)
   expect(requestSpy).toHaveBeenCalledTimes(2)
@@ -130,7 +130,7 @@ test("allowPrerelease=true with stable current - picks the newest available vali
     )
     .mockResolvedValueOnce(mockYaml("5.1.0"))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
   // only 2 calls: feed + channel file (no getLatestTagName)
   expect(requestSpy).toHaveBeenCalledTimes(2)
@@ -156,7 +156,7 @@ test("allowPrerelease=true with beta channel current - picks matching beta entry
     )
     .mockResolvedValueOnce(mockYaml("1.2.0-beta.2"))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect((result!.updateInfo as any).tag).toBe(newerBeta)
   expect(result?.updateInfo.version).toBe("1.2.0-beta.2")
 })
@@ -186,7 +186,7 @@ test.for([
     )
     .mockResolvedValueOnce(mockYaml("1.1.0-beta.4"))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect((result!.updateInfo as any).tag).toBe("v1.1.0-beta.4")
   expect(result?.updateInfo.version).toBe("1.1.0-beta.4")
   expect(result?.isUpdateAvailable).toBe(true)
@@ -210,7 +210,7 @@ test("allowPrerelease=true with beta channel current - picks a higher stable rel
     )
     .mockResolvedValueOnce(mockYaml("1.1.0"))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect((result!.updateInfo as any).tag).toBe("v1.1.0")
   expect(result?.updateInfo.version).toBe("1.1.0")
   expect(result?.isUpdateAvailable).toBe(true)
@@ -227,7 +227,7 @@ test("allowPrerelease=true - falls back to latest.yml when channel file not foun
     .mockRejectedValueOnce(new HttpError(404)) // beta.yml not found
     .mockResolvedValueOnce(mockYaml(BETA_VERSION)) // fallback to latest.yml succeeds
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect(result?.updateInfo.version).toBe(BETA_VERSION)
 })
 
@@ -240,7 +240,7 @@ test("allowPrerelease=true - no matching channel entry throws ERR_UPDATER_NO_PUB
   // nightly entries are "custom" channels, skipped when current is beta
   requestSpy.mockResolvedValueOnce(mockAtomFeed([{ tag: "v2.0.0-nightly.1", title: "v2.0.0-nightly.1" }]))
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_NO_PUBLISHED_VERSIONS" })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_NO_PUBLISHED_VERSIONS" })
 })
 
 // allowPrerelease=true, no channel: feed has only non-semver tags (e.g. monorepo package releases)
@@ -257,7 +257,7 @@ test("allowPrerelease=true with only non-semver feed entries - throws ERR_UPDATE
     ])
   )
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_NO_PUBLISHED_VERSIONS" })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_NO_PUBLISHED_VERSIONS" })
 })
 
 // allowPrerelease=true, no channel, stable current NEWER than every release: the newest valid release
@@ -282,7 +282,7 @@ test("allowPrerelease=true with stable current newer than all releases - reports
     updater.addListener(eventName, () => events.push(eventName))
   }
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect(result?.isUpdateAvailable).toBe(false)
   expect((result!.updateInfo as any).tag).toBe(BETA_TAG)
   // newest available release is older than current → AppUpdater takes the graceful no-update path
@@ -308,7 +308,7 @@ test("allowPrerelease=false - resolves update when latest tag is missing from th
     updater.addListener(eventName, () => events.push(eventName))
   }
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   const info = result?.updateInfo as UpdateInfo & { tag: string }
   expect(info.tag).toBe(STABLE_TAG)
   expect(info.version).toBe(STABLE_VERSION)
@@ -324,7 +324,7 @@ test("path-traversal tag - throws ERR_UPDATER_INVALID_TAG instead of building a 
 
   requestSpy.mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: STABLE_TAG }])).mockResolvedValueOnce(mockReleaseJson("../../../../evil/repo/releases/download/v1.0.0"))
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_TAG" })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_TAG" })
 })
 
 // allowPrerelease=false: channel file 404 → ERR_UPDATER_CHANNEL_FILE_NOT_FOUND (no fallback)
@@ -338,7 +338,7 @@ test("stable mode - channel file 404 throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND",
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockRejectedValueOnce(new HttpError(404))
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" })
 })
 
 // getLatestTagName failure is wrapped in ERR_UPDATER_INVALID_RELEASE_FEED by outer try-catch
@@ -349,7 +349,7 @@ test("getLatestTagName failure - throws ERR_UPDATER_INVALID_RELEASE_FEED", async
 
   requestSpy.mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: STABLE_TAG }])).mockRejectedValueOnce(new Error("Connection refused"))
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_RELEASE_FEED" })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_RELEASE_FEED" })
 })
 
 // Atom feed with no entries → element("entry") throws → ERR_XML_MISSED_ELEMENT bubbles out
@@ -361,7 +361,7 @@ test("empty Atom feed - throws ERR_XML_MISSED_ELEMENT", async ({ expect }) => {
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en-US">
 </feed>`)
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_XML_MISSED_ELEMENT" })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({ code: "ERR_XML_MISSED_ELEMENT" })
 })
 
 // resolveFiles constructs the GitHub download URL using the tag from the feed
@@ -374,7 +374,7 @@ test("resolveFiles - constructs download URL with tag in path", async ({ expect 
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   const provider = getProvider<GitHubProvider>(updater)
   const updateInfo = result?.updateInfo as UpdateInfo & { tag: string }
 
@@ -400,7 +400,7 @@ test("fullChangelog=true - releaseNotes returned as sorted ReleaseNoteInfo array
     .mockResolvedValueOnce(mockReleaseJson("v1.2.0"))
     .mockResolvedValueOnce(mockYaml("1.2.0"))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   const notes = result?.updateInfo.releaseNotes
 
   expect(Array.isArray(notes)).toBe(true)
@@ -419,7 +419,7 @@ test("releaseName - populated from Atom feed entry title", async ({ expect }) =>
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect(result?.updateInfo.releaseName).toBe("My App 1.1.0 Release")
 })
 
@@ -435,7 +435,7 @@ test("autoDownload=false - checkForUpdates does not trigger download", async ({ 
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const actualEvents = trackEvents(updater)
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
   assertDownloadNotTriggered(expect, result, actualEvents)
 })
@@ -459,7 +459,7 @@ test("enterprise GitHub host - getLatestTagName uses /api/v3 API endpoint", asyn
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
   // second call (getLatestTagName) must go to /api/v3/repos/... for enterprise hosts
   const secondCallPath = requestSpy.mock.calls[1][0].path as string
@@ -476,7 +476,7 @@ test("getBlockMapFiles - constructs correct blockmap URLs from base URL", async 
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   const provider = getProvider<GitHubProvider>(updater)
 
   const baseUrl = new URL(`https://github.com/${MOCK_OWNER}/${MOCK_REPO}/releases/download/${STABLE_TAG}/my-app-Setup-${STABLE_VERSION}.exe`)
@@ -500,7 +500,7 @@ test("Atom feed request - fetches releases.atom with the XML accept header", asy
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
   const feedRequest = requestSpy.mock.calls[0][0]
   expect(feedRequest.hostname).toBe("github.com")
@@ -514,7 +514,10 @@ test("empty Atom feed - error message names the missing entries", async ({ expec
 
   requestSpy.mockResolvedValueOnce(mockAtomFeed([]))
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_XML_MISSED_ELEMENT", message: "No releases in the GitHub Atom feed" })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
+    code: "ERR_XML_MISSED_ELEMENT",
+    message: "No releases in the GitHub Atom feed",
+  })
   expect(requestSpy).toHaveBeenCalledTimes(1)
 })
 
@@ -530,7 +533,7 @@ test("allowPrerelease=false - requests feed, /releases/latest (JSON) and latest.
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
   expect(requestedPaths(requestSpy)).toEqual([`${RELEASES_PATH}.atom`, `${RELEASES_PATH}/latest`, `${RELEASES_PATH}/download/${STABLE_TAG}/latest.yml`])
   expect(requestSpy.mock.calls[1][0].headers).toMatchObject({ Accept: "application/json" })
@@ -546,7 +549,7 @@ test("allowPrerelease=false - api.github.com host queries /repos/.../releases/la
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
   expect(requestSpy.mock.calls[1][0].hostname).toBe("api.github.com")
   expect(requestSpy.mock.calls[1][0].path).toBe(`/repos/${MOCK_OWNER}/${MOCK_REPO}/releases/latest`)
@@ -562,7 +565,10 @@ test.for([
 
   requestSpy.mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: STABLE_TAG }])).mockResolvedValueOnce(response)
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_NO_PUBLISHED_VERSIONS", message: "No published versions on GitHub" })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
+    code: "ERR_UPDATER_NO_PUBLISHED_VERSIONS",
+    message: "No published versions on GitHub",
+  })
   expect(requestSpy).toHaveBeenCalledTimes(2)
 })
 
@@ -583,7 +589,10 @@ test.for([
     )
     .mockResolvedValueOnce(response)
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_RELEASE_FEED", message: expect.stringContaining('No element "link"') })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
+    code: "ERR_UPDATER_INVALID_RELEASE_FEED",
+    message: expect.stringContaining('No element "link"'),
+  })
 })
 
 test("allowPrerelease=false - a numeric tag_name from /releases/latest requests the channel file under download/<tag>/", async ({ expect }) => {
@@ -596,7 +605,7 @@ test("allowPrerelease=false - a numeric tag_name from /releases/latest requests 
     .mockResolvedValueOnce(JSON.stringify({ tag_name: 123 }))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect(requestedPaths(requestSpy)).toEqual([`${RELEASES_PATH}.atom`, `${RELEASES_PATH}/latest`, `${RELEASES_PATH}/download/123/latest.yml`])
 })
 
@@ -611,7 +620,7 @@ test.for([
   requestSpy.mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: STABLE_TAG }]))
   mock(requestSpy)
 
-  const error = await updater.checkForUpdates().then(
+  const error = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults }).then(
     () => null,
     (e: any) => e
   )
@@ -641,7 +650,7 @@ test("allowPrerelease=false - takes name/notes from the first feed entry whose t
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect((result!.updateInfo as any).tag).toBe(STABLE_TAG)
   expect(result?.updateInfo.releaseName).toBe("First match")
   expect(result?.updateInfo.releaseNotes).toBe("first match notes")
@@ -663,10 +672,10 @@ test.for([
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   if (code == null) {
-    const result = await updater.checkForUpdates()
+    const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
     expect(result?.updateInfo.releaseName).toBe(STABLE_TAG)
   } else {
-    await expect(updater.checkForUpdates()).rejects.toMatchObject({ code, message: expect.stringContaining('No element "link"') })
+    await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({ code, message: expect.stringContaining('No element "link"') })
   }
 })
 
@@ -680,7 +689,7 @@ test("allowPrerelease=false - latest tag missing from the Atom feed leaves relea
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect((result!.updateInfo as any).tag).toBe(STABLE_TAG)
   expect(result?.updateInfo.releaseName).toBeUndefined()
   expect(result?.updateInfo.releaseNotes).toBeUndefined()
@@ -700,7 +709,7 @@ test.for([
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce("# no update info\n")
 
-  await expect(updater.checkForUpdates()).rejects.toBeInstanceOf(TypeError)
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toBeInstanceOf(TypeError)
   expect(requestSpy).toHaveBeenCalledTimes(3)
 })
 
@@ -714,7 +723,7 @@ test("allowPrerelease=false - a pre-release tag from /releases/latest still fetc
     .mockResolvedValueOnce(mockReleaseJson(BETA_TAG))
     .mockResolvedValueOnce(mockYaml(BETA_VERSION))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect((result!.updateInfo as any).tag).toBe(BETA_TAG)
   expect(requestedPaths(requestSpy)[2]).toBe(`${RELEASES_PATH}/download/${BETA_TAG}/latest.yml`)
 })
@@ -736,7 +745,7 @@ test.for([
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect(requestedPaths(requestSpy)[2]).toBe(`${RELEASES_PATH}/download/${STABLE_TAG}/beta.yml`)
 })
 
@@ -750,7 +759,7 @@ test("allowPrerelease=false - non-404 channel file error is rethrown as-is witho
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockRejectedValueOnce(new HttpError(500))
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ statusCode: 500 })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({ statusCode: 500 })
   expect(requestSpy).toHaveBeenCalledTimes(3)
 })
 
@@ -764,7 +773,7 @@ test("allowPrerelease=false - channel file 404 error message names the file and 
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockRejectedValueOnce(new HttpError(404))
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
     code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND",
     message: expect.stringContaining(`Cannot find latest.yml in the latest release artifacts (https://github.com${RELEASES_PATH}/download/${STABLE_TAG}/latest.yml): `),
   })
@@ -787,7 +796,7 @@ test("allowPrerelease=true with stable current - skips hrefs without a /tag/ seg
     )
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect((result!.updateInfo as any).tag).toBe(STABLE_TAG)
   expect(result?.updateInfo.releaseNotes).toBe("Stable notes")
 })
@@ -807,7 +816,10 @@ test.for([
     ])
   )
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_RELEASE_FEED", message: expect.stringContaining('No element "link"') })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
+    code: "ERR_UPDATER_INVALID_RELEASE_FEED",
+    message: expect.stringContaining('No element "link"'),
+  })
 })
 
 test.for([
@@ -820,7 +832,7 @@ test.for([
 
   requestSpy.mockResolvedValueOnce(mockAtomFeed(feed.map(tag => ({ tag, title: `title ${tag}` })))).mockResolvedValueOnce(mockYaml("1.2.0"))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect((result!.updateInfo as any).tag).toBe(expected)
   expect(result?.updateInfo.releaseName).toBe(`title ${expected}`)
 })
@@ -840,7 +852,7 @@ test("allowPrerelease=true with stable current - a custom-channel pre-release ca
     )
     .mockResolvedValueOnce(mockYaml("2.0.0-nightly.1"))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect((result!.updateInfo as any).tag).toBe("v2.0.0-nightly.1")
   expect(requestedPaths(requestSpy)).toEqual([`${RELEASES_PATH}.atom`, `${RELEASES_PATH}/download/v2.0.0-nightly.1/nightly.yml`])
 })
@@ -859,7 +871,7 @@ test("allowPrerelease=true with stable current - app-update.yml channel does not
     )
     .mockResolvedValueOnce(mockYaml("1.3.0"))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect((result!.updateInfo as any).tag).toBe("v1.3.0")
   expect(requestedPaths(requestSpy)[1]).toBe(`${RELEASES_PATH}/download/v1.3.0/beta.yml`)
 })
@@ -930,7 +942,7 @@ test.for([
 
   requestSpy.mockResolvedValueOnce(mockAtomFeed(feed.map(tag => ({ tag, title: tag, content: `notes ${tag}` })))).mockResolvedValueOnce(mockYaml(expectedTag.slice(1)))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect((result!.updateInfo as any).tag).toBe(expectedTag)
   expect(result?.updateInfo.releaseName).toBe(expectedTag)
   expect(result?.updateInfo.releaseNotes).toBe(`notes ${expectedTag}`)
@@ -951,7 +963,10 @@ test.for([
 
   requestSpy.mockResolvedValueOnce(mockAtomFeed(feed.map(tag => ({ tag, title: tag }))))
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_NO_PUBLISHED_VERSIONS", message: "No published versions on GitHub" })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
+    code: "ERR_UPDATER_NO_PUBLISHED_VERSIONS",
+    message: "No published versions on GitHub",
+  })
   expect(requestSpy).toHaveBeenCalledTimes(1)
 })
 
@@ -989,7 +1004,7 @@ test.for([
 
   requestSpy.mockResolvedValueOnce(mockAtomFeed(feed.map(tag => ({ tag, title: tag })))).mockResolvedValueOnce(mockYaml(expectedTag.slice(1)))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect((result!.updateInfo as any).tag).toBe(expectedTag)
   expect(requestedPaths(requestSpy)).toEqual([`${RELEASES_PATH}.atom`, `${RELEASES_PATH}/download/${expectedTag}/latest.yml`])
 })
@@ -1009,7 +1024,7 @@ test('allowPrerelease=true - explicit channel = "alpha" overrides the beta chann
     )
     .mockResolvedValueOnce(mockYaml("1.1.0-alpha.1"))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect((result!.updateInfo as any).tag).toBe("v1.1.0-alpha.1")
   expect(requestedPaths(requestSpy)[1]).toBe(`${RELEASES_PATH}/download/v1.1.0-alpha.1/alpha.yml`)
 })
@@ -1030,7 +1045,7 @@ test('allowPrerelease=true with stable current and explicit channel = "beta" - s
     )
     .mockResolvedValueOnce(mockYaml("1.3.0"))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect((result!.updateInfo as any).tag).toBe("v1.3.0")
   expect(requestedPaths(requestSpy)[1]).toBe(`${RELEASES_PATH}/download/v1.3.0/beta.yml`)
 })
@@ -1055,7 +1070,7 @@ test.for([
     )
     .mockResolvedValueOnce(mockYaml("1.0.0-beta.2"))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect((result!.updateInfo as any).tag).toBe("v1.0.0-beta.2")
   expect(requestedPaths(requestSpy)[1]).toBe(`${RELEASES_PATH}/download/v1.0.0-beta.2/beta.yml`)
 })
@@ -1076,7 +1091,7 @@ test.for([
     .mockRejectedValueOnce(error())
     .mockResolvedValueOnce(mockYaml(BETA_VERSION))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect(result?.updateInfo.version).toBe(BETA_VERSION)
   expect(requestedPaths(requestSpy)).toEqual([`${RELEASES_PATH}.atom`, `${RELEASES_PATH}/download/${BETA_TAG}/beta.yml`, `${RELEASES_PATH}/download/${BETA_TAG}/latest.yml`])
 })
@@ -1092,7 +1107,7 @@ test("allowPrerelease=true - the fallback is the default channel file even when 
     .mockRejectedValueOnce(new HttpError(404))
     .mockResolvedValueOnce(mockYaml(BETA_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect(requestedPaths(requestSpy)).toEqual([`${RELEASES_PATH}.atom`, `${RELEASES_PATH}/download/${BETA_TAG}/beta.yml`, `${RELEASES_PATH}/download/${BETA_TAG}/latest.yml`])
 })
 
@@ -1106,7 +1121,7 @@ test("allowPrerelease=true - fallback latest.yml 404 throws ERR_UPDATER_CHANNEL_
     .mockRejectedValueOnce(new HttpError(404))
     .mockRejectedValueOnce(new HttpError(404))
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
     code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND",
     message: expect.stringContaining(`Cannot find latest.yml in the latest release artifacts (https://github.com${RELEASES_PATH}/download/${BETA_TAG}/latest.yml): `),
   })
@@ -1122,7 +1137,7 @@ test("allowPrerelease=true - unparseable fallback channel file is reported again
     .mockRejectedValueOnce(new HttpError(404))
     .mockResolvedValueOnce(null)
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
     code: "ERR_UPDATER_INVALID_UPDATE_INFO",
     message: `Cannot parse update info from latest.yml in the latest release artifacts (https://github.com${RELEASES_PATH}/download/${BETA_TAG}/latest.yml): rawData: null`,
   })
@@ -1141,7 +1156,7 @@ test("linux platform - channel file names carry the platform/arch suffix, includ
     .mockResolvedValueOnce(mockYaml(BETA_VERSION))
 
   try {
-    await updater.checkForUpdates()
+    await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   } finally {
     vi.unstubAllEnvs()
   }
@@ -1169,7 +1184,7 @@ test('linux platform - explicit channel = "latest" picks the stable release and 
     .mockResolvedValueOnce(mockYaml("1.0.0"))
 
   try {
-    await updater.checkForUpdates()
+    await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   } finally {
     vi.unstubAllEnvs()
   }
@@ -1187,7 +1202,7 @@ test("releaseName/releaseNotes from the channel file take precedence over the At
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(`${mockYaml(STABLE_VERSION)}releaseName: YAML name\nreleaseNotes: YAML notes\n`)
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect(result?.updateInfo.releaseName).toBe("YAML name")
   expect(result?.updateInfo.releaseNotes).toBe("YAML notes")
 })
@@ -1201,7 +1216,7 @@ test('releaseNotes - GitHub\'s "No content." placeholder becomes an empty string
     .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect(result?.updateInfo.releaseNotes).toBe("")
 })
 
@@ -1222,7 +1237,7 @@ test("allowPrerelease=true with fullChangelog=true - notes span from the current
     )
     .mockResolvedValueOnce(mockYaml("1.1.0-beta.4"))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect(result?.updateInfo.releaseName).toBe("v1.1.0-beta.4")
   expect(result?.updateInfo.releaseNotes).toEqual([
     { version: "1.1.0-beta.4", note: "Beta 4 notes" },

@@ -4,6 +4,7 @@ import { URL } from "url"
 import { LoginCallback } from "./electronHttpExecutor.js"
 
 export { CancellationToken, PackageFileInfo, ProgressInfo, UpdateFileInfo, UpdateInfo }
+export type { CrossOriginHeadersCallback, CrossOriginRequest } from "builder-util-runtime"
 
 export const DOWNLOAD_PROGRESS = "download-progress"
 export const UPDATE_DOWNLOADED = "update-downloaded"

@@ -204,7 +204,7 @@ describe("differential download failures fall back to a verified full download, 
   async function expectFallback(tmpDir: any, override: Override, setup: Setup = {}, expectRangeRequests = true) {
     const url = await startServer(override)
     const { updater, logs } = await createUpdater(tmpDir, url, setup)
-    await updater.checkForUpdates()
+    await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
     const { updateFile } = await updater.downloadUpdate()
     expect((await fsExtra.readFile(updateFile)).equals(NEW)).toBe(true)
     expect(fullDownloads()).toHaveLength(1)
@@ -222,7 +222,7 @@ describe("differential download failures fall back to a verified full download, 
     for (const multiRange of [true, false]) {
       const url = await startServer()
       const { updater, logs } = await createUpdater(tmpDir, url, { multiRange })
-      await updater.checkForUpdates()
+      await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       const token = new CancellationToken()
       const { updateFile } = await updater.downloadUpdate(token)
       expect((await fsExtra.readFile(updateFile)).equals(NEW)).toBe(true)
@@ -241,7 +241,7 @@ describe("differential download failures fall back to a verified full download, 
     bad[10] ^= 0xff
     const url = await startServer(() => false, bad)
     const { updater } = await createUpdater(tmpDir, url, { cacheOldInstaller: null })
-    await updater.checkForUpdates()
+    await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
     await expect(updater.downloadUpdate()).rejects.toMatchObject({ code: "ERR_CHECKSUM_MISMATCH" })
   })
 
@@ -344,7 +344,7 @@ describe("differential download failures fall back to a verified full download, 
     test("corrupt cached old blockmap is ignored (re-fetched)", async ({ tmpDir }) => {
       const url = await startServer()
       const { updater } = await createUpdater(tmpDir, url, { cacheOldBlockMap: Buffer.from("garbage") })
-      await updater.checkForUpdates()
+      await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       const { updateFile } = await updater.downloadUpdate()
       expect((await fsExtra.readFile(updateFile)).equals(NEW)).toBe(true)
       expect(requests.some(it => it.path === OLD_BLOCKMAP_PATH)).toBe(true)
@@ -389,7 +389,7 @@ describe("differential download failures fall back to a verified full download, 
           try {
             const url = await startServer(override)
             const { updater } = await createUpdater(tmpDir, url, { multiRange })
-            await updater.checkForUpdates()
+            await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
             const outcome = await Promise.race([
               updater.downloadUpdate().then(
                 async ({ updateFile }) => ((await fsExtra.readFile(updateFile)).equals(NEW) ? "resolved with the new file" : "resolved with a WRONG file"),
@@ -549,7 +549,7 @@ describe("differential download failures fall back to a verified full download, 
         })
       )
       const { updater } = await createUpdater(tmpDir, url)
-      await updater.checkForUpdates()
+      await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       const { updateFile } = await updater.downloadUpdate()
       expect((await fsExtra.readFile(updateFile)).equals(NEW)).toBe(true)
     })
@@ -598,7 +598,7 @@ describe("differential download failures fall back to a verified full download, 
       // caught before any range request: the downloaded old blockmap does not end at the cached installer's size
       const url = await startServer()
       const { updater, logs } = await createUpdater(tmpDir, url, { cacheOldInstaller: blocks.A })
-      await updater.checkForUpdates()
+      await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       const { updateFile } = await updater.downloadUpdate()
       expect((await fsExtra.readFile(updateFile)).equals(NEW)).toBe(true)
       expect(fullDownloads()).toHaveLength(1)
@@ -635,7 +635,7 @@ describe("differential download failures fall back to a verified full download, 
           },
         })
         updater.disableDifferentialDownload = mode === "full"
-        await updater.checkForUpdates()
+        await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
         const outcome = await Promise.race([
           updater.downloadUpdate().then(
             async ({ updateFile: file }) => ((await fsExtra.readFile(file)).equals(NEW) ? "resolved with the new file" : "resolved with a WRONG file"),
@@ -664,7 +664,7 @@ describe("differential download failures fall back to a verified full download, 
       updater.on("download-progress", () => calls++)
       let onceCalls = 0
       updater.once("download-progress", () => onceCalls++)
-      await updater.checkForUpdates()
+      await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       const { updateFile } = await updater.downloadUpdate()
       expect((await fsExtra.readFile(updateFile)).equals(NEW)).toBe(true)
       expect(calls).toBeGreaterThan(0)
@@ -699,7 +699,7 @@ describe("differential download failures fall back to a verified full download, 
         const { updater, logs } = await createUpdater(tmpDir, url, { multiRange, onProgress: () => {} })
         let cancelledEvents = 0
         updater.on("update-cancelled", () => cancelledEvents++)
-        await updater.checkForUpdates()
+        await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
         const token = new CancellationToken()
         const download = updater.downloadUpdate(token)
         await stalled
@@ -745,7 +745,7 @@ describe("differential download failures fall back to a verified full download, 
       const { updater, logs } = await createUpdater(tmpDir, url, { multiRange: true, onProgress: () => {} })
       let cancelledEvents = 0
       updater.on("update-cancelled", () => cancelledEvents++)
-      await updater.checkForUpdates()
+      await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       const token = new CancellationToken()
       const download = updater.downloadUpdate(token)
       await stalled
@@ -829,7 +829,7 @@ describe("differential download failures fall back to a verified full download, 
       test(`cancel during a copy from the old file settles only once the copy stopped reading it (${multiRange ? "multi" : "single"}-range)`, async ({ tmpDir }) => {
         const url = await startServer()
         const { updater, logs, cacheDir } = await createUpdater(tmpDir, url, { multiRange })
-        await updater.checkForUpdates()
+        await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
         const oldFileInode = (await fsExtra.stat(path.join(cacheDir, CURRENT_APP_INSTALLER_FILE_NAME))).ino
 
         // Holds the first read of the old installer (the copy of block A, the first operation on both paths) so the cancel
@@ -895,7 +895,7 @@ describe("differential download failures fall back to a verified full download, 
     test("cancel during a write to the new file settles only once the new file is closed", async ({ tmpDir }) => {
       const url = await startServer()
       const { updater, logs, cacheDir } = await createUpdater(tmpDir, url)
-      await updater.checkForUpdates()
+      await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       const newFile = path.join(cacheDir, "pending", `temp-${INSTALLER.slice(1)}`)
 
       // Holds the first write to the new file so the cancel lands while that write is in flight. The stream that owns the
