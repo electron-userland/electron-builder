@@ -13,6 +13,7 @@ export { CancellationError, CancellationToken } from "./CancellationToken.js"
 export { newError } from "./error.js"
 export { hashFile } from "./hash.js"
 export {
+  ApiRequestOptions,
   configureRequestOptions,
   configureRequestOptionsFromUrl,
   configureRequestUrl,
@@ -36,8 +37,10 @@ export {
   BaseS3Options,
   BitbucketOptions,
   CustomPublishOptions,
+  DEFAULT_MAX_UPDATE_INFO_SIZE,
   GenericServerOptions,
   getS3LikeProviderBaseUrl,
+  isValidMaxUpdateInfoSize,
   getGitlabAuthHeaders,
   GithubOptions,
   githubUrl,

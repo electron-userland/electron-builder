@@ -10,7 +10,7 @@ import { Provider, resolveFiles } from "electron-updater/src/providers/Provider"
 import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
 import { createHash } from "crypto"
 import fsExtra from "fs-extra"
-import type { IncomingHttpHeaders, IncomingMessage, OutgoingHttpHeaders, Server } from "http"
+import type { IncomingHttpHeaders, IncomingMessage, OutgoingHttpHeaders, RequestOptions, Server } from "http"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
 import { afterEach, describe, test, vi } from "vitest"
@@ -114,6 +114,62 @@ describe("download URLs chosen by the update manifest", () => {
     expect(foreign.requests[0]).toMatchObject({ pathname: `/${PACKAGE_NAME}`, search: "" })
     expect(foreign.requests[0].headers.authorization).toBeUndefined()
     expect(foreign.requests[0].headers).toMatchObject({ accept: "*/*", "user-agent": "electron-builder" })
+  })
+
+  test("a channel file on another origin gets no credential headers or feed query; a channel on the feed keeps them", async ({ tmpDir, expect }) => {
+    const feed = await serve(tmpDir)
+    const foreign = await serve(tmpDir)
+    await feed.write("beta.yml", channelYml(INSTALLER_NAME))
+    await foreign.write("x.yml", channelYml(INSTALLER_NAME))
+    const updater = await createUpdater(feed.url)
+    updater.autoDownload = false
+
+    updater.channel = "beta"
+    expect((await updater.checkForUpdates())!.isUpdateAvailable).toBe(true)
+    expect(feed.requests).toHaveLength(1)
+    expect(feed.requests[0]).toMatchObject({ pathname: "/beta.yml", search: "?token=feed-secret" })
+    expect(feed.requests[0].headers).toMatchObject({ authorization: "Bearer feed-secret", "x-tenant": "acme" })
+
+    // a channel name that is a URL resolves against the feed URL to another origin
+    updater.channel = `${foreign.url}/x`
+    expect((await updater.checkForUpdates())!.isUpdateAvailable).toBe(true)
+    expect(feed.requests).toHaveLength(1)
+    expect(foreign.requests).toHaveLength(1)
+    expect(foreign.requests[0]).toMatchObject({ pathname: "/x.yml", search: "" })
+    expect(foreign.requests[0].headers.authorization).toBeUndefined()
+    expect(foreign.requests[0].headers).toMatchObject({ "x-tenant": "acme" })
+  })
+
+  test("a channel file on another origin announces the dropped headers once per updater, by name only", async ({ tmpDir, expect }) => {
+    const feed = await serve(tmpDir)
+    const foreign = await serve(tmpDir)
+    await foreign.write("x.yml", channelYml(INSTALLER_NAME))
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
+    const notices = () => logger.warn.mock.calls.map(it => String(it[0])).filter(it => it.includes("update info request"))
+    const newUpdater = async () => {
+      const updater = await createUpdater(feed.url)
+      updater.autoDownload = false
+      updater.logger = logger
+      updater.channel = `${foreign.url}/x`
+      return updater
+    }
+
+    const updater = await newUpdater()
+    await updater.checkForUpdates()
+    await updater.checkForUpdates()
+    expect(foreign.requests).toHaveLength(2)
+    expect(notices()).toHaveLength(1)
+    const [notice] = notices()
+    expect(notice).toContain(`sends the credential headers from requestHeaders / addAuthHeader only to the update feed's origin (${feed.url})`)
+    expect(notice).toContain(`authorization not sent with the update info request to ${foreign.url}`)
+    expect(notice).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin")
+    for (const secret of ["Bearer", "feed-secret", "acme"]) {
+      expect(notice).not.toContain(secret)
+    }
+
+    // once per updater instance: another updater announces it again
+    await (await newUpdater()).checkForUpdates()
+    expect(notices()).toHaveLength(2)
   })
 })
 
@@ -582,6 +638,15 @@ describe("a custom provider must declare feedBaseUrl to send credentials", () =>
     const headers = downloadRequestHeaders("https://cdn.example.net/app-1.1.0.exe")
     expect(headers).toBe(options.requestHeaders)
     expect(headers).toHaveProperty("authorization", "Bearer s")
+  })
+
+  test("explicit null: an update info request on another origin keeps the request headers", async ({ expect }) => {
+    const provider = new DeclaredProvider(null)
+    provider.setRequestHeaders({ authorization: "Bearer s", "X-Tenant": "acme" })
+
+    const options: RequestOptions = (provider as any).createRequestOptions(new URL("https://cdn.example.net/latest.yml"))
+    expect(options.hostname).toBe("cdn.example.net")
+    expect(options.headers).toEqual({ authorization: "Bearer s", "X-Tenant": "acme" })
   })
 
   test("a feed URL: the credential headers only go to its origin", async ({ expect }) => {

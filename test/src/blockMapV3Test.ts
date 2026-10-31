@@ -1,6 +1,10 @@
 import { blake2b } from "@noble/hashes/blake2.js"
+import { BlockMap } from "builder-util-runtime"
 import {
   BlockInput,
+  blockMapV3Size,
+  checkBlockMapV3Header,
+  blockMapV2ToV3Keys,
   decodeBlockMapV3,
   encodeBlockMapV3,
   GROUP_MAX,
@@ -9,7 +13,9 @@ import {
   groupBlocks,
   groupEntryRanges,
   groupSupers,
+  groupTableStart,
   HEADER_FIXED_SIZE,
+  MAX_BLOCK_MAP_V3_SIZE,
   parseBlockMapV3Groups,
   parseBlockMapV3Header,
   parseBlockMapV3Records,
@@ -24,6 +30,7 @@ import {
   superHashOfGroups,
   toBlockMap,
 } from "builder-util-runtime/internal"
+import { vi } from "vitest"
 
 // Deterministic synthetic blocks: content-derived digests, sizes around a mean.
 function makeBlocks(count: number, seed: number, avgSize = 4096, startOffset = 0): Array<BlockInput> {
@@ -60,6 +67,7 @@ describe("block map v3 format", () => {
     expect(buf.length).toBe(map.header.headerLen + map.supers.length * SUPER_SIZE + map.groups.length * GROUP_SIZE + 1000 * RECORD_SIZE)
     expect(map.records.map(r => r.size)).toEqual(blocks.map(b => b.size))
     expect(map.records[0].hash).toBe(Buffer.from(blocks[0].digest.subarray(0, 8)).toString("hex"))
+    expect(map.records.map(r => r.hash)).toEqual(blocks.map(b => Buffer.from(b.digest.subarray(0, 8)).toString("hex")))
     expect(map.groups.reduce((sum, g) => sum + g.byteLength, 0)).toBe(fileSize)
     expect(map.groups.reduce((sum, g) => sum + g.blockCount, 0)).toBe(1000)
     expect(map.supers.reduce((sum, s) => sum + s.groupCount, 0)).toBe(map.groups.length)
@@ -196,5 +204,146 @@ describe("block map v3 format", () => {
     expect(() => parseBlockMapV3Header(withCount(20, header.fileSize + 1))).toThrow("inconsistent counts")
     expect(() => parseBlockMapV3Header(withCount(16, header.blockCount + 1))).toThrow("inconsistent counts")
     expect(() => parseBlockMapV3Header(withCount(42, header.groupCount + 1))).toThrow("inconsistent counts")
+  })
+
+  // a map is downloaded whole when there is no cached one to range-fetch against: its header and tables are checked before any of its
+  // (possibly millions of) records is decoded
+  const blocks = makeBlocks(400, 21)
+  const fileSize = blocks.reduce((s, b) => s + b.size, 0)
+  const encoded = encodeBlockMapV3(blocks, { fileSize, defaultChunker: DEFAULT })
+  const encodedHeader = parseBlockMapV3Header(encoded)
+
+  /** A copy of `encoded` with a u16/u32 at `offset` changed, and a counter of the record fields read from it. */
+  function tampered(change?: { offset: number; value: number; bits: 16 | 32 }) {
+    const buf = Buffer.from(encoded)
+    if (change != null) {
+      if (change.bits === 16) {
+        buf.writeUInt16LE(change.value, change.offset)
+      } else {
+        buf.writeUInt32LE(change.value, change.offset)
+      }
+    }
+    const reads = vi.spyOn(buf, "readUInt16LE")
+    return { buf, recordReads: () => reads.mock.calls.filter(([offset]) => (offset ?? 0) >= recordsStart(encodedHeader)).length }
+  }
+
+  test("an expected file size other than the header's is rejected before any record is read", ({ expect }) => {
+    const { buf, recordReads } = tampered()
+    expect(() => decodeBlockMapV3(buf, fileSize + 1)).toThrow(`describes a ${fileSize}-byte file, the update is ${fileSize + 1} bytes`)
+    expect(recordReads()).toBe(0)
+    expect(decodeBlockMapV3(buf, fileSize).records).toHaveLength(400)
+    expect(decodeBlockMapV3(buf, null).records).toHaveLength(400)
+  })
+
+  test("a map longer than its header declares is rejected", ({ expect }) => {
+    expect(blockMapV3Size(encodedHeader)).toBe(encoded.length)
+    expect(() => decodeBlockMapV3(Buffer.concat([encoded, Buffer.alloc(1)]))).toThrow(`file size ${encoded.length + 1} does not match header (expected ${encoded.length})`)
+  })
+
+  test("a header that declares a map over the size limit is rejected before its tables are read", ({ expect }) => {
+    // 2^50-byte file, one super-group, one group, 14M records (140 MB): only the header and the two table entries are present
+    const buf = Buffer.alloc(HEADER_FIXED_SIZE + SUPER_SIZE + GROUP_SIZE)
+    encoded.copy(buf, 0, 0, HEADER_FIXED_SIZE)
+    buf.writeUInt16LE(0, 40)
+    buf.writeUInt32LE(HEADER_FIXED_SIZE, 24)
+    buf.writeBigUInt64LE(BigInt(2 ** 50), 8)
+    buf.writeUInt32LE(1, 42)
+    buf.writeUInt32LE(1, 16)
+    buf.writeUInt32LE(14_000_000, 20)
+    expect(() => decodeBlockMapV3(buf)).toThrow(/the header declares a 140000078-byte map, more than the \d+-byte limit/)
+  })
+
+  test("a map larger than the given size limit is rejected before any record is read", ({ expect }) => {
+    const { buf, recordReads } = tampered()
+    expect(() => decodeBlockMapV3(buf, fileSize, encoded.length - 1)).toThrow(`the header declares a ${encoded.length}-byte map, more than the ${encoded.length - 1}-byte limit`)
+    expect(recordReads()).toBe(0)
+    expect(decodeBlockMapV3(buf, fileSize, encoded.length).records).toHaveLength(400)
+  })
+
+  test.for([
+    { name: "larger than MAX_BLOCK_MAP_V3_SIZE", maxSize: MAX_BLOCK_MAP_V3_SIZE + 1 },
+    { name: "NaN", maxSize: NaN },
+    { name: "zero", maxSize: 0 },
+  ])("a size limit that is $name leaves the map held to MAX_BLOCK_MAP_V3_SIZE", ({ maxSize }, { expect }) => {
+    const header = { ...encodedHeader, blockCount: Math.ceil(MAX_BLOCK_MAP_V3_SIZE / RECORD_SIZE) }
+    expect(() => checkBlockMapV3Header(header, { maxSize })).toThrow(`more than the ${MAX_BLOCK_MAP_V3_SIZE}-byte limit`)
+  })
+
+  const superAt = encodedHeader.headerLen
+  const groupAt = groupTableStart(encodedHeader)
+  const firstSuper = parseBlockMapV3Supers(encodedHeader, encoded)[0]
+  const firstGroup = parseBlockMapV3Groups(encodedHeader, encoded)[0]
+  test.for([
+    { name: "an empty super-group", change: { offset: superAt + 12, value: 0, bits: 16 as const }, error: "empty super-group" },
+    { name: "super-group block counts off by one", change: { offset: superAt + 8, value: firstSuper.blockCount + 1, bits: 32 as const }, error: "super-group counts do not sum" },
+    { name: "an empty group", change: { offset: groupAt + 12, value: 0, bits: 16 as const }, error: "empty group" },
+    { name: "group block counts off by one", change: { offset: groupAt + 12, value: firstGroup.blockCount + 1, bits: 16 as const }, error: "group block counts do not sum" },
+  ])("$name is rejected before any record is read", ({ change, error }, { expect }) => {
+    const { buf, recordReads } = tampered(change)
+    expect(() => decodeBlockMapV3(buf)).toThrow(error)
+    expect(recordReads()).toBe(0)
+  })
+})
+
+describe("blockMapV2ToV3Keys (comparing a v2 map with a v3 map)", () => {
+  function v2Of(blocks: Array<BlockInput>): BlockMap {
+    return { version: "2", files: [{ name: "file", offset: 0, checksums: blocks.map(b => Buffer.from(b.digest).toString("base64")), sizes: blocks.map(b => b.size) }] }
+  }
+
+  function withFile(map: BlockMap, patch: Partial<BlockMap["files"][0]>): BlockMap {
+    return { ...map, files: [{ ...map.files[0], ...patch }] }
+  }
+
+  test("gives every block the key toBlockMap gives the v3 map of the same blocks", ({ expect }) => {
+    const blocks = makeBlocks(500, 8)
+    const v3 = toBlockMap(decodeBlockMapV3(encodeBlockMapV3(blocks, { fileSize: blocks.reduce((s, b) => s + b.size, 0), defaultChunker: DEFAULT })))
+    const v2 = v2Of(blocks)
+    expect(blockMapV2ToV3Keys(v2)).toEqual(v3)
+    // the input is not modified
+    expect(v2.files[0].checksums[0]).toBe(Buffer.from(blocks[0].digest).toString("base64"))
+  })
+
+  test("an empty map converts to an empty map", ({ expect }) => {
+    expect(blockMapV2ToV3Keys(v2Of([])).files[0]).toEqual({ name: "file", offset: 0, checksums: [], sizes: [] })
+  })
+
+  test("rejects maps it cannot vouch for, so that the caller falls back to a full download", ({ expect }) => {
+    const v2 = v2Of(makeBlocks(5, 2))
+    const checksums = v2.files[0].checksums
+    expect(() => blockMapV2ToV3Keys(null as any)).toThrow("not a single-file v2 block map")
+    expect(() => blockMapV2ToV3Keys({ ...v2, version: "1" })).toThrow("not a single-file v2 block map")
+    expect(() => blockMapV2ToV3Keys({ ...v2, files: [v2.files[0], v2.files[0]] })).toThrow("not a single-file v2 block map")
+    expect(() => blockMapV2ToV3Keys({ ...v2, files: {} as any })).toThrow("not a single-file v2 block map")
+    expect(() => blockMapV2ToV3Keys(withFile(v2, { offset: 10 }))).toThrow("malformed v2 block map")
+    expect(() => blockMapV2ToV3Keys(withFile(v2, { sizes: v2.files[0].sizes.slice(1) }))).toThrow("malformed v2 block map")
+    expect(() => blockMapV2ToV3Keys(withFile(v2, { checksums: null as any }))).toThrow("malformed v2 block map")
+    // a block a 16-bit v3 record cannot hold (a v2 region with a coarse custom chunker), or no block at all
+    for (const size of [0, -1, 1.5, 0x10000, "4096" as any]) {
+      expect(() => blockMapV2ToV3Keys(withFile(v2, { sizes: [size, ...v2.files[0].sizes.slice(1)] }))).toThrow("which a v3 record cannot hold")
+    }
+    // a digest of another length (another hash), not a string, or base64 the builder never writes (Buffer's decoder skips junk)
+    const sha256 = Buffer.alloc(32, 7).toString("base64")
+    for (const checksum of [sha256, 42 as any, `${checksums[0].substring(0, 4)}\n${checksums[0].substring(4)}`, `${checksums[0]}==`, ""]) {
+      expect(() => blockMapV2ToV3Keys(withFile(v2, { checksums: [checksum, ...checksums.slice(1)] }))).toThrow("is not a base64 blake2b-18 digest")
+    }
+  })
+
+  test("CPU cost: the map of a 2 GiB artifact (131,072 blocks of 16 KiB) converts without reading or hashing anything", ({ expect }) => {
+    const count = (2 * 1024 * 1024 * 1024) / 16384
+    const checksums: Array<string> = new Array(count)
+    const digest = Buffer.alloc(18)
+    for (let i = 0; i < count; i++) {
+      digest.writeUInt32LE(i, 0)
+      checksums[i] = digest.toString("base64")
+    }
+    const map: BlockMap = { version: "2", files: [{ name: "file", offset: 0, checksums, sizes: new Array(count).fill(16384) }] }
+    const start = process.hrtime.bigint()
+    const converted = blockMapV2ToV3Keys(map)
+    const ms = Number(process.hrtime.bigint() - start) / 1e6
+    expect(converted.files[0].checksums).toHaveLength(count)
+    expect(converted.files[0].checksums[1]).toBe("0100000000000000")
+    // about 0.1 s; re-chunking and re-hashing the 2 GiB file with the v3 chunker (what building a map costs, ~10-100 MiB/s)
+    // would take from tens of seconds to minutes. The bound only catches an accidental quadratic or I/O path, not a slow CI machine
+    expect(ms).toBeLessThan(5000)
   })
 })

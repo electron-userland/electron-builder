@@ -6,6 +6,10 @@ electron-builder relies on a handful of external **binary bundles** — the NSIS
 
 For most projects you never touch this key: every toolset defaults to the newest published bundle. You reach for `toolsets` only to **pin a specific (or legacy) version**, or to **supply a custom bundle** in place of a built-in one.
 
+:::warning[Toolsets can change in any release]
+Toolsets, the versions offered for each, and what `"latest"` resolves to can be added, changed or removed in any electron-builder release (minor or patch), not only in a major release. (To address toolset stability, reported issues, adopt latest tooling versions, etc.)
+:::
+
 :::info[New in v27]
 Before v27, toolset selection was a mix of fixed version pins and environment-variable overrides (`APPIMAGE_TOOLS_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, `USE_SYSTEM_WINE`, …). v27 **removes every one of those env vars** and replaces them with the typed `toolsets` config on this page. See [Toolsets & environment variables](./migration/v27-build-changes.md#toolsets-environment-variables) in the breaking-changes reference and the [Replacing removed environment variables](#replacing-removed-environment-variables) section below.
 :::
@@ -21,7 +25,7 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 | `nsis` | Compiling Windows installers (`makensis`, plugin DLLs, `elevate.exe`) | `2.0.4` |
 | `wine` | Running Windows tools (NSIS, rcedit, signtool) on non-Windows hosts | `system` (host `wine` at a fixed install location) |
 | `fpm` | Building Linux packages (`.deb`, `.rpm`, `.pacman`, …) on macOS & Linux | `2.3.1` |
-| `linuxToolsMac` | Building Linux targets / `.tar.lz` archives on macOS (`ar`, `lzip`, `gtar`) | `1.1.1` |
+| `archive` | Tools that fpm and `.tar.lz` archives run on macOS & Linux: `xz`, `lzip`, GNU `tar`/`gtar`, GNU `ar`/`gar`, `bsdtar`, and `rpm`/`rpmbuild` (rpm 6.1.0) | `1.0.0` |
 | `sevenZip` | Extracting `.7z` and `.tar.xz` archives internally | `1.1.0` |
 | `icons` | Converting source images to `.icns`, `.ico`, and PNG icon sets | `1.2.3` |
 | `squirrel` | Building Squirrel.Windows installers (`Squirrel.exe`, `SyncReleases.exe`, `nuget.exe`, `7z`) — requires `electron-builder-squirrel-windows` | `1.2.1` |
@@ -31,6 +35,7 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 - **`wine`** is only needed to build **Windows targets on a non-Windows machine**. On Windows it has no effect. It defaults to the **host-installed `wine`** (`"system"`) on both macOS and Linux, so a macOS host that builds Windows targets needs Wine installed (`brew install --cask wine-stable`). See [Host Wine](#host-wine) for where it is looked for. `toolsets.wine: "1.0.1"` still downloads the Wine 11.0 bundle on macOS when pinned explicitly, but the published bundle ships no PE builtins, so it cannot run Windows tools on its own.
 - **`winCodeSign`** is used on all platforms (`signtool.exe` on Windows, `osslsigncode` on macOS/Linux).
 - **`squirrel`** is only used by the `squirrelWindows` target. It runs natively on Windows; on macOS/Linux it needs a host-installed `mono` (see [`executables`](#executables)), and `rcedit` (from `winCodeSign`) runs under Wine.
+- **`archive`** ships for Linux x64, arm64 and ia32 and macOS arm64 and x64; its `bin/` goes first on fpm's `PATH`. The bundle needs glibc 2.28 or newer on Linux x64 and arm64, glibc 2.17 or newer on Linux ia32, and macOS 15 or newer, and does not run on musl (e.g. Alpine); on older or musl hosts, set `toolsets.archive: "system"`. Other hosts, and `toolsets.archive: "system"` on any host, use their own tools (`lzip` from [`executables`](#executables)). `rpm`/`rpmbuild` are bundled only on Linux x64 and arm64 and macOS arm64: on **Intel macOS** and **32-bit Linux**, building `rpm` uses the host `rpmbuild` on `PATH` (e.g. `brew install rpm`, `apt-get install rpm`). A custom `archive` bundle must have the same `bin/` layout.
 - **`icons`** has only one published version today, so `"latest"` and the listed version are equivalent.
 - **`wix`** `"latest"` is WiX 3.14.1, which builds a native **arm64** MSI for `arm64`; `"0.0.0"` is the legacy WiX 4.0.0.5512 preview bundle, which packages an arm64 app in an x64 MSI. On macOS/Linux, `candle.exe` and `light.exe` run under Wine with [wine-mono](https://gitlab.winehq.org/wine-mono/wine-mono). If an `msiProjectCreated` hook adds elements in a WiX 4 namespace (for example `http://wixtoolset.org/schemas/v4/wxs/util`), switch it to the WiX 3 one (`http://schemas.microsoft.com/wix/UtilExtension`), or pin `"0.0.0"`; with WiX 3 the build fails with an error that names the namespace.
 :::
@@ -77,10 +82,6 @@ Every toolset accepts the sentinel version **`"0.0.0"`**, which selects the **pr
 
 Pinning `"0.0.0"` also changes a few behaviors that are gated on the bundle version — for example, the legacy AppImage bundle (`appimage: "0.0.0"`) is the FUSE2 runtime and re-adds the automatic `--no-sandbox` launch argument, and a `winCodeSign` below `1.3.0` forces the legacy PowerShell path for Azure Trusted Signing (see [Code signing & toolsets](#code-signing-and-toolsets)).
 
-:::warning[Short-term workaround only]
-`"0.0.0"` is intended as a temporary fallback while you resolve an incompatibility. The alias **may be removed in a future major release** — prefer moving to a current bundle (or a [custom toolset](#custom-toolsets)) rather than relying on it long-term.
-:::
-
 ## Custom toolsets
 
 Instead of a version string, any toolset can be set to a **`ToolsetCustom`** object to supply your own bundle:
@@ -116,7 +117,7 @@ toolsets.<name>: { url: string, checksum?: string, version?: string }
 
 ### Custom toolset checksums {#custom-toolset-checksum}
 
-Every custom toolset bundle accepts the same checksum formats, whichever toolset it replaces: `winCodeSign`, `appimage`, `nsis`, `wine`, `fpm`, `linuxToolsMac`, `sevenZip`, `icons` or `squirrel`.
+Every custom toolset bundle accepts the same checksum formats, whichever toolset it replaces: `winCodeSign`, `appimage`, `nsis`, `wine`, `fpm`, `archive`, `sevenZip`, `icons` or `squirrel`.
 
 - **Formats:** either
   - the SHA-256 of the archive file as 64 **hex** characters (an uppercase value is lowercased for you), or
@@ -322,7 +323,7 @@ Each entry is one `file://` URI or a list of them. A list can serve several host
 | `notarytool` | Notarization | the `notarytool` of the selected Xcode, located with `/usr/bin/xcrun --find notarytool` |
 | `stapler` | Validating stapled notarization tickets (`forceCodeSigning`, `electron-builder verify`) | the `stapler` of the selected Xcode, located with `/usr/bin/xcrun --find stapler` |
 | `pkgutil` | Checking the signature of `pkg` installers (`forceCodeSigning`, `electron-builder verify`) | macOS: `/usr/sbin/pkgutil` |
-| `lzip` | `tar.lz` archives on Linux (macOS uses the `linuxToolsMac` toolset) | Linux: `/usr/bin/lzip`, `/usr/local/bin/lzip` |
+| `lzip` | `tar.lz` archives on hosts without an `archive` toolset bundle | Linux: `/usr/bin/lzip`, `/usr/local/bin/lzip` |
 | `snapcraft` | Building and publishing snaps | macOS: `/opt/homebrew/bin/snapcraft`, `/usr/local/bin/snapcraft`; Linux: `/snap/bin/snapcraft`, `/usr/bin/snapcraft` |
 | `flatpak`, `flatpak-builder` | Building flatpaks | Linux: `/usr/bin/<name>`, `/usr/local/bin/<name>` |
 
@@ -341,7 +342,7 @@ v27 **removes** the toolset environment-variable overrides. Replace each with a 
 | Removed env var | Toolset it controlled | Replacement |
 |---|---|---|
 | `APPIMAGE_TOOLS_PATH` | AppImage build tools | `toolsets.appimage: { url }` |
-| `LINUX_TOOLS_MAC_PATH` | linux-tools-mac bundle | `toolsets.linuxToolsMac: { url }` |
+| `LINUX_TOOLS_MAC_PATH` | linux-tools-mac bundle | `toolsets.archive: { url }` |
 | `CUSTOM_FPM_PATH` | FPM executable | `toolsets.fpm: { url }` |
 | `ELECTRON_BUILDER_NSIS_DIR` | NSIS compiler bundle | `toolsets.nsis: { url }` |
 | `ELECTRON_BUILDER_NSIS_RESOURCES_DIR` | NSIS resources/plugins | `toolsets.nsis: { url }` |

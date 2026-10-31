@@ -1,11 +1,12 @@
 import { CancellationToken } from "builder-util-runtime"
 import {
   computeBatchEnd,
+  ERR_MULTIPLE_RANGES_NOT_SUPPORTED,
   executeTasksUsingMultipleRangeRequests,
   MAX_RANGES_PER_REQUEST,
   MAX_TASKS_PER_REQUEST,
 } from "electron-updater/src/differentialDownloader/multipleRangeDownloader"
-import { DataSplitter } from "electron-updater/src/differentialDownloader/DataSplitter"
+import { DataSplitter, parseMultipartBoundary } from "electron-updater/src/differentialDownloader/DataSplitter"
 import { OperationKind } from "electron-updater/src/differentialDownloader/downloadPlanBuilder"
 import { PassThrough, Writable } from "stream"
 import * as fs from "fs"
@@ -174,6 +175,26 @@ describe("executeTasksUsingMultipleRangeRequests", () => {
     expect(error.message).toBe("read ECONNRESET")
   })
 
+  test("rejects a 206 whose long Content-Type names no boundary without backtracking over it", () => {
+    const tasks: Array<Operation> = [D(0, 10), D(20, 30)]
+    const out = new Writable({
+      write: (_chunk, _encoding, callback) => callback(),
+    })
+    const response = new PassThrough() as PassThrough & { statusCode: number; headers: Record<string, string> }
+    response.statusCode = 206
+    // a whitespace run followed by a non-space character (Electron trims only trailing whitespace); Electron's net accepts
+    // response headers of about 256 KB
+    response.headers = { "content-type": `multipart/x${" ".repeat(100_000)}x` }
+
+    const errors: Array<Error & { code?: string }> = []
+    const start = performance.now()
+    executeTasksUsingMultipleRangeRequests(createFakeDifferentialDownloader(response), tasks, out, 0, e => errors.push(e))(0)
+    expect(performance.now() - start).toBeLessThan(3000)
+    expect(errors.map(it => it.code)).toEqual([ERR_MULTIPLE_RANGES_NOT_SUPPORTED])
+    // the error message quotes only the first 200 characters of the header
+    expect(errors.map(it => it.message)).toEqual([`Server does not support multiple ranges in one request (status 206, Content-Type "multipart/x${" ".repeat(189)}")`])
+  })
+
   test("splits a plan with more than 200 ranges into several multipart requests and assembles the file", async ({ tmpDir }) => {
     const blockSize = 16
     const blockCount = 450
@@ -269,5 +290,49 @@ describe("DataSplitter", () => {
     })
 
     expect(callbackCalled).toBe(true)
+  })
+})
+
+describe("parseMultipartBoundary", () => {
+  test("returns the boundary of a multipart Content-Type", () => {
+    expect(parseMultipartBoundary("multipart/byteranges; boundary=3d6b6a416f9b5")).toBe("3d6b6a416f9b5")
+    expect(parseMultipartBoundary('Multipart/ByteRanges;BOUNDARY="a b"')).toBe("a b")
+    expect(parseMultipartBoundary("multipart/byteranges; boundary=abc ")).toBe("abc")
+    expect(parseMultipartBoundary("multipart/byteranges; charset=x; boundary=abc")).toBe("abc")
+    expect(parseMultipartBoundary("multipart/byteranges; boundary=abc; x=y")).toBe("abc")
+    expect(parseMultipartBoundary(`multipart/byteranges; boundary=${"b".repeat(70)}`)).toBe("b".repeat(70))
+    expect(parseMultipartBoundary(`multipart/byteranges; boundary="${"b".repeat(70)}"`)).toBe("b".repeat(70))
+  })
+
+  test("returns null when the type is not multipart or names no valid boundary", () => {
+    for (const contentType of [
+      null,
+      undefined,
+      "",
+      "application/zip",
+      "application/zip; boundary=abc",
+      "multipart/",
+      "multipart/; boundary=abc",
+      "multipart/byteranges",
+      "multipart/byteranges; boundary=",
+      'multipart/byteranges; boundary=""',
+      "multipart/byteranges; boundary=a b",
+      'multipart/byteranges; boundary="abc',
+      'multipart/byteranges; boundary="a"b"',
+      // RFC 2046 limits a boundary to 70 characters
+      `multipart/byteranges; boundary=${"b".repeat(71)}`,
+      `multipart/byteranges; boundary="${"b".repeat(71)}"`,
+    ]) {
+      expect(parseMultipartBoundary(contentType)).toBeNull()
+    }
+  })
+
+  test("takes linear time on a long whitespace run", () => {
+    for (const whitespace of [" ", "\t"]) {
+      const start = performance.now()
+      expect(parseMultipartBoundary(`multipart/x${whitespace.repeat(250_000)}x`)).toBeNull()
+      expect(parseMultipartBoundary(`multipart/x;${whitespace.repeat(250_000)}boundary=${whitespace.repeat(250_000)}x`)).toBe("x")
+      expect(performance.now() - start).toBeLessThan(3000)
+    }
   })
 })

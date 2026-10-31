@@ -48,7 +48,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     const url = new URL(asset.url)
     let result: any
     try {
-      const rawData = await this.httpRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken)
+      const rawData = await this.channelFileRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken)
       result = load(rawData ?? "null")
       if (rawData != null) {
         rememberUpdateManifestSource(result, rawData)

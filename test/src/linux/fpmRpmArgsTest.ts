@@ -9,6 +9,10 @@ vi.mock("app-builder-lib/src/toolsets/fpm", async importOriginal => {
   const actual = await importOriginal<typeof import("app-builder-lib/src/toolsets/fpm")>()
   return { ...actual, getFpmPath: async () => "fpm" }
 })
+vi.mock("app-builder-lib/src/toolsets/archive", async importOriginal => {
+  const actual = await importOriginal<typeof import("app-builder-lib/src/toolsets/archive")>()
+  return { ...actual, getArchiveToolsetBinDir: async () => "/archive/bin" }
+})
 
 import FpmTarget from "app-builder-lib/src/targets/linux/FpmTarget"
 import { exec } from "builder-util"

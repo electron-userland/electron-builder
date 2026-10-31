@@ -264,7 +264,7 @@ describe("default locations", () => {
 
   test("of the Linux tools, snapcraft, Mono, Wine, pwsh and prlctl, in PATH order", ({ expect }) => {
     expect(defaultExecutableLocations("lzip", "linux")).toEqual(["/usr/bin/lzip", "/usr/local/bin/lzip"])
-    // macOS uses the linuxToolsMac toolset
+    // macOS uses the archive toolset
     expect(defaultExecutableLocations("lzip", "darwin")).toEqual([])
     expect(defaultExecutableLocations("flatpak-builder", "linux")).toEqual(["/usr/bin/flatpak-builder", "/usr/local/bin/flatpak-builder"])
     expect(defaultExecutableLocations("snapcraft", "linux")).toEqual(["/snap/bin/snapcraft", "/usr/bin/snapcraft"])

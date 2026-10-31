@@ -1,7 +1,8 @@
 import { createRequire } from "node:module"
 import { DownloadOptions, HttpExecutor, configureRequestOptions, configureRequestUrl } from "builder-util-runtime"
 
-const require = createRequire(import.meta.url)
+// import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
+const require = createRequire(import.meta.url ?? process.execPath)
 import type { AuthInfo } from "electron"
 import { RequestOptions } from "http"
 type Session = Electron.Session

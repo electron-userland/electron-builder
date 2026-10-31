@@ -51,7 +51,7 @@ export { nsisEscapeString, NsisScriptGenerator } from "./targets/win/nsis/nsisSc
 export { ProgIdMaker } from "./targets/win/nsis/progId.js"
 export { checkMakensisOutput, verifyInstallerSize } from "./targets/win/nsis/nsisValidation.js"
 export { configureWebInstallerAppPackageUrl } from "./targets/win/nsis/WebInstallerTarget.js"
-export { getLinuxToolsMacToolset, getLinuxToolsPath } from "./toolsets/linuxToolsMac.js"
+export { getArchiveToolsetBinDir } from "./toolsets/archive.js"
 export { getCustomToolsetPath } from "./toolsets/custom.js"
 export { resolveToolsetVersion } from "./toolsets/version.js"
 export { getRceditBundle, getWindowsKitsBundle } from "./toolsets/winCodeSign.js"

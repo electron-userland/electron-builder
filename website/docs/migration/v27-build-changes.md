@@ -21,6 +21,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [Implicit `--publish` removed](#implicit-publish-removed) | Warns | Pass `--publish` explicitly |
 | [`--em.build` / `--em.directories` CLI flags removed](#removed-flags-embuild-emdirectories) | Fails build | Use `-c` / `-c.directories` |
 | [Toolset defaults resolve to `"latest"`](#toolset-defaults-resolve-to-latest-newest-bundle) | Info log | No action; pin to `"0.0.0"` to restore a legacy bundle. **Wine is now the host install** — building Windows targets on macOS needs Wine installed |
+| [RPM builds use a bundled `rpmbuild`](#rpm-builds-use-a-bundled-rpmbuild) | None | Intel macOS and 32-bit Linux still need `rpmbuild` installed |
 | [Azure Trusted Signing `/dlib` is the default](#azure-trusted-signing-signtool-dlib-is-the-default) | Info log | Pin `winCodeSign` below `1.3.0` only to force the legacy PowerShell path |
 | [Toolset env-var overrides removed](#toolset-env-var-overrides-removed) | Fails build | Replace `APPIMAGE_TOOLS_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, `USE_SYSTEM_WINE`, … with `toolsets.X: { url, checksum }` — setting a removed variable now **fails the build** |
 | [`CI_BUILD_TAG` env var removed](#ci_build_tag-environment-variable) | Warns, then fails | Use `CI_COMMIT_TAG` |
@@ -113,7 +114,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 | `nsis` | `0.0.0` (NSIS 3.0.4.1, split bundle) | `2.0.4` | NSIS 3.13 compiled from source; unified single-archive bundle; entrypoint scripts auto-set `NSISDIR`; a second, log-enabled bundle is picked when `installerDebugLogging` is on |
 | `fpm` | `2.2.1` | `2.3.1` | FPM 1.18.0 / Ruby 3.4.12; Linux bundles link a static OpenSSL 3.5.9 instead of OpenSSL 1.1.1 (same glibc 2.28 floor) |
 | `icons` | `1.1.0` | `1.2.3` | Newer bundle — `wasm-vips` + `@resvg/resvg-wasm`; 16/32 px ICNS entries written as ARGB |
-| `linuxToolsMac` | `1.0.0` | `1.1.1` | Trimmed to the tools electron-builder runs (`gtar`, `lzip`, binutils 2.47 `ar`) plus their license files, built to run on macOS 15+ (1.0.0 required macOS 26) |
+| `archive` | *(host tools; `linuxToolsMac` on macOS)* | `1.0.0` | New toolset replacing `linuxToolsMac` — `xz`, `lzip`, GNU `tar`/`ar`, `bsdtar` and `rpmbuild` (rpm 6.1.0). See [RPM builds use a bundled `rpmbuild`](#rpm-builds-use-a-bundled-rpmbuild) |
 | `sevenZip` | `1.0.0` | `1.1.0` | 7-Zip 26.05 |
 | `squirrel` | *(electron-winstaller npm package)* | `1.2.1` | New toolset — Squirrel.Windows vendor bundle, replaces the `electron-winstaller` dependency; pinned, checksum-verified 7-Zip 26.05 (native arm64 on arm64 Windows hosts) and `nuget.exe` 7.9.0 |
 | `wix` | *(fixed, WiX 4.0.0.5512 preview)* — now `0.0.0` | `2.0.0` | WiX 3.14.1: an `arm64` build gets a native `Arm64` MSI (the preview packaged the arm64 app in an x64 MSI). The generated `.wxs` uses the WiX 3 schema, so an `msiProjectCreated` hook that inserts WiX 4-namespace elements needs the WiX 3 namespace (e.g. `http://schemas.microsoft.com/wix/UtilExtension`) or `wix: "0.0.0"`; the build fails with an error naming the namespace otherwise |
@@ -124,9 +125,17 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 { "build": { "toolsets": { "winCodeSign": "0.0.0", "nsis": "0.0.0", "appimage": "0.0.0", "wine": "0.0.0", "wix": "0.0.0" } } }
 ```
 
-This escape hatch is intended as a short-term workaround. The `"0.0.0"` alias may be removed in a future major release.
+This escape hatch is intended as a short-term workaround. Like any toolset version, the `"0.0.0"` alias can be removed in any release, including a minor or patch release (see [Toolsets](../toolsets.md)).
 
 Legacy-base snap template builds (`core18`/`core20`/`core22` with `useTemplateApp`) now pack with the `mksquashfs` from `toolsets.appimage` instead of always using the legacy `"0.0.0"` bundle, so an `appimage: "0.0.0"` pin applies to them too — and its `mksquashfs` supports only `gzip`/`xz`, so snap `compression: "lzo"` (or `linux.compression: "store"`) needs a newer toolset.
+
+### RPM builds use a bundled `rpmbuild` {#rpm-builds-use-a-bundled-rpmbuild}
+
+**How you'll find out:** No message. The `.rpm` no longer reflects the host rpm's version or macros.
+
+In v26, fpm ran whatever `rpmbuild`, `xz`, `tar` and `ar` were on the build machine's `PATH`, and on macOS the `linuxToolsMac` bundle. v27 replaces `linuxToolsMac` with the [`toolsets.archive`](../toolsets.md) toolset, whose `bin/` (`xz`, `lzip`, GNU `tar`/`gtar`, GNU `ar`/`gar`, `bsdtar`, and `rpm`/`rpmbuild` from rpm 6.1.0) goes first on fpm's `PATH` on macOS and Linux. Its `rpmbuild` ignores host and user rpm configuration (`/etc/rpm`, `~/.rpmmacros`) and pins the v4 package format and `_build_id_links none`, so building on Linux, on macOS or in Docker gives the same package. Pass a macro explicitly with `rpm.fpm: ["--rpm-rpmbuild-define=<name> <value>"]`.
+
+The bundle needs glibc 2.28 or newer on Linux x64 and arm64, glibc 2.17 or newer on Linux ia32, and macOS 15 or newer, and does not run on musl (e.g. Alpine); on older or musl hosts, set `toolsets.archive: "system"`. The bundled `rpmbuild` ships for Linux x64 and arm64 and macOS arm64. On **Intel macOS** and **32-bit Linux**, the toolset has no `rpmbuild`, so building `rpm` uses the host `rpmbuild` on `PATH`: install it (`brew install rpm`, `apt-get install rpm`).
 
 ### Azure Trusted Signing `signtool /dlib` is the default {#azure-trusted-signing-signtool-dlib-is-the-default}
 
@@ -150,7 +159,7 @@ The signer resolves the path from the `winCodeSign` value: unset / `null` / `"la
 |---|---|---|
 | `APPIMAGE_TOOLS_PATH` | AppImage build tools (`mksquashfs`, runtime) | `toolsets.appimage` |
 | `MKSQUASHFS_PATH` | `mksquashfs` for legacy (core18/20/22) snap builds | `toolsets.appimage` |
-| `LINUX_TOOLS_MAC_PATH` | Linux-tools-mac bundle (`ar`, `lzip`, `gtar`) | `toolsets.linuxToolsMac` |
+| `LINUX_TOOLS_MAC_PATH` | Linux-tools-mac bundle (`ar`, `lzip`, `gtar`) | `toolsets.archive` |
 | `CUSTOM_FPM_PATH` | FPM executable | `toolsets.fpm` |
 | `ELECTRON_BUILDER_NSIS_DIR` | NSIS compiler bundle directory | `toolsets.nsis` |
 | `ELECTRON_BUILDER_NSIS_RESOURCES_DIR` | NSIS resources/plugins directory | `toolsets.nsis` |
@@ -559,7 +568,7 @@ v27 adds a binary `.blockmap` format that electron-updater 7 fetches in parts wi
 | A range that includes electron-updater 6 or earlier (e.g. `">=6"`) | Gzipped JSON (`"v2"`), as in v26 | Warns once that binary block maps are off and why |
 
 - **Your app ships electron-updater 7:** no action. The first release built with v27 publishes binary maps. Installs that are still on electron-updater 6 (an app version built before you upgraded) cannot read it and download that one update in full ("Cannot download differentially, fallback to full download"); the update installs electron-updater 7, and later updates are differential again. With an artifact name without `${version}` (the default names include it) the next update is a full download too: electron-updater 6 cached no map for the release it could not read, and the installed version's map URL electron-updater 7 derives is the new map's own; that update caches its map, and the ones after it are differential.
-- **Your app still ships electron-updater 6:** the build fails with a link here. Upgrade `electron-updater` to 7, or keep it and set `"electronUpdaterCompatibility": ">=6"` (per platform with e.g. `win.electronUpdaterCompatibility`), which keeps the JSON map. Raise the range to `>=7` once your installed apps ship electron-updater 7.
+- **Your app still ships electron-updater 6:** the build fails with a link here. Upgrade `electron-updater` to 7, or keep it and set `"electronUpdaterCompatibility": ">=6"` (per platform with e.g. `win.electronUpdaterCompatibility`), which keeps the JSON map. Raise the range to `>=7` once your installed apps ship electron-updater 7. Installs on electron-updater 7.0.0-alpha.14 or later update differentially to the first release with binary maps: they compare their cached JSON map with the new binary map, since both describe the same blocks. Only a stored `app.asar` (`nsis.differentialPackage: "store-asar"`), which the binary map cuts into finer blocks, is downloaded whole by that update. The same holds when going back to `"blockmap": "v2"`.
 - **Opting out:** `"blockmap": "v2"` always writes the JSON map, whatever the range. `"blockmap": "v3"` asks for the binary map and fails the build when the range includes electron-updater 6 or earlier; `"blockmap": "latest"` follows the newest format the range allows.
 - With the JSON map, NSIS packages and their block maps are byte-for-byte what v26 wrote. With the binary map, the 7z header of a differential package is also stored uncompressed and chunked on its own.
 

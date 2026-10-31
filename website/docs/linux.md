@@ -191,6 +191,8 @@ rpm:
     - "--rpm-rpmbuild-define=_build_id_links compat"
 ```
 
+**`rpmbuild`:** fpm runs the `rpmbuild` (rpm 6.1.0) from the [`toolsets.archive`](./toolsets.md) toolset on Linux x64 and arm64 and macOS arm64, so those hosts need no `rpm` package. On Intel macOS and 32-bit Linux the toolset has no `rpmbuild`: install one (`brew install rpm`, `apt-get install rpm`) and fpm uses the host `rpmbuild` on `PATH`.
+
 **After-install/after-remove scripts:**
 
 ```yaml

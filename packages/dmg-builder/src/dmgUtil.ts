@@ -96,9 +96,17 @@ export async function executeAndDetach(
       // (e.g. disk8), so device-name matching via hdiutil info misses the APFS volume.
       let volumePath: string | null = null
       for (const line of attachResult.split("\n")) {
-        const match = /\s+(\/Volumes\/.+?)\s*$/.exec(line)
-        if (match) {
-          volumePath = match[1].trim()
+        // the mount point is the rest of the line after the first whitespace-preceded "/Volumes/"; a fixed pattern, not
+        // /\s+(\/Volumes\/.+?)\s*$/, which backtracked polynomially on long runs of whitespace
+        const start = line.search(/\s\/Volumes\//)
+        if (start === -1) {
+          continue
+        }
+        // trimEnd removes the same characters as \s, including a trailing \r
+        const mountPoint = line.slice(start + 1).trimEnd()
+        // an empty volume name is not a mount point
+        if (mountPoint !== "/Volumes/") {
+          volumePath = mountPoint
           break
         }
       }

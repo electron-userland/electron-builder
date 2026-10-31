@@ -98,6 +98,7 @@ export interface CommonConfiguration {
    * `"latest"`) to use the modern default (newest bundle) for that toolset.
    *
    * Note: Toolset versioning can drop intermediate releases (such as if a problem is discovered in a bundle). If you need to pin to a specific release, check the release notes for the toolset to ensure the version you specify is valid.
+   * Toolsets, the versions offered for each, and what `latest` resolves to can be added, changed or removed in any electron-builder release (minor or patch), not only in a major release. (To address toolset stability, reported issues, adopt latest tooling versions, etc.)
    *
    * @see {@link ToolsetConfig}
    */
@@ -116,10 +117,17 @@ export interface CommonConfiguration {
    * - `"v2"`: the gzipped JSON block map every electron-updater version reads, downloaded in full on every update; the package and
    *   block map are the same as electron-builder 26 wrote.
    * - `"latest"`: the newest format the `electronUpdaterCompatibility` range supports (currently the same as unset). A future
-   *   format then costs one full download per user, as below.
+   *   format may then cost one full download per user, as below.
    *
-   * Apps whose electron-updater cannot read a release's format, or whose cached map is in another format, download that update
-   * in full once; the next one is differential again, or with an artifact name without `${version}` the one after it.
+   * Apps whose electron-updater cannot read a release's format download that update in full once; the next one is differential
+   * again, or with an artifact name without `${version}` the one after it. Switching between `"v2"` and `"v3"` does not cost a
+   * full download with electron-updater 7.0.0-alpha.14 and later: both formats cut the same blocks and hash them alike, so the
+   * cached map of one format is compared with the new map of the other. Only the bytes of a stored member (`nsis.differentialPackage: "store-asar"`),
+   * which `"v3"` cuts into finer blocks, are downloaded whole by that first update.
+   *
+   * Compressed bytes (a compressed app package, a zip) are cut into the same 8/16/32 KiB blocks in both formats, so `"v3"`
+   * downloads the same data for them as `"v2"` (compressed data changes from a change up to the end of its compressed stream,
+   * whatever the format); it only makes the map smaller (about 10 instead of 22 bytes per block) and fetched in parts.
    *
    * Block maps embedded in an artifact (AppImage, the NSIS web installer's app package) are always `"v2"`.
    * See [the v27 notes](https://www.electron.build/docs/migration/v27-build-changes#block-map-format-follows-electronupdatercompatibility).
@@ -696,6 +704,8 @@ export type AfterExtractContext = PackContext
  *
  * To supply your own bundle, set the property to a {@link ToolsetCustom} object with a `url` (https:// or file://) and a `checksum` for verification. The bundle must mirror the expected directory layout of the corresponding built-in bundle; see the build scripts at
  * https://github.com/electron-userland/electron-builder-binaries/tree/master/packages.
+ *
+ * Toolsets, the versions offered for each, and what `latest` resolves to can be added, changed or removed in any electron-builder release (minor or patch), not only in a major release. (To address toolset stability, reported issues, adopt latest tooling versions, etc.)
  */
 export interface ToolsetConfig {
   /**
@@ -848,23 +858,17 @@ export interface ToolsetConfig {
   readonly fpm?: "2.2.1" | "2.3.1" | ToolsetCustom | "latest"
 
   /**
-   * Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build
-   * Linux targets on macOS hosts.
+   * The archive and packaging tools that fpm and the `tar.lz` target run, on macOS and Linux hosts: `xz`, `lzip`, GNU `tar`
+   * (`tar`, `gtar`), GNU `ar` (`ar`, `gar`) and `bsdtar`, plus `rpm` and `rpmbuild` (rpm 6.1.0) on Linux x64 and arm64 and macOS arm64.
+   * Its `bin` directory goes first on fpm's `PATH`. On Intel macOS and 32-bit Linux, which get no bundled `rpmbuild`,
+   * building `rpm` uses the host `rpmbuild` on `PATH`. A {@link ToolsetCustom} bundle must have the same `bin/` layout.
+   * `"system"` uses the host's tools (no download); `tar.lz` then uses `lzip` from {@link executables}.
    *
-   * The bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).
-   *
-   * Available versions:
-   * | Version | Notes |
-   * |---------|-------|
-   * | `"1.0.0"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |
-   * | `"1.0.1"` | Same tools rebuilt on macOS 15 runners — binaries run on macOS 15+ (1.0.0 required macOS 26) |
-   * | `"1.1.1"` | Trimmed to gnu-tar, lzip and binutils 2.47 (`ar`) plus their dylibs and license files; still runs on macOS 15+ |
-   *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/archive/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly linuxToolsMac?: "1.0.0" | "1.0.1" | "1.1.1" | ToolsetCustom | "latest"
+  readonly archive?: "1.0.0" | "system" | ToolsetCustom | "latest"
 
   /**
    * Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.

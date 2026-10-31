@@ -1,6 +1,6 @@
 import { PublishManager } from "app-builder-lib"
 import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier"
-import { computeArchToTargetNamesMap, getLinuxToolsMacToolset, parsePlistFile, PlistObject } from "app-builder-lib/internal"
+import { computeArchToTargetNamesMap, getArchiveToolsetBinDir, parsePlistFile, PlistObject } from "app-builder-lib/internal"
 import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, isEmptyOrSpaces, log, retry, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import {
@@ -37,7 +37,7 @@ import sanitizeFileName from "sanitize-filename"
 import type { ExpectStatic } from "vitest"
 import { computeDefaultAppDirectory, installDependencies } from "app-builder-lib/internal"
 import { ELECTRON_VERSION } from "./testConfig"
-import { execSync } from "child_process"
+import { execSync, spawnSync } from "child_process"
 import { detectPackageManager } from "app-builder-lib/src/node-module-collector/packageManager"
 import { SelfSignedIdentity } from "./selfSignedIdentity"
 
@@ -811,13 +811,7 @@ async function checkLinuxResult(expect: ExpectStatic, outDir: string, packager: 
   }
 
   const { member: controlMember, tarArgs: controlArgs } = await resolveDebMember(packagePath, "control.tar.")
-  const control = parseDebControl(
-    (
-      await execShell(`'${await getArExecutable()}' p '${packagePath}' ${controlMember} | '${await getTarExecutable()}' -x ${controlArgs} --to-stdout ./control`, {
-        maxBuffer: 10 * 1024 * 1024,
-      })
-    ).stdout
-  )
+  const control = parseDebControl(await extractDebMember(packagePath, controlMember, ["-x", ...controlArgs, "--to-stdout", "./control"]))
 
   delete control.Version
   delete control.Size
@@ -1003,22 +997,39 @@ const checkResult = (expect: ExpectStatic, artifacts: Array<ArtifactCreated>, ex
   return { packageFile, zip, allFiles }
 }
 
-export const execShell: any = promisify(require("child_process").exec)
+// runs a program without a shell; throws when it fails to start or exits non-zero
+function run(file: string, args: Array<string>, input?: Buffer): { stdout: Buffer; stderr: string } {
+  const result = spawnSync(file, args, { input, maxBuffer: 1024 * 1024 * 1024 })
+  if (result.error != null) {
+    throw result.error
+  }
+  if (result.status !== 0) {
+    throw new Error(`${file} ${args.join(" ")} exited with ${result.status}: ${result.stderr}`)
+  }
+  return { stdout: result.stdout, stderr: result.stderr.toString() }
+}
+
+/** `ar p <debFile> <member> | tar <tarArgs>`, returning tar's stdout */
+export async function extractDebMember(debFile: string, member: string, tarArgs: Array<string>): Promise<string> {
+  const { stdout: data } = run(await getArExecutable(), ["p", debFile, member])
+  return run(await getTarExecutable(), tarArgs, data).stdout.toString()
+}
 
 export async function getTarExecutable() {
-  return process.platform === "darwin" ? (await getLinuxToolsMacToolset()).gtar : "tar"
+  return process.platform === "darwin" ? path.join((await getArchiveToolsetBinDir(undefined, "")) ?? "", "gtar") : "tar"
 }
 
 export async function getArExecutable() {
   if (process.platform === "darwin") {
-    return (await getLinuxToolsMacToolset()).ar
+    return path.join((await getArchiveToolsetBinDir(undefined, "")) ?? "", "ar")
   }
   return "ar"
 }
 
-export async function resolveDebMember(debFile: string, memberPrefix: "data.tar." | "control.tar."): Promise<{ member: string; tarArgs: string }> {
+export async function resolveDebMember(debFile: string, memberPrefix: "data.tar." | "control.tar."): Promise<{ member: string; tarArgs: Array<string> }> {
   const arExecutable = await getArExecutable()
-  const { stdout: memberList, stderr } = await execShell(`'${arExecutable}' t '${debFile}'`, { maxBuffer: 1024 * 1024 })
+  const { stdout, stderr } = run(arExecutable, ["t", debFile])
+  const memberList = stdout.toString()
   if (stderr.length > 0) {
     throw new Error(`Failed to list members of ${debFile}: ${stderr}`)
   }
@@ -1029,7 +1040,7 @@ export async function resolveDebMember(debFile: string, memberPrefix: "data.tar.
   if (member == null) throw new Error(`No ${memberPrefix}* member found in ${debFile}`)
   const ext = member.slice(memberPrefix.length)
   // Short flags (-J, -z, -j) are safe to concatenate; zstd requires a standalone long option
-  const tarArgs = ext === "xz" ? "-J" : ext === "gz" ? "-z" : ext === "bz2" ? "-j" : ext === "zst" || ext === "zstd" ? "--zstd" : "-J"
+  const tarArgs = [ext === "xz" ? "-J" : ext === "gz" ? "-z" : ext === "bz2" ? "-j" : ext === "zst" || ext === "zstd" ? "--zstd" : "-J"]
   return { member, tarArgs }
 }
 
@@ -1040,15 +1051,7 @@ export async function readDebCompression(debFile: string): Promise<string> {
 
 async function getContents(packageFile: string) {
   const { member, tarArgs } = await resolveDebMember(packageFile, "data.tar.")
-  const arExecutable = await getArExecutable()
-  const result = await execShell(`'${arExecutable}' p '${packageFile}' ${member} | '${await getTarExecutable()}' -t ${tarArgs}`, {
-    maxBuffer: 10 * 1024 * 1024,
-    env: {
-      ...process.env,
-    },
-  })
-
-  const contents = parseFileList(result.stdout, true)
+  const contents = parseFileList(await extractDebMember(packageFile, member, ["-t", ...tarArgs]), true)
   return pathSorter(contents.filter(it => !(it.includes(`/locales/`) || it.includes(`/libgcrypt`) || it.includes("/inspector/"))))
 }
 

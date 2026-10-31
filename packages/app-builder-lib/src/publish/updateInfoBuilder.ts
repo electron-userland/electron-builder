@@ -253,7 +253,8 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
   const updateChannelFileToInfo = new Map<string, UpdateInfoFileTask>()
   for (const task of updateInfoFileTasks) {
     // https://github.com/electron-userland/electron-builder/pull/2994
-    const key = `${task.file}@${safeStringifyJson(task.publishConfiguration, new Set(["releaseType"]))}`
+    // every sensitive value is fingerprinted, so configs that differ in one get different keys
+    const key = `${task.file}@${safeStringifyJson(task.publishConfiguration, new Set(["releaseType"]), Number.POSITIVE_INFINITY)}`
     const existingTask = updateChannelFileToInfo.get(key)
     if (existingTask == null) {
       updateChannelFileToInfo.set(key, task)

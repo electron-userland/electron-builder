@@ -242,6 +242,19 @@ test("emitArtifactCreated is called once per unique yml file", async ({ expect }
   })
 })
 
+test("tasks whose publish configs differ only in a sensitive value after many others are not merged", async ({ expect, tmpDir }) => {
+  const dir = await tmpDir.getTempDir({ prefix: "updateinfo-cache-key" })
+  const config = (last: string) => ({ ...basePublishConfig, ...Object.fromEntries(Array.from({ length: 16 }, (_, i) => [`token${i}`, "same"])), lastSecret: last })
+  const mockPackager = makePackager()
+  const tasks = [
+    { ...makeTask(dir, "App-1.0.0.exe", "sha-a", null), publishConfiguration: config("a") as any },
+    { ...makeTask(dir, "App-1.0.0.exe", "sha-b", null), publishConfiguration: config("b") as any },
+  ]
+  await writeUpdateInfoFiles(tasks, mockPackager as any)
+  expect(mockPackager.emitArtifactCreated).toHaveBeenCalledTimes(2)
+  expect(tasks.map(it => it.info.files.length)).toEqual([1, 1])
+})
+
 // ── A1: update manifest signing ──────────────────────────────────────────────
 
 test("manifest is signed when the packager yields a signing key, and the signature verifies", async ({ expect }) => {
