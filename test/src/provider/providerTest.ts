@@ -3,7 +3,10 @@ import { CancellationToken, UpdateInfo } from "builder-util-runtime"
 import { Provider, ProviderRuntimeOptions } from "electron-updater"
 import { parseUpdateInfo } from "electron-updater/src/providers/Provider"
 import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
+import { readFileSync } from "fs"
 import { OutgoingHttpHeaders } from "http"
+import * as path from "path"
+import * as semver from "semver"
 import { URL } from "url"
 import { MockInstance, afterEach, beforeEach, vi } from "vitest"
 import { mockAliasChainYaml, mockYaml } from "../helpers/providerTestUtil.js"
@@ -273,4 +276,23 @@ test("parseUpdateInfo - accepts alias-free channel files of any size and a benig
 
   const withAlias = parseUpdateInfo(`${mockYaml("1.0.1")}other: &f [a, b]\nreleaseNotes: *f\n`, "latest.yml", CHANNEL_FILE_URL) as any
   expect(withAlias.releaseNotes).toEqual(["a", "b"])
+})
+
+// js-yaml before 4.3.2 spends seconds of CPU on a few hundred KB of YAML merge keys, and the channel file is parsed before its signature is checked
+test("electron-updater requires a js-yaml that bounds YAML merge keys", ({ expect }) => {
+  const { dependencies } = JSON.parse(readFileSync(path.join(import.meta.dirname, "../../../packages/electron-updater/package.json"), "utf8"))
+  expect(dependencies["js-yaml"]).toSatisfy((range: string) => semver.subset(range, ">=4.3.2"))
+})
+
+test.for([
+  ["20000 empty merge sources", `${mockYaml("1.0.1")}arr: &arr [${Array(20_000).fill("{}").join(", ")}]\ntargets:\n${"  - <<: *arr\n".repeat(20_000)}`],
+  [
+    "a chain of 8000 merge keys",
+    `${mockYaml("1.0.1")}a0: &a0 { k0: 0 }\n${Array.from({ length: 7999 }, (_, i) => `a${i + 1}: &a${i + 1} { <<: *a${i}, k${i + 1}: 0 }\n`).join("")}`,
+  ],
+])("parseUpdateInfo - rejects YAML merge keys that would take seconds to parse: %s", ([_name, yaml], { expect }) => {
+  const start = performance.now()
+  // the message embeds the whole channel file, so only the code is checked
+  expect(() => parseUpdateInfo(yaml, "latest.yml", CHANNEL_FILE_URL)).toThrow(expect.objectContaining({ code: "ERR_UPDATER_INVALID_UPDATE_INFO" }))
+  expect(performance.now() - start).toBeLessThan(1000)
 })
