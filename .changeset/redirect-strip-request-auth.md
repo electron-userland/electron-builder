@@ -2,4 +2,4 @@
 "builder-util-runtime": patch
 ---
 
-fix(runtime): a cross-origin redirect drops the request `auth` option together with the Authorization header, so Basic credentials go only to the original origin
+fix(runtime): a cross-origin redirect keeps the request `auth` option (Basic credentials) only when the cross-origin header choice keeps `authorization`, like an Authorization header, so by default it goes only to the original origin

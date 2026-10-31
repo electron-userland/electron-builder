@@ -795,8 +795,8 @@ describe("differential download failures fall back to a verified full download, 
         const token = new CancellationToken()
         const fileUrl = new URL(file, url)
         const info = { url: fileUrl.href, sha512: sha512(NEW), size: NEW.length, blockMapSize: 100 }
-        // feedBaseUrl null: no credential headers to strip, only the cancellation matters here
-        const provider = { feedBaseUrl: null, isUseMultipleRangeRequest: false }
+        // the file is on the feed's origin: no crossOriginHeaders is asked, only the cancellation matters here
+        const provider = { feedBaseUrl: new URL(url), isUseMultipleRangeRequest: false }
         const options = { updateInfoAndProvider: { info: { version: NEW_VERSION }, provider }, requestHeaders: {}, cancellationToken: token }
         const newFile = path.join(cacheDir, "new")
         const download: Promise<boolean> =

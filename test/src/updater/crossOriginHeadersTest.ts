@@ -1,6 +1,7 @@
 import { serializeToYaml } from "builder-util"
-import { type CrossOriginHeadersCallback, type CrossOriginRequest, DEFAULT_CROSS_ORIGIN_HEADERS } from "builder-util-runtime"
+import { type CrossOriginHeadersCallback, type CrossOriginRequest, type CustomPublishOptions, DEFAULT_CROSS_ORIGIN_HEADERS } from "builder-util-runtime"
 import type { AppUpdater, CheckForUpdatesAndNotifyOptions, CheckForUpdatesOptions } from "electron-updater/src/AppUpdater"
+import { GenericProvider } from "electron-updater/src/providers/GenericProvider"
 import { createHash } from "crypto"
 import fsExtra from "fs-extra"
 import type { IncomingHttpHeaders, IncomingMessage, Server } from "http"
@@ -10,8 +11,9 @@ import { afterEach, describe, test, vi } from "vitest"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
-// checkForUpdates({ crossOriginHeaders }) chooses the request headers of each request and redirect to another origin: required for every app,
-// called per cross-origin request, and kept for the download of the check and the install of an update marked for the next launch.
+// checkForUpdates({ crossOriginHeaders }) decides the request headers of each request and redirect to another origin, after the update
+// provider's crossOriginHeaders: required for every app, called per cross-origin request, and kept for the download of the check and the
+// install of an update marked for the next launch.
 
 const DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-header-allowlist"
 const INSTALLER = Buffer.from("cross-origin headers test installer — not a real executable")
@@ -87,7 +89,7 @@ describe("checkForUpdates({ crossOriginHeaders })", () => {
           const error = await rejection(check(updater, options))
           expect(error).toMatchObject({
             code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED",
-            message: `${method} requires { crossOriginHeaders }: requests and redirects to another origin carry only the headers it returns. Pass \`{ crossOriginHeaders: defaults => defaults }\` to use the built-in list. ${DOCS}`,
+            message: `${method} requires { crossOriginHeaders }: requests and redirects to another origin carry only the headers it returns. Pass \`{ crossOriginHeaders: defaults => defaults }\` to send what the update provider chooses. ${DOCS}`,
           })
           expect(feed.requests).toEqual([])
           expect(events).toEqual(["error"])
@@ -200,6 +202,58 @@ describe("checkForUpdates({ crossOriginHeaders })", () => {
         expect(cdn.requests).toEqual([])
       })
     }
+  })
+
+  // the update provider's crossOriginHeaders chooses first; the app gets its choice as defaults and decides
+  describe("comes after the update provider's crossOriginHeaders", () => {
+    test("the provider of the check is asked first, and its choice is the app's defaults", async ({ tmpDir, expect }) => {
+      const cdn = await serve(tmpDir)
+      await cdn.write(INSTALLER_NAME, INSTALLER)
+      const { updater, feed } = await createUpdater(tmpDir, () => `${cdn.url}/${INSTALLER_NAME}`)
+      const calls: Array<readonly [string, ReadonlyArray<string>, CrossOriginRequest]> = []
+      class TenantProvider extends GenericProvider {
+        crossOriginHeaders(defaults: ReadonlyArray<string>, request: CrossOriginRequest): ReadonlyArray<string> {
+          calls.push(["provider", defaults, request])
+          return [...defaults, "x-tenant"]
+        }
+      }
+      updater.setFeedURL({ provider: "custom", updateProvider: TenantProvider, url: feed.url } as unknown as CustomPublishOptions)
+      const crossOriginHeaders = (defaults: ReadonlyArray<string>, request: CrossOriginRequest) => {
+        calls.push(["app", defaults, request])
+        return defaults
+      }
+
+      await updater.checkForUpdates({ crossOriginHeaders })
+      await updater.downloadUpdate()
+
+      const request = { from: new URL(`${feed.url}/`), to: new URL(`${cdn.url}/${INSTALLER_NAME}`), kind: "request" }
+      expect(calls).toEqual([
+        ["provider", DEFAULT_CROSS_ORIGIN_HEADERS, request],
+        ["app", [...DEFAULT_CROSS_ORIGIN_HEADERS, "x-tenant"], request],
+      ])
+      expect(cdn.requests[0].headers["x-tenant"]).toBe("acme")
+      expect(cdn.requests[0].headers.authorization).toBeUndefined()
+    })
+
+    // e.g. a custom provider written in plain JavaScript: even a check whose requests all stay on the feed's origin fails
+    test("a provider without crossOriginHeaders fails the check with ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED before any request", async ({ tmpDir, expect }) => {
+      const { updater, feed, events } = await createUpdater(tmpDir)
+      class PlainProvider extends GenericProvider {
+        constructor(...args: ConstructorParameters<typeof GenericProvider>) {
+          super(...args)
+          Object.defineProperty(this, "crossOriginHeaders", { value: undefined })
+        }
+      }
+      updater.setFeedURL({ provider: "custom", updateProvider: PlainProvider, url: feed.url } as unknown as CustomPublishOptions)
+
+      const error = await rejection(updater.checkForUpdates({ crossOriginHeaders: useDefaults }))
+      expect(error).toMatchObject({
+        code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED",
+        message: expect.stringMatching(/^The update provider PlainProvider has no crossOriginHeaders method: /),
+      })
+      expect(feed.requests).toEqual([])
+      expect(events).toEqual(["checking-for-update", "error"])
+    })
   })
 
   describe("is kept from the last check", () => {

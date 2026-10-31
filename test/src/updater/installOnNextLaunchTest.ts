@@ -295,7 +295,11 @@ describe("install on next launch", { concurrent: false }, () => {
       const download = (updater as any).executeDownload({
         fileExtension: "deb",
         fileInfo,
-        downloadUpdateOptions: { updateInfoAndProvider: { info: updateInfo, provider: { feedBaseUrl: null } }, cancellationToken: new CancellationToken(), requestHeaders: {} },
+        downloadUpdateOptions: {
+          updateInfoAndProvider: { info: updateInfo, provider: { feedBaseUrl: new URL("https://example.com/") } },
+          cancellationToken: new CancellationToken(),
+          requestHeaders: {},
+        },
         task: () => Promise.reject(new Error("the cached update must not be downloaded again")),
       })
       await isVerifying

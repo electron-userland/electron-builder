@@ -1,4 +1,4 @@
-import { CancellationToken, UpdateInfo } from "builder-util-runtime"
+import { CancellationToken, type CrossOriginRequest, DEFAULT_CROSS_ORIGIN_HEADERS, UpdateInfo } from "builder-util-runtime"
 import { Provider, ProviderRuntimeOptions } from "electron-updater"
 import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
 import { OutgoingHttpHeaders } from "http"
@@ -18,6 +18,11 @@ afterEach(() => vi.restoreAllMocks())
 class TestProvider extends Provider<UpdateInfo> {
   constructor(opts: ProviderRuntimeOptions) {
     super(opts)
+  }
+
+  // no feed URL: every request asks this, which sends every header
+  crossOriginHeaders(_defaults: ReadonlyArray<string>, _request: CrossOriginRequest): ReadonlyArray<string> | null {
+    return null
   }
 
   getLatestVersion(): Promise<UpdateInfo> {
@@ -65,8 +70,8 @@ test("fileExtraDownloadHeaders - returns null by default", ({ expect }) => {
   expect(provider.fileExtraDownloadHeaders).toBeNull()
 })
 
-// undeclared: a download with credential headers fails until a custom provider overrides feedBaseUrl (URL or null)
-test("feedBaseUrl - returns undefined (not declared) by default", ({ expect }) => {
+// no feed URL: crossOriginHeaders of the provider, then of the app, choose the headers of every request
+test("feedBaseUrl - returns undefined (no feed URL) by default", ({ expect }) => {
   const provider = makeProvider()
   expect(provider.feedBaseUrl).toBeUndefined()
 })
@@ -153,6 +158,37 @@ test("createRequestOptions - merges setRequestHeaders with per-call headers", ({
 
   expect((opts.headers as any)["x-base"]).toBe("base-value")
   expect((opts.headers as any)["x-extra"]).toBe("extra-value")
+})
+
+// the provider chooses first, the runtime options' crossOriginHeaders (the app's) gets its choice and decides
+test("createRequestOptions - without a feed URL, the provider and then the runtime options' crossOriginHeaders choose the base headers", ({ expect }) => {
+  const calls: Array<readonly [string, ReadonlyArray<string>, unknown]> = []
+  const provider = new (class extends TestProvider {
+    crossOriginHeaders(defaults: ReadonlyArray<string>, request: CrossOriginRequest): ReadonlyArray<string> | null {
+      calls.push(["provider", defaults, request])
+      return [...defaults, "x-base"]
+    }
+  })({
+    isUseMultipleRangeRequest: true,
+    platform: "win32",
+    executor: httpExecutor as any,
+    crossOriginHeaders: (defaults, request) => {
+      calls.push(["app", defaults, request])
+      return defaults.filter(it => it !== "accept")
+    },
+  })
+  provider.setRequestHeaders({ "x-base": "base-value", "x-other": "other-value", accept: "*/*" })
+
+  const url = new URL("https://api.example.com/v1/releases")
+  const opts = provider.callCreateRequestOptions(url, { "x-extra": "extra-value" })
+
+  const request = { from: null, to: url, kind: "request" }
+  expect(calls).toEqual([
+    ["provider", DEFAULT_CROSS_ORIGIN_HEADERS, request],
+    ["app", [...DEFAULT_CROSS_ORIGIN_HEADERS, "x-base"], request],
+  ])
+  // the per-call headers are sent as given
+  expect(opts.headers).toEqual({ "x-base": "base-value", "x-extra": "extra-value" })
 })
 
 test("createRequestOptions - per-call headers used alone when no base headers set", ({ expect }) => {
