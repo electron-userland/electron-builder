@@ -117,9 +117,9 @@ export function warnAboutGenericFeedQuery(publishConfig: PublishConfiguration): 
 }
 
 /**
- * electron-updater 7 rejects an update request over plain http to a host that is not loopback (`ERR_UPDATER_INSECURE_FEED`) unless
+ * electron-updater rejects an update request over plain http to a host that is not loopback (`ERR_UPDATER_INSECURE_FEED`) unless
  * the app sets `allowInsecureFeed`: a feed in app-update.yml that uses http (a generic or custom `url`, a github `protocol: "http"`,
- * an s3 `endpoint`) fails every update check of the shipped app. The build still succeeds (the app may opt in); only the feed origin
+ * an s3 `endpoint`) fails every update check of the shipped app. The build succeeds (the app may opt in); only the feed origin
  * is logged, never its path, query or user info.
  *
  * @internal exported for tests
@@ -157,7 +157,7 @@ export function warnAboutInsecureFeed(publishConfig: PublishConfiguration): void
     .once(`insecure-feed:${origin}`)
     .warn(
       { feed: origin, solution: "serve the updates over https, or set autoUpdater.allowInsecureFeed = true in the app (not recommended)" },
-      "the update feed written to app-update.yml uses plain http. electron-updater 7 (electron-builder v27) rejects every update request over http to a host " +
+      "the update feed written to app-update.yml uses plain http. electron-updater rejects every update request over http to a host " +
         "that is not loopback (localhost, 127.0.0.0/8, ::1) with ERR_UPDATER_INSECURE_FEED, unless the app sets autoUpdater.allowInsecureFeed = true. " +
         "See https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https"
     )

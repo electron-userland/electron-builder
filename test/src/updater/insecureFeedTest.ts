@@ -13,7 +13,7 @@ import { describe, test } from "vitest"
 import { blockMapOf, FakeElectronHttpExecutor, FakeNetAnswer, tuneTestUpdater } from "../helpers/updaterTestUtil.js"
 import { TestAppAdapter } from "../helpers/TestAppAdapter.js"
 
-// electron-updater 7 sends every update request (feed, downloads, blockmaps, differential ranges and every redirect) over https,
+// electron-updater sends every update request (feed, downloads, blockmaps, differential ranges and every redirect) over https,
 // except to a loopback host, unless the app sets allowInsecureFeed.
 
 const HTTPS_URL = "https://feed.example.com/updates/app-1.1.0.exe"
@@ -85,7 +85,7 @@ describe("ElectronHttpExecutor rejects plain http", () => {
         (e: unknown) => e
       )
       expect(error).toMatchObject(INSECURE_FEED)
-      expect((error as Error).message).toContain("electron-updater 7 rejects the update request to http://feed.example.com:")
+      expect((error as Error).message).toContain("electron-updater rejects the update request to http://feed.example.com:")
       expect((error as Error).message).toContain("autoUpdater.allowInsecureFeed = true")
       expect((error as Error).message).toContain(DOCS)
       expect(executor.sent).toEqual([])

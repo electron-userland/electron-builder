@@ -167,7 +167,7 @@ function checkInsecureRequestIsLoopback(options: RequestOptions): void {
     return
   }
   throw newError(
-    `electron-updater 7 rejects the update request to ${options.protocol ?? "http:"}//${host}: the update feed, its downloads and every redirect must use https, ` +
+    `electron-updater rejects the update request to ${options.protocol ?? "http:"}//${host}: the update feed, its downloads and every redirect must use https, ` +
       "except to a loopback host (localhost, 127.0.0.0/8, ::1). Serve your updates over https, or set autoUpdater.allowInsecureFeed = true to accept plain http (not recommended). " +
       `See ${INSECURE_FEED_DOCS}`,
     "ERR_UPDATER_INSECURE_FEED"

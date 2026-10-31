@@ -221,7 +221,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   allowDowngrade = false
 
   /**
-   * Whether update requests may use plain `http`. Since electron-updater 7 every request of the updater (the update feed, the update
+   * Whether update requests may use plain `http`. Every request of the updater (the update feed, the update
    * file downloads, blockmaps and every redirect they follow) must use `https`, except to a loopback host (`localhost`, `127.0.0.0/8`,
    * `::1`): any other request, including an `https` request redirected to `http`, fails with `ERR_UPDATER_INSECURE_FEED`.
    *

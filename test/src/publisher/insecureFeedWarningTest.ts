@@ -3,7 +3,7 @@ import { warnAboutInsecureFeed } from "app-builder-lib/src/publish/PublishManage
 import type { PublishConfiguration } from "builder-util-runtime"
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
 
-// electron-updater 7 rejects a plain http feed that is not loopback: the build announces it, since the app may never be run before shipping.
+// electron-updater rejects a plain http feed that is not loopback: the build announces it, since the app may never be run before shipping.
 describe("plain http feed url in app-update.yml", () => {
   beforeEach(() => log.resetLimits())
   afterEach(() => vi.restoreAllMocks())
@@ -20,7 +20,7 @@ describe("plain http feed url in app-update.yml", () => {
     expect(warn).toHaveBeenCalledTimes(1)
     const [fields, message] = warn.mock.calls[0] as unknown as [Record<string, string>, string]
     expect(fields.feed).toBe("http://updates.example.com:8080")
-    expect(message).toContain("electron-updater 7 (electron-builder v27) rejects every update request over http to a host that is not loopback")
+    expect(message).toContain("electron-updater rejects every update request over http to a host that is not loopback")
     expect(message).toContain("autoUpdater.allowInsecureFeed = true")
     expect(message).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https")
     const logged = JSON.stringify(warn.mock.calls)
@@ -60,7 +60,7 @@ describe("plain http feed url in app-update.yml", () => {
     expect(warn).toHaveBeenCalledTimes(1)
     const [fields, message] = warn.mock.calls[0] as unknown as [Record<string, string>, string]
     expect(fields.feed).toBe(feed)
-    expect(message).toContain("electron-updater 7 (electron-builder v27) rejects every update request over http to a host that is not loopback")
+    expect(message).toContain("electron-updater rejects every update request over http to a host that is not loopback")
     expect(message).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https")
   })
 
