@@ -33,8 +33,9 @@ export class KeygenProvider extends Provider<UpdateInfo> {
     const cancellationToken = new CancellationToken()
     const channelFile = getChannelFilename(this.getCustomChannelName(this.channel))
     const channelUrl = newUrlFromBase(channelFile, this.baseUrl, this.updater.isAddNoCacheQuery)
+    let updateInfo: string | null
     try {
-      const updateInfo = await this.channelFileRequest(
+      updateInfo = await this.channelFileRequest(
         channelUrl,
         {
           Accept: "application/vnd.api+json",
@@ -42,7 +43,6 @@ export class KeygenProvider extends Provider<UpdateInfo> {
         },
         cancellationToken
       )
-      return parseUpdateInfo(updateInfo, channelFile, channelUrl)
     } catch (e: any) {
       // a channel file over the size limit keeps its own code
       if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
@@ -50,6 +50,8 @@ export class KeygenProvider extends Provider<UpdateInfo> {
       }
       throw newError(`Unable to find latest version on ${this.toString()}, please ensure release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
+    // parsed outside the try: a manifest that cannot be parsed fails with ERR_UPDATER_INVALID_UPDATE_INFO
+    return parseUpdateInfo(updateInfo, channelFile, channelUrl)
   }
 
   resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo> {
