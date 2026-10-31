@@ -19,8 +19,8 @@ const DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#nsis
 const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
 async function writeExecutable(tmpDir: TmpDir, content: Buffer): Promise<string> {
-  const file = path.join(await tmpDir.createTempDir({ prefix: "installer-version" }), "installer.exe")
-  await fsExtra.writeFile(file, content)
+  const file = path.join(await tmpDir.getTempDir({ prefix: "installer-version" }), "installer.exe")
+  await fsExtra.outputFile(file, content)
   return file
 }
 
@@ -66,7 +66,8 @@ describe("readExecutableProductVersions", () => {
 
   // the installer is what electron-builder compiles: VIAddVersionKey ProductVersion is the app version (see NsisTarget.computeVersionKey)
   test("reads the ProductVersion of an installer compiled by makensis", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir({ prefix: "installer-version-makensis" })
+    const dir = await tmpDir.getTempDir({ prefix: "installer-version-makensis" })
+    await fsExtra.ensureDir(dir)
     const installer = path.join(dir, "installer.exe")
     const makensis = await getMakeNsisPath(undefined, dir)
     const script = [
@@ -200,8 +201,8 @@ describe("NsisUpdater installer version check", () => {
   // as in verifySignature, which reads the same config first
   test("rejects the update when the update config cannot be read", async ({ expect, tmpDir }) => {
     const updater = await createNsisUpdater("1.0.0")
-    const config = path.join(await tmpDir.createTempDir({ prefix: "installer-version-config" }), "app-update.yml")
-    await fsExtra.writeFile(config, "provider: [generic")
+    const config = path.join(await tmpDir.getTempDir({ prefix: "installer-version-config" }), "app-update.yml")
+    await fsExtra.outputFile(config, "provider: [generic")
     updater.updateConfigPath = config
     const file = await writeExecutable(tmpDir, windowsExecutable(["1.1.0"]))
     // @ts-expect-error accessing a private method
@@ -219,7 +220,7 @@ describe("NsisUpdater installer version check", () => {
     })
 
     async function checkForUpdates(tmpDir: TmpDir, installer: Buffer) {
-      const root = await tmpDir.createTempDir({ prefix: "installer-version-server" })
+      const root = await tmpDir.getTempDir({ prefix: "installer-version-server" })
       await fsExtra.outputFile(path.join(root, "TestApp-Setup-1.1.0.exe"), installer)
       const sha512 = createHash("sha512").update(installer).digest("base64")
       await fsExtra.outputFile(
@@ -249,7 +250,7 @@ describe("NsisUpdater installer version check", () => {
 
     // the cache is matched by the installer's sha512 only, so a manifest of a newer version could otherwise reuse a cached older installer
     test("a cached installer of an older release is not reused for a newer version", async ({ expect, tmpDir }) => {
-      const root = await tmpDir.createTempDir({ prefix: "installer-version-server" })
+      const root = await tmpDir.getTempDir({ prefix: "installer-version-server" })
       const installer = windowsExecutable(["1.1.0"])
       const sha512 = createHash("sha512").update(installer).digest("base64")
       const writeManifest = (version: string) =>
