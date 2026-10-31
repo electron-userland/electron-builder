@@ -22,7 +22,7 @@
         # one (the web installer was published as a full installer, with no package in the update info) is aborted: the package is not
         # downloaded from the URL built into the installer.
         ${if} ${isUpdated}
-          MessageBox MB_OK|MB_ICONSTOP "This web installer was started as an update without a package file (--package-file), which web installers built by electron-builder 27 refuse. Installation aborted.$\r$\nhttps://www.electron.build/docs/migration/v27-runtime-changes#an-nsis-web-installer-started-as-an-update-needs-a-package-file" /SD IDOK
+          MessageBox MB_OK|MB_ICONSTOP "This web installer was started as an update without a package file (--package-file). Installation aborted.$\r$\nhttps://www.electron.build/docs/migration/v27-runtime-changes#an-nsis-web-installer-started-as-an-update-needs-a-package-file" /SD IDOK
           SetErrorLevel 2
           Quit
         ${endIf}

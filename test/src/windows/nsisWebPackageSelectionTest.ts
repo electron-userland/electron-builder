@@ -82,7 +82,7 @@ for (const incomplete of [false, true]) {
         "StdUtils::TestParameter /NOUNLOAD",
         "pop $R9",
         `StrCmp "$R9" "true" \`\` \`${notUpdated}\``,
-        'MessageBox MB_OK|MB_ICONSTOP "This web installer was started as an update without a package file (--package-file), which web installers built by electron-builder 27 refuse. Installation aborted.',
+        'MessageBox MB_OK|MB_ICONSTOP "This web installer was started as an update without a package file (--package-file). Installation aborted.',
         'https://www.electron.build/docs/migration/v27-runtime-changes#an-nsis-web-installer-started-as-an-update-needs-a-package-file" /SD IDOK',
         "SetErrorLevel 2",
         "Quit",
