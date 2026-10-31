@@ -719,7 +719,7 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage,
         if (receivedSize > maxSize) {
           callback(
             newError(
-              `The download is larger than the ${maxSize} bytes declared for it (size in the update info): electron-updater 7 stops a full download once it receives more bytes than that. Publish the update info generated together with the file, so that its size matches. See https://www.electron.build/docs/migration/v27-runtime-changes#full-downloads-stop-at-the-declared-size`,
+              `The download is larger than the ${maxSize} bytes declared for it (size in the update info): a full download stops once it receives more bytes than that. Publish the update info generated together with the file, so that its size matches. See https://www.electron.build/docs/migration/v27-runtime-changes#full-downloads-stop-at-the-declared-size`,
               "ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED"
             )
           )

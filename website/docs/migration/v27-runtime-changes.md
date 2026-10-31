@@ -125,7 +125,7 @@ This applies only where electron-updater verifies an update against a `publisher
 
 **How you'll find out:** **Silent** at build time. On users' machines the download fails with `ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED` (with a link here).
 
-electron-updater 6 wrote a full download (an installer, a macOS zip, a Linux package or an `nsis-web` package) to disk until the server ended the response, and only then compared its SHA-512 with the manifest. electron-updater 7 stops the download, and closes the connection, as soon as it has received more bytes than the `size` that `latest*.yml` declares for the file, so a server cannot make it receive and store an unlimited amount of data. A file whose `size` is missing from the manifest is downloaded as before; differential downloads are not affected.
+A full download (an installer, a macOS zip, a Linux package or an `nsis-web` package) stops, and its connection is closed, as soon as it has received more bytes than the `size` that `latest*.yml` declares for the file, instead of being written to disk until the server ends the response and only then compared with the manifest's SHA-512. A server cannot make electron-updater receive and store an unlimited amount of data. A file whose `size` is missing from the manifest is not limited; differential downloads are not affected.
 
 **Action:** none for manifests electron-builder generated with the files they describe. If a release process changes a file after `latest*.yml` is written (for example, signs the installer again), it must regenerate the `sha512` and the `size` together, as the SHA-512 check already required.
 
