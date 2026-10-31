@@ -371,7 +371,9 @@ export class NsisUpdater extends BaseUpdater {
       // not retried at all: neither elevated nor opened with the shell
       if (errorCode === "EACCES") {
         // whether the running app is installed under one of the Program Files folders, where only an administrator can change it (and its
-        // elevate.exe). Judged by the install location only, never by the update info or the cached files
+        // elevate.exe). Judged by the install location only, never by the update info or the cached files. The Program Files folders are
+        // taken from the ProgramW6432, ProgramFiles and ProgramFiles(x86) environment variables, which the app inherits from the process
+        // that started it
         const exeDir = path.join(path.dirname(process.execPath), path.sep).toLowerCase()
         const isPerMachineInstallLocation = [process.env.ProgramW6432, process.env.ProgramFiles, process.env["ProgramFiles(x86)"]].some(
           programFiles => programFiles != null && path.isAbsolute(programFiles) && exeDir.startsWith(path.join(programFiles, path.sep).toLowerCase())
