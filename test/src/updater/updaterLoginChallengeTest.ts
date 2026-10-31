@@ -9,8 +9,8 @@ import { FakeElectronHttpExecutor, makeLogger, tuneTestUpdater } from "../helper
 import { TestAppAdapter } from "../helpers/TestAppAdapter.js"
 
 // Electron emits `login` on an update request for any authentication challenge: a proxy's (407) or a server's (401), including a
-// download host named by the update info or a redirect target. Only a proxy's challenge, or one from the feed's origin, reaches the
-// app's `login` handler; any other is cancelled (the callback is called without credentials).
+// download host named by the update info or a redirect target. Only a proxy's challenge, or one from the feed's origin or from an origin
+// in loginChallengeOrigins, reaches the app's `login` handler; any other is cancelled (the callback is called without credentials).
 
 const CHANNEL_FILE = serializeToYaml({ version: "1.1.0", files: [{ url: "TestApp-Setup-1.1.0.exe", sha512: "c2hhNTEy", size: 1 }], releaseDate: "2024-01-01T00:00:00.000Z" })
 
@@ -83,8 +83,9 @@ async function createUpdater(tmpDir: TmpDir) {
   return { updater, logger, answer }
 }
 
-async function checkedUpdater(tmpDir: TmpDir, feed: Parameters<NsisUpdater["setFeedURL"]>[0]) {
+async function checkedUpdater(tmpDir: TmpDir, feed: Parameters<NsisUpdater["setFeedURL"]>[0], loginChallengeOrigins: Array<string> = []) {
   const result = await createUpdater(tmpDir)
+  result.updater.loginChallengeOrigins = loginChallengeOrigins
   result.updater.setFeedURL(feed)
   await result.updater.checkForUpdates()
   return result
@@ -124,9 +125,15 @@ describe("electron-updater login event", () => {
     expect(answer(challenge("::2", 8443))).toBe(false)
   })
 
-  test("a provider whose feedBaseUrl is null forwards every challenge", async ({ tmpDir, expect }) => {
-    const { answer } = await checkedUpdater(tmpDir, { provider: "custom", updateProvider: EveryOriginProvider })
-    expect(answer(challenge("downloads.example.net", 443))).toBe(true)
+  test("a provider whose feedBaseUrl is null forwards only a proxy's challenge and those from loginChallengeOrigins", async ({ tmpDir, expect }) => {
+    const { answer, logger } = await checkedUpdater(tmpDir, { provider: "custom", updateProvider: EveryOriginProvider })
+    expect(answer(challenge("downloads.example.net", 443))).toBe(false)
+    expect(answer(challenge("proxy.corp.example", 3128, true))).toBe(true)
+    expect(loginWarnings(logger.warns).join("\n")).toContain("(none: the provider's feedBaseUrl is null)")
+
+    const { answer: listed } = await checkedUpdater(tmpDir, { provider: "custom", updateProvider: EveryOriginProvider }, ["https://downloads.example.net"])
+    expect(listed(challenge("downloads.example.net", 443))).toBe(true)
+    expect(listed(challenge("cdn.example.org", 443))).toBe(false)
   })
 
   test("a provider that does not declare feedBaseUrl forwards only a proxy's challenge", async ({ tmpDir, expect }) => {
@@ -159,11 +166,85 @@ describe("electron-updater login event", () => {
     expect(warnings).toHaveLength(1)
     expect(warnings[0]).toContain("downloads.example.net:443")
     expect(warnings[0]).toContain("https://feed.example.com")
+    expect(warnings[0]).toMatch(/^electron-updater emits the login event only for a proxy's authentication challenge/)
+    expect(warnings[0]).toContain("add its origin to autoUpdater.loginChallengeOrigins")
     expect(warnings[0]).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#login-only-gets-proxy-and-feed-origin-challenges")
 
     const { answer: other, logger: otherLogger } = await checkedUpdater(tmpDir, { provider: "generic", url: "https://feed.example.com/updates" })
     other(challenge("downloads.example.net", 443))
     expect(loginWarnings(otherLogger.warns)).toHaveLength(1)
+  })
+})
+
+describe("loginChallengeOrigins", () => {
+  test("a challenge from a listed origin reaches the login event, one from an unlisted origin is cancelled", async ({ tmpDir, expect }) => {
+    const { answer, logger } = await checkedUpdater(tmpDir, { provider: "generic", url: "https://feed.example.com/updates" }, ["https://downloads.example.net"])
+    expect(answer(challenge("downloads.example.net", 443))).toBe(true)
+    expect(answer(challenge("feed.example.com", 443))).toBe(true)
+    expect(answer(challenge("cdn.example.org", 443))).toBe(false)
+    expect(loginWarnings(logger.warns)).toHaveLength(1)
+  })
+
+  test("an entry matches its host and port: the scheme's default, or the one it names", async ({ tmpDir, expect }) => {
+    const feed = { provider: "generic", url: "https://feed.example.com/updates" } as const
+    const { answer } = await checkedUpdater(tmpDir, feed, ["http://downloads.example.net", "https://cdn.example.org:8443", "https://[::1]:9443"])
+    expect(answer(challenge("downloads.example.net", 80))).toBe(true)
+    expect(answer(challenge("downloads.example.net", 443))).toBe(false)
+    expect(answer(challenge("cdn.example.org", 8443))).toBe(true)
+    expect(answer(challenge("cdn.example.org", 443))).toBe(false)
+    expect(answer(challenge("::1", 9443))).toBe(true)
+  })
+
+  test("the list applies to the next challenge without another update check", async ({ tmpDir, expect }) => {
+    const { updater, answer } = await checkedUpdater(tmpDir, { provider: "generic", url: "https://feed.example.com/updates" })
+    expect(answer(challenge("downloads.example.net", 443))).toBe(false)
+    updater.loginChallengeOrigins = ["https://downloads.example.net"]
+    expect(answer(challenge("downloads.example.net", 443))).toBe(true)
+    updater.loginChallengeOrigins = []
+    expect(answer(challenge("downloads.example.net", 443))).toBe(false)
+  })
+
+  test("reads back as normalized origins in a frozen array", async ({ tmpDir, expect }) => {
+    const { updater } = await createUpdater(tmpDir)
+    expect(updater.loginChallengeOrigins).toEqual([])
+    expect(() => updater.loginChallengeOrigins.push("https://downloads.example.net")).toThrow(TypeError)
+    updater.loginChallengeOrigins = ["https://Downloads.Example.net:443/", "http://cdn.example.org:8080"]
+    expect(updater.loginChallengeOrigins).toEqual(["https://downloads.example.net", "http://cdn.example.org:8080"])
+    expect(() => updater.loginChallengeOrigins.push("https://other.example.com")).toThrow(TypeError)
+  })
+
+  test.for<[string, unknown]>([
+    ["a path", "https://downloads.example.net/updates"],
+    ["a query", "https://downloads.example.net/?token=1"],
+    ["an empty query", "https://downloads.example.net?"],
+    ["a fragment", "https://downloads.example.net/#updates"],
+    ["user info", "https://user:secret-password@downloads.example.net"],
+    ["another scheme", "ftp://downloads.example.net"],
+    ["no URL", "downloads.example.net"],
+    ["a number", 443],
+    ["a URL object", new URL("https://downloads.example.net")],
+  ])("an entry with %s is rejected", async ([_what, entry], { tmpDir, expect }) => {
+    const { updater, answer } = await createUpdater(tmpDir)
+    updater.loginChallengeOrigins = ["https://cdn.example.org"]
+    let error: unknown = null
+    try {
+      updater.loginChallengeOrigins = ["https://feed.example.com", entry as string]
+    } catch (e: unknown) {
+      error = e
+    }
+    expect(error).toMatchObject({ code: "ERR_UPDATER_INVALID_LOGIN_CHALLENGE_ORIGIN", message: expect.stringContaining("loginChallengeOrigins[1] must be an origin") })
+    expect(String(error)).not.toContain("secret-password")
+    // a rejected list leaves the previous one in place
+    expect(updater.loginChallengeOrigins).toEqual(["https://cdn.example.org"])
+    expect(answer(challenge("cdn.example.org", 443))).toBe(true)
+    expect(answer(challenge("feed.example.com", 443))).toBe(false)
+  })
+
+  test("a value that is not an array is rejected", async ({ tmpDir, expect }) => {
+    const { updater } = await createUpdater(tmpDir)
+    expect(() => {
+      updater.loginChallengeOrigins = "https://downloads.example.net" as unknown as Array<string>
+    }).toThrow(expect.objectContaining({ code: "ERR_UPDATER_INVALID_LOGIN_CHALLENGE_ORIGIN" }))
   })
 })
 

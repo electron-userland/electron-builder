@@ -392,6 +392,56 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     })
   }
 
+  // frozen (the constructor freezes the default), so that only the setter, which validates, changes the list
+  private _loginChallengeOrigins: Array<string> = []
+  // the entries of loginChallengeOrigins, parsed by its setter
+  private loginChallengeOriginUrls: Array<URL> = []
+
+  /**
+   * Origins (such as `https://downloads.example.com` or `https://downloads.example.com:8443`) whose servers' authentication challenges
+   * reach the `login` event, besides the update feed's origin (`Provider.feedBaseUrl`). A proxy's challenge always reaches it; any other
+   * server's challenge is cancelled. Electron's `AuthInfo` has no scheme, so an entry matches a challenge from its host and port (the
+   * scheme's default port when the entry names none).
+   *
+   * An entry that is not an `http` or `https` URL, or that has user info, a path other than `/`, a query or a fragment, throws
+   * `ERR_UPDATER_INVALID_LOGIN_CHALLENGE_ORIGIN`. The entries read back as normalized origins (`https://Downloads.example.com:443/` reads
+   * `https://downloads.example.com`), in a frozen array: assign a new one to change the list.
+   * See [Event: `login`](https://www.electron.build/docs/features/auto-update#event-login).
+   * @default []
+   */
+  get loginChallengeOrigins(): Array<string> {
+    return this._loginChallengeOrigins
+  }
+
+  set loginChallengeOrigins(value: Array<string>) {
+    // noinspection SuspiciousTypeOfGuard
+    if (!Array.isArray(value)) {
+      throw newError(`loginChallengeOrigins must be an array of origins, but got: ${typeof value}`, "ERR_UPDATER_INVALID_LOGIN_CHALLENGE_ORIGIN")
+    }
+    const urls: Array<URL> = []
+    value.forEach((entry: unknown, index) => {
+      let url: URL | null = null
+      try {
+        url = typeof entry === "string" ? new URL(entry) : null
+      } catch (_e: unknown) {
+        url = null
+      }
+      // the serialization of an origin plus "/": no user info, path, query or fragment (not even an empty "?" or "#")
+      if (url == null || (url.protocol !== "https:" && url.protocol !== "http:") || url.href !== `${url.origin}/`) {
+        // the entry itself is not logged: its user info may be a credential
+        throw newError(
+          `loginChallengeOrigins[${index}] must be an origin such as "https://downloads.example.com": an http or https URL without user info, a path other than "/", a query or a fragment`,
+          "ERR_UPDATER_INVALID_LOGIN_CHALLENGE_ORIGIN"
+        )
+      }
+      urls.push(url)
+    })
+    const origins = urls.map(it => it.origin)
+    Object.freeze(origins)
+    this._loginChallengeOrigins = origins
+    this.loginChallengeOriginUrls = urls
+  }
+
   // per updater instance, so several updaters (and tests) keep their own counts
   private readonly logLimiter = new LogLimiter()
 
@@ -560,6 +610,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   protected constructor(options: AllPublishOptions | null | undefined, app?: AppAdapter) {
     super()
+    Object.freeze(this._loginChallengeOrigins)
 
     this.on("error", (error: Error) => {
       this.log.error(`Error: ${error.stack || error.message}`)
@@ -895,30 +946,37 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   /**
-   * Electron's `login` event of an update request. Only a proxy's challenge, or one from the feed's origin (`Provider.feedBaseUrl`;
-   * every origin when it is `null`), is emitted as `login`: a download host named by the update info, or a redirect target, must not
-   * get the credentials the app's handler gives. Any other challenge is cancelled, and the request fails with the server's status.
+   * Electron's `login` event of an update request. Only a proxy's challenge, or a server's from the feed's origin (`Provider.feedBaseUrl`)
+   * or from an origin in `loginChallengeOrigins`, is emitted as `login`: a download host named by the update info, or a redirect target,
+   * must not get the credentials the app's handler gives. Any other challenge is cancelled, and the request fails with the server's status.
    * @internal
    */
   protected onLoginChallenge(authInfo: AuthInfo, callback: LoginCallback): void {
     const provider = this.loginChallengeProvider
     const feedBaseUrl = provider == null ? undefined : provider.feedBaseUrl
-    let isFeedOrigin = feedBaseUrl === null
-    if (feedBaseUrl != null) {
-      // AuthInfo has no scheme: host and port identify the origin. URL.hostname keeps the brackets of an IPv6 address, AuthInfo.host may not
-      const feedPort = feedBaseUrl.port === "" ? (feedBaseUrl.protocol === "http:" ? 80 : 443) : Number(feedBaseUrl.port)
-      const withoutBrackets = (host: string) => host.toLowerCase().replace(/^\[(.*)\]$/, "$1")
-      isFeedOrigin = withoutBrackets(authInfo.host) === withoutBrackets(feedBaseUrl.hostname) && authInfo.port === feedPort
+    // AuthInfo has no scheme: host and port identify the origin. URL.hostname keeps the brackets of an IPv6 address, AuthInfo.host may not
+    const withoutBrackets = (host: string) => host.toLowerCase().replace(/^\[(.*)\]$/, "$1")
+    const challengeHost = withoutBrackets(authInfo.host)
+    const isChallengeFrom = (origin: URL) => {
+      const port = origin.port === "" ? (origin.protocol === "http:" ? 80 : 443) : Number(origin.port)
+      return withoutBrackets(origin.hostname) === challengeHost && authInfo.port === port
     }
-    if (authInfo.isProxy || isFeedOrigin) {
+    if (authInfo.isProxy || (feedBaseUrl != null && isChallengeFrom(feedBaseUrl)) || this.loginChallengeOriginUrls.some(isChallengeFrom)) {
       this.emit("login", authInfo, callback)
       return
     }
+    let feedOrigin = "not declared: a custom provider declares it by overriding Provider.feedBaseUrl"
+    if (feedBaseUrl === null) {
+      feedOrigin = "none: the provider's feedBaseUrl is null"
+    } else if (feedBaseUrl != null) {
+      feedOrigin = feedBaseUrl.origin
+    }
     // host and port only: the realm comes from the server
     this.limitedLogger("login-challenge-refused").warn(
-      `electron-updater 7 (electron-builder v27) emits the login event only for a proxy's authentication challenge or one from the update feed's origin` +
-        `${feedBaseUrl == null ? " (not declared: a custom provider declares it by overriding Provider.feedBaseUrl)" : ` (${feedBaseUrl.origin})`}: ` +
-        `the challenge from ${authInfo.host}:${authInfo.port} was cancelled. If that server needs credentials, serve the update files from the feed origin or use pre-signed URLs. ` +
+      `electron-updater emits the login event only for a proxy's authentication challenge, or a server's from the update feed's origin (${feedOrigin}) ` +
+        `or from an origin in autoUpdater.loginChallengeOrigins: the challenge from ${authInfo.host}:${authInfo.port} was cancelled. ` +
+        `If your login handler answers that server, add its origin to autoUpdater.loginChallengeOrigins (e.g. ["https://downloads.example.com"]); ` +
+        `or serve the update files from the feed origin or use pre-signed URLs. ` +
         `https://www.electron.build/docs/migration/v27-runtime-changes#login-only-gets-proxy-and-feed-origin-challenges`
     )
     // no credentials: Electron cancels the authentication

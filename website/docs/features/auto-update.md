@@ -453,7 +453,15 @@ Emitted when there is an error while updating.
 * `authInfo` [AuthInfo](https://www.electronjs.org/docs/latest/api/structures/auth-info)
 * `callback` Function — `callback(username, password)`; called without arguments, it cancels the authentication
 
-Emitted when an update request gets an authentication challenge from a proxy (`authInfo.isProxy`) or from the update feed's origin (the host and port of the provider's `feedBaseUrl`; any origin when it is `null`). A challenge from any other server, such as a download host named in `latest*.yml` or a redirect target, is cancelled without emitting `login`, and electron-updater logs a warning the first time. See [`login` only gets proxy and feed-origin challenges](../migration/v27-runtime-changes.md#login-only-gets-proxy-and-feed-origin-challenges).
+Emitted when an update request gets an authentication challenge from a proxy (`authInfo.isProxy`), from the update feed's origin (the host and port of the provider's `feedBaseUrl`), or from an origin in `autoUpdater.loginChallengeOrigins`. A challenge from any other server, such as a download host named in `latest*.yml` or a redirect target, is cancelled without emitting `login`, and electron-updater logs a warning the first time. A provider whose `feedBaseUrl` is `null` (such as the private GitHub provider) or not declared has no feed origin here.
+
+To let a server's challenge through, list its origin (scheme, host and optional port; `authInfo` carries the host and port, so an entry matches those, with the scheme's default port when it names none):
+
+```js
+autoUpdater.loginChallengeOrigins = ["https://downloads.example.com"]
+```
+
+`loginChallengeOrigins` defaults to `[]` and reads back as a frozen array of normalized origins; assign a new array to change it. An entry that is not an `http` or `https` URL, or that has user info, a path other than `/`, a query or a fragment, throws `ERR_UPDATER_INVALID_LOGIN_CHALLENGE_ORIGIN` when assigned. See [`login` only gets proxy and feed-origin challenges](../migration/v27-runtime-changes.md#login-only-gets-proxy-and-feed-origin-challenges).
 
 #### Event: `checking-for-update`
 
