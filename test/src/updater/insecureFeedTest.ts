@@ -55,8 +55,9 @@ const REQUESTS: ReadonlyArray<readonly [string, (executor: FakeElectronHttpExecu
   [
     "a download",
     async (executor, url, tmpDir) => {
-      const destination = path.join(await tmpDir.createTempDir({ prefix: "insecure-feed" }), "app.exe")
-      return await executor.download(new URL(url), destination, { cancellationToken: new CancellationToken() })
+      const dir = await tmpDir.getTempDir({ prefix: "insecure-feed" })
+      await fsExtra.ensureDir(dir)
+      return await executor.download(new URL(url), path.join(dir, "app.exe"), { cancellationToken: new CancellationToken() })
     },
   ],
   ["a download to a buffer", (executor, url) => executor.downloadToBuffer(new URL(url), { cancellationToken: new CancellationToken() })],
@@ -124,7 +125,7 @@ describe("ElectronHttpExecutor rejects plain http", () => {
     const executor = new FakeElectronHttpExecutor(url =>
       url === HTTPS_URL ? { statusCode: 300, headers: { location: HTTP_TARGET_URL }, body: BODY } : { statusCode: 200, body: BODY }
     )
-    const destination = path.join(await tmpDir.createTempDir({ prefix: "insecure-feed" }), "app.exe")
+    const destination = path.join(await tmpDir.getTempDir({ prefix: "insecure-feed" }), "app.exe")
     await expect(executor.download(new URL(HTTPS_URL), destination, { cancellationToken: new CancellationToken() })).rejects.toMatchObject(INSECURE_FEED)
     expect(executor.sent.map(it => it.url)).toEqual([HTTPS_URL])
   })
@@ -230,7 +231,8 @@ describe("differential download from an http URL", () => {
   }
 
   async function download(tmpDir: TmpDir, url: string, executor: FakeElectronHttpExecutor): Promise<Buffer> {
-    const dir = await tmpDir.createTempDir({ prefix: "insecure-feed-differential" })
+    const dir = await tmpDir.getTempDir({ prefix: "insecure-feed-differential" })
+    await fsExtra.ensureDir(dir)
     const oldFile = path.join(dir, "old.exe")
     const newFile = path.join(dir, "new.exe")
     await fsExtra.writeFile(oldFile, OLD)
