@@ -1,7 +1,7 @@
 import { hashFile } from "builder-util-runtime"
 import type { UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
 import { EventEmitter } from "events"
-import { outputFile } from "fs-extra"
+import { outputFile, pathExists } from "fs-extra"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { DebUpdater, NsisUpdater } from "electron-updater"
@@ -10,7 +10,7 @@ import { CommandExitError } from "electron-updater/src/BaseUpdater"
 import { ElevationDeniedError } from "electron-updater/src/LinuxUpdater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
 import { ElectronAppAdapter } from "electron-updater/src/ElectronAppAdapter"
-import type { Logger } from "electron-updater/src/types"
+import type { Logger, VerifyUpdateFileResult } from "electron-updater/src/types"
 import { makeLogger } from "../helpers/updaterTestUtil"
 
 interface StubApp extends AppAdapter {
@@ -1048,6 +1048,127 @@ describe("install on quit", { concurrent: false }, () => {
     expect(app.willQuitHandlerCount()).toBe(0)
     expect(app.quitApp()).toBe(true)
     expect(doInstall).toHaveBeenCalledTimes(1)
+  })
+
+  // the downloaded update sits in the pending directory, which the user can write to, until it is installed
+  describe("the downloaded update is hashed again right before it is installed", () => {
+    const debInstaller = () => path.join(helper.cacheDirForPendingUpdate, "TestApp-1.0.1.deb")
+    const nsisInstaller = () => path.join(helper.cacheDirForPendingUpdate, "TestApp-Setup-1.0.1.exe")
+
+    function createNsisUpdater(app: StubApp) {
+      const updater = new NsisUpdater(null, app)
+      updater.logger = log
+      ;(updater as any).downloadedUpdateHelper = helper
+      const errors: Error[] = []
+      updater.on("error", (error: Error) => errors.push(error))
+      const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
+      ;(updater as any).addQuitHandler()
+      return { updater, errors, spawnLog }
+    }
+
+    async function expectRemoved(installerPath: string) {
+      expect(await pathExists(installerPath)).toBe(false)
+      expect(await pathExists(path.join(helper.cacheDirForPendingUpdate, "update-info.json"))).toBe(false)
+    }
+
+    test("deb on quit: an installer overwritten after update-downloaded is not installed, and is removed", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { errors, pkexecCalls } = createDebUpdater(app, 0)
+      await outputFile(debInstaller(), "another package")
+
+      expect(app.quitApp()).toBe(true)
+
+      expect(pkexecCalls).toEqual([])
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
+      await expectRemoved(debInstaller())
+    })
+
+    test("deb, async install: an untouched installer is installed", async () => {
+      await seedDownloadedUpdate()
+      const { updater, errors } = createDebUpdater(makeStubApp(), 0)
+      const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue(undefined)
+
+      await expect(updater.installAsync(true, false)).resolves.toBe(true)
+
+      expect(spawnAsyncLog).toHaveBeenCalledWith("pkexec", ["--disable-internal-agent", "/usr/bin/dpkg", "-i", debInstaller()], {}, false)
+      expect(errors).toEqual([])
+    })
+
+    test("deb, async install: an installer overwritten after update-downloaded is not installed, and is removed", async () => {
+      await seedDownloadedUpdate()
+      const { updater, errors } = createDebUpdater(makeStubApp(), 0)
+      const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue(undefined)
+      await outputFile(debInstaller(), "another package")
+
+      await expect(updater.installAsync(true, false)).resolves.toBe(false)
+
+      expect(spawnAsyncLog).not.toHaveBeenCalled()
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
+      await expectRemoved(debInstaller())
+    })
+
+    test("NSIS on quit: an untouched installer is started", async () => {
+      await seedDownloadedUpdate("TestApp-Setup-1.0.1.exe")
+      const app = makeStubApp()
+      const { errors, spawnLog } = createNsisUpdater(app)
+
+      expect(app.quitApp()).toBe(true)
+
+      expect(spawnLog).toHaveBeenCalledWith(nsisInstaller(), ["--updated", "/S"])
+      expect(errors).toEqual([])
+    })
+
+    test("NSIS on quit: an installer overwritten after update-downloaded is not started, and is removed", async () => {
+      await seedDownloadedUpdate("TestApp-Setup-1.0.1.exe")
+      const app = makeStubApp()
+      const { errors, spawnLog } = createNsisUpdater(app)
+      await outputFile(nsisInstaller(), "another installer")
+
+      expect(app.quitApp()).toBe(true)
+
+      expect(spawnLog).not.toHaveBeenCalled()
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
+      await expectRemoved(nsisInstaller())
+    })
+
+    test("NSIS, async install: the signature is verified again right before the installer starts", async () => {
+      await seedDownloadedUpdate("TestApp-Setup-1.0.1.exe")
+      const { updater, errors, spawnLog } = createNsisUpdater(makeStubApp())
+      const verifySignature = vi.spyOn(updater as any, "verifySignature").mockResolvedValue({ response: "success" })
+
+      await expect(updater.installAsync(true, false)).resolves.toBe(true)
+
+      expect(verifySignature).toHaveBeenCalledWith(nsisInstaller(), null)
+      expect(spawnLog).toHaveBeenCalledWith(nsisInstaller(), ["--updated", "/S"])
+      expect(errors).toEqual([])
+    })
+
+    test("NSIS, async install: an installer whose signature is rejected is not started, and is removed", async () => {
+      await seedDownloadedUpdate("TestApp-Setup-1.0.1.exe")
+      const { updater, errors, spawnLog } = createNsisUpdater(makeStubApp())
+      vi.spyOn(updater as any, "verifySignature").mockResolvedValue({ response: "failure", message: "signed by someone else" })
+
+      await expect(updater.installAsync(true, false)).resolves.toBe(false)
+
+      expect(spawnLog).not.toHaveBeenCalled()
+      expect(errors).toEqual([expect.objectContaining({ code: "ERR_UPDATER_INVALID_SIGNATURE", message: expect.stringContaining("signed by someone else") })])
+      await expectRemoved(nsisInstaller())
+    })
+
+    test("NSIS, async install: an installer overwritten while its signature is verified is not started", async () => {
+      await seedDownloadedUpdate("TestApp-Setup-1.0.1.exe")
+      const { updater, errors, spawnLog } = createNsisUpdater(makeStubApp())
+      vi.spyOn(updater as unknown as { verifySignature: () => Promise<VerifyUpdateFileResult> }, "verifySignature").mockImplementation(async () => {
+        await outputFile(nsisInstaller(), "another installer")
+        return { response: "success" }
+      })
+
+      await expect(updater.installAsync(true, false)).resolves.toBe(false)
+
+      expect(spawnLog).not.toHaveBeenCalled()
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
+    })
   })
 
   test("ElectronAppAdapter forwards every will-quit event, so a cancelled quit can be followed by another", () => {

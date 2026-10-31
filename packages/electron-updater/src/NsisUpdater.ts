@@ -206,10 +206,20 @@ export class NsisUpdater extends BaseUpdater {
         return Promise.reject(newError(`Update info doesn't contain sha512 checksum for the web installer package: ${fileInfo.packageInfo.path}`, "ERR_UPDATER_NO_CHECKSUM"))
       }
     }
+    const signatureError = (failure: string) =>
+      newError(`New version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${failure}`, "ERR_UPDATER_INVALID_SIGNATURE")
     return this.executeDownload({
       fileExtension: "exe",
       downloadUpdateOptions,
       fileInfo,
+      // an installer cached by an earlier launch sat in the pending directory since then: its signature is verified again before it is
+      // reused, so that the checksum check right before the install (see doInstall) pins it to a file verified in this session
+      verifyCachedFile: async updateFile => {
+        const signatureFailure = verificationFailureMessage(await this.verifySignature(updateFile, downloadUpdateOptions.updateInfoAndProvider))
+        if (signatureFailure != null) {
+          throw signatureError(signatureFailure)
+        }
+      },
       task: async (destinationFile, downloadOptions, packageFile, removeTempDirIfAny) => {
         const packageInfo = fileInfo.packageInfo
         const isWebInstaller = packageInfo != null && packageFile != null
@@ -237,10 +247,7 @@ export class NsisUpdater extends BaseUpdater {
         if (signatureFailure != null) {
           await removeTempDirIfAny()
           // noinspection ThrowInsideFinallyBlockJS
-          throw newError(
-            `New version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${signatureFailure}`,
-            "ERR_UPDATER_INVALID_SIGNATURE"
-          )
+          throw signatureError(signatureFailure)
         }
 
         if (isWebInstaller) {
@@ -357,6 +364,10 @@ export class NsisUpdater extends BaseUpdater {
       this.spawnLog(path.join(process.resourcesPath, "elevate.exe"), [installerPath].concat(args)).catch(e => this.dispatchError(e))
     }
 
+    if (!this.verifyDownloadedUpdateBeforeInstall()) {
+      return false
+    }
+
     if (options.isAdminRightsRequired) {
       this.log.info("isAdminRightsRequired is set to true, run installer using elevate.exe")
       callUsingElevation()
@@ -372,6 +383,10 @@ export class NsisUpdater extends BaseUpdater {
       if (errorCode === "EACCES") {
         if (isPerMachineInstallLocation()) {
           this.log.info(`Cannot run installer (EACCES: "${message}"), the app is installed under Program Files: run installer using elevate.exe`)
+          // the first start failed after the check in doInstall: the installer is checked again before it is started elevated
+          if (!this.verifyDownloadedUpdateBeforeInstall()) {
+            return
+          }
           callUsingElevation()
           return
         }
@@ -395,6 +410,21 @@ export class NsisUpdater extends BaseUpdater {
       this.dispatchError(e instanceof Error ? e : new Error(message))
     })
     return true
+  }
+
+  // quitAndInstall and the install on launch verify the installer's signature again right before doInstall starts it, as when it was
+  // downloaded. The install on quit cannot wait for the verification, and relies on the checksum check in doInstall: it pins the
+  // installer to the file whose signature was verified in this session, when it was downloaded or reused from the cache.
+  protected async doInstallAsync(options: InstallOptions): Promise<boolean> {
+    const installerPath = this.installerPath
+    if (installerPath != null) {
+      const signatureFailure = verificationFailureMessage(await this.verifySignature(installerPath, this.updateInfoAndProvider))
+      if (signatureFailure != null) {
+        this.rejectDownloadedUpdate(newError(`The downloaded update is not signed by the application owner: ${signatureFailure}`, "ERR_UPDATER_INVALID_SIGNATURE"))
+        return false
+      }
+    }
+    return this.doInstall(options)
   }
 
   private async differentialDownloadWebPackage(

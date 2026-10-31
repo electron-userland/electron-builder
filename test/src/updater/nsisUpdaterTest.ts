@@ -229,6 +229,36 @@ test("verifyUpdateFile also gates a cached update reused after an app relaunch",
   }
 })
 
+test("the installer signature is verified again for a cached update reused after an app relaunch", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const appAdapter = await createTestAppAdapter()
+    const updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+
+    const firstLaunch = new NsisUpdater(null, appAdapter)
+    tuneTestUpdater(firstLaunch)
+    firstLaunch.updateConfigPath = updateConfigPath
+    const firstDownload = await (await firstLaunch.checkForUpdates())?.downloadPromise
+    await assertThat(expect, firstDownload!.updateFile).isFile()
+
+    // a fresh updater instance, as after a restart: nothing is downloaded again, but the signature is verified again
+    const secondLaunch = new NsisUpdater(null, appAdapter)
+    tuneTestUpdater(secondLaunch)
+    secondLaunch.updateConfigPath = updateConfigPath
+    const verifySignature = vi.spyOn(secondLaunch as any, "verifySignature").mockResolvedValue({ response: "failure", message: "signed by someone else" })
+
+    await expect((await secondLaunch.checkForUpdates())?.downloadPromise).rejects.toMatchObject({
+      code: "ERR_UPDATER_INVALID_SIGNATURE",
+      message: expect.stringContaining("signed by someone else"),
+    })
+
+    expect(verifySignature).toHaveBeenCalledWith(firstDownload!.updateFile, expect.anything())
+    await assertThat(expect, firstDownload!.updateFile).doesNotExist()
+  } finally {
+    await close()
+  }
+})
+
 test("verifyUpdateFile also gates an update reused from the cache in the same session", config, async ({ expect }) => {
   const { url, close } = await serveDefaultUpdate()
   try {
@@ -1214,7 +1244,14 @@ describe("NsisUpdater — installer start failure", () => {
   }
 
   // installs with spawnLog rejecting the first start with `error`, the app running from `execPath` and its resources in `resourcesPath`
-  async function install(tmpDir: TmpDir, error: Error, execPath: (programFiles: string) => string, programFilesEnv: (programFiles: string) => string = it => it) {
+  // `verifyDownloadedFilesSync`: the re-check of the downloaded installer before each start, unchanged by default
+  async function install(
+    tmpDir: TmpDir,
+    error: Error,
+    execPath: (programFiles: string) => string,
+    programFilesEnv: (programFiles: string) => string = it => it,
+    verifyDownloadedFilesSync: () => string | null = () => null
+  ) {
     const root = await tmpDir.getTempDir({ prefix: "installer-start" })
     const programFiles = path.join(root, "Program Files")
     vi.stubEnv("ProgramW6432", undefined)
@@ -1225,6 +1262,7 @@ describe("NsisUpdater — installer start failure", () => {
 
     const updater = await createNsisUpdater("1.0.0")
     Object.defineProperty(updater, "installerPath", { get: () => installerPath })
+    ;(updater as any).downloadedUpdateHelper = { verifyDownloadedFilesSync, clearSync: () => {} }
     const errors: Array<Error> = []
     updater.on("error", (e: Error) => errors.push(e))
     // the first spawn is the installer itself; an elevated retry succeeds
@@ -1272,6 +1310,14 @@ describe("NsisUpdater — installer start failure", () => {
     expect(spawnLog).toHaveBeenCalledTimes(2)
     expect(spawnLog).toHaveBeenLastCalledWith(elevatePath, [installerPath, ...args])
     expect(errors).toEqual([])
+  })
+
+  test("EACCES is not retried through elevate.exe when the installer changed after the first start", config, async ({ expect, tmpDir }) => {
+    const verifyDownloadedFilesSync = vi.fn<() => string | null>().mockReturnValueOnce(null).mockReturnValue("installer changed since it was verified")
+    const { errors, spawnLog } = await install(tmpDir, spawnError("EACCES"), underProgramFiles, undefined, verifyDownloadedFilesSync)
+    expect(verifyDownloadedFilesSync).toHaveBeenCalledTimes(2)
+    expect(spawnLog).toHaveBeenCalledTimes(1)
+    expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
   })
 
   // Windows paths are case-insensitive

@@ -691,6 +691,8 @@ describe("install on next launch", { concurrent: false }, () => {
         provider: { resolveFiles: (info: UpdateInfo) => info.files.map(it => makeResolvedFileInfo(it.sha512, it.url)) },
       })
       vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
+      // the signature check right before the install
+      vi.spyOn(updater as any, "verifySignature").mockResolvedValue({ response: "success" })
       return { updater, app, ready, whenReady, doInstall, getUpdateInfoAndProvider }
     }
 

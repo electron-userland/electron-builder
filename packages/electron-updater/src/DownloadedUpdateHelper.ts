@@ -1,4 +1,6 @@
-import { hashFile, UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
+import { BlockMapDataHolder, hashFile, UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
+import { createHash } from "crypto"
+import { closeSync, openSync, readSync } from "fs"
 import { NonThrowableLogger, ResolvedUpdateFileInfo } from "./types.js"
 import { Logger } from "./types.js"
 import fsExtra from "fs-extra"
@@ -23,6 +25,36 @@ function updateFileId(info: UpdateFileInfo, file: string, version: string | null
     return `sha2:${sha2}`
   }
   return `file:${JSON.stringify([file, version])}`
+}
+
+/**
+ * {@link hashFile}, synchronously: the install on quit has to check the installer before the app exits, and cannot wait
+ * for a stream.
+ */
+function hashFileSync(file: string, algorithm: string, encoding: "base64" | "hex"): string {
+  const hash = createHash(algorithm)
+  const buffer = Buffer.allocUnsafe(1024 * 1024)
+  const fd = openSync(file, "r")
+  try {
+    let bytesRead: number
+    while ((bytesRead = readSync(fd, buffer, 0, buffer.length, null)) > 0) {
+      hash.update(buffer.subarray(0, bytesRead))
+    }
+  } finally {
+    closeSync(fd)
+  }
+  return hash.digest(encoding)
+}
+
+/** Whether `file` still has the checksum of `info` it was downloaded with: its sha512, or the legacy sha2 of update info that has no sha512. */
+function hasChecksumSync(file: string, info: BlockMapDataHolder): boolean {
+  // typed as required, but missing from update info that only has the legacy sha2 checksum
+  const sha512: string | undefined = info.sha512
+  if (typeof sha512 === "string" && sha512.length !== 0) {
+    return hashFileSync(file, "sha512", "base64") === sha512
+  }
+  const sha2 = "sha2" in info ? info.sha2 : undefined
+  return typeof sha2 === "string" && sha2.length !== 0 && hashFileSync(file, "sha256", "hex") === sha2
 }
 
 /** @private **/
@@ -179,8 +211,37 @@ export class DownloadedUpdateHelper {
     const cachedUpdateFile = await this.getValidCachedUpdateFile(fileInfo)
     if (cachedUpdateFile != null) {
       this._file = cachedUpdateFile
+      // what verifyDownloadedFilesSync checks the files against right before the install
+      this.fileInfo = fileInfo
     }
     return cachedUpdateFile
+  }
+
+  /**
+   * Hashes the downloaded update file, and the web installer package, again, right before they are installed: they sit in
+   * the pending directory, which the user can write to, from the download until then. The checksums are those of the
+   * update info the files were verified against in this session, kept in memory and never read back from that directory.
+   * Synchronous, so that the install on quit can call it before the app exits.
+   * @returns `null` when the files are unchanged, otherwise which file changed.
+   */
+  verifyDownloadedFilesSync(): string | null {
+    const file = this._file
+    const fileInfo = this.fileInfo
+    if (file == null || fileInfo == null) {
+      return "no verified update file"
+    }
+    try {
+      if (!hasChecksumSync(file, fileInfo.info)) {
+        return `${file} changed since it was verified`
+      }
+      const packageFile = this._packageFile
+      if (packageFile != null && (fileInfo.packageInfo == null || !hasChecksumSync(packageFile, fileInfo.packageInfo))) {
+        return `${packageFile} changed since it was verified`
+      }
+    } catch (e: unknown) {
+      return `cannot read it again: ${e instanceof Error ? e.message : String(e)}`
+    }
+    return null
   }
 
   /**
@@ -218,12 +279,26 @@ export class DownloadedUpdateHelper {
   }
 
   async clear(): Promise<void> {
+    this.forget()
+    await this.cleanCacheDirForPendingUpdate()
+  }
+
+  /** {@link clear}, synchronously: the install on quit cannot wait for it. */
+  clearSync(): void {
+    this.forget()
+    try {
+      fsExtra.emptyDirSync(this.cacheDirForPendingUpdate)
+    } catch (_ignore) {
+      // ignore, as clear() does
+    }
+  }
+
+  private forget(): void {
     this._file = null
     this._packageFile = null
     this.versionInfo = null
     this.fileInfo = null
     this._downloadedUpdateId = null
-    await this.cleanCacheDirForPendingUpdate()
   }
 
   private async cleanCacheDirForPendingUpdate(): Promise<void> {

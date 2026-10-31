@@ -458,4 +458,101 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       })
     })
   })
+
+  describe("DownloadedUpdateHelper.verifyDownloadedFilesSync", () => {
+    let cacheDir: string
+    let helper: DownloadedUpdateHelper
+
+    beforeEach(async context => {
+      cacheDir = await context.tmpDir.createTempDir()
+      helper = new DownloadedUpdateHelper(cacheDir, makeLogger())
+    })
+
+    // an installer and, with `withPackage`, a web installer package, as downloaded and verified in this session
+    async function seed(options: { withPackage?: boolean; packageInfo?: boolean; checksum?: "sha512" | "sha2" } = {}) {
+      const installerPath = path.join(helper.cacheDirForPendingUpdate, "TestApp Setup.exe")
+      await outputFile(installerPath, "installer")
+      const sha512 = await hashFile(installerPath)
+      const info: UpdateFileInfo =
+        options.checksum === "sha2"
+          ? // the type requires a sha512, which update info for legacy clients does not have
+            ({ url: "TestApp Setup.exe", sha2: await hashFile(installerPath, "sha256", "hex"), size: 9 } as unknown as UpdateFileInfo)
+          : { url: "TestApp Setup.exe", sha512, size: 9 }
+      const fileInfo: ResolvedUpdateFileInfo = { url: new URL("https://example.com/TestApp%20Setup.exe"), info }
+      let packagePath: string | null = null
+      if (options.withPackage === true) {
+        packagePath = path.join(helper.cacheDirForPendingUpdate, "package-1.0.1.7z")
+        await outputFile(packagePath, "package")
+        if (options.packageInfo !== false) {
+          fileInfo.packageInfo = { path: "https://example.com/TestApp.nsis.7z", sha512: await hashFile(packagePath), size: 7 }
+        }
+      }
+      await helper.setDownloadedFile(installerPath, packagePath, makeUpdateInfo(), fileInfo, "TestApp Setup.exe", true)
+      return { installerPath, packagePath, fileInfo }
+    }
+
+    test("returns null for unchanged files", async () => {
+      await seed({ withPackage: true })
+      expect(helper.verifyDownloadedFilesSync()).toBeNull()
+    })
+
+    test("reports an installer overwritten after it was verified", async () => {
+      const { installerPath } = await seed()
+      await outputFile(installerPath, "another installer")
+      expect(helper.verifyDownloadedFilesSync()).toBe(`${installerPath} changed since it was verified`)
+    })
+
+    test("checks against the checksum kept in memory, not the one in update-info.json", async () => {
+      const { installerPath } = await seed()
+      await outputFile(installerPath, "another installer")
+      const infoFile = path.join(helper.cacheDirForPendingUpdate, "update-info.json")
+      await outputJson(infoFile, { ...(await readJson(infoFile)), sha512: await hashFile(installerPath) })
+      expect(helper.verifyDownloadedFilesSync()).toBe(`${installerPath} changed since it was verified`)
+    })
+
+    test("reports a web installer package overwritten after it was verified", async () => {
+      const { packagePath } = await seed({ withPackage: true })
+      await outputFile(packagePath!, "another package")
+      expect(helper.verifyDownloadedFilesSync()).toBe(`${packagePath} changed since it was verified`)
+    })
+
+    test("reports a package that the verified update info has no checksum for", async () => {
+      const { packagePath } = await seed({ withPackage: true, packageInfo: false })
+      expect(helper.verifyDownloadedFilesSync()).toBe(`${packagePath} changed since it was verified`)
+    })
+
+    test("checks the legacy sha2 checksum of update info without sha512", async () => {
+      const { installerPath } = await seed({ checksum: "sha2" })
+      expect(helper.verifyDownloadedFilesSync()).toBeNull()
+      await outputFile(installerPath, "another installer")
+      expect(helper.verifyDownloadedFilesSync()).toBe(`${installerPath} changed since it was verified`)
+    })
+
+    test("reports an installer that cannot be read anymore", async () => {
+      const { installerPath } = await seed()
+      await remove(installerPath)
+      expect(helper.verifyDownloadedFilesSync()).toMatch(/^cannot read it again: ENOENT/)
+    })
+
+    test("reports that nothing was verified before a download", () => {
+      expect(helper.verifyDownloadedFilesSync()).toBe("no verified update file")
+    })
+
+    test("checks a pending update validated on launch against the update info it was validated with", async () => {
+      const { installerPath, fileInfo } = await seed()
+      const nextLaunch = new DownloadedUpdateHelper(cacheDir, makeLogger())
+      expect(await nextLaunch.validateCachedPendingInstall(fileInfo)).toBe(installerPath)
+      expect(nextLaunch.verifyDownloadedFilesSync()).toBeNull()
+      await outputFile(installerPath, "another installer")
+      expect(nextLaunch.verifyDownloadedFilesSync()).toBe(`${installerPath} changed since it was verified`)
+    })
+
+    test("clearSync forgets the update and empties the pending directory", async () => {
+      const { installerPath } = await seed()
+      helper.clearSync()
+      expect(helper.file).toBeNull()
+      expect(helper.verifyDownloadedFilesSync()).toBe("no verified update file")
+      expect(await pathExists(installerPath)).toBe(false)
+    })
+  })
 })

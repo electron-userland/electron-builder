@@ -8,7 +8,7 @@ import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHel
 import type { DownloadExecutorTask } from "electron-updater/src/AppUpdater"
 import { outputFile, pathExists, readFile, stat } from "fs-extra"
 import { createVerifyUpdateFileMock, expectVerifyUpdateFileFailure, makeLogger } from "../helpers/updaterTestUtil.js"
-import { CancellationError } from "builder-util-runtime"
+import { CancellationError, hashFile } from "builder-util-runtime"
 
 const stubApp: AppAdapter = {
   name: "TestApp",
@@ -179,6 +179,7 @@ describe.ifNotWindows("AppImageUpdater doInstall file replacement", () => {
     vi.stubEnv("PATH", path.join(dir, "empty"))
     const updater = new AppImageUpdater(null, stubApp)
     Object.defineProperty(updater, "installerPath", { get: () => installerPath })
+    ;(updater as any).downloadedUpdateHelper = { verifyDownloadedFilesSync: () => null }
     vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
     return { appImageFile, installerPath, updater, install: () => (updater as any).doInstall({ ...installOpts, isForceRunAfter: true }) }
   }
@@ -202,6 +203,39 @@ describe.ifNotWindows("AppImageUpdater doInstall file replacement", () => {
     expect(await readFile(newFile, "utf8")).toBe("new")
     expect(await pathExists(appImageFile)).toBe(false)
     expect(renamed).toHaveBeenCalledWith(newFile)
+  })
+
+  // the update as downloaded and verified in this session, in the pending directory of a real download helper
+  async function seedVerifiedDownload(dir: string, updater: AppImageUpdater, installerPath: string) {
+    const helper = new DownloadedUpdateHelper(dir, makeLogger())
+    const sha512 = await hashFile(installerPath)
+    const fileInfo = { url: new URL("https://example.com/TestApp-2.0.0.AppImage"), info: { url: "TestApp-2.0.0.AppImage", sha512, size: 3 } }
+    await helper.setDownloadedFile(installerPath, null, { version: "2.0.0", files: [fileInfo.info], path: "", sha512, releaseDate: "" }, fileInfo, "TestApp-2.0.0.AppImage", true)
+    ;(updater as any).downloadedUpdateHelper = helper
+    const errors: Error[] = []
+    updater.on("error", (error: Error) => errors.push(error))
+    return errors
+  }
+
+  it("installs the downloaded AppImage when it is unchanged", async context => {
+    const dir = await context.tmpDir.createTempDir()
+    const { appImageFile, installerPath, updater, install } = await setup(dir, true)
+    const errors = await seedVerifiedDownload(dir, updater, installerPath)
+    expect(install()).toBe(true)
+    expect(await readFile(appImageFile, "utf8")).toBe("new")
+    expect(errors).toEqual([])
+  })
+
+  it("does not install a downloaded AppImage that changed since it was verified", async context => {
+    const dir = await context.tmpDir.createTempDir()
+    const { appImageFile, installerPath, updater, install } = await setup(dir, true)
+    const errors = await seedVerifiedDownload(dir, updater, installerPath)
+    await outputFile(installerPath, "replaced")
+    expect(install()).toBe(false)
+    expect(await readFile(appImageFile, "utf8")).toBe("old")
+    expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
+    // removed, so that the next update check downloads it again
+    expect(await pathExists(installerPath)).toBe(false)
   })
 
   it("keeps the installed AppImage when the swap fails", async context => {

@@ -369,6 +369,9 @@ export abstract class LinuxUpdater extends BaseUpdater {
     }
     try {
       const { elevation, plan } = this.prepareInstall()
+      if (!this.verifyDownloadedUpdateBeforeInstall()) {
+        return false
+      }
       runInstallPlan(plan, commandWithArgs => this.runCommandWithSudoIfNeeded(commandWithArgs, elevation), this.log)
     } catch (error: unknown) {
       // on quit, an "error" listener that shows the error has no window left to show it in: the updater's own "error"
@@ -387,6 +390,9 @@ export abstract class LinuxUpdater extends BaseUpdater {
     }
     try {
       const { elevation, plan } = this.prepareInstall()
+      if (!this.verifyDownloadedUpdateBeforeInstall()) {
+        return false
+      }
       await runInstallPlanAsync(plan, commandWithArgs => this.runCommandWithSudoIfNeededAsync(commandWithArgs, elevation), this.log)
     } catch (error: unknown) {
       this.dispatchError(error instanceof Error ? error : new Error(String(error)))

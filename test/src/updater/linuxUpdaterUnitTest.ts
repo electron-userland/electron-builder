@@ -302,7 +302,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
   describe("async install", () => {
     const setRawPath = (rawPath: string) => {
-      ;(updater as any).downloadedUpdateHelper = { file: rawPath }
+      ;(updater as any).downloadedUpdateHelper = { verifyDownloadedFilesSync: () => null, file: rawPath }
     }
 
     beforeEach(() => {
@@ -434,7 +434,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
     it("refreshes the pacman database and retries, like the synchronous path", async () => {
       const pacman = new PacmanUpdater(null, stubApp)
       pacman.logger = new NoOpLogger()
-      ;(pacman as any).downloadedUpdateHelper = { file: "/tmp/update-1.0.2.pacman" }
+      ;(pacman as any).downloadedUpdateHelper = { verifyDownloadedFilesSync: () => null, file: "/tmp/update-1.0.2.pacman" }
       vi.spyOn(pacman as any, "isRunningAsRoot").mockReturnValue(true)
       const spawnAsyncLog = vi
         .spyOn(pacman as any, "spawnAsyncLog")
@@ -456,7 +456,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
   describe("quitAndInstall with the async install", () => {
     function prepareDownloadedUpdate() {
       updater.logger = { info() {}, warn() {}, error: vi.fn() }
-      ;(updater as any).downloadedUpdateHelper = { file: "/tmp/update-1.0.2.deb", downloadedFileInfo: { isAdminRightsRequired: false } }
+      ;(updater as any).downloadedUpdateHelper = { verifyDownloadedFilesSync: () => null, file: "/tmp/update-1.0.2.deb", downloadedFileInfo: { isAdminRightsRequired: false } }
     }
 
     const flush = () => new Promise(resolve => setImmediate(resolve))
@@ -501,7 +501,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
     const options = { isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false }
 
     function prepareDownloadedUpdate(rawPath: string) {
-      ;(updater as any).downloadedUpdateHelper = { file: rawPath, downloadedFileInfo: { isAdminRightsRequired: false } }
+      ;(updater as any).downloadedUpdateHelper = { verifyDownloadedFilesSync: () => null, file: rawPath, downloadedFileInfo: { isAdminRightsRequired: false } }
     }
 
     function quitHandlerOf(target: DebUpdater): (exitCode: number) => void {
@@ -612,7 +612,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
      * privileged command fails with `exitCode`. Returns the privileged commands run and the errors dispatched.
      */
     async function install(mode: "sync" | "async", exitCode: number, helper = "pkexec") {
-      ;(updater as any).downloadedUpdateHelper = { file: "/tmp/update-1.0.2.deb", downloadedFileInfo: { isAdminRightsRequired: false } }
+      ;(updater as any).downloadedUpdateHelper = { verifyDownloadedFilesSync: () => null, file: "/tmp/update-1.0.2.deb", downloadedFileInfo: { isAdminRightsRequired: false } }
       vi.spyOn(updater as any, "determineSudoCommand").mockReturnValue(helper)
       const spawnSyncLog = vi.spyOn(updater as any, "spawnSyncLog").mockImplementation((...args: unknown[]) => {
         const [cmd] = args
@@ -689,7 +689,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
     it("stops the pacman retry as well", async () => {
       const pacman = new PacmanUpdater(null, stubApp)
       pacman.logger = new NoOpLogger()
-      ;(pacman as any).downloadedUpdateHelper = { file: "/tmp/update-1.0.2.pacman" }
+      ;(pacman as any).downloadedUpdateHelper = { verifyDownloadedFilesSync: () => null, file: "/tmp/update-1.0.2.pacman" }
       vi.spyOn(pacman as any, "isRunningAsRoot").mockReturnValue(false)
       vi.spyOn(pacman as any, "determineSudoCommand").mockReturnValue("pkexec")
       vi.spyOn(pacman as any, "resolveTrustedCommand").mockImplementation((...args: unknown[]) => `/usr/bin/${String(args[0])}`)
@@ -1157,7 +1157,7 @@ describe("Linux package signature-verification gating", () => {
     // and we can assert that this.allowUnverifiedLinuxPackages is threaded through.
     function stubForDoInstall(updater: DebUpdater | RpmUpdater, packageManager: string, file: string): string[][] {
       updater.logger = new NoOpLogger()
-      ;(updater as any).downloadedUpdateHelper = { file }
+      ;(updater as any).downloadedUpdateHelper = { verifyDownloadedFilesSync: () => null, file }
       vi.spyOn(updater as any, "spawnSyncLog").mockReturnValue("")
       vi.spyOn(updater as any, "hasCommand").mockReturnValue(true)
       vi.spyOn(updater as any, "detectPackageManager").mockReturnValue(packageManager)

@@ -330,6 +330,30 @@ export abstract class BaseUpdater extends AppUpdater {
     return this.downloadedUpdateHelper == null ? null : this.downloadedUpdateHelper.file
   }
 
+  /**
+   * Called by {@link doInstall} right before it starts the installer: hashes the downloaded update again (see
+   * `DownloadedUpdateHelper.verifyDownloadedFilesSync`). Synchronous, so that the install on quit can call it. When the
+   * update changed since it was verified, it is not installed: it is removed, so that the next update check downloads it
+   * again, and an `error` event is emitted.
+   */
+  protected verifyDownloadedUpdateBeforeInstall(): boolean {
+    const downloadedUpdateHelper = this.downloadedUpdateHelper
+    const failure = downloadedUpdateHelper == null ? "no update was downloaded" : downloadedUpdateHelper.verifyDownloadedFilesSync()
+    if (failure == null) {
+      return true
+    }
+    this.rejectDownloadedUpdate(
+      newError(`The downloaded update is not installed: ${failure}. It is removed and will be downloaded again on the next update check.`, "ERR_UPDATER_UPDATE_FILE_CHANGED")
+    )
+    return false
+  }
+
+  /** Removes the downloaded update, which must not be installed, and emits `error`. Synchronous, for the install on quit. */
+  protected rejectDownloadedUpdate(error: Error): void {
+    this.downloadedUpdateHelper?.clearSync()
+    this.dispatchError(error)
+  }
+
   // must be sync
   protected abstract doInstall(options: InstallOptions): boolean
 
