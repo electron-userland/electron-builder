@@ -50,7 +50,7 @@ export async function writeRawUpdateConfig<T extends AllPublishOptions>(data: T)
 export async function validateDownload(expect: ExpectStatic, updater: AppUpdater, expectDownloadPromise = true) {
   const actualEvents = trackEvents(updater)
 
-  const updateCheckResult = await updater.checkForUpdates()
+  const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   const assets = (updateCheckResult?.updateInfo as any).assets
   if (assets != null) {
     for (const asset of assets) {

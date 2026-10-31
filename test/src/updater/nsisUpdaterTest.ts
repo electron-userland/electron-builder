@@ -107,7 +107,7 @@ test("downgrade (disallowed, beta)", config, async ({ expect }) => {
       })
     }
 
-    const updateCheckResult = await updater.checkForUpdates()
+    const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
     expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
     // noinspection JSIgnoredPromiseFromCall
     expect(updateCheckResult?.downloadPromise).toBeUndefined()
@@ -139,7 +139,7 @@ test("file url generic aborts when verifyUpdateFile rejects the downloaded temp 
     updater.verifyUpdateFile = mock
 
     const actualEvents = trackEvents(updater)
-    const updateCheckResult = await updater.checkForUpdates()
+    const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
     const observation = await expectVerifyUpdateFileFailure({
       expect,
@@ -175,7 +175,7 @@ test("web installer passes packageFilePath to verifyUpdateFile", config, async (
     })
     updater.verifyUpdateFile = mock
 
-    const updateCheckResult = await updater.checkForUpdates()
+    const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
     const observation = await expectVerifyUpdateFileFailure({
       expect,
       downloadPromise: updateCheckResult?.downloadPromise,
@@ -206,7 +206,7 @@ test("verifyUpdateFile also gates a cached update reused after an app relaunch",
     firstLaunch.updateConfigPath = updateConfigPath
     const accepting = createVerifyUpdateFileMock(() => ({ response: "success" }))
     firstLaunch.verifyUpdateFile = accepting.mock
-    const firstDownload = await (await firstLaunch.checkForUpdates())?.downloadPromise
+    const firstDownload = await (await firstLaunch.checkForUpdates({ crossOriginHeaders: defaults => defaults }))?.downloadPromise
     await assertThat(expect, firstDownload!.updateFile).isFile()
 
     // a fresh updater instance, as after a restart: nothing is downloaded again, but the verifier must still run
@@ -216,7 +216,7 @@ test("verifyUpdateFile also gates a cached update reused after an app relaunch",
     const rejecting = createVerifyUpdateFileMock(() => ({ response: "failure", message: "stale cached file rejected" }))
     secondLaunch.verifyUpdateFile = rejecting.mock
 
-    await expect((await secondLaunch.checkForUpdates())?.downloadPromise).rejects.toMatchObject({
+    await expect((await secondLaunch.checkForUpdates({ crossOriginHeaders: defaults => defaults }))?.downloadPromise).rejects.toMatchObject({
       code: "ERR_UPDATER_INVALID_UPDATE_FILE",
       message: expect.stringContaining("stale cached file rejected"),
     })
@@ -238,7 +238,7 @@ test("verifyUpdateFile also gates an update reused from the cache in the same se
     // first round: the verifier accepts, so the update lands in the cache under its real filename
     const accepting = createVerifyUpdateFileMock(() => ({ response: "success" }))
     updater.verifyUpdateFile = accepting.mock
-    const firstDownload = await (await updater.checkForUpdates())?.downloadPromise
+    const firstDownload = await (await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults }))?.downloadPromise
     expect(accepting.mock).toHaveBeenCalledTimes(1)
     await assertThat(expect, firstDownload!.updateFile).isFile()
 
@@ -246,7 +246,7 @@ test("verifyUpdateFile also gates an update reused from the cache in the same se
     const rejecting = createVerifyUpdateFileMock(() => ({ response: "failure", message: "cached file rejected" }))
     updater.verifyUpdateFile = rejecting.mock
     const actualEvents = trackEvents(updater)
-    await expect((await updater.checkForUpdates())?.downloadPromise).rejects.toMatchObject({
+    await expect((await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults }))?.downloadPromise).rejects.toMatchObject({
       code: "ERR_UPDATER_INVALID_UPDATE_FILE",
       message: expect.stringContaining("cached file rejected"),
     })
@@ -278,7 +278,7 @@ test.skip("sha512 mismatch error event", config, async ({ expect }) => {
 
     const actualEvents = trackEvents(updater)
 
-    const updateCheckResult = await updater.checkForUpdates()
+    const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
     expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
     await assertThat(expect, updateCheckResult?.downloadPromise).throws()
 
@@ -297,7 +297,7 @@ test("file url generic - manual download", config, async ({ expect }) => {
 
     const actualEvents = trackEvents(updater)
 
-    const updateCheckResult = await updater.checkForUpdates()
+    const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
     expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
     // noinspection JSIgnoredPromiseFromCall
     expect(updateCheckResult?.downloadPromise).toBeNull()
@@ -320,11 +320,11 @@ test("checkForUpdates several times", config, async ({ expect }) => {
 
     for (let i = 0; i < 10; i++) {
       //noinspection JSIgnoredPromiseFromCall
-      void updater.checkForUpdates()
+      void updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
     }
 
     async function checkForUpdates() {
-      const updateCheckResult = await updater.checkForUpdates()
+      const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
       await checkDownloadPromise(expect, updateCheckResult)
     }
@@ -347,7 +347,7 @@ test("test error", config, async ({ expect }) => {
   const updater = await createNsisUpdater("0.0.1")
   const actualEvents = trackEvents(updater)
 
-  await assertThat(expect, updater.checkForUpdates()).throws()
+  await assertThat(expect, updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).throws()
   expect(actualEvents).toMatchSnapshot()
 })
 
@@ -364,7 +364,7 @@ test.skip("test download progress", config, async ({ expect }) => {
 
     updater.signals.progress(it => progressEvents.push(it))
 
-    await updater.checkForUpdates()
+    await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
     await updater.downloadUpdate()
 
     expect(progressEvents.length).toBeGreaterThanOrEqual(1)
@@ -392,7 +392,7 @@ test.ifNotWindows("fails closed when the signature cannot be verified (no PowerS
       publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
     })
     const actualEvents = trackEvents(updater)
-    const updateCheckResult = await updater.checkForUpdates()
+    const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
     await expect(updateCheckResult?.downloadPromise).rejects.toMatchObject({
       code: "ERR_UPDATER_SIGNATURE_UNVERIFIABLE",
       message: expect.stringContaining("Cannot verify the Authenticode signature of the update"),
@@ -416,7 +416,7 @@ test.ifWindows("invalid signature", config, async ({ expect }) => {
     const actualEvents = trackEvents(updater)
     await assertThat(
       expect,
-      updater.checkForUpdates().then((it): any => it?.downloadPromise)
+      updater.checkForUpdates({ crossOriginHeaders: defaults => defaults }).then((it): any => it?.downloadPromise)
     ).throws()
     expect(actualEvents).toMatchSnapshot()
   } finally {
@@ -457,7 +457,7 @@ test.ifWindows("test custom signature verifier - signing error message", config,
     const actualEvents = trackEvents(updater)
     await assertThat(
       expect,
-      updater.checkForUpdates().then((it): any => it?.downloadPromise)
+      updater.checkForUpdates({ crossOriginHeaders: defaults => defaults }).then((it): any => it?.downloadPromise)
     ).throws()
     expect(actualEvents).toMatchSnapshot()
   } finally {
@@ -477,7 +477,7 @@ test("malformed custom signature verifier result fails closed", config, async ({
     // @ts-expect-error intentionally violating the verifier contract to cover fail-closed behavior
     updater.verifyUpdateFileAuthenticodeSignature = async (_publisherName: string[], _path: string) => null
     const actualEvents = trackEvents(updater)
-    const updateCheckResult = await updater.checkForUpdates()
+    const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
     await expect(updateCheckResult?.downloadPromise).rejects.toMatchObject({
       code: "ERR_UPDATER_INVALID_SIGNATURE",
@@ -499,7 +499,7 @@ test("missing publisherName rejects the downloaded update", config, async ({ exp
     const verifier = vi.fn(async () => ({ response: "success" as const }))
     updater.verifyUpdateFileAuthenticodeSignature = verifier
     const actualEvents = trackEvents(updater)
-    const updateCheckResult = await updater.checkForUpdates()
+    const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
     await expect(updateCheckResult?.downloadPromise).rejects.toMatchObject({
       code: "ERR_UPDATER_INVALID_SIGNATURE",
@@ -519,7 +519,7 @@ test("verifyUpdateCodeSignature: false in app-update.yml installs the update unv
     updater.updateConfigPath = await writeRawUpdateConfig<GenericServerOptions>({ provider: "generic", url, verifyUpdateCodeSignature: false })
     const verifier = vi.fn(async () => ({ response: "failure" as const, message: "must not be called" }))
     updater.verifyUpdateFileAuthenticodeSignature = verifier
-    const updateCheckResult = await updater.checkForUpdates()
+    const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
     await expect(updateCheckResult?.downloadPromise).resolves.toBeDefined()
     expect(verifier).not.toHaveBeenCalled()
@@ -624,7 +624,7 @@ test("cancel download with progress", config, async ({ expect }) => {
     let cancelled = false
     updater.signals.updateCancelled(() => (cancelled = true))
 
-    const checkResult = await updater.checkForUpdates()
+    const checkResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
     checkResult?.cancellationToken!.cancel()
 
     if (progressEvents.length > 0) {
@@ -762,7 +762,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
       updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
       trackEvents(updater)
 
-      const updateCheckResult = await updater.checkForUpdates()
+      const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       await expect(updateCheckResult!.downloadPromise).rejects.toThrow(/Web Installers are disabled/)
     } finally {
       server.close()
@@ -779,7 +779,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
       updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
       trackEvents(updater)
 
-      const updateCheckResult = await updater.checkForUpdates()
+      const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       await expect(updateCheckResult!.downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_WEB_INSTALLER_DISABLED" })
       expect(downloads).toEqual([])
     } finally {
@@ -799,7 +799,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
       updater.disableWebInstaller = true
       const actualEvents = trackEvents(updater)
 
-      const updateCheckResult = await updater.checkForUpdates()
+      const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       await expect(updateCheckResult!.downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_WEB_INSTALLER_DISABLED" })
       expect(actualEvents).not.toContain("update-downloaded")
       expect(downloads).toEqual([])
@@ -820,7 +820,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
       updater.disableWebInstaller = false
       const actualEvents = trackEvents(updater)
 
-      const updateCheckResult = await updater.checkForUpdates()
+      const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       const result = await updateCheckResult!.downloadPromise
       expect(result!.packageFile).toBe(packageFile)
       expect(actualEvents).toContain("update-downloaded")
@@ -840,7 +840,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
       updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
       trackEvents(updater)
 
-      const updateCheckResult = await updater.checkForUpdates()
+      const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       await expect(updateCheckResult!.downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_NO_CHECKSUM" })
       expect(downloads).toEqual([])
     } finally {
@@ -859,7 +859,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
       const errors: Array<any> = []
       updater.on("error", e => errors.push(e))
 
-      const updateCheckResult = await updater.checkForUpdates()
+      const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       const { updateFile, packageFile } = (await updateCheckResult!.downloadPromise)!
       expect(packageFile).toBeDefined()
       await assertThat(expect, packageFile).isFile()
@@ -892,7 +892,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
       updater.disableWebInstaller = false
       updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}/?token=abc` })
 
-      const updateCheckResult = await updater.checkForUpdates()
+      const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       const { updateFile, packageFile } = (await updateCheckResult!.downloadPromise)!
       expect(path.basename(packageFile!)).toBe(CACHED_PACKAGE_NAME)
       await assertThat(expect, packageFile).isFile()
@@ -918,7 +918,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
       const { packageFile } = await seedCachedWebUpdate(updater, "package-1.0.1.def")
       updater.disableWebInstaller = false
 
-      const updateCheckResult = await updater.checkForUpdates()
+      const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       const result = (await updateCheckResult!.downloadPromise)!
       expect(result.packageFile).toBe(packageFile)
       expect(downloads).toEqual([])
@@ -951,7 +951,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
             const errors: Array<any> = []
             updater.on("error", e => errors.push(e))
 
-            const updateCheckResult = await updater.checkForUpdates()
+            const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
             const { updateFile, packageFile } = (await updateCheckResult!.downloadPromise)!
             expect(packageFile == null).toBe(!web)
 
@@ -991,7 +991,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
           const errors: Array<any> = []
           updater.on("error", e => errors.push(e))
 
-          const updateCheckResult = await updater.checkForUpdates()
+          const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
           const { updateFile, packageFile } = (await updateCheckResult!.downloadPromise)!
           expect(packageFile).toBeDefined()
           expect((await fsExtra.readJson(path.join(path.dirname(updateFile), "update-info.json"))).isAdminRightsRequired).toBe(true)
@@ -1038,7 +1038,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
       trackEvents(updater)
 
       await updater
-        .checkForUpdates()
+        .checkForUpdates({ crossOriginHeaders: defaults => defaults })
         .then(r => r!.downloadPromise)
         .then(
           () => null,
@@ -1062,7 +1062,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
       trackEvents(updater)
 
       await updater
-        .checkForUpdates()
+        .checkForUpdates({ crossOriginHeaders: defaults => defaults })
         .then(r => r!.downloadPromise)
         .then(
           () => null,
@@ -1105,7 +1105,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
       updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
       trackEvents(updater)
 
-      const updateCheckResult = await updater.checkForUpdates()
+      const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       // the download completes, so the full-installer branch ran
       await expect(updateCheckResult!.downloadPromise).resolves.toMatchObject({ updateFile: expect.stringContaining(WEB_INSTALLER_NAME) })
       expect(warnings.filter(w => w.includes("disableWebInstaller"))).toEqual([])
@@ -1129,7 +1129,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
       updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
       trackEvents(updater)
 
-      const updateCheckResult = await updater.checkForUpdates()
+      const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
       await expect(updateCheckResult!.downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_WEB_INSTALLER_DISABLED" })
       expect(downloads).toEqual([])
     } finally {
@@ -1150,7 +1150,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
       trackEvents(updater)
 
       await updater
-        .checkForUpdates()
+        .checkForUpdates({ crossOriginHeaders: defaults => defaults })
         .then(r => r!.downloadPromise)
         .then(
           () => null,

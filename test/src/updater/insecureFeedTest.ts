@@ -198,7 +198,7 @@ describe("channel file request of an update check", () => {
     updater.autoDownload = false
     ;(updater as any).httpExecutor = executor
     updater.setFeedURL({ provider: "generic", url: feedUrl })
-    return await updater.checkForUpdates()
+    return await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   }
 
   test("fails for an http feed before any request is sent", async ({ tmpDir, expect }) => {

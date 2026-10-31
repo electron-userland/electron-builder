@@ -1,9 +1,9 @@
-import { CancellationToken, type CrossOriginHeaders } from "builder-util-runtime"
+import { CancellationToken, type CrossOriginHeadersCallback, DEFAULT_CROSS_ORIGIN_HEADERS } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import type { RequestOptions } from "http"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
-import { describe, test } from "vitest"
+import { describe, test, vi } from "vitest"
 import { FakeElectronHttpExecutor, FakeNetRequest } from "../helpers/updaterTestUtil.js"
 
 // ElectronHttpExecutor follows the redirects of its full downloads and of manual-redirect API requests (GitLab, private GitHub)
@@ -75,11 +75,12 @@ describe("ElectronHttpExecutor redirects", () => {
   })
 })
 
-// A redirect to another origin sends on only the executor's cross-origin headers (AppUpdater.crossOriginHeaders), by default the allowlist.
+// A redirect to another origin sends on only the headers the executor's crossOriginHeaders returns for it (the crossOriginHeaders of
+// AppUpdater.checkForUpdates), by default the allowlist.
 describe("ElectronHttpExecutor cross-origin redirect headers", () => {
   const HEADERS = { "X-Api-Token": "custom-secret", "X-Tenant": "acme", range: "bytes=0-99", accept: "*/*" }
 
-  function createRedirectingExecutor(target: string, crossOriginHeaders?: CrossOriginHeaders) {
+  function createRedirectingExecutor(target: string, crossOriginHeaders?: CrossOriginHeadersCallback) {
     return new FakeElectronHttpExecutor(url => (url === FILE_URL ? { location: target } : { statusCode: 200, body: BODY }), { crossOriginHeaders })
   }
 
@@ -112,6 +113,45 @@ describe("ElectronHttpExecutor cross-origin redirect headers", () => {
     await download(executor, tmpDir)
 
     expect(executor.sent[1].headers).toMatchObject(HEADERS)
+  })
+
+  test("crossOriginHeaders gets the default list and the redirect: from, to and kind", async ({ tmpDir, expect }) => {
+    const crossOriginHeaders = vi.fn((defaults: ReadonlyArray<string>) => defaults)
+    await download(createRedirectingExecutor(TARGET_URL, crossOriginHeaders), tmpDir)
+
+    expect(crossOriginHeaders).toHaveBeenCalledExactlyOnceWith(DEFAULT_CROSS_ORIGIN_HEADERS, { from: new URL(FILE_URL), to: new URL(TARGET_URL), kind: "redirect" })
+  })
+
+  test("a same-origin redirect does not call crossOriginHeaders", async ({ tmpDir, expect }) => {
+    const crossOriginHeaders = vi.fn((defaults: ReadonlyArray<string>) => defaults)
+    await download(createRedirectingExecutor("https://feed.example.com/other/app-1.1.0.exe", crossOriginHeaders), tmpDir)
+
+    expect(crossOriginHeaders).not.toHaveBeenCalled()
+  })
+
+  // fail closed: the redirect is not followed with every header, or at all
+  const invalidCrossOriginHeaders: ReadonlyArray<readonly [string, CrossOriginHeadersCallback]> = [
+    [
+      "throws",
+      () => {
+        throw new Error("x-api-token custom-secret")
+      },
+    ],
+    ["returns a header value", () => "custom-secret" as unknown as ReadonlyArray<string>],
+  ]
+  test.for(invalidCrossOriginHeaders)("a crossOriginHeaders that %s fails the redirect without following it", async ([, crossOriginHeaders], { tmpDir, expect }) => {
+    const executor = createRedirectingExecutor(TARGET_URL, crossOriginHeaders)
+    const error = await download(executor, tmpDir).then(
+      () => null,
+      (e: unknown) => e
+    )
+
+    expect(error).toMatchObject({
+      code: "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS",
+      message: expect.stringContaining(`the redirect from https://feed.example.com to https://bucket.example.net`),
+    })
+    expect(String((error as Error).message)).not.toContain("custom-secret")
+    expect(executor.sent.map(it => it.url)).toEqual([FILE_URL])
   })
 
   test("a same-origin redirect keeps a custom header", async ({ tmpDir, expect }) => {

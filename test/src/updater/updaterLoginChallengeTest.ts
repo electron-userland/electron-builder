@@ -98,7 +98,7 @@ async function createUpdater(tmpDir: TmpDir) {
 async function checkedUpdater(tmpDir: TmpDir, feed: Parameters<NsisUpdater["setFeedURL"]>[0]) {
   const result = await createUpdater(tmpDir)
   result.updater.setFeedURL(feed)
-  await result.updater.checkForUpdates()
+  await result.updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   return result
 }
 
@@ -165,7 +165,7 @@ describe("electron-updater login event", () => {
     withProviderAnswer(() => false)
     const { updater, answer } = await checkedUpdater(tmpDir, { provider: "generic", url: "https://feed.example.com/updates" })
     updater.setFeedURL({ provider: "custom", updateProvider: TestProvider })
-    await updater.checkForUpdates()
+    await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
     expect(answer(challenge("downloads.example.net", 443))).toBe(false)
   })
 
