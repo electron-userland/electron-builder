@@ -52,14 +52,14 @@ export interface AsarContentUnit {
  */
 export type AsarLayoutPlanner<P extends { offsets: Array<number> }> = (units: Array<AsarContentUnit>) => P
 
-interface PackedFile {
+export interface PackedFile {
   path: string
   node: Node
   offset: number
   size: number
 }
 
-function collectPackedFiles(node: Node, prefix: string, result: Array<PackedFile>): void {
+export function collectPackedFiles(node: Node, prefix: string, result: Array<PackedFile>): void {
   const files = node.files
   if (files == null) {
     return
