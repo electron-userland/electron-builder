@@ -167,7 +167,7 @@ describe("download URLs chosen by the update manifest", () => {
     expect(notices()).toHaveLength(1)
     const [notice] = notices()
     expect(notice).toContain(
-      `sends the request headers from requestHeaders / addAuthHeader, other than an allowlist such as Accept, User-Agent and Range, only to the update feed's origin (${feed.url})`
+      `electron-updater sends the request headers from requestHeaders / addAuthHeader, other than an allowlist such as Accept, User-Agent and Range, only to the update feed's origin (${feed.url})`
     )
     // only the app's headers: not x-user-staging-id, which electron-updater adds itself
     expect(notice).toContain(`(${feed.url}): X-Tenant, authorization not sent with the update info request to ${foreign.url}`)
@@ -539,7 +539,7 @@ describe("differential downloads use the per-download headers", () => {
       expect(warnings()).toHaveLength(2)
       const [headersNotice, queryNotice] = warnings()
       expect(headersNotice).toContain(
-        "sends the request headers from requestHeaders / addAuthHeader, other than an allowlist such as Accept, User-Agent and Range, only to the update feed's origin (https://feed.example.com)"
+        "electron-updater sends the request headers from requestHeaders / addAuthHeader, other than an allowlist such as Accept, User-Agent and Range, only to the update feed's origin (https://feed.example.com)"
       )
       expect(headersNotice).toContain("X-Tenant, authorization not sent to https://cdn.example.net")
       expect(queryNotice).toContain("adds the feed URL's query string (token, tenant) only to URLs on the update feed's origin (https://feed.example.com)")
@@ -596,7 +596,7 @@ describe("differential downloads use the per-download headers", () => {
 
       expect(warnings()).toHaveLength(1)
       const [notice] = warnings()
-      expect(notice).toContain("sends only an allowlist of request headers (such as Accept, User-Agent and Range) on to another origin")
+      expect(notice).toContain("electron-updater sends only an allowlist of request headers (such as Accept, User-Agent and Range) on to another origin")
       expect(notice).toContain("the redirect from https://feed.example.com to https://cdn.example.net did not send x-tenant from requestHeaders")
       expect(notice).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-header-allowlist")
       expect(notice).not.toContain("authorization")
@@ -613,8 +613,8 @@ describe("differential downloads use the per-download headers", () => {
       expect(warnings()).toEqual([])
     })
 
-    // electron-updater 6 already left out a fixed list of credential headers on a cross-origin redirect, whatever their spelling
-    test("a cross-origin redirect announces only the app's headers that electron-updater 6 sent on", async ({ tmpDir, expect }) => {
+    // well-known credential headers are expected to stay on their origin, whatever their spelling, so dropping them is not announced
+    test("a cross-origin redirect announces only the app's headers that are not well-known credential headers", async ({ tmpDir, expect }) => {
       const { updater, warnings } = await setUp(tmpDir)
       updater.requestHeaders = { "PRIVATE-TOKEN": "glpat", x_api_key: "k", Cookie: "c", "X-Tenant": "acme" }
       const announce = (names: Array<string>) => (updater as any).announceCrossOriginRedirect(names, new URL("https://feed.example.com/"), new URL("https://cdn.example.net/"))

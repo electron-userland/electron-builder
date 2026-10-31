@@ -93,6 +93,8 @@ export abstract class Provider<T extends UpdateInfo> {
    * (e.g. the channel file), on its origin. `null` sends the request headers to every URL.
    * The default, `undefined`, means not declared: a download with such headers (from `requestHeaders` / `addAuthHeader`) then fails
    * with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, so a custom provider used with credentials or custom headers must override this getter.
+   * A server's authentication challenge from this origin reaches the updater's `login` event. With `null` or `undefined`, only a proxy's
+   * challenge and those from `AppUpdater.loginChallengeOrigins` do.
    */
   get feedBaseUrl(): URL | null | undefined {
     return undefined
