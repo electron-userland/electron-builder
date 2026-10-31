@@ -169,6 +169,15 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
   const volumePath = path.join("/Volumes", volumeName)
   // https://github.com/electron-userland/electron-builder/issues/2115
 
+  if (!specification.filesystem) {
+    log
+      .once("dmg-filesystem-default")
+      .info(
+        { filesystem: "APFS" },
+        'electron-builder 27 builds DMG volumes as APFS by default (was HFS+), and macOS before 10.13 (High Sierra) cannot mount them. Set dmg.filesystem to "HFS+" to keep the old format, or to "APFS" to hide this message. See https://www.electron.build/docs/migration/v27-runtime-changes#dmg-filesystem-defaults-to-apfs'
+      )
+  }
+
   const settings: DmgBuildConfig = {
     title: path.basename(volumePath),
     "icon-size": specification.iconSize,

@@ -24,7 +24,7 @@ What the installed app, its installer or its auto-updater does differently on yo
 | [`verifyUpdateCodeSignature` renamed and returns a result object (electron-updater)](#verifyupdatecodesignature-renamed-to-verifyupdatefileauthenticodesignature) | Silent (shim) | `NsisUpdater.verifyUpdateCodeSignature` → `verifyUpdateFileAuthenticodeSignature`; return `{ response: "success" }` / `{ response: "failure", message }` instead of `null` / `string` |
 | [macOS default entitlements tightened](#macos-default-entitlements-tightened) | Advisory, partial warning | The bundled default now grants only `allow-jit`; add `allow-unsigned-executable-memory` / `disable-library-validation` back in `build/entitlements.mac.plist` (and `.inherit.plist`) only if your app needs them |
 | [macOS: the ASAR integrity digest is embedded](#macos-asar-integrity-digest) | Warns (with `afterPack`) | With Electron 41+, the Electron Framework is patched and signed again ad hoc after `afterPack`; set `mac.asarIntegrityDigest: false` if you sign the app yourself in `afterPack`, change `app.asar` / `Info.plist` after it, or merge separately built x64 and arm64 apps with `@electron/universal` yourself |
-| [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | Silent | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
+| [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | Info log | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
 | [NSIS file-association ProgID format changed](#nsis-file-association-progid-format-changed) | Warns (custom script only) | Update custom NSIS scripts that hard-code the old ProgID |
 | [Linux `.desktop` `Exec` now runs a generated `*-launcher` script](#linux-launcher-entrypoint) | Silent | Update custom `.desktop`/AppArmor/MIME tooling that hard-codes the `Exec` command (the flatpak target is not affected) |
 | [Linux `executableArgs` field codes are now literal](#linux-launcher-entrypoint) | Warns | Remove `%F`/`%U` from `executableArgs`; use `linux.desktop.entry.Exec` |
@@ -250,7 +250,7 @@ With Electron 41 and later, electron-builder writes a digest of the `ElectronAsa
 
 ### DMG `filesystem` defaults to APFS {#dmg-filesystem-defaults-to-apfs}
 
-**How you'll find out:** **Silent.**
+**How you'll find out:** **Info log only.** A DMG build without `dmg.filesystem` logs the new default once, with a link here. Set `dmg.filesystem` to either value to hide it.
 
 The default DMG volume filesystem changed from **`HFS+`** to **`APFS`**. APFS is the modern macOS filesystem and produces smaller, faster-to-mount images on current macOS.
 

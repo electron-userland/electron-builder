@@ -131,7 +131,7 @@ dmg:
 ```
 
 :::note[v27 default change]
-The default changed from `HFS+` to `APFS` in v27. This is a runtime default, not a config-key rename, so `migrate-schema` does not change it — set `filesystem: "HFS+"` explicitly if you need the old behavior. See [v27 Breaking Changes → DMG filesystem](./migration/v27-runtime-changes.md#dmg-filesystem-defaults-to-apfs).
+The default changed from `HFS+` to `APFS` in v27. This is a runtime default, not a config-key rename, so `migrate-schema` does not change it — set `filesystem: "HFS+"` explicitly if you need the old behavior. A build that leaves `filesystem` unset logs the new default once; setting it to either value hides that line. See [v27 Breaking Changes → DMG filesystem](./migration/v27-runtime-changes.md#dmg-filesystem-defaults-to-apfs).
 :::
 
 ## DMG Size

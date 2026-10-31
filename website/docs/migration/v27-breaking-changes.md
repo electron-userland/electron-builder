@@ -61,7 +61,6 @@ The quickest way through an upgrade is:
 
 | Change | Affects you if | Page |
 |---|---|---|
-| [DMG `filesystem` defaults to APFS](./v27-runtime-changes.md#dmg-filesystem-defaults-to-apfs) | You support macOS older than 10.13 (High Sierra) | Runtime |
 | [`http-parser` dropped from the default pacman `depends`](./v27-runtime-changes.md#pacman-default-dependencies-changed) | Your Arch package relies on `http-parser` | Runtime |
 | [Linux targets launch through a `*-launcher` script; AppImage adds `--no-sandbox` only for the legacy FUSE2 runtime](./v27-runtime-changes.md#linux-launcher-entrypoint) | You ship a custom `.desktop` file, AppArmor profile or MIME handler, or need the Chromium sandbox off in an AppImage | Runtime |
 | [Windows update signature verification fails closed](./v27-runtime-changes.md#windows-update-signature-verification-fails-closed) | Your users' machines may block PowerShell (AppLocker / WDAC), or your update installers are catalog-signed. Updates fail only on those machines | Runtime |
@@ -83,6 +82,7 @@ The quickest way through an upgrade is:
 | [Azure Trusted Signing uses `signtool /dlib`](./v27-build-changes.md#azure-trusted-signing-signtool-dlib-is-the-default) | You need the legacy PowerShell signing path | Build |
 | [`node_modules` are filtered by `cpu` / `os` on every build](./v27-build-changes.md#node_modules-are-now-archos-filtered-on-every-build) | You bundle a cross-arch or cross-OS optional binary on purpose | Build |
 | [`electron` / `electron-builder` are excluded from the copied `node_modules`](./v27-build-changes.md#redundant-production-dependencies-are-excluded-not-rejected) | You need `electron-builder` inside the app | Build |
+| [DMG `filesystem` defaults to APFS](./v27-runtime-changes.md#dmg-filesystem-defaults-to-apfs) | You support macOS older than 10.13 (High Sierra) | Runtime |
 
 ### Silent in the common case {#silent-in-the-common-case}
 
