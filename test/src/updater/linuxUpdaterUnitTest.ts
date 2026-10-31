@@ -807,7 +807,8 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
       /** A DebUpdater that installs `rawPathIn(dir)` with dpkg, elevated by kdesudo; `dir` holds the stand-ins and their log. */
       async function prepare(tmpDir: TmpDir, rawPathIn: (dir: string) => string) {
-        const dir = await tmpDir.createTempDir({ prefix: "wrapped-helper" })
+        const dir = await tmpDir.getTempDir({ prefix: "wrapped-helper" })
+        await mkdir(dir, { recursive: true })
         // kdesudo --comment <comment> -c <command> runs `sudo sh -c <command>`
         await writeFile(path.join(dir, "kdesudo"), `#!/bin/sh\n[ "$1" = --comment ] && [ "$3" = -c ] || exit 64\nexec sh -c "$4"\n`, { mode: 0o755 })
         // the package managers log the arguments they get, one per line
