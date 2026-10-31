@@ -1,4 +1,6 @@
 import { Arch, Platform } from "electron-builder"
+import { readFile } from "fs/promises"
+import { load } from "js-yaml"
 import * as path from "path"
 import { readSquashfsCompression } from "../helpers/fileAssert.js"
 import { app, appThrows, assertPack, snapTarget } from "../helpers/packTester.js"
@@ -401,6 +403,57 @@ test.ifNotWindows("template app with lzo compression (#7013)", ({ expect }) =>
       packed: async context => {
         // Template builds pack with toolsets.appimage's mksquashfs; the legacy "0.0.0" one supported only gzip/xz.
         expect(await readSquashfsCompression(path.join(context.outDir, "sep_1.1.0_amd64.snap"))).toBe("lzo")
+      },
+    }
+  )
+)
+
+async function readTemplateSnapStage(outDir: string) {
+  const stageDir = path.join(outDir, "__snap-amd64")
+  return {
+    commandSh: await readFile(path.join(stageDir, "command.sh"), "utf8"),
+    environment: (load(await readFile(path.join(stageDir, "meta", "snap.yaml"), "utf8")) as { apps: Record<string, { environment: Record<string, string> }> }).apps.sep.environment,
+  }
+}
+
+test.ifNotWindows("template app sets LD_LIBRARY_PATH in command.sh, not in snap.yaml", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep" },
+        productName: "Sep",
+        snapcraft: { base: "core20", core20: { useTemplateApp: true } },
+      },
+    },
+    {
+      packed: async context => {
+        // snapd would expand an unset `$LD_LIBRARY_PATH` in snap.yaml to an empty entry; the launcher adds it only when set
+        const { commandSh, environment } = await readTemplateSnapStage(context.outDir)
+        expect(environment.LD_LIBRARY_PATH).toBeUndefined()
+        expect(commandSh).toContain("$SNAP/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:$SNAP/lib:")
+      },
+    }
+  )
+)
+
+test.ifNotWindows("template app keeps a configured LD_LIBRARY_PATH as is", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep" },
+        productName: "Sep",
+        snapcraft: { base: "core20", core20: { useTemplateApp: true, environment: { LD_LIBRARY_PATH: "$SNAP/custom" } } },
+      },
+    },
+    {
+      packed: async context => {
+        const { commandSh, environment } = await readTemplateSnapStage(context.outDir)
+        expect(environment.LD_LIBRARY_PATH).toBe("$SNAP/custom")
+        expect(commandSh).not.toContain("LD_LIBRARY_PATH")
       },
     }
   )

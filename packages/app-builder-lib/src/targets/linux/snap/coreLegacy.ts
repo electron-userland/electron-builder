@@ -52,6 +52,8 @@ const SNAP_TEMPLATES = {
 // See: https://github.com/develar/app-builder/blob/master/pkg/package-format/snap
 export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18" | "core20" | "core22" }> {
   private isUseTemplateApp = false
+  // Arch triplet whose library dirs command.sh puts on LD_LIBRARY_PATH; null when the launcher leaves LD_LIBRARY_PATH alone.
+  private launcherLibraryArchTriplet: string | null = null
 
   defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
@@ -157,16 +159,13 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
       delete appDescriptor.plugs
       delete snap.plugs
     } else {
-      const archTriplet = this.archNameToTriplet(arch)
+      // LD_LIBRARY_PATH is set by command.sh rather than here, unless the user configures it: see buildCommandShContent.
+      if (options.environment?.LD_LIBRARY_PATH == null) {
+        this.launcherLibraryArchTriplet = this.archNameToTriplet(arch)
+      }
       const environment: Record<string, string> = {
         PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         SNAP_DESKTOP_RUNTIME: "$SNAP/gnome-platform",
-        LD_LIBRARY_PATH: [
-          "$SNAP_LIBRARY_PATH",
-          "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/" + archTriplet + ":$SNAP/usr/lib/" + archTriplet,
-          "$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib",
-          "$SNAP/lib/" + archTriplet + ":$SNAP/usr/lib/" + archTriplet,
-        ].join(":"),
         ...options.environment,
       }
       const allow = options.allowNativeWayland
@@ -396,7 +395,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
 
     // command.sh — template builds write to stage root; no-template writes to scripts/
     const commandWrapperPath = isTemplate ? path.join(stageDir, "command.sh") : path.join(scriptDir, "command.sh")
-    const commandContent = buildCommandShContent({ isTemplate, executableName: this.packager.executableName, extraAppArgs })
+    const commandContent = buildCommandShContent({ isTemplate, executableName: this.packager.executableName, extraAppArgs, libraryArchTriplet: this.launcherLibraryArchTriplet })
     await writeFile(commandWrapperPath, commandContent, { mode: 0o755 })
     await chmod(commandWrapperPath, 0o755)
   }
@@ -504,12 +503,21 @@ export function assertTemplateSnapCompressionSupported(appimageToolset: ToolsetC
   }
 }
 
-export function buildCommandShContent(opts: { isTemplate: boolean; executableName: string; extraAppArgs: string[] }): string {
-  const { isTemplate, executableName, extraAppArgs } = opts
+export function buildCommandShContent(opts: { isTemplate: boolean; executableName: string; extraAppArgs: string[]; libraryArchTriplet?: string | null }): string {
+  const { isTemplate, executableName, extraAppArgs, libraryArchTriplet } = opts
   validateShellEmbeddable(executableName, "executableName")
   const appPrefix = isTemplate ? "" : "app/"
+  // snapd expands an unset `$LD_LIBRARY_PATH` in the snap.yaml `environment` to "" and has no `${VAR:+...}` form,
+  // which leaves an empty entry that makes the dynamic linker search the current directory. The shell adds the
+  // caller's LD_LIBRARY_PATH only when it is set.
+  let preamble: string | undefined
+  if (libraryArchTriplet != null) {
+    const snapLibDirs = `$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/${libraryArchTriplet}:$SNAP/usr/lib/${libraryArchTriplet}`
+    preamble = `export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:${snapLibDirs}\${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:${snapLibDirs}"`
+  }
   return buildLauncherScript({
     shebang: "#!/bin/bash -e",
+    preamble,
     command: ['"$SNAP/desktop-init.sh"', '"$SNAP/desktop-common.sh"', '"$SNAP/desktop-gnome-specific.sh"', `"$SNAP/${appPrefix}${executableName}"`],
     args: extraAppArgs,
   })

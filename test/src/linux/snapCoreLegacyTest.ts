@@ -59,6 +59,20 @@ describe("snapCoreLegacy helpers", { concurrent: false }, () => {
       expect(content).toMatch(/^#!\/bin\/bash/)
     })
 
+    test("LD_LIBRARY_PATH adds the caller's value only when it is set, so an unset one leaves no empty entry", ({ expect }) => {
+      const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], libraryArchTriplet: "x86_64-linux-gnu" })
+      const snapLibDirs = "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu"
+      expect(content).toContain(`\nexport LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:${snapLibDirs}\${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:${snapLibDirs}"\n`)
+      expect(content).not.toContain(":$LD_LIBRARY_PATH:")
+      // set before the desktop scripts and the app start
+      expect(content.indexOf("export LD_LIBRARY_PATH=")).toBeLessThan(content.indexOf("exec "))
+    })
+
+    test("LD_LIBRARY_PATH is left alone without an arch triplet", ({ expect }) => {
+      const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], libraryArchTriplet: null })
+      expect(content).not.toContain("LD_LIBRARY_PATH")
+    })
+
     test("executableName with shell-safe chars is accepted", ({ expect }) => {
       expect(() => buildCommandShContent({ isTemplate: true, executableName: "my-app_v2.0", extraAppArgs: [] })).not.toThrow()
     })
