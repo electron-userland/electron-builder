@@ -18,6 +18,12 @@ export function getNetSession(): Session {
   })
 }
 
+/**
+ * Gets Electron's `login` event of a request: `requestUrl` is the URL of that request (Electron's `AuthInfo` names only the challenger's
+ * host and port), `null` when it cannot be determined from the request options.
+ */
+export type LoginChallengeListener = (authInfo: AuthInfo, callback: LoginCallback, requestUrl: URL | null) => void
+
 /** Gets the names (never the values) of the headers a cross-origin redirect did not send on to its target. */
 export type CrossOriginRedirectListener = (droppedHeaderNames: Array<string>, originUrl: URL, targetUrl: URL) => void
 
@@ -34,7 +40,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
   private readonly isInsecureFeedAllowed: () => boolean
 
   constructor(
-    private readonly proxyLoginCallback?: (authInfo: AuthInfo, callback: LoginCallback) => void,
+    private readonly loginChallengeListener?: LoginChallengeListener,
     options: ElectronHttpExecutorOptions = {}
   ) {
     super()
@@ -99,8 +105,22 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
       session: this.cachedSession,
     })
     request.on("response", callback)
-    if (this.proxyLoginCallback != null) {
-      request.on("login", this.proxyLoginCallback)
+    const loginChallengeListener = this.loginChallengeListener
+    if (loginChallengeListener != null) {
+      // like Electron's net, `host` (where a Host header goes) wins over hostname and port
+      let authority: string | null = null
+      if (typeof options.host === "string" && options.host !== "") {
+        authority = options.host
+      } else if (typeof options.hostname === "string" && options.hostname !== "") {
+        authority = options.port ? `${options.hostname}:${options.port}` : options.hostname
+      }
+      let requestUrl: URL | null = null
+      try {
+        requestUrl = authority == null || typeof options.protocol !== "string" ? null : new URL(`${options.protocol}//${authority}${options.path || "/"}`)
+      } catch (_e: unknown) {
+        requestUrl = null
+      }
+      request.on("login", (authInfo: AuthInfo, loginCallback: LoginCallback) => loginChallengeListener(authInfo, loginCallback, requestUrl))
     }
     return request
   }
