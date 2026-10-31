@@ -649,7 +649,12 @@ describe("install on next launch", { concurrent: false }, () => {
       expect(updater.disableWebInstaller).toBe(true)
 
       await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
-      expect(errors).toEqual([expect.objectContaining({ code: "ERR_UPDATER_WEB_INSTALLER_DISABLED" })])
+      expect(errors).toEqual([
+        expect.objectContaining({
+          code: "ERR_UPDATER_WEB_INSTALLER_DISABLED",
+          message: expect.stringContaining("https://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true"),
+        }),
+      ])
       expect(doInstall).not.toHaveBeenCalled()
       expect(await helper.getPendingInstallInfo()).toBeNull()
     })

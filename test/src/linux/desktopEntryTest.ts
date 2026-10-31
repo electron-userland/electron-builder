@@ -21,6 +21,9 @@ function computeDesktopEntry(desktop: LinuxDesktopFile, options: Options = {}): 
   return new LinuxTargetHelper(packager as any).computeDesktopEntry({ category: "Utility", ...options, desktop }, "test-app %U")
 }
 
+// every validation error links the v27 migration section, as electron-builder 26 wrote these entries as given
+const MIGRATION_URL = "https://www.electron.build/docs/migration/v27-build-changes#linux-desktop-entries-are-validated"
+
 const rejection = (desktop: LinuxDesktopFile, options?: Options): Promise<Error> =>
   computeDesktopEntry(desktop, options).then(
     () => {
@@ -53,6 +56,7 @@ test.for<[string, LinuxDesktopFile, Options, string]>([
   const error = await rejection(desktop, options)
   expect(error).toBeInstanceOf(InvalidConfigurationError)
   expect(error.message).toContain(`The value of ${where} of the .desktop file contains a line break`)
+  expect(error.message).toContain(MIGRATION_URL)
 })
 
 // each of these fails g_key_file_is_key_name, which makes GLib reject the whole file
@@ -66,6 +70,7 @@ test.for(["Foo=Bar", "Exec\nX", "Exec\rX", "", " ", "\t", "Name[de", "Na]me", "N
       const error = await rejection(desktop)
       expect(error).toBeInstanceOf(InvalidConfigurationError)
       expect(error.message).toContain(`Invalid key ${JSON.stringify(key)} in the ${group} group`)
+      expect(error.message).toContain(MIGRATION_URL)
     }
   }
 )
@@ -74,6 +79,7 @@ test.for(["New[Window", "New]Window", "New\nWindow", "New\tWindow", "New\x00Wind
   const error = await rejection({ desktopActions: { [name]: { Name: "New Window" } } })
   expect(error).toBeInstanceOf(InvalidConfigurationError)
   expect(error.message).toContain(`Invalid desktop action name ${JSON.stringify(name)}`)
+  expect(error.message).toContain(MIGRATION_URL)
 })
 
 // GLib trims the blanks around a key and treats a blank line as a comment, so these are read back as configured

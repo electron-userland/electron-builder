@@ -87,6 +87,8 @@ Keys and values are written to the file as given, so escape sequences such as `\
 
 The `Name`, `Comment` and `StartupWMClass` values that electron-builder derives from the product name, the description and `desktopName` are escaped instead, so they are not affected. Each of these cases would otherwise produce a file that desktop environments read differently from what was configured, or not at all. To fix the error, write the value on one line and use a key that the [Desktop Entry Specification](https://specifications.freedesktop.org/desktop-entry/latest/basic-format.html) allows; your own keys start with `X-`, such as `X-MyApp-Feature`.
 
+These checks are new in electron-builder 27, which fails the build where v26 wrote the entry as given. See [v27 Build & Publish Changes → Linux `.desktop` entries are validated](./migration/v27-build-changes.md#linux-desktop-entries-are-validated).
+
 ## Window Association (`desktopName`)
 
 Electron derives its [`app_id`](https://github.com/electron/electron/blob/main/lib/browser/init.ts) — which becomes the window's `WM_CLASS` — from the `desktopName` field in your root `package.json`. Desktop environments (GNOME, KDE, etc.) use `WM_CLASS` to match a running window to its `.desktop` entry for taskbar grouping, dock badges, and launcher highlighting.

@@ -3,7 +3,7 @@ import { AllPublishOptions, newError, PackageFileInfo, CURRENT_APP_INSTALLER_FIL
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter.js"
 import { DownloadUpdateOptions, UpdateInfoAndProvider } from "./AppUpdater.js"
-import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
+import { BaseUpdater, InstallOptions, WEB_INSTALLER_DISABLED_HINT } from "./BaseUpdater.js"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
@@ -203,7 +203,10 @@ export class NsisUpdater extends BaseUpdater {
     if (fileInfo.packageInfo != null) {
       if (webInstallerDisabled) {
         return Promise.reject(
-          newError(`Unable to download new version ${downloadUpdateOptions.updateInfoAndProvider.info.version}. Web Installers are disabled`, "ERR_UPDATER_WEB_INSTALLER_DISABLED")
+          newError(
+            `Unable to download new version ${downloadUpdateOptions.updateInfoAndProvider.info.version}. Web Installers are disabled. ${WEB_INSTALLER_DISABLED_HINT}`,
+            "ERR_UPDATER_WEB_INSTALLER_DISABLED"
+          )
         )
       }
       if (fileInfo.packageInfo.sha512 == null) {
@@ -344,7 +347,7 @@ export class NsisUpdater extends BaseUpdater {
     if (packagePath != null) {
       // the policy may have changed since the download; never run the web installer when web installers are disabled
       if (this.disableWebInstaller) {
-        this.dispatchError(newError("Unable to install the downloaded update. Web Installers are disabled", "ERR_UPDATER_WEB_INSTALLER_DISABLED"))
+        this.dispatchError(newError(`Unable to install the downloaded update. Web Installers are disabled. ${WEB_INSTALLER_DISABLED_HINT}`, "ERR_UPDATER_WEB_INSTALLER_DISABLED"))
         return false
       }
       // only = form is supported

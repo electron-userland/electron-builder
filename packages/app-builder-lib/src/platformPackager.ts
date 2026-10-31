@@ -35,6 +35,7 @@ import type { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
 import { AppInfo } from "./appInfo.js"
 import { isSignResultSigned, SigningResult } from "./codeSign/signResult.js"
 import { FORCE_CODE_SIGNING_DOCS, forceCodeSigningOverrideHint } from "./codeSign/forceCodeSigning.js"
+import { BUILD_CHANGES_URL } from "./util/config/legacyOptions.js"
 import { checkFileInArchive } from "./asar/asarFileChecker.js"
 import { AsarPackager } from "./asar/asarUtil.js"
 import { AsarIntegrity, computeData } from "./asar/integrity.js"
@@ -213,7 +214,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
           "updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out explicitly with " +
           (forced
             ? `\`updateManifest: false\`, or pass ${forceCodeSigningOverrideHint(this)} to build without forceCodeSigning. See ${FORCE_CODE_SIGNING_DOCS}`
-            : "`updateManifest: false`. See https://www.electron.build/features/signed-update-manifests")
+            : `\`updateManifest: false\`. Signed manifests are required since electron-builder 27. See ${BUILD_CHANGES_URL}#signed-update-manifests-are-required`)
       )
     }
 

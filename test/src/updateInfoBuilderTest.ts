@@ -437,6 +437,8 @@ test("requireUpdateSigningKeys throws when publishing and no key resolves", asyn
   expect(error!.message).toContain("electron-builder create-update-key")
   expect(error!.message).toContain("ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded PEM file)")
   expect(error!.message).toContain("`updateManifest: false`")
+  // a v27 break: the error links its migration section
+  expect(error!.message).toContain("https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required")
 })
 
 test("requireUpdateSigningKeys only warns when the build is not publishing", async ({ expect }) => {

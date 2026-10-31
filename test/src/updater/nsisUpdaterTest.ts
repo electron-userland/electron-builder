@@ -681,6 +681,8 @@ test.skip("test downloaded installer", config, async ({ expect }) => {
 })
 
 describe("NsisUpdater — disableWebInstaller", () => {
+  // every ERR_UPDATER_WEB_INSTALLER_DISABLED message links the v27 migration section of the new default
+  const WEB_INSTALLER_MIGRATION_URL = "https://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true"
   // disableWebInstaller defaults to true: a web-installer update is rejected with ERR_UPDATER_WEB_INSTALLER_DISABLED
   // (also when it is already cached) unless the app sets it to false; the downloaded package is then passed via --package-file.
   // names the updater gives the cached installer (basename of the url) and package (package-<version><ext>) in the pending dir
@@ -780,7 +782,10 @@ describe("NsisUpdater — disableWebInstaller", () => {
       trackEvents(updater)
 
       const updateCheckResult = await updater.checkForUpdates()
-      await expect(updateCheckResult!.downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_WEB_INSTALLER_DISABLED" })
+      await expect(updateCheckResult!.downloadPromise).rejects.toMatchObject({
+        code: "ERR_UPDATER_WEB_INSTALLER_DISABLED",
+        message: expect.stringContaining(WEB_INSTALLER_MIGRATION_URL),
+      })
       expect(downloads).toEqual([])
     } finally {
       server.close()
@@ -870,7 +875,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
       updater.disableWebInstaller = true
       expect(updater.install(true, false)).toBe(false)
       expect(spawnLog).not.toHaveBeenCalled()
-      expect(errors).toEqual([expect.objectContaining({ code: "ERR_UPDATER_WEB_INSTALLER_DISABLED" })])
+      expect(errors).toEqual([expect.objectContaining({ code: "ERR_UPDATER_WEB_INSTALLER_DISABLED", message: expect.stringContaining(WEB_INSTALLER_MIGRATION_URL) })])
 
       // a refused install() returns to idle: a later install() tries again without any reset
       expect((updater as any).installState).toEqual({ kind: "idle" })
