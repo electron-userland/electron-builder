@@ -433,6 +433,7 @@ export class NsisTarget extends Target {
           )
       }
     }
+    await this.warnAboutPerUserUninstallHooks()
     if (isPortable) {
       const { unpackDirName, requestExecutionLevel, splashImage } = options as PortableOptions
       defines.REQUEST_EXECUTION_LEVEL = requestExecutionLevel || "user"
@@ -1000,6 +1001,49 @@ export class NsisTarget extends Target {
         "You ship a custom NSIS script (nsis.include / nsis.script), which may reference the old value. " +
         "See https://www.electron.build/docs/migration/v27-runtime-changes#nsis-file-association-progid-format-changed"
     )
+  }
+
+  /**
+   * v27: a per-machine installer no longer runs or acts on a per-user installation of the app. The built-in install section no longer
+   * calls `customUnInstallCheckCurrentUser`, and `uninstallOldVersion HKEY_CURRENT_USER` returns without running anything in per-machine
+   * mode, so a custom NSIS script that relies on either has that code skipped there.
+   *
+   * Only warns when a custom script (nsis.include / nsis.script) uses one of them; nothing else in the build can see the change.
+   * The portable launcher installs nothing, so it never warns.
+   */
+  private async warnAboutPerUserUninstallHooks(): Promise<void> {
+    if (this.isPortable) {
+      return
+    }
+    // checked first: resolving and reading the custom scripts is not free, and buildInstaller runs for every installer
+    const limited = log.once("nsis-per-machine-per-user-uninstall")
+    if (limited.isExhausted) {
+      return
+    }
+    const customScripts = await this.resolveCustomIncludes()
+    const customScriptPath = await this.packager.getResource(this.options.script, "installer.nsi")
+    if (customScriptPath != null) {
+      customScripts.push(customScriptPath)
+    }
+    const usages: Array<[string, RegExp]> = [
+      ["customUnInstallCheckCurrentUser", /^[ \t]*!macro[ \t]+customUnInstallCheckCurrentUser\b/m],
+      ["uninstallOldVersion HKEY_CURRENT_USER", /^[ \t]*!insertmacro[ \t]+uninstallOldVersion[ \t]+"?HKEY_CURRENT_USER\b/m],
+    ]
+    for (const file of customScripts) {
+      const content = await readFile(file, "utf8")
+      const used = usages.filter(([, pattern]) => pattern.test(content)).map(([name]) => name)
+      if (used.length === 0) {
+        continue
+      }
+      limited.warn(
+        { file: log.filePath(file), uses: used.join(", "), solution: "users moving to a per-machine install remove the per-user copy themselves" },
+        "electron-builder v27: a per-machine NSIS installer no longer runs or acts on a per-user installation of the app. " +
+          "The built-in install section no longer calls customUnInstallCheckCurrentUser, and uninstallOldVersion HKEY_CURRENT_USER returns without running anything " +
+          "in per-machine mode, so this code in your custom NSIS script no longer runs there. " +
+          "See https://www.electron.build/docs/migration/v27-runtime-changes#nsis-a-per-machine-install-leaves-a-per-user-install-in-place"
+      )
+      return
+    }
   }
 
   private async computeFinalScript(originalScript: string, isInstaller: boolean, archs: Map<Arch, string>): Promise<string> {
