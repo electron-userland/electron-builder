@@ -7,7 +7,7 @@ import { NsisTarget } from "app-builder-lib/src/targets/win/nsis/NsisTarget"
 import { NsisScriptGenerator } from "app-builder-lib/src/targets/win/nsis/nsisScriptGenerator"
 
 // Each path written into the generated NSIS script must fail the build when it would end the quoted string.
-const unsafe = /contains a double quote, backtick, line break or NUL character/
+const unsafe = /contains a double quote, line break or NUL character/
 
 // Only the packager fields read before each sink is reached.
 function createPackager(buildResourcesDir: string, overrides: Record<string, unknown> = {}): any {
@@ -53,8 +53,17 @@ describe("NSIS script path quoting", () => {
 
   test("HTML license copy rejects an unsafe license file", async ({ expect, tmpDir }) => {
     const dir = await tmpDir.getTempDir({ prefix: "nsis-quote-license-html" })
-    const packager = createPackager(dir, { getResource: () => Promise.resolve(path.join(dir, "lic`ense.html")) })
+    const packager = createPackager(dir, { getResource: () => Promise.resolve(path.join(dir, "lic\nense.html")) })
     await expect(computeLicensePage(packager, {}, new NsisScriptGenerator(), ["en_US"])).rejects.toThrow(unsafe)
+  })
+
+  test("license page keeps a backtick in the license file path", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "nsis-quote-license-backtick" })
+    const license = path.join(dir, "lic`ense.html")
+    const packager = createPackager(dir, { getResource: () => Promise.resolve(license) })
+    const generator = new NsisScriptGenerator()
+    await computeLicensePage(packager, {}, generator, ["en_US"])
+    expect(generator.build()).toContain(`File /oname=$PLUGINSDIR\\license.html "${license}"`)
   })
 
   test("localized license page rejects an unsafe license file before rewriting it", async ({ expect, tmpDir }) => {

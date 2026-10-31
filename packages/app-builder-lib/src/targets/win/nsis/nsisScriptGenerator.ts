@@ -47,13 +47,13 @@ export class NsisScriptGenerator {
 
 /**
  * Quotes a file path for the generated NSIS script. A double quote, line break or NUL in the path would end the quoted string
- * and the rest of the path would be read as script; a backtick is NSIS's other string delimiter. Such a path fails the build
- * instead of being escaped.
+ * and the rest of the path would be read as script, so such a path fails the build instead of being escaped. Backticks and
+ * single quotes are literal inside a double-quoted NSIS string and are kept.
  */
 export function nsisQuotePath(file: string): string {
-  if (/["`\r\n\0]/.test(file)) {
+  if (/["\r\n\0]/.test(file)) {
     throw new InvalidConfigurationError(
-      `Cannot write ${JSON.stringify(file)} into the NSIS script: the path contains a double quote, backtick, line break or NUL character. Rename the file or directory.`
+      `Cannot write ${JSON.stringify(file)} into the NSIS script: the path contains a double quote, line break or NUL character. Rename the file or directory.`
     )
   }
   return `"${file}"`
