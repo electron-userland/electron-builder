@@ -8,9 +8,12 @@ import { GenericDifferentialDownloader } from "electron-updater/src/differential
 import { createClient } from "electron-updater/src/providerFactory"
 import { Provider, resolveFiles } from "electron-updater/src/providers/Provider"
 import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
+import { NsisUpdater } from "electron-updater/src/NsisUpdater"
 import { createHash } from "crypto"
+import { EventEmitter } from "events"
 import fsExtra from "fs-extra"
 import type { IncomingHttpHeaders, IncomingMessage, OutgoingHttpHeaders, RequestOptions, Server } from "http"
+import Module from "node:module"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
 import { afterEach, describe, test, vi } from "vitest"
@@ -623,6 +626,58 @@ describe("differential downloads use the per-download headers", () => {
       expect(warnings()).toHaveLength(1)
       expect(warnings()[0]).toContain("did not send X-Tenant from requestHeaders")
     })
+  })
+})
+
+// The updater's own executor (built when no app adapter is passed) hands the headers a redirect drops to announceCrossOriginRedirect.
+describe("the updater's own executor announces a cross-origin redirect", () => {
+  test("a redirect to another origin through Electron's net announces the dropped requestHeaders", async ({ expect }) => {
+    const requests: Array<EventEmitter> = []
+    const electron = {
+      app: Object.assign(new EventEmitter(), {
+        whenReady: () => new Promise<void>(() => undefined),
+        getVersion: () => "1.0.0",
+        getName: () => "cross-origin-redirect-app",
+        getAppPath: () => __dirname,
+        getPath: () => __dirname,
+        isPackaged: false,
+      }),
+      session: { fromPartition: () => ({}) },
+      net: {
+        request: () => {
+          const request: EventEmitter = Object.assign(new EventEmitter(), {
+            end: () => undefined,
+            abort: () => request.emit("abort"),
+          })
+          requests.push(request)
+          return request
+        },
+      },
+    }
+    const moduleInternals = Module as unknown as { _load: (request: string, ...rest: Array<unknown>) => unknown }
+    const load = moduleInternals._load
+    moduleInternals._load = function (this: unknown, request: string, ...rest: Array<unknown>) {
+      return request === "electron" ? electron : load.call(this, request, ...rest)
+    }
+    try {
+      const updater = new NsisUpdater()
+      const warn = vi.fn()
+      updater.logger = { info: vi.fn(), warn, error: vi.fn() }
+      updater.requestHeaders = { "X-Tenant": "acme" }
+      const done = updater.httpExecutor
+        .request({ protocol: "https:", hostname: "feed.example.com", path: "/updates/latest.yml", headers: { "X-Tenant": "acme" } })
+        .catch((e: unknown) => e)
+
+      requests[0].emit("redirect", 302, "GET", "https://cdn.example.net/latest.yml")
+      requests[1].emit("error", new Error("end of test"))
+      await done
+
+      expect(warn).toHaveBeenCalledTimes(1)
+      expect(warn.mock.calls[0][0]).toContain("the redirect from https://feed.example.com to https://cdn.example.net did not send X-Tenant from requestHeaders")
+      expect(warn.mock.calls[0][0]).not.toContain("acme")
+    } finally {
+      moduleInternals._load = load
+    }
   })
 })
 
