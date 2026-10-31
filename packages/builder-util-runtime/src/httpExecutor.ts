@@ -342,6 +342,9 @@ Please double check that your authentication token is correct. Due to security r
     this.addRedirectHandlers(request, requestOptions, options.callback, redirectCount, requestOptions => {
       this.doDownload(requestOptions, options, redirectCount + 1)
     })
+    // a cancel aborts the request in flight, or its response would go on downloading into the destination. The promise keeps one cancel
+    // handler: a redirect's new request replaces this one, which the redirect has already ended
+    options.onCancel(() => request.abort())
     request.end()
   }
 
