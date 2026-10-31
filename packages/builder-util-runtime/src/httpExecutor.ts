@@ -481,13 +481,12 @@ Please double check that your authentication token is correct. Due to security r
       // Node's `auth` option becomes a Basic Authorization header on the request, so it is a credential for the original origin too
       delete newOptions.auth
       const droppedNames: Array<string> = []
-      const headerRecord = headers as Record<string, unknown>
-      for (const key of Object.keys(headerRecord)) {
+      for (const key of Object.keys(headers)) {
         if (!isCrossOriginSafeHeader(key)) {
-          if (headerRecord[key] != null) {
+          if (headers[key] != null) {
             droppedNames.push(key)
           }
-          delete headerRecord[key]
+          delete headers[key]
         }
       }
       if (droppedNames.length !== 0 && onDroppedHeaders != null) {
