@@ -143,8 +143,7 @@ describe("computeSignToolArgs (isWin=true, modern toolset)", () => {
   })
 
   test("omits /td in offline mode", () => {
-    const origEnv = process.env.ELECTRON_BUILDER_OFFLINE
-    process.env.ELECTRON_BUILDER_OFFLINE = "true"
+    vi.stubEnv("ELECTRON_BUILDER_OFFLINE", "true")
     try {
       const manager = makeManager("1.1.0")
       const config = makeTaskConfig({ hash: "sha256" })
@@ -153,11 +152,7 @@ describe("computeSignToolArgs (isWin=true, modern toolset)", () => {
       expect(args).not.toContain("/t")
       expect(args).not.toContain("/td")
     } finally {
-      if (origEnv === undefined) {
-        delete process.env.ELECTRON_BUILDER_OFFLINE
-      } else {
-        process.env.ELECTRON_BUILDER_OFFLINE = origEnv
-      }
+      vi.unstubAllEnvs()
     }
   })
 })
@@ -502,8 +497,7 @@ describe("PKCS#11 timestamp flags", () => {
   })
 
   test("offline mode omits all timestamp args", () => {
-    const origEnv = process.env.ELECTRON_BUILDER_OFFLINE
-    process.env.ELECTRON_BUILDER_OFFLINE = "true"
+    vi.stubEnv("ELECTRON_BUILDER_OFFLINE", "true")
     try {
       const manager = makePkcs11Manager()
       const config = makeTaskConfig({ options: { sign: pkcs11Base }, hash: "sha256" })
@@ -511,12 +505,55 @@ describe("PKCS#11 timestamp flags", () => {
       expect(args).not.toContain("-ts")
       expect(args).not.toContain("-t")
     } finally {
-      if (origEnv === undefined) {
-        delete process.env.ELECTRON_BUILDER_OFFLINE
-      } else {
-        process.env.ELECTRON_BUILDER_OFFLINE = origEnv
-      }
+      vi.unstubAllEnvs()
     }
+  })
+})
+
+// ─── ELECTRON_BUILDER_OFFLINE accepts the same values as every other boolean flag ─
+
+describe("ELECTRON_BUILDER_OFFLINE=1 skips timestamping in every sign manager", () => {
+  const pkcs11Options = {
+    sign: {
+      type: "pkcs11" as const,
+      pkcs11Module: "/usr/lib/opensc-pkcs11.so",
+      pkcs11KeyUri: "pkcs11:token=T;object=K;type=private",
+    },
+  } as any
+  const hsmOptions = {
+    sign: { type: "hsm" as const, cryptoServiceProvider: "Provider", keyContainer: "container" },
+  } as any
+  const timestampFlags = ["/tr", "/t", "/td", "-ts", "-t"]
+
+  beforeEach(() => {
+    vi.stubEnv("ELECTRON_BUILDER_OFFLINE", "1")
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test.each([
+    ["signtool, modern toolset, sha256", () => makeManager("1.1.0").computeSignToolArgs(makeTaskConfig({ hash: "sha256" }), true)],
+    ["signtool, modern toolset, sha1", () => makeManager("1.1.0").computeSignToolArgs(makeTaskConfig({ hash: "sha1" }), true)],
+    ["signtool, legacy toolset, sha256", () => makeManager("0.0.0").computeSignToolArgs(makeTaskConfig({ hash: "sha256" }), true)],
+    ["osslsigncode", () => makeManager("1.1.0").computeSignToolArgs(makeTaskConfig({ hash: "sha256" }), false)],
+    ["HSM, sha256", () => makeHsmManager("1.1.0").computeSignToolArgs(makeTaskConfig({ options: hsmOptions, hash: "sha256" }), true)],
+    ["HSM, sha1", () => makeHsmManager("1.1.0").computeSignToolArgs(makeTaskConfig({ options: hsmOptions, hash: "sha1" }), true)],
+    ["PKCS#11, sha256", () => makePkcs11Manager().computeSignToolArgs(makeTaskConfig({ options: pkcs11Options, hash: "sha256" }), false)],
+    ["PKCS#11, sha1", () => makePkcs11Manager().computeSignToolArgs(makeTaskConfig({ options: pkcs11Options, hash: "sha1" }), false)],
+  ])("%s", (_name, computeArgs) => {
+    const args = computeArgs()
+    for (const flag of timestampFlags) {
+      expect(args).not.toContain(flag)
+    }
+  })
+
+  test("a value that is not true, 1 or empty keeps timestamping on", () => {
+    vi.stubEnv("ELECTRON_BUILDER_OFFLINE", "false")
+    const args = makeHsmManager("1.1.0").computeSignToolArgs(makeTaskConfig({ options: hsmOptions, hash: "sha256" }), true)
+    expect(args).toContain("/tr")
+    expect(args).toContain("/td")
   })
 })
 

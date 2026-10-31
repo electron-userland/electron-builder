@@ -16,6 +16,7 @@ import AppXTarget from "../../targets/win/AppxTarget.js"
 import MsixTarget from "../../targets/win/MsixTarget.js"
 import { getSignToolPath } from "../../toolsets/winCodeSign.js"
 import { ToolInfo } from "../../util/bundledTool.js"
+import { isOfflineModeEnabled } from "../../util/flags.js"
 import { resolveFunction } from "../../util/resolve.js"
 import { withSigntoolLock } from "../../util/toolsetLock.js"
 import { readCertInfo, readCertInfoFromX509 } from "../certInfo.js"
@@ -586,7 +587,7 @@ export class SigntoolSignManager extends SigntoolBaseSignManager {
     const args = ["sign"]
 
     // Timestamping
-    if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
+    if (!isOfflineModeEnabled()) {
       const isRfc3161 = options.isNest || options.hash === "sha256"
       args.push(isRfc3161 ? "/tr" : "/t")
       const timestampUrl = isRfc3161 ? signing?.rfc3161TimeStampServer || "http://timestamp.digicert.com" : signing?.timeStampServer || "http://timestamp.digicert.com"
@@ -601,7 +602,7 @@ export class SigntoolSignManager extends SigntoolBaseSignManager {
       // Legacy v0.0.0: Only add /fd for non-SHA1 (original behavior)
       if (options.hash !== "sha1") {
         args.push("/fd", options.hash)
-        if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
+        if (!isOfflineModeEnabled()) {
           args.push("/td", "sha256")
         }
       }
@@ -609,7 +610,7 @@ export class SigntoolSignManager extends SigntoolBaseSignManager {
       // Modern: Always add /fd (required by new Windows Kits)
       args.push("/fd", options.hash.toLowerCase())
       // Only add /td for RFC3161 timestamps (incompatible with /t)
-      if (process.env.ELECTRON_BUILDER_OFFLINE !== "true" && (options.isNest || options.hash === "sha256")) {
+      if (!isOfflineModeEnabled() && (options.isNest || options.hash === "sha256")) {
         args.push("/td", "sha256")
       }
     }
@@ -634,7 +635,7 @@ export class SigntoolSignManager extends SigntoolBaseSignManager {
     const args = ["sign", "-in", inputFile, "-out", outputPath]
 
     // Timestamping
-    if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
+    if (!isOfflineModeEnabled()) {
       const timestampUrl = signing?.timeStampServer || "http://timestamp.digicert.com"
       args.push("-t", timestampUrl)
     }

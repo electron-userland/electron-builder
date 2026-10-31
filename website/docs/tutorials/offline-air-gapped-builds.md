@@ -134,5 +134,6 @@ The `flatpak` target builds on three Flatpak refs that neither cache holds: the 
 | Variable | Effect |
 | --- | --- |
 | `ELECTRON_BUILDER_CACHE` | Overrides the toolset cache root (must be an absolute path). |
+| `ELECTRON_BUILDER_OFFLINE` | Skips the timestamp server when signing Windows files (signtool, osslsigncode, HSM and PKCS#11), so signing works without network access. Set it to `true` or `1`; like electron-builder's other boolean environment variables, an empty value also counts as set. It does not stop any download, so you still need to seed the caches described above. A signature without a timestamp stops validating once the signing certificate expires. |
 | `ELECTRON_DOWNLOAD_CACHE_MODE` | Tunes @electron/get's cache behavior (`0` ReadWrite, `1` ReadOnly, `2` WriteOnly, `3` Bypass). It only controls artifact caching — it never gated the `SHASUMS256.txt` fetch, so it cannot make a build offline by itself. |
 | `ELECTRON_SKIP_BINARY_DOWNLOAD`, `ELECTRON_OFFLINE_BUILD` | **No effect on electron-builder.** These are install-time variables for the [`electron` npm package](https://github.com/electron/electron) itself; electron-builder never reads them. |
