@@ -1273,6 +1273,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       // downloaded again, so the custom verifier has to gate it here too — its only other gate is the sha512 taken
       // from the very update metadata a custom verifier exists to distrust
       try {
+        await taskOptions.verifyCachedFile?.(updateFile)
         await verifyUpdateFile(updateFile)
       } catch (e: any) {
         await removeFileIfAny()
@@ -1692,6 +1693,12 @@ export interface DownloadExecutorTask {
    * For anything that must not be done to a file that is still unverified — making it executable, in particular.
    */
   readonly afterVerification?: (destinationFile: string) => Promise<void>
+
+  /**
+   * Runs before an update file that is already in the cache (matched by its sha512) is reused for this update instead of being
+   * downloaded. Throws to reject it, like a check `task` makes on a downloaded file.
+   */
+  readonly verifyCachedFile?: (cachedFile: string) => Promise<void>
 
   readonly done?: (event: UpdateDownloadedEvent) => Promise<any>
 }

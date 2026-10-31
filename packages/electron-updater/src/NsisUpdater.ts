@@ -225,6 +225,9 @@ export class NsisUpdater extends BaseUpdater {
       fileExtension: "exe",
       downloadUpdateOptions,
       fileInfo,
+      // the cache is matched by sha512 only: an installer cached for another version (e.g. an older release, kept after it was installed)
+      // must not be reused for this one
+      verifyCachedFile: cachedFile => this.verifyInstallerVersion(cachedFile, downloadUpdateOptions.updateInfoAndProvider),
       task: async (destinationFile, downloadOptions, packageFile, removeTempDirIfAny) => {
         const packageInfo = fileInfo.packageInfo
         const isWebInstaller = packageInfo != null && packageFile != null
