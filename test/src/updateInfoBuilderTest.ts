@@ -449,6 +449,8 @@ test("requireUpdateSigningKeys only warns when the build is not publishing", asy
     expect(warn).toHaveBeenCalledTimes(1)
     // the advisory must say that publishing WILL fail, so it works as a fail-fast preview
     expect(warn.mock.calls[0][1]).toContain("Publishing this configuration will fail")
+    // it previews a v27 break, so it links the migration section
+    expect(warn.mock.calls[0][1]).toContain("https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required")
   } finally {
     warn.mockRestore()
   }

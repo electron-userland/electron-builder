@@ -228,9 +228,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       "auto-update manifests will be unsigned: anyone who can overwrite latest*.yml on your update server can point installs at an arbitrary payload. " +
         (optedOut
           ? "Remove `updateManifest: false` and provide a key with `electron-builder create-update-key` to enable signing. "
-          : "Publishing this configuration will fail (and so will a build with forceCodeSigning) until you provide a key with `electron-builder create-update-key`, or opt out explicitly with `updateManifest: false`. ") +
+          : "Publishing this configuration will fail (and so will a build with forceCodeSigning) until you provide a key with `electron-builder create-update-key`, or opt out explicitly with `updateManifest: false`; signed manifests are required since electron-builder 27. ") +
         "Note that installs which already embed a public key reject unsigned manifests (ERR_UPDATER_MANIFEST_NOT_SIGNED). " +
-        "See https://www.electron.build/features/signed-update-manifests"
+        (optedOut ? "See https://www.electron.build/features/signed-update-manifests" : `See ${BUILD_CHANGES_URL}#signed-update-manifests-are-required`)
     )
     return keys
   }
