@@ -1,5 +1,6 @@
 import { GenericServerOptions, S3Options } from "builder-util-runtime"
 import { NsisUpdater, UpdateCheckResult } from "electron-updater"
+import fs from "fs"
 import fsExtra from "fs-extra"
 import { createHash } from "crypto"
 import * as http from "http"
@@ -23,6 +24,19 @@ import { serializeToYaml, TmpDir } from "builder-util"
 import { afterEach, ExpectStatic, vi } from "vitest"
 
 const config = { retry: 3 }
+
+// The current user cannot write to `files` or create files in `dirs`: NsisUpdater finds out by trying (Node's fs.access does not read
+// Windows ACLs), and those attempts fail with `code`. Every other path is opened as usual. Restore with vi.restoreAllMocks().
+function denyWrites(files: Array<string>, dirs: Array<string>, code = "EACCES") {
+  const openSync = fs.openSync
+  return vi.spyOn(fs, "openSync").mockImplementation((file: fs.PathLike, flags?: fs.OpenMode, mode?: fs.Mode | null) => {
+    const target = String(file)
+    if ((flags === "r+" && files.includes(target)) || (flags === "wx" && dirs.includes(path.dirname(target)))) {
+      throw Object.assign(new Error(`${code}: open '${target}'`), { code })
+    }
+    return openSync(file, flags ?? "r", mode)
+  })
+}
 
 // All update payloads are served from an in-repo localhost static server (createLocalServer) via the
 // generic provider — the exact download path the s3/spaces providers resolve to at runtime (see
@@ -999,11 +1013,14 @@ describe("NsisUpdater — disableWebInstaller", () => {
           const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
           // process.resourcesPath is only set in Electron; set here for the install only (the constructor reads the package-type marker from it)
           const resourcesPath = await tmpDir.getTempDir({ prefix: "resources" })
+          // elevate.exe runs only where the current user cannot modify it (see "NsisUpdater — installer start failure and elevate.exe")
+          const deniedWrites = denyWrites([path.join(resourcesPath, "elevate.exe")], [resourcesPath, path.dirname(process.execPath)])
           const original = Object.getOwnPropertyDescriptor(process, "resourcesPath")
           Object.defineProperty(process, "resourcesPath", { value: resourcesPath, configurable: true, writable: true })
           try {
             expect(updater.install(true, false)).toBe(true)
           } finally {
+            deniedWrites.mockRestore()
             if (original == null) {
               delete (process as any).resourcesPath
             } else {
@@ -1202,46 +1219,64 @@ describe("NsisUpdater — package-type pre-seeds disableWebInstaller", () => {
   })
 })
 
-// a failed start of the update installer is not retried elevated or with the shell; only EACCES is retried through elevate.exe, and only
-// for an app installed under a Program Files folder (where the user cannot replace elevate.exe)
-describe("NsisUpdater — installer start failure", () => {
-  afterEach(() => vi.unstubAllEnvs())
+// a failed start of the update installer is not retried elevated or with the shell; EACCES is retried through elevate.exe, which (like
+// for an update with isAdminRightsRequired) is run only when the current user cannot modify it, its folder or the install folder of the app
+describe("NsisUpdater — installer start failure and elevate.exe", () => {
+  afterEach(() => vi.restoreAllMocks())
 
   const args = ["--updated", "/S"]
+  const MIGRATION_LINK = "https://www.electron.build/docs/migration/v27-runtime-changes#nsis-a-failed-installer-start-is-no-longer-retried"
 
   function spawnError(code: string): Error {
     return Object.assign(new Error(`spawn ${code}`), { code })
   }
 
-  // installs with spawnLog rejecting the first start with `error`, the app running from `execPath` and its resources in `resourcesPath`
-  async function install(tmpDir: TmpDir, error: Error, execPath: (programFiles: string) => string, programFilesEnv: (programFiles: string) => string = it => it) {
+  type Writable = "elevate.exe" | "resources" | "install folder"
+
+  // The app runs from <root>/TestApp/TestApp.exe with elevate.exe in <root>/TestApp/resources. Writing to `writable` succeeds; the
+  // attempts on the others fail with `deniedCode` (see denyWrites). With `isAdminRightsRequired`, the update is installed through
+  // elevate.exe right away; without it, spawnLog rejects the first start with `startError`.
+  async function install(tmpDir: TmpDir, options: { isAdminRightsRequired: boolean; startError?: Error; writable?: Array<Writable>; elevateExe?: boolean; deniedCode?: string }) {
     const root = await tmpDir.getTempDir({ prefix: "installer-start" })
-    const programFiles = path.join(root, "Program Files")
-    vi.stubEnv("ProgramW6432", undefined)
-    vi.stubEnv("ProgramFiles", programFilesEnv(programFiles))
-    vi.stubEnv("ProgramFiles(x86)", undefined)
-    const resourcesPath = path.join(execPath(programFiles), "..", "resources")
+    const installFolder = path.join(root, "TestApp")
+    const resourcesPath = path.join(installFolder, "resources")
+    const execPath = path.join(installFolder, "TestApp.exe")
+    const elevatePath = path.join(resourcesPath, "elevate.exe")
+    await fsExtra.outputFile(execPath, "app")
+    await fsExtra.ensureDir(resourcesPath)
+    if (options.elevateExe !== false) {
+      await fsExtra.outputFile(elevatePath, "elevate")
+    }
     const installerPath = path.join(root, "pending", "TestApp Setup 1.1.0.exe")
 
     const updater = await createNsisUpdater("1.0.0")
     Object.defineProperty(updater, "installerPath", { get: () => installerPath })
     const errors: Array<Error> = []
     updater.on("error", (e: Error) => errors.push(e))
-    // the first spawn is the installer itself; an elevated retry succeeds
-    const spawnLog = vi
-      .spyOn(updater as any, "spawnLog")
-      .mockRejectedValueOnce(error)
-      .mockResolvedValue(true)
+    const spawnLog = vi.spyOn(updater as any, "spawnLog")
+    if (options.startError != null) {
+      spawnLog.mockRejectedValueOnce(options.startError)
+    }
+    // the elevated start succeeds
+    spawnLog.mockResolvedValue(true)
+
+    const writable = options.writable ?? []
+    denyWrites(
+      // a missing elevate.exe fails to open with ENOENT
+      writable.includes("elevate.exe") || options.elevateExe === false ? [] : [elevatePath],
+      [writable.includes("resources") ? null : resourcesPath, writable.includes("install folder") ? null : installFolder].filter(it => it != null),
+      options.deniedCode
+    )
 
     const originalExecPath = Object.getOwnPropertyDescriptor(process, "execPath")
     const originalResourcesPath = Object.getOwnPropertyDescriptor(process, "resourcesPath")
-    Object.defineProperty(process, "execPath", { value: execPath(programFiles), configurable: true, writable: true })
+    Object.defineProperty(process, "execPath", { value: execPath, configurable: true, writable: true })
     Object.defineProperty(process, "resourcesPath", { value: resourcesPath, configurable: true, writable: true })
     try {
-      const result = (updater as any).doInstall({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
-      // the start failure is handled asynchronously, after doInstall returned
+      const result = (updater as any).doInstall({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: options.isAdminRightsRequired })
+      // a start failure is handled asynchronously, after doInstall returned
       await new Promise(resolve => setImmediate(resolve))
-      return { result, errors, spawnLog, installerPath, elevatePath: path.join(resourcesPath, "elevate.exe") }
+      return { result, errors, spawnLog, installerPath, elevatePath, resourcesPath, installFolder }
     } finally {
       if (originalExecPath != null) {
         Object.defineProperty(process, "execPath", originalExecPath)
@@ -1254,52 +1289,106 @@ describe("NsisUpdater — installer start failure", () => {
     }
   }
 
-  const underProgramFiles = (programFiles: string) => path.join(programFiles, "TestApp", "TestApp.exe")
-
   for (const code of ["UNKNOWN", "ENOENT"]) {
-    test(`${code} is not retried, not even for an app installed under Program Files`, config, async ({ expect, tmpDir }) => {
-      const { result, errors, spawnLog, installerPath } = await install(tmpDir, spawnError(code), underProgramFiles)
+    test(`${code} is not retried, not even where elevate.exe may run`, config, async ({ expect, tmpDir }) => {
+      const { result, errors, spawnLog, installerPath } = await install(tmpDir, { isAdminRightsRequired: false, startError: spawnError(code) })
       expect(result).toBe(true)
       expect(spawnLog).toHaveBeenCalledTimes(1)
       expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
       expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_START_FAILED"])
-      expect(errors[0].message).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#nsis-a-failed-installer-start-is-no-longer-retried")
-    })
-  }
-
-  test("EACCES is retried through elevate.exe for an app installed under Program Files", config, async ({ expect, tmpDir }) => {
-    const { errors, spawnLog, installerPath, elevatePath } = await install(tmpDir, spawnError("EACCES"), underProgramFiles)
-    expect(spawnLog).toHaveBeenCalledTimes(2)
-    expect(spawnLog).toHaveBeenLastCalledWith(elevatePath, [installerPath, ...args])
-    expect(errors).toEqual([])
-  })
-
-  // Windows paths are case-insensitive
-  test("EACCES is retried through elevate.exe when the Program Files variable differs in case", config, async ({ expect, tmpDir }) => {
-    const { errors, spawnLog, elevatePath } = await install(tmpDir, spawnError("EACCES"), underProgramFiles, it => it.toUpperCase())
-    expect(spawnLog).toHaveBeenLastCalledWith(elevatePath, expect.anything())
-    expect(errors).toEqual([])
-  })
-
-  for (const [name, execPath, programFilesEnv] of [
-    ["an app installed elsewhere", (programFiles: string) => path.join(programFiles, "..", "Users", "user", "AppData", "Local", "Programs", "TestApp", "TestApp.exe"), undefined],
-    ["an app in a sibling folder whose name starts with Program Files", (programFiles: string) => path.join(`${programFiles} (user)`, "TestApp", "TestApp.exe"), undefined],
-    // an empty variable must not match every path
-    ["an empty Program Files variable", (programFiles: string) => path.join(programFiles, "..", "Apps", "TestApp", "TestApp.exe"), () => ""],
-  ] as const) {
-    test(`EACCES is refused for ${name}`, config, async ({ expect, tmpDir }) => {
-      const { errors, spawnLog, installerPath } = await install(tmpDir, spawnError("EACCES"), execPath, programFilesEnv)
-      expect(spawnLog).toHaveBeenCalledTimes(1)
-      expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
-      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"])
-      expect(errors[0].message).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#nsis-a-failed-installer-start-is-no-longer-retried")
+      expect(errors[0].message).toContain(MIGRATION_LINK)
     })
   }
 
   test("any other start error is emitted as it is", config, async ({ expect, tmpDir }) => {
     const error = spawnError("EPERM")
-    const { errors, spawnLog } = await install(tmpDir, error, underProgramFiles)
+    const { errors, spawnLog } = await install(tmpDir, { isAdminRightsRequired: false, startError: error })
     expect(spawnLog).toHaveBeenCalledTimes(1)
     expect(errors).toEqual([error])
   })
+
+  for (const { name, isAdminRightsRequired } of [
+    { name: "an update with isAdminRightsRequired", isAdminRightsRequired: true },
+    { name: "an installer start failing with EACCES", isAdminRightsRequired: false },
+  ]) {
+    const startError = isAdminRightsRequired ? undefined : spawnError("EACCES")
+    const startCalls = isAdminRightsRequired ? 0 : 1
+
+    const expectElevated = (expect: ExpectStatic, { result, errors, spawnLog, installerPath, elevatePath }: Awaited<ReturnType<typeof install>>) => {
+      expect(errors).toEqual([])
+      expect(result).toBe(true)
+      expect(spawnLog).toHaveBeenCalledTimes(startCalls + 1)
+      expect(spawnLog).toHaveBeenLastCalledWith(elevatePath, [installerPath, ...args])
+    }
+
+    const expectRefused = (expect: ExpectStatic, { result, errors, spawnLog }: Awaited<ReturnType<typeof install>>, reason: string) => {
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"])
+      expect(errors[0].message).toContain(reason)
+      expect(errors[0].message).toContain("elevate.exe is used only when the current user cannot modify it, its folder or the install folder of the app")
+      expect(errors[0].message).toContain(MIGRATION_LINK)
+      // isAdminRightsRequired is refused before anything is started
+      expect(result).toBe(!isAdminRightsRequired)
+      expect(spawnLog).toHaveBeenCalledTimes(startCalls)
+    }
+
+    describe(name, () => {
+      test("runs elevate.exe when the current user cannot modify it or the folders around it", config, async ({ expect, tmpDir }) => {
+        expectElevated(expect, await install(tmpDir, { isAdminRightsRequired, startError }))
+      })
+
+      test("runs elevate.exe when writing is denied with EPERM", config, async ({ expect, tmpDir }) => {
+        expectElevated(expect, await install(tmpDir, { isAdminRightsRequired, startError, deniedCode: "EPERM" }))
+      })
+
+      // the folder that would hold it is not writable either, so nobody but an administrator can put one there: the spawn of the missing
+      // elevate.exe fails with its own error
+      test("runs a missing elevate.exe in a folder the current user cannot write", config, async ({ expect, tmpDir }) => {
+        expectElevated(expect, await install(tmpDir, { isAdminRightsRequired, startError, elevateExe: false }))
+      })
+
+      test("is refused when the current user can modify elevate.exe", config, async ({ expect, tmpDir }) => {
+        const installed = await install(tmpDir, { isAdminRightsRequired, startError, writable: ["elevate.exe"] })
+        expectRefused(expect, installed, `the current user can modify ${installed.elevatePath}`)
+        // opened for writing without changing it
+        expect(await fsExtra.readFile(installed.elevatePath, "utf8")).toBe("elevate")
+      })
+
+      for (const [folder, folderPath] of [
+        ["resources", (it: Awaited<ReturnType<typeof install>>) => it.resourcesPath],
+        ["install folder", (it: Awaited<ReturnType<typeof install>>) => it.installFolder],
+      ] as const) {
+        test(
+          `is refused when the current user can create files in the ${folder === "resources" ? "folder of elevate.exe" : "install folder of the app"}`,
+          config,
+          async ({ expect, tmpDir }) => {
+            const installed = await install(tmpDir, { isAdminRightsRequired, startError, writable: [folder] })
+            expectRefused(expect, installed, `the current user can create files in ${folderPath(installed)}`)
+            // the file created to find out is removed
+            expect((await fsExtra.readdir(installed.resourcesPath)).sort()).toEqual(["elevate.exe"])
+            expect((await fsExtra.readdir(installed.installFolder)).sort()).toEqual(["TestApp.exe", "resources"])
+          }
+        )
+      }
+
+      // a missing elevate.exe could be put there
+      test("is refused when elevate.exe is missing from a folder the current user can write", config, async ({ expect, tmpDir }) => {
+        const installed = await install(tmpDir, { isAdminRightsRequired, startError, elevateExe: false, writable: ["resources"] })
+        expectRefused(expect, installed, `the current user can create files in ${installed.resourcesPath}`)
+      })
+
+      test("is refused when it cannot be told whether the current user can modify elevate.exe", config, async ({ expect, tmpDir }) => {
+        const installed = await install(tmpDir, { isAdminRightsRequired, startError, deniedCode: "EBUSY" })
+        expectRefused(expect, installed, `cannot tell whether the current user can modify ${installed.elevatePath} (EBUSY: `)
+      })
+
+      // a user who may create files in a folder but not delete them still can put an elevate.exe there
+      test("is refused when the file created to find out cannot be removed", config, async ({ expect, tmpDir }) => {
+        vi.spyOn(fs, "unlinkSync").mockImplementation(() => {
+          throw Object.assign(new Error("EACCES: permission denied, unlink"), { code: "EACCES" })
+        })
+        const installed = await install(tmpDir, { isAdminRightsRequired, startError, writable: ["resources"] })
+        expectRefused(expect, installed, `the current user can create files in ${installed.resourcesPath}`)
+      })
+    })
+  }
 })
