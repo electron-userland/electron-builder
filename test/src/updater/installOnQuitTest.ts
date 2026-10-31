@@ -992,7 +992,7 @@ describe("install on quit", { concurrent: false }, () => {
     })
 
     describe("the removed quitAndInstallCalled", () => {
-      const REMOVED = "BaseUpdater.quitAndInstallCalled was removed in electron-updater 7"
+      const REMOVED = "BaseUpdater.quitAndInstallCalled is removed"
 
       test("reads undefined while an install runs, and warns once per updater", async () => {
         await seedDownloadedUpdate()

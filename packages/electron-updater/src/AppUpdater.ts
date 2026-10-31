@@ -1713,9 +1713,9 @@ export interface TestOnlyUpdaterOptions {
 }
 
 /**
- * Adds a warning `versionInfo` getter to an {@link UpdateCheckResult}, for plain JavaScript callers still reading the
- * member electron-updater 7 removed. It returns `undefined`, as a missing property would, and names the replacement,
- * at most once per updater instance (`logger` is limited by the caller).
+ * Adds a warning `versionInfo` getter to an {@link UpdateCheckResult}, for plain JavaScript callers that read the
+ * removed member. It returns `undefined`, as a missing property would, and names the replacement, at most once per
+ * updater instance (`logger` is limited by the caller).
  *
  * Non-enumerable so the object still serializes and compares without it.
  */
@@ -1725,9 +1725,8 @@ function withRemovedVersionInfo(result: UpdateCheckResult, logger: LimitedLogger
     configurable: true,
     get: () => {
       logger.warn(
-        "UpdateCheckResult.versionInfo was removed in electron-updater 7 (electron-builder v27) and is now undefined. " +
-          "Read updateInfo instead: `const { updateInfo } = await autoUpdater.checkForUpdates()`. " +
-          "https://www.electron.build/docs/migration/v27-runtime-changes#updatecheckresultversioninfo-is-removed"
+        "UpdateCheckResult.versionInfo is removed and reads as undefined; read updateInfo instead: `const { updateInfo } = await autoUpdater.checkForUpdates()`. " +
+          "See https://www.electron.build/docs/migration/v27-runtime-changes#updatecheckresultversioninfo-is-removed"
       )
       return undefined
     },

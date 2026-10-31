@@ -174,8 +174,8 @@ export abstract class BaseUpdater extends AppUpdater {
   private pendingInstall: Promise<unknown> = Promise.resolve()
 
   /**
-   * Removed in electron-updater 7: kept out of the typings (`@internal`) only to warn a plain JavaScript subclass that still
-   * reads or sets it. Reading returns `undefined` and setting does nothing; the install lifecycle is {@link installState}.
+   * Removed: kept out of the typings (`@internal`) only to warn a plain JavaScript subclass that reads or sets it.
+   * Reading returns `undefined` and setting does nothing; the install lifecycle is {@link installState}.
    * @internal
    */
   protected get quitAndInstallCalled(): undefined {
@@ -190,10 +190,10 @@ export abstract class BaseUpdater extends AppUpdater {
 
   private warnQuitAndInstallCalledRemoved(): void {
     this.limitedLogger("removed-quit-and-install-called").warn(
-      "BaseUpdater.quitAndInstallCalled was removed in electron-updater 7 (electron-builder v27): reading it returns undefined and setting it does nothing. " +
+      "BaseUpdater.quitAndInstallCalled is removed: reading it returns undefined and setting it does nothing. " +
         "The updater tracks the install itself: an install that failed can be retried as is, and one started while another runs or after one handed the update off is ignored, so remove the code that reads or sets it. " +
         'To keep the update from installing when the app quits, set autoInstallEvent = "manual". ' +
-        "https://www.electron.build/docs/migration/v27-runtime-changes#baseupdaterquitandinstallcalled-is-removed"
+        "See https://www.electron.build/docs/migration/v27-runtime-changes#baseupdaterquitandinstallcalled-is-removed"
     )
   }
 
