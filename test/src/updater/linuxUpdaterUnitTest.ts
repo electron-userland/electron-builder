@@ -758,7 +758,9 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
           expect(dispatchError).toHaveBeenCalledTimes(1)
           expect(dispatchError.mock.calls[0][0]).toMatchObject({
             code: "ERR_UPDATER_UNSAFE_INSTALLER_PATH",
-            message: expect.stringContaining("https://www.electron.build/docs/migration/v27-runtime-changes#linux-gksudo-kdesudo-and-beesu-refuse-unsafe-installer-paths"),
+            message: expect.stringContaining(
+              "so electron-updater does not install it. To install this update, install polkit (pkexec). See https://www.electron.build/docs/migration/v27-runtime-changes#linux-gksudo-kdesudo-and-beesu-refuse-unsafe-installer-paths"
+            ),
           })
         }
       )
@@ -826,7 +828,8 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
       /** A DebUpdater that installs `rawPathIn(dir)` with dpkg, elevated by kdesudo; `dir` holds the stand-ins and their log. */
       async function prepare(tmpDir: TmpDir, rawPathIn: (dir: string) => string) {
-        const dir = await tmpDir.createTempDir({ prefix: "wrapped-helper" })
+        const dir = await tmpDir.getTempDir({ prefix: "wrapped-helper" })
+        await mkdir(dir, { recursive: true })
         // kdesudo --comment <comment> -c <command> runs `sudo sh -c <command>`
         await writeFile(path.join(dir, "kdesudo"), `#!/bin/sh\n[ "$1" = --comment ] && [ "$3" = -c ] || exit 64\nexec sh -c "$4"\n`, { mode: 0o755 })
         // the package managers log the arguments they get, one per line, and the environment they run in

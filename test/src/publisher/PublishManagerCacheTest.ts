@@ -71,6 +71,24 @@ describe("getOrCreatePublisher", () => {
     expect(await getOrCreatePublisher(manager, publishConfig)).toBe(first)
   })
 
+  test("configs that differ only in a sensitive value after many others get their own publishers", async ({ expect }) => {
+    const manager = createManager()
+    const config = (last: string) =>
+      ({
+        provider: "github",
+        owner: "foo",
+        repo: "bar",
+        token: "__test__",
+        ...Object.fromEntries(Array.from({ length: 16 }, (_, i) => [`extraToken${i}`, "same"])),
+        lastSecret: last,
+      }) as GithubOptions
+
+    const first = await getOrCreatePublisher(manager, config("a"))
+    expect(first).not.toBeNull()
+    expect(await getOrCreatePublisher(manager, config("b"))).not.toBe(first)
+    expect(await getOrCreatePublisher(manager, config("a"))).toBe(first)
+  })
+
   test("failed creation propagates and is retried by a subsequent call", async ({ expect }) => {
     const manager = createManager()
     // no token anywhere — GitHubPublisher construction rejects
