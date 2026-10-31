@@ -72,6 +72,22 @@ for (const incomplete of [false, true]) {
       expect(stdout.includes("doesn't match this installer")).toBe(incomplete && !allowUnverified)
 
       const script = statements(stdout)
+      // An update (--updated) without --package-file aborts first: the package is neither looked up next to the installer nor downloaded.
+      const noPackageFile = script.indexOf("pop $packageFile") + 1
+      const notUpdated = /^StrCmp "\$R9" "true" `` `(\w+)`$/.exec(script[noPackageFile + 4])?.[1]
+      expect(notUpdated).toBeDefined()
+      expect(script.slice(noPackageFile, noPackageFile + 9)).toEqual([
+        expect.stringMatching(/^StrCmp `\$packageFile` `` `` `\w+`$/),
+        "push `updated`",
+        "StdUtils::TestParameter /NOUNLOAD",
+        "pop $R9",
+        `StrCmp "$R9" "true" \`\` \`${notUpdated}\``,
+        'MessageBox MB_OK|MB_ICONSTOP "This web installer was started as an update without a package file (--package-file), which web installers built by electron-builder 27 refuse. Installation aborted.',
+        'https://www.electron.build/docs/migration/v27-runtime-changes#an-nsis-web-installer-started-as-an-update-needs-a-package-file" /SD IDOK',
+        "SetErrorLevel 2",
+        "Quit",
+      ])
+      expect(script[noPackageFile + 9]).toBe(`${notUpdated}:`)
       const lookup = script.findIndex(line => line.startsWith("IfFileExists `$packageFile`"))
       // Messages name the local package (adjacent, explicit), not the installer's copy of it.
       expect(script.slice(0, lookup).filter(line => line.startsWith("StrCpy $4 "))).toEqual(['StrCpy $4 "$packageFile"', 'StrCpy $4 "$packageFile"'])
@@ -133,10 +149,11 @@ for (const incomplete of [false, true]) {
       const checkOrExit = /^(quit|seterrorlevel|messagebox|inetc::get|stdutils::hashfile|system::call)\b/i
       expect(script.slice(uninstalled + 1).filter(line => checkOrExit.test(line))).toEqual(["SetErrorLevel 0", "Quit"])
 
-      // Every abort before the uninstall exits with code 2: a failed copy, an explicit package that doesn't match (unless unverified
-      // packages are allowed), a download cancelled with or without proxy, a failed download and a versioned download that doesn't match.
+      // Every abort before the uninstall exits with code 2: an update without --package-file, a failed copy, an explicit package that
+      // doesn't match (unless unverified packages are allowed), a download cancelled with or without proxy, a failed download and a
+      // versioned download that doesn't match.
       const aborts = script.slice(0, uninstalled).flatMap((line, index) => (/^quit$/i.test(line) ? [index] : []))
-      expect(aborts).toHaveLength(4 + (allowUnverified ? 0 : 1) + (incomplete && !allowUnverified ? 1 : 0))
+      expect(aborts).toHaveLength(5 + (allowUnverified ? 0 : 1) + (incomplete && !allowUnverified ? 1 : 0))
       expect(aborts.map(index => script[index - 1])).toEqual(aborts.map(() => "SetErrorLevel 2"))
 
       // The package is downloaded with and without proxy. A silent run doesn't pass /RESUME: after a connection error inetc would ask
@@ -157,11 +174,11 @@ for (const incomplete of [false, true]) {
       const { stdout: installOnly } = await compile(dir, packages, installOnlyDefines, ["-PPO"])
       expect(statements(installOnly)).toEqual(script.filter(line => line !== uninstall))
 
-      // Every message box of the web installer has a default for silent runs (/SD): a failed copy (explicit and adjacent package), an
-      // explicit package that doesn't match (unless unverified packages are allowed), an adjacent package that doesn't match, a failed
-      // download and a versioned download that doesn't match (unless unverified packages are allowed).
+      // Every message box of the web installer has a default for silent runs (/SD): an update without --package-file, a failed copy
+      // (explicit and adjacent package), an explicit package that doesn't match (unless unverified packages are allowed), an adjacent
+      // package that doesn't match, a failed download and a versioned download that doesn't match (unless unverified packages are allowed).
       const messageBoxOptions = [...stdout.matchAll(/^MessageBox [^"]*"[^"]*"([^\r\n]*)/gim)].map(match => match[1].trim())
-      expect(messageBoxOptions).toHaveLength(4 + (allowUnverified ? 0 : 1) + (incomplete && !allowUnverified ? 1 : 0))
+      expect(messageBoxOptions).toHaveLength(5 + (allowUnverified ? 0 : 1) + (incomplete && !allowUnverified ? 1 : 0))
       expect(messageBoxOptions.filter(options => !options.startsWith("/SD "))).toEqual([])
       // A failed download can be retried interactively; a silent run cancels and exits with code 2.
       const downloadFailed = script.findIndex(line => line.startsWith("Please check your internet connection and retry."))
@@ -413,6 +430,12 @@ for (const { packages, expected, completeUrl, allowUnverified, nsis } of [
       await fs.rmdir(explicit)
       await run("ARM64", explicit)
       expect(requests).toEqual([`/app-${expected[2]}.7z`])
+
+      // An update (--updated) without --package-file aborts the installation without downloading the package.
+      requests.length = 0
+      await fs.writeFile(installed, "installed version")
+      await expectRefused(exec(installer, ["/S", "--arch=ARM64", "--updated"], { timeout: 60_000 }))
+      expect(requests).toEqual([])
 
       // A versioned download must match the selected package; a complete URL (explicit appPackageUrl) isn't verified.
       mismatched = true

@@ -21,6 +21,17 @@ import {
   verifySignature,
 } from "./windowsExecutableCodeSignatureVerifier.js"
 import { URL } from "url"
+import { readExecutableProductVersions } from "./windowsExecutableVersion.js"
+
+const INSTALLER_VERSION_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#nsis-update-installers-must-carry-the-updates-version"
+
+function installerVersionMismatch(reason: string, expected: string): Error {
+  return newError(
+    `The installer of version ${expected} is rejected: ${reason}. electron-updater 7 installs an update whose manifest is not signed only when the ProductVersion of its installer is the update version. ` +
+      `Publish the installer built for that version with its latest.yml, or sign update manifests (updateManifestPublicKey). ${INSTALLER_VERSION_DOCS}`,
+    "ERR_UPDATER_INSTALLER_VERSION_MISMATCH"
+  )
+}
 
 // import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
 const require = createRequire(import.meta.url ?? process.execPath)
@@ -246,6 +257,7 @@ export class NsisUpdater extends BaseUpdater {
             "ERR_UPDATER_INVALID_SIGNATURE"
           )
         }
+        await this.verifyInstallerVersion(destinationFile, downloadUpdateOptions.updateInfoAndProvider)
 
         if (isWebInstaller) {
           if (await this.differentialDownloadWebPackage(downloadUpdateOptions, packageInfo, packageFile, provider)) {
@@ -310,6 +322,44 @@ export class NsisUpdater extends BaseUpdater {
       return { response: "success" }
     }
     return { response: "failure", message: missingPublisherNameMessage() }
+  }
+
+  // A signature proves that the installer is a release of the app, not which one: an update manifest that is not signed could announce a
+  // newer version and serve the signed installer of an older release, or a web installer built for another version. The ProductVersion
+  // that electron-builder writes into the installer (the app version, also the version of latest.yml) must therefore be the version of the
+  // update. Not checked when the manifest signature was verified (it binds the installer by its sha512), and not when the signature isn't
+  // verified (no publisherName): any installer would be accepted then anyway.
+  private async verifyInstallerVersion(installerPath: string, update: UpdateInfoAndProvider): Promise<void> {
+    if (update.manifestSignatureVerified === true) {
+      return
+    }
+    let config: unknown
+    try {
+      config = await this.configOnDisk.value
+    } catch (e: unknown) {
+      // no app-update.yml, as in verifySignature
+      if (e instanceof Error && "code" in e && e.code === "ENOENT") {
+        return
+      }
+      throw e
+    }
+    if (readConfiguredPublisherNames(config) == null) {
+      return
+    }
+    const expected = update.info.version
+    let versions: Array<string>
+    try {
+      versions = await readExecutableProductVersions(installerPath)
+    } catch (e: unknown) {
+      throw installerVersionMismatch(`its ProductVersion cannot be read (${e instanceof Error ? e.message : String(e)})`, expected)
+    }
+    if (versions.length === 0) {
+      throw installerVersionMismatch("it has no ProductVersion", expected)
+    }
+    const other = versions.find(it => it !== expected)
+    if (other != null) {
+      throw installerVersionMismatch(`its ProductVersion is ${JSON.stringify(other)}`, expected)
+    }
   }
 
   // the cached installer sat on disk since a previous launch, so its Authenticode signature is re-verified before an
