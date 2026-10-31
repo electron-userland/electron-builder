@@ -9,6 +9,7 @@ import { PlatformPackager } from "../platformPackager.js"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier.js"
 import { detectUnpackedDirs } from "./unpackDetector.js"
 import { alignAsarContent } from "./asarAlign.js"
+import { applyStableLayoutOption } from "./asarStableLayout.js"
 import { assertSourceFileInTrustedRoots, getTrustedSourceRoots } from "../util/trustedSourceRoots.js"
 import { Readable } from "stream"
 const { readlink } = fs
@@ -172,7 +173,11 @@ export class AsarPackager {
     await this.executeElectronAsar(streams)
 
     const contentAlignment = this.config.options.contentAlignment
-    if (contentAlignment != null && contentAlignment !== 0) {
+    const stableLayout = this.config.options.stableLayout
+    if (stableLayout != null) {
+      // aligns too: every file the stable layout places starts at a multiple of `contentAlignment`
+      await applyStableLayoutOption(this.outFile, this.packager.projectDir, stableLayout, contentAlignment)
+    } else if (contentAlignment != null && contentAlignment !== 0) {
       await alignAsarContent(this.outFile, contentAlignment)
     }
   }
