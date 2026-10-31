@@ -5,7 +5,7 @@ import fsExtra from "fs-extra"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
 import { vi } from "vitest"
-import { mockAliasChainYaml, mockYaml } from "../helpers/providerTestUtil.js"
+import { mockAliasChainYaml, mockComplexKeyYaml, mockYaml } from "../helpers/providerTestUtil.js"
 import { createMockRequest, createNsisUpdater } from "../helpers/updaterTestUtil.js"
 
 const DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-manifest-yaml-aliases-are-limited"
@@ -85,10 +85,22 @@ test("a logger that throws does not replace the alias-budget error", async ({ tm
   await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringContaining(DOCS) })
 })
 
+test("a manifest rejected while loading for aliases in a complex mapping key is announced as the v27 alias limit", async ({ tmpDir, expect }) => {
+  const logger = createLogger()
+  const requestSpy = createMockRequest()
+  const updater = await createGenericUpdater(tmpDir, requestSpy, logger)
+
+  requestSpy.mockResolvedValueOnce(mockComplexKeyYaml("1.0.1"))
+
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringContaining(DOCS) })
+  expect(announcements(logger)).toEqual([ANNOUNCEMENT])
+})
+
 // the feed URL's query is copied onto the channel file URL, and the updater logs the error with its stack
 test.for([
   ["a manifest whose YAML aliases expand past the budget", mockAliasChainYaml("1.0.1", 40)],
   ["a manifest that is not valid YAML", `${mockYaml("1.0.1")}releaseNotes: [unclosed\n`],
+  ["a manifest rejected while loading for aliases in a complex mapping key", mockComplexKeyYaml("1.0.1")],
 ])("the update info error for %s names the channel file without the feed URL's query", async ([_name, manifest], { tmpDir, expect }) => {
   const requestSpy = createMockRequest()
   const updater = await createGenericUpdater(tmpDir, requestSpy, createLogger())

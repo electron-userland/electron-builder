@@ -11,7 +11,7 @@ import {
   WindowsUpdateInfo,
 } from "builder-util-runtime"
 import { OutgoingHttpHeaders } from "http"
-import { load } from "js-yaml"
+import { EventType, load, State } from "js-yaml"
 import { URL } from "url"
 import { ElectronHttpExecutor } from "../electronHttpExecutor.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
@@ -200,23 +200,45 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
     throw newError(`Cannot parse update info from ${channelFile} in the latest release artifacts (${location}): rawData: null`, "ERR_UPDATER_INVALID_UPDATE_INFO")
   }
 
+  // js-yaml returns an aliased node by reference, so a few hundred bytes of nested aliases can reach a value exponentially often,
+  // and a long string referenced by many aliases is read in full each time.
+  // Anything that walks the update info (a deep comparison, JSON serialization) would then block the main process.
+  // Without aliases, a document's keys and values, a string counted by its length, add up to at most its number of characters, so a legitimate channel file is never rejected.
+  const budget = Math.max(100_000, rawData.length)
+  const budgetExceeded = (): Error => yamlAliasBudgetError(channelFile, location, budget)
+
+  // js-yaml itself expands aliases while loading: it converts a complex mapping key (`? [*a, *a]`) to a string,
+  // so a few hundred KB of aliases in keys would build strings of hundreds of MB before load returns.
+  // Each alias is charged with everything it reaches as soon as js-yaml reads it, before the key that holds it is converted,
+  // and at least as much as it adds to that string: an aliased timestamp becomes about 60 characters of key text.
+  let aliasTotal = 0
+  const listener = (eventType: EventType, state: State): void => {
+    // an alias is the only node that closes with a value but no kind
+    if (eventType !== "close" || state.kind !== null || state.result == null) {
+      return
+    }
+    aliasTotal = chargeExpansion(state.result, aliasTotal, budget, keyTextCost)
+    if (aliasTotal > budget) {
+      throw budgetExceeded()
+    }
+  }
+
   let result: UpdateInfo
   try {
-    result = load(rawData) as UpdateInfo
+    result = load(rawData, { listener }) as UpdateInfo
   } catch (e: any) {
+    if (e?.code === "ERR_UPDATER_INVALID_UPDATE_INFO") {
+      throw e
+    }
     throw newError(
       `Cannot parse update info from ${channelFile} in the latest release artifacts (${location}): ${e.stack || e.message}, rawData: ${rawData}`,
       "ERR_UPDATER_INVALID_UPDATE_INFO"
     )
   }
 
-  // js-yaml returns an aliased node by reference, so a few hundred bytes of nested aliases can reach a value exponentially often,
-  // and a long string referenced by many aliases is read in full each time.
-  // Anything that walks the update info (a deep comparison, JSON serialization) would then block the main process.
-  // Without aliases, a document's keys and values, a string counted by its length, add up to at most its number of characters, so a legitimate channel file is never rejected.
-  const budget = Math.max(100_000, rawData.length)
-  if (exceedsExpansionBudget(result, budget)) {
-    throw yamlAliasBudgetError(channelFile, location, budget)
+  // the update info as a whole is charged by what walking it costs, so a manifest without aliases stays within the budget
+  if (chargeExpansion(result, 0, budget, valueCost) > budget) {
+    throw budgetExceeded()
   }
   return result
 }
@@ -247,26 +269,56 @@ export function isYamlAliasBudgetError(error: unknown): boolean {
   return error instanceof Error && yamlAliasBudgetErrors.has(error)
 }
 
-// charges every value reachable from root, an aliased one each time it is referenced: a string by its length, anything else as 1,
-// and a mapping entry also by the length of its key. Stops once the total exceeds the budget.
-function exceedsExpansionBudget(root: unknown, budget: number): boolean {
-  let total = 0
+// adds to total every value reachable from root, root included and an aliased one each time it is referenced:
+// each value by cost, and a mapping entry also by the length of its key.
+// Stops once the total exceeds the budget, so a call costs at most budget - total steps.
+function chargeExpansion(root: unknown, total: number, budget: number, cost: (value: unknown) => number): number {
+  total += cost(root)
   const stack: Array<unknown> = [root]
-  while (stack.length > 0) {
+  while (stack.length > 0 && total <= budget) {
     const value = stack.pop()
     if (value === null || typeof value !== "object") {
       continue
     }
     const isMapping = !Array.isArray(value)
     for (const [key, child] of Object.entries(value)) {
-      total += (isMapping ? key.length : 0) + (typeof child === "string" ? Math.max(1, child.length) : 1)
+      total += (isMapping ? key.length : 0) + cost(child)
       if (total > budget) {
-        return true
+        return total
       }
       stack.push(child)
     }
   }
-  return false
+  return total
+}
+
+// a string its length, anything else 1: without aliases, a document's values and keys never add up to more than its number of characters
+function valueCost(value: unknown): number {
+  return typeof value === "string" ? Math.max(1, value.length) : 1
+}
+
+// at least what value adds to a complex mapping key, which js-yaml converts with String() (a sequence joins its items with commas):
+// a scalar the length of its string form (a timestamp about 60 characters), a sequence a comma between items, any other object "[object Object]"
+function keyTextCost(value: unknown): number {
+  if (typeof value === "string") {
+    return Math.max(1, value.length)
+  }
+  if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+    return String(value).length
+  }
+  if (typeof value !== "object") {
+    return 1
+  }
+  if (value === null) {
+    return "null".length
+  }
+  if (Array.isArray(value)) {
+    return Math.max(1, value.length - 1)
+  }
+  if (value instanceof Date) {
+    return Math.max(1, String(value).length)
+  }
+  return "[object Object]".length
 }
 
 export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {

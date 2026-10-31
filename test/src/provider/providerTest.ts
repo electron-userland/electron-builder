@@ -9,7 +9,7 @@ import * as path from "path"
 import * as semver from "semver"
 import { URL } from "url"
 import { MockInstance, afterEach, beforeEach, vi } from "vitest"
-import { mockAliasChainYaml, mockYaml } from "../helpers/providerTestUtil.js"
+import { mockAliasChainYaml, mockComplexKeyYaml, mockYaml } from "../helpers/providerTestUtil.js"
 import { httpExecutor } from "../helpers/updaterTestUtil.js"
 
 let requestSpy: MockInstance
@@ -276,6 +276,90 @@ test("parseUpdateInfo - accepts alias-free channel files of any size and a benig
 
   const withAlias = parseUpdateInfo(`${mockYaml("1.0.1")}other: &f [a, b]\nreleaseNotes: *f\n`, "latest.yml", CHANNEL_FILE_URL) as any
   expect(withAlias.releaseNotes).toEqual(["a", "b"])
+})
+
+// js-yaml converts a complex mapping key to a string inside load, so its aliases must be charged before load returns:
+// without that, these fail as a duplicated mapping key, or a key longer than a string can be, after the keys are built
+test.for([
+  ["two explicit sequence keys", mockComplexKeyYaml("1.0.1")],
+  ["two implicit flow sequence keys", `${mockYaml("1.0.1")}s: &s ${"A".repeat(10_000)}\n${`[${Array(200).fill("*s").join(", ")}]: 0\n`.repeat(2)}`],
+  [
+    "two sequence keys in a flow mapping",
+    `${mockYaml("1.0.1")}s: &s ${"A".repeat(10_000)}\nm: { [${Array(200).fill("*s").join(", ")}]: 0, [${Array(200).fill("*s").join(", ")}]: 1 }\n`,
+  ],
+  ["a 600M-character key", `${mockYaml("1.0.1")}s: &s ${"A".repeat(100_000)}\n? [${Array(6000).fill("*s").join(", ")}]\n: 0\n`],
+])("parseUpdateInfo - rejects YAML aliases in complex mapping keys while loading: %s", ([_name, yaml], { expect }) => {
+  const start = performance.now()
+  // the error thrown from the listener reaches the caller as is, not wrapped with the stack and the whole rawData
+  expect(() => parseUpdateInfo(yaml, "latest.yml", CHANNEL_FILE_URL)).toThrow(
+    expect.objectContaining({
+      code: "ERR_UPDATER_INVALID_UPDATE_INFO",
+      message: expect.stringMatching(
+        /^Cannot parse update info from latest\.yml in the latest release artifacts \(https:\/\/example\.com\/latest\.yml\): YAML aliases expand to more than \d+ values and string characters\. electron-updater 7 \(electron-builder v27\) rejects such a manifest: [^\n]* https:\/\/www\.electron\.build\/docs\/migration\/v27-runtime-changes#update-manifest-yaml-aliases-are-limited$/
+      ),
+    })
+  )
+  expect(performance.now() - start).toBeLessThan(1000)
+})
+
+// js-yaml's String() turns an aliased timestamp into about 60 characters of key text and a number into up to 24, so each such alias is charged that much:
+// charged as one value each, these build keys of about 60 times the budget, and fail as a duplicated mapping key once they are built
+test.for([
+  ["timestamps", `${mockYaml("1.0.1")}d: &d 2001-12-14\n${`? [${Array(4000).fill("*d").join(", ")}]\n: 0\n`.repeat(2)}`],
+  ["numbers", `${mockYaml("1.0.1")}n: &n -1.2345678901234567e+300\n${`? [${Array(8000).fill("*n").join(", ")}]\n: 0\n`.repeat(2)}`],
+  ["empty mappings", `${mockYaml("1.0.1")}o: &o {}\n${`? [${Array(8000).fill("*o").join(", ")}]\n: 0\n`.repeat(2)}`],
+  ["a sequence of timestamps", `${mockYaml("1.0.1")}d: &d 2001-12-14\ns: &s [${Array(1000).fill("*d").join(", ")}]\n${"? *s\n: 0\n".repeat(2)}`],
+])("parseUpdateInfo - charges aliases in complex mapping keys by the text they become: %s", ([_name, yaml], { expect }) => {
+  const start = performance.now()
+  expect(() => parseUpdateInfo(yaml, "latest.yml", CHANNEL_FILE_URL)).toThrow(
+    expect.objectContaining({
+      code: "ERR_UPDATER_INVALID_UPDATE_INFO",
+      message: expect.stringMatching(/^[^\n]*: YAML aliases expand to more than 100000 values and string characters\. /),
+    })
+  )
+  expect(performance.now() - start).toBeLessThan(1000)
+})
+
+test("parseUpdateInfo - accepts timestamps without aliases, and aliased timestamps and numbers within the budget", ({ expect }) => {
+  const info = {
+    version: "1.0.1",
+    files: [{ url: "TestApp-Setup-1.0.1.exe", sha512: "sha512abc", size: 1024 }],
+    path: "TestApp-Setup-1.0.1.exe",
+    sha512: "sha512abc",
+    releaseDate: "2026-01-01T00:00:00.000Z",
+  }
+  // serializeToYaml quotes releaseDate; a hand-written file may leave it a YAML timestamp, which js-yaml loads as a Date
+  const written = serializeToYaml(info)
+  expect(parseUpdateInfo(written, "latest.yml", CHANNEL_FILE_URL)).toEqual(info)
+  const unquoted = written.replace("'2026-01-01T00:00:00.000Z'", "2026-01-01T00:00:00.000Z")
+  expect(unquoted).not.toBe(written)
+  expect(parseUpdateInfo(unquoted, "latest.yml", CHANNEL_FILE_URL).releaseDate).toEqual(new Date("2026-01-01T00:00:00.000Z"))
+
+  // the whole document is still charged one per timestamp: 300000 characters of timestamps without aliases are not rejected
+  const dates = Array(25_000).fill("2001-12-14").join(", ")
+  expect(parseUpdateInfo(`${mockYaml("1.0.1")}releaseNotes: [${dates}]\n`, "latest.yml", CHANNEL_FILE_URL).releaseNotes).toHaveLength(25_000)
+
+  const withKeys = parseUpdateInfo(`${mockYaml("1.0.1")}d: &d 2001-12-14\nn: &n 42\n? [*d, *d, *n, *n]\n: 0\n`, "latest.yml", CHANNEL_FILE_URL) as any
+  const date = String(new Date("2001-12-14T00:00:00.000Z"))
+  expect(withKeys[`${date},${date},42,42`]).toBe(0)
+})
+
+test("parseUpdateInfo - accepts a channel file as electron-builder writes it, and aliases in a key within the budget", ({ expect }) => {
+  const info = {
+    version: "1.0.1",
+    files: [
+      { url: "TestApp-Setup-1.0.1.exe", sha512: "sha512abc", size: 1024 },
+      { url: "TestApp-1.0.1-arm64.exe", sha512: "sha512def", size: 2048 },
+    ],
+    path: "TestApp-Setup-1.0.1.exe",
+    sha512: "sha512abc",
+    releaseDate: "2026-01-01T00:00:00.000Z",
+    releaseNotes: "Fixes and improvements",
+  }
+  expect(parseUpdateInfo(serializeToYaml(info), "latest.yml", CHANNEL_FILE_URL)).toEqual(info)
+
+  const withKey = parseUpdateInfo(`${mockYaml("1.0.1")}n: &n note\n? [*n, *n]\n: 0\n`, "latest.yml", CHANNEL_FILE_URL) as any
+  expect(withKey["note,note"]).toBe(0)
 })
 
 // js-yaml before 4.3.2 spends seconds of CPU on a few hundred KB of YAML merge keys, and the channel file is parsed before its signature is checked

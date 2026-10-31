@@ -1,5 +1,5 @@
 import { KeygenOptions } from "builder-util-runtime"
-import { assertDownloadNotTriggered, getProvider, mockAliasChainYaml, mockYaml } from "../helpers/providerTestUtil.js"
+import { assertDownloadNotTriggered, getProvider, mockAliasChainYaml, mockComplexKeyYaml, mockYaml } from "../helpers/providerTestUtil.js"
 import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
 const MOCK_ACCOUNT = "test-account-id"
@@ -120,6 +120,15 @@ test("channel file with YAML aliases that expand to too many values - throws ERR
   const updater = await createKeygenUpdater(requestSpy)
 
   requestSpy.mockResolvedValueOnce(mockAliasChainYaml(STABLE_VERSION, 40))
+
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringMatching(/YAML aliases expand to more than/) })
+})
+
+test("channel file with YAML aliases in complex mapping keys - throws ERR_UPDATER_INVALID_UPDATE_INFO while loading", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createKeygenUpdater(requestSpy)
+
+  requestSpy.mockResolvedValueOnce(mockComplexKeyYaml(STABLE_VERSION))
 
   await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringMatching(/YAML aliases expand to more than/) })
 })
