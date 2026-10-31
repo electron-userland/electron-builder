@@ -8787,7 +8787,7 @@
           ]
         },
         "region": {
-          "description": "The region (e.g. `nyc3`).",
+          "description": "The DigitalOcean region slug (e.g. `nyc3`): three lowercase letters followed by one or two digits.",
           "type": "string"
         },
         "requestHeaders": {

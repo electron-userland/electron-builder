@@ -241,6 +241,35 @@ describe("SpacesPublisher — getS3UploadConfig", { concurrent: false }, () => {
   })
 })
 
+// ─── SpacesPublisher — region validation ─────────────────────────────────────
+
+describe("SpacesPublisher — region validation", { concurrent: false }, () => {
+  const invalidRegions = ["evil.example.com/", "attacker.example#", "nyc3.evil.example", "user@host", "NYC3", "nyc3 ", "nyc", "nyc123", ""]
+
+  beforeEach(() => {
+    vi.stubEnv("DO_KEY_ID", "do-test-key")
+    vi.stubEnv("DO_SECRET_KEY", "do-test-secret")
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it.each(["nyc3", "ams3", "sfo2", "sgp1", "fra1", "syd1"])("accepts DigitalOcean region %s", async region => {
+    await expect(SpacesPublisher.checkAndResolveOptions({ provider: "spaces", name: "my-space", region }, null, true)).resolves.toBeUndefined()
+    expect(makeSpacesPublisher({ region }).getS3UploadConfig().endpoint).toBe(`https://${region}.digitaloceanspaces.com`)
+  })
+
+  it.each(invalidRegions)("checkAndResolveOptions rejects region %j", region => {
+    expect(() => SpacesPublisher.checkAndResolveOptions({ provider: "spaces", name: "my-space", region }, null, true)).toThrow(InvalidConfigurationError)
+  })
+
+  it.each(invalidRegions)("getS3UploadConfig rejects region %j before building an endpoint", region => {
+    expect(() => makeSpacesPublisher({ region }).getS3UploadConfig()).toThrow(InvalidConfigurationError)
+    expect(() => makeSpacesPublisher({ region }).getS3UploadConfig()).toThrow(/region slug such as "nyc3".*https:\/\/www\.electron\.build\/docs\/publish#spaces/)
+  })
+})
+
 // ─── Upload — key construction and request params ────────────────────────────
 
 describe("BaseS3Publisher.upload — key construction and S3 request", { concurrent: false }, () => {

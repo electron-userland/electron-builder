@@ -588,7 +588,7 @@ export interface SpacesOptions extends BaseS3Options {
   readonly name: string
 
   /**
-   * The region (e.g. `nyc3`).
+   * The DigitalOcean region slug (e.g. `nyc3`): three lowercase letters followed by one or two digits.
    */
   readonly region: string
 }
