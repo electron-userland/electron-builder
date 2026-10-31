@@ -74,6 +74,7 @@ export type Elevation = { readonly kind: "root" } | { readonly kind: "argv" | "w
 const WRAPPED_SAFE_PATH = /^(?:[A-Za-z0-9._/+,:=@%-]|[^\p{C}\p{Z}\p{ASCII}])+$/u
 /** {@link WRAPPED_SAFE_PATH} and a space, which kdesudo's `sh -c` keeps in one word once it is backslash-escaped. */
 const KDESUDO_SAFE_PATH = /^(?:[A-Za-z0-9._/+,:=@% -]|[^\p{C}\p{Z}\p{ASCII}])+$/u
+const UNSAFE_INSTALLER_PATH_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#linux-gksudo-kdesudo-and-beesu-refuse-unsafe-installer-paths"
 
 /**
  * Throws when `rawPath` cannot be passed to `helper`, a `wrapped` elevation helper. The install command reaches it as one
@@ -86,7 +87,7 @@ function checkWrappedInstallerPath(helper: string, rawPath: string): void {
   const safePath = /kdesudo/i.test(helper) ? KDESUDO_SAFE_PATH : WRAPPED_SAFE_PATH
   if (!safePath.test(rawPath)) {
     throw newError(
-      `${helper} takes the install command as a single string, and the installer path ${JSON.stringify(rawPath)} contains characters that cannot be passed through it safely; install polkit (pkexec) to install this update`,
+      `${helper} takes the install command as a single string, and the installer path ${JSON.stringify(rawPath)} contains characters that cannot be passed through it safely, so electron-updater 7 (electron-builder v27) does not install it; install polkit (pkexec) to install this update: ${UNSAFE_INSTALLER_PATH_DOCS}`,
       "ERR_UPDATER_UNSAFE_INSTALLER_PATH"
     )
   }

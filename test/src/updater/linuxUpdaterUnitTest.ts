@@ -737,7 +737,10 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
           expect(installed).toBe(false)
           expect(privileged).toEqual([])
           expect(dispatchError).toHaveBeenCalledTimes(1)
-          expect(dispatchError.mock.calls[0][0]).toMatchObject({ code: "ERR_UPDATER_UNSAFE_INSTALLER_PATH" })
+          expect(dispatchError.mock.calls[0][0]).toMatchObject({
+            code: "ERR_UPDATER_UNSAFE_INSTALLER_PATH",
+            message: expect.stringContaining("https://www.electron.build/docs/migration/v27-runtime-changes#linux-gksudo-kdesudo-and-beesu-refuse-unsafe-installer-paths"),
+          })
         }
       )
 
