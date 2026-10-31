@@ -308,7 +308,10 @@ Please double check that your authentication token is correct. Due to security r
 
   protected doDownload(requestOptions: RequestOptions, options: DownloadCallOptions, redirectCount: number) {
     const request = this.createRequest(requestOptions, (response: IncomingMessage) => {
-      if (response.statusCode! >= 400) {
+      const code = response.statusCode ?? 0
+      if (code >= 400) {
+        // the body is not used: drain it, so the response ends and releases its socket (see the redirect below)
+        response.resume()
         options.callback(
           new Error(
             `Cannot download "${requestOptions.protocol || "https:"}//${requestOptions.hostname}${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`
@@ -321,13 +324,27 @@ Please double check that your authentication token is correct. Due to security r
       // response stream is in progress. Stop waiting and reject so consumer can catch the error.
       response.on("error", options.callback)
 
-      // this code not relevant for Electron (redirect event instead handled)
-      const redirectUrl = safeGetHeader(response, "location")
+      // Node.js reports a redirect as a 3xx response, Electron's net reports 301/302/303/307/308 as "redirect" events (see
+      // addRedirectHandlers) and any other 3xx as a response: a Location on a response that is not 3xx is ignored
+      const redirectUrl = code >= 300 && code < 400 ? safeGetHeader(response, "location") : null
       if (redirectUrl != null) {
-        if (redirectCount < this.maxRedirects) {
-          this.doDownload(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions), options, redirectCount + 1)
-        } else {
+        // the body of the redirect is not used: drain it, so the response ends and releases its socket, whose timeout would otherwise
+        // call back a second time
+        response.resume()
+        if (redirectCount >= this.maxRedirects) {
           options.callback(this.createMaxRedirectError())
+          return
+        }
+        // a response listener: a throw (from preparing the options, or from sending the new request) would escape as an uncaught
+        // exception and the download would never settle
+        try {
+          const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions)
+          if (redirectOptions.protocol !== "http:" && redirectOptions.protocol !== "https:") {
+            throw new Error(`Cannot follow the redirect to the "${redirectOptions.protocol ?? ""}" protocol`)
+          }
+          this.doDownload(redirectOptions, options, redirectCount + 1)
+        } catch (e: unknown) {
+          options.callback(e instanceof Error ? e : new Error(`Cannot follow the redirect: ${String(e)}`))
         }
         return
       }
@@ -351,10 +368,13 @@ Please double check that your authentication token is correct. Due to security r
 
   private addTimeOutHandler(request: any, callback: (error: Error) => void, timeout: number) {
     request.on("socket", (socket: Socket) => {
-      socket.setTimeout(timeout, () => {
+      const onTimeout = () => {
         request.abort()
         callback(new Error("Request timed out"))
-      })
+      }
+      socket.setTimeout(timeout, onTimeout)
+      // a keep-alive agent keeps the socket after the request and sets its own idle timeout on it: that timeout is not this request's
+      request.once("close", () => socket.removeListener("timeout", onTimeout))
     })
   }
 
