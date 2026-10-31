@@ -158,7 +158,9 @@ describe("NsisUpdater installer version check", () => {
     await expect(updater.verifyInstallerVersion(file, update("1.1.0"))).rejects.toMatchObject({
       code: "ERR_UPDATER_INSTALLER_VERSION_MISMATCH",
       message: expect.stringMatching(
-        new RegExp(`^The installer of version 1\\.1\\.0 is rejected: ${escapeRegExp(reason)}\\. electron-updater 7 .*updateManifestPublicKey.* ${escapeRegExp(DOCS)}$`)
+        new RegExp(
+          `^The installer of version 1\\.1\\.0 is rejected: ${escapeRegExp(reason)}\\. electron-updater installs an update whose manifest is not signed only when .*updateManifestPublicKey.* ${escapeRegExp(DOCS)}$`
+        )
       ),
     })
   })

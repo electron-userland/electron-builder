@@ -27,7 +27,7 @@ const INSTALLER_VERSION_DOCS = "https://www.electron.build/docs/migration/v27-ru
 
 function installerVersionMismatch(reason: string, expected: string): Error {
   return newError(
-    `The installer of version ${expected} is rejected: ${reason}. electron-updater 7 installs an update whose manifest is not signed only when the ProductVersion of its installer is the update version. ` +
+    `The installer of version ${expected} is rejected: ${reason}. electron-updater installs an update whose manifest is not signed only when the ProductVersion of its installer is the update version. ` +
       `Publish the installer built for that version with its latest.yml, or sign update manifests (updateManifestPublicKey). ${INSTALLER_VERSION_DOCS}`,
     "ERR_UPDATER_INSTALLER_VERSION_MISMATCH"
   )
@@ -404,7 +404,7 @@ export class NsisUpdater extends BaseUpdater {
   // the cached installer sat on disk since a previous launch, so its Authenticode signature and its ProductVersion are re-verified before
   // an install-on-next-launch is executed (same checks as at download time). The pending installer is matched to the latest update info
   // by sha512 only, so a manifest announcing another version for it is rejected here. A version mismatch is returned as a failure, so
-  // the caller clears the pending update instead of retrying it on every launch.
+  // the caller clears the pending update and does not retry it on every launch.
   protected async verifyInstallerSignatureOnLaunch(installerPath: string, updateInfoAndProvider: UpdateInfoAndProvider): Promise<VerifyUpdateFileResult> {
     const signature = await this.verifySignature(installerPath, updateInfoAndProvider)
     if (signature.response !== "success") {
