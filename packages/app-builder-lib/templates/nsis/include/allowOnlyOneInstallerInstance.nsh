@@ -106,16 +106,20 @@
   !endif
 !macroend
 
+# Every PowerShell command below first sets PSModulePath to the modules of the PowerShell it runs in ($PSHOME\Modules,
+# under the admin-only Windows directory), so the cmdlets they use (Get-CimInstance, Get-ExecutionPolicy, Stop-Process)
+# are never auto-loaded from a module in a user-writable directory: the inherited PSModulePath, which PowerShell also
+# extends with the user's Documents folder, is not trusted by the (possibly elevated) installer
 !macro IS_POWERSHELL_AVAILABLE
   Var /GLOBAL IsPowerShellAvailable ; 0 = available, 1 = not available
   # Require a sentinel exit code to ensure PowerShell actually executes the command.
   # Wine's PowerShell stub ignores the command and exits with 0.
-  nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) { exit 37 } else { exit 1 }"`
+  nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "$$env:PSModulePath = $$PSHOME + '\Modules'; if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) { exit 37 } else { exit 1 }"`
   Pop $0  # Return code (37 = command executed successfully)
 
   ${if} $0 == 37
     # PowerShell is available, check if it's not blocked by policies
-    nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "if ((Get-ExecutionPolicy -Scope Process) -eq 'Restricted') { exit 1 } else { exit 0 }"`
+    nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "$$env:PSModulePath = $$PSHOME + '\Modules'; if ((Get-ExecutionPolicy -Scope Process) -eq 'Restricted') { exit 1 } else { exit 0 }"`
     Pop $0
   ${else}
     StrCpy $0 1
@@ -130,7 +134,7 @@
 
 !macro FIND_PROCESS _FILE _RETURN
   ${if} $IsPowerShellAvailable == 0
-    nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "if ((Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and ($processPathFilter)}).Count -gt 0) { exit 0 } else { exit 1 }"`
+    nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "$$env:PSModulePath = $$PSHOME + '\Modules'; if ((Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and ($processPathFilter)}).Count -gt 0) { exit 0 } else { exit 1 }"`
     Pop ${_RETURN}
   ${else}
     !ifdef INSTALL_MODE_PER_ALL_USERS
@@ -159,7 +163,7 @@
   ${endIf}
 
   ${if} $IsPowerShellAvailable == 0
-    nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and ($processPathFilter)} | % { Stop-Process -Id $$_.ProcessId $0 }"`
+    nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "$$env:PSModulePath = $$PSHOME + '\Modules'; Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and ($processPathFilter)} | % { Stop-Process -Id $$_.ProcessId $0 }"`
   ${else}
     # taskkill by absolute path: a bare name is looked up in the installer's directory and the current directory first
     !ifdef INSTALL_MODE_PER_ALL_USERS

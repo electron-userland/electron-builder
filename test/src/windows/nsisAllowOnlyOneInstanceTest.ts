@@ -1,6 +1,26 @@
+import { findExecutable } from "builder-util/src/executables"
+import { windowsPowerShellPath } from "builder-util-runtime"
+import { spawnSync } from "child_process"
+import { existsSync } from "fs"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { beforeAll, expect } from "vitest"
+
+// the statement every PowerShell command of the template starts with, NSIS-escaped
+const FIXED_MODULE_PATH = "$$env:PSModulePath = $$PSHOME + '\\Modules'; "
+
+const powerShellCalls = (text: string) => text.split("\n").filter(line => line.includes("nsExec::Exec") && line.includes('"$PowerShellPath"'))
+
+// The PowerShell to run the commands in: the in-box Windows PowerShell on Windows (where the installer runs them), elsewhere
+// PowerShell 7 when it is installed at its default location
+function processCheckPowerShell(): string | null {
+  try {
+    return process.platform === "win32" ? windowsPowerShellPath() : findExecutable("pwsh", null)
+  } catch {
+    return null
+  }
+}
+const PROCESS_CHECK_POWERSHELL = processCheckPowerShell()
 
 const templatePath = path.join(__dirname, "../../../packages/app-builder-lib/templates/nsis/include/allowOnlyOneInstallerInstance.nsh")
 const uninstallerPath = path.join(__dirname, "../../../packages/app-builder-lib/templates/nsis/uninstaller.nsh")
@@ -238,6 +258,72 @@ describe("allowOnlyOneInstallerInstance.nsh", { concurrent: false }, () => {
     test("starts tasklist by absolute path inside cmd.exe, which keeps the quoted paths with /S", () => {
       expect(withoutComments(findProcessMacro)).not.toMatch(/[`\s]tasklist[\s`]/)
       expect(findProcessMacro.match(/"\$CmdPath" \/S \/C ""\$SYSDIR\\tasklist\.exe" /g)).toHaveLength(2)
+    })
+  })
+
+  describe("PowerShell module path", () => {
+    test("every PowerShell command first sets PSModulePath to the modules of the PowerShell it runs in", () => {
+      const calls = powerShellCalls(templateContent)
+      // availability probe, execution policy probe, FIND_PROCESS, KILL_PROCESS
+      expect(calls).toHaveLength(4)
+      for (const call of calls) {
+        expect(call).toContain(` -C "${FIXED_MODULE_PATH}`)
+      }
+    })
+
+    // the commands as PowerShell receives them, matching no process, run with a module that exports the cmdlets they use planted in the
+    // inherited PSModulePath (as a user can in their own Documents folder or environment)
+    test.runIf(PROCESS_CHECK_POWERSHELL != null)("no command auto-loads a module from the inherited PSModulePath", { timeout: 120_000 }, async ({ tmpDir }) => {
+      const powerShell = PROCESS_CHECK_POWERSHELL ?? ""
+      const dir = await tmpDir.getTempDir({ prefix: "nsis-psmodulepath" })
+      const marker = path.join(dir, "planted-module-loaded")
+      const moduleDir = path.join(dir, "modules", "CimCmdlets")
+      await fs.mkdir(moduleDir, { recursive: true })
+      const cmdlets = ["Get-CimInstance", "Get-ExecutionPolicy", "Stop-Process"]
+      await fs.writeFile(
+        path.join(moduleDir, "CimCmdlets.psm1"),
+        `[IO.File]::WriteAllText('${marker.replace(/'/g, "''")}', 'loaded')\n${cmdlets.map(name => `function ${name} { 'Unrestricted' }`).join("\n")}\n`
+      )
+      await fs.writeFile(
+        path.join(moduleDir, "CimCmdlets.psd1"),
+        `@{ RootModule = 'CimCmdlets.psm1'; ModuleVersion = '9.9.9'; FunctionsToExport = @(${cmdlets.map(name => `'${name}'`).join(", ")}) }\n`
+      )
+      const env: NodeJS.ProcessEnv = {}
+      // Windows environment variable names are case-insensitive, the keys of process.env copied here are not
+      for (const [key, value] of Object.entries(process.env)) {
+        if (key.toLowerCase() !== "psmodulepath") {
+          env[key] = value
+        }
+      }
+      env.PSModulePath = path.join(dir, "modules")
+      const run = (command: string) => {
+        spawnSync(powerShell, ["-NoProfile", "-NonInteractive", "-Command", command], { env, stdio: "ignore", timeout: 60_000 })
+        return existsSync(marker)
+      }
+
+      const commands = powerShellCalls(templateContent).map(call => {
+        const command = call.match(/ -C "(.*)"`$/)?.[1]
+        expect(command, call).toBeDefined()
+        // NSIS variables: a filter matching no process and no -Force; then NSIS's $$ escape
+        return (command ?? "")
+          .replaceAll("$processPathFilter", () => "$false")
+          .replaceAll(" $0 ", () => " ")
+          .replaceAll("$$", () => "$")
+      })
+      for (const command of commands) {
+        expect(run(command), command).toBe(false)
+      }
+      // without the fixed module path, the planted module is loaded
+      const findProcess = commands[2]
+      expect(findProcess).toContain("Get-CimInstance")
+      expect(
+        run(
+          findProcess.replace(
+            FIXED_MODULE_PATH.replaceAll("$$", () => "$"),
+            ""
+          )
+        )
+      ).toBe(true)
     })
   })
 
