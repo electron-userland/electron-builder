@@ -18,10 +18,10 @@ const require = createRequire(import.meta.url ?? process.execPath)
 /** How much of a failed command's stderr goes into the error message, at most: its end, where the error is. */
 const STDERR_MESSAGE_BYTES = 8 * 1024
 
-/** Ends every ERR_UPDATER_WEB_INSTALLER_DISABLED message: what changed in electron-updater 7 and how to opt in. */
+/** Ends every ERR_UPDATER_WEB_INSTALLER_DISABLED message: the rule and how to opt in. */
 export const WEB_INSTALLER_DISABLED_HINT =
-  "Since electron-updater 7, web-installer updates are rejected unless disableWebInstaller is false, which is the default only for installs made by an nsis-web installer of electron-builder 27; " +
-  "set autoUpdater.disableWebInstaller = false to allow them. See https://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true"
+  "Web-installer updates are rejected unless autoUpdater.disableWebInstaller is set to false. " +
+  "See https://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true"
 
 /**
  * The command line a shell runs for `cmd` and `args`. Given `shell: true` and an argv array, Node joins them with spaces
