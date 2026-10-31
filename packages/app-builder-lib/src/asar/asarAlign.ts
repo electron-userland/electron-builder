@@ -28,13 +28,13 @@ export function validateContentAlignment(alignment: unknown): asserts alignment 
   }
 }
 
-interface PackedFile {
+export interface PackedFile {
   node: Node
   offset: number
   size: number
 }
 
-function collectPackedFiles(node: Node, result: Array<PackedFile>): void {
+export function collectPackedFiles(node: Node, result: Array<PackedFile>): void {
   const files = node.files
   if (files == null) {
     return
