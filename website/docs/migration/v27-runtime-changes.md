@@ -102,7 +102,7 @@ electron-builder warns once per feed when a `generic` publish `url` (the feed wr
 
 > **Tip:** `electron-builder migrate-schema` prints an advisory for a `generic` publish configuration whose `url` has a query string.
 
-### Cross-origin header allowlist {#cross-origin-header-allowlist}
+### Only an allowlist of headers goes to another origin {#cross-origin-header-allowlist}
 
 **How you'll find out:** electron-updater **logs a warning at runtime**, once per updater, the first time a redirect to another origin leaves out a header from `requestHeaders` that electron-updater 6 sent on, naming the headers (never their values). A download or a channel file request on another origin than the feed already logs one (see [Update credentials stay on the feed's origin](#update-credentials-stay-on-the-feeds-origin)); it now names these headers too.
 
@@ -110,7 +110,7 @@ electron-updater 6 and builder-util-runtime 9 removed a fixed list of credential
 
 `Accept`, `Accept-Encoding`, `Accept-Language`, `User-Agent`, `Cache-Control`, `Pragma`, `Range`, `If-Range`, `If-Match`, `If-None-Match`, `If-Modified-Since`, `If-Unmodified-Since`, `Content-Type`, `Content-Length`, `Content-Encoding`, `Content-Language`
 
-Every other header is dropped, as is a request's `auth` option. `Range` and the conditional headers stay, so differential downloads redirected to a CDN keep working.
+Every other header is dropped. `Range` and the conditional headers stay, so differential downloads redirected to a CDN keep working.
 
 The same allowlist decides which headers electron-updater sends to a download, a channel file (`latest*.yml`) or another update info request on another origin than the update feed (see [Update credentials stay on the feed's origin](#update-credentials-stay-on-the-feeds-origin)): a custom header from `requestHeaders` now stays on the feed's origin like `Authorization`. So does `x-user-staging-id`, the per-install ID electron-updater adds to update info requests itself: a channel file on another origin, or the target of a redirect, no longer gets it, and no warning names it. A custom provider that does not extend a built-in one and whose downloads carry a header off the allowlist must declare `Provider.feedBaseUrl`, or `downloadUpdate()` fails with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`. Before, only credential headers from the fixed list required it.
 
