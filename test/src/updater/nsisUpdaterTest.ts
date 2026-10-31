@@ -729,17 +729,17 @@ describe("NsisUpdater — disableWebInstaller", () => {
 
   // Seeds the pending cache exactly as a previous launch that downloaded the WEB_PAYLOAD update leaves it, so
   // validateDownloadedPath returns a cache hit. `updateConfigPath` must be set first (it names the cache dir).
-  async function seedCachedWebUpdate(updater: NsisUpdater) {
+  async function seedCachedWebUpdate(updater: NsisUpdater, packageFileName = CACHED_PACKAGE_NAME) {
     const pendingDir: string = (await (updater as any).getOrCreateDownloadHelper()).cacheDirForPendingUpdate
     await fsExtra.outputFile(path.join(pendingDir, WEB_INSTALLER_NAME), WEB_PAYLOAD.installer)
-    await fsExtra.outputFile(path.join(pendingDir, CACHED_PACKAGE_NAME), WEB_PAYLOAD.package)
+    await fsExtra.outputFile(path.join(pendingDir, packageFileName), WEB_PAYLOAD.package)
     await fsExtra.outputJson(path.join(pendingDir, "update-info.json"), {
       fileName: WEB_INSTALLER_NAME,
       sha512: sha512Base64(WEB_PAYLOAD.installer),
       isAdminRightsRequired: false,
-      packageFileName: CACHED_PACKAGE_NAME,
+      packageFileName,
     })
-    return { packageFile: path.join(pendingDir, CACHED_PACKAGE_NAME) }
+    return { packageFile: path.join(pendingDir, packageFileName) }
   }
 
   // records every non-channel-file request, i.e. installer and package downloads
@@ -883,11 +883,61 @@ describe("NsisUpdater — disableWebInstaller", () => {
     }
   })
 
-  // NSIS takes the rest of the command line after /D= as the install directory, so every other argument comes before it
+  // the feed query (an auth token here; Keygen always has `?product=`) is copied onto the package URL, but must not reach the package
+  // file name: `?` cannot be in a Windows file name
+  test("a feed URL with a query names the downloaded web package without the query", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(true, WEB_PAYLOAD)
+    try {
+      const updater = await createNsisUpdater("1.0.0")
+      updater.disableWebInstaller = false
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}/?token=abc` })
+
+      const updateCheckResult = await updater.checkForUpdates()
+      const { updateFile, packageFile } = (await updateCheckResult!.downloadPromise)!
+      expect(path.basename(packageFile!)).toBe(CACHED_PACKAGE_NAME)
+      await assertThat(expect, packageFile).isFile()
+      expect((await fsExtra.readJson(path.join(path.dirname(packageFile!), "update-info.json"))).packageFileName).toBe(CACHED_PACKAGE_NAME)
+
+      const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
+      expect(updater.install(true, false)).toBe(true)
+      expect(spawnLog).toHaveBeenCalledWith(updateFile, expect.arrayContaining([`--package-file=${packageFile}`]))
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  // a package cached under another name (e.g. by an earlier electron-updater that took the extension from the URL query) is installed
+  // from the file that was validated, not from the name derived for this download
+  test("a web-installer update cached under another package file name is installed from the cached package", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(true, WEB_PAYLOAD)
+    const downloads = trackDownloads(server)
+    try {
+      const updater = await createNsisUpdater("1.0.0")
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      const { packageFile } = await seedCachedWebUpdate(updater, "package-1.0.1.def")
+      updater.disableWebInstaller = false
+
+      const updateCheckResult = await updater.checkForUpdates()
+      const result = (await updateCheckResult!.downloadPromise)!
+      expect(result.packageFile).toBe(packageFile)
+      expect(downloads).toEqual([])
+
+      const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
+      expect(updater.install(true, false)).toBe(true)
+      expect(spawnLog).toHaveBeenCalledWith(result.updateFile, expect.arrayContaining([`--package-file=${packageFile}`]))
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  // NSIS takes the rest of the command line after /D= as the install directory, so every other argument comes before it. A directory
+  // with a space stays one unquoted argument: child_process.spawn quotes it, and the installer's GetDParameter handles that form
   for (const web of [true, false]) {
-    for (const installDirectory of ["C:\\Apps\\TestApp", undefined]) {
+    for (const installDirectory of ["C:\\Apps\\TestApp", "C:\\Program Files\\Test App", undefined]) {
       test(
-        `installer arguments of a ${web ? "web" : "full"} installer ${installDirectory == null ? "without installDirectory" : "with installDirectory (/D= last)"}`,
+        `installer arguments of a ${web ? "web" : "full"} installer ${installDirectory == null ? "without installDirectory" : `with installDirectory (/D= last)${installDirectory.includes(" ") ? ", containing a space" : ""}`}`,
         config,
         async ({ expect }) => {
           const { server, port, tmpDir } = await serveUpdate(web, WEB_PAYLOAD)
@@ -927,9 +977,9 @@ describe("NsisUpdater — disableWebInstaller", () => {
 
   // the update info of a per-machine build has isAdminRightsRequired in the installer's file entry: the installer is started through
   // elevate.exe from the resources of the running app, with the arguments it would get directly
-  for (const installDirectory of [undefined, "C:\\Apps\\TestApp"]) {
+  for (const installDirectory of [undefined, "C:\\Apps\\TestApp", "C:\\Program Files\\Test App"]) {
     test(
-      `an update with isAdminRightsRequired is installed through elevate.exe, --package-file included${installDirectory == null ? "" : " and /D= last"}`,
+      `an update with isAdminRightsRequired is installed through elevate.exe, --package-file included${installDirectory == null ? "" : ` and /D= last${installDirectory.includes(" ") ? ", containing a space" : ""}`}`,
       config,
       async ({ expect }) => {
         const { server, port, tmpDir } = await serveUpdate(true, { ...WEB_PAYLOAD, isAdminRightsRequired: true })

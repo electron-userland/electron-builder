@@ -5,6 +5,9 @@ import {
   BlockMapV3Header,
   BlockMapV3Super,
   blockMapV3Size,
+  checkBlockMapV3Groups,
+  checkBlockMapV3Header,
+  checkBlockMapV3Supers,
   decodeBlockMapV3,
   GROUP_SIZE,
   groupEntryRanges,
@@ -12,6 +15,7 @@ import {
   groupTableStart,
   isBlockMapV3,
   IndexRange,
+  MAX_BLOCK_MAP_V3_SIZE,
   parseBlockMapV3Groups,
   parseBlockMapV3Header,
   parseBlockMapV3Records,
@@ -25,6 +29,7 @@ import {
 import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
 import { Logger } from "../types.js"
+import { parseMultipartBoundary } from "./DataSplitter.js"
 
 /** Upper bound of the first Range request: header + super-group table of maps up to ~4k super-groups (≈ 2 GB of 16 KiB blocks). */
 export const FIRST_RANGE_SIZE = 64 * 1024
@@ -34,11 +39,8 @@ export const MIN_FIRST_RANGE_SIZE = 2 * 1024
 export const COALESCE_GAP_BYTES = 1024
 /** Apache's default MaxRanges is 200 and header buffers are 8 KB; stay under both. */
 export const MAX_RANGES_PER_REQUEST = 200
-/**
- * Largest block map accepted (whole downloads, and the size a header declares): a 2 GB installer at 1 KiB blocks needs ~22 MB,
- * so this leaves ample room while keeping a corrupt or hostile header from allocating or requesting gigabytes.
- */
-export const MAX_BLOCK_MAP_SIZE = 128 * 1024 * 1024
+/** Largest block map accepted (whole downloads, and the size a header declares): `MAX_BLOCK_MAP_V3_SIZE`. */
+export const MAX_BLOCK_MAP_SIZE = MAX_BLOCK_MAP_V3_SIZE
 /** per-part allowance for the boundary and part headers of a `multipart/byteranges` response */
 const MULTIPART_PART_OVERHEAD = 256
 const MAX_REDIRECTS = 10
@@ -50,6 +52,8 @@ export interface BlockMapV3FetchOptions {
   readonly oldMap: Buffer | null
   /** size of the file the new map describes (the update's `size` in the manifest), when known: a map for another size is rejected */
   readonly expectedFileSize?: number | null
+  /** largest new map accepted, at most MAX_BLOCK_MAP_SIZE (AppUpdater passes `blockMapSizeLimit` of the update's size) */
+  readonly maxBlockMapSize?: number | null
   readonly httpExecutor: HttpExecutor<any>
   readonly requestHeaders?: OutgoingHttpHeaders | null
   readonly cancellationToken: CancellationToken
@@ -121,8 +125,12 @@ class BlockMapV3Fetcher {
   /** options of the current target: retargeted by every redirect (later ranges go directly to e.g. the CDN a feed redirects to) */
   private requestOptions: RequestOptions
   private currentUrl: URL
+  /** the header, every response body and every Range request are bounded by it */
+  private readonly maxSize: number
 
   constructor(private readonly options: BlockMapV3FetchOptions) {
+    const maxBlockMapSize = options.maxBlockMapSize
+    this.maxSize = maxBlockMapSize != null && maxBlockMapSize > 0 ? Math.min(maxBlockMapSize, MAX_BLOCK_MAP_SIZE) : MAX_BLOCK_MAP_SIZE
     // Electron's net reports redirects as events instead of following them, so they can be followed without the credentials
     const requestOptions: RequestOptions & { redirect?: "manual" } = {
       headers: {
@@ -167,7 +175,8 @@ class BlockMapV3Fetcher {
       return await this.otherFormat(first)
     }
     const header = parseBlockMapV3Header(first.body)
-    this.checkHeader(header)
+    // before any size derived from its counts is requested or allocated (the counts themselves are bounded by `parseBlockMapV3Header`)
+    checkBlockMapV3Header(header, { expectedFileSize: this.options.expectedFileSize, maxSize: this.maxSize })
     const fileSize = blockMapV3Size(header)
     if (first.totalSize != null && first.totalSize !== fileSize) {
       throw new Error(`block map v3: remote size ${first.totalSize} does not match header (expected ${fileSize})`)
@@ -186,6 +195,8 @@ class BlockMapV3Fetcher {
       prefix = Buffer.concat([prefix, rest.body])
     }
     const supers = parseBlockMapV3Supers(header, prefix)
+    // the group entry ranges are planned from these counts: once they sum to the header's, every range lies within the map
+    checkBlockMapV3Supers(header, supers)
     const buffer = Buffer.alloc(fileSize)
     const prefetched = Math.min(prefix.length, fileSize)
     prefix.copy(buffer, 0, 0, prefetched)
@@ -208,6 +219,8 @@ class BlockMapV3Fetcher {
       }
     }
     const groups = parseBlockMapV3Groups(header, buffer)
+    // the record ranges are planned from these counts: once they sum to the header's, every range lies within the map
+    checkBlockMapV3Groups(header, groups)
 
     // 3. groups: copy the records of matched ones from the old map, fetch the rest
     const recordStage = planRecordStage(oldMap, header, supers, groups, superStage.superMatch, prefetched)
@@ -252,32 +265,13 @@ class BlockMapV3Fetcher {
     }
   }
 
-  /**
-   * Rejects a header that does not describe the expected file, or declares a map larger than MAX_BLOCK_MAP_SIZE, before any size
-   * derived from its counts is requested or allocated (the counts themselves are bounded by `parseBlockMapV3Header`).
-   */
-  private checkHeader(header: BlockMapV3Header): void {
-    const expectedFileSize = this.options.expectedFileSize
-    if (expectedFileSize != null && header.fileSize !== expectedFileSize) {
-      throw new Error(`block map v3: the map describes a ${header.fileSize}-byte file, the update is ${expectedFileSize} bytes`)
-    }
-    const size = blockMapV3Size(header)
-    if (size > MAX_BLOCK_MAP_SIZE) {
-      throw new Error(`block map v3: the header declares a ${size}-byte map, more than the ${MAX_BLOCK_MAP_SIZE}-byte limit`)
-    }
-  }
-
   private verifiedWhole(body: Buffer): BlockMapV3FetchResult {
     if (!isBlockMapV3(body)) {
       this.options.logger?.info?.(`Block map ${this.options.url.href} is not a v3 map; downloaded it whole`)
       return this.result(body, { supers: 0, groups: 0 }, { supers: 0, groups: 0 })
     }
-    const map = decodeBlockMapV3(body)
-    this.checkHeader(map.header)
-    const expected = blockMapV3Size(map.header)
-    if (body.length !== expected) {
-      throw new Error(`block map v3: file size ${body.length} does not match header (expected ${expected})`)
-    }
+    // the header (expected file size, size limit, exact length) and the tables are checked before any record is decoded
+    const map = decodeBlockMapV3(body, this.options.expectedFileSize, this.maxSize)
     verifyBlockMapV3(body, map.header, map.supers, map.groups)
     return this.result(body, { supers: 0, groups: 0 }, { supers: map.supers.length, groups: map.groups.length })
   }
@@ -287,8 +281,8 @@ class BlockMapV3Fetcher {
     let body = first.body
     if (first.totalSize == null) {
       body = await this.fetchWhole()
-    } else if (first.totalSize > MAX_BLOCK_MAP_SIZE) {
-      throw new Error(`Blockmap "${this.options.url.href}" is ${first.totalSize} bytes, more than the ${MAX_BLOCK_MAP_SIZE}-byte limit`)
+    } else if (first.totalSize > this.maxSize) {
+      throw new Error(`Blockmap "${this.options.url.href}" is ${first.totalSize} bytes, more than the ${this.maxSize}-byte limit`)
     } else if (body.length < first.totalSize) {
       const rest = await this.rangeRequest([{ start: body.length, end: first.totalSize }])
       body = rest.status === 200 ? rest.body : Buffer.concat([body, rest.body])
@@ -297,7 +291,7 @@ class BlockMapV3Fetcher {
   }
 
   private async fetchWhole(): Promise<Buffer> {
-    const response = await this.doRequest(null, MAX_BLOCK_MAP_SIZE)
+    const response = await this.doRequest(null, this.maxSize)
     if (response.status !== 200 && response.status !== 206) {
       throw new Error(`block map v3: unexpected status ${response.status} for a full download`)
     }
@@ -334,11 +328,11 @@ class BlockMapV3Fetcher {
         continue
       }
       const contentType = response.contentType || ""
-      const m = /^multipart\/.+?\s*;\s*boundary=(?:"([^"]+)"|([^\s";]+))\s*$/i.exec(contentType)
-      if (m == null) {
-        throw new Error(`Content-Type "multipart/byteranges" is expected, but got "${contentType}"`)
+      const boundary = parseMultipartBoundary(contentType)
+      if (boundary == null) {
+        throw new Error(`Content-Type "multipart/byteranges" is expected, but got "${contentType.substring(0, 200)}"`)
       }
-      const parts = parseMultipartByteRanges(response.body, m[1] || m[2], batch)
+      const parts = parseMultipartByteRanges(response.body, boundary, batch)
       if (parts.length !== batch.length) {
         throw new Error(`block map v3: multipart response is missing ${batch.length - parts.length} of ${batch.length} requested ranges`)
       }
@@ -355,6 +349,11 @@ class BlockMapV3Fetcher {
    */
   private async rangeRequest(ranges: Array<ByteRange>, allowShort = false): Promise<RangeResponse> {
     const requested = ranges.reduce((sum, it) => sum + it.end - it.start, 0)
+    // every range planned from a checked header and tables lies within the map, so for them this is defense in depth; the first
+    // request is sized from the old map, before the new header is known
+    if (requested > this.maxSize) {
+      throw new Error(`block map v3: ${requested} bytes requested, more than the ${this.maxSize}-byte limit`)
+    }
     const response = await this.doRequest(ranges, ranges.length === 1 ? requested : requested + ranges.length * MULTIPART_PART_OVERHEAD)
     if (response.status === 206) {
       if (ranges.length === 1) {
@@ -371,7 +370,7 @@ class BlockMapV3Fetcher {
 
   /**
    * Sends one GET (of `ranges`, or of the whole file when null) and buffers the body, failing once a 206 body exceeds
-   * `maxPartialBytes` or any other body (the whole file) exceeds MAX_BLOCK_MAP_SIZE.
+   * `maxPartialBytes` or any other body (the whole file) exceeds the size limit of the map.
    */
   private doRequest(ranges: Array<ByteRange> | null, maxPartialBytes: number, redirectCount = 0): Promise<RangeResponse> {
     const { cancellationToken, httpExecutor } = this.options
@@ -418,7 +417,7 @@ class BlockMapV3Fetcher {
           return
         }
 
-        const maxBytes = status === 206 ? maxPartialBytes : MAX_BLOCK_MAP_SIZE
+        const maxBytes = status === 206 ? maxPartialBytes : this.maxSize
         const chunks: Array<Buffer> = []
         let received = 0
         response.on("data", (chunk: Buffer) => {

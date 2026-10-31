@@ -22,6 +22,7 @@ import {
   githubTagPrefix,
   githubUrl,
   GitlabOptions,
+  isValidMaxUpdateInfoSize,
   KeygenOptions,
   normalizePublicKeyList,
   Nullish,
@@ -346,8 +347,8 @@ export class PublishManager implements PublishContext {
   }
 
   private getOrCreatePublisher(publishConfig: PublishConfiguration, appInfo: AppInfo): Promise<Publisher | null> {
-    // to not include token into cache key
-    const providerCacheKey = safeStringifyJson(publishConfig)
+    // to not include token into cache key; every sensitive value is fingerprinted, so configs that differ in one get different keys
+    const providerCacheKey = safeStringifyJson(publishConfig, undefined, Number.POSITIVE_INFINITY)
     let publisher = this.nameToPublisher.get(providerCacheKey)
     if (publisher == null) {
       publisher = createPublisher(this, appInfo.version, publishConfig, this.publishOptions, this.packager).then(it => {
@@ -559,6 +560,14 @@ async function createAppUpdateConfiguration(
   }
   warnAboutGenericFeedQuery(publishConfig)
 
+  // electron-updater fails every update check of an installed app whose app-update.yml has an invalid limit
+  const maxUpdateInfoSize: unknown = publishConfig.maxUpdateInfoSize
+  if (maxUpdateInfoSize != null && !isValidMaxUpdateInfoSize(maxUpdateInfoSize)) {
+    throw new InvalidConfigurationError(
+      `publish.maxUpdateInfoSize must be a positive integer (bytes) or 0 for no limit, but got: ${typeof maxUpdateInfoSize === "string" ? JSON.stringify(maxUpdateInfoSize) : typeof maxUpdateInfoSize === "number" ? maxUpdateInfoSize : typeof maxUpdateInfoSize}`
+    )
+  }
+
   // like updateManifestPublicKey: the opt-out marker is only ever assigned below, from win.verifyUpdateCodeSignature
   if (publishConfig.verifyUpdateCodeSignature !== undefined) {
     throw new InvalidConfigurationError("publish.verifyUpdateCodeSignature is managed by electron-builder and must not be set; configure win.verifyUpdateCodeSignature instead")
@@ -765,11 +774,9 @@ export async function createPublisher(
   options: PublishOptions,
   packager: Packager
 ): Promise<Publisher | null> {
-  if (debug.enabled) {
-    debug(`Create publisher: ${safeStringifyJson(publishConfig)}`)
-  }
-
   const provider = publishConfig.provider
+  debug(`Create publisher: ${provider}`)
+
   switch (provider) {
     case "github": {
       const releaseBody = await resolveReleaseBody(packager)
