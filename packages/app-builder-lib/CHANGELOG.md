@@ -1,5 +1,28 @@
 # app-builder-lib
 
+## 26.18.2
+
+### Patch Changes
+
+- Fix(publish): `createPublisher` debug output names the provider instead of dumping the publish configuration _[`#10540`](https://github.com/electron-userland/electron-builder/pull/10540) [`a4e36e7`](https://github.com/electron-userland/electron-builder/commit/a4e36e714346dc41d91f91de7da00d1f0b89c157) [@claude](https://github.com/apps/claude)_
+- Fix(rpm): build RPMs without /usr/lib/.build-id links and with v4 package format so output is the same on every build host (#10471) _[`#10476`](https://github.com/electron-userland/electron-builder/pull/10476) [`7f293a9`](https://github.com/electron-userland/electron-builder/commit/7f293a90f31ed020ee6bea26fd87b03e2ee21f2b) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`8348b16`](https://github.com/electron-userland/electron-builder/commit/8348b165b05273e8fa0d07763180d39017ddfbff) [`2d1dc9e`](https://github.com/electron-userland/electron-builder/commit/2d1dc9e9e1bd7382931cc3aa78f5867d74b121f3) [`f3c7077`](https://github.com/electron-userland/electron-builder/commit/f3c7077c6e86c63ac27898a10fbfab319d87c1b6) [`2d1dc9e`](https://github.com/electron-userland/electron-builder/commit/2d1dc9e9e1bd7382931cc3aa78f5867d74b121f3)
+
+</small>
+
+- `builder-util@26.18.2`
+- `builder-util-runtime@9.7.2`
+- `electron-publish@26.18.2`
+- `dmg-builder@26.18.2`
+- `electron-builder-squirrel-windows@26.18.2`
+
+</details>
+
 ## 26.18.1
 
 ### Patch Changes

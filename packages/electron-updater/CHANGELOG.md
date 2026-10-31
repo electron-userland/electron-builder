@@ -1,5 +1,26 @@
 ## 4.3.0
 
+## 6.8.13
+
+### Patch Changes
+
+- Fix(runtime): a download follows a `Location` header only on a 3xx response, and a redirect it cannot follow (another protocol than http(s), or an invalid URL) now fails the download instead of throwing an uncaught exception and stalling until the request times out. On Node, a request's socket timeout ends with the request, so the keep-alive agent's idle timeout on a redirect's released socket does not fail the download of the redirect target with "Request timed out" _[`#10541`](https://github.com/electron-userland/electron-builder/pull/10541) [`2d1dc9e`](https://github.com/electron-userland/electron-builder/commit/2d1dc9e9e1bd7382931cc3aa78f5867d74b121f3) [@claude](https://github.com/apps/claude)_
+- Fix: secrets in logs and error messages (passwords, tokens and keys in redacted command lines, environments and request options) are shown as a fingerprint keyed with a random secret of the process, derived with scrypt: the same value has the same fingerprint within a run, but a fingerprint cannot be checked against guessed values offline. A value whose fingerprint cannot be computed is shown as `<redacted>`. _[`#10457`](https://github.com/electron-userland/electron-builder/pull/10457) [`f3c7077`](https://github.com/electron-userland/electron-builder/commit/f3c7077c6e86c63ac27898a10fbfab319d87c1b6) [@claude](https://github.com/apps/claude)_
+- Remove the `lodash.isequal` dependency: the in-memory check for an already downloaded update compares the update info with `util.isDeepStrictEqual`. _[`#10502`](https://github.com/electron-userland/electron-builder/pull/10502) [`ea56437`](https://github.com/electron-userland/electron-builder/commit/ea56437d4f6cc1f2ef2db4ac4a34d605dbf6ace6) [@mgasner](https://github.com/mgasner)_
+- Fix(runtime): on Node, a download that fails with a status of 400 or more drains the response, so its socket is released and the request's socket timeout does not call back the failed download a second time with "Request timed out" _[`#10541`](https://github.com/electron-userland/electron-builder/pull/10541) [`2d1dc9e`](https://github.com/electron-userland/electron-builder/commit/2d1dc9e9e1bd7382931cc3aa78f5867d74b121f3) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`2d1dc9e`](https://github.com/electron-userland/electron-builder/commit/2d1dc9e9e1bd7382931cc3aa78f5867d74b121f3) [`f3c7077`](https://github.com/electron-userland/electron-builder/commit/f3c7077c6e86c63ac27898a10fbfab319d87c1b6) [`2d1dc9e`](https://github.com/electron-userland/electron-builder/commit/2d1dc9e9e1bd7382931cc3aa78f5867d74b121f3)
+
+</small>
+
+- `builder-util-runtime@9.7.2`
+
+</details>
+
 ## 6.8.12
 
 ### Patch Changes
