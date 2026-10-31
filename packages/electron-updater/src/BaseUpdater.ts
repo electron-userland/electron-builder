@@ -174,8 +174,8 @@ export abstract class BaseUpdater extends AppUpdater {
   private pendingInstall: Promise<unknown> = Promise.resolve()
 
   /**
-   * Removed in electron-updater 7: kept, without a type, only to tell a plain JavaScript subclass that still reads or sets
-   * it. Reading returns `undefined` and setting does nothing; the install lifecycle is {@link installState}.
+   * Removed in electron-updater 7: kept out of the typings (`@internal`) only to warn a plain JavaScript subclass that still
+   * reads or sets it. Reading returns `undefined` and setting does nothing; the install lifecycle is {@link installState}.
    * @internal
    */
   protected get quitAndInstallCalled(): undefined {
