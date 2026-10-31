@@ -13,7 +13,9 @@ import {
   resolveFileSetDestination,
 } from "app-builder-lib/internal"
 import { readFileSync } from "fs"
+import { createRequire } from "module"
 import * as path from "path"
+import semver from "semver"
 import { vi } from "vitest"
 import { resolveExcludedExtensions } from "../../packages/app-builder-lib/src/fileMatcher"
 
@@ -84,6 +86,51 @@ describe("createFilter – build/app/**/* partial directory matching (test-app-b
 
   test("includes package.json", ({ expect }) => {
     expect(filter("/app/package.json", fileStat())).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// minimatch 11 (GHSA-g3hv-75wg-m249)
+// ---------------------------------------------------------------------------
+
+/**
+ * GHSA-g3hv-75wg-m249 is only patched in minimatch 11.0.1+. The glob semantics FileMatcher relies on
+ * (brace alternation, negation, extglobs, bare-directory expansion) are unchanged from 10.x.
+ */
+describe("minimatch 11 (GHSA-g3hv-75wg-m249)", () => {
+  test("app-builder-lib resolves a patched minimatch", ({ expect }) => {
+    const { version } = createRequire(require.resolve("app-builder-lib"))("minimatch/package.json")
+    expect(semver.gte(version, "11.0.1")).toBe(true)
+  })
+
+  test("brace alternatives match each alternative and nothing else", ({ expect }) => {
+    const filter = new FileMatcher("/app", "/out", noMacro, ["dist/{main,preload}.js", "icon.{png,ico}"]).createFilter()
+    expect(filter("/app/dist/main.js", fileStat())).toBe(true)
+    expect(filter("/app/dist/preload.js", fileStat())).toBe(true)
+    expect(filter("/app/dist/renderer.js", fileStat())).toBe(false)
+    expect(filter("/app/icon.ico", fileStat())).toBe(true)
+    expect(filter("/app/icon.icns", fileStat())).toBe(false)
+  })
+
+  test("a brace pattern without a dot counts as magic and is not expanded as a bare directory", ({ expect }) => {
+    const filter = new FileMatcher("/app", "/out", noMacro, ["{lib,assets}"]).createFilter()
+    expect(filter("/app/lib", dirStat())).toBe(true)
+    expect(filter("/app/lib/index.js", fileStat())).toBe(false)
+  })
+
+  test("negated brace extensions exclude files at any depth, including dotfiles", ({ expect }) => {
+    const filter = new FileMatcher("/app", "/out", noMacro, ["**/*", "!**/*.{map,d.ts}"]).createFilter()
+    expect(filter("/app/dist/index.js", fileStat())).toBe(true)
+    expect(filter("/app/dist/index.js.map", fileStat())).toBe(false)
+    expect(filter("/app/types/index.d.ts", fileStat())).toBe(false)
+    expect(filter("/app/.config/settings.json", fileStat())).toBe(true)
+  })
+
+  test("extglob exclusions exclude only the listed alternatives", ({ expect }) => {
+    const filter = new FileMatcher("/app", "/out", noMacro, ["**/*", "!node_modules/@(electron-download|electron)/**/*"]).createFilter()
+    expect(filter("/app/node_modules/electron/index.js", fileStat())).toBe(false)
+    expect(filter("/app/node_modules/electron-download/index.js", fileStat())).toBe(false)
+    expect(filter("/app/node_modules/electron-log/index.js", fileStat())).toBe(true)
   })
 })
 
