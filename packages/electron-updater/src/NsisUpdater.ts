@@ -402,10 +402,24 @@ export class NsisUpdater extends BaseUpdater {
     }
   }
 
-  // the cached installer sat on disk since a previous launch, so its Authenticode signature is re-verified before an
-  // install-on-next-launch is executed (same check as at download time)
-  protected verifyInstallerSignatureOnLaunch(installerPath: string, updateInfoAndProvider: UpdateInfoAndProvider): Promise<VerifyUpdateFileResult> {
-    return this.verifySignature(installerPath, updateInfoAndProvider)
+  // the cached installer sat on disk since a previous launch, so its Authenticode signature and its ProductVersion are re-verified before
+  // an install-on-next-launch is executed (same checks as at download time). The pending installer is matched to the latest update info
+  // by sha512 only, so a manifest announcing another version for it is rejected here. A version mismatch is returned as a failure, so
+  // the caller clears the pending update instead of retrying it on every launch.
+  protected async verifyInstallerSignatureOnLaunch(installerPath: string, updateInfoAndProvider: UpdateInfoAndProvider): Promise<VerifyUpdateFileResult> {
+    const signature = await this.verifySignature(installerPath, updateInfoAndProvider)
+    if (signature.response !== "success") {
+      return signature
+    }
+    try {
+      await this.verifyInstallerVersion(installerPath, updateInfoAndProvider)
+    } catch (e: unknown) {
+      if (e instanceof Error && "code" in e && e.code === "ERR_UPDATER_INSTALLER_VERSION_MISMATCH") {
+        return { response: "failure", message: e.message }
+      }
+      throw e
+    }
+    return signature
   }
 
   // per-user NSIS installs run without an elevation prompt (per-machine installs are filtered separately via

@@ -323,5 +323,56 @@ describe("NsisUpdater installer version check", () => {
       expect(events).toEqual(["checking-for-update", "update-available", "error"])
       expect(requests.filter(url => url.includes(".exe"))).toEqual([])
     })
+
+    // the pending installer is matched to the latest update info by sha512 only, so a manifest of a newer version could otherwise install it
+    test("a pending installer is not installed on the next launch when the manifest announces it under a newer version", async ({ expect, tmpDir }) => {
+      const root = await tmpDir.getTempDir({ prefix: "installer-version-server" })
+      const installer = windowsExecutable(["1.1.0"])
+      const sha512 = createHash("sha512").update(installer).digest("base64")
+      const writeManifest = (version: string) =>
+        fsExtra.outputFile(
+          path.join(root, "latest.yml"),
+          serializeToYaml({ version, files: [{ url: "TestApp-Setup-1.1.0.exe", sha512, size: installer.length }], releaseDate: "2024-01-01T00:00:00.000Z" })
+        )
+      await fsExtra.outputFile(path.join(root, "TestApp-Setup-1.1.0.exe"), installer)
+      await writeManifest("1.1.0")
+      const { server, port } = await createLocalServer(root)
+      servers.push(server)
+      const app = await createTestAppAdapter("1.0.0")
+      const config = await signedConfig(`http://127.0.0.1:${port}`)
+      const launch = () => {
+        const updater = new NsisUpdater(null, app)
+        tuneTestUpdater(updater)
+        // the test installs the pending update itself, not the automatic install at launch
+        updater.autoInstallEvent = "manual"
+        updater.updateConfigPath = config
+        updater.verifyUpdateFileAuthenticodeSignature = () => Promise.resolve({ response: "success" })
+        return updater
+      }
+
+      const lastLaunch = launch()
+      await expect((await lastLaunch.checkForUpdates())?.downloadPromise).resolves.toBeDefined()
+      lastLaunch.quitAndInstall({ isSilent: true, isForceRunAfter: true, waitUntilNextLaunch: true })
+      // the next launch: the feed announces 1.2.0 with the checksum of the pending 1.1.0 installer
+      await writeManifest("1.2.0")
+      const updater = launch()
+      const doInstall = vi.spyOn(updater as any, "doInstall").mockReturnValue(true)
+      const errors: Array<Error> = []
+      updater.on("error", error => errors.push(error))
+      // @ts-expect-error accessing a private method
+      expect(await updater.isPendingInstallMarked()).toBe(true)
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(errors).toEqual([
+        expect.objectContaining({
+          code: "ERR_UPDATER_INVALID_SIGNATURE",
+          message: expect.stringContaining('The installer of version 1.2.0 is rejected: its ProductVersion is "1.1.0"'),
+        }),
+      ])
+      // the pending update is cleared, not retried on every launch
+      // @ts-expect-error accessing a private method
+      expect(await updater.isPendingInstallMarked()).toBe(false)
+    })
   })
 })
