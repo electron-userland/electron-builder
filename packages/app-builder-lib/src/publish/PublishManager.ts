@@ -22,6 +22,7 @@ import {
   githubTagPrefix,
   githubUrl,
   GitlabOptions,
+  isValidMaxUpdateInfoSize,
   KeygenOptions,
   normalizePublicKeyList,
   Nullish,
@@ -558,6 +559,14 @@ async function createAppUpdateConfiguration(
     updaterCacheDirName: packager.appInfo.updaterCacheDirName,
   }
   warnAboutGenericFeedQuery(publishConfig)
+
+  // electron-updater fails every update check of an installed app whose app-update.yml has an invalid limit
+  const maxUpdateInfoSize: unknown = publishConfig.maxUpdateInfoSize
+  if (maxUpdateInfoSize != null && !isValidMaxUpdateInfoSize(maxUpdateInfoSize)) {
+    throw new InvalidConfigurationError(
+      `publish.maxUpdateInfoSize must be a positive integer (bytes) or 0 for no limit, but got: ${typeof maxUpdateInfoSize === "string" ? JSON.stringify(maxUpdateInfoSize) : typeof maxUpdateInfoSize === "number" ? maxUpdateInfoSize : typeof maxUpdateInfoSize}`
+    )
+  }
 
   // like updateManifestPublicKey: the opt-out marker is only ever assigned below, from win.verifyUpdateCodeSignature
   if (publishConfig.verifyUpdateCodeSignature !== undefined) {

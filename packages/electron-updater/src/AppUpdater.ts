@@ -4,6 +4,8 @@ import {
   AllPublishOptions,
   asArray,
   CancellationToken,
+  DEFAULT_MAX_UPDATE_INFO_SIZE,
+  isValidMaxUpdateInfoSize,
   newError,
   PublishConfiguration,
   UpdateInfo,
@@ -325,6 +327,32 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this.allowDowngrade = true
   }
 
+  private _maxUpdateInfoSize: number | null = null
+  // `maxUpdateInfoSize` of the publish configuration the provider was created from (app-update.yml or setFeedURL), checked when used
+  private publishConfigMaxUpdateInfoSize: unknown = undefined
+
+  /**
+   * The largest channel file (`latest*.yml`) read, in bytes. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`.
+   * Release feeds and provider API responses (release listings and lookups) are not limited. A positive integer, or `0` for no
+   * limit; anything else throws `ERR_UPDATER_INVALID_MAX_UPDATE_INFO_SIZE`.
+   *
+   * Overrides `maxUpdateInfoSize` of the publish configuration (`app-update.yml`, or the options given to `setFeedURL`), whose default
+   * is 10 MiB. `null` (the default) uses the publish configuration.
+   */
+  get maxUpdateInfoSize(): number | null {
+    return this._maxUpdateInfoSize
+  }
+
+  set maxUpdateInfoSize(value: number | null) {
+    if (value != null && !isValidMaxUpdateInfoSize(value)) {
+      throw newError(
+        `maxUpdateInfoSize must be a positive integer (bytes) or 0 for no limit, but got: ${typeof value === "number" ? value : typeof value}`,
+        "ERR_UPDATER_INVALID_MAX_UPDATE_INFO_SIZE"
+      )
+    }
+    this._maxUpdateInfoSize = value
+  }
+
   /**
    * The Ed25519 public key(s) (PEM or base64 SPKI) trusted to have signed the update manifest — the
    * install's trust list. A single string or an array of keys; a manifest is accepted when any listed key
@@ -568,6 +596,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     } else {
       provider = createClient(options, this, runtimeOptions)
     }
+    this.publishConfigMaxUpdateInfoSize = typeof options === "string" ? undefined : options.maxUpdateInfoSize
     this.clientPromise = Promise.resolve(provider)
   }
 
@@ -734,12 +763,39 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     await this.app.whenReady()
 
     if (this.clientPromise == null) {
-      this.clientPromise = this.configOnDisk.value.then(it => createClient(it, this, this.createProviderRuntimeOptions()))
+      this.clientPromise = this.configOnDisk.value.then(it => {
+        this.publishConfigMaxUpdateInfoSize = it?.maxUpdateInfoSize
+        return createClient(it, this, this.createProviderRuntimeOptions())
+      })
     }
 
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({ "x-user-staging-id": stagingUserId }))
+    // autoUpdater.maxUpdateInfoSize wins over the publish configuration, so an app can raise the limit even when its config is invalid
+    let maxUpdateInfoSize = this._maxUpdateInfoSize
+    if (maxUpdateInfoSize == null) {
+      const configured = this.publishConfigMaxUpdateInfoSize
+      if (configured == null) {
+        maxUpdateInfoSize = DEFAULT_MAX_UPDATE_INFO_SIZE
+      } else if (isValidMaxUpdateInfoSize(configured)) {
+        maxUpdateInfoSize = configured
+      } else {
+        throw newError(
+          `maxUpdateInfoSize in the publish configuration must be a positive integer (bytes) or 0 for no limit, but got: ${typeof configured === "number" ? configured : typeof configured}`,
+          "ERR_UPDATER_INVALID_MAX_UPDATE_INFO_SIZE"
+        )
+      }
+    }
+    // a custom updateProvider that is not built on this Provider (e.g. one from another copy of electron-updater) has no setMaxUpdateInfoSize
+    if (typeof Reflect.get(client, "setMaxUpdateInfoSize") === "function") {
+      client.setMaxUpdateInfoSize(maxUpdateInfoSize)
+    } else if (maxUpdateInfoSize !== DEFAULT_MAX_UPDATE_INFO_SIZE) {
+      this.limitedLogger("max-update-info-size-not-supported").warn(
+        `The custom update provider ${client.constructor.name} has no setMaxUpdateInfoSize, so maxUpdateInfoSize (${maxUpdateInfoSize} bytes) does not apply to its requests. ` +
+          `Extend Provider from electron-updater to use it.`
+      )
+    }
     const info = await client.getLatestVersion()
     // recorded on the new result object (never on the parsed manifest, which listeners of update-available also get), so the state
     // travels with exactly the update info it was established for

@@ -53,6 +53,16 @@ export interface RequestHeaders extends OutgoingHttpHeaders {
   [key: string]: OutgoingHttpHeader | undefined
 }
 
+/** The options of an API request, see {@link HttpExecutor.request}. */
+export interface ApiRequestOptions extends RequestOptions {
+  /**
+   * The largest body, in bytes, read into memory (set by electron-updater for update info, which is parsed before it is verified):
+   * a larger response fails the request with `ERR_HTTP_RESPONSE_TOO_LARGE` and aborts it. Applies when it is a finite number of at
+   * least 0, and is kept on redirects, whose options are copied from these.
+   */
+  maxResponseSize?: number
+}
+
 export interface DownloadOptions {
   readonly headers?: OutgoingHttpHeaders | null
   readonly sha2?: string | null
@@ -119,7 +129,7 @@ interface Request {
 export abstract class HttpExecutor<T extends Request> {
   protected readonly maxRedirects = 10
 
-  request(options: RequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any } | null): Promise<string | null> {
+  request(options: ApiRequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any } | null): Promise<string | null> {
     configureRequestOptions(options)
     const json = data == null ? undefined : JSON.stringify(data)
     const encodedData = json ? Buffer.from(json) : undefined
@@ -142,7 +152,7 @@ export abstract class HttpExecutor<T extends Request> {
   }
 
   doApiRequest(
-    options: RequestOptions,
+    options: ApiRequestOptions,
     cancellationToken: CancellationToken,
     requestProcessor: (request: T, reject: (error: Error) => void) => void,
     redirectCount = 0
@@ -155,7 +165,7 @@ export abstract class HttpExecutor<T extends Request> {
     return cancellationToken.createPromise<string>((resolve, reject, onCancel) => {
       const request = this.createRequest(options, (response: any) => {
         try {
-          this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
+          this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor, () => request.abort())
         } catch (e: any) {
           reject(e)
         }
@@ -194,12 +204,13 @@ export abstract class HttpExecutor<T extends Request> {
 
   private handleResponse(
     response: IncomingMessage,
-    options: RequestOptions,
+    options: ApiRequestOptions,
     cancellationToken: CancellationToken,
     resolve: (data?: any) => void,
     reject: (error: Error) => void,
     redirectCount: number,
-    requestProcessor: (request: T, reject: (error: Error) => void) => void
+    requestProcessor: (request: T, reject: (error: Error) => void) => void,
+    abort: () => void
   ) {
     if (debug.enabled) {
       const { headers: _headers, auth: _auth, ...safeOptions } = options as any
@@ -242,10 +253,38 @@ Please double check that your authentication token is correct. Due to security r
 
     response.setEncoding("utf8")
 
+    const limit = options.maxResponseSize
+    const maxResponseSize = limit != null && Number.isFinite(limit) && limit >= 0 ? limit : null
     let data = ""
+    let size = 0
+    let isTooLarge = false
     response.on("error", reject)
-    response.on("data", (chunk: string) => (data += chunk))
+    response.on("data", (chunk: string) => {
+      if (isTooLarge) {
+        return
+      }
+      if (maxResponseSize != null) {
+        size += Buffer.byteLength(chunk)
+        if (size > maxResponseSize) {
+          isTooLarge = true
+          data = ""
+          reject(
+            newError(
+              // the path without its query, which can carry credentials
+              `Response from ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${(options.path ?? "").replace(/[?#].*$/s, "")} exceeds the maximum allowed size of ${maxResponseSize} bytes`,
+              "ERR_HTTP_RESPONSE_TOO_LARGE"
+            )
+          )
+          abort()
+          return
+        }
+      }
+      data += chunk
+    })
     response.on("end", () => {
+      if (isTooLarge) {
+        return
+      }
       try {
         if (response.statusCode != null && response.statusCode >= 400) {
           const contentType = safeGetHeader(response, "content-type")

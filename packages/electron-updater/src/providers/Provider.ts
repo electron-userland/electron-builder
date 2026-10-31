@@ -1,4 +1,14 @@
-import { CancellationToken, configureRequestUrl, newError, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import {
+  ApiRequestOptions,
+  CancellationToken,
+  configureRequestUrl,
+  DEFAULT_MAX_UPDATE_INFO_SIZE,
+  newError,
+  safeStringifyJson,
+  UpdateFileInfo,
+  UpdateInfo,
+  WindowsUpdateInfo,
+} from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { load } from "js-yaml"
 import { URL } from "url"
@@ -23,6 +33,8 @@ export function channelFileNotFoundError(channelFile: string, channelFileUrl: UR
 
 export abstract class Provider<T extends UpdateInfo> {
   private requestHeaders: OutgoingHttpHeaders | null = null
+  // the size limit of channel files (see channelFileRequest), 0 for none
+  private maxUpdateInfoSize = DEFAULT_MAX_UPDATE_INFO_SIZE
   protected readonly executor: ElectronHttpExecutor
 
   protected constructor(private readonly runtimeOptions: ProviderRuntimeOptions) {
@@ -82,6 +94,14 @@ export abstract class Provider<T extends UpdateInfo> {
     this.requestHeaders = value
   }
 
+  /**
+   * The largest channel file (`latest*.yml`) read, in bytes (`0` for no limit). Set by AppUpdater before each update check, from
+   * `autoUpdater.maxUpdateInfoSize` or the `maxUpdateInfoSize` of the publish configuration.
+   */
+  setMaxUpdateInfoSize(value: number): void {
+    this.maxUpdateInfoSize = value
+  }
+
   abstract getLatestVersion(): Promise<T>
 
   abstract resolveFiles(updateInfo: T): Array<ResolvedUpdateFileInfo>
@@ -91,6 +111,31 @@ export abstract class Provider<T extends UpdateInfo> {
    */
   protected httpRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken): Promise<string | null> {
     return this.executor.request(this.createRequestOptions(url, headers), cancellationToken)
+  }
+
+  /**
+   * {@link httpRequest} for a channel file (`latest*.yml`), which is read into memory and parsed before anything verifies it: a response
+   * larger than `maxUpdateInfoSize` fails with `ERR_HTTP_RESPONSE_TOO_LARGE` (see ApiRequestOptions.maxResponseSize). Channel files are
+   * a few KB. Release feeds and API responses (release listings and lookups) are not limited: their size depends on the release history.
+   */
+  protected async channelFileRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken): Promise<string | null> {
+    const options: ApiRequestOptions = this.createRequestOptions(url, headers)
+    // 0 is no limit, while a maxResponseSize of 0 would only allow an empty response
+    if (this.maxUpdateInfoSize !== 0) {
+      options.maxResponseSize = this.maxUpdateInfoSize
+    }
+    try {
+      return await this.executor.request(options, cancellationToken)
+    } catch (e: unknown) {
+      // names the options that raise the limit
+      if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
+        throw newError(
+          `${e.message}: raise the limit with maxUpdateInfoSize in the publish configuration (app-update.yml) or autoUpdater.maxUpdateInfoSize`,
+          "ERR_HTTP_RESPONSE_TOO_LARGE"
+        )
+      }
+      throw e
+    }
   }
 
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
