@@ -13,6 +13,11 @@ allowBuilds:
 
 # 10080 minutes = 7 days
 minimumReleaseAge: 10080
+# Security fixes whose only patched version is <7d old; deliberately exempted from the age gate
+minimumReleaseAgeExclude:
+  # GHSA-g3hv-75wg-m249: minimatch is only patched in 11.0.1+ (published <7d ago)
+  - minimatch@11.0.3
+  - '@isaacs/nonrecursive-glob-match@1.0.3' # new dependency of minimatch 11.0.3, released alongside it
 patchedDependencies:
   '@changesets/cli@2.29.7': patches/@changesets__cli@2.29.7.patch
   '@changesets/assemble-release-plan@6.0.9': patches/@changesets__assemble-release-plan@6.0.9.patch
