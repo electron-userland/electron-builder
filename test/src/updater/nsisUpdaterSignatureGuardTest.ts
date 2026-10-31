@@ -6,7 +6,7 @@ import { createNsisUpdater, writeRawUpdateConfig, writeUpdateConfig } from "../h
 // verifyUpdateCodeSignature hooks), first silently, then with a deprecation warning. Since electron-updater 7 it fails closed:
 // the update is rejected unless the config opts out explicitly with `verifyUpdateCodeSignature: false` (written by electron-builder
 // for win.verifyUpdateCodeSignature: false), or the app sets NsisUpdater.publisherName. An unpackaged app (dev mode) without any update
-// config file is not verified. A packaged app whose update config file is missing (e.g. updateConfigPath names a missing file) is, since electron-updater 7:
+// config file is not verified. A packaged app whose update config file is missing (e.g. updateConfigPath names a missing file) is verified
 // against NsisUpdater.publisherName, else the update is rejected (ERR_UPDATER_NO_PUBLISHER_NAME) without calling a custom verifier.
 
 const MISSING_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#missing-publishername-fails-update-verification"
@@ -131,10 +131,9 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
     expect(messages(logger.warn).filter(it => it.includes(DISABLED_FRAGMENT))).toHaveLength(0)
   })
 
-  // no update config file at all: an unpackaged app (dev mode) is not verified; a packaged one (e.g. updateConfigPath names a missing file) is,
-  // since electron-updater 7
+  // no update config file at all: an unpackaged app (dev mode) is not verified; a packaged one (e.g. updateConfigPath names a missing file) is
   describe("no update config file", () => {
-    const NO_CONFIG_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#packaged-nsis-apps-without-an-update-config-verify-updates"
+    const NO_CONFIG_DOCS = "https://www.electron.build/docs/win#how-do-you-set-the-publishername-of-updates-at-runtime"
 
     async function createUpdaterWithoutConfig(isPackaged: boolean) {
       const updater = await createNsisUpdater()
@@ -172,8 +171,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
       expect(error).toBeInstanceOf(Error)
       expect(error).toMatchObject({ code: "ERR_UPDATER_NO_PUBLISHER_NAME" })
       const message = error instanceof Error ? error.message : ""
-      expect(message).toContain("electron-updater 7 (electron-builder v27)")
-      expect(message).toContain("app-update.yml")
+      expect(message.startsWith("The update is rejected: the update config file of the packaged app (app-update.yml or the updateConfigPath file) is missing")).toBe(true)
       expect(message).toContain("autoUpdater.publisherName")
       expect(message.endsWith(NO_CONFIG_DOCS)).toBe(true)
     })

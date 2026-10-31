@@ -60,8 +60,7 @@ export class NsisUpdater extends BaseUpdater {
    * verified. The `publisherName` that electron-builder writes to `app-update.yml` wins over it, and it wins over
    * `verifyUpdateCodeSignature: false` in `app-update.yml` (the update is then verified).
    *
-   * Since electron-updater 7, a packaged app whose update config file is missing rejects the update (`ERR_UPDATER_NO_PUBLISHER_NAME`)
-   * unless it sets this property.
+   * Without it, a packaged app whose update config file is missing rejects the update (`ERR_UPDATER_NO_PUBLISHER_NAME`).
    * @default null
    */
   publisherName: string | Array<string> | null = null
@@ -329,11 +328,11 @@ export class NsisUpdater extends BaseUpdater {
     if (!hasConfigFile) {
       // a custom verifier is not called either: it would get no names to match
       throw newError(
-        "electron-updater 7 (electron-builder v27) no longer installs updates unverified when the update config file of a packaged app (app-update.yml or the updateConfigPath file) is missing: " +
-          "the update is rejected, as there is no publisherName to verify its Authenticode signature against (a custom verifyUpdateFileAuthenticodeSignature is called only with a publisherName). " +
+        "The update is rejected: the update config file of the packaged app (app-update.yml or the updateConfigPath file) is missing, " +
+          "so there is no publisherName to verify its Authenticode signature against (a custom verifyUpdateFileAuthenticodeSignature is called only with a publisherName). " +
           "Make sure the file exists (build the app with a publish configuration so that electron-builder writes app-update.yml with the publisherName), " +
           "or set autoUpdater.publisherName to the subject of the certificate that signs your updates. " +
-          "https://www.electron.build/docs/migration/v27-runtime-changes#packaged-nsis-apps-without-an-update-config-verify-updates",
+          "https://www.electron.build/docs/win#how-do-you-set-the-publishername-of-updates-at-runtime",
         "ERR_UPDATER_NO_PUBLISHER_NAME"
       )
     }
