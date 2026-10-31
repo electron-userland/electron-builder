@@ -5,6 +5,7 @@ import { getCompleteExtname } from "builder-util/internal"
 import { ClientRequest, RequestOptions } from "http"
 import { PublishContext } from "./index.js"
 import { HttpPublisher } from "./httpPublisher.js"
+import { assertEnvTokenHostAllowed, parseConfiguredHost } from "./tokenHost.js"
 
 type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>
@@ -99,6 +100,7 @@ export class KeygenPublisher extends HttpPublisher {
     }
 
     this.info = info
+    assertEnvTokenHostAllowed("keygen", "KEYGEN_TOKEN", parseConfiguredHost(this.hostname, "keygen.host"))
     this.auth = `Bearer ${token.trim()}`
     this.version = version
     this.basePath = `/v1/accounts/${this.info.account}`

@@ -83,12 +83,14 @@ Publish providers read their credentials from the environment. Publishing is **n
 |---|---|
 | `GH_TOKEN` / `GITHUB_TOKEN` | GitHub token. If either is defined, publishing defaults to `[{ provider: "github" }]`. |
 | `GITHUB_RELEASE_TOKEN` | If defined, used **instead of** `GH_TOKEN`/`GITHUB_TOKEN` to publish the release (so you can keep a read-only token for update checks and a read-write token for releasing). |
+| `GITHUB_SERVER_URL` / `GITHUB_API_URL` | Set by GitHub Actions. A GitHub token from the environment may also be sent to their hosts (see [token hosts](#publish-token-hosts)). |
 
 ### GitLab
 
 | Variable | Description |
 |---|---|
 | `GITLAB_TOKEN` | GitLab token. Required to publish to the `gitlab` provider. |
+| `CI_SERVER_URL` / `CI_API_V4_URL` | Set by GitLab CI. `GITLAB_TOKEN` may also be sent to their hosts (see [token hosts](#publish-token-hosts)). |
 
 ### Bitbucket
 
@@ -111,6 +113,14 @@ If `BITBUCKET_TOKEN` holds an app password or API token, you **must** also set `
 | Variable | Description |
 |---|---|
 | `KEYGEN_TOKEN` | Keygen token. If defined (and no GitHub token is), publishing defaults to `[{ provider: "keygen" }]`. |
+
+### Publish token hosts {#publish-token-hosts}
+
+Since v27 a token from the environment (`GH_TOKEN`, `GITHUB_TOKEN`, `GITHUB_RELEASE_TOKEN`, `GITLAB_TOKEN`, `KEYGEN_TOKEN`) is sent only to its provider's public host (`github.com` / `api.github.com` / `uploads.github.com`, `gitlab.com`, `api.keygen.sh`), to the host the CI runner reports (above), or to a host listed here. A token set in the publish configuration goes to the configured `host`. See [the breaking-change note](./migration/v27-build-changes.md#publish-tokens-from-the-environment-are-bound-to-the-provider-host).
+
+| Variable | Description |
+|---|---|
+| `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS` | Comma-separated host names (a port is allowed and ignored), e.g. `github.example.com,gitlab.example.com`, that a token from the environment may also be sent to: a GitHub Enterprise, self-managed GitLab or self-hosted Keygen `host`, or the host of `squirrelWindows.remoteReleases`. Set it in the publishing job, not in the project. |
 
 ### Cloudflare R2
 

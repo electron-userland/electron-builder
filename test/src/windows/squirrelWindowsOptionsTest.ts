@@ -31,27 +31,19 @@ describe("SquirrelWindowsTarget.computeEffectiveDistOptions", () => {
   let projectDir: string
   let vendorDir: string
   let tempDirManager: TmpDir
-  const savedEnv: Record<string, string | undefined> = {}
 
   beforeEach(async () => {
     projectDir = await mkdtemp(path.join(tmpdir(), "eb-squirrel-options-test-"))
     vendorDir = path.join(projectDir, "vendor")
     await mkdir(vendorDir)
     tempDirManager = new TmpDir("squirrel-options-test")
-    for (const name of ["GH_TOKEN", "GITHUB_TOKEN"]) {
-      savedEnv[name] = process.env[name]
-      delete process.env[name]
+    for (const name of ["GH_TOKEN", "GITHUB_TOKEN", "GITHUB_SERVER_URL", "GITHUB_API_URL", "ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS"]) {
+      vi.stubEnv(name, undefined)
     }
   })
 
   afterEach(async () => {
-    for (const [name, value] of Object.entries(savedEnv)) {
-      if (value == null) {
-        delete process.env[name]
-      } else {
-        process.env[name] = value
-      }
-    }
+    vi.unstubAllEnvs()
     await tempDirManager.cleanup().catch(() => {})
     await rm(projectDir, { recursive: true, force: true }).catch(() => {})
   })
@@ -237,34 +229,37 @@ describe("SquirrelWindowsTarget.computeEffectiveDistOptions", () => {
   })
 
   describe("remoteToken", () => {
+    // the token from the environment needs a remoteReleases destination on an allowed host
+    const githubRemote = { remoteReleases: true }
+
     test("explicit token wins over the environment", async () => {
-      process.env.GH_TOKEN = "env-gh"
-      process.env.GITHUB_TOKEN = "env-github"
-      const { result } = await compute({ squirrelWindows: { remoteToken: "explicit-token" } })
+      vi.stubEnv("GH_TOKEN", "env-gh")
+      vi.stubEnv("GITHUB_TOKEN", "env-github")
+      const { result } = await compute({ squirrelWindows: { ...githubRemote, remoteToken: "explicit-token" }, repositoryInfo: GITHUB_REPO })
       expect(result.remoteToken).toBe("explicit-token")
     })
 
     test("unset → GH_TOKEN", async () => {
-      process.env.GH_TOKEN = "env-gh"
-      process.env.GITHUB_TOKEN = "env-github"
-      const { result } = await compute()
+      vi.stubEnv("GH_TOKEN", "env-gh")
+      vi.stubEnv("GITHUB_TOKEN", "env-github")
+      const { result } = await compute({ squirrelWindows: githubRemote, repositoryInfo: GITHUB_REPO })
       expect(result.remoteToken).toBe("env-gh")
     })
 
     test("unset and no GH_TOKEN → GITHUB_TOKEN", async () => {
-      process.env.GITHUB_TOKEN = "env-github"
-      const { result } = await compute()
+      vi.stubEnv("GITHUB_TOKEN", "env-github")
+      const { result } = await compute({ squirrelWindows: githubRemote, repositoryInfo: GITHUB_REPO })
       expect(result.remoteToken).toBe("env-github")
     })
 
     test("unset and no token in the environment → unset", async () => {
-      const { result } = await compute()
+      const { result } = await compute({ squirrelWindows: githubRemote, repositoryInfo: GITHUB_REPO })
       expect(result.remoteToken).toBeUndefined()
     })
 
     test("null falls back to the environment", async () => {
-      process.env.GITHUB_TOKEN = "env-github"
-      const { result } = await compute({ squirrelWindows: { remoteToken: null } })
+      vi.stubEnv("GITHUB_TOKEN", "env-github")
+      const { result } = await compute({ squirrelWindows: { ...githubRemote, remoteToken: null }, repositoryInfo: GITHUB_REPO })
       expect(result.remoteToken).toBe("env-github")
     })
 
@@ -272,9 +267,9 @@ describe("SquirrelWindowsTarget.computeEffectiveDistOptions", () => {
       ["empty string", ""],
       ["whitespace", "  "],
     ])("%s is treated as unset and falls back to the environment", async (_label, remoteToken) => {
-      process.env.GH_TOKEN = "env-gh"
-      process.env.GITHUB_TOKEN = "env-github"
-      const { result } = await compute({ squirrelWindows: { remoteToken } })
+      vi.stubEnv("GH_TOKEN", "env-gh")
+      vi.stubEnv("GITHUB_TOKEN", "env-github")
+      const { result } = await compute({ squirrelWindows: { ...githubRemote, remoteToken }, repositoryInfo: GITHUB_REPO })
       expect(result.remoteToken).toBe("env-gh")
     })
 
@@ -285,6 +280,43 @@ describe("SquirrelWindowsTarget.computeEffectiveDistOptions", () => {
 
     test("surrounding whitespace is trimmed", async () => {
       const { result } = await compute({ squirrelWindows: { remoteToken: "  explicit-token \n" } })
+      expect(result.remoteToken).toBe("explicit-token")
+    })
+
+    test("the environment token is not passed without remoteReleases", async () => {
+      vi.stubEnv("GH_TOKEN", "env-gh")
+      const { result } = await compute()
+      expect(result.remoteToken).toBeUndefined()
+    })
+
+    test.each([
+      ["another host", "https://releases.example.com/owner/repo"],
+      ["a host with a GitHub-like prefix", "https://github.com.example.com/owner/repo"],
+      ["a local path", "C:\\releases"],
+    ])("the environment token is not sent to %s", async (_label, remoteReleases) => {
+      vi.stubEnv("GH_TOKEN", "env-gh")
+      const { result } = await compute({ squirrelWindows: { remoteReleases } })
+      expect(result.remoteReleases).toBe(remoteReleases)
+      expect(result.remoteToken).toBeUndefined()
+    })
+
+    test("the environment token goes to the host GitHub Actions reports", async () => {
+      vi.stubEnv("GH_TOKEN", "env-gh")
+      vi.stubEnv("GITHUB_SERVER_URL", "https://ghe.example.com")
+      const { result } = await compute({ squirrelWindows: { remoteReleases: "https://ghe.example.com/owner/repo" } })
+      expect(result.remoteToken).toBe("env-gh")
+    })
+
+    test("the environment token goes to a host in ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS", async () => {
+      vi.stubEnv("GH_TOKEN", "env-gh")
+      vi.stubEnv("ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS", "ghe.example.com")
+      const { result } = await compute({ squirrelWindows: { remoteReleases: "https://ghe.example.com/owner/repo" } })
+      expect(result.remoteToken).toBe("env-gh")
+    })
+
+    test("an explicit token goes to any remoteReleases host", async () => {
+      vi.stubEnv("GH_TOKEN", "env-gh")
+      const { result } = await compute({ squirrelWindows: { remoteReleases: "https://ghe.example.com/owner/repo", remoteToken: "explicit-token" } })
       expect(result.remoteToken).toBe("explicit-token")
     })
   })

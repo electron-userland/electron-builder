@@ -1,5 +1,15 @@
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
-import { forceCodeSigningError, forceCodeSigningOverrideHint, getRceditBundle, waitForPackWork, withToolsetLock, WineVmManager } from "app-builder-lib/internal"
+import {
+  forceCodeSigningError,
+  forceCodeSigningOverrideHint,
+  getRceditBundle,
+  isEnvTokenHostAllowed,
+  PUBLISH_TOKEN_HOST_DOCS_URL,
+  PUBLISH_TOKEN_HOSTS_ENV,
+  waitForPackWork,
+  withToolsetLock,
+  WineVmManager,
+} from "app-builder-lib/internal"
 import { InvalidConfigurationError, isEmptyOrSpaces, log, escapeForXml, prepareFixedNameWrite } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import * as fs from "fs"
@@ -349,7 +359,7 @@ export default class SquirrelWindowsTarget extends Target {
       setupMsi: this.options.msi ? setupFile.replace(/\.exe$/i, ".msi") : undefined,
       loadingGif,
       remoteReleases,
-      remoteToken: firstNonBlank(this.options.remoteToken, process.env.GH_TOKEN, process.env.GITHUB_TOKEN),
+      remoteToken: resolveRemoteToken(this.options.remoteToken, remoteReleases),
       createTempDir: opts => this.packager.tempDirManager.createTempDir(opts),
       externalLinks: await packager.getExternalLinkPolicy(),
     }
@@ -360,6 +370,35 @@ export default class SquirrelWindowsTarget extends Target {
 export function addProjectUrl(template: string, projectUrl: string): string {
   const searchString = "<copyright><%- copyright %></copyright>"
   return template.replace(searchString, `${searchString}\n    <projectUrl>${escapeForXml(projectUrl)}</projectUrl>`)
+}
+
+let warnedEnvRemoteTokenHost = false
+
+// An explicit `remoteToken` is configuration and goes to `remoteReleases` as is. GH_TOKEN / GITHUB_TOKEN go only to a host
+// allowed for a GitHub token from the environment; otherwise SyncReleases runs without a token (enough for a public
+// repository or a non-GitHub server), with a warning once per process.
+function resolveRemoteToken(remoteToken: string | null | undefined, remoteReleases: string | undefined): string | undefined {
+  const explicit = firstNonBlank(remoteToken)
+  if (explicit != null || remoteReleases == null) {
+    return explicit
+  }
+  const envName = ["GH_TOKEN", "GITHUB_TOKEN"].find(name => !isEmptyOrSpaces(process.env[name]))
+  if (envName == null) {
+    return undefined
+  }
+  const hostname = URL.parse(remoteReleases)?.hostname ?? ""
+  if (isEnvTokenHostAllowed("github", hostname)) {
+    return firstNonBlank(process.env[envName])
+  }
+  if (!warnedEnvRemoteTokenHost) {
+    warnedEnvRemoteTokenHost = true
+    log.warn(
+      { hostname },
+      `Since electron-builder 27, ${envName} is not sent with squirrelWindows.remoteReleases to this host: a token from the environment goes only to its provider's host. ` +
+        `For a private repository on this host, add the host to the ${PUBLISH_TOKEN_HOSTS_ENV} environment variable or set squirrelWindows.remoteToken. See ${PUBLISH_TOKEN_HOST_DOCS_URL}`
+    )
+  }
+  return undefined
 }
 
 // `remoteToken: ""` (or whitespace) in the config counts as unset: fall through to the environment

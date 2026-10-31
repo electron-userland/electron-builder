@@ -7,6 +7,7 @@ import { parse as parseUrl, UrlWithStringQuery } from "url"
 import { HttpPublisher } from "./httpPublisher.js"
 import { PublishContext, PublishOptions } from "./index.js"
 import { getCiTag } from "./publisher.js"
+import { assertEnvTokenHostAllowed, parseConfiguredHost } from "./tokenHost.js"
 import { trimStringWithWarn, validateResolvedToken } from "./util.js"
 
 export interface Release {
@@ -48,10 +49,13 @@ export class GitHubPublisher extends HttpPublisher {
   ) {
     super(context, true)
 
+    const hostname = parseConfiguredHost(info.host || "api.github.com", "github.host")
+    // GITHUB_RELEASE_TOKEN deliberately overrides an explicit `token` (which may be a read-only token embedded in app-update.yml)
+    const tokenEnv = process.env.GITHUB_RELEASE_TOKEN ? "GITHUB_RELEASE_TOKEN" : process.env.GH_TOKEN ? "GH_TOKEN" : "GITHUB_TOKEN"
     let token = info.token
-    if (isEmptyOrSpaces(token) || process.env.GITHUB_RELEASE_TOKEN) {
-      token = process.env.GITHUB_RELEASE_TOKEN ? process.env.GITHUB_RELEASE_TOKEN : process.env.GH_TOKEN || process.env.GITHUB_TOKEN
-      token = validateResolvedToken(token, "GitHub", "GH_TOKEN")
+    if (isEmptyOrSpaces(token) || tokenEnv === "GITHUB_RELEASE_TOKEN") {
+      token = validateResolvedToken(process.env[tokenEnv], "GitHub", "GH_TOKEN")
+      assertEnvTokenHostAllowed("github", tokenEnv, hostname)
     }
 
     this.token = token
