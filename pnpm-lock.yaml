@@ -523,7 +523,7 @@ importers:
         specifier: ^11.3.4
         version: 11.3.5
       js-yaml:
-        specifier: ^4.1.0
+        specifier: ^4.3.2
         version: 4.3.2
       lazy-val:
         specifier: ^1.0.5
