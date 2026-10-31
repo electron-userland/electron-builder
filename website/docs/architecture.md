@@ -84,8 +84,8 @@ When building a universal binary, electron-builder must merge two ASAR archives 
 mac:
   universal:                # v27: universal-build options live under mac.universal
     mergeASARs: true        # Default: true — merge the two per-arch ASARs into one
-    singleArchFiles: ""     # Glob of files that must NOT be merged (arch-specific binaries)
-    x64ArchFiles: ""        # Glob of files that exist only in the x64 build
+    singleArchFiles: ""     # Glob of files allowed in only one of the two ASARs; unpacked matches are not lipo-merged
+    x64ArchFiles: ""        # Glob of single-arch Mach-O files that are identical in both builds
 ```
 
 ### Arch-Specific Native Modules
@@ -99,7 +99,7 @@ mac:
     singleArchFiles: "node_modules/canvas/**"   # only exists in x64
 ```
 
-For modules that exist in both architectures but have different binaries:
+Mach-O files that differ between the x64 and arm64 builds are merged with `lipo` automatically, and files that are already universal in both builds are kept as they are. A single-arch Mach-O file that is identical in both builds (for example the same x64 binary shipped in both) fails the build unless `x64ArchFiles` matches it:
 
 ```yaml
 mac:

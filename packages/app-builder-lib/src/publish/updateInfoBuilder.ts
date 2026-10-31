@@ -11,6 +11,7 @@ import { ReleaseInfo } from "../options/PlatformSpecificBuildOptions.js"
 import { Packager } from "../packager.js"
 import { ArtifactCreated } from "../packagerApi.js"
 import { PlatformPackager } from "../platformPackager.js"
+import { DEFAULT_ELECTRON_UPDATER_COMPATIBILITY, resolveElectronUpdaterCompatibility } from "../util/electronUpdaterCompatibility.js"
 import { hashFile } from "../util/hash.js"
 import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager.js"
 import { verifyUpdateManifestContent } from "./updateManifestVerifier.js"
@@ -124,9 +125,9 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
   const createdFiles = new Set<string>()
   const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
   const tasks: Array<UpdateInfoFileTask> = []
-  const electronUpdaterCompatibility = packager.platformOptions.electronUpdaterCompatibility || packager.config.electronUpdaterCompatibility || ">=2.16"
+  const electronUpdaterCompatibility = resolveElectronUpdaterCompatibility(packager.platformOptions, packager.config)
   // electron-updater < 2.16.0 predates the files[] array and reads the top-level path/sha512 (and Windows sha2) fields instead
-  // (do not pass includePrerelease — it would make the default ">=2.16" intersect "<2.16.0" at the 2.16.0-0 prerelease point)
+  // (do not pass includePrerelease — it would make a ">=2.16" range intersect "<2.16.0" at the 2.16.0-0 prerelease point)
   const needsLegacyPathSha512 = semver.intersects(electronUpdaterCompatibility, "<2.16.0")
   // electron-updater < 2.0.0 on macOS reads the legacy <channel>-mac.json instead of <channel>-mac.yml
   const needsLegacyMacJsonCompatibility = semver.intersects(electronUpdaterCompatibility, "<2.0.0")
@@ -252,7 +253,8 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
   const updateChannelFileToInfo = new Map<string, UpdateInfoFileTask>()
   for (const task of updateInfoFileTasks) {
     // https://github.com/electron-userland/electron-builder/pull/2994
-    const key = `${task.file}@${safeStringifyJson(task.publishConfiguration, new Set(["releaseType"]))}`
+    // every sensitive value is fingerprinted, so configs that differ in one get different keys
+    const key = `${task.file}@${safeStringifyJson(task.publishConfiguration, new Set(["releaseType"]), Number.POSITIVE_INFINITY)}`
     const existingTask = updateChannelFileToInfo.get(key)
     if (existingTask == null) {
       updateChannelFileToInfo.set(key, task)
@@ -396,13 +398,14 @@ function warnAboutLegacyUpdaterCompatibility(electronUpdaterCompatibility: strin
     return
   }
   // once per process — createUpdateInfoTasks runs per artifact
-  log
-    .once("legacy-updater-compatibility")
-    .warn(
-      { electronUpdaterCompatibility, solution: 'drop the pin (the default is ">=2.16") unless you still ship apps embedding electron-updater 1.x-2.15' },
-      "electronUpdaterCompatibility includes electron-updater versions below 2.16.0, so the deprecated top-level path/sha512 descriptor is still written to latest*.yml " +
-        "(and, on Windows, the legacy SHA-256 sha2 checksum). Metadata validated only by sha2 is deprecated and v28 will reject it. " +
-        "Every electron-updater since 2.16.0 reads files[] and ignores these fields. " +
-        "See https://www.electron.build/docs/migration/v27-build-changes#latestyml-drops-legacy-top-level-pathsha512"
-    )
+  log.once("legacy-updater-compatibility").warn(
+    {
+      electronUpdaterCompatibility,
+      solution: `drop the pin (the default is "${DEFAULT_ELECTRON_UPDATER_COMPATIBILITY}") unless you still ship apps embedding electron-updater 1.x-2.15`,
+    },
+    "electronUpdaterCompatibility includes electron-updater versions below 2.16.0, so the deprecated top-level path/sha512 descriptor is still written to latest*.yml " +
+      "(and, on Windows, the legacy SHA-256 sha2 checksum). Metadata validated only by sha2 is deprecated and v28 will reject it. " +
+      "Every electron-updater since 2.16.0 reads files[] and ignores these fields. " +
+      "See https://www.electron.build/docs/migration/v27-build-changes#latestyml-drops-legacy-top-level-pathsha512"
+  )
 }

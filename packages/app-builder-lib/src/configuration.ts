@@ -98,10 +98,41 @@ export interface CommonConfiguration {
    * `"latest"`) to use the modern default (newest bundle) for that toolset.
    *
    * Note: Toolset versioning can drop intermediate releases (such as if a problem is discovered in a bundle). If you need to pin to a specific release, check the release notes for the toolset to ensure the version you specify is valid.
+   * Toolsets, the versions offered for each, and what `latest` resolves to can be added, changed or removed in any electron-builder release (minor or patch), not only in a major release. (To address toolset stability, reported issues, adopt latest tooling versions, etc.)
    *
    * @see {@link ToolsetConfig}
    */
   readonly toolsets?: ToolsetConfig | null
+
+  /**
+   * Format of the `<artifact>.blockmap` file published next to installers and update archives, which electron-updater reads for
+   * differential downloads. The map is read by the updater already installed in your users' apps, so the format follows
+   * `electronUpdaterCompatibility` (default `">=7"`):
+   *
+   * - unset: `"v3"` when `electronUpdaterCompatibility` includes only electron-updater 7 and later, else `"v2"`, with a build
+   *   warning.
+   * - `"v3"`: a binary block map that electron-updater fetches in parts with HTTP `Range` requests (only the parts that changed
+   *   since the installed version), with finer blocks for stored members such as an uncompressed `app.asar`. Needs electron-updater
+   *   7 or later: with an `electronUpdaterCompatibility` that includes earlier versions, the build fails.
+   * - `"v2"`: the gzipped JSON block map every electron-updater version reads, downloaded in full on every update; the package and
+   *   block map are the same as electron-builder 26 wrote.
+   * - `"latest"`: the newest format the `electronUpdaterCompatibility` range supports (currently the same as unset). A future
+   *   format may then cost one full download per user, as below.
+   *
+   * Apps whose electron-updater cannot read a release's format download that update in full once; the next one is differential
+   * again, or with an artifact name without `${version}` the one after it. Switching between `"v2"` and `"v3"` does not cost a
+   * full download with electron-updater 7.0.0-alpha.14 and later: both formats cut the same blocks and hash them alike, so the
+   * cached map of one format is compared with the new map of the other. Only the bytes of a stored member (`nsis.differentialPackage: "store-asar"`),
+   * which `"v3"` cuts into finer blocks, are downloaded whole by that first update.
+   *
+   * Compressed bytes (a compressed app package, a zip) are cut into the same 8/16/32 KiB blocks in both formats, so `"v3"`
+   * downloads the same data for them as `"v2"` (compressed data changes from a change up to the end of its compressed stream,
+   * whatever the format); it only makes the map smaller (about 10 instead of 22 bytes per block) and fetched in parts.
+   *
+   * Block maps embedded in an artifact (AppImage, the NSIS web installer's app package) are always `"v2"`.
+   * See [the v27 notes](https://www.electron.build/docs/migration/v27-build-changes#block-map-format-follows-electronupdatercompatibility).
+   */
+  readonly blockmap?: "v2" | "v3" | "latest" | null
 
   /**
    * macOS-specific build options (signing, entitlements, notarization, target categories, etc.).
@@ -673,6 +704,8 @@ export type AfterExtractContext = PackContext
  *
  * To supply your own bundle, set the property to a {@link ToolsetCustom} object with a `url` (https:// or file://) and a `checksum` for verification. The bundle must mirror the expected directory layout of the corresponding built-in bundle; see the build scripts at
  * https://github.com/electron-userland/electron-builder-binaries/tree/master/packages.
+ *
+ * Toolsets, the versions offered for each, and what `latest` resolves to can be added, changed or removed in any electron-builder release (minor or patch), not only in a major release. (To address toolset stability, reported issues, adopt latest tooling versions, etc.)
  */
 export interface ToolsetConfig {
   /**
@@ -693,12 +726,13 @@ export interface ToolsetConfig {
    * | `"1.2.1"` | Adds native `osslsigncode` arm64 |
    * | `"1.3.0"` | Includes support for Azure Trusted Signing `signtool` via dlib and .NET 8 runtime |
    * | `"1.3.1"` | macOS `osslsigncode` bundles its own OpenSSL (no Homebrew `openssl@3` needed) and libp11's PKCS#11 provider |
+   * | `"1.3.3"` | Linux `osslsigncode` bundles its own OpenSSL (no system OpenSSL 1.1 needed); `osslsigncode` 2.14 and .NET runtime 8.0.33 |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | "1.1.1" | "1.2.1" | "1.3.0" | "1.3.1" | ToolsetCustom | "latest"
+  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | "1.1.1" | "1.2.1" | "1.3.0" | "1.3.1" | "1.3.3" | ToolsetCustom | "latest"
 
   /**
    * Version of the AppImage toolset bundle used for building `.AppImage` files.
@@ -714,6 +748,7 @@ export interface ToolsetConfig {
    * | `"0.0.0"` | Legacy | FUSE2-based AppImage runtime (pre-v27) |
    * | `"1.0.3"` | 20251108 | Introduces static AppImage runtime |
    * | `"1.1.0"` | 20251108 | Adds `unsquashfs` support |
+   * | `"1.2.1"` | 20251108 | squashfs-tools 4.7.5 with a statically linked zstd 1.5.7, so Linux and macOS hosts produce identical images; ships the bundled components' license files |
    *
    * An explicit version pin always selects exactly that release.
    *
@@ -721,7 +756,7 @@ export interface ToolsetConfig {
    *
    * @default "latest"
    */
-  readonly appimage?: "0.0.0" | "1.0.3" | "1.1.0" | ToolsetCustom | "latest"
+  readonly appimage?: "0.0.0" | "1.0.3" | "1.1.0" | "1.2.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the NSIS toolset bundle used to compile Windows installers.
@@ -737,6 +772,7 @@ export interface ToolsetConfig {
    * |---------|------------------|-------|
    * | `"0.0.0"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27) |
    * | `"1.2.1"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` |
+   * | `"2.0.4"` | 3.13 | Compiled from source, `NSIS_MAX_STRLEN=8192` — two bundles: the default, and a `-log` bundle whose `makensis` and stubs are log-enabled (`NSIS_CONFIG_LOG=yes`), used when `installerDebugLogging` is on |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md
    *
@@ -745,7 +781,31 @@ export interface ToolsetConfig {
    *
    * @default "latest"
    */
-  readonly nsis?: "0.0.0" | "1.2.1" | ToolsetCustom | "latest"
+  readonly nsis?: "0.0.0" | "1.2.1" | "2.0.4" | ToolsetCustom | "latest"
+
+  /**
+   * Version of the WiX Toolset bundle used to build `msi` and `msiWrapped` installers.
+   *
+   * The bundle ships **`candle.exe`** and **`light.exe`** (compile and link the generated `.wxs` project) and the WiX
+   * extensions (`WixUIExtension` for assisted installers). On macOS and Linux they run under Wine with wine-mono.
+   *
+   * Available versions:
+   * | Version | WiX version | Notes |
+   * |---------|-------------|-------|
+   * | `"0.0.0"` | 4.0.0.5512 (preview) | Legacy bundle (pre-v27). An `arm64` app is packaged in an `x64` MSI, because this toolset has no `arm64` |
+   * | `"2.0.0"` | 3.14.1 | Builds a native `arm64` MSI for `arm64` |
+   *
+   * The `.wxs` project uses the WiX 3 schema with `"2.0.0"`: an `msiProjectCreated` hook that inserts elements of a WiX 4
+   * extension namespace must use the WiX 3 one (for example `http://schemas.microsoft.com/wix/UtilExtension`), or pin `"0.0.0"`.
+   *
+   * A custom bundle (a {@link ToolsetCustom} object) must have the WiX v3 layout: `candle.exe`, `light.exe` and the
+   * extensions at its root.
+   *
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wix/CHANGELOG.md
+   *
+   * @default "latest"
+   */
+  readonly wix?: "0.0.0" | "2.0.0" | ToolsetCustom | "latest"
 
   /**
    * Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on
@@ -786,31 +846,29 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | FPM version | Notes |
    * |---------|------------|-------|
-   * | `"2.2.1"` | 1.17.0 (Ruby 3.4.3) | Current default |
+   * | `"2.2.1"` | 1.17.0 (Ruby 3.4.3) | Previous default |
+   * | `"2.3.1"` | 1.18.0 (Ruby 3.4.12) | Linux bundles link a static OpenSSL 3.5.9 instead of OpenSSL 1.1.1 |
+   *
+   * An explicit version pin always selects exactly that release.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/fpm/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly fpm?: "2.2.1" | ToolsetCustom | "latest"
+  readonly fpm?: "2.2.1" | "2.3.1" | ToolsetCustom | "latest"
 
   /**
-   * Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build
-   * Linux targets on macOS hosts.
+   * The archive and packaging tools that fpm and the `tar.lz` target run, on macOS and Linux hosts: `xz`, `lzip`, GNU `tar`
+   * (`tar`, `gtar`), GNU `ar` (`ar`, `gar`) and `bsdtar`, plus `rpm` and `rpmbuild` (rpm 6.1.0) on Linux x64 and arm64 and macOS arm64.
+   * Its `bin` directory goes first on fpm's `PATH`. On Intel macOS and 32-bit Linux, which get no bundled `rpmbuild`,
+   * building `rpm` uses the host `rpmbuild` on `PATH`. A {@link ToolsetCustom} bundle must have the same `bin/` layout.
+   * `"system"` uses the host's tools (no download); `tar.lz` then uses `lzip` from {@link executables}.
    *
-   * The bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).
-   *
-   * Available versions:
-   * | Version | Notes |
-   * |---------|-------|
-   * | `"1.0.0"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |
-   * | `"1.0.1"` | Same tools rebuilt on macOS 15 runners — binaries run on macOS 15+ (1.0.0 required macOS 26) |
-   *
-   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/archive/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly linuxToolsMac?: "1.0.0" | "1.0.1" | ToolsetCustom | "latest"
+  readonly archive?: "1.0.0" | "system" | ToolsetCustom | "latest"
 
   /**
    * Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.
@@ -827,13 +885,14 @@ export interface ToolsetConfig {
    * | Version | Notes |
    * |---------|-------|
    * | `"1.0.0"` | Shipped the 32-bit `7za.exe` for every Windows arch (1.75 GiB memory cap, no LZMA2 multithreading on x64/arm64) |
-   * | `"1.0.1"` | Correct per-arch Windows binaries (x64, ia32, arm64) |
+   * | `"1.0.1"` | 24.09 - Correct per-arch Windows binaries (x64, ia32, arm64) |
+   * | `"1.1.0"` | 26.05 |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/7zip/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly sevenZip?: "1.0.0" | "1.0.1" | ToolsetCustom | "latest"
+  readonly sevenZip?: "1.0.0" | "1.0.1" | "1.1.0" | ToolsetCustom | "latest"
 
   /**
    * Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,
@@ -867,6 +926,7 @@ export interface ToolsetConfig {
    * | Version | Notes |
    * |---------|-------|
    * | `"1.1.1"` | Squirrel.Windows 2.0.1 (patched) with a standalone, checksum-verified `nuget.exe` 6.14.0 |
+   * | `"1.2.1"` | Pinned, checksum-verified 7-Zip 26.05 (adds native `7z-arm64`, selected on arm64 Windows hosts) and `nuget.exe` 7.9.0 |
    *
    * Set to a {@link ToolsetCustom} object to supply your own bundle — it must contain the
    * `electron-winstaller/vendor/` subtree. Only used when building the `squirrelWindows` target.
@@ -875,7 +935,7 @@ export interface ToolsetConfig {
    *
    * @default "latest"
    */
-  readonly squirrel?: "1.1.1" | ToolsetCustom | "latest"
+  readonly squirrel?: "1.1.1" | "1.2.1" | ToolsetCustom | "latest"
 
   /**
    * Where the host programs that electron-builder starts are installed on the build machine, by program name.

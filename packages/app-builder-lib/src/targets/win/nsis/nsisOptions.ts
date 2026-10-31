@@ -41,8 +41,11 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    * Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation
    * directory). In your custom NSIS scripts, write to the log via `${LogText}`.
    *
-   * Requires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. The default `toolsets.nsis` bundle
-   * is not log-enabled, so supply one as a custom `toolsets.nsis` bundle; the build fails otherwise.
+   * Requires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. From `toolsets.nsis` `"2.0.4"` (the
+   * default) on, each NSIS release publishes a log-enabled bundle next to the default one, and electron-builder downloads it when this
+   * option is `true` (the default bundle otherwise). Its stubs make the installer and uninstaller up to about 8 KB larger, and they
+   * write a log only once `LogSet on` runs, which this option adds. The older pinned bundles (`"0.0.0"`, `"1.2.1"`) have no
+   * log-enabled variant, and the build fails with one of them. A custom `toolsets.nsis` bundle must be log-enabled itself.
    * Replaces the v26 `customNsisBinary.debugLogging`.
    * @see https://www.electron.build/docs/migration/v27-config-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis
    * @default false

@@ -123,7 +123,7 @@ export default class AppUpdater {
 ```
 
 :::note[Credentials are only sent to the update feed's origin]
-The credential headers in `requestHeaders` / `addAuthHeader` — headers such as `Authorization`, the same set that is removed on a cross-origin redirect — and the query string of the feed `url` are only sent to the feed's origin (scheme, host and port; as on redirects, an `http` → `https` upgrade of the feed host on the default ports keeps the headers and the feed query). With the generic, s3, spaces, r2, keygen, bitbucket, github and gitlab providers, an update file whose URL in `latest*.yml` is on another origin, and the blockmaps and differential range requests derived from it, are downloaded without them; such a URL keeps its own query string. A blockmap is downloaded from `${url}.blockmap` with the file URL's query string, so a pre-signed installer URL's signature does not fit it: set `files[].blockMapUrl` in `latest*.yml` to the blockmap's own (pre-signed) URL. A relative value resolves like `url` (against the feed URL); an absolute URL is used as-is, with its own host and query string. Either follows the same origin rule. With a `blockMapUrl`, the old version's blockmap comes from the local cache or from `previousBlockmapBaseUrlOverride`; when neither has it, that one update is downloaded in full, which fills the cache for the next one (the private GitHub and GitLab providers, which resolve files from the release assets, ignore `blockMapUrl`). With every provider, including custom ones, a URL that electron-updater resolves against the feed URL (such as `files[].url` or a blockmap) gets the feed query only on the feed's origin. Serve the update files from the feed origin (relative `files[].url`, the default) or use pre-signed URLs. [Signed update manifests](./signed-update-manifests.md) cover `files[].url` and `packages.<arch>.path`, so a pre-signed URL has to be in `latest*.yml` before it is signed (see [Key storage](./key-rotation.md#key-storage)). A custom provider (one that does not extend a built-in provider such as `GenericProvider`) declares where these headers go by overriding `Provider.feedBaseUrl`: return its feed URL to send them only to that origin, or `null` to send the request headers to every download URL. If it declares neither and the downloads carry credential headers, `downloadUpdate()` fails with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED` before any download request:
+The credential headers in `requestHeaders` / `addAuthHeader` — headers such as `Authorization`, the same set that is removed on a cross-origin redirect — and the query string of the feed `url` are only sent to the feed's origin (scheme, host and port; as on redirects, an `http` → `https` upgrade of the feed host on the default ports keeps the headers and the feed query). With the generic, s3, spaces, r2, keygen, bitbucket, github and gitlab providers, an update file whose URL in `latest*.yml` is on another origin, and the blockmaps and differential range requests derived from it, are downloaded without them; such a URL keeps its own query string. A channel file on another origin (a GitLab release link to another host, or a `channel` that is a URL) is requested without them too. A blockmap is downloaded from `${url}.blockmap` with the file URL's query string, so a pre-signed installer URL's signature does not fit it: set `files[].blockMapUrl` in `latest*.yml` to the blockmap's own (pre-signed) URL. A relative value resolves like `url` (against the feed URL); an absolute URL is used as-is, with its own host and query string. Either follows the same origin rule. With a `blockMapUrl`, the old version's blockmap comes from the local cache or from `previousBlockmapBaseUrlOverride`; when neither has it, that one update is downloaded in full, which fills the cache for the next one (the private GitHub and GitLab providers, which resolve files from the release assets, ignore `blockMapUrl`). With every provider, including custom ones, a URL that electron-updater resolves against the feed URL (such as `files[].url` or a blockmap) gets the feed query only on the feed's origin. Serve the update files from the feed origin (relative `files[].url`, the default) or use pre-signed URLs. [Signed update manifests](./signed-update-manifests.md) cover `files[].url` and `packages.<arch>.path`, so a pre-signed URL has to be in `latest*.yml` before it is signed (see [Key storage](./key-rotation.md#key-storage)). A custom provider (one that does not extend a built-in provider such as `GenericProvider`) declares where these headers go by overriding `Provider.feedBaseUrl`: return its feed URL to send them only to that origin, or `null` to send the request headers to every download and update info URL. The declared origin also applies to the provider's own `httpRequest` calls (for example an API request in `getLatestVersion`): one to another origin is sent without the credential headers from `requestHeaders` / `addAuthHeader`, while headers passed in `httpRequest`'s `headers` argument are sent as given. If it declares neither and the downloads carry credential headers, `downloadUpdate()` fails with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED` before any download request:
 
 ```typescript
 class MyProvider extends Provider<UpdateInfo> {
@@ -203,11 +203,15 @@ electron-updater ≥ 7.0 (electron-builder v27) mitigates this in two ways:
     autoUpdater.quitAndInstall({ isSilent: true, isForceRunAfter: true, waitUntilNextLaunch: true })
     ```
 
+    The next launch installs that update automatically, as with `"onNextLaunch"`, whatever `autoInstallEvent` is set to, except `"manual"`: then install it with `installPendingUpdateIfAvailable()`.
+
     You can also trigger the pending install explicitly (e.g. before opening your first window):
 
     ```js
     await autoUpdater.installPendingUpdateIfAvailable()
     ```
+
+    The automatic install starts right after the app is `ready`, once your own `ready` handlers have run. Configure the updater (`autoInstallEvent`, `setFeedURL`, `addAuthHeader`, `requestHeaders`) before the app is `ready` or synchronously in a `ready` handler, not after an `await` in it. An explicit `installPendingUpdateIfAvailable()` call never runs at the same time as the automatic install: one waits for the other, and the update is installed once.
 
 ### Per-target behavior
 
@@ -265,7 +269,12 @@ But it is not recommended, better to test auto-update for installed application 
 
 Since electron-builder 27 the generated `latest*.yml` targets the modern `files[]` metadata format by default and no longer includes the legacy top-level `path`/`sha512` fields, which are needed only by electron-updater 1.x – 2.15.0.
 
-The `electronUpdaterCompatibility` option sets the electron-updater compatibility semver range (e.g. `>=2.16`, `>=1.0.0`). Can be specified per platform (e.g. `win.electronUpdaterCompatibility`). When the declared range intersects legacy electron-updater versions, the corresponding legacy fields are emitted in addition to `files[]`: the top-level `path`/`sha512` and the Windows `sha2` checksum for ranges intersecting `<2.16.0`, and the old `latest-mac.json` for ranges intersecting `<2.0.0`. Defaults to `>=2.16`.
+The `electronUpdaterCompatibility` option sets the electron-updater compatibility semver range: the electron-updater versions your installed apps ship, which have to read the update files a build publishes (e.g. `>=7`, `>=6`, `>=1.0.0`). Can be specified per platform (e.g. `win.electronUpdaterCompatibility`). Defaults to `>=7`. The range decides:
+
+* the [`.blockmap` format](#differential-updates-blockmap): the binary map for a range that includes only electron-updater 7 and later, the JSON map (with a build warning) for a range that includes earlier versions;
+* the legacy fields emitted in addition to `files[]`: the top-level `path`/`sha512` and the Windows `sha2` checksum for ranges intersecting `<2.16.0`, and the old `latest-mac.json` for ranges intersecting `<2.0.0`.
+
+The build fails when the app's own electron-updater is outside the range of a platform it builds (for example electron-updater 6 with the default `>=7`): upgrade it, or declare a range that includes it. The app's electron-updater is the one in `dependencies`, else in `devDependencies` (bundled by webpack, vite and the like), else, with two package.json files, in the development package.json. Where the build writes binary `.blockmap` files (an NSIS installer, a macOS zip), electron-updater 7.0.0-alpha.0 to 7.0.0-alpha.12, which cannot read it, fail the build as well: upgrade to 7.0.0-alpha.13 or later, or set `blockmap` to `"v2"`.
 
 Metadata format history:
 
@@ -283,6 +292,8 @@ Two `AppUpdater` settings changed or were added in v27. See the [Security & Hard
 
 The update manifest (`latest*.yml`) itself **is** cryptographically signed and verified before any download as of v27. Publishing a build that emits update metadata fails unless an Ed25519 signing key resolves; `updateManifest: false` is the only opt-out — see [Signed Update Manifests](./signed-update-manifests.md).
 
+A channel file (`latest*.yml`) larger than 10 MiB fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`: it is read into memory and parsed before the manifest signature is verified. Release feeds and provider API responses (such as the GitHub releases feed or a list of releases) are not limited, since their size grows with the release history. To allow larger channel files, set `maxUpdateInfoSize` (in bytes) in the `publish` configuration, which electron-builder writes into `app-update.yml` so installed apps use it, or `autoUpdater.maxUpdateInfoSize` in the app, which overrides it. Both take a positive integer, or `0` for no limit.
+
 Changing a signing key or certificate that installs in the field already trust requires a transition release — see [Key Rotation](./key-rotation.md).
 
 ### `disableWebInstaller` (now defaults to `true`)
@@ -299,7 +310,7 @@ const updater = new NsisUpdater()
 updater.disableWebInstaller = false // only if you intentionally ship a web installer
 ```
 
-Set it before the app is `ready`, e.g. right after creating the updater: with `autoInstallEvent: "onNextLaunch"`, a pending web-installer update is checked against the flag when the app is ready, and rejected (its pending-install marker cleared) while the flag is `true`.
+Set it before the app is `ready`, e.g. right after creating the updater, or synchronously in a `ready` handler: a web-installer update marked for [install on next launch](#install-on-next-launch-windowslinux) is checked against the flag right after the app is ready, once your own `ready` handlers have run, and rejected (its pending-install marker cleared) while the flag is `true`.
 
 A web update cached by a previous launch, or pending an install on next launch, is used only if its web package still matches the freshly fetched manifest; otherwise it is discarded. The `nsis-web` installer itself verifies the package electron-updater passes to it and installs its own copy — see [Web Installer](../nsis.md#web-installer). Once the app runs the version of that update, `NsisUpdater` removes the package from its `pending` cache directory at startup (app `ready`); the package of an update that is not installed yet, or whose install failed, is kept for the install or a retry. Because the manifest vouches for the web package, don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./signed-update-manifests.md) cover its path, SHA-512 and size.
 
@@ -316,7 +327,7 @@ autoUpdater.allowUnverifiedLinuxPackages = false
 
 Staged rollouts allow you to distribute the latest version of your app to a subset of users that you can increase over time, similar to rollouts on platforms like Google Play.
 
-Staged rollouts are controlled by manually editing your `latest.yml` / `latest-mac.yml` (channel update info file).
+Staged rollouts are controlled by the `stagingPercentage` field of your `latest.yml` / `latest-mac.yml` (channel update info file), which electron-builder does not write itself.
 
 ```yml
 version: 1.1.0
@@ -329,12 +340,95 @@ stagingPercentage: 10
 
 Update will be shipped to 10% of userbase.
 
+:::warning[Sign `latest.yml` again after changing `stagingPercentage`]
+electron-builder [signs update manifests](./signed-update-manifests.md) by default, and `stagingPercentage` is [covered by the signature](./signed-update-manifests.md#what-is-signed). Adding or changing it in a signed `latest.yml` by hand, without signing the file again, makes every install that embeds the public key reject the manifest with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`: the release then reaches none of your users instead of 10% of them. The same applies to every later change, such as raising the percentage or setting it to `0` to pause the rollout. Only an unsigned manifest (`updateManifest: false`) can be edited by hand.
+:::
+
+To set or change the percentage of a signed release, sign `latest.yml` again with the key(s) the release was signed with before you upload it. Edit `stagingPercentage`, then run [`electron-builder sign-update-manifest`](./signed-update-manifests.md#re-signing-a-published-manifest) from the project directory; it takes the key(s) from the same configuration and environment variables as the build:
+
+```sh
+npx electron-builder sign-update-manifest dist/latest.yml
+```
+
+Where electron-builder cannot run, a short Node.js script does the same with `canonicalizeForSigning` from `builder-util-runtime` (the version that comes with the electron-builder that built the release) and `js-yaml`:
+
+```js
+// set-staging-percentage.mjs — usage: node set-staging-percentage.mjs dist/latest.yml 10
+import { readFileSync, writeFileSync } from "node:fs"
+import { createPrivateKey, sign } from "node:crypto"
+import { canonicalizeForSigning, createManifestSignatureEntry } from "builder-util-runtime"
+import { dump, load } from "js-yaml"
+
+const [file, value = ""] = process.argv.slice(2)
+const percentage = value.trim() === "" ? NaN : Number(value)
+if (!Number.isFinite(percentage) || percentage < 0 || percentage > 100) {
+  throw new Error(`stagingPercentage must be a number from 0 to 100, got "${value}"`)
+}
+const info = load(readFileSync(file, "utf8"))
+info.stagingPercentage = percentage
+const payload = Buffer.from(canonicalizeForSigning(info), "utf8")
+// every key the release was signed with, in the same order (one PEM file per key)
+const keys = ["update-private-key.pem"].map(keyFile => createPrivateKey(readFileSync(keyFile)))
+info.signatures = keys.map(key => createManifestSignatureEntry(key, sign(null, payload, key).toString("base64")))
+info.signature = info.signatures[0].signature
+writeFileSync(file, dump(info, { lineWidth: -1 }))
+```
+
+Then upload the signed `latest.yml`. While the build output is still at hand, [`electron-builder verify`](../cli.md#verify) checks it against the key the packaged app embeds.
+
 If you want to pull a staged release because it hasn't gone well, you **must** increment the version number higher than your broken release.
 Because some of your users will be on the broken 1.0.1, releasing a new 1.0.1 would result in them staying on a broken version.
 
 ## File Generated and Uploaded in Addition
 
 `latest.yml` (or `latest-mac.yml` for macOS, or `latest-linux.yml` for Linux) will be generated and uploaded for all providers except `bintray` (because not required, `bintray` doesn't use `latest.yml`).
+
+### Differential updates: `.blockmap`
+
+For targets that support differential (delta) updates (NSIS on Windows and the macOS update zip; AppImage embeds its map in the binary), electron-builder publishes a **block map** next to the artifact: a list of content-defined blocks and their hashes. electron-updater compares the new map with the one of the installed version and downloads only the byte ranges that changed, using HTTP `Range` requests.
+
+One `<artifact>.blockmap` is published per artifact. Its format follows [`electronUpdaterCompatibility`](#compatibility), since the map is read by the updater already installed in your users' apps:
+
+* `"v3"` (the default when `electronUpdaterCompatibility` includes only electron-updater 7 and later, as the default `>=7` does): an uncompressed binary map that electron-updater fetches in parts with `Range` requests. It carries the blocks in a three-level layout (a small table of *super-groups*, a table of *groups* of blocks, then one 10-byte record per block), so the updater reads the super-group table, compares it with its cached previous map, fetches only the group entries of the super-groups that changed, compares those, and finally fetches only the records of the groups that changed. The map cost of an update therefore grows with the change, not with the installer size, which is what makes 512 B blocks inside `app.asar` affordable.
+* `"v2"` (the default when the range includes electron-updater 6 or earlier): the gzipped JSON map (~16 KiB blocks) every electron-updater release reads. It is downloaded in full on every update, a fixed cost of roughly 20 bytes per block of the installer. The build warns that it writes this format and why.
+
+![Block map file layout: header, super-group and group tables and 10-byte block records, with content-defined groups](/img/blockmap-v3-format.svg)
+
+The `blockmap` option overrides the choice: `"v2"` always writes the JSON map, `"v3"` the binary map (the build fails when `electronUpdaterCompatibility` includes electron-updater versions before 7), and `"latest"` the newest format the range allows, so that a future format is picked up without a config change.
+
+Compatibility: electron-updater tells the two formats apart by the file's first bytes, so `latest.yml` is the same for both. electron-updater before 7.0 cannot read `"v3"`: an app still on electron-updater 6 that receives a release with a binary map falls back to a full download once ("Cannot download differentially, fallback to full download"), and the update it installs brings an updater that can. From electron-updater 6.8.10 the next update is differential again when the artifact name includes `${version}`, as the default names do; 6.8.9 and earlier leave the old block map in their cache, which can make the next update a full download too. With an artifact name without the version (e.g. `"${productName} Setup.${ext}"`) the transition costs two full downloads: electron-updater 6 caches no map for the release it could not read, and the URL electron-updater 7 derives for the installed version's map (the new map's URL with the version replaced) is then the new map's own, so the next update is downloaded in full as well and caches its map ("…because the artifact name has no version: downloading the full update"); the update after it is differential. Block maps embedded in an artifact (AppImage, the NSIS web installer's app package) are always `"v2"`.
+
+Switching formats between two releases (for example raising `electronUpdaterCompatibility` to `>=7` in an app that wrote `"v2"` maps, or going back to `"blockmap": "v2"`) does not cost a full download with electron-updater 7.0.0-alpha.14 and later. Both formats come from the same content-defined chunker and the same blake2b block digest: a `"v2"` map stores the whole digest and a `"v3"` map its first 8 bytes, so electron-updater compares a cached map of one format with the new map of the other by those 8 bytes, without reading or re-hashing the installed file ("Block map format changed (old: v2, new: v3): comparing the blocks by the v3 block hashes both maps carry", at `info`). The new map is downloaded whole that once, and the next update fetches it in parts. Blocks are cut the same way in both formats except inside a stored member: with `nsis.differentialPackage: "store-asar"`, `"v3"` cuts the stored `app.asar` into 512 B to 2 KiB blocks where `"v2"` used 4 to 16 KiB ones, so that first update downloads the stored asar whole and copies everything else. A `"v2"` map whose checksums are not the digests electron-builder writes is not compared, and that update is downloaded in full ("…cannot be compared with a v3 map…: downloading this update in full"). Earlier electron-updater 7 prereleases download the first update after a format change in full. A future format under `"latest"` may cost one full download as well.
+
+Compressed artifacts: a differential NSIS package (7z, non-solid, 1 MB dictionary) and a macOS zip (each file deflated on its own) are cut into the same 8/16/32 KiB blocks in both formats; only stored bytes get finer `"v3"` blocks. Compressed bytes change from the edit to the end of the compressed stream they belong to (one file of a zip, one 4 MB LZMA2 block of the package, or the whole deflated `app.asar` of a macOS zip), whatever the block size, so `"v3"` downloads the same data for them as `"v2"`. What it changes is the map: about 10 bytes per block instead of about 22 for incompressible content, and only its changed parts are fetched. That is why `"latest"` and the default write `"v3"` for compressed artifacts too. To make app-code updates small, store the asar (below) rather than changing the block map format.
+
+```json
+{
+  "electronUpdaterCompatibility": ">=7",
+  "blockmap": "v3"
+}
+```
+
+The `"v3"` format pays off most for app-code changes when the asar is stored uncompressed and laid out so that a small edit does not shift the rest of the archive:
+
+```json
+{
+  "nsis": { "differentialPackage": "store-asar" },
+  "asar": { "contentAlignment": 512 }
+}
+```
+
+`nsis.differentialPackage: "store-asar"` stores `resources/app.asar` uncompressed in the differential package (so a one-line change maps to a few changed blocks instead of a re-compressed archive), and `asar.contentAlignment` pads file contents inside the asar so that a file growing by a few bytes does not move the offsets of every later file. The `"v3"` format additionally starts a new block at every packed file of the stored asar, so an edit inside one file never touches a block of its neighbour, and in a build that writes it the 7z header of every differential package is stored as is and chunked on its own, so the CRCs that change with each build cost a few hundred bytes instead of the package's last block (a `"v2"` build packages exactly as electron-builder 26 did). With all of that, the `"v3"` rows of the repository benchmark (`test/src/differentialOneLineBenchTest.ts`) bring a one-line change in a 32 MB asar down to about ten kilobytes on the wire.
+
+![What electron-updater fetches for a "v3" block map: header and super-group table, the entries and records of what changed, then the changed data ranges; any failure falls back to a full download](/img/blockmap-v3-update-flow.svg)
+
+How this compares with per-version delta packages (Squirrel, Velopack): those frameworks compute a binary patch between two specific releases on the build machine and publish one delta file per consecutive version pair, which a client applies in sequence from the exact release it has installed. The patch itself is small (a zstd `--patch-from` diff of a one-line change is a few kilobytes), but every release pair needs its own artifact, a client that skipped releases applies several of them, and the old release must still be present in full. A block map describes a single artifact independently of any previous version: one `.blockmap` per installer serves updates from any older version, the server only needs HTTP `Range` support, and the cost of an update is a handful of kilobytes of map plus the changed blocks. The repository benchmark reports both side by side for the same synthetic app.
+
+![Per-version delta packages versus block maps: what is published, what a client downloads, measured bytes for the same edits](/img/blockmap-v3-vs-delta.svg)
+
+electron-updater also downloads through small gaps between changed ranges (copy gaps below 8 KiB are fetched rather than copied, saving one request per gap on hosts such as GitHub or S3 that serve a single range per request) and never puts more than 200 ranges into one `multipart/byteranges` request (Apache's default `MaxRanges`).
+
+A block map may be at most 1/16 of the update's size, no less than 8 MiB and no more than 64 MiB (64 MiB when the update's size is not known); a `"v2"` map, or one embedded in an artifact, is measured unzipped. With a larger map, or a `"v3"` map that describes a file of another size than the update, the update is downloaded in full.
 
 ## Private GitHub Update Repo
 

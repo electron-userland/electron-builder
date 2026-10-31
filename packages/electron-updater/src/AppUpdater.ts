@@ -1,9 +1,11 @@
 import { createRequire } from "node:module"
-import { LogLimiter } from "builder-util-runtime/internal"
+import { blockMapV2ToV3Keys, decodeBlockMapV3, isBlockMapV3, LogLimiter, toBlockMap } from "builder-util-runtime/internal"
 import {
   AllPublishOptions,
   asArray,
   CancellationToken,
+  DEFAULT_MAX_UPDATE_INFO_SIZE,
+  isValidMaxUpdateInfoSize,
   newError,
   PublishConfiguration,
   UpdateInfo,
@@ -34,14 +36,15 @@ import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor.js"
 import { GenericProvider } from "./providers/GenericProvider.js"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory.js"
-import { Provider, ProviderPlatform } from "./providers/Provider.js"
+import { Provider, ProviderPlatform, ProviderRuntimeOptions } from "./providers/Provider.js"
 import type { TypedEmitter } from "tiny-typed-emitter"
 type Session = Electron.Session
 import type { AuthInfo } from "electron"
-import { gunzipSync, gzipSync } from "zlib"
-import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
+import { gunzipSync } from "zlib"
+import { blockMapSizeLimit, DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
-import { nonThrowingLogger, throwIfCancelled } from "./util.js"
+import { fetchBlockMapV3 } from "./differentialDownloader/blockMapV3Fetcher.js"
+import { nonThrowingAppLogger, nonThrowingLogger, throwIfCancelled } from "./util.js"
 import {
   AutoInstallEvent,
   DOWNLOAD_PROGRESS,
@@ -56,9 +59,10 @@ import {
   VerifyUpdateFile,
   verificationFailureMessage,
 } from "./types.js"
-import type { VerifyUpdateSupport } from "./index.js"
+import type { NonThrowableLogger, VerifyUpdateSupport } from "./index.js"
 
-const require = createRequire(import.meta.url)
+// import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
+const require = createRequire(import.meta.url ?? process.execPath)
 
 // shared rather than per-instance so that `updater.verifyUpdateFile === DEFAULT_VERIFY_UPDATE_FILE` identifies "no custom verifier"
 const DEFAULT_VERIFY_UPDATE_FILE: VerifyUpdateFile = _params => Promise.resolve({ response: "success" })
@@ -85,7 +89,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   /**
    * When a downloaded update is automatically installed (if `quitAndInstall` was not called before).
    *
-   * - `"onQuit"` (default) — install on app quit by spawning the installer while the app exits.
+   * - `"onQuit"` (default) — install on app quit by spawning the installer while the app exits. Linux package targets
+   *   (deb, rpm, pacman) run the whole install in the quit: when it fails, for example because the user dismissed the
+   *   authentication dialog, an `error` event is emitted and logged, and the app exits without the update (see
+   *   {@link cancelQuitOnInstallFailure} to keep it running instead). A quit while an update install runs (`quitAndInstall()`)
+   *   waits for it to finish.
    * - `"onNextLaunch"` — defer the install: any app quit persists an install-on-next-launch marker for the downloaded
    *   update; on the next launch the updater re-validates the cached installer against freshly fetched update info and
    *   installs it (see `installPendingUpdateIfAvailable`). This avoids the class of failures where the on-quit installer
@@ -104,6 +112,27 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   autoInstallEvent: AutoInstallEvent = "onQuit"
 
   /**
+   * Whether a failed install on quit cancels the quit, so that the app keeps running instead of exiting without the
+   * update. Linux package targets (deb, rpm, pacman) only, with `autoInstallEvent` `"onQuit"`: with this option, the
+   * install on quit runs from `will-quit` rather than `quit`, so that it can still cancel the quit, and knows whether it
+   * succeeded. It fails, for example, when the user dismissed the authentication dialog; an `error` event is emitted
+   * first, while the quit can still be cancelled. A quit while an update install runs that then fails stays cancelled too.
+   *
+   * The updater can only see that the quit was cancelled by a `will-quit` listener registered before its own, which it
+   * registers once the first update download (or install) starts: a listener registered later that cancels the quit runs
+   * after the install. Apps that set this option should register their own `will-quit` listeners before checking for
+   * updates. (Without the option, the install runs from `quit`, which is only emitted once every listener let the quit
+   * through.)
+   *
+   * The app keeps running with its windows already closed, so without a tray it is left windowless: listen for `error`
+   * to reopen a window, or to quit from a later tick (`setImmediate(() => app.quit())`; Electron ignores `app.quit()`
+   * while the quit is still in progress). The next quit is not cancelled and does not try to install that update
+   * again; a different update downloaded later is installed on quit, and `quitAndInstall()` can still install it.
+   * @default false
+   */
+  cancelQuitOnInstallFailure = false
+
+  /**
    * @deprecated Removed in v27 — use {@link autoInstallEvent}. This accessor is a compatibility shim
    * and will be deleted in v28.
    *
@@ -118,7 +147,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   set autoInstallOnAppQuit(value: boolean) {
     const mapped: AutoInstallEvent = value ? "onQuit" : "manual"
-    this._logger.warn(
+    this.log.warn(
       `autoInstallOnAppQuit was removed in electron-updater 7 (electron-builder v27) — use autoInstallEvent instead. ` +
         `Mapping autoInstallOnAppQuit = ${value} to autoInstallEvent = "${mapped}". ` +
         `This compatibility shim is removed in v28. ` +
@@ -146,7 +175,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * @returns `true` if a pending update was validated and its installation was initiated (the app will quit).
    */
   installPendingUpdateIfAvailable(): Promise<boolean> {
-    this._logger.info("installPendingUpdateIfAvailable is not supported by this updater implementation, skipping")
+    this.log.info("installPendingUpdateIfAvailable is not supported by this updater implementation, skipping")
     return Promise.resolve(false)
   }
 
@@ -215,8 +244,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * `NsisUpdater` defaults it to `false` for installs made by an `nsis-web` installer built with electron-builder v27+ (`resources/package-type` marker).
    * Set it to `false` explicitly only if you intentionally publish and rely on NSIS web-installer packages and your installs lack that marker.
    *
-   * Set it before the app is `ready` (e.g. right after creating the updater): with `autoInstallEvent: "onNextLaunch"` a pending
-   * web-installer update is checked against it when the app is ready, and rejected (its pending-install marker cleared) while it is `true`.
+   * Set it before the app is `ready` (e.g. right after creating the updater) or synchronously in a `ready` handler: the automatic
+   * install at launch of an update marked for the next launch (by a quit with `autoInstallEvent: "onNextLaunch"`, or by
+   * `quitAndInstall({ waitUntilNextLaunch: true })`) runs right after the app's own `ready` handlers, unless `autoInstallEvent` is
+   * `"manual"`, and rejects a web-installer update (clearing its pending-install marker) while this is `true`.
    *
    * @default true
    */
@@ -296,6 +327,32 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this.allowDowngrade = true
   }
 
+  private _maxUpdateInfoSize: number | null = null
+  // `maxUpdateInfoSize` of the publish configuration the provider was created from (app-update.yml or setFeedURL), checked when used
+  private publishConfigMaxUpdateInfoSize: unknown = undefined
+
+  /**
+   * The largest channel file (`latest*.yml`) read, in bytes. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`.
+   * Release feeds and provider API responses (release listings and lookups) are not limited. A positive integer, or `0` for no
+   * limit; anything else throws `ERR_UPDATER_INVALID_MAX_UPDATE_INFO_SIZE`.
+   *
+   * Overrides `maxUpdateInfoSize` of the publish configuration (`app-update.yml`, or the options given to `setFeedURL`), whose default
+   * is 10 MiB. `null` (the default) uses the publish configuration.
+   */
+  get maxUpdateInfoSize(): number | null {
+    return this._maxUpdateInfoSize
+  }
+
+  set maxUpdateInfoSize(value: number | null) {
+    if (value != null && !isValidMaxUpdateInfoSize(value)) {
+      throw newError(
+        `maxUpdateInfoSize must be a positive integer (bytes) or 0 for no limit, but got: ${typeof value === "number" ? value : typeof value}`,
+        "ERR_UPDATER_INVALID_MAX_UPDATE_INFO_SIZE"
+      )
+    }
+    this._maxUpdateInfoSize = value
+  }
+
   /**
    * The Ed25519 public key(s) (PEM or base64 SPKI) trusted to have signed the update manifest — the
    * install's trust list. A single string or an array of keys; a manifest is accepted when any listed key
@@ -322,8 +379,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     })
   }
 
-  protected _logger: Logger = console
-
   // per updater instance, so several updaters (and tests) keep their own counts
   private readonly logLimiter = new LogLimiter()
 
@@ -334,7 +389,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * @internal
    */
   protected limitedLogger(key: string, max = 1): LimitedLogger<Logger> {
-    return this.logLimiter.wrap(() => this._logger, { key, max })
+    // the app's own logger, made non-throwing but not `this.log`: a logger without `debug()` must not use up the quota on debug calls
+    return this.logLimiter.wrap(() => nonThrowingAppLogger(this._logger), { key, max })
   }
 
   /**
@@ -365,6 +421,18 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     return getNetSession()
   }
 
+  // the logger the app set, handed back unchanged by the `logger` getter (e.g. `autoUpdater.logger.transports` of electron-log)
+  private _logger: Logger = console
+  private _log: NonThrowableLogger = nonThrowingLogger(console)
+
+  /**
+   * The app's logger (see {@link logger}) wrapped so that logging never throws and `debug` is always present.
+   * Use this, not `logger`, for logging inside updater code (including subclasses), so a throwing logger cannot interrupt the update logic.
+   */
+  get log(): NonThrowableLogger {
+    return this._log
+  }
+
   /**
    * The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`.
    * Set it to `null` if you would like to disable a logging feature.
@@ -375,6 +443,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   set logger(value: Logger | null) {
     this._logger = value == null ? new NoOpLogger() : value
+    this._log = nonThrowingLogger(this._logger)
   }
 
   // noinspection JSUnusedGlobalSymbols
@@ -478,7 +547,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     super()
 
     this.on("error", (error: Error) => {
-      this._logger.error(`Error: ${error.stack || error.message}`)
+      this.log.error(`Error: ${error.stack || error.message}`)
     })
 
     if (app == null) {
@@ -527,6 +596,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     } else {
       provider = createClient(options, this, runtimeOptions)
     }
+    this.publishConfigMaxUpdateInfoSize = typeof options === "string" ? undefined : options.maxUpdateInfoSize
     this.clientPromise = Promise.resolve(provider)
   }
 
@@ -541,13 +611,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     let checkForUpdatesPromise = this.checkForUpdatesPromise
     if (checkForUpdatesPromise != null) {
-      this._logger.info("Checking for update (already in progress)")
+      this.log.info("Checking for update (already in progress)")
       return checkForUpdatesPromise
     }
 
     const nullizePromise = () => (this.checkForUpdatesPromise = null)
 
-    this._logger.info("Checking for update")
+    this.log.info("Checking for update")
     checkForUpdatesPromise = this.doCheckForUpdates()
       .then(it => {
         nullizePromise()
@@ -566,7 +636,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   public isUpdaterActive(): boolean {
     const isEnabled = this.app.isPackaged || this.forceDevUpdateConfig
     if (!isEnabled) {
-      this._logger.info("Skip checkForUpdates because application is not packed and dev update config is not forced")
+      this.log.info("Skip checkForUpdates because application is not packed and dev update config is not forced")
       return false
     }
     return true
@@ -576,9 +646,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   checkForUpdatesAndNotify(downloadNotification?: DownloadNotification): Promise<UpdateCheckResult | null> {
     return this.checkForUpdates().then(it => {
       if (!it?.downloadPromise) {
-        if (this._logger.debug != null) {
-          this._logger.debug("checkForUpdatesAndNotify called, downloadPromise is null")
-        }
+        this.log.debug("checkForUpdatesAndNotify called, downloadPromise is null")
         return it
       }
 
@@ -620,7 +688,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     stagingPercentage = Number(stagingPercentage)
     if (!Number.isFinite(stagingPercentage)) {
-      this._logger.warn(`Staging percentage is NaN: ${rawStagingPercentage}`)
+      this.log.warn(`Staging percentage is NaN: ${rawStagingPercentage}`)
       return true
     }
 
@@ -630,7 +698,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const stagingUserId = await this.stagingUserIdPromise.value
     const val = UUID.parse(stagingUserId).readUInt32BE(12)
     const percentage = val / 0xffffffff
-    this._logger.info(`Staging percentage: ${stagingPercentage}, percentage: ${percentage}, user id: ${stagingUserId}`)
+    this.log.info(`Staging percentage: ${stagingPercentage}, percentage: ${percentage}, user id: ${stagingUserId}`)
     return percentage < stagingPercentage
   }
 
@@ -681,11 +749,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     if (minimumSystemVersion) {
       try {
         if (isVersionLessThan(currentOSVersion, minimumSystemVersion)) {
-          this._logger.info(`Current OS version ${currentOSVersion} is less than the minimum OS version required ${minimumSystemVersion} for version ${currentOSVersion}`)
+          this.log.info(`Current OS version ${currentOSVersion} is less than the minimum OS version required ${minimumSystemVersion} for version ${currentOSVersion}`)
           return false
         }
       } catch (e: any) {
-        this._logger.warn(`Failed to compare current OS version(${currentOSVersion}) with minimum OS version(${minimumSystemVersion}): ${(e.message || e).toString()}`)
+        this.log.warn(`Failed to compare current OS version(${currentOSVersion}) with minimum OS version(${minimumSystemVersion}): ${(e.message || e).toString()}`)
       }
     }
     return true
@@ -695,12 +763,39 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     await this.app.whenReady()
 
     if (this.clientPromise == null) {
-      this.clientPromise = this.configOnDisk.value.then(it => createClient(it, this, this.createProviderRuntimeOptions()))
+      this.clientPromise = this.configOnDisk.value.then(it => {
+        this.publishConfigMaxUpdateInfoSize = it?.maxUpdateInfoSize
+        return createClient(it, this, this.createProviderRuntimeOptions())
+      })
     }
 
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({ "x-user-staging-id": stagingUserId }))
+    // autoUpdater.maxUpdateInfoSize wins over the publish configuration, so an app can raise the limit even when its config is invalid
+    let maxUpdateInfoSize = this._maxUpdateInfoSize
+    if (maxUpdateInfoSize == null) {
+      const configured = this.publishConfigMaxUpdateInfoSize
+      if (configured == null) {
+        maxUpdateInfoSize = DEFAULT_MAX_UPDATE_INFO_SIZE
+      } else if (isValidMaxUpdateInfoSize(configured)) {
+        maxUpdateInfoSize = configured
+      } else {
+        throw newError(
+          `maxUpdateInfoSize in the publish configuration must be a positive integer (bytes) or 0 for no limit, but got: ${typeof configured === "number" ? configured : typeof configured}`,
+          "ERR_UPDATER_INVALID_MAX_UPDATE_INFO_SIZE"
+        )
+      }
+    }
+    // a custom updateProvider that is not built on this Provider (e.g. one from another copy of electron-updater) has no setMaxUpdateInfoSize
+    if (typeof Reflect.get(client, "setMaxUpdateInfoSize") === "function") {
+      client.setMaxUpdateInfoSize(maxUpdateInfoSize)
+    } else if (maxUpdateInfoSize !== DEFAULT_MAX_UPDATE_INFO_SIZE) {
+      this.limitedLogger("max-update-info-size-not-supported").warn(
+        `The custom update provider ${client.constructor.name} has no setMaxUpdateInfoSize, so maxUpdateInfoSize (${maxUpdateInfoSize} bytes) does not apply to its requests. ` +
+          `Extend Provider from electron-updater to use it.`
+      )
+    }
     const info = await client.getLatestVersion()
     // recorded on the new result object (never on the parsed manifest, which listeners of update-available also get), so the state
     // travels with exactly the update info it was established for
@@ -735,7 +830,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       } catch (e: any) {
         // app-update.yml is read elsewhere too; a missing/unreadable config here just means "no key"
         if (e.code !== "ENOENT") {
-          this._logger.warn(`Cannot read updateManifestPublicKey from update config: ${e.message || e}`)
+          this.log.warn(`Cannot read updateManifestPublicKey from update config: ${e.message || e}`)
         }
         trustedKeys = []
       }
@@ -763,22 +858,37 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         ? " files[].blockMapUrl is covered by the signature, like files[].url, so it has to be in latest*.yml before the manifest is signed: " +
           "https://www.electron.build/docs/features/signed-update-manifests#what-is-signed"
         : ""
+      // as is a stagingPercentage set or changed by hand in a signed latest*.yml, which is how staged rollouts of unsigned manifests are run
+      const stagingPercentageHint =
+        info.stagingPercentage == null
+          ? ""
+          : " stagingPercentage is covered by the signature. If it was set or changed after latest*.yml was signed, sign latest*.yml again: " +
+            "https://www.electron.build/docs/features/auto-update#staged-rollouts"
       throw newError(
-        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.${blockMapUrlHint}`,
+        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.${blockMapUrlHint}${stagingPercentageHint}`,
         "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID"
       )
     }
 
-    this._logger.debug?.(`Update manifest for version ${info.version} verified with trusted key ${result.keyId}`)
-    this._logger.info(`Update manifest signature verified for version ${info.version}`)
+    this.log.debug(`Update manifest for version ${info.version} verified with trusted key ${result.keyId}`)
+    this.log.info(`Update manifest signature verified for version ${info.version}`)
     return true
   }
 
-  private createProviderRuntimeOptions() {
+  private createProviderRuntimeOptions(): ProviderRuntimeOptions {
     return {
       isUseMultipleRangeRequest: true,
       platform: this._testOnlyOptions == null ? (process.platform as ProviderPlatform) : this._testOnlyOptions.platform,
       executor: this.httpExecutor,
+      // announced like a cross-origin download (see announceCrossOriginDownload): names and origins only, never values
+      onCrossOriginHeadersRemoved: (url, feedBaseUrl, headerNames) => {
+        this.limitedLogger("cross-origin-update-info-headers").warn(
+          `electron-updater 7 (electron-builder v27) sends the credential headers from requestHeaders / addAuthHeader only to the update feed's origin (${feedBaseUrl.origin}): ` +
+            `${headerNames.join(", ")} not sent with the update info request to ${url.origin}, which is another origin. ` +
+            `If that server needs them, serve the channel file from the feed origin or use a pre-signed URL; a custom provider whose update check calls an API on that origin passes them in httpRequest's headers argument or returns null from feedBaseUrl. ` +
+            `https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin`
+        )
+      },
     }
   }
 
@@ -788,7 +898,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const result = await this.getUpdateInfoAndProvider()
     const updateInfo = result.info
     if (!(await this.isUpdateAvailable(updateInfo))) {
-      this._logger.info(
+      this.log.info(
         `Update for version ${this.currentVersion.format()} is not available (latest version: ${updateInfo.version}, downgrade is ${
           this.allowDowngrade ? "allowed" : "disallowed"
         }).`
@@ -816,7 +926,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   protected onUpdateAvailable(updateInfo: UpdateInfo): void {
-    this._logger.info(
+    this.log.info(
       `Found version ${updateInfo.version} (url: ${asArray(updateInfo.files)
         .map(it => it.url)
         .join(", ")})`
@@ -838,11 +948,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
 
     if (this.downloadPromise != null) {
-      this._logger.info("Downloading update (already in progress)")
+      this.log.info("Downloading update (already in progress)")
       return this.downloadPromise
     }
 
-    this._logger.info(
+    this.log.info(
       `Downloading update from ${asArray(updateInfoAndProvider.info.files)
         .map(it => it.url)
         .join(", ")}`
@@ -853,7 +963,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         try {
           this.dispatchError(e)
         } catch (nestedError: any) {
-          this._logger.warn(`Cannot dispatch error event: ${nestedError.stack || nestedError}`)
+          this.log.warn(`Cannot dispatch error event: ${nestedError.stack || nestedError}`)
         }
       }
 
@@ -922,7 +1032,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
     const isSilent = typeof options === "boolean" ? options : false
     const isForceRunAfter = legacyIsForceRunAfter === true
-    this._logger.warn(
+    this.log.warn(
       `quitAndInstall(isSilent, isForceRunAfter) was replaced by quitAndInstall({ isSilent, isForceRunAfter }) in electron-updater 7 (electron-builder v27). ` +
         `Interpreting the positional arguments as { isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter} }. ` +
         `This compatibility shim is removed in v28. ` +
@@ -1017,20 +1127,20 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       if (UUID.check(id)) {
         return id
       } else {
-        this._logger.warn(`Staging user id file exists, but content was invalid: ${id}`)
+        this.log.warn(`Staging user id file exists, but content was invalid: ${id}`)
       }
     } catch (e: any) {
       if (e.code !== "ENOENT") {
-        this._logger.warn(`Couldn't read staging user ID, creating a blank one: ${e}`)
+        this.log.warn(`Couldn't read staging user ID, creating a blank one: ${e}`)
       }
     }
 
     const id = UUID.v5(randomBytes(4096), UUID.OID)
-    this._logger.info(`Generated new staging user ID: ${id}`)
+    this.log.info(`Generated new staging user ID: ${id}`)
     try {
       await fsExtra.outputFile(file, id)
     } catch (e: any) {
-      this._logger.warn(`Couldn't write out staging user ID: ${e}`)
+      this.log.warn(`Couldn't write out staging user ID: ${e}`)
     }
     return id
   }
@@ -1062,16 +1172,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     let result = this.downloadedUpdateHelper
     if (result == null) {
       const dirName = (await this.configOnDisk.value).updaterCacheDirName
-      const logger = this._logger
       if (dirName == null) {
-        logger.error("updaterCacheDirName is not specified in app-update.yml Was app build using at least electron-builder 20.34.0?")
+        this.log.error("updaterCacheDirName is not specified in app-update.yml Was app build using at least electron-builder 20.34.0?")
       }
       const cacheDir = path.join(this.app.baseCachePath, dirName || this.app.name)
-      if (logger.debug != null) {
-        logger.debug(`updater cache dir: ${cacheDir}`)
-      }
+      this.log.debug(`updater cache dir: ${cacheDir}`)
 
-      result = new DownloadedUpdateHelper(cacheDir)
+      result = new DownloadedUpdateHelper(cacheDir, this.log)
       this.downloadedUpdateHelper = result
     }
     return result
@@ -1080,7 +1187,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   protected async executeDownload(taskOptions: DownloadExecutorTask): Promise<DownloadExecutorResult> {
     const fileInfo = taskOptions.fileInfo
     if (fileInfo.info.sha512 == null && (fileInfo.info as any).sha2 != null) {
-      this._logger.warn(
+      this.log.warn(
         "Update artifact is validated with a SHA-256 (sha2) checksum only. SHA-256 update checksums are deprecated; electron-builder v28 will require SHA-512 and reject SHA-256-only update metadata (fail-closed). Regenerate latest*.yml with a current electron-builder and avoid pinning electronUpdaterCompatibility to a legacy (<2.15 / 1.x) range."
       )
     }
@@ -1104,30 +1211,31 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     await fsExtra.mkdir(cacheDir, { recursive: true })
     const updateFileName = getCacheUpdateFileName(taskOptions.fileInfo, taskOptions.fileExtension)
     let updateFile = path.join(cacheDir, updateFileName)
-    const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}${path.extname(packageInfo.path) || ".7z"}`)
+    let packageFile = packageInfo == null ? null : path.join(cacheDir, getCachePackageFileName(version, packageInfo.path))
 
     const pendingBlockMapFile = path.join(cacheDir, "current.blockmap")
     const cachedBlockMapFile = path.join(downloadedUpdateHelper.cacheDir, "current.blockmap")
     const done = async (isSaveCache: boolean) => {
       await downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo, updateFileName, isSaveCache)
-      await taskOptions.done!({
-        ...updateInfo,
-        downloadedFile: updateFile,
-        ...(packageFile == null ? {} : { packageFile }),
-      })
+      // before `taskOptions.done`: it emits `update-downloaded`, and an app that calls quitAndInstall() from that listener exits
+      // before anything after it runs, which would leave the next update without the blockmap of the installed version
       if (await fsExtra.pathExists(pendingBlockMapFile)) {
         await fsExtra.copyFile(pendingBlockMapFile, cachedBlockMapFile)
       } else if (!taskOptions.downloadUpdateOptions.disableDifferentialDownload) {
-        // this download did not produce a blockmap, but `taskOptions.done` above refreshes the cached installer —
+        // this download did not produce a blockmap, but `taskOptions.done` below refreshes the cached installer —
         // remove the cached blockmap too, so a stale one cannot sit next to a fresh file and poison the next
         // differential download with a wrong copy plan (https://github.com/electron-userland/electron-builder/issues/10097).
         // The differential downloader re-fetches the old blockmap from the server when no cached one exists.
         await fsExtra.remove(cachedBlockMapFile)
       }
-      return withLegacyArrayCompat(packageFile == null ? { updateFile } : { updateFile, packageFile }, this._logger)
+      await taskOptions.done!({
+        ...updateInfo,
+        downloadedFile: updateFile,
+        ...(packageFile == null ? {} : { packageFile }),
+      })
+      return withLegacyArrayCompat(packageFile == null ? { updateFile } : { updateFile, packageFile }, this.log)
     }
 
-    const log = this._logger
     const cancellationToken = taskOptions.downloadUpdateOptions.cancellationToken
 
     const removeFileIfAny = async () => {
@@ -1156,9 +1264,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       }
     }
 
-    const cachedUpdateFile = await downloadedUpdateHelper.validateDownloadedPath(updateFile, updateInfo, fileInfo, log)
+    const cachedUpdateFile = await downloadedUpdateHelper.validateDownloadedPath(updateFile, updateInfo, fileInfo)
     if (cachedUpdateFile != null) {
       updateFile = cachedUpdateFile
+      // the package validated together with the cached installer, under the name it was saved with
+      packageFile = downloadedUpdateHelper.packageFile
       // an update downloaded by an earlier session is about to be announced as ready to install without being
       // downloaded again, so the custom verifier has to gate it here too — its only other gate is the sha512 taken
       // from the very update metadata a custom verifier exists to distrust
@@ -1176,7 +1286,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     // cache next to a file it does not describe
     await fsExtra.remove(pendingBlockMapFile)
 
-    const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, log)
+    const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, this.log)
     try {
       await taskOptions.task(tempUpdateFile, downloadOptions, packageFile, removeFileIfAny)
       // checked before verifying as well as after: verification can be arbitrarily expensive (hashing a large
@@ -1198,7 +1308,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
           if (error instanceof Error && /^EBUSY:/.test(error.message)) {
             return true
           }
-          log.warn(`Cannot rename temp file to final file: ${error.message || error.stack}`)
+          this.log.warn(`Cannot rename temp file to final file: ${error.message || error.stack}`)
           return false
         },
       })
@@ -1206,19 +1316,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       await removeFileIfAny()
 
       if (e instanceof CancellationError) {
-        log.info("cancelled")
+        this.log.info("cancelled")
         this.emit("update-cancelled", updateInfo)
       } else if (e.code === "ERR_CHECKSUM_MISMATCH") {
         // a differential-download failure never escapes the task (it falls back to a full download),
         // so a checksum mismatch here means the fully downloaded file itself failed verification
-        log.warn(
+        this.log.warn(
           `sha512 checksum mismatch after full download of ${updateFileName}: the downloaded file is corrupted or the published update metadata does not match the uploaded file`
         )
       }
       throw e
     }
 
-    log.info(`New version ${version} has been downloaded to ${updateFile}`)
+    this.log.info(`New version ${version} has been downloaded to ${updateFile}`)
     return await done(true)
   }
   /**
@@ -1228,7 +1338,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   protected logDifferentialDownloadFallback(error: unknown): void {
     try {
-      this._logger.error(`Cannot download differentially, fallback to full download: ${error instanceof Error ? error.stack || String(error) : String(error)}`)
+      this.log.error(`Cannot download differentially, fallback to full download: ${error instanceof Error ? error.stack || String(error) : String(error)}`)
     } catch (_ignored) {
       // a throwing logger must not stop the fallback
     }
@@ -1259,9 +1369,15 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         newBlockMapUrl = fileInfo.blockMapUrl
         oldBlockMapUrl = override ? (await getBlockMapFiles())[0] : null
       }
-      this._logger.info(`Download block maps (old: "${oldBlockMapUrl ?? "cache only"}", new: ${newBlockMapUrl})`)
+      this.log.info(`Download block maps (old: "${oldBlockMapUrl ?? "cache only"}", new: ${newBlockMapUrl})`)
 
-      const downloadBlockMap = async (url: URL, originUrl?: URL): Promise<BlockMap> => {
+      // a v2 map may inflate to, and a v3 map may be, at most this many bytes; the old map is held to the new file's limit too: it has
+      // ample headroom for a release of a different size
+      const blockMapLimit = blockMapSizeLimit(fileInfo.info.size)
+      // a v3 map of the update is rejected before its records are decoded when it describes a file of another size; an old map is held
+      // to the size limit and then matched to the cached installer by isBlockMapOfFile
+      const newFileSize = fileInfo.info.size ?? null
+      const downloadBlockMap = async (url: URL, expectedFileSize: number | null, originUrl?: URL): Promise<LoadedBlockMap> => {
         const data = await this.httpExecutor.downloadToBuffer(url, {
           headers: this.downloadRequestHeaders(url, downloadUpdateOptions, originUrl),
           cancellationToken: downloadUpdateOptions.cancellationToken,
@@ -1270,18 +1386,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         if (data == null || data.length === 0) {
           throw new Error(`Blockmap "${url.href}" is empty`)
         }
-
-        try {
-          return JSON.parse(gunzipSync(data).toString())
-        } catch (e: any) {
-          throw new Error(`Cannot parse blockmap "${url.href}", error: ${e}`)
-        }
+        return parseBlockMapData(data, url.href, blockMapLimit, expectedFileSize)
       }
 
       const downloadOptions: DifferentialDownloaderOptions = {
         newUrl: fileInfo.url,
         oldFile: path.join(this.downloadedUpdateHelper!.cacheDir, oldInstallerFileName),
-        logger: this._logger,
+        logger: this.log,
         newFile: installerPath,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
         requestHeaders: this.downloadRequestHeaders(fileInfo.url, downloadUpdateOptions),
@@ -1292,70 +1403,162 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         downloadOptions.onProgress = it => this.emitDownloadProgress(it)
       }
 
-      const saveBlockMapToCacheDir = async (blockMapData: BlockMap, cacheDir: string) => {
-        const blockMapFile = path.join(cacheDir, "current.blockmap")
-        await fsExtra.outputFile(blockMapFile, gzipSync(JSON.stringify(blockMapData)))
+      // the cached file is the block map as published (gzipped JSON for v2, the binary map for v3); its first bytes tell them apart
+      const saveBlockMapToCacheDir = async (blockMap: LoadedBlockMap, cacheDir: string) => {
+        await fsExtra.outputFile(path.join(cacheDir, "current.blockmap"), blockMap.data)
       }
 
-      const getBlockMapFromCacheDir = async (cacheDir: string) => {
+      const getBlockMapFromCacheDir = async (cacheDir: string): Promise<LoadedBlockMap | null> => {
         const blockMapFile = path.join(cacheDir, "current.blockmap")
         try {
           if (await fsExtra.pathExists(blockMapFile)) {
-            return JSON.parse(gunzipSync(await fsExtra.readFile(blockMapFile)).toString())
+            return parseBlockMapData(await fsExtra.readFile(blockMapFile), blockMapFile, blockMapLimit, null)
           }
         } catch (e: any) {
-          this._logger.warn(`Cannot parse blockmap "${blockMapFile}", error: ${e}`)
+          this.log.warn(`Cannot parse blockmap "${blockMapFile}", error: ${e}`)
         }
         return null
       }
 
-      const newBlockMapData = await downloadBlockMap(newBlockMapUrl)
-      await saveBlockMapToCacheDir(newBlockMapData, this.downloadedUpdateHelper!.cacheDirForPendingUpdate)
-
-      // get old blockmap from cache dir first, if not found, download it
+      // the cached old block map is read first (no request): when it is a v3 map, only the parts of the new map that changed are
+      // fetched (Range requests), else the new map is downloaded in full
       let oldBlockMapData = await getBlockMapFromCacheDir(this.downloadedUpdateHelper!.cacheDir)
-      if (oldBlockMapData != null && !(await isBlockMapOfFile(oldBlockMapData, downloadOptions.oldFile))) {
+      if (oldBlockMapData != null && !(await isBlockMapOfFile(oldBlockMapData.map, downloadOptions.oldFile))) {
         // The cached blockmap is replaced when a download finishes, but NSIS replaces the cached installer only when the update is
         // installed. A release that arrives before the previous one is installed therefore finds the pending release's blockmap next
         // to the running release's installer; planning against it downloads every differential byte and then fails the sha512 check.
         // expected, and fixed by the steps below: the installed version's blockmap is fetched, or (blockMapUrl set, no override) the update is downloaded in full
-        this._logger.info(`Cached blockmap does not describe the cached "${oldInstallerFileName}" (malformed, or its blocks do not end at the file size): ignoring it`)
+        this.log.info(`Cached blockmap does not describe the cached "${oldInstallerFileName}" (malformed, or its blocks do not end at the file size): ignoring it`)
         oldBlockMapData = null
       }
       isOldBlockMapFromCache = oldBlockMapData != null
+      let newBlockMapData: LoadedBlockMap | null = null
+      if (oldBlockMapData?.format === "v3") {
+        try {
+          const fetched = await fetchBlockMapV3({
+            url: newBlockMapUrl,
+            oldMap: oldBlockMapData.data,
+            expectedFileSize: fileInfo.info.size,
+            maxBlockMapSize: blockMapLimit,
+            httpExecutor: this.httpExecutor,
+            requestHeaders: this.downloadRequestHeaders(newBlockMapUrl, downloadUpdateOptions),
+            cancellationToken: downloadUpdateOptions.cancellationToken,
+            isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
+            logger: this.log,
+          })
+          newBlockMapData = parseBlockMapData(fetched.buffer, newBlockMapUrl.href, blockMapLimit, newFileSize)
+        } catch (e: unknown) {
+          // a host or CDN that mishandles Range requests, or a map that fails verification: a plain GET of the new map still
+          // allows a differential update
+          throwIfCancelled(e, downloadUpdateOptions.cancellationToken)
+          this.log.warn(`Cannot fetch the changed parts of the block map "${newBlockMapUrl.href}", downloading it whole: ${e instanceof Error ? e.message : String(e)}`)
+        }
+      }
+      newBlockMapData ??= await downloadBlockMap(newBlockMapUrl, newFileSize)
+      await saveBlockMapToCacheDir(newBlockMapData, this.downloadedUpdateHelper!.cacheDirForPendingUpdate)
+
       if (oldBlockMapData == null) {
         if (oldBlockMapUrl == null) {
           // the full download caches the new blockmap downloaded above, so the next update can be differential
-          this._logger.info(
+          this.log.info(
             "No cached blockmap for the old installer, and the update manifest sets blockMapUrl, so the old blockmap URL cannot be derived " +
               "(set previousBlockmapBaseUrlOverride to download it): downloading the full update"
           )
           return true
         }
-        this._logger.info(`No cached blockmap for the old installer, downloading it from "${oldBlockMapUrl}"`)
+        if (oldBlockMapUrl.href === newBlockMapUrl.href) {
+          // The old URL is the new one with the new version replaced by the installed one: an artifact name without the version (e.g.
+          // "${productName} Setup.${ext}") gives both releases the same URL, which serves the new blockmap. Planned against it, the
+          // download copies the installed installer unchanged and fails the sha512 check. The new blockmap downloaded above is cached
+          // with the update, so the next update can be differential.
+          this.log.info(
+            `No cached blockmap for the old installer, and the URL of the installed version's blockmap is the update's own ("${newBlockMapUrl}") because the ` +
+              "artifact name has no version: downloading the full update (add ${version} to the artifact name, or set previousBlockmapBaseUrlOverride, " +
+              "to make the first update after an install differential)"
+          )
+          return true
+        }
+        this.log.info(`No cached blockmap for the old installer, downloading it from "${oldBlockMapUrl}"`)
         // the old blockmap comes from previousBlockmapBaseUrlOverride when the app sets it, so that origin gets the credentials
-        oldBlockMapData = await downloadBlockMap(oldBlockMapUrl, override ? new URL(override) : undefined)
+        oldBlockMapData = await downloadBlockMap(oldBlockMapUrl, null, override ? new URL(override) : undefined)
+        if (!(await isBlockMapOfFile(oldBlockMapData.map, downloadOptions.oldFile))) {
+          // e.g. a server that serves another release's blockmap under the derived name: planned against it, the download fails the sha512 check
+          this.log.info(
+            `The blockmap downloaded from "${oldBlockMapUrl}" does not describe the cached "${oldInstallerFileName}" (malformed, or its blocks do not end at the file size): downloading the full update`
+          )
+          return true
+        }
       }
 
-      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)
+      let oldBlockMap = oldBlockMapData.map
+      let newBlockMap = newBlockMapData.map
+      if (oldBlockMapData.format !== newBlockMapData.format) {
+        // e.g. the first release built with a newer `blockmap` format (the new map is cached above, so the next update compares
+        // maps of one format again): a v2 map carries the v3 block hashes, so the v2 side is compared by those
+        try {
+          if (oldBlockMapData.format === "v2") {
+            oldBlockMap = blockMapV2ToV3Keys(oldBlockMap)
+          } else {
+            newBlockMap = blockMapV2ToV3Keys(newBlockMap)
+          }
+        } catch (e: unknown) {
+          throw newError(
+            `Block map format changed (old: ${oldBlockMapData.format}, new: ${newBlockMapData.format}) and the ${
+              oldBlockMapData.format === "v2" ? "old" : "new"
+            } v2 map cannot be compared with a v3 map (${e instanceof Error ? e.message : String(e)})`,
+            "ERR_UPDATER_BLOCKMAP_FORMAT_CHANGED"
+          )
+        }
+        this.log.info(`Block map format changed (old: ${oldBlockMapData.format}, new: ${newBlockMapData.format}): comparing the blocks by the v3 block hashes both maps carry`)
+      }
+
+      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMap, newBlockMap)
       return false
     } catch (e: any) {
       // a user cancellation is not a differential failure: no fallback to a full download
       throwIfCancelled(e, downloadUpdateOptions.cancellationToken)
       if (e?.code === "ERR_CHECKSUM_MISMATCH") {
-        nonThrowingLogger(this._logger).warn(
+        this.log.warn(
           `sha512 checksum mismatch after differential download (old blockmap ${
             isOldBlockMapFromCache ? "was read from the local cache" : "was downloaded from the server"
           }): cached "${oldInstallerFileName}" is likely out of sync with the old blockmap, e.g. because one of them was replaced or evicted independently of the other`
         )
       }
-      this.logDifferentialDownloadFallback(e)
+      if (e?.code === "ERR_UPDATER_BLOCKMAP_FORMAT_CHANGED") {
+        // a v2 map that cannot be compared with a v3 one, once, for the first update after the format changed: not a failure
+        this.log.info(`${e.message}: downloading this update in full; the next one is differential again`)
+      } else {
+        this.logDifferentialDownloadFallback(e)
+      }
       if (this._testOnlyOptions != null) {
         // test mode
         throw e
       }
       return true
     }
+  }
+}
+
+/** A block map file as published (`data`) and decoded (`map`): `v2` is gzipped JSON, `v3` the binary range-fetchable map. */
+interface LoadedBlockMap {
+  readonly format: "v2" | "v3"
+  readonly data: Buffer
+  readonly map: BlockMap
+}
+
+/**
+ * Decodes a block map file in either format; the v3 map starts with its magic, anything else is read as gzipped JSON (v2), which
+ * may inflate to at most `maxSize` bytes (see `blockMapSizeLimit`). A v3 map is checked (at most `maxSize` bytes, its exact length,
+ * and that it describes a file of `expectedFileSize` bytes when given) before its records are decoded.
+ */
+function parseBlockMapData(data: Buffer, source: string, maxSize: number, expectedFileSize: number | null): LoadedBlockMap {
+  try {
+    if (isBlockMapV3(data)) {
+      return { format: "v3", data, map: toBlockMap(decodeBlockMapV3(data, expectedFileSize, maxSize)) }
+    }
+    return { format: "v2", data, map: JSON.parse(gunzipSync(data, { maxOutputLength: maxSize }).toString()) }
+  } catch (e: any) {
+    throw new Error(`Cannot parse blockmap "${source}", error: ${e}`)
   }
 }
 
@@ -1417,6 +1620,20 @@ export function getCacheUpdateFileName(fileInfo: ResolvedUpdateFileInfo, fileExt
   return fileName
 }
 
+/** @internal */
+export function getCachePackageFileName(version: string, packageUrl: string): string {
+  // the extension is taken from the URL path only: a query (an auth token, a pre-signed URL, Keygen's `?product=`) must not reach the
+  // file name, and characters such as `?` and `:` are not allowed in a Windows file name
+  let pathname: string
+  try {
+    pathname = new URL(packageUrl).pathname
+  } catch {
+    pathname = packageUrl
+  }
+  const extension = path.posix.extname(pathname)
+  return `package-${version}${/^\.[a-z0-9]{1,8}$/i.test(extension) ? extension : ".7z"}`
+}
+
 export interface DownloadUpdateOptions {
   readonly updateInfoAndProvider: UpdateInfoAndProvider
   readonly requestHeaders: OutgoingHttpHeaders
@@ -1431,7 +1648,7 @@ function hasPrereleaseComponents(version: SemVer) {
 }
 
 /** @private */
-export class NoOpLogger implements Logger {
+export class NoOpLogger implements NonThrowableLogger {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   info(message?: any) {
     // ignore
@@ -1444,6 +1661,11 @@ export class NoOpLogger implements Logger {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   error(message?: any) {
+    // ignore
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  debug(message?: any) {
     // ignore
   }
 }

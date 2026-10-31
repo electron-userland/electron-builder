@@ -57,7 +57,7 @@ export class ArchiveTarget extends Target {
           dirToArchive: appOutDir,
           isMacApp: isMac,
           tempDirManager: packager.tempDirManager,
-          linuxToolsMac: packager.config.toolsets?.linuxToolsMac,
+          archiveToolset: packager.config.toolsets?.archive,
           buildResourcesDir: packager.buildResourcesDir,
         })
       } else {

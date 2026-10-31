@@ -21,6 +21,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [Implicit `--publish` removed](#implicit-publish-removed) | Warns | Pass `--publish` explicitly |
 | [`--em.build` / `--em.directories` CLI flags removed](#removed-flags-embuild-emdirectories) | Fails build | Use `-c` / `-c.directories` |
 | [Toolset defaults resolve to `"latest"`](#toolset-defaults-resolve-to-latest-newest-bundle) | Info log | No action; pin to `"0.0.0"` to restore a legacy bundle. **Wine is now the host install** — building Windows targets on macOS needs Wine installed |
+| [RPM builds use a bundled `rpmbuild`](#rpm-builds-use-a-bundled-rpmbuild) | None | Intel macOS and 32-bit Linux still need `rpmbuild` installed |
 | [Azure Trusted Signing `/dlib` is the default](#azure-trusted-signing-signtool-dlib-is-the-default) | Info log | Pin `winCodeSign` below `1.3.0` only to force the legacy PowerShell path |
 | [Toolset env-var overrides removed](#toolset-env-var-overrides-removed) | Fails build | Replace `APPIMAGE_TOOLS_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, `USE_SYSTEM_WINE`, … with `toolsets.X: { url, checksum }` — setting a removed variable now **fails the build** |
 | [`CI_BUILD_TAG` env var removed](#ci_build_tag-environment-variable) | Warns, then fails | Use `CI_COMMIT_TAG` |
@@ -37,11 +38,13 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [Windows `publisherName` must be a distinguished name](#windows-publishername-must-be-a-distinguished-name) | Fails build, advisory | Set every `win.sign.publisherName` entry to a distinguished name (e.g. `"CN=My Company, O=My Company, C=US"`) — a bare name now **fails the build**, and electron-updater 7 never matches it. Without `publisherName`, the build now writes `CN=<common name>` of the certificate (a DN) instead of the bare Common Name |
 | [A missing Windows `publisherName` fails update verification](#missing-publishername-fails-update-verification) | Fails build, advisory | A Windows build that writes `app-update.yml` without a `publisherName` (`win.sign: false` / `null`, no certificate, `publisherName: null`) now **fails the build**, and electron-updater 7 rejects updates whose `app-update.yml` has none. Sign the build, set `win.sign.publisherName`, or set `win.verifyUpdateCodeSignature: false` (the only opt-out) |
 | [`forceCodeSigning` covers notarization and update manifests](#forcecodesigning-covers-notarization-and-update-manifests) | Fails build (with `forceCodeSigning`) | Provide notarization credentials and the update-manifest signing key wherever `forceCodeSigning` is set, or opt out explicitly (`mac.notarize: false`, `updateManifest: false`); pass `-c.forceCodeSigning=false` to pull-request and local builds that cannot sign |
+| [`mac.notarize: true` requires notarization credentials](#mac-notarize-true-requires-credentials) | Fails build (with `notarize: true`) | Only if you set `mac.notarize: true`: set the notarization credentials, or leave `notarize` unset to notarize only when they are set |
 | [Signed update manifests are required](#signed-update-manifests-are-required) | Fails when publishing (or with `forceCodeSigning`) | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY` to the base64-encoded PEM file, or set `updateManifest: false` to keep publishing unsigned manifests |
 | [Signing key must be in `updateManifest.publicKey`](#signing-key-must-be-in-updatemanifestpublickey) | Fails when publishing | Only if you set `updateManifest.publicKey`: list a key the build signs with, or set `updateManifest.allowSigningKeyOutsideTrustList: true` for a deliberate cutover release |
 | [`app-update.yml` feed follows the update-writing targets](#app-updateyml-feed-follows-the-update-writing-targets) | Silent (conflicts fail) | Only with target-level `publish` (e.g. `nsis.publish`), targets of one app with different feeds, or a first provider with `publishAutoUpdate: false`: check which feed installs will poll |
 | [Suffixed channels expand to lower channels](#suffixed-update-channels-now-expand-to-lower-channels) | Warns | Only with `generateUpdatesFilesForAllChannels`: a `beta-*`/`latest-*` channel now writes 2–3 yml files instead of 1 |
 | [`latest*.yml` drops legacy top-level `path`/`sha512`](#latestyml-drops-legacy-top-level-pathsha512) | Silent | None for electron-updater >=2.16 (all modern clients); set `electronUpdaterCompatibility` to a legacy-inclusive range only if you still ship apps embedding electron-updater 1.x–2.15 |
+| [Block map format follows `electronUpdaterCompatibility` (default `>=7`)](#block-map-format-follows-electronupdatercompatibility) | Fails build / warns | Apps on electron-updater 6 fail the build: upgrade electron-updater to 7, or set `electronUpdaterCompatibility` to a range that includes them (e.g. `">=6"`), which keeps the JSON `.blockmap` and warns. Installs still on electron-updater 6 download the first release with a binary map in full once |
 | [S3 publishing requires an explicit `awsCredentials.source`](#s3-publishing-requires-an-explicit-awscredentialssource) | Fails at publish | Add `awsCredentials: { source: "env" }` (for `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`), `{ source: "profile", profile: "<name>" }` (for `AWS_PROFILE` / `~/.aws` / SSO) or `{ source: "sso-role-chain", profile: "<name>" }` (for a role assumed from an SSO `source_profile`) |
 | [Bitbucket Cloud publishing: token without username → Bearer auth](#bitbucket-cloud-publishing-token-without-username-uses-bearer-auth) | Warns at publish | Set `BITBUCKET_USERNAME` if your token is an app password / API token |
 | [Flatpak target requires `flatpak` >= 1.12.4 and `flatpak-builder` >= 1.2.2](#flatpak-tooling-requirements) | Fails build | Only for tools older than the stock packages of Ubuntu 22.04 and Debian 12: update them (the `electronuserland/builder` images with a date tag newer than `-05.26` include them, those up to `-05.26` none); replace `DEBUG=@malept/flatpak-bundler` with `DEBUG=electron-builder` |
@@ -99,37 +102,46 @@ These flags are removed (they have thrown since v22).
 
 ### Toolset defaults resolve to `"latest"` (newest bundle) {#toolset-defaults-resolve-to-latest-newest-bundle}
 
-**How you'll find out:** **Info log only.** The build logs which toolset version it uses, with a link here, but not that the default changed. Without Wine installed, a macOS build that needs it fails with a bare `spawn wine ENOENT`.
+**How you'll find out:** **Info log only.** The build logs which toolset version it uses, with a link here, but not that the default changed. Without Wine installed, a macOS build that needs it fails with a bare `spawn wine ENOENT`. An `msiProjectCreated` hook that adds a WiX 4 namespace fails the MSI build with an error that links here.
 
 In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset property or the literal `"latest"` resolves to the **newest published bundle** for that toolset. (Earlier v27 prereleases pinned a fixed default per toolset; those fixed defaults are gone.) (In v26 an unset or `null` toolset resolved to the legacy `"0.0.0"` bundle, so pin `"0.0.0"` if you need to stay on it.) A `null` value and the retired `appimage: "1.0.2"` pin are config changes: see [`toolsets.*: null` rejected](./v27-config-changes.md#toolsets-null-rejected).
 
 | Toolset | v26 default | v27 `"latest"` resolves to | What the upgrade entails |
 |---------|-------------|----------------------------|--------------------------|
 | `wine` | `0.0.0` (Wine 4.0.1, macOS only) | `system` | Host-installed Wine, on macOS and Linux, started by absolute path from its install locations or [`toolsets.executables.wine`](../toolsets.md#executables), never from `PATH`. **Requires a host Wine on macOS** — see the note below. The `"1.0.1"` Wine 11.0 bundle still downloads when pinned, but ships no PE builtins and cannot run Windows tools on its own |
-| `winCodeSign` | `0.0.0` (winCodeSign 2.6.0) | `1.3.1` | Windows Kits 10.0.26100.0; `osslsigncode` 2.11 + native arm64; bundles the Azure Trusted Signing `dlib` + .NET 8 runtime |
-| `appimage` | `0.0.0` (FUSE2 runtime) | `1.1.0` | Static FUSE3-compatible runtime (runs without a host FUSE install); adds `unsquashfs` support |
-| `nsis` | `0.0.0` (NSIS 3.0.4.1, split bundle) | `1.2.1` | NSIS 3.12; unified single-archive bundle; entrypoint scripts auto-set `NSISDIR` |
-| `fpm` | `2.2.1` | `2.2.1` | Unchanged — FPM 1.17.0 / Ruby 3.4.3 |
+| `winCodeSign` | `0.0.0` (winCodeSign 2.6.0) | `1.3.3` | Windows Kits 10.0.26100.0; `osslsigncode` 2.14 + native arm64; bundles the Azure Trusted Signing `dlib` + .NET 8 runtime |
+| `appimage` | `0.0.0` (FUSE2 runtime) | `1.2.1` | Static FUSE3-compatible runtime (runs without a host FUSE install); adds `unsquashfs` support; statically linked zstd, so Linux and macOS hosts build identical images |
+| `nsis` | `0.0.0` (NSIS 3.0.4.1, split bundle) | `2.0.4` | NSIS 3.13 compiled from source; unified single-archive bundle; entrypoint scripts auto-set `NSISDIR`; a second, log-enabled bundle is picked when `installerDebugLogging` is on |
+| `fpm` | `2.2.1` | `2.3.1` | FPM 1.18.0 / Ruby 3.4.12; Linux bundles link a static OpenSSL 3.5.9 instead of OpenSSL 1.1.1 (same glibc 2.28 floor) |
 | `icons` | `1.1.0` | `1.2.3` | Newer bundle — `wasm-vips` + `@resvg/resvg-wasm`; 16/32 px ICNS entries written as ARGB |
-| `linuxToolsMac` | `1.0.0` | `1.0.1` | Same tools rebuilt to run on macOS 15+ (1.0.0 required macOS 26) |
-| `sevenZip` | `1.0.0` | `1.0.1` | Correct per-arch Windows `7za.exe` (x64, ia32, arm64) |
-| `squirrel` | *(electron-winstaller npm package)* | `1.1.1` | New toolset — Squirrel.Windows vendor bundle, replaces the `electron-winstaller` dependency |
+| `archive` | *(host tools; `linuxToolsMac` on macOS)* | `1.0.0` | New toolset replacing `linuxToolsMac` — `xz`, `lzip`, GNU `tar`/`ar`, `bsdtar` and `rpmbuild` (rpm 6.1.0). See [RPM builds use a bundled `rpmbuild`](#rpm-builds-use-a-bundled-rpmbuild) |
+| `sevenZip` | `1.0.0` | `1.1.0` | 7-Zip 26.05 |
+| `squirrel` | *(electron-winstaller npm package)* | `1.2.1` | New toolset — Squirrel.Windows vendor bundle, replaces the `electron-winstaller` dependency; pinned, checksum-verified 7-Zip 26.05 (native arm64 on arm64 Windows hosts) and `nuget.exe` 7.9.0 |
+| `wix` | *(fixed, WiX 4.0.0.5512 preview)* — now `0.0.0` | `2.0.0` | WiX 3.14.1: an `arm64` build gets a native `Arm64` MSI (the preview packaged the arm64 app in an x64 MSI). The generated `.wxs` uses the WiX 3 schema, so an `msiProjectCreated` hook that inserts WiX 4-namespace elements needs the WiX 3 namespace (e.g. `http://schemas.microsoft.com/wix/UtilExtension`) or `wix: "0.0.0"`; the build fails with an error naming the namespace otherwise |
 
-**No action required** for most projects — the new bundles are drop-in replacements and produce identical output. **`wine` is the exception:** its default is no longer a bundle at all, so a macOS host that builds Windows targets now needs Wine installed (`brew install --cask wine-stable`). If you hit a regression introduced by a newer bundle, pin back by setting the toolset version to `"0.0.0"`:
+**No action required** for most projects — the new bundles are drop-in replacements and produce identical output. For `wix`, the x64 and ia32 MSIs keep the upgrade code, install paths and file layout, but are built from a WiX 3 project; an `arm64` MSI is now an `Arm64` package, and `msiProjectCreated` hooks that edit the project can notice the schema. **`wine` is the exception:** its default is no longer a bundle at all, so a macOS host that builds Windows targets now needs Wine installed (`brew install --cask wine-stable`). If you hit a regression introduced by a newer bundle, pin back by setting the toolset version to `"0.0.0"`:
 
 ```json5
-{ "build": { "toolsets": { "winCodeSign": "0.0.0", "nsis": "0.0.0", "appimage": "0.0.0", "wine": "0.0.0" } } }
+{ "build": { "toolsets": { "winCodeSign": "0.0.0", "nsis": "0.0.0", "appimage": "0.0.0", "wine": "0.0.0", "wix": "0.0.0" } } }
 ```
 
-This escape hatch is intended as a short-term workaround. The `"0.0.0"` alias may be removed in a future major release.
+This escape hatch is intended as a short-term workaround. Like any toolset version, the `"0.0.0"` alias can be removed in any release, including a minor or patch release (see [Toolsets](../toolsets.md)).
 
 Legacy-base snap template builds (`core18`/`core20`/`core22` with `useTemplateApp`) now pack with the `mksquashfs` from `toolsets.appimage` instead of always using the legacy `"0.0.0"` bundle, so an `appimage: "0.0.0"` pin applies to them too — and its `mksquashfs` supports only `gzip`/`xz`, so snap `compression: "lzo"` (or `linux.compression: "store"`) needs a newer toolset.
+
+### RPM builds use a bundled `rpmbuild` {#rpm-builds-use-a-bundled-rpmbuild}
+
+**How you'll find out:** No message. The `.rpm` no longer reflects the host rpm's version or macros.
+
+In v26, fpm ran whatever `rpmbuild`, `xz`, `tar` and `ar` were on the build machine's `PATH`, and on macOS the `linuxToolsMac` bundle. v27 replaces `linuxToolsMac` with the [`toolsets.archive`](../toolsets.md) toolset, whose `bin/` (`xz`, `lzip`, GNU `tar`/`gtar`, GNU `ar`/`gar`, `bsdtar`, and `rpm`/`rpmbuild` from rpm 6.1.0) goes first on fpm's `PATH` on macOS and Linux. Its `rpmbuild` ignores host and user rpm configuration (`/etc/rpm`, `~/.rpmmacros`) and pins the v4 package format and `_build_id_links none`, so building on Linux, on macOS or in Docker gives the same package. Pass a macro explicitly with `rpm.fpm: ["--rpm-rpmbuild-define=<name> <value>"]`.
+
+The bundle needs glibc 2.28 or newer on Linux x64 and arm64, glibc 2.17 or newer on Linux ia32, and macOS 15 or newer, and does not run on musl (e.g. Alpine); on older or musl hosts, set `toolsets.archive: "system"`. The bundled `rpmbuild` ships for Linux x64 and arm64 and macOS arm64. On **Intel macOS** and **32-bit Linux**, the toolset has no `rpmbuild`, so building `rpm` uses the host `rpmbuild` on `PATH`: install it (`brew install rpm`, `apt-get install rpm`).
 
 ### Azure Trusted Signing `signtool /dlib` is the default {#azure-trusted-signing-signtool-dlib-is-the-default}
 
 **How you'll find out:** **Info log only.** Each signed file logs which signing path was used. Falling back to the legacy PowerShell path logs a line that links here.
 
-Azure Trusted Signing (`win.sign: { type: "azure" }`) uses the faster `signtool /dlib` path automatically: the default `winCodeSign` (`"latest"` → `1.3.1`) ships the ATS `dlib` + .NET 8 payload, so no pin is required. To **force the legacy** PowerShell `Invoke-TrustedSigning` path instead (which requires the `TrustedSigning` PS module in the signing environment), pin `winCodeSign` below `1.3.0`:
+Azure Trusted Signing (`win.sign: { type: "azure" }`) uses the faster `signtool /dlib` path automatically: the default `winCodeSign` (`"latest"` → `1.3.3`) ships the ATS `dlib` + .NET 8 payload, so no pin is required. To **force the legacy** PowerShell `Invoke-TrustedSigning` path instead (which requires the `TrustedSigning` PS module in the signing environment), pin `winCodeSign` below `1.3.0`:
 
 ```json5
 { "build": { "toolsets": { "winCodeSign": "1.2.1" } } } // or "0.0.0" — forces the legacy PowerShell signing path
@@ -147,7 +159,7 @@ The signer resolves the path from the `winCodeSign` value: unset / `null` / `"la
 |---|---|---|
 | `APPIMAGE_TOOLS_PATH` | AppImage build tools (`mksquashfs`, runtime) | `toolsets.appimage` |
 | `MKSQUASHFS_PATH` | `mksquashfs` for legacy (core18/20/22) snap builds | `toolsets.appimage` |
-| `LINUX_TOOLS_MAC_PATH` | Linux-tools-mac bundle (`ar`, `lzip`, `gtar`) | `toolsets.linuxToolsMac` |
+| `LINUX_TOOLS_MAC_PATH` | Linux-tools-mac bundle (`ar`, `lzip`, `gtar`) | `toolsets.archive` |
 | `CUSTOM_FPM_PATH` | FPM executable | `toolsets.fpm` |
 | `ELECTRON_BUILDER_NSIS_DIR` | NSIS compiler bundle directory | `toolsets.nsis` |
 | `ELECTRON_BUILDER_NSIS_RESOURCES_DIR` | NSIS resources/plugins directory | `toolsets.nsis` |
@@ -409,6 +421,7 @@ In v26, `forceCodeSigning` only failed the build when no code signing identity o
 - **Update manifests must be signed**, also by a build that does not publish — including pull-request builds, and Linux builds, where this is the only effect of `forceCodeSigning`. A missing signing key fails at build start, and so does a signing key outside `updateManifest.publicKey` (unless `allowSigningKeyOutsideTrustList` is set).
 - **Signatures are verified.** Every file a Windows signing step reports as signed is read back and must carry a valid Authenticode signature, so a custom `win.sign.sign` hook that signs another path now fails the build. The output of a custom `mac.sign` signer is checked with `codesign --verify --deep --strict` (and a custom signer without a keychain identity is now called, as in v26, instead of being skipped silently). Signed `pkg` and MAS installers are checked with `pkgutil --check-signature`, and a DMG with `dmg.sign: true` must be signed.
 - **A prepackaged app must already be signed** (and, on macOS, notarized), since electron-builder does not sign it. `win.sign: false` with a prepackaged app now fails too.
+- **Squirrel.Windows `msi: true` fails.** Squirrel.Windows builds that MSI around `Setup.exe` before electron-builder signs it, so the installer inside it is unsigned; use the `msi` target for a signed MSI. Without `forceCodeSigning` it warns.
 
 Explicit opt-outs are honored with a warning: `mac.notarize: false` (for an ad-hoc or development-signed app, or one you notarize yourself, e.g. in an `afterSign` hook), `updateManifest: false`, `win.signExts` exclusions, and a custom `nsis.script` (whose uninstaller electron-builder does not sign). An HSM/KMS signer that signs `latest*.yml` in a later step publishes with `publishAutoUpdate: false` on every provider (see [Key storage](../features/key-rotation.md#key-storage)), or builds without `forceCodeSigning`. Any valid signature counts, including ad-hoc and self-signed ones.
 
@@ -424,6 +437,14 @@ electron-builder --mac -c.mac.forceCodeSigning=false  # when the mac block sets 
 Run [`electron-builder verify`](../cli.md#verify) after a build to check the signatures, notarization and update manifests of its output.
 
 > **Tip:** `electron-builder migrate-schema` prints an advisory when `forceCodeSigning` is set.
+
+### `mac.notarize: true` requires notarization credentials {#mac-notarize-true-requires-credentials}
+
+**How you'll find out:** **Fails the build** (only with `mac.notarize: true`), at build start on a macOS host, with a link here.
+
+`mac.notarize: true` now means that notarization is required: a build without notarization credentials (`APPLE_API_KEY` + `APPLE_API_KEY_ID` + `APPLE_API_ISSUER`, `APPLE_ID` + `APPLE_APP_SPECIFIC_PASSWORD` + `APPLE_TEAM_ID`, or `APPLE_KEYCHAIN_PROFILE`) fails with an `InvalidConfigurationError`, at build start and again when notarizing — wherever notarization would run: on a macOS host, outside a pull-request build, and, for the app, unless the configuration turns its signing off (`mac.sign: null`, `sign.identity: null`, or `CSC_IDENTITY_AUTO_DISCOVERY=false` without an identity or custom signer); a `pkg` installer is notarized whenever it is built. Elsewhere missing credentials only warn. Previously `true` behaved like leaving `notarize` unset, which notarizes when the credentials are set and skips notarization with a warning otherwise; that is still the default.
+
+**Action:** if you set `mac.notarize: true` only because the docs showed it, remove it: notarization still runs whenever the credentials are set. Keep it where a build without notarization must fail, and make sure the credentials are in the environment when the build starts.
 
 ---
 
@@ -458,6 +479,8 @@ ELECTRON_BUILDER_UPDATE_SIGN_KEY="$(base64 < update-private-key.pem | tr -d '\n'
 27.0.0-alpha.9 to alpha.11 read `ELECTRON_BUILDER_UPDATE_SIGN_KEY` as raw PEM text. A raw PEM — or any value that is not the base64 of complete PEM private keys — now fails the build with an `InvalidConfigurationError` that names the variable and gives the encode command without printing the value. Re-encode the secret, or point `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` at the PEM file. A build script that sets the variable from a PEM string can pass `Buffer.from(pem).toString("base64")`, or set `updateManifest.signingKey` instead.
 :::
 
+`electron-builder publish -f` checks every update manifest it is given before it uploads anything: an unsigned manifest is refused, and with `updateManifest.publicKey` set the manifest must be signed by one of those keys (another key is allowed, with a warning, under `allowSigningKeyOutsideTrustList`). Without `publicKey` the signature cannot be checked against a trust list, which warns, and fails under `forceCodeSigning`. Only public keys are used.
+
 **To opt out**, set `updateManifest: false` at the top level or under a platform key. Every build that emits a manifest then logs a warning. `false` also short-circuits the environment variables, so a leftover `ELECTRON_BUILDER_UPDATE_SIGN_KEY` cannot silently re-enable signing. A platform value of `null` is **not** an opt-out — it falls back to the top-level value.
 
 A publishing build whose targets write no update info (for example only snap, flatpak, MSI/MSIX, portable, mas/pkg or plain archives) needs no key. Two more cases need no configuration at all: when every publish provider sets `publishAutoUpdate: false` no manifest is emitted, so the requirement is waived; and a `publicKey` with no private key does **not** satisfy it, since electron-builder still has nothing to sign with (that HSM/KMS workflow either builds without a publish policy, or publishes with `publishAutoUpdate: false` and generates the manifest itself — see [Key storage](../features/key-rotation.md#key-storage)).
@@ -467,6 +490,8 @@ Once a release embeds a public key, its installs are **fail-closed**: an unsigne
 :::
 
 Note that installs already in the field are unaffected but also unprotected: they carry whatever `app-update.yml` they shipped with, so those built before you adopted signing keep accepting unsigned manifests. Full protection begins with the installs built after the public key was embedded.
+
+If you run [staged rollouts](../features/auto-update.md#staged-rollouts) by editing `stagingPercentage` in `latest*.yml`, sign the file again after every change: `stagingPercentage` is covered by the signature, and a manifest edited without signing it again is rejected with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID` by every install that embeds the public key.
 
 See [Signed Update Manifests](../features/signed-update-manifests.md) and [Key Rotation](../features/key-rotation.md).
 
@@ -528,6 +553,22 @@ The deprecated top-level `path` and `sha512` fields are **no longer written** to
 - **If you still ship apps embedding electron-updater 1.x – 2.15**, keep emitting the legacy descriptor by declaring a compatibility range that includes them, e.g. `"electronUpdaterCompatibility": ">=1.0.0"` (also settable per platform, e.g. `win.electronUpdaterCompatibility`).
 
 > Related: metadata validated only by the legacy SHA-256 `sha2` checksum is deprecated — v27 warns and **v28 will reject sha2-only metadata (fail-closed)**. Avoid pinning `electronUpdaterCompatibility` to a legacy range unless you actually ship 1.x–2.15 clients.
+
+### Block map format follows `electronUpdaterCompatibility` {#block-map-format-follows-electronupdatercompatibility}
+
+**How you'll find out:** the build **fails** when the app's electron-updater (in `dependencies`, or bundled from `devDependencies` or the development package.json) is outside the `electronUpdaterCompatibility` of a platform it builds, or is a 7.0.0 prerelease before 7.0.0-alpha.13 where it writes binary block maps (an NSIS installer, a macOS zip), and **warns** once when the range makes it write JSON block maps.
+
+v27 adds a binary `.blockmap` format that electron-updater 7 fetches in parts with HTTP `Range` requests, so a differential update no longer downloads the whole map ([Differential updates](../features/auto-update.md#differential-updates-blockmap)). electron-updater 6 cannot read it. The map is read by the updater already installed in your users' apps, which is what [`electronUpdaterCompatibility`](../features/auto-update.md#compatibility) describes, so the format follows that range, and its default is now **`>=7`** (it was `>=2.16`; the legacy `latest*.yml` fields it also controls are written only for ranges below 2.16, so they are unaffected):
+
+| `electronUpdaterCompatibility` | `.blockmap` written | Build |
+|---|---|---|
+| Unset (`>=7`), or any range of electron-updater 7 and later | Binary (`"v3"`) on Windows and macOS | Fails if the app's own electron-updater is 6 or earlier, or 7.0.0-alpha.0 to 7.0.0-alpha.12 (which cannot read the binary map) |
+| A range that includes electron-updater 6 or earlier (e.g. `">=6"`) | Gzipped JSON (`"v2"`), as in v26 | Warns once that binary block maps are off and why |
+
+- **Your app ships electron-updater 7:** no action. The first release built with v27 publishes binary maps. Installs that are still on electron-updater 6 (an app version built before you upgraded) cannot read it and download that one update in full ("Cannot download differentially, fallback to full download"); the update installs electron-updater 7, and later updates are differential again. With an artifact name without `${version}` (the default names include it) the next update is a full download too: electron-updater 6 cached no map for the release it could not read, and the installed version's map URL electron-updater 7 derives is the new map's own; that update caches its map, and the ones after it are differential.
+- **Your app still ships electron-updater 6:** the build fails with a link here. Upgrade `electron-updater` to 7, or keep it and set `"electronUpdaterCompatibility": ">=6"` (per platform with e.g. `win.electronUpdaterCompatibility`), which keeps the JSON map. Raise the range to `>=7` once your installed apps ship electron-updater 7. Installs on electron-updater 7.0.0-alpha.14 or later update differentially to the first release with binary maps: they compare their cached JSON map with the new binary map, since both describe the same blocks. Only a stored `app.asar` (`nsis.differentialPackage: "store-asar"`), which the binary map cuts into finer blocks, is downloaded whole by that update. The same holds when going back to `"blockmap": "v2"`.
+- **Opting out:** `"blockmap": "v2"` always writes the JSON map, whatever the range. `"blockmap": "v3"` asks for the binary map and fails the build when the range includes electron-updater 6 or earlier; `"blockmap": "latest"` follows the newest format the range allows.
+- With the JSON map, NSIS packages and their block maps are byte-for-byte what v26 wrote. With the binary map, the 7z header of a differential package is also stored uncompressed and chunked on its own.
 
 ### S3 publishing requires an explicit `awsCredentials.source` {#s3-publishing-requires-an-explicit-awscredentialssource}
 

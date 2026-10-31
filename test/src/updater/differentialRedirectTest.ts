@@ -1,7 +1,8 @@
 import { BlockMapDataHolder, CancellationError, CancellationToken, ProgressInfo } from "builder-util-runtime"
 import { DifferentialDownloader } from "electron-updater/src/differentialDownloader/DifferentialDownloader"
+import { DOWNLOAD_GAP_COALESCE_THRESHOLD, MULTIPART_DOWNLOAD_GAP_COALESCE_THRESHOLD } from "electron-updater/src/differentialDownloader/downloadPlanBuilder"
 import { GenericDifferentialDownloader } from "electron-updater/src/differentialDownloader/GenericDifferentialDownloader"
-import { requestRange } from "electron-updater/src/differentialDownloader/multipleRangeDownloader"
+import { MAX_RANGES_PER_REQUEST, requestRange } from "electron-updater/src/differentialDownloader/multipleRangeDownloader"
 import { createHash } from "crypto"
 import fsExtra from "fs-extra"
 import type { OutgoingHttpHeaders } from "http"
@@ -17,13 +18,23 @@ import { blockMapOf, FakeElectronHttpExecutor, FakeNetAnswer, FakeNetSentRequest
 const FILE_URL = "https://feed.example.com/updates/app-1.1.0.exe"
 const PRE_SIGNED_URL = "https://bucket.example.net/app-1.1.0.exe?X-Amz-Signature=abc"
 const SAME_ORIGIN_URL = "https://feed.example.com/files/app-1.1.0.exe"
+const FTP_URL = "ftp://files.example.net/app-1.1.0.exe"
+// without the fix, a redirect that cannot be followed leaves the download pending forever: fail fast instead
+const GUARD_TIMEOUT = 10_000
 
-// three blocks; the middle one is unchanged, so the plan is: download bytes 0-15, copy 16-31 from the old file, download bytes 32-47
+// a changed block, an unchanged middle and a changed block, so the plan is: download the first block, copy the middle from the old file,
+// download the last block. The middle is as large as the gap that is still downloaded rather than copied (on any host), so the two
+// changed blocks stay two ranges.
 const BLOCK = 16
-const OLD = Buffer.from("a".repeat(BLOCK) + "b".repeat(BLOCK) + "c".repeat(BLOCK))
-const NEW = Buffer.from("x".repeat(BLOCK) + "b".repeat(BLOCK) + "z".repeat(BLOCK))
+const MIDDLE = DOWNLOAD_GAP_COALESCE_THRESHOLD
+const OLD = Buffer.from("a".repeat(BLOCK) + "b".repeat(MIDDLE) + "c".repeat(BLOCK))
+const NEW = Buffer.from("x".repeat(BLOCK) + "b".repeat(MIDDLE) + "z".repeat(BLOCK))
 // only the first block changed: one range to download, which the multi-range downloader requests on its own
-const NEW_FIRST_BLOCK = Buffer.from("x".repeat(BLOCK) + "b".repeat(BLOCK) + "c".repeat(BLOCK))
+const NEW_FIRST_BLOCK = Buffer.from("x".repeat(BLOCK) + "b".repeat(MIDDLE) + "c".repeat(BLOCK))
+const SECOND_START = BLOCK + MIDDLE
+const SECOND_END = 2 * BLOCK + MIDDLE - 1
+const SECOND_RANGE = `bytes=${SECOND_START}-${SECOND_END}`
+const BOTH_RANGES = `bytes=0-15, ${SECOND_START}-${SECOND_END}`
 
 const REQUEST_HEADERS: OutgoingHttpHeaders = {
   authorization: "Bearer feed-secret",
@@ -142,7 +153,7 @@ describe("differential download redirects", () => {
     expect(urlsAndRanges(sent)).toEqual([
       [FILE_URL, "bytes=0-15"],
       [PRE_SIGNED_URL, "bytes=0-15"],
-      [PRE_SIGNED_URL, "bytes=32-47"],
+      [PRE_SIGNED_URL, SECOND_RANGE],
     ])
     // positive control: the feed gets the credentials
     expectCredentials(expect, sent[0].headers, true)
@@ -161,7 +172,7 @@ describe("differential download redirects", () => {
     expect(urlsAndRanges(sent)).toEqual([
       [FILE_URL, "bytes=0-15"],
       [SAME_ORIGIN_URL, "bytes=0-15"],
-      [SAME_ORIGIN_URL, "bytes=32-47"],
+      [SAME_ORIGIN_URL, SECOND_RANGE],
     ])
     for (const { headers } of sent) {
       expectCredentials(expect, headers, true)
@@ -169,13 +180,13 @@ describe("differential download redirects", () => {
   })
 
   test("a redirect of a later range only moves the ranges from there on, and progress counts each range once", async ({ tmpDir, expect }) => {
-    const { sent, downloaded, progress } = await download(tmpDir, { redirects: { [FILE_URL]: PRE_SIGNED_URL }, redirectRanges: ["bytes=32-47"] })
+    const { sent, downloaded, progress } = await download(tmpDir, { redirects: { [FILE_URL]: PRE_SIGNED_URL }, redirectRanges: [SECOND_RANGE] })
 
     expect(downloaded).toEqual(NEW)
     expect(urlsAndRanges(sent)).toEqual([
       [FILE_URL, "bytes=0-15"],
-      [FILE_URL, "bytes=32-47"],
-      [PRE_SIGNED_URL, "bytes=32-47"],
+      [FILE_URL, SECOND_RANGE],
+      [PRE_SIGNED_URL, SECOND_RANGE],
     ])
     expectCredentials(expect, sent[0].headers, true)
     expectCredentials(expect, sent[1].headers, true)
@@ -190,8 +201,8 @@ describe("differential download redirects", () => {
 
     expect(downloaded).toEqual(NEW)
     expect(urlsAndRanges(sent)).toEqual([
-      [FILE_URL, "bytes=0-15, 32-47"],
-      [PRE_SIGNED_URL, "bytes=0-15, 32-47"],
+      [FILE_URL, BOTH_RANGES],
+      [PRE_SIGNED_URL, BOTH_RANGES],
     ])
     expectCredentials(expect, sent[0].headers, true)
     expectCredentials(expect, sent[1].headers, false)
@@ -202,8 +213,8 @@ describe("differential download redirects", () => {
 
     expect(downloaded).toEqual(NEW)
     expect(urlsAndRanges(sent)).toEqual([
-      [FILE_URL, "bytes=0-15, 32-47"],
-      [SAME_ORIGIN_URL, "bytes=0-15, 32-47"],
+      [FILE_URL, BOTH_RANGES],
+      [SAME_ORIGIN_URL, BOTH_RANGES],
     ])
     for (const { headers } of sent) {
       expectCredentials(expect, headers, true)
@@ -223,9 +234,10 @@ describe("differential download redirects", () => {
   })
 
   test("each multi-range batch and the lone range of a batch start at the update URL, so each gets its own redirect", async ({ tmpDir, expect }) => {
-    // 2001 blocks, every other one changed: 1001 ranges to download and 1000 to copy. The multi-range downloader sends the
-    // operations in batches of 1000: two of 500 ranges, then one with the last range alone.
-    const blockSize = 8
+    // 2001 blocks, every other one changed: 1001 ranges to download and 1000 to copy. A block is as large as the gap that is still
+    // copied on a multipart host, so the ranges are not coalesced. The multi-range downloader sends at most MAX_RANGES_PER_REQUEST ranges
+    // per request: full batches, then one with the last range alone.
+    const blockSize = MULTIPART_DOWNLOAD_GAP_COALESCE_THRESHOLD
     const blockCount = 2001
     const blocksOf = (marker: (index: number) => string) =>
       Buffer.from(Array.from({ length: blockCount }, (_, index) => marker(index) + String(index).padStart(blockSize - 1, "0")).join(""))
@@ -235,15 +247,14 @@ describe("differential download redirects", () => {
     const { sent, downloaded } = await download(tmpDir, { redirects: { [FILE_URL]: PRE_SIGNED_URL }, isUseMultipleRangeRequest: true, content, old, blockSize })
 
     expect(downloaded).toEqual(content)
-    expect(sent.map(it => [it.url, parseRanges(it.headers.range).length])).toEqual([
-      [FILE_URL, 500],
-      [PRE_SIGNED_URL, 500],
-      [FILE_URL, 500],
-      [PRE_SIGNED_URL, 500],
-      [FILE_URL, 1],
-      [PRE_SIGNED_URL, 1],
-    ])
-    expect(sent[4].headers.range).toBe(`bytes=${2000 * blockSize}-${2001 * blockSize - 1}`)
+    const fullBatches = Math.floor(1001 / MAX_RANGES_PER_REQUEST)
+    const expected: Array<[string, number]> = []
+    for (let i = 0; i < fullBatches; i++) {
+      expected.push([FILE_URL, MAX_RANGES_PER_REQUEST], [PRE_SIGNED_URL, MAX_RANGES_PER_REQUEST])
+    }
+    expected.push([FILE_URL, 1], [PRE_SIGNED_URL, 1])
+    expect(sent.map(it => [it.url, parseRanges(it.headers.range).length])).toEqual(expected)
+    expect(sent[2 * fullBatches].headers.range).toBe(`bytes=${2000 * blockSize}-${2001 * blockSize - 1}`)
     for (const { url, headers } of sent) {
       expectCredentials(expect, headers, url === FILE_URL)
     }
@@ -255,11 +266,11 @@ describe("differential download redirects", () => {
     expect(downloaded).toEqual(NEW)
     expect(warnings.some(it => it.includes("retrying with one range per request"))).toBe(true)
     expect(urlsAndRanges(sent)).toEqual([
-      [FILE_URL, "bytes=0-15, 32-47"],
-      [PRE_SIGNED_URL, "bytes=0-15, 32-47"],
+      [FILE_URL, BOTH_RANGES],
+      [PRE_SIGNED_URL, BOTH_RANGES],
       [FILE_URL, "bytes=0-15"],
       [PRE_SIGNED_URL, "bytes=0-15"],
-      [PRE_SIGNED_URL, "bytes=32-47"],
+      [PRE_SIGNED_URL, SECOND_RANGE],
     ])
     for (const { url, headers } of sent) {
       expectCredentials(expect, headers, url === FILE_URL)
@@ -273,6 +284,34 @@ describe("differential download redirects", () => {
     // the request and the 10 redirects it may follow
     expect(executor.sent).toHaveLength(11)
   })
+
+  for (const [label, isUseMultipleRangeRequest] of [
+    ["single", false],
+    ["multi", true],
+  ] as const) {
+    test(
+      `a redirect to a protocol other than http(s) fails a ${label}-range download`,
+      async ({ tmpDir, expect }) => {
+        const c: DownloadCase = { redirects: { [FILE_URL]: FTP_URL }, isUseMultipleRangeRequest }
+        const executor = createExecutor(c, NEW)
+        await expect(download(tmpDir, c, executor)).rejects.toThrow('Cannot follow the redirect to the "ftp:" protocol')
+        expect(executor.sent).toHaveLength(1)
+      },
+      GUARD_TIMEOUT
+    )
+
+    test(
+      `a redirect target that no request can be created for fails a ${label}-range download`,
+      async ({ tmpDir, expect }) => {
+        const c: DownloadCase = { redirects: { [FILE_URL]: PRE_SIGNED_URL }, isUseMultipleRangeRequest }
+        const executor = createExecutor(c, NEW)
+        executor.unrequestableUrls.add(PRE_SIGNED_URL)
+        await expect(download(tmpDir, c, executor)).rejects.toThrow(`Cannot create a request for ${PRE_SIGNED_URL}`)
+        expect(executor.sent).toHaveLength(1)
+      },
+      GUARD_TIMEOUT
+    )
+  }
 
   test("a redirect reported after a cancel is a cancellation, and the range is not requested again", async ({ tmpDir, expect }) => {
     const cancellationToken = new CancellationToken()
@@ -344,28 +383,41 @@ class RemoteBytesReader extends DifferentialDownloader {
 }
 
 describe("differential download redirects when reading remote bytes", () => {
+  function createReader(executor: FakeElectronHttpExecutor): RemoteBytesReader {
+    return new RemoteBytesReader(fileInfoOf(NEW), executor, {
+      newUrl: new URL(FILE_URL),
+      oldFile: "unused",
+      newFile: "unused",
+      logger: createLogger([], []),
+      requestHeaders: REQUEST_HEADERS,
+      cancellationToken: new CancellationToken(),
+    })
+  }
+
   for (const [label, target, isSent] of [
     ["another origin gets no credential headers", PRE_SIGNED_URL, false],
     ["the same origin keeps the credential headers", SAME_ORIGIN_URL, true],
   ] as const) {
     test(`a redirect to ${label}`, async ({ expect }) => {
       const executor = createExecutor({ redirects: { [FILE_URL]: target } }, NEW)
-      const reader = new RemoteBytesReader(fileInfoOf(NEW), executor, {
-        newUrl: new URL(FILE_URL),
-        oldFile: "unused",
-        newFile: "unused",
-        logger: createLogger([], []),
-        requestHeaders: REQUEST_HEADERS,
-        cancellationToken: new CancellationToken(),
-      })
 
-      expect(await reader.read(32, 47)).toEqual(NEW.subarray(32, 48))
+      expect(await createReader(executor).read(SECOND_START, SECOND_END)).toEqual(NEW.subarray(SECOND_START, SECOND_END + 1))
       expect(urlsAndRanges(executor.sent)).toEqual([
-        [FILE_URL, "bytes=32-47"],
-        [target, "bytes=32-47"],
+        [FILE_URL, SECOND_RANGE],
+        [target, SECOND_RANGE],
       ])
       expectCredentials(expect, executor.sent[0].headers, true)
       expectCredentials(expect, executor.sent[1].headers, isSent)
     })
   }
+
+  test(
+    "a redirect to a protocol other than http(s) fails",
+    async ({ expect }) => {
+      const executor = createExecutor({ redirects: { [FILE_URL]: FTP_URL } }, NEW)
+      await expect(createReader(executor).read(32, 47)).rejects.toThrow('Cannot follow the redirect to the "ftp:" protocol')
+      expect(executor.sent).toHaveLength(1)
+    },
+    GUARD_TIMEOUT
+  )
 })

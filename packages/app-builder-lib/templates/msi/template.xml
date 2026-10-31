@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="${wixNamespace}">
   <!-- https://blogs.msdn.microsoft.com/gremlininthemachine/2006/12/05/msi-wix-and-unicode/ -->
   <Product Id="*" Name="${productName}" UpgradeCode="${upgradeCode}" Version="${version}" Language="1033" Codepage="65001" Manufacturer="${manufacturer}">
     <Package Compressed="yes" InstallerVersion="500"/>
@@ -82,11 +82,11 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="${programFilesId}">
-        {{ if (menuCategory) { }}
-          <Directory Id="COMPANYDIR" Name="${menuCategory}">
+        {{ for (const companyDirectory of companyDirectories) { }}
+          <Directory Id="${companyDirectory.id}" Name="${companyDirectory.name}">
         {{ } -}}
               <Directory Id="APPLICATIONFOLDER" Name="${installationDirectoryWixName}"/>
-        {{ if (menuCategory) { }}
+        {{ for (const companyDirectory of companyDirectories) { }}
           </Directory>
         {{ } -}}
       </Directory>
@@ -109,7 +109,7 @@
 
     {{-dirs}}
 
-    <ComponentGroup Id="ProductComponents" Directory="APPLICATIONFOLDER">
+    <ComponentGroup Id="ProductComponents"{{-componentGroupDirectoryAttribute}}>
       {{-files}}
     </ComponentGroup>
   </Product>

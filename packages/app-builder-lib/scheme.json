@@ -478,6 +478,14 @@
             "string"
           ]
         },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "owner": {
           "description": "Repository owner",
           "type": "string"
@@ -595,6 +603,14 @@
     "CustomPublishOptions": {
       "additionalProperties": {},
       "properties": {
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "provider": {
           "const": "custom",
           "description": "The provider. Must be `custom`.",
@@ -2281,6 +2297,14 @@
             "string"
           ]
         },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "provider": {
           "const": "generic",
           "description": "The provider. Must be `generic`.",
@@ -2383,6 +2407,14 @@
           "type": [
             "null",
             "string"
+          ]
+        },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "type": [
+            "null",
+            "number"
           ]
         },
         "owner": {
@@ -2546,6 +2578,14 @@
             "string"
           ]
         },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "projectId": {
           "description": "The GitLab project ID or path (e.g., \"12345678\" or \"namespace/project\").",
           "type": [
@@ -2688,6 +2728,14 @@
           "default": "api.keygen.sh",
           "description": "Keygen host for self-hosted instances",
           "type": "string"
+        },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "type": [
+            "null",
+            "number"
+          ]
         },
         "platform": {
           "description": "The target Platform. Is set programmatically explicitly during publishing.",
@@ -2888,7 +2936,8 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
+          "default": ">=7",
+          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range: the\nelectron-updater versions the installed apps ship, which have to read the update files this build writes. It selects the\n`.blockmap` format (see `blockmap`), and the build fails when the app's electron-updater does not satisfy it.",
           "type": [
             "null",
             "string"
@@ -2942,7 +2991,7 @@
         },
         "forceCodeSigning": {
           "default": false,
-          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Not read from `mas` / `masDev`: the `mac` (or root) value applies to Mac App Store builds.",
+          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -3481,7 +3530,8 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
+          "default": ">=7",
+          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range: the\nelectron-updater versions the installed apps ship, which have to read the update files this build writes. It selects the\n`.blockmap` format (see `blockmap`), and the build fails when the app's electron-updater does not satisfy it.",
           "type": [
             "null",
             "string"
@@ -3541,7 +3591,7 @@
         },
         "forceCodeSigning": {
           "default": false,
-          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Not read from `mas` / `masDev`: the `mac` (or root) value applies to Mac App Store builds.",
+          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -3613,7 +3663,7 @@
           ]
         },
         "notarize": {
-          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
+          "description": "Whether to notarize the app with [@electron/notarize](https://github.com/electron/notarize).\n\n- unset (the default): notarize when notarization credentials are set, otherwise skip it with a warning.\n- `true`: notarization is required: the build fails when no credentials are set, wherever notarization would run (a macOS host,\n  outside a pull-request build, with signing not turned off), at build start and when notarizing.\n- `false`: never notarize (for an ad-hoc or development-signed app, or one notarized in an `afterSign` hook).\n\nThe credentials are one of the following sets of environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
           "type": "boolean"
         },
         "protocols": {
@@ -3911,7 +3961,8 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
+          "default": ">=7",
+          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range: the\nelectron-updater versions the installed apps ship, which have to read the update files this build writes. It selects the\n`.blockmap` format (see `blockmap`), and the build fails when the app's electron-updater does not satisfy it.",
           "type": [
             "null",
             "string"
@@ -3971,7 +4022,7 @@
         },
         "forceCodeSigning": {
           "default": false,
-          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Not read from `mas` / `masDev`: the `mac` (or root) value applies to Mac App Store builds.",
+          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -4043,7 +4094,7 @@
           ]
         },
         "notarize": {
-          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
+          "description": "Whether to notarize the app with [@electron/notarize](https://github.com/electron/notarize).\n\n- unset (the default): notarize when notarization credentials are set, otherwise skip it with a warning.\n- `true`: notarization is required: the build fails when no credentials are set, wherever notarization would run (a macOS host,\n  outside a pull-request build, with signing not turned off), at build start and when notarizing.\n- `false`: never notarize (for an ad-hoc or development-signed app, or one notarized in an `afterSign` hook).\n\nThe credentials are one of the following sets of environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
           "type": "boolean"
         },
         "protocols": {
@@ -4916,7 +4967,7 @@
         },
         "installerDebugLogging": {
           "default": false,
-          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). In your custom NSIS scripts, write to the log via `${LogText}`.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. The default `toolsets.nsis` bundle\nis not log-enabled, so supply one as a custom `toolsets.nsis` bundle; the build fails otherwise.\nReplaces the v26 `customNsisBinary.debugLogging`.",
+          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). In your custom NSIS scripts, write to the log via `${LogText}`.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. From `toolsets.nsis` `\"2.0.4\"` (the\ndefault) on, each NSIS release publishes a log-enabled bundle next to the default one, and electron-builder downloads it when this\noption is `true` (the default bundle otherwise). Its stubs make the installer and uninstaller up to about 8 KB larger, and they\nwrite a log only once `LogSet on` runs, which this option adds. The older pinned bundles (`\"0.0.0\"`, `\"1.2.1\"`) have no\nlog-enabled variant, and the build fails with one of them. A custom `toolsets.nsis` bundle must be log-enabled itself.\nReplaces the v26 `customNsisBinary.debugLogging`.",
           "type": "boolean"
         },
         "installerHeader": {
@@ -5276,7 +5327,7 @@
         },
         "installerDebugLogging": {
           "default": false,
-          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). In your custom NSIS scripts, write to the log via `${LogText}`.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. The default `toolsets.nsis` bundle\nis not log-enabled, so supply one as a custom `toolsets.nsis` bundle; the build fails otherwise.\nReplaces the v26 `customNsisBinary.debugLogging`.",
+          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). In your custom NSIS scripts, write to the log via `${LogText}`.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. From `toolsets.nsis` `\"2.0.4\"` (the\ndefault) on, each NSIS release publishes a log-enabled bundle next to the default one, and electron-builder downloads it when this\noption is `true` (the default bundle otherwise). Its stubs make the installer and uninstaller up to about 8 KB larger, and they\nwrite a log only once `LogSet on` runs, which this option adds. The older pinned bundles (`\"0.0.0\"`, `\"1.2.1\"`) have no\nlog-enabled variant, and the build fails with one of them. A custom `toolsets.nsis` bundle must be log-enabled itself.\nReplaces the v26 `customNsisBinary.debugLogging`.",
           "type": "boolean"
         },
         "installerHeader": {
@@ -6659,6 +6710,14 @@
           ],
           "description": "The jurisdiction of the R2 bucket, if the bucket was created with a jurisdictional\nrestriction. Buckets created in a jurisdiction live on a separate endpoint —\n`https://<accountId>.<jurisdiction>.r2.cloudflarestorage.com` — so this must match\nthe jurisdiction the bucket was created with. Omit for regular buckets.\n\nSee https://developers.cloudflare.com/r2/reference/data-location/#jurisdictional-restrictions"
         },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "path": {
           "default": "/",
           "description": "The directory path.",
@@ -7263,6 +7322,14 @@
         "forcePathStyle": {
           "description": "When true, force a path-style endpoint to be used where the bucket name is part of the path.\n[Path-style Access](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html#path-style-access)",
           "type": "boolean"
+        },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "type": [
+            "null",
+            "number"
+          ]
         },
         "path": {
           "default": "/",
@@ -8175,6 +8242,14 @@
           ],
           "description": "The list of channels the snap would be released."
         },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "provider": {
           "const": "snapStore",
           "description": "The provider. Must be `snapStore`.",
@@ -8668,6 +8743,14 @@
             "string"
           ]
         },
+        "maxUpdateInfoSize": {
+          "default": 10485760,
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "name": {
           "description": "The space name.",
           "type": "string"
@@ -8786,7 +8869,7 @@
           ]
         },
         "msi": {
-          "description": "Whether to create an MSI installer. Defaults to `false` (MSI is not created).",
+          "description": "Whether to create an MSI installer. Defaults to `false` (MSI is not created).\n\nSquirrel.Windows builds the MSI around Setup.exe before electron-builder signs Setup.exe, so the installer inside the MSI is\nunsigned: the build warns, and fails with `forceCodeSigning`. For a signed MSI use the `msi` target instead.",
           "type": "boolean"
         },
         "name": {
@@ -8897,7 +8980,7 @@
     },
     "ToolsetConfig": {
       "additionalProperties": false,
-      "description": "Version pins and custom bundle overrides for the binary toolsets that electron-builder downloads and caches locally.\n\nEach toolset is a versioned archive hosted at [electron-userland/electron-builder-binaries](https://github.com/electron-userland/electron-builder-binaries/releases).\nOmitting a property (or setting it to `latest`) selects the modern default for that toolset.\n\nTo supply your own bundle, set the property to a {@link ToolsetCustom} object with a `url` (https:// or file://) and a `checksum` for verification. The bundle must mirror the expected directory layout of the corresponding built-in bundle; see the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.",
+      "description": "Version pins and custom bundle overrides for the binary toolsets that electron-builder downloads and caches locally.\n\nEach toolset is a versioned archive hosted at [electron-userland/electron-builder-binaries](https://github.com/electron-userland/electron-builder-binaries/releases).\nOmitting a property (or setting it to `latest`) selects the modern default for that toolset.\n\nTo supply your own bundle, set the property to a {@link ToolsetCustom} object with a `url` (https:// or file://) and a `checksum` for verification. The bundle must mirror the expected directory layout of the corresponding built-in bundle; see the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.\n\nToolsets, the versions offered for each, and what `latest` resolves to can be added, changed or removed in any electron-builder release (minor or patch), not only in a major release. (To address toolset stability, reported issues, adopt latest tooling versions, etc.)",
       "properties": {
         "appimage": {
           "anyOf": [
@@ -8909,13 +8992,31 @@
                 "0.0.0",
                 "1.0.3",
                 "1.1.0",
+                "1.2.1",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the AppImage toolset bundle used for building `.AppImage` files.\n\nThe bundle ships:\n- **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage. It also packs legacy-base (core18/core20/core22) snaps built from the snap template app.\n- **`desktop-file-validate`** — validates the generated `.desktop` entry.\n- **AppImage runtime** — the self-executing stub that mounts the SquashFS at launch.\n\nAvailable versions:\n| Version | Runtime date | Notes |\n|---------|-------------|-------|\n| `\"0.0.0\"` | Legacy | FUSE2-based AppImage runtime (pre-v27) |\n| `\"1.0.3\"` | 20251108 | Introduces static AppImage runtime |\n| `\"1.1.0\"` | 20251108 | Adds `unsquashfs` support |\n\nAn explicit version pin always selects exactly that release.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/appimage/CHANGELOG.md"
+          "description": "Version of the AppImage toolset bundle used for building `.AppImage` files.\n\nThe bundle ships:\n- **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage. It also packs legacy-base (core18/core20/core22) snaps built from the snap template app.\n- **`desktop-file-validate`** — validates the generated `.desktop` entry.\n- **AppImage runtime** — the self-executing stub that mounts the SquashFS at launch.\n\nAvailable versions:\n| Version | Runtime date | Notes |\n|---------|-------------|-------|\n| `\"0.0.0\"` | Legacy | FUSE2-based AppImage runtime (pre-v27) |\n| `\"1.0.3\"` | 20251108 | Introduces static AppImage runtime |\n| `\"1.1.0\"` | 20251108 | Adds `unsquashfs` support |\n| `\"1.2.1\"` | 20251108 | squashfs-tools 4.7.5 with a statically linked zstd 1.5.7, so Linux and macOS hosts produce identical images; ships the bundled components' license files |\n\nAn explicit version pin always selects exactly that release.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/appimage/CHANGELOG.md"
+        },
+        "archive": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
+            {
+              "enum": [
+                "1.0.0",
+                "latest",
+                "system"
+              ],
+              "type": "string"
+            }
+          ],
+          "default": "latest",
+          "description": "The archive and packaging tools that fpm and the `tar.lz` target run, on macOS and Linux hosts: `xz`, `lzip`, GNU `tar`\n(`tar`, `gtar`), GNU `ar` (`ar`, `gar`) and `bsdtar`, plus `rpm` and `rpmbuild` (rpm 6.1.0) on Linux x64 and arm64 and macOS arm64.\nIts `bin` directory goes first on fpm's `PATH`. On Intel macOS and 32-bit Linux, which get no bundled `rpmbuild`,\nbuilding `rpm` uses the host `rpmbuild` on `PATH`. A {@link ToolsetCustom} bundle must have the same `bin/` layout.\n`\"system\"` uses the host's tools (no download); `tar.lz` then uses `lzip` from {@link executables}.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/archive/CHANGELOG.md"
         },
         "executables": {
           "anyOf": [
@@ -8937,13 +9038,14 @@
             {
               "enum": [
                 "2.2.1",
+                "2.3.1",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)\non macOS and Linux hosts.\n\nAvailable versions:\n| Version | FPM version | Notes |\n|---------|------------|-------|\n| `\"2.2.1\"` | 1.17.0 (Ruby 3.4.3) | Current default |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/fpm/CHANGELOG.md"
+          "description": "Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)\non macOS and Linux hosts.\n\nAvailable versions:\n| Version | FPM version | Notes |\n|---------|------------|-------|\n| `\"2.2.1\"` | 1.17.0 (Ruby 3.4.3) | Previous default |\n| `\"2.3.1\"` | 1.18.0 (Ruby 3.4.12) | Linux bundles link a static OpenSSL 3.5.9 instead of OpenSSL 1.1.1 |\n\nAn explicit version pin always selects exactly that release.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/fpm/CHANGELOG.md"
         },
         "icons": {
           "anyOf": [
@@ -8961,23 +9063,6 @@
           "default": "latest",
           "description": "Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,\nand PNG icon sets.\n\nSet to a {@link ToolsetCustom} object to supply your own icons bundle directory.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.2.3\"` | Writes 16px/32px ICNS entries as `ic04`/`ic05` ARGB (fixes corrupt small icons in Finder) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md"
         },
-        "linuxToolsMac": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/ToolsetCustom"
-            },
-            {
-              "enum": [
-                "1.0.0",
-                "1.0.1",
-                "latest"
-              ],
-              "type": "string"
-            }
-          ],
-          "default": "latest",
-          "description": "Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build\nLinux targets on macOS hosts.\n\nThe bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |\n| `\"1.0.1\"` | Same tools rebuilt on macOS 15 runners — binaries run on macOS 15+ (1.0.0 required macOS 26) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md"
-        },
         "nsis": {
           "anyOf": [
             {
@@ -8987,13 +9072,14 @@
               "enum": [
                 "0.0.0",
                 "1.2.1",
+                "2.0.4",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the NSIS toolset bundle used to compile Windows installers.\n\nThe bundle ships:\n- **`makensis`** — the NSIS compiler invoked to build `.nsi` scripts into `.exe` installers.\n- **NSIS plugins** — the plugin DLLs (`NsisMultiUser`, `UAC`, `StdUtils`, etc.) referenced by\n  electron-builder's default installer scripts.\n- **`elevate.exe`** — UAC elevation helper included in NSIS installers.\n\nAvailable versions:\n| Version | `makensis` version | Notes |\n|---------|------------------|-------|\n| `\"0.0.0\"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27) |\n| `\"1.2.1\"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md\n\nA custom bundle (a {@link ToolsetCustom} object) must follow the layout at\nhttps://www.electron.build/docs/toolsets#custom-nsis-bundle-layout"
+          "description": "Version of the NSIS toolset bundle used to compile Windows installers.\n\nThe bundle ships:\n- **`makensis`** — the NSIS compiler invoked to build `.nsi` scripts into `.exe` installers.\n- **NSIS plugins** — the plugin DLLs (`NsisMultiUser`, `UAC`, `StdUtils`, etc.) referenced by\n  electron-builder's default installer scripts.\n- **`elevate.exe`** — UAC elevation helper included in NSIS installers.\n\nAvailable versions:\n| Version | `makensis` version | Notes |\n|---------|------------------|-------|\n| `\"0.0.0\"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27) |\n| `\"1.2.1\"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` |\n| `\"2.0.4\"` | 3.13 | Compiled from source, `NSIS_MAX_STRLEN=8192` — two bundles: the default, and a `-log` bundle whose `makensis` and stubs are log-enabled (`NSIS_CONFIG_LOG=yes`), used when `installerDebugLogging` is on |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md\n\nA custom bundle (a {@link ToolsetCustom} object) must follow the layout at\nhttps://www.electron.build/docs/toolsets#custom-nsis-bundle-layout"
         },
         "sevenZip": {
           "anyOf": [
@@ -9004,13 +9090,14 @@
               "enum": [
                 "1.0.0",
                 "1.0.1",
+                "1.1.0",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.\n\nSet to a {@link ToolsetCustom} object to supply your own 7za binary.\nThe `url` must point to a directory (or a `.tar.gz`/`.zip` archive of one) that contains\n`bin/7za` (macOS/Linux) or `bin/7za.exe` (Windows).\n\n**Bootstrap constraint:** the custom bundle itself must be a `.tar.gz` or `.zip` archive\n(or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because\nextracting them requires 7za — a circular dependency.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | Shipped the 32-bit `7za.exe` for every Windows arch (1.75 GiB memory cap, no LZMA2 multithreading on x64/arm64) |\n| `\"1.0.1\"` | Correct per-arch Windows binaries (x64, ia32, arm64) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/7zip/CHANGELOG.md"
+          "description": "Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.\n\nSet to a {@link ToolsetCustom} object to supply your own 7za binary.\nThe `url` must point to a directory (or a `.tar.gz`/`.zip` archive of one) that contains\n`bin/7za` (macOS/Linux) or `bin/7za.exe` (Windows).\n\n**Bootstrap constraint:** the custom bundle itself must be a `.tar.gz` or `.zip` archive\n(or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because\nextracting them requires 7za — a circular dependency.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | Shipped the 32-bit `7za.exe` for every Windows arch (1.75 GiB memory cap, no LZMA2 multithreading on x64/arm64) |\n| `\"1.0.1\"` | 24.09 - Correct per-arch Windows binaries (x64, ia32, arm64) |\n| `\"1.1.0\"` | 26.05 |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/7zip/CHANGELOG.md"
         },
         "squirrel": {
           "anyOf": [
@@ -9020,13 +9107,14 @@
             {
               "enum": [
                 "1.1.1",
+                "1.2.1",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the `squirrel.windows` bundle used to build Squirrel.Windows installers.\n\nThe bundle ships the Squirrel vendor toolset under `electron-winstaller/vendor/`:\n- **`Squirrel.exe`** / **`Squirrel-Mono.exe`** — releasify the app into `Setup.exe` (and an optional MSI).\n- **`SyncReleases.exe`** — downloads prior releases to produce delta packages.\n- **`nuget.exe`**, **`7z`** — pack the app into a `.nupkg` and compress release assets.\n\n`rcedit.exe` is provisioned from the {@link winCodeSign} toolset at runtime (on every platform;\nunder Wine on non-Windows hosts). Building an MSI additionally uses the shared WiX toolset.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.1.1\"` | Squirrel.Windows 2.0.1 (patched) with a standalone, checksum-verified `nuget.exe` 6.14.0 |\n\nSet to a {@link ToolsetCustom} object to supply your own bundle — it must contain the\n`electron-winstaller/vendor/` subtree. Only used when building the `squirrelWindows` target.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/squirrel.windows/CHANGELOG.md"
+          "description": "Version of the `squirrel.windows` bundle used to build Squirrel.Windows installers.\n\nThe bundle ships the Squirrel vendor toolset under `electron-winstaller/vendor/`:\n- **`Squirrel.exe`** / **`Squirrel-Mono.exe`** — releasify the app into `Setup.exe` (and an optional MSI).\n- **`SyncReleases.exe`** — downloads prior releases to produce delta packages.\n- **`nuget.exe`**, **`7z`** — pack the app into a `.nupkg` and compress release assets.\n\n`rcedit.exe` is provisioned from the {@link winCodeSign} toolset at runtime (on every platform;\nunder Wine on non-Windows hosts). Building an MSI additionally uses the shared WiX toolset.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.1.1\"` | Squirrel.Windows 2.0.1 (patched) with a standalone, checksum-verified `nuget.exe` 6.14.0 |\n| `\"1.2.1\"` | Pinned, checksum-verified 7-Zip 26.05 (adds native `7z-arm64`, selected on arm64 Windows hosts) and `nuget.exe` 7.9.0 |\n\nSet to a {@link ToolsetCustom} object to supply your own bundle — it must contain the\n`electron-winstaller/vendor/` subtree. Only used when building the `squirrelWindows` target.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/squirrel.windows/CHANGELOG.md"
         },
         "winCodeSign": {
           "anyOf": [
@@ -9042,13 +9130,14 @@
                 "1.2.1",
                 "1.3.0",
                 "1.3.1",
+                "1.3.3",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the `win-codesign` bundle used for Windows code signing and resource editing.\n\nThe bundle ships:\n- **`signtool.exe`** (Windows) / **`osslsigncode`** (macOS & Linux) — used to sign `.exe`,\n  `.dll`, and `.msix` artifacts.\n- **`rcedit`** — embeds version metadata and icons into `.exe` files (legacy usage, migrated to npm `resedit` package).\n- **Windows Kits** — used by AppX/MSIX packaging (`makeappx`, `signtool`).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"0.0.0\"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27) |\n| `\"1.0.0\"` | Windows Kits 10.0.26100.0, `osslsigncode` v2.9 |\n| `\"1.1.1\"` | Updates `osslsigncode` to v2.11 |\n| `\"1.2.1\"` | Adds native `osslsigncode` arm64 |\n| `\"1.3.0\"` | Includes support for Azure Trusted Signing `signtool` via dlib and .NET 8 runtime |\n| `\"1.3.1\"` | macOS `osslsigncode` bundles its own OpenSSL (no Homebrew `openssl@3` needed) and libp11's PKCS#11 provider |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md"
+          "description": "Version of the `win-codesign` bundle used for Windows code signing and resource editing.\n\nThe bundle ships:\n- **`signtool.exe`** (Windows) / **`osslsigncode`** (macOS & Linux) — used to sign `.exe`,\n  `.dll`, and `.msix` artifacts.\n- **`rcedit`** — embeds version metadata and icons into `.exe` files (legacy usage, migrated to npm `resedit` package).\n- **Windows Kits** — used by AppX/MSIX packaging (`makeappx`, `signtool`).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"0.0.0\"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27) |\n| `\"1.0.0\"` | Windows Kits 10.0.26100.0, `osslsigncode` v2.9 |\n| `\"1.1.1\"` | Updates `osslsigncode` to v2.11 |\n| `\"1.2.1\"` | Adds native `osslsigncode` arm64 |\n| `\"1.3.0\"` | Includes support for Azure Trusted Signing `signtool` via dlib and .NET 8 runtime |\n| `\"1.3.1\"` | macOS `osslsigncode` bundles its own OpenSSL (no Homebrew `openssl@3` needed) and libp11's PKCS#11 provider |\n| `\"1.3.3\"` | Linux `osslsigncode` bundles its own OpenSSL (no system OpenSSL 1.1 needed); `osslsigncode` 2.14 and .NET runtime 8.0.33 |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md"
         },
         "wine": {
           "anyOf": [
@@ -9067,6 +9156,23 @@
           ],
           "default": "latest",
           "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |\n| `\"1.0.1\"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |\n| `\"system\"` | host install | macOS, Linux | Uses the host Wine at a fixed install location instead of a bundle |\n\n`\"system\"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and\nis what `\"latest\"` (the default) currently resolves to on every platform: the published `\"1.0.1\"`\nbundles ship no PE builtins, so a host Wine installation is required to build Windows targets on\nmacOS or Linux.\n\nThe host Wine (`\"system\"`) is started by absolute path, never looked up on `PATH`: it is the `wine` entry of\n{@link executables}, which lists its default install locations and is where a Wine installed elsewhere is set.\nSetting both a bundle that would be used (a `ToolsetCustom` object, or a version on macOS; on Linux a version selects no\nbundle) and `executables.wine` is a configuration error.\n\nTo use a custom Wine bundle, use a `ToolsetCustom` object.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md"
+        },
+        "wix": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
+            {
+              "enum": [
+                "0.0.0",
+                "2.0.0",
+                "latest"
+              ],
+              "type": "string"
+            }
+          ],
+          "default": "latest",
+          "description": "Version of the WiX Toolset bundle used to build `msi` and `msiWrapped` installers.\n\nThe bundle ships **`candle.exe`** and **`light.exe`** (compile and link the generated `.wxs` project) and the WiX\nextensions (`WixUIExtension` for assisted installers). On macOS and Linux they run under Wine with wine-mono.\n\nAvailable versions:\n| Version | WiX version | Notes |\n|---------|-------------|-------|\n| `\"0.0.0\"` | 4.0.0.5512 (preview) | Legacy bundle (pre-v27). An `arm64` app is packaged in an `x64` MSI, because this toolset has no `arm64` |\n| `\"2.0.0\"` | 3.14.1 | Builds a native `arm64` MSI for `arm64` |\n\nThe `.wxs` project uses the WiX 3 schema with `\"2.0.0\"`: an `msiProjectCreated` hook that inserts elements of a WiX 4\nextension namespace must use the WiX 3 one (for example `http://schemas.microsoft.com/wix/UtilExtension`), or pin `\"0.0.0\"`.\n\nA custom bundle (a {@link ToolsetCustom} object) must have the WiX v3 layout: `candle.exe`, `light.exe` and the\nextensions at its root.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wix/CHANGELOG.md"
         }
       },
       "type": "object"
@@ -9303,7 +9409,8 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
+          "default": ">=7",
+          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range: the\nelectron-updater versions the installed apps ship, which have to read the update files this build writes. It selects the\n`.blockmap` format (see `blockmap`), and the build fails when the app's electron-updater does not satisfy it.",
           "type": [
             "null",
             "string"
@@ -9343,7 +9450,7 @@
         },
         "forceCodeSigning": {
           "default": false,
-          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Not read from `mas` / `masDev`: the `mac` (or root) value applies to Mac App Store builds.",
+          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -10086,6 +10193,22 @@
       ],
       "description": "Called immediately before electron-builder begins packing the app for each platform/arch\ncombination.\n\nUse this hook to perform last-minute modifications to source files or build resources before\nthey are read by the packager.\n\nReceives a {@link BeforePackContext}."
     },
+    "blockmap": {
+      "anyOf": [
+        {
+          "enum": [
+            "latest",
+            "v2",
+            "v3"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Format of the `<artifact>.blockmap` file published next to installers and update archives, which electron-updater reads for\ndifferential downloads. The map is read by the updater already installed in your users' apps, so the format follows\n`electronUpdaterCompatibility` (default `\">=7\"`):\n\n- unset: `\"v3\"` when `electronUpdaterCompatibility` includes only electron-updater 7 and later, else `\"v2\"`, with a build\n  warning.\n- `\"v3\"`: a binary block map that electron-updater fetches in parts with HTTP `Range` requests (only the parts that changed\n  since the installed version), with finer blocks for stored members such as an uncompressed `app.asar`. Needs electron-updater\n  7 or later: with an `electronUpdaterCompatibility` that includes earlier versions, the build fails.\n- `\"v2\"`: the gzipped JSON block map every electron-updater version reads, downloaded in full on every update; the package and\n  block map are the same as electron-builder 26 wrote.\n- `\"latest\"`: the newest format the `electronUpdaterCompatibility` range supports (currently the same as unset). A future\n  format may then cost one full download per user, as below.\n\nApps whose electron-updater cannot read a release's format download that update in full once; the next one is differential\nagain, or with an artifact name without `${version}` the one after it. Switching between `\"v2\"` and `\"v3\"` does not cost a\nfull download with electron-updater 7.0.0-alpha.14 and later: both formats cut the same blocks and hash them alike, so the\ncached map of one format is compared with the new map of the other. Only the bytes of a stored member (`nsis.differentialPackage: \"store-asar\"`),\nwhich `\"v3\"` cuts into finer blocks, are downloaded whole by that first update.\n\nCompressed bytes (a compressed app package, a zip) are cut into the same 8/16/32 KiB blocks in both formats, so `\"v3\"`\ndownloads the same data for them as `\"v2\"` (compressed data changes from a change up to the end of its compressed stream,\nwhatever the format); it only makes the map smaller (about 10 instead of 22 bytes per block) and fetched in parts.\n\nBlock maps embedded in an artifact (AppImage, the NSIS web installer's app package) are always `\"v2\"`.\nSee [the v27 notes](https://www.electron.build/docs/migration/v27-build-changes#block-map-format-follows-electronupdatercompatibility)."
+    },
     "buildNumber": {
       "description": "The build number.\n\nMaps to the `--iteration` flag for FPM-based Linux targets and is appended to the version\nstring in `CFBundleVersion` (macOS) and `FileVersion` (Windows) when {@link buildVersion} is\nnot set explicitly.\n\nIf not set, falls back to the first defined environment variable among:\n`BUILD_NUMBER`, `TRAVIS_BUILD_NUMBER`, `APPVEYOR_BUILD_NUMBER`, `CIRCLE_BUILD_NUM`,\n`BUILD_BUILDNUMBER`, `CI_PIPELINE_IID`.",
       "type": [
@@ -10249,7 +10372,8 @@
       "description": "The electron locales to keep. By default, all Electron locales used as-is."
     },
     "electronUpdaterCompatibility": {
-      "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
+      "default": ">=7",
+      "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range: the\nelectron-updater versions the installed apps ship, which have to read the update files this build writes. It selects the\n`.blockmap` format (see `blockmap`), and the build fails when the app's electron-updater does not satisfy it.",
       "type": [
         "null",
         "string"
@@ -10734,7 +10858,7 @@
           "type": "null"
         }
       ],
-      "description": "Pinned versions of the binary toolsets electron-builder downloads and uses internally.\n\nEach property selects a specific release of the corresponding tool bundle. Set a property to\n`\"0.0.0\"` to force the legacy bundle (pre-v27 behaviour). Leave a property unset (or set it to\n`\"latest\"`) to use the modern default (newest bundle) for that toolset.\n\nNote: Toolset versioning can drop intermediate releases (such as if a problem is discovered in a bundle). If you need to pin to a specific release, check the release notes for the toolset to ensure the version you specify is valid."
+      "description": "Pinned versions of the binary toolsets electron-builder downloads and uses internally.\n\nEach property selects a specific release of the corresponding tool bundle. Set a property to\n`\"0.0.0\"` to force the legacy bundle (pre-v27 behaviour). Leave a property unset (or set it to\n`\"latest\"`) to use the modern default (newest bundle) for that toolset.\n\nNote: Toolset versioning can drop intermediate releases (such as if a problem is discovered in a bundle). If you need to pin to a specific release, check the release notes for the toolset to ensure the version you specify is valid.\nToolsets, the versions offered for each, and what `latest` resolves to can be added, changed or removed in any electron-builder release (minor or patch), not only in a major release. (To address toolset stability, reported issues, adopt latest tooling versions, etc.)"
     },
     "updateManifest": {
       "anyOf": [

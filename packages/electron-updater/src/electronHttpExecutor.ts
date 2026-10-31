@@ -1,7 +1,8 @@
 import { createRequire } from "node:module"
 import { DownloadOptions, HttpExecutor, configureRequestOptions, configureRequestUrl } from "builder-util-runtime"
 
-const require = createRequire(import.meta.url)
+// import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
+const require = createRequire(import.meta.url ?? process.execPath)
 import type { AuthInfo } from "electron"
 import { RequestOptions } from "http"
 type Session = Electron.Session
@@ -93,7 +94,8 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
   /**
    * A redirect aborts `request` and `handler` sends a new one to the target: followRedirect() would resend every header,
    * while {@link HttpExecutor.prepareRedirectUrlOptions} leaves out the credential headers when the target is on another origin.
-   * Up to `maxRedirects` redirects are followed; `redirectCount` is the number already followed.
+   * Up to `maxRedirects` redirects are followed; `redirectCount` is the number already followed. A redirect to a protocol other than
+   * http(s) is rejected, and so is anything `handler` throws.
    */
   addRedirectHandlers(request: ClientRequest, options: RequestOptions, reject: (error: Error) => void, redirectCount: number, handler: (options: RequestOptions) => void): void {
     request.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
@@ -105,15 +107,18 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
         reject(this.createMaxRedirectError())
         return
       }
-      let redirectOptions: RequestOptions
+      // an event listener: a throw (from preparing the options, or from the handler, which sends the new request) would escape as an
+      // uncaught exception and the request would never settle
       try {
-        redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options)
+        const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options)
+        // net.request throws for another protocol, where Electron following the redirect itself fails the request
+        if (redirectOptions.protocol !== "http:" && redirectOptions.protocol !== "https:") {
+          throw new Error(`Cannot follow the redirect to the "${redirectOptions.protocol ?? ""}" protocol`)
+        }
+        handler(redirectOptions)
       } catch (e: unknown) {
-        // an event listener: a throw would escape as an uncaught exception
         reject(e instanceof Error ? e : new Error(`Cannot follow the redirect: ${String(e)}`))
-        return
       }
-      handler(redirectOptions)
     })
   }
 }

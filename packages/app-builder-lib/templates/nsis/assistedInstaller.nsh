@@ -1,4 +1,5 @@
 !include UAC.nsh
+!include WordFunc.nsh
 
 !ifndef INSTALL_MODE_PER_ALL_USERS
   !include multiUserUi.nsh
@@ -11,7 +12,38 @@
   !endif
 
   !ifmacrodef licensePage
-    !insertmacro skipPageIfUpdated
+    # Skip only a license accepted in the outer instance, not an .onInit elevation.
+    # Back must still reach it, otherwise NSIS closes the installer when all earlier pages are skipped.
+    Var isLicensePageSkippedInInnerInstance
+    Var isAssistedLicenseAccepted
+
+    Function assistedLicensePagePre
+      ${if} ${isUpdated}
+        Abort
+      ${endif}
+
+      ${if} ${UAC_IsInnerInstance}
+      ${andIf} $isLicensePageSkippedInInnerInstance != "1"
+        !insertmacro UAC_AsUser_GetGlobalVar $isAssistedLicenseAccepted
+        ${if} $isAssistedLicenseAccepted == "1"
+          StrCpy $isLicensePageSkippedInInnerInstance "1"
+          Abort
+        ${endif}
+      ${endif}
+    FunctionEnd
+
+    Function assistedLicensePageLeave
+      !ifdef MUI_PAGE_CUSTOMFUNCTION_LEAVE
+        Call "${MUI_PAGE_CUSTOMFUNCTION_LEAVE}"
+        !undef MUI_PAGE_CUSTOMFUNCTION_LEAVE
+      !endif
+      ${ifNot} ${UAC_IsInnerInstance}
+        StrCpy $isAssistedLicenseAccepted "1"
+      ${endif}
+    FunctionEnd
+
+    !define MUI_PAGE_CUSTOMFUNCTION_PRE assistedLicensePagePre
+    !define MUI_PAGE_CUSTOMFUNCTION_LEAVE assistedLicensePageLeave
     !insertmacro licensePage
   !endif
 
@@ -110,11 +142,15 @@
 
     # set installation mode to setting from a previous installation
     ReadRegStr $perMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
+    # a double quote is invalid in a path: drop the closing quote that an earlier installer kept from a quoted /D= argument
+    ${WordReplace} $perMachineInstallationFolder '"' "" "+" $perMachineInstallationFolder
     ${if} $perMachineInstallationFolder != ""
       StrCpy $hasPerMachineInstallation "1"
     ${endif}
 
     ReadRegStr $perUserInstallationFolder HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
+    # a double quote is invalid in a path: drop the closing quote that an earlier installer kept from a quoted /D= argument
+    ${WordReplace} $perUserInstallationFolder '"' "" "+" $perUserInstallationFolder
     ${if} $perUserInstallationFolder != ""
       StrCpy $hasPerUserInstallation "1"
     ${endif}

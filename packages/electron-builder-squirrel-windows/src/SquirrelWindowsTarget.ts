@@ -1,5 +1,5 @@
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
-import { getRceditBundle, waitForPackWork, withToolsetLock, WineVmManager } from "app-builder-lib/internal"
+import { forceCodeSigningError, forceCodeSigningOverrideHint, getRceditBundle, waitForPackWork, withToolsetLock, WineVmManager } from "app-builder-lib/internal"
 import { InvalidConfigurationError, isEmptyOrSpaces, log, escapeForXml, prepareFixedNameWrite } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import * as fs from "fs"
@@ -19,6 +19,23 @@ export default class SquirrelWindowsTarget extends Target {
   ) {
     super("squirrel")
     this.options = packager.getOptionsForTarget<SquirrelWindowsOptions>("squirrelWindows")
+  }
+
+  /**
+   * Squirrel.Windows builds the MSI (`msi: true`) inside `--releasify`, around the Setup.exe it has just written, before electron-builder
+   * signs that Setup.exe: the installer the MSI carries is unsigned. That warns, and fails under forceCodeSigning.
+   */
+  checkMsiSigning(): void {
+    if (this.options.msi !== true) {
+      return
+    }
+    const problem =
+      "squirrelWindows.msi is true, and the MSI that Squirrel.Windows builds embeds Setup.exe before electron-builder signs it, so the installer inside the MSI is unsigned"
+    const remedy = "For a signed MSI, remove msi: true and add the msi target (win.target: msi), which electron-builder builds from the signed app."
+    if (this.packager.forceCodeSigning) {
+      throw forceCodeSigningError(`forceCodeSigning is enabled, but ${problem}. ${remedy} Or pass ${forceCodeSigningOverrideHint(this.packager)} to build it as it is.`)
+    }
+    log.once("squirrel-msi-unsigned-setup", this.packager).warn({ reason: problem }, `the Squirrel.Windows MSI embeds an unsigned Setup.exe. ${remedy}`)
   }
 
   private async prepareSignedVendorDirectory(): Promise<string> {
@@ -150,6 +167,7 @@ export default class SquirrelWindowsTarget extends Target {
   }
 
   async build(appOutDir: string, arch: Arch) {
+    this.checkMsiSigning()
     const packager = this.packager
     const version = packager.appInfo.version
     const sanitizedName = sanitizeFileName(this.appName)
@@ -234,13 +252,16 @@ export default class SquirrelWindowsTarget extends Target {
     return sanitizeFileName(name)
   }
 
-  private select7zipArch(vendorDirectory: string) {
+  private select7zipArch(vendorDirectory: string, platform: NodeJS.Platform = process.platform, hostArch: string = os.arch()) {
     // https://github.com/electron/windows-installer/blob/main/script/select-7z-arch.js
     // Even if we're cross-compiling for a different arch like arm64,
     // we still need to use the 7-Zip executable for the host arch.
+    // On macOS and Linux, Squirrel runs 7z.exe under Wine, which (like rcedit above) needs the x64 build:
+    // Wine on Apple Silicon only runs x64 code through Rosetta, and the other vendor exes already need an
+    // x86-capable Wine on arm64 Linux, so a native arm64 7-Zip is only picked on arm64 Windows.
     // When arch-specific variants aren't present (vendor bundle ships a pre-selected 7z.exe),
     // skip the copy — the bundle's 7z.exe is already correct.
-    const resolvedArch = os.arch()
+    const resolvedArch = platform === "win32" ? hostArch : "x64"
     const archExe = path.join(vendorDirectory, `7z-${resolvedArch}.exe`)
     const archDll = path.join(vendorDirectory, `7z-${resolvedArch}.dll`)
     if (fs.existsSync(archExe)) {
@@ -274,7 +295,7 @@ export default class SquirrelWindowsTarget extends Target {
       }
 
       if (iconUrl == null) {
-        throw new InvalidConfigurationError("squirrelWindows.iconUrl is not specified, please see https://www.electron.build/squirrel-windows#SquirrelWindowsOptions-iconUrl")
+        throw new InvalidConfigurationError("squirrelWindows.iconUrl is not specified, please see https://www.electron.build/docs/squirrel-windows#iconurl")
       }
     }
 

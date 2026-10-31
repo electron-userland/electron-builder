@@ -132,7 +132,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
       const headers = isSameOriginAsApi && Object.keys(authHeaders).length ? authHeaders : undefined
 
       try {
-        const result = await this.httpRequest(channelFileUrl, headers, cancellationToken)
+        const result = await this.channelFileRequest(channelFileUrl, headers, cancellationToken)
         if (!result) {
           throw newError(`Empty response from ${channelFileUrl}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
         }

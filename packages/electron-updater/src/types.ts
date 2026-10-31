@@ -18,6 +18,10 @@ export interface Logger {
   debug?(message: string): void
 }
 
+export interface NonThrowableLogger extends Logger {
+  debug(message: string): void
+}
+
 /**
  * When a downloaded update is automatically installed.
  * - `"onQuit"` — install on app quit by spawning the installer while the app exits (the historical `autoInstallOnAppQuit = true` behavior).
@@ -41,8 +45,9 @@ export interface QuitAndInstallOptions {
   isForceRunAfter?: boolean
   /**
    * Quit WITHOUT spawning the installer and persist the downloaded update for installation on the next application
-   * launch instead (same deferred flow as `autoInstallEvent: "onNextLaunch"`, but for a single call). `isSilent` and
-   * `isForceRunAfter` are ignored when set. Not applicable for macOS (Squirrel.Mac stages updates natively).
+   * launch instead (same deferred flow as `autoInstallEvent: "onNextLaunch"`, but for a single call): the next launch
+   * installs it automatically with the default `autoInstallEvent` too; with `"manual"`, call `installPendingUpdateIfAvailable()`.
+   * `isSilent` and `isForceRunAfter` are ignored when set. Not applicable for macOS (Squirrel.Mac stages updates natively).
    * @default false
    */
   waitUntilNextLaunch?: boolean

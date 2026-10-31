@@ -224,7 +224,7 @@ describe("compute7zCompressArgs", { concurrent: false }, () => {
   })
 
   test("differential-aware archives pin a 4 MB LZMA2 block and keep the BCJ filter", ({ expect }) => {
-    const args = compute7zCompressArgs("7z", configureDifferentialAwareArchiveOptions({ installTimeDecodable: true }))
+    const args = compute7zCompressArgs("7z", configureDifferentialAwareArchiveOptions({ installTimeDecodable: true }, true))
     expect(args).toContain("-m0=LZMA2:d=1m:c=4m")
     expect(args).toContain("-mf=BCJ")
     expect(args).toContain("-ms=off")
@@ -573,7 +573,7 @@ describe("archive() storedPaths", { concurrent: false }, () => {
   })
 
   test("append pass leaves the compressed pass's packed streams byte-identical with the NSIS options", async ({ expect, tmpDir }) => {
-    const options = configureDifferentialAwareArchiveOptions({ installTimeDecodable: true })
+    const options = configureDifferentialAwareArchiveOptions({ installTimeDecodable: true }, true)
     const storedStart = await expectCompressedPassUndisturbed(expect, await tmpDir.createTempDir(), appFilesWithExe, options)
     // -mf=BCJ puts every compressed folder in the BCJ group; the Copy member's no-filter group sorts first.
     expect(storedStart).toBe(32)
@@ -663,9 +663,12 @@ describe("archive() LZMA2 block size", () => {
     }
     const src = await makeSrcDir(tmpDirPath, { "data.txt": parts.join("") })
 
-    const pinned = configureDifferentialAwareArchiveOptions({
-      installTimeDecodable: true,
-    })
+    const pinned = configureDifferentialAwareArchiveOptions(
+      {
+        installTimeDecodable: true,
+      },
+      true
+    )
     const unpinned: ArchiveOptions = { ...pinned, blockSize: undefined }
     const pinned1 = await pack7z(src, path.join(tmpDirPath, "pinned-1.7z"), pinned, 1)
     const pinned4 = await pack7z(src, path.join(tmpDirPath, "pinned-4.7z"), pinned, 4)

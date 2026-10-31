@@ -210,6 +210,28 @@ describe("default locations", () => {
     expect(defaultExecutableLocations("powershell", "win32")).toEqual(["C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"])
   })
 
+  // process.env keeps the casing a variable was set with, which on some Windows hosts is SYSTEMROOT rather than SystemRoot
+  test("of Windows PowerShell and PowerShell 7 read SystemRoot and ProgramFiles in any casing", ({ expect }) => {
+    for (const name of ["SystemRoot", "windir", "ProgramFiles"]) {
+      vi.stubEnv(name, undefined)
+    }
+    vi.stubEnv("SYSTEMROOT", "E:\\WinNT")
+    vi.stubEnv("PROGRAMFILES", "F:\\Programs")
+    expect(defaultExecutableLocations("powershell", "win32")).toEqual(["E:\\WinNT\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"])
+    expect(defaultExecutableLocations("pwsh", "win32")).toEqual(["F:\\Programs\\PowerShell\\7\\pwsh.exe"])
+  })
+
+  test("of Windows PowerShell are unavailable without SystemRoot and windir, and a configured location does not need them", ({ expect }) => {
+    for (const name of ["SystemRoot", "SYSTEMROOT", "windir"]) {
+      vi.stubEnv(name, undefined)
+    }
+    expect(configError(() => resolveExecutable("powershell", null, "win32")).message).toContain("powershell has no default install location on win32 (SystemRoot is not set)")
+    // the configured location replaces the defaults, which are not computed: only its file is looked for
+    expect(configError(() => resolveExecutable("powershell", { powershell: "file:///D:/Tools/missing/powershell.exe" }, "win32")).message).toContain(
+      'none of the locations in toolsets.executables.powershell is an executable file on this machine (tried "D:\\Tools\\missing\\powershell.exe")'
+    )
+  })
+
   test("of a Windows program are unavailable when the environment variable is not absolute, which the error says", ({ expect }) => {
     for (const value of ["Program Files", "\\Program Files", "\\\\server\\share"]) {
       vi.stubEnv("ProgramFiles", value)
@@ -242,7 +264,7 @@ describe("default locations", () => {
 
   test("of the Linux tools, snapcraft, Mono, Wine, pwsh and prlctl, in PATH order", ({ expect }) => {
     expect(defaultExecutableLocations("lzip", "linux")).toEqual(["/usr/bin/lzip", "/usr/local/bin/lzip"])
-    // macOS uses the linuxToolsMac toolset
+    // macOS uses the archive toolset
     expect(defaultExecutableLocations("lzip", "darwin")).toEqual([])
     expect(defaultExecutableLocations("flatpak-builder", "linux")).toEqual(["/usr/bin/flatpak-builder", "/usr/local/bin/flatpak-builder"])
     expect(defaultExecutableLocations("snapcraft", "linux")).toEqual(["/snap/bin/snapcraft", "/usr/bin/snapcraft"])
@@ -460,5 +482,32 @@ describe("Packager", () => {
     const build = vi.spyOn(packager as unknown as BuildStep, "buildWithValidatedConfig")
     await expect(packager.build()).rejects.toThrow(`"/opt/mono/bin/mono" is a plain path`)
     expect(build).not.toHaveBeenCalled()
+  })
+})
+
+// Windows PowerShell of the build machine comes from toolsets.executables (Executables), so that an explicit location is used as is;
+// windowsPowerShellPath (builder-util-runtime) locates it from SystemRoot on the end user's machine, for electron-updater only
+describe("windowsPowerShellPath", () => {
+  test("is used by builder-util-runtime and electron-updater only, not by the build-time packages", async ({ expect }) => {
+    const packagesDir = path.resolve(__dirname, "../../packages")
+    const runtimePackages = new Set(["builder-util-runtime", "electron-updater"])
+    const scanned: Array<string> = []
+    const users: Array<string> = []
+    for (const pkg of await fs.readdir(packagesDir, { withFileTypes: true })) {
+      if (!pkg.isDirectory() || runtimePackages.has(pkg.name)) {
+        continue
+      }
+      const srcDir = path.join(packagesDir, pkg.name, "src")
+      const files = await fs.readdir(srcDir, { recursive: true }).catch(() => [])
+      for (const file of files.filter(it => /\.[cm]?[jt]sx?$/.test(it))) {
+        scanned.push(path.join(pkg.name, "src", file))
+        if (/\bwindowsPowerShellPath\b/.test(await fs.readFile(path.join(srcDir, file), "utf8"))) {
+          users.push(path.join(pkg.name, "src", file))
+        }
+      }
+    }
+    expect(scanned).toContain(path.join("app-builder-lib", "src", "codeSign", "win", "authenticodeSignature.ts"))
+    expect(scanned).toContain(path.join("builder-util", "src", "executables.ts"))
+    expect(users).toEqual([])
   })
 })

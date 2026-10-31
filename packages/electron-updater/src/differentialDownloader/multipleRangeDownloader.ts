@@ -1,7 +1,7 @@
 import { CancellationError, createHttpError, newError, safeGetHeader } from "builder-util-runtime"
 import { IncomingMessage, RequestOptions } from "http"
 import { Writable } from "stream"
-import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter.js"
+import { copyData, DataSplitter, parseMultipartBoundary, PartListDataTask } from "./DataSplitter.js"
 import { DifferentialDownloader } from "./DifferentialDownloader.js"
 import { Operation, OperationKind } from "./downloadPlanBuilder.js"
 
@@ -10,6 +10,38 @@ export const ERR_MULTIPLE_RANGES_NOT_SUPPORTED = "ERR_UPDATER_MULTIPLE_RANGES_NO
 
 // 400 Bad Request (Google Cloud Storage: "Multiple ranges are not supported"), 416 Range Not Satisfiable, 501 Not Implemented (GitHub release assets)
 const MULTIPLE_RANGES_REJECTED_STATUS_CODES = new Set([400, 416, 501])
+
+/**
+ * Maximum number of DOWNLOAD ranges packed into one `multipart/byteranges` request. Apache's `MaxRanges`
+ * default is 200 (more → a plain 200 response with the whole file, which fails the multipart content-type
+ * check), and at ~19 B per range more than ~400–500 ranges push the `Range` header alone past the 8 KB
+ * request-header limits of nginx and Apache (HTTP 400). Both failures degrade to a full download.
+ */
+export const MAX_RANGES_PER_REQUEST = 200
+
+/** Maximum number of operations (COPY + DOWNLOAD) handled by one request/batch. */
+export const MAX_TASKS_PER_REQUEST = 1000
+
+/**
+ * Returns the exclusive end index of the batch starting at `start`: at most `maxTasks` operations and at
+ * most `maxRanges` DOWNLOAD operations. COPY operations following the last DOWNLOAD of a batch stay in it
+ * (they cost nothing on the wire), the batch is cut right before the DOWNLOAD that would exceed the cap.
+ */
+export function computeBatchEnd(tasks: Array<Operation>, start: number, maxRanges: number = MAX_RANGES_PER_REQUEST, maxTasks: number = MAX_TASKS_PER_REQUEST): number {
+  const limit = Math.min(tasks.length, start + maxTasks)
+  let rangeCount = 0
+  let end = start
+  while (end < limit) {
+    if (tasks[end].kind === OperationKind.DOWNLOAD) {
+      if (rangeCount >= maxRanges) {
+        break
+      }
+      rangeCount++
+    }
+    end++
+  }
+  return end
+}
 
 export function executeTasksUsingMultipleRangeRequests(
   differentialDownloader: DifferentialDownloader,
@@ -27,13 +59,13 @@ export function executeTasksUsingMultipleRangeRequests(
       return
     }
 
-    const nextOffset = taskOffset + 1000
+    const nextOffset = computeBatchEnd(tasks, taskOffset)
     doExecuteTasks(
       differentialDownloader,
       {
         tasks,
         start: taskOffset,
-        end: Math.min(tasks.length, nextOffset),
+        end: nextOffset,
         oldFileFd,
       },
       out,
@@ -116,11 +148,16 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
     // Hosts that serve only one range per request answer a multi-range request with an error (GitHub release assets: 501,
     // GCS: 400), the whole file (S3: 200) or a single coalesced part. Stop reading and let the caller retry range by range.
     const contentType = safeGetHeader(response, "content-type")
-    const m = statusCode === 206 ? /^multipart\/.+?\s*;\s*boundary=(?:"([^"]+)"|([^\s";]+))\s*$/i.exec(contentType) : null
-    if (m == null) {
+    const boundary = statusCode === 206 ? parseMultipartBoundary(contentType) : null
+    if (boundary == null) {
       response.destroy()
       request.abort()
-      reject(newError(`Server does not support multiple ranges in one request (status ${statusCode}, Content-Type "${contentType}")`, ERR_MULTIPLE_RANGES_NOT_SUPPORTED))
+      reject(
+        newError(
+          `Server does not support multiple ranges in one request (status ${statusCode}, Content-Type "${String(contentType).substring(0, 200)}")`,
+          ERR_MULTIPLE_RANGES_NOT_SUPPORTED
+        )
+      )
       return
     }
 
@@ -142,7 +179,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       out,
       options,
       partIndexToTaskIndex,
-      m[1] || m[2],
+      boundary,
       partIndexToLength,
       onBatchFinished,
       grandTotalBytes,
