@@ -2,6 +2,8 @@ import {
   ApiRequestOptions,
   CancellationToken,
   configureRequestUrl,
+  CrossOriginHeaders,
+  DEFAULT_CROSS_ORIGIN_HEADERS,
   DEFAULT_MAX_UPDATE_INFO_SIZE,
   HttpExecutor,
   newError,
@@ -27,10 +29,10 @@ export interface ProviderRuntimeOptions {
   executor: ElectronHttpExecutor
 
   /**
-   * Called when an update info request (e.g. a channel file) goes to another origin than `Provider.feedBaseUrl` and so is sent
-   * without the request headers `headerNames`, the ones off the cross-origin allowlist (names only, never values). The updater warns about it once.
+   * Chooses the request headers an update info request (e.g. a channel file) on another origin than `Provider.feedBaseUrl` gets
+   * (`AppUpdater.crossOriginHeaders`); without it, `DEFAULT_CROSS_ORIGIN_HEADERS`.
    */
-  onCrossOriginHeadersRemoved?: (url: URL, feedBaseUrl: URL, headerNames: Array<string>) => void
+  crossOriginHeaders?: CrossOriginHeaders
 }
 
 // Shared by the GitHub/GitLab/PrivateGitHub providers when a release channel file (e.g. latest.yml) 404s.
@@ -88,9 +90,9 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 
   /**
-   * Base URL of the update feed: the request headers off the cross-origin allowlist (every one but the likes of Accept, User-Agent and
-   * Range, as on a cross-origin redirect) are only sent to download URLs, and to the URLs of the provider's own update info requests
-   * (e.g. the channel file), on its origin. `null` sends the request headers to every URL.
+   * Base URL of the update feed: the request headers other than the cross-origin headers (`AppUpdater.crossOriginHeaders`, by default the
+   * likes of Accept, User-Agent and Range, as on a cross-origin redirect) are only sent to download URLs, and to the URLs of the provider's
+   * own update info requests (e.g. the channel file), on its origin. `null` sends the request headers to every URL.
    * The default, `undefined`, means not declared: a download with such headers (from `requestHeaders` / `addAuthHeader`) then fails
    * with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, so a custom provider used with credentials or custom headers must override this getter.
    */
@@ -148,16 +150,14 @@ export abstract class Provider<T extends UpdateInfo> {
 
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): ApiRequestOptions {
     const result: ApiRequestOptions = {}
-    // the same feed-origin rule and cross-origin allowlist as for downloads and redirects: e.g. a channel file on another origin gets only
-    // the allowlisted request headers (such as Accept and User-Agent)
+    // the same feed-origin rule and cross-origin headers as for downloads and redirects: e.g. a channel file on another origin gets only
+    // the cross-origin request headers (by default the likes of Accept and User-Agent)
     const feedBaseUrl = this.feedBaseUrl
     let requestHeaders = this.requestHeaders
-    if (requestHeaders != null && feedBaseUrl != null && HttpExecutor.isCrossOrigin(feedBaseUrl, url)) {
-      const headerNames = HttpExecutor.sensitiveHeaderNames(requestHeaders)
-      requestHeaders = HttpExecutor.removeCrossOriginSensitiveHeaders(requestHeaders, feedBaseUrl, url)
-      if (headerNames.length !== 0) {
-        this.runtimeOptions.onCrossOriginHeadersRemoved?.(url, feedBaseUrl, headerNames)
-      }
+    if (requestHeaders != null && feedBaseUrl != null) {
+      const crossOriginHeaders = this.runtimeOptions.crossOriginHeaders
+      const allowed = crossOriginHeaders == null ? DEFAULT_CROSS_ORIGIN_HEADERS : crossOriginHeaders(DEFAULT_CROSS_ORIGIN_HEADERS)
+      requestHeaders = HttpExecutor.keepCrossOriginHeaders(requestHeaders, feedBaseUrl, url, allowed)
     }
     if (requestHeaders == null) {
       if (headers != null) {

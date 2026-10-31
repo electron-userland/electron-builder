@@ -218,7 +218,7 @@ export interface AbortableRequest {
 /**
  * Requests `range` (a `Range` header value) from `target`, whose options ask for manual redirects (see
  * DifferentialDownloader.createRequestOptions). The executor's redirect handler aborts a redirected request and it is sent
- * again to the redirect target, without the credential headers when the target is on another origin, up to the executor's
+ * again to the redirect target, with only the executor's cross-origin headers when the target is on another origin, up to the executor's
  * redirect limit. The redirect target becomes the `target`, so a caller that passes the same `target` again requests the next
  * range from the redirect target. `onResponse` gets the request that was answered.
  *

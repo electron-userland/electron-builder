@@ -1,8 +1,8 @@
 import { NodeHttpExecutor, serializeToYaml, TmpDir } from "builder-util"
-import { AllPublishOptions, BlockMap, DownloadOptions } from "builder-util-runtime"
+import { AllPublishOptions, BlockMap, type CrossOriginHeaders, DownloadOptions } from "builder-util-runtime"
 import { AppUpdater, NsisUpdater, type NonThrowableLogger, type VerifyUpdateFile, type VerifyUpdateFileResult } from "electron-updater"
 import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/src/AppUpdater"
-import { type CrossOriginRedirectListener, ElectronHttpExecutor } from "electron-updater/src/electronHttpExecutor"
+import { ElectronHttpExecutor } from "electron-updater/src/electronHttpExecutor"
 import { createHash } from "crypto"
 import { EventEmitter } from "events"
 import fsExtra from "fs-extra"
@@ -320,9 +320,9 @@ export class FakeElectronHttpExecutor extends ElectronHttpExecutor {
 
   constructor(
     private readonly answer: (url: string, headers: OutgoingHttpHeaders) => FakeNetAnswer,
-    crossOriginRedirectListener?: CrossOriginRedirectListener
+    crossOriginHeaders?: CrossOriginHeaders
   ) {
-    super(undefined, crossOriginRedirectListener)
+    super(undefined, crossOriginHeaders)
   }
 
   // the return type of the overridden method is Electron's ClientRequest, which the fake does not implement

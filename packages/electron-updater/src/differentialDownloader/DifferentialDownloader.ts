@@ -71,7 +71,7 @@ export abstract class DifferentialDownloader {
   }
 
   createRequestOptions(): RequestOptions {
-    // requestRange follows a redirect itself and keeps only the cross-origin allowlist of headers when the target is on another origin
+    // requestRange follows a redirect itself and keeps only the executor's cross-origin headers when the target is on another origin
     const result: RequestOptions & { redirect: "manual" } = {
       headers: {
         ...this.options.requestHeaders,

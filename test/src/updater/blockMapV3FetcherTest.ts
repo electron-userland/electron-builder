@@ -497,6 +497,23 @@ describe("blockMapV3Fetcher", () => {
     }
   })
 
+  test("a cross-origin redirect sends on the headers of the executor's crossOriginHeaders", async () => {
+    const NEW = editedMap("redirect-listed")
+    cdn.files.set("cdn/new.blockmap", NEW)
+    const result = await fetchWith("new.blockmap", OLD, false, {
+      requestHeaders: { authorization: "token secret", "x-custom": "listed" },
+      httpExecutor: new TestNodeHttpExecutor(defaults => [...defaults, "x-custom"]),
+      setUp: () => server.redirects.set("new.blockmap", new URL("cdn/new.blockmap", cdn.url).href),
+    })
+    expect(result.buffer.equals(NEW)).toBe(true)
+
+    expect(cdn.headers.length).toBeGreaterThan(1)
+    for (const headers of cdn.headers) {
+      expect(headers.authorization).toBeUndefined()
+      expect(headers["x-custom"]).toBe("listed")
+    }
+  })
+
   test("a malformed Location rejects the fetch instead of throwing from the response listener", async () => {
     const pending = fetchWith("new.blockmap", OLD, false, { setUp: () => server.redirects.set("new.blockmap", "http://[::1") })
     await expect(pending).rejects.toThrow(/Invalid URL/)

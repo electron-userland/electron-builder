@@ -131,7 +131,7 @@ class BlockMapV3Fetcher {
   constructor(private readonly options: BlockMapV3FetchOptions) {
     const maxBlockMapSize = options.maxBlockMapSize
     this.maxSize = maxBlockMapSize != null && maxBlockMapSize > 0 ? Math.min(maxBlockMapSize, MAX_BLOCK_MAP_SIZE) : MAX_BLOCK_MAP_SIZE
-    // Electron's net reports redirects as events instead of following them, so a cross-origin one keeps only the cross-origin allowlist of headers
+    // Electron's net reports redirects as events instead of following them, so a cross-origin one keeps only the executor's cross-origin headers
     const requestOptions: RequestOptions & { redirect?: "manual" } = {
       headers: {
         ...options.requestHeaders,
@@ -403,7 +403,7 @@ class BlockMapV3Fetcher {
           // a response listener: a throw (a malformed Location) would escape as an uncaught exception and never settle the request
           let redirectOptions: RequestOptions
           try {
-            redirectOptions = prepareRedirect(new URL(location, this.currentUrl), requestOptions)
+            redirectOptions = prepareRedirect(new URL(location, this.currentUrl), requestOptions, httpExecutor.allowedCrossOriginHeaders())
           } catch (e: unknown) {
             reject(e instanceof Error ? e : new Error(`Cannot follow the redirect: ${String(e)}`))
             return
@@ -444,8 +444,8 @@ class BlockMapV3Fetcher {
           })
         })
       })
-      // Electron's net: the redirect arrives as an event; the executor aborts the request, keeps only the cross-origin allowlist of
-      // headers on a cross-origin target, counts the redirect against its limit and hands over the options of the new request
+      // Electron's net: the redirect arrives as an event; the executor aborts the request, keeps only its cross-origin headers on a
+      // cross-origin target, counts the redirect against its limit and hands over the options of the new request
       httpExecutor.addRedirectHandlers(request, requestOptions, reject, redirectCount, followRedirect)
       httpExecutor.addErrorAndTimeoutHandlers(request, reject)
       onCancel(() => request.abort())
@@ -453,7 +453,7 @@ class BlockMapV3Fetcher {
     })
   }
 
-  /** Later ranges go directly to the redirect target (e.g. GitHub → CDN), keeping only the cross-origin allowlist of headers if it is cross-origin. */
+  /** Later ranges go directly to the redirect target (e.g. GitHub → CDN), keeping only the cross-origin headers if it is cross-origin. */
   private retarget(redirectOptions: RequestOptions): void {
     const headers: OutgoingHttpHeaders = { ...redirectOptions.headers }
     delete headers.range
@@ -463,12 +463,12 @@ class BlockMapV3Fetcher {
   }
 }
 
-/** Options for a request to `target`, redirected from `options`: keeps only the cross-origin allowlist of headers when `target` is on another origin. */
-function prepareRedirect(target: URL, options: RequestOptions): RequestOptions {
+/** Options for a request to `target`, redirected from `options`: keeps only the `allowedCrossOriginHeaders` when `target` is on another origin. */
+function prepareRedirect(target: URL, options: RequestOptions, allowedCrossOriginHeaders: ReadonlyArray<string> | null): RequestOptions {
   if (target.protocol !== "http:" && target.protocol !== "https:") {
     throw new Error(`Cannot follow the redirect to the "${target.protocol}" protocol`)
   }
-  return HttpExecutor.prepareRedirectUrlOptions(target.href, options)
+  return HttpExecutor.prepareRedirectUrlOptions(target.href, options, allowedCrossOriginHeaders)
 }
 
 function urlOf(options: RequestOptions): URL {

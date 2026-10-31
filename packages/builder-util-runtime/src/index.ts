@@ -18,6 +18,8 @@ export {
   configureRequestOptionsFromUrl,
   configureRequestUrl,
   createHttpError,
+  CrossOriginHeaders,
+  DEFAULT_CROSS_ORIGIN_HEADERS,
   DigestTransform,
   DownloadOptions,
   HttpError,
