@@ -10,7 +10,8 @@ import Module from "node:module"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
 import { describe, test } from "vitest"
-import { blockMapOf, FakeElectronHttpExecutor, FakeNetAnswer } from "../helpers/updaterTestUtil.js"
+import { blockMapOf, FakeElectronHttpExecutor, FakeNetAnswer, tuneTestUpdater } from "../helpers/updaterTestUtil.js"
+import { TestAppAdapter } from "../helpers/TestAppAdapter.js"
 
 // electron-updater 7 sends every update request (feed, downloads, blockmaps, differential ranges and every redirect) over https,
 // except to a loopback host, unless the app sets allowInsecureFeed.
@@ -181,6 +182,32 @@ describe("AppUpdater.allowInsecureFeed", () => {
     } finally {
       moduleInternals._load = load
     }
+  })
+})
+
+// The channel file is fetched through Provider.channelFileRequest (size limited, credential headers kept to the feed origin): that request
+// and its redirects go through the same executor check.
+describe("channel file request of an update check", () => {
+  async function checkForUpdates(tmpDir: TmpDir, feedUrl: string, executor: FakeElectronHttpExecutor): Promise<unknown> {
+    const updater = new NsisUpdater(null, new TestAppAdapter("1.0.0", await tmpDir.getTempDir({ prefix: "insecure-feed-app" })))
+    tuneTestUpdater(updater)
+    updater.autoDownload = false
+    ;(updater as any).httpExecutor = executor
+    updater.setFeedURL({ provider: "generic", url: feedUrl })
+    return await updater.checkForUpdates()
+  }
+
+  test("fails for an http feed before any request is sent", async ({ tmpDir, expect }) => {
+    const executor = createExecutor()
+    await expect(checkForUpdates(tmpDir, "http://feed.example.com/updates", executor)).rejects.toMatchObject(INSECURE_FEED)
+    expect(executor.sent).toEqual([])
+  })
+
+  test("fails when the channel file of an https feed is redirected to http", async ({ tmpDir, expect }) => {
+    const channelUrl = "https://feed.example.com/updates/latest.yml"
+    const executor = new FakeElectronHttpExecutor(url => (url.startsWith(channelUrl) ? { location: "http://bucket.example.net/latest.yml" } : { statusCode: 200, body: BODY }))
+    await expect(checkForUpdates(tmpDir, "https://feed.example.com/updates", executor)).rejects.toMatchObject(INSECURE_FEED)
+    expect(executor.sent.map(it => it.url.split("?")[0])).toEqual([channelUrl])
   })
 })
 
