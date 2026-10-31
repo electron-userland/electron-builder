@@ -80,7 +80,7 @@ electron-builder now sets `isAdminRightsRequired: true` in the update info of ev
 
 ### Update credentials stay on the feed's origin {#update-credentials-stay-on-the-feeds-origin}
 
-**How you'll find out:** **Warns during the build** for a `generic` feed URL with a query string, plus a **migrate-schema advisory**. electron-updater **logs a warning at runtime** the first time it drops credentials.
+**How you'll find out:** **Warns during the build** for a `generic` feed URL with a query string, plus a **migrate-schema advisory**. electron-updater **logs a warning at runtime** the first time it drops request headers.
 
 electron-updater now sends the headers from `requestHeaders` / `addAuthHeader` other than the [cross-origin allowlist](#cross-origin-header-allowlist) — every header but the likes of `Accept`, `User-Agent` and `Range`, the same rule as on a cross-origin redirect — and the query string of the feed `url` only to the feed's origin. This applies to the generic, s3, spaces, r2, keygen, bitbucket, github and gitlab providers.
 
@@ -112,7 +112,7 @@ electron-updater 6 and builder-util-runtime 9 removed a fixed list of credential
 
 Every other header is dropped, as is a request's `auth` option. `Range` and the conditional headers stay, so differential downloads redirected to a CDN keep working.
 
-The same allowlist decides which headers electron-updater sends to a download, a channel file (`latest*.yml`) or another update info request on another origin than the update feed (see [Update credentials stay on the feed's origin](#update-credentials-stay-on-the-feeds-origin)): a custom header from `requestHeaders` now stays on the feed's origin like `Authorization`. A custom provider that does not extend a built-in one and whose downloads carry a header off the allowlist must declare `Provider.feedBaseUrl`, or `downloadUpdate()` fails with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`. Before, only credential headers from the fixed list required it.
+The same allowlist decides which headers electron-updater sends to a download, a channel file (`latest*.yml`) or another update info request on another origin than the update feed (see [Update credentials stay on the feed's origin](#update-credentials-stay-on-the-feeds-origin)): a custom header from `requestHeaders` now stays on the feed's origin like `Authorization`. So does `x-user-staging-id`, the per-install ID electron-updater adds to update info requests itself: a channel file on another origin, or the target of a redirect, no longer gets it, and no warning names it. A custom provider that does not extend a built-in one and whose downloads carry a header off the allowlist must declare `Provider.feedBaseUrl`, or `downloadUpdate()` fails with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`. Before, only credential headers from the fixed list required it.
 
 The unexported `addSensitiveRedirectHeader` function of builder-util-runtime, which added a header to the fixed list, is removed: every header off the allowlist is dropped without it.
 

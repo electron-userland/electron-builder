@@ -123,6 +123,7 @@ describe("download URLs chosen by the update manifest", () => {
     await foreign.write("x.yml", channelYml(INSTALLER_NAME))
     const updater = await createUpdater(feed.url)
     updater.autoDownload = false
+    updater.requestHeaders = { ...updater.requestHeaders, "Accept-Language": "de" }
 
     updater.channel = "beta"
     expect((await updater.checkForUpdates())!.isUpdateAvailable).toBe(true)
@@ -139,6 +140,7 @@ describe("download URLs chosen by the update manifest", () => {
     // the cross-origin allowlist, as on a redirect or a download: a custom header such as X-Tenant stays on the feed origin too
     expect(foreign.requests[0].headers.authorization).toBeUndefined()
     expect(foreign.requests[0].headers["x-tenant"]).toBeUndefined()
+    expect(foreign.requests[0].headers).toMatchObject({ "accept-language": "de" })
   })
 
   test("a channel file on another origin announces the dropped headers once per updater, by name only", async ({ tmpDir, expect }) => {
@@ -164,7 +166,8 @@ describe("download URLs chosen by the update manifest", () => {
     expect(notice).toContain(
       `sends the request headers from requestHeaders / addAuthHeader, other than an allowlist such as Accept, User-Agent and Range, only to the update feed's origin (${feed.url})`
     )
-    expect(notice).toContain(`X-Tenant, authorization not sent with the update info request to ${foreign.url}`)
+    // only the app's headers: not x-user-staging-id, which electron-updater adds itself
+    expect(notice).toContain(`(${feed.url}): X-Tenant, authorization not sent with the update info request to ${foreign.url}`)
     expect(notice).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin")
     for (const secret of ["Bearer", "feed-secret", "acme"]) {
       expect(notice).not.toContain(secret)
@@ -173,6 +176,29 @@ describe("download URLs chosen by the update manifest", () => {
     // once per updater instance: another updater announces it again
     await (await newUpdater()).checkForUpdates()
     expect(notices()).toHaveLength(2)
+  })
+
+  // x-user-staging-id is off the allowlist too, but the app did not set it: dropping it is not announced, as on a redirect
+  test("a channel file on another origin without app headers announces nothing and gets no staging id", async ({ tmpDir, expect }) => {
+    const feed = await serve(tmpDir)
+    const foreign = await serve(tmpDir)
+    await feed.write("beta.yml", channelYml(INSTALLER_NAME))
+    await foreign.write("x.yml", channelYml(INSTALLER_NAME))
+    const updater = await createNsisUpdater("1.0.0")
+    updater.updateConfigPath = await writeUpdateConfig({ provider: "generic", url: feed.url })
+    updater.autoDownload = false
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
+    updater.logger = logger
+
+    updater.channel = "beta"
+    expect((await updater.checkForUpdates())!.isUpdateAvailable).toBe(true)
+    expect(feed.requests[0].headers["x-user-staging-id"]).toEqual(expect.any(String))
+
+    updater.channel = `${foreign.url}/x`
+    expect((await updater.checkForUpdates())!.isUpdateAvailable).toBe(true)
+    expect(foreign.requests).toHaveLength(1)
+    expect(foreign.requests[0].headers["x-user-staging-id"]).toBeUndefined()
+    expect(logger.warn.mock.calls.map(it => String(it[0])).filter(it => it.includes("update info request"))).toEqual([])
   })
 })
 
