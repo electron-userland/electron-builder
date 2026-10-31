@@ -16,13 +16,33 @@ const debug = _debug("electron-builder")
 
 // ── Sensitive-data registries ────────────────────────────────────────────────
 
-// Normalise a header or field name: lowercase + strip all separators (- and _).
-// Shared by both registries so lookup is always separator-agnostic.
+// Normalise a field name: lowercase + strip all separators (- and _), so lookup is separator-agnostic.
 const normalizeName = (name: string): string => name.toLowerCase().replace(/[-_]/g, "")
 
-// HTTP header names (normalised) stripped on cross-origin redirects.
-// Stored normalised; lookup normalises the incoming key with normalizeName().
-const SENSITIVE_REDIRECT_HEADERS = new Set(["authorization", "proxyauthorization", "privatetoken", "xapikey", "xauthtoken", "xaccesstoken", "xgitlabtoken", "cookie", "xcsrftoken"])
+// The only request headers (lowercase names) sent on to another origin, by a cross-origin redirect or to a download URL on another
+// origin than the update feed: content negotiation, caching, conditional and range requests, and the description of a request body.
+// Any other header (Authorization, Cookie, a custom X-Api-Token...) may carry a credential for the original origin and is left out.
+// `range` keeps differential downloads working when the server redirects them to a CDN.
+const CROSS_ORIGIN_SAFE_HEADERS = new Set([
+  "accept",
+  "accept-encoding",
+  "accept-language",
+  "user-agent",
+  "cache-control",
+  "pragma",
+  "range",
+  "if-range",
+  "if-match",
+  "if-none-match",
+  "if-modified-since",
+  "if-unmodified-since",
+  "content-type",
+  "content-length",
+  "content-encoding",
+  "content-language",
+])
+
+const isCrossOriginSafeHeader = (name: string): boolean => CROSS_ORIGIN_SAFE_HEADERS.has(name.toLowerCase())
 
 // Substrings: a field name containing any of these (after normalization) is redacted.
 const SENSITIVE_FIELD_PATTERNS: string[] = ["token", "password", "secret", "authorization", "credential", "apikey", "passphrase", "auth"] as const
@@ -31,14 +51,6 @@ const SENSITIVE_FIELD_PATTERNS: string[] = ["token", "password", "secret", "auth
 // Intentionally greedy — "publicKey" is also stripped; over-stripping debug logs is
 // acceptable, under-stripping a credential is not.
 const SENSITIVE_FIELD_SUFFIXES: string[] = ["key"] as const
-
-/**
- * Register an additional HTTP header to strip on cross-origin redirects.
- * Intended for custom publishers (e.g. GenericPublisher with a non-standard auth header).
- */
-export function addSensitiveRedirectHeader(header: string): void {
-  SENSITIVE_REDIRECT_HEADERS.add(normalizeName(header))
-}
 
 /**
  * Register an additional substring pattern used by {@link safeStringifyJson} to
@@ -441,7 +453,16 @@ Please double check that your authentication token is correct. Due to security r
     })
   }
 
-  static prepareRedirectUrlOptions(redirectUrl: string, options: RequestOptions): RequestOptions {
+  /**
+   * Options for the request to `redirectUrl`, redirected from `options`. When the target is on another origin, only the headers on the
+   * cross-origin allowlist (such as Accept, User-Agent and Range) are kept and the `auth` option is dropped; `onDroppedHeaders`, when
+   * given, gets the names (never the values) of the dropped headers that had a value.
+   */
+  static prepareRedirectUrlOptions(
+    redirectUrl: string,
+    options: RequestOptions,
+    onDroppedHeaders?: (headerNames: Array<string>, originUrl: URL, targetUrl: URL) => void
+  ): RequestOptions {
     const newOptions = configureRequestOptionsFromUrl(redirectUrl, { ...options })
     // the target is hostname and port: Electron's net prefers `host` (where ElectronHttpExecutor moves a `Host` header) over them
     delete newOptions.host
@@ -455,19 +476,28 @@ Please double check that your authentication token is correct. Due to security r
 
     if (HttpExecutor.isCrossOriginRedirect(originalUrl, parsedRedirectUrl)) {
       if (debug.enabled) {
-        debug(`Cross-origin redirect (${originalUrl.host} → ${parsedRedirectUrl.host}): stripping sensitive headers`)
+        debug(`Cross-origin redirect (${originalUrl.host} → ${parsedRedirectUrl.host}): keeping only the cross-origin allowlist of headers`)
       }
+      // Node's `auth` option becomes a Basic Authorization header on the request, so it is a credential for the original origin too
+      delete newOptions.auth
+      const droppedNames: Array<string> = []
       for (const key of Object.keys(headers)) {
-        if (SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key))) {
-          delete (headers as Record<string, unknown>)[key]
+        if (!isCrossOriginSafeHeader(key)) {
+          if (headers[key] != null) {
+            droppedNames.push(key)
+          }
+          delete headers[key]
         }
+      }
+      if (droppedNames.length !== 0 && onDroppedHeaders != null) {
+        onDroppedHeaders(droppedNames, originalUrl, parsedRedirectUrl)
       }
     }
     return newOptions
   }
 
   /**
-   * `headers` without the credential-bearing ones stripped on cross-origin redirects (see {@link addSensitiveRedirectHeader})
+   * `headers` with only the ones on the cross-origin allowlist (such as Accept, User-Agent and Range, as on a cross-origin redirect)
    * when `targetUrl` is on another origin than `originUrl` (same rule as a redirect), else `headers` itself. Never mutates `headers`.
    */
   static removeCrossOriginSensitiveHeaders(headers: OutgoingHttpHeaders, originUrl: URL, targetUrl: URL): OutgoingHttpHeaders {
@@ -475,20 +505,20 @@ Please double check that your authentication token is correct. Due to security r
       return headers
     }
     if (debug.enabled) {
-      debug(`Cross-origin request (${originUrl.host} → ${targetUrl.host}): stripping sensitive headers`)
+      debug(`Cross-origin request (${originUrl.host} → ${targetUrl.host}): keeping only the cross-origin allowlist of headers`)
     }
     const result = deepAssign<OutgoingHttpHeaders>({}, headers)
     for (const key of Object.keys(result)) {
-      if (SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key))) {
+      if (!isCrossOriginSafeHeader(key)) {
         delete result[key]
       }
     }
     return result
   }
 
-  /** The names in `headers` of the credential-bearing headers stripped on cross-origin redirects (see {@link addSensitiveRedirectHeader}). */
+  /** The names in `headers` (with a value) of the headers not sent on to another origin: every one not on the cross-origin allowlist. */
   static sensitiveHeaderNames(headers: OutgoingHttpHeaders): Array<string> {
-    return Object.keys(headers).filter(key => headers[key] != null && SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key)))
+    return Object.keys(headers).filter(key => headers[key] != null && !isCrossOriginSafeHeader(key))
   }
 
   private static reconstructOriginalUrl(options: RequestOptions): URL {

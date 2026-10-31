@@ -75,6 +75,43 @@ describe("ElectronHttpExecutor redirects", () => {
   })
 })
 
+// A redirect to another origin sends on only the cross-origin allowlist of headers; the executor's listener gets the names of the others.
+describe("ElectronHttpExecutor cross-origin redirect headers", () => {
+  const HEADERS = { "X-Api-Token": "custom-secret", range: "bytes=0-99", accept: "*/*" }
+
+  function createListeningExecutor(target: string) {
+    const dropped: Array<[Array<string>, string, string]> = []
+    const executor = new FakeElectronHttpExecutor(
+      url => (url === FILE_URL ? { location: target } : { statusCode: 200, body: BODY }),
+      (names, origin, targetUrl) => dropped.push([names, origin.origin, targetUrl.origin])
+    )
+    return { executor, dropped }
+  }
+
+  test("a cross-origin redirect drops a custom header, keeps Range, and names the dropped header", async ({ tmpDir, expect }) => {
+    const { executor, dropped } = createListeningExecutor(TARGET_URL)
+    const destination = path.join(await tmpDir.createTempDir({ prefix: "electron-http-executor-redirect" }), "app.exe")
+    await executor.download(new URL(FILE_URL), destination, { headers: HEADERS, cancellationToken: new CancellationToken() })
+
+    expect(executor.sent.map(it => it.url)).toEqual([FILE_URL, TARGET_URL])
+    expect(executor.sent[0].headers).toMatchObject(HEADERS)
+    expect(executor.sent[1].headers).not.toHaveProperty("X-Api-Token")
+    expect(executor.sent[1].headers).toMatchObject({ range: "bytes=0-99", accept: "*/*" })
+    expect(dropped).toEqual([[["X-Api-Token"], "https://feed.example.com", "https://bucket.example.net"]])
+  })
+
+  test("a same-origin redirect keeps a custom header and names nothing", async ({ tmpDir, expect }) => {
+    const sameOrigin = "https://feed.example.com/other/app-1.1.0.exe"
+    const { executor, dropped } = createListeningExecutor(sameOrigin)
+    const destination = path.join(await tmpDir.createTempDir({ prefix: "electron-http-executor-redirect" }), "app.exe")
+    await executor.download(new URL(FILE_URL), destination, { headers: HEADERS, cancellationToken: new CancellationToken() })
+
+    expect(executor.sent.map(it => it.url)).toEqual([FILE_URL, sameOrigin])
+    expect(executor.sent[1].headers).toMatchObject(HEADERS)
+    expect(dropped).toEqual([])
+  })
+})
+
 // Electron reports only 301/302/303/307/308 as "redirect" events: a Location on any other response reaches the response listener
 // of a download, which follows it only for a 3xx status, and must fail the download (rather than throw from the listener) when it
 // cannot follow it.

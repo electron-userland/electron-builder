@@ -28,10 +28,14 @@ const GUARD_TIMEOUT = 10_000
 const INSECURE_FEED = { code: "ERR_UPDATER_INSECURE_FEED" }
 
 function createExecutor(redirects: Record<string, string> = {}, isInsecureFeedAllowed?: () => boolean): FakeElectronHttpExecutor {
-  return new FakeElectronHttpExecutor(url => {
-    const location = redirects[url]
-    return location == null ? { statusCode: 200, body: BODY } : { location }
-  }, isInsecureFeedAllowed)
+  return new FakeElectronHttpExecutor(
+    url => {
+      const location = redirects[url]
+      return location == null ? { statusCode: 200, body: BODY } : { location }
+    },
+    undefined,
+    isInsecureFeedAllowed
+  )
 }
 
 function apiRequestOptions(url: string, headers?: Record<string, string>): RequestOptions {

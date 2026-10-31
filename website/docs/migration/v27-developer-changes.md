@@ -166,7 +166,7 @@ These are documented on other pages:
 - **`afterPack` hooks on macOS:** with Electron 41+, the Electron Framework is patched and signed again ad hoc after `afterPack`. If you sign the app in `afterPack`, or change `app.asar` / `Info.plist` after it, see [the ASAR integrity digest](./v27-runtime-changes.md#macos-asar-integrity-digest).
 - **Custom Windows signing hooks** move to `win.sign.sign` ([config change](./v27-config-changes.md#custom-windows-signing-hooks-move-to-winsignsign)) and now need `win.sign.publisherName` ([build check](./v27-build-changes.md#windows-publishername-is-validated-against-the-signing-certificate)).
 - **Custom macOS signing functions** (`mac.sign: "./customSign.js"`) can no longer sit next to sibling signing options: see [macOS signing → `mac.sign`](./v27-config-changes.md#macos-signing-macsign).
-- **Custom electron-updater providers** that don't extend a built-in provider must override `Provider.feedBaseUrl` when used with credential headers: see [Update credentials stay on the feed's origin](./v27-runtime-changes.md#update-credentials-stay-on-the-feeds-origin).
+- **Custom electron-updater providers** that don't extend a built-in provider must override `Provider.feedBaseUrl` when used with credential or custom headers (any header off the [cross-origin allowlist](./v27-runtime-changes.md#cross-origin-header-allowlist)): see [Update credentials stay on the feed's origin](./v27-runtime-changes.md#update-credentials-stay-on-the-feeds-origin).
 
 ---
 

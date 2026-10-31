@@ -28,7 +28,7 @@ export interface ProviderRuntimeOptions {
 
   /**
    * Called when an update info request (e.g. a channel file) goes to another origin than `Provider.feedBaseUrl` and so is sent
-   * without the credential headers `headerNames` (names only, never values). The updater warns about it once.
+   * without the request headers `headerNames`, the ones off the cross-origin allowlist (names only, never values). The updater warns about it once.
    */
   onCrossOriginHeadersRemoved?: (url: URL, feedBaseUrl: URL, headerNames: Array<string>) => void
 }
@@ -88,11 +88,11 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 
   /**
-   * Base URL of the update feed: the credential-bearing request headers (the ones stripped on a cross-origin redirect) are only sent to
-   * download URLs, and to the URLs of the provider's own update info requests (e.g. the channel file), on its origin. `null` sends the
-   * request headers to every URL.
-   * The default, `undefined`, means not declared: a download with credential headers (from `requestHeaders` / `addAuthHeader`) then fails
-   * with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, so a custom provider used with credentials must override this getter.
+   * Base URL of the update feed: the request headers off the cross-origin allowlist (every one but the likes of Accept, User-Agent and
+   * Range, as on a cross-origin redirect) are only sent to download URLs, and to the URLs of the provider's own update info requests
+   * (e.g. the channel file), on its origin. `null` sends the request headers to every URL.
+   * The default, `undefined`, means not declared: a download with such headers (from `requestHeaders` / `addAuthHeader`) then fails
+   * with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, so a custom provider used with credentials or custom headers must override this getter.
    */
   get feedBaseUrl(): URL | null | undefined {
     return undefined
@@ -148,7 +148,8 @@ export abstract class Provider<T extends UpdateInfo> {
 
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): ApiRequestOptions {
     const result: ApiRequestOptions = {}
-    // the same feed-origin rule as for downloads: e.g. a channel file on another origin gets no credential headers
+    // the same feed-origin rule and cross-origin allowlist as for downloads and redirects: e.g. a channel file on another origin gets only
+    // the allowlisted request headers (such as Accept and User-Agent)
     const feedBaseUrl = this.feedBaseUrl
     let requestHeaders = this.requestHeaders
     if (requestHeaders != null && feedBaseUrl != null && HttpExecutor.isCrossOrigin(feedBaseUrl, url)) {

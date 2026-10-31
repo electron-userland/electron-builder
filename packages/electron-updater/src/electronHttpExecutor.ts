@@ -8,7 +8,8 @@ import { RequestOptions } from "http"
 type Session = Electron.Session
 type ClientRequest = Electron.ClientRequest
 
-export type LoginCallback = (username: string, password: string) => void
+/** Electron's `login` callback: called without credentials, it cancels the authentication. */
+export type LoginCallback = (username?: string, password?: string) => void
 export const NET_SESSION_NAME = "electron-updater"
 
 export function getNetSession(): Session {
@@ -16,6 +17,9 @@ export function getNetSession(): Session {
     cache: false,
   })
 }
+
+/** Gets the names (never the values) of the headers a cross-origin redirect did not send on to its target. */
+export type CrossOriginRedirectListener = (droppedHeaderNames: Array<string>, originUrl: URL, targetUrl: URL) => void
 
 export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
   private cachedSession: Session | null = null
@@ -25,6 +29,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
    */
   constructor(
     private readonly proxyLoginCallback?: (authInfo: AuthInfo, callback: LoginCallback) => void,
+    private readonly crossOriginRedirectListener?: CrossOriginRedirectListener,
     private readonly isInsecureFeedAllowed: () => boolean = () => false
   ) {
     super()
@@ -109,7 +114,8 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
 
   /**
    * A redirect aborts `request` and `handler` sends a new one to the target: followRedirect() would resend every header,
-   * while {@link HttpExecutor.prepareRedirectUrlOptions} leaves out the credential headers when the target is on another origin.
+   * while {@link HttpExecutor.prepareRedirectUrlOptions} keeps only the cross-origin allowlist of headers when the target is on another
+   * origin (the names of the others go to the `crossOriginRedirectListener`).
    * Up to `maxRedirects` redirects are followed; `redirectCount` is the number already followed. A redirect to a protocol other than
    * http(s) is rejected, and so is anything `handler` throws.
    */
@@ -126,7 +132,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
       // an event listener: a throw (from preparing the options, or from the handler, which sends the new request) would escape as an
       // uncaught exception and the request would never settle
       try {
-        const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options)
+        const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options, this.crossOriginRedirectListener)
         // net.request throws for another protocol, where Electron following the redirect itself fails the request
         if (redirectOptions.protocol !== "http:" && redirectOptions.protocol !== "https:") {
           throw new Error(`Cannot follow the redirect to the "${redirectOptions.protocol ?? ""}" protocol`)

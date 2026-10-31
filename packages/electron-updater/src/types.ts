@@ -57,7 +57,8 @@ export class UpdaterSignal {
   constructor(private emitter: EventEmitter) {}
 
   /**
-   * Emitted when an authenticating proxy is [asking for user credentials](https://github.com/electron/electron/blob/master/docs/api/client-request.md#event-login).
+   * Emitted when an authenticating proxy, or the update feed's origin (`Provider.feedBaseUrl`), is [asking for user credentials](https://github.com/electron/electron/blob/master/docs/api/client-request.md#event-login).
+   * A challenge from any other server (a download host named by the update info, a redirect target) is cancelled without emitting it.
    */
   login(handler: LoginHandler): void {
     addHandler(this.emitter, "login", handler)

@@ -8,9 +8,12 @@ import { GenericDifferentialDownloader } from "electron-updater/src/differential
 import { createClient } from "electron-updater/src/providerFactory"
 import { Provider, resolveFiles } from "electron-updater/src/providers/Provider"
 import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
+import { NsisUpdater } from "electron-updater/src/NsisUpdater"
 import { createHash } from "crypto"
+import { EventEmitter } from "events"
 import fsExtra from "fs-extra"
 import type { IncomingHttpHeaders, IncomingMessage, OutgoingHttpHeaders, RequestOptions, Server } from "http"
+import Module from "node:module"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
 import { afterEach, describe, test, vi } from "vitest"
@@ -116,13 +119,14 @@ describe("download URLs chosen by the update manifest", () => {
     expect(foreign.requests[0].headers).toMatchObject({ accept: "*/*", "user-agent": "electron-builder" })
   })
 
-  test("a channel file on another origin gets no credential headers or feed query; a channel on the feed keeps them", async ({ tmpDir, expect }) => {
+  test("a channel file on another origin gets only the allowlisted headers and no feed query; a channel on the feed keeps them", async ({ tmpDir, expect }) => {
     const feed = await serve(tmpDir)
     const foreign = await serve(tmpDir)
     await feed.write("beta.yml", channelYml(INSTALLER_NAME))
     await foreign.write("x.yml", channelYml(INSTALLER_NAME))
     const updater = await createUpdater(feed.url)
     updater.autoDownload = false
+    updater.requestHeaders = { ...updater.requestHeaders, "Accept-Language": "de" }
 
     updater.channel = "beta"
     expect((await updater.checkForUpdates())!.isUpdateAvailable).toBe(true)
@@ -136,8 +140,10 @@ describe("download URLs chosen by the update manifest", () => {
     expect(feed.requests).toHaveLength(1)
     expect(foreign.requests).toHaveLength(1)
     expect(foreign.requests[0]).toMatchObject({ pathname: "/x.yml", search: "" })
+    // the cross-origin allowlist, as on a redirect or a download: a custom header such as X-Tenant stays on the feed origin too
     expect(foreign.requests[0].headers.authorization).toBeUndefined()
-    expect(foreign.requests[0].headers).toMatchObject({ "x-tenant": "acme" })
+    expect(foreign.requests[0].headers["x-tenant"]).toBeUndefined()
+    expect(foreign.requests[0].headers).toMatchObject({ "accept-language": "de" })
   })
 
   test("a channel file on another origin announces the dropped headers once per updater, by name only", async ({ tmpDir, expect }) => {
@@ -160,8 +166,11 @@ describe("download URLs chosen by the update manifest", () => {
     expect(foreign.requests).toHaveLength(2)
     expect(notices()).toHaveLength(1)
     const [notice] = notices()
-    expect(notice).toContain(`sends the credential headers from requestHeaders / addAuthHeader only to the update feed's origin (${feed.url})`)
-    expect(notice).toContain(`authorization not sent with the update info request to ${foreign.url}`)
+    expect(notice).toContain(
+      `sends the request headers from requestHeaders / addAuthHeader, other than an allowlist such as Accept, User-Agent and Range, only to the update feed's origin (${feed.url})`
+    )
+    // only the app's headers: not x-user-staging-id, which electron-updater adds itself
+    expect(notice).toContain(`(${feed.url}): X-Tenant, authorization not sent with the update info request to ${foreign.url}`)
     expect(notice).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin")
     for (const secret of ["Bearer", "feed-secret", "acme"]) {
       expect(notice).not.toContain(secret)
@@ -170,6 +179,29 @@ describe("download URLs chosen by the update manifest", () => {
     // once per updater instance: another updater announces it again
     await (await newUpdater()).checkForUpdates()
     expect(notices()).toHaveLength(2)
+  })
+
+  // x-user-staging-id is off the allowlist too, but the app did not set it: dropping it is not announced, as on a redirect
+  test("a channel file on another origin without app headers announces nothing and gets no staging id", async ({ tmpDir, expect }) => {
+    const feed = await serve(tmpDir)
+    const foreign = await serve(tmpDir)
+    await feed.write("beta.yml", channelYml(INSTALLER_NAME))
+    await foreign.write("x.yml", channelYml(INSTALLER_NAME))
+    const updater = await createNsisUpdater("1.0.0")
+    updater.updateConfigPath = await writeUpdateConfig({ provider: "generic", url: feed.url })
+    updater.autoDownload = false
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
+    updater.logger = logger
+
+    updater.channel = "beta"
+    expect((await updater.checkForUpdates())!.isUpdateAvailable).toBe(true)
+    expect(feed.requests[0].headers["x-user-staging-id"]).toEqual(expect.any(String))
+
+    updater.channel = `${foreign.url}/x`
+    expect((await updater.checkForUpdates())!.isUpdateAvailable).toBe(true)
+    expect(foreign.requests).toHaveLength(1)
+    expect(foreign.requests[0].headers["x-user-staging-id"]).toBeUndefined()
+    expect(logger.warn.mock.calls.map(it => String(it[0])).filter(it => it.includes("update info request"))).toEqual([])
   })
 })
 
@@ -485,7 +517,7 @@ describe("differential downloads use the per-download headers", () => {
     async function setUp(tmpDir: TmpDir, options: { feedUrl?: string; auth?: boolean } = {}) {
       const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
       if (options.auth === false) {
-        updater.requestHeaders = { "X-Tenant": "acme" }
+        updater.requestHeaders = { "Accept-Language": "en" }
       }
       const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
       updater.logger = logger
@@ -494,7 +526,7 @@ describe("differential downloads use the per-download headers", () => {
       const headersFor = (url: string, originUrl?: string) =>
         (updater as any).downloadRequestHeaders(new URL(url), downloadOptions, originUrl == null ? undefined : new URL(originUrl)) as OutgoingHttpHeaders
       const warnings = () => logger.warn.mock.calls.map(it => String(it[0]))
-      return { headersFor, warnings }
+      return { updater, headersFor, warnings }
     }
 
     test("a cross-origin download announces the dropped headers and feed query once, by name only", async ({ tmpDir, expect }) => {
@@ -506,8 +538,10 @@ describe("differential downloads use the per-download headers", () => {
 
       expect(warnings()).toHaveLength(2)
       const [headersNotice, queryNotice] = warnings()
-      expect(headersNotice).toContain("sends the credential headers from requestHeaders / addAuthHeader only to the update feed's origin (https://feed.example.com)")
-      expect(headersNotice).toContain("authorization not sent to https://cdn.example.net")
+      expect(headersNotice).toContain(
+        "sends the request headers from requestHeaders / addAuthHeader, other than an allowlist such as Accept, User-Agent and Range, only to the update feed's origin (https://feed.example.com)"
+      )
+      expect(headersNotice).toContain("X-Tenant, authorization not sent to https://cdn.example.net")
       expect(queryNotice).toContain("adds the feed URL's query string (token, tenant) only to URLs on the update feed's origin (https://feed.example.com)")
       expect(queryNotice).toContain("not added to the download from https://cdn.example.net")
       for (const notice of warnings()) {
@@ -527,7 +561,7 @@ describe("differential downloads use the per-download headers", () => {
       expect(warnings()).toEqual([])
     })
 
-    test("no credential headers and no feed query: a cross-origin download announces nothing", async ({ tmpDir, expect }) => {
+    test("only allowlisted headers and no feed query: a cross-origin download announces nothing", async ({ tmpDir, expect }) => {
       const { headersFor, warnings } = await setUp(tmpDir, { feedUrl: "https://feed.example.com/updates/", auth: false })
 
       headersFor("https://cdn.example.net/app-1.1.0.exe")
@@ -551,6 +585,99 @@ describe("differential downloads use the per-download headers", () => {
       expect(warnings()).toHaveLength(1)
       expect(warnings()[0]).toContain("only to the update feed's origin (https://blockmaps.example.org)")
     })
+
+    test("a cross-origin redirect announces the dropped headers set in requestHeaders once, by name only", async ({ tmpDir, expect }) => {
+      const { updater, warnings } = await setUp(tmpDir)
+      const announce = (names: Array<string>) =>
+        (updater as any).announceCrossOriginRedirect(names, new URL("https://feed.example.com/updates/"), new URL("https://cdn.example.net/app-1.1.0.exe"))
+
+      announce(["x-tenant", "authorization", "Keygen-Version"])
+      announce(["X-Tenant"])
+
+      expect(warnings()).toHaveLength(1)
+      const [notice] = warnings()
+      expect(notice).toContain("sends only an allowlist of request headers (such as Accept, User-Agent and Range) on to another origin")
+      expect(notice).toContain("the redirect from https://feed.example.com to https://cdn.example.net did not send x-tenant from requestHeaders")
+      expect(notice).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-header-allowlist")
+      expect(notice).not.toContain("authorization")
+      expect(notice).not.toContain("Keygen-Version")
+      expect(notice).not.toContain("acme")
+    })
+
+    // Authorization (addAuthHeader) was never sent to another origin, and headers the provider sets itself are not the app's
+    test("a cross-origin redirect that drops only Authorization or headers the app did not set announces nothing", async ({ tmpDir, expect }) => {
+      const { updater, warnings } = await setUp(tmpDir)
+
+      ;(updater as any).announceCrossOriginRedirect(["Authorization", "Keygen-Version"], new URL("https://feed.example.com/"), new URL("https://cdn.example.net/"))
+
+      expect(warnings()).toEqual([])
+    })
+
+    // electron-updater 6 already left out a fixed list of credential headers on a cross-origin redirect, whatever their spelling
+    test("a cross-origin redirect announces only the app's headers that electron-updater 6 sent on", async ({ tmpDir, expect }) => {
+      const { updater, warnings } = await setUp(tmpDir)
+      updater.requestHeaders = { "PRIVATE-TOKEN": "glpat", x_api_key: "k", Cookie: "c", "X-Tenant": "acme" }
+      const announce = (names: Array<string>) => (updater as any).announceCrossOriginRedirect(names, new URL("https://feed.example.com/"), new URL("https://cdn.example.net/"))
+
+      announce(["PRIVATE-TOKEN", "x_api_key", "Cookie"])
+      expect(warnings()).toEqual([])
+
+      announce(["PRIVATE-TOKEN", "X-Tenant"])
+      expect(warnings()).toHaveLength(1)
+      expect(warnings()[0]).toContain("did not send X-Tenant from requestHeaders")
+    })
+  })
+})
+
+// The updater's own executor (built when no app adapter is passed) hands the headers a redirect drops to announceCrossOriginRedirect.
+describe("the updater's own executor announces a cross-origin redirect", () => {
+  test("a redirect to another origin through Electron's net announces the dropped requestHeaders", async ({ expect }) => {
+    const requests: Array<EventEmitter> = []
+    const electron = {
+      app: Object.assign(new EventEmitter(), {
+        whenReady: () => new Promise<void>(() => undefined),
+        getVersion: () => "1.0.0",
+        getName: () => "cross-origin-redirect-app",
+        getAppPath: () => __dirname,
+        getPath: () => __dirname,
+        isPackaged: false,
+      }),
+      session: { fromPartition: () => ({}) },
+      net: {
+        request: () => {
+          const request: EventEmitter = Object.assign(new EventEmitter(), {
+            end: () => undefined,
+            abort: () => request.emit("abort"),
+          })
+          requests.push(request)
+          return request
+        },
+      },
+    }
+    const moduleInternals = Module as unknown as { _load: (request: string, ...rest: Array<unknown>) => unknown }
+    const load = moduleInternals._load
+    moduleInternals._load = function (this: unknown, request: string, ...rest: Array<unknown>) {
+      return request === "electron" ? electron : load.call(this, request, ...rest)
+    }
+    try {
+      const updater = new NsisUpdater()
+      const warn = vi.fn()
+      updater.logger = { info: vi.fn(), warn, error: vi.fn() }
+      updater.requestHeaders = { "X-Tenant": "acme" }
+      const done = updater.httpExecutor
+        .request({ protocol: "https:", hostname: "feed.example.com", path: "/updates/latest.yml", headers: { "X-Tenant": "acme" } })
+        .catch((e: unknown) => e)
+
+      requests[0].emit("redirect", 302, "GET", "https://cdn.example.net/latest.yml")
+      requests[1].emit("error", new Error("end of test"))
+      await done
+
+      expect(warn).toHaveBeenCalledTimes(1)
+      expect(warn.mock.calls[0][0]).toContain("the redirect from https://feed.example.com to https://cdn.example.net did not send X-Tenant from requestHeaders")
+      expect(warn.mock.calls[0][0]).not.toContain("acme")
+    } finally {
+      moduleInternals._load = load
+    }
   })
 })
 
@@ -588,9 +715,9 @@ describe("a custom provider must declare feedBaseUrl to send credentials", () =>
     vi.restoreAllMocks()
   })
 
-  async function createUpdater(provider: Provider<any>, withAuthHeader: boolean) {
+  async function createUpdater(provider: Provider<any>, withAuthHeader: boolean, requestHeaders: OutgoingHttpHeaders = { "X-Tenant": "acme" }) {
     const updater = await createNsisUpdater("1.0.0")
-    updater.requestHeaders = { "X-Tenant": "acme" }
+    updater.requestHeaders = requestHeaders
     if (withAuthHeader) {
       updater.addAuthHeader("Bearer s")
     }
@@ -612,7 +739,7 @@ describe("a custom provider must declare feedBaseUrl to send credentials", () =>
     await expect(updater.downloadUpdate()).rejects.toMatchObject({
       code: "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED",
       message: expect.stringMatching(
-        /^The custom update provider UndeclaredProvider does not declare feedBaseUrl.*https:\/\/www\.electron\.build\/docs\/migration\/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin$/
+        /^The custom update provider UndeclaredProvider does not declare feedBaseUrl.*https:\/\/www\.electron\.build\/docs\/migration\/v27-runtime-changes#cross-origin-header-allowlist$/
       ),
     })
     expect(doDownloadUpdate).not.toHaveBeenCalled()
@@ -621,12 +748,25 @@ describe("a custom provider must declare feedBaseUrl to send credentials", () =>
     expect(() => downloadRequestHeaders(`${FEED}app-1.1.0.exe`)).toThrow(expect.objectContaining({ code: "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED" }))
   })
 
-  test("undeclared without credential headers: the download runs with the request headers", async ({ expect }) => {
-    const { updater, doDownloadUpdate, options, downloadRequestHeaders } = await createUpdater(new UndeclaredProvider(), false)
+  // any header off the cross-origin allowlist may be a credential
+  test("undeclared with a custom header: the download fails with a configuration error naming it", async ({ expect }) => {
+    const { updater, doDownloadUpdate } = await createUpdater(new UndeclaredProvider(), false)
+
+    await expect(updater.downloadUpdate()).rejects.toMatchObject({
+      code: "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED",
+      message: expect.stringContaining(
+        "would send the headers X-Tenant (from requestHeaders, addAuthHeader or fileExtraDownloadHeaders), which are not on the cross-origin allowlist"
+      ),
+    })
+    expect(doDownloadUpdate).not.toHaveBeenCalled()
+  })
+
+  test("undeclared with only allowlisted headers: the download runs with the request headers", async ({ expect }) => {
+    const { updater, doDownloadUpdate, options, downloadRequestHeaders } = await createUpdater(new UndeclaredProvider(), false, { "Accept-Language": "en" })
 
     await expect(updater.downloadUpdate()).resolves.toEqual([])
     expect(doDownloadUpdate).toHaveBeenCalledTimes(1)
-    expect(doDownloadUpdate.mock.calls[0][0]).toMatchObject({ requestHeaders: { "X-Tenant": "acme" } })
+    expect(doDownloadUpdate.mock.calls[0][0]).toMatchObject({ requestHeaders: { "Accept-Language": "en" } })
     expect(downloadRequestHeaders("https://cdn.example.net/app-1.1.0.exe")).toBe(options.requestHeaders)
   })
 
@@ -649,7 +789,25 @@ describe("a custom provider must declare feedBaseUrl to send credentials", () =>
     expect(options.headers).toEqual({ authorization: "Bearer s", "X-Tenant": "acme" })
   })
 
-  test("a feed URL: the credential headers only go to its origin", async ({ expect }) => {
+  test("a feed URL: an update info request on another origin keeps only the allowlisted request headers", async ({ expect }) => {
+    const onCrossOriginHeadersRemoved = vi.fn()
+    const provider = new DeclaredProvider(new URL(FEED))
+    ;(provider as any).runtimeOptions.onCrossOriginHeadersRemoved = onCrossOriginHeadersRemoved
+    provider.setRequestHeaders({ authorization: "Bearer s", "X-Tenant": "acme", "Accept-Language": "de", "Cache-Control": "no-cache" })
+
+    const options: RequestOptions = (provider as any).createRequestOptions(new URL("https://cdn.example.net/latest.yml"), { "X-Explicit": "e" })
+    expect(options.hostname).toBe("cdn.example.net")
+    // headers passed for the one request are sent as given
+    expect(options.headers).toEqual({ "Accept-Language": "de", "Cache-Control": "no-cache", "X-Explicit": "e" })
+    expect(onCrossOriginHeadersRemoved).toHaveBeenCalledExactlyOnceWith(new URL("https://cdn.example.net/latest.yml"), new URL(FEED), ["authorization", "X-Tenant"])
+
+    // same origin: every request header
+    const sameOrigin: RequestOptions = (provider as any).createRequestOptions(new URL(`${FEED}latest.yml`))
+    expect(sameOrigin.headers).toEqual({ authorization: "Bearer s", "X-Tenant": "acme", "Accept-Language": "de", "Cache-Control": "no-cache" })
+    expect(onCrossOriginHeadersRemoved).toHaveBeenCalledTimes(1)
+  })
+
+  test("a feed URL: the headers off the allowlist only go to its origin", async ({ expect }) => {
     const { updater, doDownloadUpdate, downloadRequestHeaders } = await createUpdater(new DeclaredProvider(new URL(FEED)), true)
 
     await expect(updater.downloadUpdate()).resolves.toEqual([])
@@ -657,6 +815,7 @@ describe("a custom provider must declare feedBaseUrl to send credentials", () =>
     expect(downloadRequestHeaders(`${FEED}app-1.1.0.exe`)).toMatchObject({ authorization: "Bearer s", "X-Tenant": "acme" })
     const foreign = downloadRequestHeaders("https://cdn.example.net/app-1.1.0.exe")
     expect(foreign).not.toHaveProperty("authorization")
-    expect(foreign).toHaveProperty("X-Tenant", "acme")
+    expect(foreign).not.toHaveProperty("X-Tenant")
+    expect(foreign).toHaveProperty("accept", "*/*")
   })
 })
