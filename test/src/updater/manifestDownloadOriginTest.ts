@@ -684,7 +684,7 @@ describe("a custom provider must declare feedBaseUrl to send credentials", () =>
     await expect(updater.downloadUpdate()).rejects.toMatchObject({
       code: "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED",
       message: expect.stringMatching(
-        /^The custom update provider UndeclaredProvider does not declare feedBaseUrl.*https:\/\/www\.electron\.build\/docs\/migration\/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin$/
+        /^The custom update provider UndeclaredProvider does not declare feedBaseUrl.*https:\/\/www\.electron\.build\/docs\/migration\/v27-runtime-changes#cross-origin-header-allowlist$/
       ),
     })
     expect(doDownloadUpdate).not.toHaveBeenCalled()

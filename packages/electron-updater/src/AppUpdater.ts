@@ -1161,7 +1161,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         `The custom update provider ${provider.constructor.name} does not declare feedBaseUrl, but its downloads would send the headers ${names.join(", ")} ` +
           `(from requestHeaders, addAuthHeader or fileExtraDownloadHeaders), which are not on the cross-origin allowlist. Override Provider.feedBaseUrl to return the feed URL ` +
           `(the headers are then only sent to its origin), or null to send the request headers to every origin. ` +
-          `https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin`,
+          `https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-header-allowlist`,
         "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED"
       )
     }
