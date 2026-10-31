@@ -5,7 +5,7 @@ import { DebUpdater } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import type { UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { parseUpdateInfo, resolveFiles } from "electron-updater/src/providers/Provider"
-import { canonicalizeForSigning, computeUpdateManifestKeyId, createManifestSignatureEntry } from "builder-util-runtime"
+import { canonicalizeForSigning, canonicalizeForSigningV2, computeUpdateManifestKeyId, createManifestSignatureEntry } from "builder-util-runtime"
 import { createUpdateManifestSignatures, generateUpdateSigningKeypair, serializeToYaml, signUpdateManifest } from "builder-util"
 
 const stubApp: AppAdapter = {
@@ -302,11 +302,18 @@ const STAGING_USER_ID = "12a70172-80f8-5cc4-8131-28f5e0edd2a1"
 function setStagingPercentageAndSign(yml: string, stagingPercentage: number, privateKeyPems: Array<string>): string {
   const info = load(yml) as any
   info.stagingPercentage = stagingPercentage
-  const payload = Buffer.from(canonicalizeForSigning(info), "utf8")
-  info.signatures = privateKeyPems.map(pem => {
-    const key = createPrivateKey(pem)
-    return createManifestSignatureEntry(key, cryptoSign(null, payload, key).toString("base64"))
-  })
+  const ebum2 = canonicalizeForSigningV2(info)
+  if (!ebum2.ok) {
+    throw new Error(`cannot sign: ${ebum2.reason}`)
+  }
+  const keys = privateKeyPems.map(pem => createPrivateKey(pem))
+  const payloads = [
+    ["EBUM1", canonicalizeForSigning(info)],
+    ["EBUM2", ebum2.payload],
+  ] as const
+  info.signatures = payloads.flatMap(([format, payload]) =>
+    keys.map(key => createManifestSignatureEntry(key, cryptoSign(null, Buffer.from(payload, "utf8"), key).toString("base64"), format))
+  )
   info.signature = info.signatures[0].signature
   return dump(info, { lineWidth: -1 })
 }
@@ -354,10 +361,22 @@ describe("AppUpdater: stagingPercentage in a signed manifest", () => {
   it("rolls the release out to the configured share of installs once latest.yml is signed again, as the docs describe", async ({ expect }) => {
     await expect(isUpdateAvailable(parse(setStagingPercentageAndSign(publishedYml, 90, [privateKeyPem])))).resolves.toBe(true)
     await expect(isUpdateAvailable(parse(setStagingPercentageAndSign(publishedYml, 10, [privateKeyPem])))).resolves.toBe(false)
-    // the new entry carries the id of the key that made it and the format it was made in (EBUM1, as canonicalizeForSigning signs),
-    // like an entry written at build time; the manifest has only fields EBUM1 covers or knows, so an EBUM1 signature verifies it
+    // the same entries the build writes: the EBUM1 entry, then the EBUM2 entry, each carrying the id of the key that made it
     const signedAgain = parse(setStagingPercentageAndSign(publishedYml, 10, [privateKeyPem]))
-    expect(signedAgain.signatures).toEqual([{ keyId: computeUpdateManifestKeyId(publicKeyPem), signature: signedAgain.signature, format: "EBUM1" }])
+    const keyId = computeUpdateManifestKeyId(publicKeyPem)
+    expect(signedAgain.signatures).toEqual([
+      { keyId, signature: signedAgain.signature, format: "EBUM1" },
+      { keyId, signature: expect.any(String), format: "EBUM2" },
+    ])
+    // and the result has the signatures the build would have written for that manifest
+    const { signature: _signature, signatures: _signatures, ...unsigned } = signedAgain
+    expect(signedAgain.signatures).toEqual(createUpdateManifestSignatures(unsigned, [privateKeyPem]))
+  })
+
+  it("keeps EBUM2 coverage: a manifest with a field EBUM1 does not know verifies once signed again", async ({ expect }) => {
+    // an EBUM1-only signature is refused for such a manifest, so this passes only through the EBUM2 entry
+    const withNewField = `${publishedYml}someFutureField: value\n`
+    await expect(isUpdateAvailable(parse(setStagingPercentageAndSign(withNewField, 90, [privateKeyPem])))).resolves.toBe(true)
   })
 })
 
