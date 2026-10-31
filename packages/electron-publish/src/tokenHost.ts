@@ -35,7 +35,13 @@ export function parseConfiguredHost(host: string, option: string): string {
 /** Whether a token of `provider` taken from the environment may be sent to `hostname`. */
 export function isEnvTokenHostAllowed(provider: TokenHostProvider, hostname: string): boolean {
   const { defaults, ciEnv } = PROVIDER_HOSTS[provider]
-  if (defaults.includes(hostname) || ciEnv.some(name => urlHostname(process.env[name]) === hostname)) {
+  if (
+    defaults.includes(hostname) ||
+    ciEnv.some(name => {
+      const value = process.env[name]
+      return !isEmptyOrSpaces(value) && URL.parse(value)?.hostname === hostname
+    })
+  ) {
     return true
   }
   const allowList = process.env[PUBLISH_TOKEN_HOSTS_ENV]
@@ -58,8 +64,4 @@ export function assertEnvTokenHostAllowed(provider: TokenHostProvider, envName: 
     `Since electron-builder 27, a publish token from the environment is sent only to its provider's host: ${envName} is not sent to "${hostname}". ` +
       `To publish to this host, add "${hostname}" to the ${PUBLISH_TOKEN_HOSTS_ENV} environment variable of the publishing job. See ${PUBLISH_TOKEN_HOST_DOCS_URL}`
   )
-}
-
-function urlHostname(value: string | undefined): string | null {
-  return isEmptyOrSpaces(value) ? null : (URL.parse(value)?.hostname ?? null)
 }
