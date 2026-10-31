@@ -23,7 +23,7 @@ If `GITHUB_RELEASE_TOKEN` is defined, it will be used instead of (`GH_TOKEN` or 
 - "Contents" fine-grained permission was sufficient. (at time of writing - Apr 2024)
 
 :::warning[v27: tokens from the environment go only to their provider's host]
-A token from the environment (`GH_TOKEN`, `GITHUB_TOKEN`, `GITHUB_RELEASE_TOKEN`, `GITLAB_TOKEN`, `KEYGEN_TOKEN`) is sent only to the provider's public host, to the host the CI runner reports (`GITHUB_SERVER_URL` / `GITHUB_API_URL` on GitHub Actions, `CI_SERVER_URL` / `CI_API_V4_URL` on GitLab CI), or to a host listed in `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS`. Publishing to another custom `host` with such a token fails. A token set in the publish configuration (`token`) goes to the configured `host`. `host` must be a host name, optionally with a port. See [the breaking-change note](./migration/v27-build-changes.md#publish-tokens-from-the-environment-are-bound-to-the-provider-host).
+A token from the environment (`GH_TOKEN`, `GITHUB_TOKEN`, `GITHUB_RELEASE_TOKEN`, `GITLAB_TOKEN`, `KEYGEN_TOKEN`) is sent only to the provider's public host, to the host the CI runner reports (`GITHUB_SERVER_URL` / `GITHUB_API_URL` on GitHub Actions, `CI_SERVER_URL` / `CI_API_V4_URL` on GitLab CI), or to a host listed in `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS`. Publishing to another custom `host` with such a token fails. A token set in the publish configuration (`token`) goes to the configured `host`. `host` must be a host name, optionally with a port (and for GitLab a path). See [the breaking-change note](./migration/v27-build-changes.md#publish-tokens-from-the-environment-are-bound-to-the-provider-host).
 :::
 
 :::warning[Implicit publishing was removed in v27]

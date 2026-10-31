@@ -652,7 +652,7 @@ A token set in the configuration (`github.token`, `gitlab.token`, `squirrelWindo
 <summary>What changed compared with v26</summary>
 
 - With a custom `github.host`, `gitlab.host` or `keygen.host` that is not allowed as above, publishing with a token from the environment **fails** before any request is sent.
-- `github.host`, `gitlab.host` and `keygen.host` must be an ASCII host name (punycode for an internationalized name), optionally with a port. A value with user info (`user@host`), a path, a query or a fragment **fails**, with or without a token from the environment. v26 dropped a GitHub path silently and appended a GitLab one to the API URL.
+- `github.host`, `gitlab.host` and `keygen.host` must be an ASCII host name (punycode for an internationalized name), optionally with a port. `gitlab.host` may also have a path, for a GitLab instance under a relative URL root (e.g. `example.com/gitlab`); the path is appended to the API URL as before, and the token is bound to the host name. A value with user info (`user@host`), a query or a fragment, or a path in `github.host` or `keygen.host`, **fails**, with or without a token from the environment. v26 dropped a GitHub path silently.
 - `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS`, `GITHUB_SERVER_URL`, `GITHUB_API_URL`, `CI_SERVER_URL` and `CI_API_V4_URL` in `electron-builder.env` are **ignored**, with a warning; set them in the environment of the publishing job.
 - `squirrelWindows.remoteReleases` on a host that is not allowed gets **no** token from the environment, with a warning; Squirrel.Windows then downloads the previous releases without authentication, which works for a public repository or a non-GitHub server. Without `remoteReleases` no token is passed.
 
@@ -666,7 +666,7 @@ env:
   ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS: github.example.com
 ```
 
-For a private `squirrelWindows.remoteReleases` repository on another host, add the host the same way or set `squirrelWindows.remoteToken`. Remove user info, a path, a query or a fragment from `host`.
+For a private `squirrelWindows.remoteReleases` repository on another host, add the host the same way or set `squirrelWindows.remoteToken`. Remove user info, a query or a fragment from `host`, and a path from `github.host` or `keygen.host`; a path in `gitlab.host` is kept.
 
 ---
 
