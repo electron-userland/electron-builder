@@ -38,7 +38,15 @@ import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor.js"
 import { GenericProvider } from "./providers/GenericProvider.js"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory.js"
-import { checkCrossOriginHeadersImplemented, crossOriginHeadersLayers, Provider, ProviderPlatform, ProviderRuntimeOptions } from "./providers/Provider.js"
+import {
+  checkCrossOriginHeadersImplemented,
+  crossOriginHeadersLayers,
+  isYamlAliasBudgetError,
+  Provider,
+  ProviderPlatform,
+  ProviderRuntimeOptions,
+  YAML_ALIAS_BUDGET_DOCS,
+} from "./providers/Provider.js"
 import type { TypedEmitter } from "tiny-typed-emitter"
 type Session = Electron.Session
 import type { AuthInfo } from "electron"
@@ -863,7 +871,15 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
           `Extend Provider from electron-updater to use it.`
       )
     }
-    const info = await client.getLatestVersion()
+    let info: UpdateInfo
+    try {
+      info = await client.getLatestVersion()
+    } catch (e: unknown) {
+      if (isYamlAliasBudgetError(e)) {
+        this.announceYamlAliasBudget()
+      }
+      throw e
+    }
     // recorded on the new result object (never on the parsed manifest, which listeners of update-available also get), so the state
     // travels with exactly the update info it was established for
     const manifestSignatureVerified = await this.verifyManifestSignature(info)
@@ -871,6 +887,20 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       info,
       provider: client,
       manifestSignatureVerified,
+    }
+  }
+
+  // A v27 behaviour change that only shows on installed apps: announced once per updater, without the feed URL (it may carry a token in its query)
+  private announceYamlAliasBudget(): void {
+    try {
+      this.limitedLogger("yaml-alias-budget").warn(
+        "electron-updater 7 (electron-builder v27) rejects an update manifest (latest*.yml) whose YAML aliases (&name / *name) expand past its size limit: " +
+          "this one was rejected with ERR_UPDATER_INVALID_UPDATE_INFO, so this app does not update until the manifest is replaced. " +
+          "Publish latest*.yml without YAML aliases (js-yaml `dump` with `noRefs: true`, as electron-builder writes it) or with the shared values repeated inline. " +
+          YAML_ALIAS_BUDGET_DOCS
+      )
+    } catch (_ignored) {
+      // called while the parse error propagates: logging must not replace it
     }
   }
 

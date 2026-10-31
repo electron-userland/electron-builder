@@ -1,13 +1,12 @@
 import { CancellationToken, CrossOriginRequest, GithubOptions, HttpError, HttpExecutor, newError, UpdateInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
-import { load } from "js-yaml"
 import * as path from "path"
 import { AppUpdater } from "../AppUpdater.js"
 import { URL } from "url"
 import { getChannelFilename, newUrlFromBase } from "../util.js"
 import { BaseGitHubProvider } from "./GitHubProvider.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
-import { channelFileNotFoundError, getFileList, ProviderRuntimeOptions } from "./Provider.js"
+import { channelFileNotFoundError, getFileList, parseUpdateInfo, ProviderRuntimeOptions } from "./Provider.js"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>
@@ -58,7 +57,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     const url = new URL(asset.url)
     let result: any
     try {
-      result = load((await this.channelFileRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken))!)
+      result = parseUpdateInfo(await this.channelFileRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken), channelFile, url)
     } catch (e: any) {
       if (e instanceof HttpError && e.statusCode === 404) {
         throw channelFileNotFoundError(channelFile, url, e)
