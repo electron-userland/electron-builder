@@ -136,6 +136,33 @@ export function isSafeExtractPath(destPath: string, dir: string): boolean {
   return normalizedDest.startsWith(normalizedDir + path.sep) || normalizedDest === normalizedDir
 }
 
+/**
+ * Creates the missing directories of `target` one level at a time under the real path of the extraction dir,
+ * resolving symlinks after every step, so a symlink extracted earlier cannot redirect a write outside it.
+ * Returns the real path of `target`.
+ */
+async function mkdirInsideRealDir(target: string, dir: string, realDir: string, entryPath: string): Promise<string> {
+  let current = realDir
+  for (const part of path.relative(dir, target).split(path.sep)) {
+    if (part === "") {
+      continue
+    }
+    const next = path.join(current, part)
+    try {
+      await fs.mkdir(next)
+    } catch (e: any) {
+      if (e.code !== "EEXIST") {
+        throw e
+      }
+    }
+    current = await fs.realpath(next)
+    if (!isSafeExtractPath(current, realDir)) {
+      throw new Error(`Symlinked path escapes extraction dir: ${entryPath}`)
+    }
+  }
+  return current
+}
+
 async function extractZipStreaming(file: string, dir: string): Promise<void> {
   // Pass 1: read central directory once to collect Unix modes (one seek to EOF)
   const zipDir = await unzipper.Open.file(file)
@@ -147,6 +174,9 @@ async function extractZipStreaming(file: string, dir: string): Promise<void> {
     }
   }
   const isSymlink = (mode: number) => (mode & 0o170000) === 0o120000
+
+  // Lexical checks alone miss chained symlinks, so every write is also confined by real path at write time.
+  const realDir = await fs.realpath(dir)
 
   // Pass 2: stream from byte 0 — no per-entry seeks, no Docker hang.
   // Destroy the read stream in a finally block so the file handle is always released,
@@ -165,20 +195,20 @@ async function extractZipStreaming(file: string, dir: string): Promise<void> {
         if (path.isAbsolute(target)) {
           throw new Error(`Absolute symlink target blocked: ${target}`)
         }
-        const resolvedTarget = path.resolve(path.dirname(destPath), target)
-        if (!isSafeExtractPath(resolvedTarget, dir)) {
+        const realParent = await mkdirInsideRealDir(path.dirname(destPath), dir, realDir, entry.path)
+        if (!isSafeExtractPath(path.resolve(realParent, target), realDir)) {
           throw new Error(`Symlink target escapes extraction dir: ${target}`)
         }
-        await fs.mkdir(path.dirname(destPath), { recursive: true })
-        await fs.symlink(target, destPath)
+        await fs.symlink(target, path.join(realParent, path.basename(destPath)))
       } else if (entry.type === "Directory") {
-        await fs.mkdir(destPath, { recursive: true })
+        await mkdirInsideRealDir(destPath, dir, realDir, entry.path)
         entry.autodrain()
       } else {
-        await fs.mkdir(path.dirname(destPath), { recursive: true })
-        await pipeline(entry, createWriteStream(destPath))
+        const realDest = path.join(await mkdirInsideRealDir(path.dirname(destPath), dir, realDir, entry.path), path.basename(destPath))
+        // "wx" refuses an existing path, so a symlink already sitting at the destination is never followed
+        await pipeline(entry, createWriteStream(realDest, { flags: "wx" }))
         if (mode > 0) {
-          await fs.chmod(destPath, mode & 0o7777)
+          await fs.chmod(realDest, mode & 0o7777)
         }
       }
     }

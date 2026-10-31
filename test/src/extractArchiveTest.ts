@@ -1,4 +1,4 @@
-import { exec, moveDirAtomic } from "builder-util"
+import { exec, moveDirAtomic, TmpDir } from "builder-util"
 import { extractArchive, isSafeExtractPath } from "app-builder-lib/src/util/electronGet"
 import { getPath7za } from "app-builder-lib/src/toolsets/7zip"
 import * as fs from "fs/promises"
@@ -28,93 +28,77 @@ function crc32(buf: Buffer): number {
   return (crc ^ 0xffffffff) >>> 0
 }
 
+interface ZipEntrySpec {
+  name: string
+  content?: Buffer
+  /** Unix mode stored in the external file attributes; 0 stores none. */
+  mode?: number
+}
+
+const UNIX_SYMLINK_MODE = 0o120000
+
 /**
- * Builds a minimal but well-formed ZIP buffer with a single file entry.
- * entryName may contain path traversal sequences (e.g. "../evil.txt") — adm-zip
- * normalises these away, so we hand-craft the bytes here.
+ * Builds a minimal but well-formed, uncompressed ZIP buffer. Entry names may contain path traversal
+ * sequences (e.g. "../evil.txt") — adm-zip normalises these away, so we hand-craft the bytes here.
+ * A symlink entry stores its target as the content and UNIX_SYMLINK_MODE as its mode.
  */
-function buildZipWithFileEntry(entryName: string, content = Buffer.alloc(0)): Buffer {
-  const nameBytes = Buffer.from(entryName)
-  const dataCrc = crc32(content)
+function buildZip(entries: ZipEntrySpec[]): Buffer {
+  const localParts: Buffer[] = []
+  const centralParts: Buffer[] = []
+  let offset = 0
+  for (const { name, content = Buffer.alloc(0), mode = 0 } of entries) {
+    const nameBytes = Buffer.from(name)
+    const dataCrc = crc32(content)
 
-  // Local file header (30 bytes + name)
-  const lfh = Buffer.alloc(30 + nameBytes.length)
-  lfh.writeUInt32LE(0x04034b50, 0) // PK\x03\x04 signature
-  lfh.writeUInt16LE(20, 4) // version needed to extract (2.0)
-  lfh.writeUInt32LE(dataCrc, 14) // crc-32
-  lfh.writeUInt32LE(content.length, 18) // compressed size
-  lfh.writeUInt32LE(content.length, 22) // uncompressed size
-  lfh.writeUInt16LE(nameBytes.length, 26) // file name length
-  nameBytes.copy(lfh, 30)
+    // Local file header (30 bytes + name)
+    const lfh = Buffer.alloc(30 + nameBytes.length)
+    lfh.writeUInt32LE(0x04034b50, 0) // PK\x03\x04 signature
+    lfh.writeUInt16LE(20, 4) // version needed to extract (2.0)
+    lfh.writeUInt32LE(dataCrc, 14) // crc-32
+    lfh.writeUInt32LE(content.length, 18) // compressed size
+    lfh.writeUInt32LE(content.length, 22) // uncompressed size
+    lfh.writeUInt16LE(nameBytes.length, 26) // file name length
+    nameBytes.copy(lfh, 30)
 
-  const centralDirOffset = lfh.length + content.length
+    // Central directory header (46 bytes + name)
+    const cdh = Buffer.alloc(46 + nameBytes.length)
+    cdh.writeUInt32LE(0x02014b50, 0) // PK\x01\x02 signature
+    cdh.writeUInt16LE(20, 4) // version made by
+    cdh.writeUInt16LE(20, 6) // version needed
+    cdh.writeUInt32LE(dataCrc, 16) // crc-32
+    cdh.writeUInt32LE(content.length, 20) // compressed size
+    cdh.writeUInt32LE(content.length, 24) // uncompressed size
+    cdh.writeUInt16LE(nameBytes.length, 28) // file name length
+    cdh.writeUInt32LE((mode << 16) >>> 0, 38) // external file attributes: Unix mode in the high 16 bits
+    cdh.writeUInt32LE(offset, 42) // local header offset
+    nameBytes.copy(cdh, 46)
 
-  // Central directory header (46 bytes + name)
-  const cdh = Buffer.alloc(46 + nameBytes.length)
-  cdh.writeUInt32LE(0x02014b50, 0) // PK\x01\x02 signature
-  cdh.writeUInt16LE(20, 4) // version made by
-  cdh.writeUInt16LE(20, 6) // version needed
-  cdh.writeUInt32LE(dataCrc, 16) // crc-32
-  cdh.writeUInt32LE(content.length, 20) // compressed size
-  cdh.writeUInt32LE(content.length, 24) // uncompressed size
-  cdh.writeUInt16LE(nameBytes.length, 28) // file name length
-  cdh.writeUInt32LE(0 /* local header offset */, 42)
-  nameBytes.copy(cdh, 46)
+    localParts.push(lfh, content)
+    centralParts.push(cdh)
+    offset += lfh.length + content.length
+  }
+  const centralDir = Buffer.concat(centralParts)
 
   // End of central directory record (22 bytes)
   const eocd = Buffer.alloc(22)
   eocd.writeUInt32LE(0x06054b50, 0) // PK\x05\x06 signature
-  eocd.writeUInt16LE(1, 8) // total entries on this disk
-  eocd.writeUInt16LE(1, 10) // total entries
-  eocd.writeUInt32LE(cdh.length, 12) // size of central dir
-  eocd.writeUInt32LE(centralDirOffset, 16) // offset of central dir from start of disk
+  eocd.writeUInt16LE(entries.length, 8) // total entries on this disk
+  eocd.writeUInt16LE(entries.length, 10) // total entries
+  eocd.writeUInt32LE(centralDir.length, 12) // size of central dir
+  eocd.writeUInt32LE(offset, 16) // offset of central dir from start of disk
 
-  return Buffer.concat([lfh, content, cdh, eocd])
+  return Buffer.concat([...localParts, centralDir, eocd])
 }
 
-/**
- * Builds a ZIP with a single Unix symlink entry. The symlink target is stored as the
- * file content; the Unix mode in the central directory marks it as a symlink
- * (0o120000 << 16 in the external file attributes).
- */
+function buildZipWithFileEntry(entryName: string, content = Buffer.alloc(0)): Buffer {
+  return buildZip([{ name: entryName, content }])
+}
+
 function buildZipWithSymlinkEntry(linkName: string, target: string): Buffer {
-  const content = Buffer.from(target)
-  const nameBytes = Buffer.from(linkName)
-  const dataCrc = crc32(content)
-  const UNIX_SYMLINK_MODE = (0o120000 << 16) >>> 0
-
-  const lfh = Buffer.alloc(30 + nameBytes.length)
-  lfh.writeUInt32LE(0x04034b50, 0)
-  lfh.writeUInt16LE(20, 4)
-  lfh.writeUInt32LE(dataCrc, 14)
-  lfh.writeUInt32LE(content.length, 18)
-  lfh.writeUInt32LE(content.length, 22)
-  lfh.writeUInt16LE(nameBytes.length, 26)
-  nameBytes.copy(lfh, 30)
-
-  const centralDirOffset = lfh.length + content.length
-
-  const cdh = Buffer.alloc(46 + nameBytes.length)
-  cdh.writeUInt32LE(0x02014b50, 0)
-  cdh.writeUInt16LE(20, 4)
-  cdh.writeUInt16LE(20, 6)
-  cdh.writeUInt32LE(dataCrc, 16)
-  cdh.writeUInt32LE(content.length, 20)
-  cdh.writeUInt32LE(content.length, 24)
-  cdh.writeUInt16LE(nameBytes.length, 28)
-  cdh.writeUInt32LE(UNIX_SYMLINK_MODE, 38) // external file attributes: Unix symlink
-  cdh.writeUInt32LE(0, 42)
-  nameBytes.copy(cdh, 46)
-
-  const eocd = Buffer.alloc(22)
-  eocd.writeUInt32LE(0x06054b50, 0)
-  eocd.writeUInt16LE(1, 8)
-  eocd.writeUInt16LE(1, 10)
-  eocd.writeUInt32LE(cdh.length, 12)
-  eocd.writeUInt32LE(centralDirOffset, 16)
-
-  return Buffer.concat([lfh, content, cdh, eocd])
+  return buildZip([{ name: linkName, content: Buffer.from(target), mode: UNIX_SYMLINK_MODE }])
 }
+
+const symlinkEntry = (name: string, target: string): ZipEntrySpec => ({ name, content: Buffer.from(target), mode: UNIX_SYMLINK_MODE })
 
 describe("extractArchive ZIP security guards", () => {
   test("blocks a path traversal entry (../escape.txt)", async ({ expect, tmpDir }) => {
@@ -139,6 +123,50 @@ describe("extractArchive ZIP security guards", () => {
     await fs.writeFile(zipPath, buildZipWithSymlinkEntry("link.txt", "../../outside"))
     const extractDir = path.join(tmpDirPath, "out")
     await expect(extractArchive(zipPath, extractDir)).rejects.toThrow("Symlink target escapes extraction dir")
+  })
+
+  // Each symlink below passes a purely lexical check against the extraction dir, but together they
+  // point outside it once the earlier links are followed. The archive sits in its own parent dir so
+  // anything that escapes "out.tmp" lands in "root" where the test can see it.
+  async function extractChained(tmpDir: TmpDir, entries: ZipEntrySpec[]) {
+    const root = await tmpDir.getTempDir({ prefix: "zip-chained-symlinks" })
+    await fs.mkdir(root, { recursive: true })
+    const zipPath = path.join(root, "chained.zip")
+    await fs.writeFile(zipPath, buildZip(entries))
+    return { root, promise: extractArchive(zipPath, path.join(root, "out")) }
+  }
+
+  test.skipIf(process.platform === "win32")("blocks a symlink whose target escapes once an earlier symlink in its path is followed", async ({ expect, tmpDir }) => {
+    // "a" -> "." makes "a/b" really "b"; lexically "a/b" -> ".." is the extraction dir, really its parent
+    const { root, promise } = await extractChained(tmpDir, [symlinkEntry("a", "."), symlinkEntry("a/b", ".."), { name: "b/escaped.txt", content: Buffer.from("outside") }])
+    await expect(promise).rejects.toThrow("Symlink target escapes extraction dir")
+    await expect(fs.access(path.join(root, "escaped.txt"))).rejects.toMatchObject({ code: "ENOENT" })
+  })
+
+  test.skipIf(process.platform === "win32")("blocks a write through a symlink chain that resolves outside the extraction dir", async ({ expect, tmpDir }) => {
+    // lexically "a/.." is the extraction dir; really it is the parent because "a" -> "."
+    const { root, promise } = await extractChained(tmpDir, [symlinkEntry("a", "."), symlinkEntry("c", "a/.."), { name: "c/escaped.txt", content: Buffer.from("outside") }])
+    await expect(promise).rejects.toThrow("Symlinked path escapes extraction dir: c/escaped.txt")
+    await expect(fs.access(path.join(root, "escaped.txt"))).rejects.toMatchObject({ code: "ENOENT" })
+  })
+
+  test.skipIf(process.platform === "win32")("does not follow a symlink already at a file entry's destination", async ({ expect, tmpDir }) => {
+    // "./link" names the same destination as the symlink "link", which really points at the parent dir
+    const { root, promise } = await extractChained(tmpDir, [symlinkEntry("a", "."), symlinkEntry("link", "a/../escaped.txt"), { name: "./link", content: Buffer.from("outside") }])
+    await expect(promise).rejects.toMatchObject({ code: "EEXIST" })
+    await expect(fs.access(path.join(root, "escaped.txt"))).rejects.toMatchObject({ code: "ENOENT" })
+  })
+
+  test.skipIf(process.platform === "win32")("extracts in-tree symlinks and files written through them", async ({ expect, tmpDir }) => {
+    const { root, promise } = await extractChained(tmpDir, [
+      { name: "Versions/A/", mode: 0o40755 },
+      symlinkEntry("Versions/Current", "A"),
+      { name: "Versions/Current/Resources/info.txt", content: Buffer.from("in tree"), mode: 0o100644 },
+    ])
+    await promise
+    const out = path.join(root, "out")
+    expect(await fs.readlink(path.join(out, "Versions", "Current"))).toBe("A")
+    expect(await fs.readFile(path.join(out, "Versions", "A", "Resources", "info.txt"), "utf-8")).toBe("in tree")
   })
 
   test("extracts a valid zip entry to the correct destination", async ({ expect, tmpDir }) => {
