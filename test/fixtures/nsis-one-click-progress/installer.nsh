@@ -48,16 +48,32 @@
     GetDlgItem $3 $2 1000
     GetDlgItem $2 $2 1001
     GetDlgItem $4 $1 1004
-    # Exercise the competing instruction-count/extraction updates on the real plugin.
     !insertmacro recordBanner
-    SendMessage $4 ${PBM_SETPOS} 80 0
+    SendMessage $2 ${PBM_GETPOS} 0 0 $8
+    FileWrite $9 "$8$\r$\n"
+    SetOutPath "$EXEDIR\extracted"
+  ${Else}
+    SetOutPath "$EXEDIR\extracted-silent"
+  ${EndIf}
+  StrCpy $R2 "preserved-2"
+  StrCpy $R3 "preserved-3"
+  StrCpy $R4 "preserved-4"
+  StrCpy $R5 "preserved-5"
+  StrCpy $R6 "preserved-6"
+  StrCpy $R7 "preserved-7"
+  !insertmacro extractUsing7za "$EXEDIR\payload.7z"
+  FileOpen $8 "$EXEDIR\registers.txt" w
+  FileWrite $8 "$R2,$R3,$R4,$R5,$R6,$R7"
+  FileClose $8
+  ${IfNot} ${Silent}
     !insertmacro recordBanner
+    SendMessage $2 ${PBM_GETPOS} 0 0 $8
+    FileWrite $9 "$8$\r$\n"
+    # Instruction-count updates after extraction must no longer reset the banner.
     SendMessage $4 ${PBM_SETPOS} 0 0
     !insertmacro recordBanner
-    SendMessage $4 ${PBM_SETPOS} 100 0
-    !insertmacro recordBanner
-    SendMessage $4 ${PBM_SETPOS} 40 0
-    !insertmacro recordBanner
+    SendMessage $2 ${PBM_GETPOS} 0 0 $8
+    FileWrite $9 "$8$\r$\n"
   ${Else}
     FileWrite $9 "silent$\r$\n"
   ${EndIf}

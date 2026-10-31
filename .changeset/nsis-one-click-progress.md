@@ -2,4 +2,4 @@
 "app-builder-lib": patch
 ---
 
-fix(nsis): show only the installing status in the one-click banner instead of a misleading progress bar that moves backwards when extraction and instruction-count progress compete.
+fix(nsis): keep the one-click progress bar visible and moving forward during 7z extraction instead of resetting it when extraction and instruction-count progress compete.
