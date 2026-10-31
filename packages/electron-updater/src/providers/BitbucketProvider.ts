@@ -1,4 +1,4 @@
-import { CancellationToken, BitbucketOptions, newError, UpdateInfo } from "builder-util-runtime"
+import { CancellationToken, BitbucketOptions, errorToString, newError, UpdateInfo } from "builder-util-runtime"
 import { AppUpdater } from "../AppUpdater.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
@@ -40,7 +40,7 @@ export class BitbucketProvider extends Provider<UpdateInfo> {
       if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
         throw e
       }
-      throw newError(`Unable to find latest version on ${this.toString()}, please ensure release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
+      throw newError(`Unable to find latest version on ${this.toString()}, please ensure release exists: ${errorToString(e)}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
   }
 

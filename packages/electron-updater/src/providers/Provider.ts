@@ -3,6 +3,7 @@ import {
   CancellationToken,
   configureRequestUrl,
   DEFAULT_MAX_UPDATE_INFO_SIZE,
+  errorToString,
   HttpExecutor,
   newError,
   safeStringifyJson,
@@ -35,7 +36,7 @@ export interface ProviderRuntimeOptions {
 
 // Shared by the GitHub/GitLab/PrivateGitHub providers when a release channel file (e.g. latest.yml) 404s.
 export function channelFileNotFoundError(channelFile: string, channelFileUrl: URL | string, e: any): Error {
-  return newError(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
+  return newError(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${errorToString(e)}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
 }
 
 export abstract class Provider<T extends UpdateInfo> {
@@ -198,7 +199,7 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
     result = load(rawData) as UpdateInfo
   } catch (e: any) {
     throw newError(
-      `Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}, rawData: ${rawData}`,
+      `Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${errorToString(e)}, rawData: ${rawData}`,
       "ERR_UPDATER_INVALID_UPDATE_INFO"
     )
   }

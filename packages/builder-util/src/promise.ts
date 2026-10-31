@@ -1,7 +1,8 @@
+import { errorToString } from "builder-util-runtime"
 import chalk from "chalk"
 
 export function printErrorAndExit(error: Error) {
-  console.error(chalk.red((error.stack || error).toString()))
+  console.error(chalk.red(errorToString(error)))
   process.exit(1)
 }
 

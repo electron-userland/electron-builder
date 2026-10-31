@@ -1,4 +1,4 @@
-import { GenericServerOptions, HttpError, newError, UpdateInfo } from "builder-util-runtime"
+import { errorToString, GenericServerOptions, HttpError, newError, UpdateInfo } from "builder-util-runtime"
 import { AppUpdater } from "../AppUpdater.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
@@ -33,7 +33,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
         return parseUpdateInfo(await this.channelFileRequest(channelUrl), channelFile, channelUrl)
       } catch (e: any) {
         if (e instanceof HttpError && e.statusCode === 404) {
-          throw newError(`Cannot find channel "${channelFile}" update info: ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
+          throw newError(`Cannot find channel "${channelFile}" update info: ${errorToString(e)}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
         } else if (e.code === "ECONNREFUSED") {
           if (attemptNumber < 3) {
             await new Promise((resolve, reject) => {

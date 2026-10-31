@@ -1,5 +1,6 @@
 import {
   CancellationToken,
+  errorToString,
   getGitlabAuthHeaders,
   GitlabOptions,
   HttpError,
@@ -88,7 +89,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
     try {
       releaseResponse = await this.httpRequest(latestReleaseUrl, header, cancellationToken)
     } catch (e: any) {
-      throw newError(`Unable to find latest release on GitLab (${latestReleaseUrl}): ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
+      throw newError(`Unable to find latest release on GitLab (${latestReleaseUrl}): ${errorToString(e)}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
 
     if (!releaseResponse) {
@@ -100,7 +101,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
       latestRelease = JSON.parse(releaseResponse)
     } catch (e: any) {
       throw newError(
-        `Unable to parse latest release response from GitLab (${latestReleaseUrl}): response was not valid JSON: ${e.stack || e.message}`,
+        `Unable to parse latest release response from GitLab (${latestReleaseUrl}): response was not valid JSON: ${errorToString(e)}`,
         "ERR_UPDATER_LATEST_VERSION_NOT_FOUND"
       )
     }
@@ -234,7 +235,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
           continue
         }
         // For other errors, throw immediately
-        throw newError(`Unable to find release ${releaseId} on GitLab (${releaseUrl}): ${e.stack || e.message}`, "ERR_UPDATER_RELEASE_NOT_FOUND")
+        throw newError(`Unable to find release ${releaseId} on GitLab (${releaseUrl}): ${errorToString(e)}`, "ERR_UPDATER_RELEASE_NOT_FOUND")
       }
     }
 

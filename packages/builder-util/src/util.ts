@@ -1,4 +1,4 @@
-import { hashSensitiveValue, isSensitiveFieldName, isValidKey, Nullish, retry, safeStringifyJson } from "builder-util-runtime"
+import { errorToString, hashSensitiveValue, isSensitiveFieldName, isValidKey, Nullish, retry, safeStringifyJson } from "builder-util-runtime"
 import chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
@@ -304,7 +304,7 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
   try {
     return _spawn(command, args, options)
   } catch (e: any) {
-    throw new Error(`Cannot spawn ${command}: ${e.stack || e}`)
+    throw new Error(`Cannot spawn ${command}: ${errorToString(e)}`)
   }
 }
 

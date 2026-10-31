@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url"
 import { AppInfo, CancellationToken, Packager, PackagerOptions, PublishManager, PublishOptions, UploadTask, checkBuildRequestOptions } from "app-builder-lib"
 import { Publish, checkUpdateManifestBeforeUpload, computeSafeArtifactNameIfNeeded, getConfig } from "app-builder-lib/internal"
 import { Executables, InvalidConfigurationError, archFromString, log, printErrorAndExit } from "builder-util"
+import { errorToString } from "builder-util-runtime"
 import type { PublishPolicy } from "electron-publish"
 import chalk from "chalk"
 import * as path from "path"
@@ -135,7 +136,7 @@ export async function publishPackageWithTasks(
       } catch (error: any) {
         packager.cancellationToken.cancel()
         publishManager.cancelTasks()
-        log.error({ message: (error.stack || error.message || error).toString() }, "error publishing")
+        log.error({ message: errorToString(error) }, "error publishing")
         return null
       }
     })

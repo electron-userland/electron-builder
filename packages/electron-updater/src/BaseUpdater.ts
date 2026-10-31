@@ -1,5 +1,5 @@
 import { createRequire } from "node:module"
-import { AllPublishOptions, newError } from "builder-util-runtime"
+import { AllPublishOptions, errorToString, newError } from "builder-util-runtime"
 import { spawn, SpawnOptions, spawnSync, StdioOptions } from "child_process"
 import { mkdtemp, open, rm } from "fs/promises"
 import type { FileHandle } from "fs/promises"
@@ -267,7 +267,7 @@ export abstract class BaseUpdater extends AppUpdater {
     void this.runInstallAsync(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall, "quitAndInstall")
       .catch((error: unknown) => {
         // installAsync reports install failures itself; this is a failure to report one (an "error" listener that throws)
-        this.log.error(`Cannot install update: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
+        this.log.error(`Cannot install update: ${errorToString(error)}`)
         return false
       })
       .then(isInstalled => {
@@ -725,7 +725,7 @@ export abstract class BaseUpdater extends AppUpdater {
       isInstalled = this.install(true, false)
     } catch (error: unknown) {
       // install() reports a failed install itself; this is a failure to report it (an "error" listener that throws)
-      logger.error(`Cannot install update on quit: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
+      logger.error(`Cannot install update on quit: ${errorToString(error)}`)
     }
     if (!isInstalled) {
       // the failed install returned to idle, so an explicit quitAndInstall() can still install the update; a quit cannot

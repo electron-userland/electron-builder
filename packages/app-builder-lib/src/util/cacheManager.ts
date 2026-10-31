@@ -1,4 +1,5 @@
 import { Arch, copyFile, log, orNullIfFileNotExist } from "builder-util"
+import { errorToString } from "builder-util-runtime"
 import { Hash } from "crypto"
 import fsExtra from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
@@ -47,7 +48,7 @@ export class BuildCacheManager {
       if (e.code === "ENOENT" || e.code === "ENOTDIR") {
         log.debug({ error: e.code }, "copy cached executable failed")
       } else {
-        log.warn({ error: e.stack || e }, `cannot copy cached executable`)
+        log.warn({ error: errorToString(e) }, `cannot copy cached executable`)
       }
     }
     return false
@@ -68,7 +69,7 @@ export class BuildCacheManager {
       await mkdir(this.cacheDir, { recursive: true })
       await Promise.all([fsExtra.writeJson(this.cacheInfoFile, this.cacheInfo), copyFile(this.executableFile, this.cacheFile, false)])
     } catch (e: any) {
-      log.warn({ error: e.stack || e }, `cannot save build cache`)
+      log.warn({ error: errorToString(e) }, `cannot save build cache`)
     }
   }
 }

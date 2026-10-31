@@ -5,6 +5,7 @@ import {
   asArray,
   CancellationToken,
   DEFAULT_MAX_UPDATE_INFO_SIZE,
+  errorToString,
   isValidMaxUpdateInfoSize,
   newError,
   PublishConfiguration,
@@ -407,7 +408,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       } catch (e: unknown) {
         try {
           this.limitedLogger("download-progress-listener-error").error(
-            `A "${DOWNLOAD_PROGRESS}" listener threw, the download continues (further listener errors are not logged): ${e instanceof Error ? (e.stack ?? e.message) : String(e)}`
+            `A "${DOWNLOAD_PROGRESS}" listener threw, the download continues (further listener errors are not logged): ${errorToString(e)}`
           )
         } catch (_ignored) {
           // a throwing logger must not break the download either
@@ -547,7 +548,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     super()
 
     this.on("error", (error: Error) => {
-      this.log.error(`Error: ${error.stack || error.message}`)
+      this.log.error(`Error: ${errorToString(error)}`)
     })
 
     if (app == null) {
@@ -625,7 +626,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       })
       .catch((e: any) => {
         nullizePromise()
-        this.emit("error", e, `Cannot check for updates: ${(e.stack || e).toString()}`)
+        this.emit("error", e, `Cannot check for updates: ${errorToString(e)}`)
         throw e
       })
 
@@ -963,7 +964,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         try {
           this.dispatchError(e)
         } catch (nestedError: any) {
-          this.log.warn(`Cannot dispatch error event: ${nestedError.stack || nestedError}`)
+          this.log.warn(`Cannot dispatch error event: ${errorToString(nestedError)}`)
         }
       }
 
@@ -996,7 +997,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   protected dispatchError(e: Error): void {
-    this.emit("error", e, (e.stack || e).toString())
+    this.emit("error", e, errorToString(e))
   }
 
   protected dispatchUpdateDownloaded(event: UpdateDownloadedEvent): void {
@@ -1338,7 +1339,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   protected logDifferentialDownloadFallback(error: unknown): void {
     try {
-      this.log.error(`Cannot download differentially, fallback to full download: ${error instanceof Error ? error.stack || String(error) : String(error)}`)
+      this.log.error(`Cannot download differentially, fallback to full download: ${errorToString(error)}`)
     } catch (_ignored) {
       // a throwing logger must not stop the fallback
     }

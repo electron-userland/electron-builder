@@ -1,4 +1,5 @@
 import type { LimitedLogger, LogLevel, LogLimitOptions } from "builder-util-runtime"
+import { errorToString } from "builder-util-runtime"
 import { LogLimiter } from "builder-util-runtime/internal"
 import chalk from "chalk"
 import { Chalk } from "chalk"
@@ -110,7 +111,7 @@ export class Logger {
 
     // noinspection SuspiciousInstanceOfGuard
     if (message instanceof Error) {
-      message = message.stack || message.toString()
+      message = errorToString(message)
     } else {
       message = message.toString()
     }

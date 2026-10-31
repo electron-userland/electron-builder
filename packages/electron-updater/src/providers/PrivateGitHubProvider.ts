@@ -1,4 +1,4 @@
-import { CancellationToken, GithubOptions, HttpError, newError, UpdateInfo } from "builder-util-runtime"
+import { CancellationToken, errorToString, GithubOptions, HttpError, newError, UpdateInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { load } from "js-yaml"
 import * as path from "path"
@@ -89,7 +89,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
         return version
       }
     } catch (e: any) {
-      throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
+      throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${errorToString(e)}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
   }
 

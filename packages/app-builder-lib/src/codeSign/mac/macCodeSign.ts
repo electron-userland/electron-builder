@@ -1,7 +1,7 @@
 import type { SignOptions } from "@electron/osx-sign"
 import { sign as _sign } from "@electron/osx-sign"
 import { copyFile, exec, Executables, Fields, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
-import { Nullish } from "builder-util-runtime"
+import { errorToString, Nullish } from "builder-util-runtime"
 import { createHash, randomBytes } from "crypto"
 import { rename } from "fs/promises"
 import { Lazy } from "lazy-val"
@@ -163,7 +163,7 @@ export interface CreateKeychainOptions {
 export function removeKeychain(keychainFile: string, printWarn = true): Promise<any> {
   return exec("/usr/bin/security", ["delete-keychain", keychainFile]).catch((e: any) => {
     if (printWarn) {
-      log.warn({ file: keychainFile, error: e.stack || e }, "cannot delete keychain")
+      log.warn({ file: keychainFile, error: errorToString(e) }, "cannot delete keychain")
     }
     return unlinkIfExists(keychainFile)
   })

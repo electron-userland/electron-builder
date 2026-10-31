@@ -1,4 +1,4 @@
-import { CancellationToken, GithubOptions, githubUrl, HttpError, newError, parseXml, ReleaseNoteInfo, UpdateInfo, XElement } from "builder-util-runtime"
+import { CancellationToken, errorToString, GithubOptions, githubUrl, HttpError, newError, parseXml, ReleaseNoteInfo, UpdateInfo, XElement } from "builder-util-runtime"
 import * as semver from "semver"
 import { URL } from "url"
 import { AppUpdater } from "../AppUpdater.js"
@@ -78,7 +78,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     try {
       release = this.updater.allowPrerelease ? this.findHighestEligibleRelease(releaseEntries) : await this.findLatestRelease(releaseEntries, cancellationToken)
     } catch (e: any) {
-      throw newError(`Cannot parse releases feed: ${e.stack || e.message},\nXML:\n${feedXml}`, "ERR_UPDATER_INVALID_RELEASE_FEED")
+      throw newError(`Cannot parse releases feed: ${errorToString(e)},\nXML:\n${feedXml}`, "ERR_UPDATER_INVALID_RELEASE_FEED")
     }
 
     const { tag, entry: latestRelease } = release
@@ -173,7 +173,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
       const releaseInfo: GithubReleaseInfo = JSON.parse(rawData)
       return releaseInfo.tag_name
     } catch (e: any) {
-      throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
+      throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${errorToString(e)}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
   }
 
