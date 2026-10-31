@@ -6,6 +6,7 @@ import { afterEach, describe, expect, test, vi } from "vitest"
 
 const context: PublishContext = { cancellationToken: new CancellationToken(), progress: null }
 const TOKEN = "config-token"
+const MIGRATION_LINK = "See https://www.electron.build/docs/migration/v27-build-changes#publish-host-must-be-a-host-name"
 
 afterEach(() => {
   vi.unstubAllEnvs()
@@ -51,6 +52,7 @@ describe("GitHub", () => {
   ])("a host with %s is rejected", (_label, host) => {
     const message = errorMessage(() => github(host))
     expect(message).toContain("github.host must be a host name")
+    expect(message).toContain(MIGRATION_LINK)
     expect(message).not.toContain("password")
   })
 })
@@ -72,6 +74,7 @@ describe("GitLab", () => {
   ])("a host with %s is rejected", (_label, host) => {
     const message = errorMessage(() => gitlab(host))
     expect(message).toContain("gitlab.host must be a host name")
+    expect(message).toContain(MIGRATION_LINK)
     expect(message).not.toContain("password")
   })
 })
@@ -85,6 +88,8 @@ describe("Keygen", () => {
     ["user info", "api.keygen.sh@keygen.example.com"],
     ["a path", "keygen.example.com/v1"],
   ])("a host with %s is rejected", (_label, host) => {
-    expect(() => keygen(host)).toThrow("keygen.host must be a host name")
+    const message = errorMessage(() => keygen(host))
+    expect(message).toContain("keygen.host must be a host name")
+    expect(message).toContain(MIGRATION_LINK)
   })
 })

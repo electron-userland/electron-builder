@@ -638,7 +638,7 @@ The Bitbucket publisher now selects its authentication scheme by whether a usern
 
 ### `github.host`, `gitlab.host` and `keygen.host` must be a host name {#publish-host-must-be-a-host-name}
 
-**How you'll find out:** **Fails at publish** with an `InvalidConfigurationError` that names the option (never its value). Builds that don't publish are silent.
+**How you'll find out:** **Fails at publish** with an `InvalidConfigurationError` that names the option (never its value), with a link here. Builds that don't publish are silent.
 
 `github.host`, `gitlab.host` and `keygen.host` must be an ASCII host name (punycode for an internationalized name), optionally with a port. `gitlab.host` may also have a path, for a GitLab instance under a relative URL root (e.g. `example.com/gitlab`); the path is kept in the API URL. A value with user info (`user@host`), a query, a fragment, a backslash, `%` or an empty path segment, or a path in `github.host` or `keygen.host`, fails at publish.
 

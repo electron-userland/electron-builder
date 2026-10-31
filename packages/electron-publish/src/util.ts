@@ -41,6 +41,9 @@ export function validateConfiguredHost(host: string, option: string, allowPath =
     const shape = allowPath
       ? 'optionally with a port and a path (e.g. "git.example.com:8443/gitlab"), without user info, query or fragment'
       : 'optionally with a port (e.g. "git.example.com:8443"), without user info, path, query or fragment'
-    throw new InvalidConfigurationError(`${option} must be a host name in ASCII (punycode for an internationalized name), ${shape}`)
+    throw new InvalidConfigurationError(
+      `${option} must be a host name in ASCII (punycode for an internationalized name), ${shape}. ` +
+        "See https://www.electron.build/docs/migration/v27-build-changes#publish-host-must-be-a-host-name"
+    )
   }
 }
