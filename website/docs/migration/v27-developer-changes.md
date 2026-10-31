@@ -20,6 +20,7 @@ Changes that only matter if you write code that plugs into electron-builder: bui
 | [ProtonFramework & LibUiFramework removed](#removed-exports) | Import / TS error | Migrate to an Electron-based build setup |
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | TS error | Import the new names — no compat aliases |
 | [`SnapOptions`, `ProtonFramework`, `LibUiFramework` exports removed](#removed-exports) | Import / TS error | Use the `snapcraft` config shape / Electron framework |
+| [builder-util-runtime: cross-origin headers come from an explicit list](#builder-util-runtime-cross-origin-headers) | Import / TS error | Custom publishers and providers: pass a `CrossOriginHeaders` function to the `HttpExecutor` constructor, or filter headers with `HttpExecutor.keepCrossOriginHeaders(headers, from, to, DEFAULT_CROSS_ORIGIN_HEADERS)`; there is no `addSensitiveRedirectHeader` |
 | [Hooks reading `files` / `extraResources` / `extraFiles`](#hooks-reading-file-options) | Warns / fails | Read and write `fileOptions.files` / `.extraResources` / `.extraFiles` instead; assigning a flat key throws |
 | [NSIS `customInstallMode` macro guard casing corrected](#nsis-custominstallmode-macro-guard-casing-corrected) | Silent | Rename a `customInstallmode` (lowercase `m`) macro definition in custom NSIS scripts to the documented `customInstallMode` |
 | [Linux maintainer-script EJS syntax removed](#linux-maintainer-script-ejs-template-syntax) | Fails build | Use `${var}` instead of `<%= var %>` |
@@ -149,6 +150,21 @@ These exported TypeScript types were **renamed with no compatibility alias** —
 
 `ElectronGetOptions` is re-exported from the top-level `electron-builder` package, so this affects ordinary TypeScript consumers, not just `app-builder-lib` plugin authors.
 
+### builder-util-runtime: cross-origin headers {#builder-util-runtime-cross-origin-headers}
+
+**How you'll find out:** **TypeScript error**; in plain JavaScript, importing `addSensitiveRedirectHeader` from ESM fails when the module loads, and `require()` returns `undefined` for it.
+
+Custom publishers and custom electron-updater providers that use builder-util-runtime's `HttpExecutor` get the [cross-origin header rule](./v27-runtime-changes.md#cross-origin-header-allowlist) from these exports:
+
+- `DEFAULT_CROSS_ORIGIN_HEADERS`: the frozen default list of lowercase header names sent to another origin (`accept`, `user-agent`, `range` and other content negotiation, caching and conditional headers).
+- `CrossOriginHeaders`: `(defaults: ReadonlyArray<string>) => ReadonlyArray<string> | null`, the shape of `autoUpdater.crossOriginHeaders`. An `HttpExecutor` takes one as its constructor argument and keeps only the headers it returns on a redirect to another origin (`null` keeps every header); without one, it keeps `DEFAULT_CROSS_ORIGIN_HEADERS`. `executor.allowedCrossOriginHeaders()` returns the list in effect.
+- `HttpExecutor.keepCrossOriginHeaders(headers, from, to, allowed)`: the headers to send to `to` for a request whose headers are meant for `from`. All of them when `to` is on the same origin, else only the names in `allowed` (case-insensitive); `allowed` `null` keeps every header. It never changes `headers`.
+- `HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options, allowedCrossOriginHeaders)` takes the list as its third argument (`DEFAULT_CROSS_ORIGIN_HEADERS` when left out).
+
+builder-util-runtime has no `addSensitiveRedirectHeader`, `HttpExecutor.removeCrossOriginSensitiveHeaders` or `HttpExecutor.sensitiveHeaderNames`: a header is sent to another origin only when the list names it, so add the header to the list your executor's `CrossOriginHeaders` function returns instead.
+
+**Action:** remove `addSensitiveRedirectHeader(name)` calls (every header off the list stays on the original origin), and pass `defaults => [...defaults, "x-my-header"]` to your `HttpExecutor` subclass's constructor for a header that has to follow redirects to another origin.
+
 ---
 
 ## Build hooks & custom signers {#build-hooks-custom-signers}
@@ -166,7 +182,7 @@ These are documented on other pages:
 - **`afterPack` hooks on macOS:** with Electron 41+, the Electron Framework is patched and signed again ad hoc after `afterPack`. If you sign the app in `afterPack`, or change `app.asar` / `Info.plist` after it, see [the ASAR integrity digest](./v27-runtime-changes.md#macos-asar-integrity-digest).
 - **Custom Windows signing hooks** move to `win.sign.sign` ([config change](./v27-config-changes.md#custom-windows-signing-hooks-move-to-winsignsign)) and now need `win.sign.publisherName` ([build check](./v27-build-changes.md#windows-publishername-is-validated-against-the-signing-certificate)).
 - **Custom macOS signing functions** (`mac.sign: "./customSign.js"`) can no longer sit next to sibling signing options: see [macOS signing → `mac.sign`](./v27-config-changes.md#macos-signing-macsign).
-- **Custom electron-updater providers** that don't extend a built-in provider must override `Provider.feedBaseUrl` when used with credential or custom headers (any header off the [cross-origin allowlist](./v27-runtime-changes.md#cross-origin-header-allowlist)): see [Update credentials stay on the feed's origin](./v27-runtime-changes.md#update-credentials-stay-on-the-feeds-origin).
+- **Custom electron-updater providers** that don't extend a built-in provider must override `Provider.feedBaseUrl` when used with credential or custom headers (any header off the [cross-origin headers](./v27-runtime-changes.md#cross-origin-header-allowlist)): see [Update credentials stay on the feed's origin](./v27-runtime-changes.md#update-credentials-stay-on-the-feeds-origin).
 
 ---
 
