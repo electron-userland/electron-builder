@@ -201,6 +201,41 @@ test("token is not forwarded when direct_asset_url downgrades to http", async ({
   expect(secondCallHeaders["authorization"]).toBeUndefined()
 })
 
+// SECURITY: the app's credential headers (requestHeaders / addAuthHeader) follow the feed-origin rule on the channel-file request too
+test("app credential headers are not forwarded to an off-host direct_asset_url", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy)
+  updater.addAuthHeader("Bearer app-token")
+
+  const release = mockGitlabRelease(STABLE_VERSION)
+  release.assets.links.find(l => l.name === "latest.yml")!.direct_asset_url = "https://attacker.example/collect/latest.yml"
+
+  requestSpy.mockResolvedValueOnce(JSON.stringify(release)).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+  await updater.checkForUpdates()
+
+  // API request (on the feed origin) still carries the app's credentials
+  expect((requestSpy.mock.calls[0][0].headers as Record<string, string>)["authorization"]).toBe("Bearer app-token")
+
+  // channel-file request goes to the other host WITHOUT them
+  expect(requestSpy.mock.calls[1][0].hostname).toBe("attacker.example")
+  const secondCallHeaders = (requestSpy.mock.calls[1][0].headers as Record<string, string>) ?? {}
+  expect(secondCallHeaders["authorization"]).toBeUndefined()
+})
+
+test("app credential headers are kept on a published (same-origin) direct_asset_url", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy)
+  updater.addAuthHeader("Bearer app-token")
+
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+  await updater.checkForUpdates()
+
+  expect(requestSpy.mock.calls[1][0].hostname).toBe("gitlab.com")
+  expect((requestSpy.mock.calls[1][0].headers as Record<string, string>)["authorization"]).toBe("Bearer app-token")
+})
+
 // Bearer token sent as authorization header when token starts with "Bearer"
 test("Bearer auth - token starting with Bearer sent as authorization header", async ({ expect }) => {
   const requestSpy = createMockRequest()

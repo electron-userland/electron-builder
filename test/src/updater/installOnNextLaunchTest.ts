@@ -1,6 +1,7 @@
 import { CancellationToken, hashFile } from "builder-util-runtime"
 import type { UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
-import { outputFile, pathExists, readJson } from "fs-extra"
+import { mkdir, outputFile, pathExists, readJson } from "fs-extra"
+import { Lazy } from "lazy-val"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { DebUpdater, NsisUpdater } from "electron-updater"
@@ -329,6 +330,8 @@ describe("install on next launch", { concurrent: false }, () => {
       const updater = new UpdaterClass(null, app)
       updater.logger = log
       updater.forceDevUpdateConfig = true
+      // these tests install the marked update themselves: keep the automatic install at launch out of them
+      updater.autoInstallEvent = "manual"
       ;(updater as any).downloadedUpdateHelper = helper
       const doInstall = vi.spyOn(updater as any, "doInstall").mockReturnValue(true)
       // Linux targets install through the async path; keep every assertion on the single doInstall spy
@@ -668,6 +671,222 @@ describe("install on next launch", { concurrent: false }, () => {
     })
   })
 
+  // The automatic install at launch: once the app is ready, the updater installs an update that a previous launch marked for it.
+  describe("BaseUpdater install at launch", () => {
+    // a new launch of a per-user NSIS app, packaged unless `appOverrides` says otherwise: the marked update is only known from disk
+    async function launchNsisUpdater(context: { tmpDir: import("temp-file").TmpDir }, latestUpdateInfo: UpdateInfo, appOverrides: Partial<AppAdapter> = {}) {
+      const configDir = await context.tmpDir.createTempDir()
+      const appUpdateConfigPath = path.join(configDir, "app-update.yml")
+      // quoted: a temp dir name can be all digits, which YAML would read as a number
+      await outputFile(appUpdateConfigPath, `provider: generic\nurl: https://example.com\nupdaterCacheDirName: ${JSON.stringify(path.basename(cacheDir))}\n`)
+      let ready!: () => void
+      const whenReady = new Promise<void>(resolve => (ready = resolve))
+      const app = makeStubApp({ isPackaged: true, appUpdateConfigPath, baseCachePath: path.dirname(cacheDir), whenReady: () => whenReady, ...appOverrides })
+      // built before the app is ready, as `autoUpdater.logger = log` at the top of the main script does
+      const updater = new NsisUpdater(null, app)
+      updater.logger = log
+      const doInstall = vi.spyOn(updater as any, "doInstall").mockReturnValue(true)
+      const getUpdateInfoAndProvider = vi.spyOn(updater as any, "getUpdateInfoAndProvider").mockResolvedValue({
+        info: latestUpdateInfo,
+        provider: { resolveFiles: (info: UpdateInfo) => info.files.map(it => makeResolvedFileInfo(it.sha512, it.url)) },
+      })
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
+      return { updater, app, ready, whenReady, doInstall, getUpdateInfoAndProvider }
+    }
+
+    // the update the last launch downloaded, marked by its quitAndInstall({ waitUntilNextLaunch: true })
+    async function markWithQuitAndInstall(): Promise<UpdateInfo> {
+      const { updateInfo } = await seedDownloadedUpdate(helper, { fileName: "TestApp-Setup-1.0.1.exe" })
+      const lastLaunch = new NsisUpdater(null, makeStubApp())
+      lastLaunch.logger = log
+      ;(lastLaunch as any).downloadedUpdateHelper = helper
+      lastLaunch.quitAndInstall({ isSilent: true, isForceRunAfter: true, waitUntilNextLaunch: true })
+      expect(await helper.getPendingInstallInfo()).toMatchObject({ installOnNextLaunch: true })
+      return updateInfo
+    }
+
+    test("installs the update that quitAndInstall({ waitUntilNextLaunch: true }) marked, with the default autoInstallEvent ('onQuit')", async context => {
+      const updateInfo = await markWithQuitAndInstall()
+      const { updater, app, ready, doInstall } = await launchNsisUpdater(context, updateInfo)
+      expect(updater.autoInstallEvent).toBe("onQuit")
+
+      ready()
+      await vi.waitFor(() => expect(doInstall).toHaveBeenCalledTimes(1))
+      await new Promise(resolve => setImmediate(resolve))
+
+      expect(doInstall).toHaveBeenCalledWith(expect.objectContaining({ isSilent: true, isForceRunAfter: true }))
+      expect(app.quitCalls).toBe(1)
+      expect(await helper.getPendingInstallInfo()).toBeNull()
+    })
+
+    test("applies what the app configures in its own ready handler, registered after the updater was built", async context => {
+      const updateInfo = await markWithQuitAndInstall()
+      const { updater, ready, whenReady, doInstall, getUpdateInfoAndProvider } = await launchNsisUpdater(context, updateInfo)
+      // the request headers when the latest update info was fetched: the install resolves its files right after
+      let headersOfUpdateCheck: unknown = null
+      getUpdateInfoAndProvider.mockResolvedValue({
+        info: updateInfo,
+        provider: {
+          resolveFiles: (info: UpdateInfo) => {
+            headersOfUpdateCheck = updater.requestHeaders
+            return info.files.map(it => makeResolvedFileInfo(it.sha512, it.url))
+          },
+        },
+      })
+      // what app.whenReady().then(() => { ... }) in the main script does
+      void whenReady.then(() => {
+        updater.autoInstallEvent = "onNextLaunch"
+        updater.addAuthHeader("Bearer token")
+      })
+
+      ready()
+      await vi.waitFor(() => expect(doInstall).toHaveBeenCalledTimes(1))
+
+      expect(headersOfUpdateCheck).toEqual({ authorization: "Bearer token" })
+    })
+
+    test("leaves a marked update to installPendingUpdateIfAvailable() when the app sets autoInstallEvent to 'manual' in its ready handler", async context => {
+      const updateInfo = await markWithQuitAndInstall()
+      const { updater, ready, whenReady, doInstall, getUpdateInfoAndProvider } = await launchNsisUpdater(context, updateInfo)
+      // a ready handler chained after another one: app.whenReady().then(createWindow).then(() => { ... })
+      void whenReady
+        .then(() => undefined)
+        .then(() => {
+          updater.autoInstallEvent = "manual"
+        })
+
+      ready()
+      // time for the launch to install the marked update, were it to
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      expect(getUpdateInfoAndProvider).not.toHaveBeenCalled()
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(await helper.getPendingInstallInfo()).toMatchObject({ installOnNextLaunch: true })
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
+      expect(doInstall).toHaveBeenCalledTimes(1)
+    })
+
+    test("installs the marked update once when the app installs it itself in its ready handler as well", async context => {
+      const updateInfo = await markWithQuitAndInstall()
+      const { updater, ready, whenReady, doInstall, getUpdateInfoAndProvider } = await launchNsisUpdater(context, updateInfo)
+      // the update check of the app's install is held, so that the install at launch starts while the app's install runs
+      let finishUpdateCheck!: () => void
+      const isUpdateCheckFinished = new Promise<void>(resolve => (finishUpdateCheck = resolve))
+      getUpdateInfoAndProvider.mockReturnValue(
+        isUpdateCheckFinished.then(() => ({ info: updateInfo, provider: { resolveFiles: (info: UpdateInfo) => info.files.map(it => makeResolvedFileInfo(it.sha512, it.url)) } }))
+      )
+      const getPendingInstallInfo = vi.spyOn(DownloadedUpdateHelper.prototype, "getPendingInstallInfo")
+      let isInstalledByApp!: Promise<boolean>
+      // the documented `await autoUpdater.installPendingUpdateIfAvailable()` before the app opens its first window
+      void whenReady.then(() => {
+        isInstalledByApp = updater.installPendingUpdateIfAvailable()
+      })
+
+      ready()
+      await vi.waitFor(() => expect(getUpdateInfoAndProvider).toHaveBeenCalledTimes(1))
+      // time for the launch to look for the marked update and check for it too, were it not waiting for the app's install
+      await new Promise(resolve => setTimeout(resolve, 100))
+      expect(getUpdateInfoAndProvider).toHaveBeenCalledTimes(1)
+
+      finishUpdateCheck()
+      await expect(isInstalledByApp).resolves.toBe(true)
+      // then the launch finds the marker cleared
+      await vi.waitFor(() => expect(getPendingInstallInfo).toHaveBeenCalledTimes(2))
+      await expect(getPendingInstallInfo.mock.results[1].value).resolves.toBeNull()
+
+      expect(getUpdateInfoAndProvider).toHaveBeenCalledTimes(1)
+      expect(doInstall).toHaveBeenCalledTimes(1)
+      expect(log.warns).toEqual([])
+    })
+
+    test("does nothing at launch when no update is marked: no update check, no log, and the updater cache directory is not fixed yet", async context => {
+      const { updateInfo } = await seedDownloadedUpdate(helper, { fileName: "TestApp-Setup-1.0.1.exe" })
+      const getPendingInstallInfo = vi.spyOn(DownloadedUpdateHelper.prototype, "getPendingInstallInfo")
+      const { updater, ready, doInstall, getUpdateInfoAndProvider } = await launchNsisUpdater(context, updateInfo)
+
+      ready()
+      await vi.waitFor(() => expect(getPendingInstallInfo).toHaveBeenCalledTimes(1))
+      await expect(getPendingInstallInfo.mock.results[0].value).resolves.toBeNull()
+      await new Promise(resolve => setImmediate(resolve))
+
+      expect(getUpdateInfoAndProvider).not.toHaveBeenCalled()
+      expect(doInstall).not.toHaveBeenCalled()
+      expect((updater as any).downloadedUpdateHelper).toBeNull()
+      expect(log.infos).toEqual([])
+      expect(log.warns).toEqual([])
+    })
+
+    test("an unpackaged app without forceDevUpdateConfig neither looks for nor installs a marked update at launch", async ({ tmpDir }) => {
+      const updateInfo = await markWithQuitAndInstall()
+      const getPendingInstallInfo = vi.spyOn(DownloadedUpdateHelper.prototype, "getPendingInstallInfo")
+      const { ready, doInstall, getUpdateInfoAndProvider } = await launchNsisUpdater({ tmpDir }, updateInfo, { isPackaged: false })
+
+      ready()
+      // time for the launch to install the marked update, were it to
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      expect(getPendingInstallInfo).not.toHaveBeenCalled()
+      expect(getUpdateInfoAndProvider).not.toHaveBeenCalled()
+      expect(doInstall).not.toHaveBeenCalled()
+      getPendingInstallInfo.mockRestore()
+      expect(await helper.getPendingInstallInfo()).toMatchObject({ installOnNextLaunch: true })
+    })
+
+    // without a readable app-update.yml the updater cache directory, and so the marker, cannot be found
+    test.for(["is missing", "is a directory", "fails to load with a rejection that is not an Error"])(
+      "does not install at launch, and does not fail, when app-update.yml %s",
+      async (kind, { tmpDir }) => {
+        const updateInfo = await markWithQuitAndInstall()
+        const appUpdateConfigPath = path.join(await tmpDir.getTempDir({ prefix: "launch-config" }), "app-update.yml")
+        if (kind === "is a directory") {
+          await mkdir(appUpdateConfigPath, { recursive: true })
+        }
+        const { updater, ready, doInstall, getUpdateInfoAndProvider } = await launchNsisUpdater({ tmpDir }, updateInfo, { appUpdateConfigPath })
+        if (kind === "fails to load with a rejection that is not an Error") {
+          vi.spyOn(updater as any, "loadUpdateConfig").mockRejectedValue(undefined)
+          // NsisUpdater's web package cleanup at ready reads app-update.yml too; this test is about the install at launch
+          vi.spyOn(updater as any, "removeInstalledWebPackage").mockResolvedValue(undefined)
+        }
+        const onUnhandledRejection = vi.fn()
+        process.on("unhandledRejection", onUnhandledRejection)
+        try {
+          ready()
+          // time for the launch to install the marked update, were it to
+          await new Promise(resolve => setTimeout(resolve, 100))
+        } finally {
+          process.off("unhandledRejection", onUnhandledRejection)
+        }
+
+        expect(onUnhandledRejection).not.toHaveBeenCalled()
+        expect(getUpdateInfoAndProvider).not.toHaveBeenCalled()
+        expect(doInstall).not.toHaveBeenCalled()
+        await expect((updater as any).installPendingUpdateOnLaunch()).resolves.toBe(false)
+      }
+    )
+
+    test("an install at launch that rejects with a value that is not an Error does not fail, and the app can install the update itself", async ({ tmpDir }) => {
+      const updateInfo = await markWithQuitAndInstall()
+      const { updater, ready, doInstall, getUpdateInfoAndProvider } = await launchNsisUpdater({ tmpDir }, updateInfo)
+      // the update check of the install at launch fails with a value that has no `message`
+      getUpdateInfoAndProvider.mockRejectedValueOnce(undefined)
+      const onUnhandledRejection = vi.fn()
+      process.on("unhandledRejection", onUnhandledRejection)
+      try {
+        ready()
+        await vi.waitFor(() => expect(getUpdateInfoAndProvider).toHaveBeenCalledTimes(1))
+        await new Promise(resolve => setTimeout(resolve, 50))
+      } finally {
+        process.off("unhandledRejection", onUnhandledRejection)
+      }
+
+      expect(onUnhandledRejection).not.toHaveBeenCalled()
+      expect(doInstall).not.toHaveBeenCalled()
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
+      expect(doInstall).toHaveBeenCalledTimes(1)
+    })
+  })
+
   // The web installer installs its own copy of the --package-file, so the package left in the pending directory is removed once
   // the app runs the version of that update, at startup (app ready).
   describe("NsisUpdater removes the web package of an installed update", () => {
@@ -681,6 +900,8 @@ describe("install on next launch", { concurrent: false }, () => {
       const app = makeStubApp({ version, isPackaged: true, appUpdateConfigPath, baseCachePath: path.dirname(cacheDir), whenReady: () => whenReady })
       const updater = new NsisUpdater(null, app)
       updater.logger = log
+      // the seeded update is marked for install on next launch: keep the automatic install at launch out of these tests
+      updater.autoInstallEvent = "manual"
       return { updater, ready }
     }
 
@@ -714,6 +935,16 @@ describe("install on next launch", { concurrent: false }, () => {
       await (updater as any).removeInstalledWebPackage()
 
       expect((updater as any).downloadedUpdateHelper).toBeNull()
+    })
+
+    test("settles and keeps the package when loading the update config rejects with a non-Error value", async context => {
+      const seeded = await seedDownloadedWebUpdate(helper, { version: "1.0.1" })
+      // the app is never ready here, so only the call below runs the cleanup
+      const { updater } = await createPackagedNsisUpdater("1.0.1", context)
+      updater.configOnDisk = new Lazy<any>(() => Promise.reject(undefined))
+
+      await expect((updater as any).removeInstalledWebPackage()).resolves.toBeUndefined()
+      expect(await pathExists(seeded.packagePath)).toBe(true)
     })
   })
 })

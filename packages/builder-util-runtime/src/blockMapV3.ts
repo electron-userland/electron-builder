@@ -42,6 +42,12 @@ export const RECORD_SIZE = 10
 export const REGION_SIZE = 28
 export const HEADER_FIXED_SIZE = 46
 
+/**
+ * Largest block map accepted (whole downloads, and the size a header declares): a 2 GB installer at 1 KiB blocks needs ~22 MB,
+ * so this leaves ample room while keeping a corrupt or hostile header from allocating, requesting or decoding gigabytes.
+ */
+export const MAX_BLOCK_MAP_V3_SIZE = 128 * 1024 * 1024
+
 /** Content-defined grouping parameters (in blocks). */
 export const GROUP_AVG = 32
 export const GROUP_MASK = GROUP_AVG - 1
@@ -323,6 +329,29 @@ export function parseBlockMapV3Header(buf: Buffer): BlockMapV3Header {
   }
 }
 
+/**
+ * Rejects a header that does not describe a file of `expectedFileSize` bytes (when given), declares a map larger than `maxSize` (when
+ * given) or MAX_BLOCK_MAP_V3_SIZE, or (when `length` is given) declares a map of another length, before any size derived from its counts
+ * is requested or allocated, or any table is decoded (the counts themselves are bounded by `parseBlockMapV3Header`).
+ */
+export function checkBlockMapV3Header(header: BlockMapV3Header, options: { expectedFileSize?: number | null; length?: number | null; maxSize?: number | null } = {}): void {
+  const { expectedFileSize, length, maxSize } = options
+  if (expectedFileSize != null && header.fileSize !== expectedFileSize) {
+    throw new Error(`block map v3: the map describes a ${header.fileSize}-byte file, the update is ${expectedFileSize} bytes`)
+  }
+  const size = blockMapV3Size(header)
+  const limit = maxSize != null && maxSize > 0 ? Math.min(maxSize, MAX_BLOCK_MAP_V3_SIZE) : MAX_BLOCK_MAP_V3_SIZE
+  if (size > limit) {
+    throw new Error(`block map v3: the header declares a ${size}-byte map, more than the ${limit}-byte limit`)
+  }
+  if (length != null && length < size) {
+    throw new Error(`block map v3: truncated map (${length} bytes, the header declares ${size})`)
+  }
+  if (length != null && length !== size) {
+    throw new Error(`block map v3: file size ${length} does not match header (expected ${size})`)
+  }
+}
+
 /** Byte offset of the group table. */
 export function groupTableStart(header: BlockMapV3Header): number {
   return header.headerLen + header.superCount * SUPER_SIZE
@@ -346,7 +375,7 @@ export function parseBlockMapV3Supers(header: BlockMapV3Header, buf: Buffer): Ar
   }
   const supers: Array<BlockMapV3Super> = []
   for (let s = header.headerLen; s < end; s += SUPER_SIZE) {
-    supers.push({ hash: hex8(buf, s), blockCount: buf.readUInt32LE(s + 8), groupCount: buf.readUInt16LE(s + 12) })
+    supers.push({ hash: buf.toString("hex", s, s + HASH_LEN), blockCount: buf.readUInt32LE(s + 8), groupCount: buf.readUInt16LE(s + 12) })
   }
   return supers
 }
@@ -360,7 +389,7 @@ export function parseBlockMapV3Groups(header: BlockMapV3Header, buf: Buffer): Ar
   }
   const groups: Array<BlockMapV3Group> = []
   for (let g = start; g < end; g += GROUP_SIZE) {
-    groups.push({ hash: hex8(buf, g), byteLength: buf.readUInt32LE(g + 8), blockCount: buf.readUInt16LE(g + 12) })
+    groups.push({ hash: buf.toString("hex", g, g + HASH_LEN), byteLength: buf.readUInt32LE(g + 8), blockCount: buf.readUInt16LE(g + 12) })
   }
   return groups
 }
@@ -372,9 +401,46 @@ export function parseBlockMapV3Records(buf: Buffer, offset: number, count: numbe
   }
   const records: Array<BlockMapV3Record> = []
   for (let i = 0, r = offset; i < count; i++, r += RECORD_SIZE) {
-    records.push({ hash: hex8(buf, r), size: buf.readUInt16LE(r + HASH_LEN) })
+    // one flat string per record (hex8 builds a chain of concatenations): a map of millions of blocks stays a fraction of the heap
+    records.push({ hash: buf.toString("hex", r, r + HASH_LEN), size: buf.readUInt16LE(r + HASH_LEN) })
   }
   return records
+}
+
+/**
+ * Rejects a super-group table with an empty super-group, or whose counts do not sum to the header's, before any range derived from it
+ * (`groupEntryRanges`) is requested or decoded: once they sum, the group entries end exactly where the records start.
+ */
+export function checkBlockMapV3Supers(header: BlockMapV3Header, supers: Array<BlockMapV3Super>): void {
+  let groupsCounted = 0
+  let blocksCounted = 0
+  for (const sup of supers) {
+    if (sup.groupCount === 0) {
+      throw new Error("block map v3: empty super-group")
+    }
+    groupsCounted += sup.groupCount
+    blocksCounted += sup.blockCount
+  }
+  if (groupsCounted !== header.groupCount || blocksCounted !== header.blockCount) {
+    throw new Error("block map v3: super-group counts do not sum to groupCount/blockCount")
+  }
+}
+
+/**
+ * Rejects a group table with an empty group, or whose block counts do not sum to the header's, before any range derived from it
+ * (`recordRanges`) is requested or decoded: once they sum, the records end exactly at the end of the map.
+ */
+export function checkBlockMapV3Groups(header: BlockMapV3Header, groups: Array<BlockMapV3Group>): void {
+  let counted = 0
+  for (const group of groups) {
+    if (group.blockCount === 0) {
+      throw new Error("block map v3: empty group")
+    }
+    counted += group.blockCount
+  }
+  if (counted !== header.blockCount) {
+    throw new Error("block map v3: group block counts do not sum to blockCount")
+  }
 }
 
 /** Byte ranges [start, end) of every super-group's group entries within the file (cumulative, O(n)). */
@@ -406,34 +472,18 @@ export function recordRangeOfGroup(header: BlockMapV3Header, groups: Array<Block
   return recordRanges(header, groups)[index]
 }
 
-/** Parses a complete v3 buffer. */
-export function decodeBlockMapV3(buf: Buffer): BlockMapV3 {
+/**
+ * Parses a complete v3 buffer, rejecting a map for a file other than `expectedFileSize` bytes, or larger than `maxSize` bytes (when
+ * given). The header and the tables are checked before any record is decoded: a downloaded map can declare millions of them.
+ */
+export function decodeBlockMapV3(buf: Buffer, expectedFileSize?: number | null, maxSize?: number | null): BlockMapV3 {
   const header = parseBlockMapV3Header(buf)
+  checkBlockMapV3Header(header, { expectedFileSize, length: buf.length, maxSize })
   const supers = parseBlockMapV3Supers(header, buf)
+  checkBlockMapV3Supers(header, supers)
   const groups = parseBlockMapV3Groups(header, buf)
+  checkBlockMapV3Groups(header, groups)
   const records = parseBlockMapV3Records(buf, recordsStart(header), header.blockCount)
-  let groupsCounted = 0
-  let blocksCounted = 0
-  for (const sup of supers) {
-    if (sup.groupCount === 0) {
-      throw new Error("block map v3: empty super-group")
-    }
-    groupsCounted += sup.groupCount
-    blocksCounted += sup.blockCount
-  }
-  if (groupsCounted !== header.groupCount || blocksCounted !== header.blockCount) {
-    throw new Error("block map v3: super-group counts do not sum to groupCount/blockCount")
-  }
-  let counted = 0
-  for (const group of groups) {
-    if (group.blockCount === 0) {
-      throw new Error("block map v3: empty group")
-    }
-    counted += group.blockCount
-  }
-  if (counted !== header.blockCount) {
-    throw new Error("block map v3: group block counts do not sum to blockCount")
-  }
   if (records.some(record => record.size === 0)) {
     throw new Error("block map v3: empty block")
   }

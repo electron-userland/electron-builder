@@ -1,5 +1,16 @@
-import { CancellationToken, configureRequestUrl, newError, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
-import { OutgoingHttpHeaders, RequestOptions } from "http"
+import {
+  ApiRequestOptions,
+  CancellationToken,
+  configureRequestUrl,
+  DEFAULT_MAX_UPDATE_INFO_SIZE,
+  HttpExecutor,
+  newError,
+  safeStringifyJson,
+  UpdateFileInfo,
+  UpdateInfo,
+  WindowsUpdateInfo,
+} from "builder-util-runtime"
+import { OutgoingHttpHeaders } from "http"
 import { EventType, load, State } from "js-yaml"
 import { URL } from "url"
 import { ElectronHttpExecutor } from "../electronHttpExecutor.js"
@@ -14,6 +25,12 @@ export interface ProviderRuntimeOptions {
   platform: ProviderPlatform
 
   executor: ElectronHttpExecutor
+
+  /**
+   * Called when an update info request (e.g. a channel file) goes to another origin than `Provider.feedBaseUrl` and so is sent
+   * without the credential headers `headerNames` (names only, never values). The updater warns about it once.
+   */
+  onCrossOriginHeadersRemoved?: (url: URL, feedBaseUrl: URL, headerNames: Array<string>) => void
 }
 
 // Shared by the GitHub/GitLab/PrivateGitHub providers when a release channel file (e.g. latest.yml) 404s.
@@ -23,6 +40,8 @@ export function channelFileNotFoundError(channelFile: string, channelFileUrl: UR
 
 export abstract class Provider<T extends UpdateInfo> {
   private requestHeaders: OutgoingHttpHeaders | null = null
+  // the size limit of channel files (see channelFileRequest), 0 for none
+  private maxUpdateInfoSize = DEFAULT_MAX_UPDATE_INFO_SIZE
   protected readonly executor: ElectronHttpExecutor
 
   protected constructor(private readonly runtimeOptions: ProviderRuntimeOptions) {
@@ -70,7 +89,8 @@ export abstract class Provider<T extends UpdateInfo> {
 
   /**
    * Base URL of the update feed: the credential-bearing request headers (the ones stripped on a cross-origin redirect) are only sent to
-   * download URLs on its origin. `null` sends the request headers to every download URL.
+   * download URLs, and to the URLs of the provider's own update info requests (e.g. the channel file), on its origin. `null` sends the
+   * request headers to every URL.
    * The default, `undefined`, means not declared: a download with credential headers (from `requestHeaders` / `addAuthHeader`) then fails
    * with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, so a custom provider used with credentials must override this getter.
    */
@@ -80,6 +100,14 @@ export abstract class Provider<T extends UpdateInfo> {
 
   setRequestHeaders(value: OutgoingHttpHeaders | null): void {
     this.requestHeaders = value
+  }
+
+  /**
+   * The largest channel file (`latest*.yml`) read, in bytes (`0` for no limit). Set by AppUpdater before each update check, from
+   * `autoUpdater.maxUpdateInfoSize` or the `maxUpdateInfoSize` of the publish configuration.
+   */
+  setMaxUpdateInfoSize(value: number): void {
+    this.maxUpdateInfoSize = value
   }
 
   abstract getLatestVersion(): Promise<T>
@@ -93,14 +121,49 @@ export abstract class Provider<T extends UpdateInfo> {
     return this.executor.request(this.createRequestOptions(url, headers), cancellationToken)
   }
 
-  protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
-    const result: RequestOptions = {}
-    if (this.requestHeaders == null) {
+  /**
+   * {@link httpRequest} for a channel file (`latest*.yml`), which is read into memory and parsed before anything verifies it: a response
+   * larger than `maxUpdateInfoSize` fails with `ERR_HTTP_RESPONSE_TOO_LARGE` (see ApiRequestOptions.maxResponseSize). Channel files are
+   * a few KB. Release feeds and API responses (release listings and lookups) are not limited: their size depends on the release history.
+   */
+  protected async channelFileRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken): Promise<string | null> {
+    const options: ApiRequestOptions = this.createRequestOptions(url, headers)
+    // 0 is no limit, while a maxResponseSize of 0 would only allow an empty response
+    if (this.maxUpdateInfoSize !== 0) {
+      options.maxResponseSize = this.maxUpdateInfoSize
+    }
+    try {
+      return await this.executor.request(options, cancellationToken)
+    } catch (e: unknown) {
+      // names the options that raise the limit
+      if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
+        throw newError(
+          `${e.message}: raise the limit with maxUpdateInfoSize in the publish configuration (app-update.yml) or autoUpdater.maxUpdateInfoSize`,
+          "ERR_HTTP_RESPONSE_TOO_LARGE"
+        )
+      }
+      throw e
+    }
+  }
+
+  protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): ApiRequestOptions {
+    const result: ApiRequestOptions = {}
+    // the same feed-origin rule as for downloads: e.g. a channel file on another origin gets no credential headers
+    const feedBaseUrl = this.feedBaseUrl
+    let requestHeaders = this.requestHeaders
+    if (requestHeaders != null && feedBaseUrl != null && HttpExecutor.isCrossOrigin(feedBaseUrl, url)) {
+      const headerNames = HttpExecutor.sensitiveHeaderNames(requestHeaders)
+      requestHeaders = HttpExecutor.removeCrossOriginSensitiveHeaders(requestHeaders, feedBaseUrl, url)
+      if (headerNames.length !== 0) {
+        this.runtimeOptions.onCrossOriginHeadersRemoved?.(url, feedBaseUrl, headerNames)
+      }
+    }
+    if (requestHeaders == null) {
       if (headers != null) {
         result.headers = headers
       }
     } else {
-      result.headers = headers == null ? this.requestHeaders : { ...this.requestHeaders, ...headers }
+      result.headers = headers == null ? requestHeaders : { ...requestHeaders, ...headers }
     }
 
     configureRequestUrl(url, result)
