@@ -14,14 +14,20 @@ const PROVIDER_HOSTS: Record<TokenHostProvider, { readonly defaults: ReadonlyArr
   keygen: { defaults: ["api.keygen.sh"], ciEnv: [] },
 }
 
+/** The variables that decide which hosts may receive a token from the environment. They must come from the publishing job, not from a project file. */
+export const PUBLISH_TOKEN_HOST_ENV_NAMES: ReadonlyArray<string> = [PUBLISH_TOKEN_HOSTS_ENV, ...Object.values(PROVIDER_HOSTS).flatMap(it => it.ciEnv)]
+
 /**
  * Returns the lower-case host name of a configured `host` option (a name, optionally with a port).
- * User info, a path, a query or a fragment is rejected. The value is not echoed: user info may hold a password.
+ * Only ASCII host name characters, a port and an IPv6 literal are accepted, so user info, a path, a query, a fragment or
+ * anything that another URL parser could read differently is rejected. The value is not echoed: user info may hold a password.
  */
 export function parseConfiguredHost(host: string, option: string): string {
-  const url = /[/\\?#@\s]/.test(host) ? null : URL.parse(`https://${host}`)
+  const url = /^[A-Za-z0-9.:[\]-]+$/.test(host) ? URL.parse(`https://${host}`) : null
   if (url == null || url.hostname === "") {
-    throw new InvalidConfigurationError(`${option} must be a host name, optionally with a port (e.g. "git.example.com:8443"), without user info, path, query or fragment`)
+    throw new InvalidConfigurationError(
+      `${option} must be a host name in ASCII (punycode for an internationalized name), optionally with a port (e.g. "git.example.com:8443"), without user info, path, query or fragment`
+    )
   }
   return url.hostname
 }

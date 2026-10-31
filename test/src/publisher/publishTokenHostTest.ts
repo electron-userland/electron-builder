@@ -1,5 +1,8 @@
+import { loadEnv } from "app-builder-lib/internal"
 import { CancellationToken } from "builder-util-runtime"
 import { GitHubPublisher, GitlabPublisher, KeygenPublisher, PublishContext } from "electron-publish"
+import { writeFile } from "fs/promises"
+import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 // A publish token taken from the environment is sent only to the provider's public host, a host the CI runner reports,
@@ -103,6 +106,9 @@ describe("GitHub", () => {
     ["a query", "ghe.example.com?x=1"],
     ["a fragment", "ghe.example.com#x"],
     ["whitespace", " ghe.example.com"],
+    ["a percent-encoded character", "%61pi.github.com"],
+    ["a semicolon", "ghe.example.com;api.github.com"],
+    ["a non-ASCII character", "ａｐｉ.github.com"],
   ])("a host with %s is rejected, even with a token in the configuration", (_label, host) => {
     let message = ""
     try {
@@ -180,5 +186,33 @@ describe("Keygen", () => {
   test("a host with user info is rejected", () => {
     vi.stubEnv("KEYGEN_TOKEN", SECRET)
     expect(() => keygen("api.keygen.sh@keygen.example.com")).toThrow("keygen.host must be a host name")
+  })
+})
+
+describe("electron-builder.env", () => {
+  test("cannot set the variables that decide the token hosts", async ({ tmpDir }) => {
+    vi.stubEnv("OTHER_SETTING", undefined)
+    const envFile = path.join(await tmpDir.createTempDir({ prefix: "publish-token-host-env" }), "electron-builder.env")
+    await writeFile(
+      envFile,
+      [
+        "ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS=ghe.example.com",
+        "GITHUB_SERVER_URL=https://ghe.example.com",
+        "GITHUB_API_URL=https://ghe.example.com/api/v3",
+        "CI_SERVER_URL=https://gitlab.example.com",
+        "CI_API_V4_URL=https://gitlab.example.com/api/v4",
+        "GH_TOKEN=" + SECRET,
+        "GITLAB_TOKEN=" + SECRET,
+        "OTHER_SETTING=kept",
+      ].join("\n")
+    )
+    await loadEnv(envFile)
+    expect(process.env.GH_TOKEN).toBe(SECRET)
+    expect(process.env.OTHER_SETTING).toBe("kept")
+    for (const name of ["ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS", "GITHUB_SERVER_URL", "GITHUB_API_URL", "CI_SERVER_URL", "CI_API_V4_URL"]) {
+      expect(process.env[name]).toBeUndefined()
+    }
+    expect(() => github("ghe.example.com")).toThrow('GH_TOKEN is not sent to "ghe.example.com"')
+    expect(() => gitlab("gitlab.example.com")).toThrow('GITLAB_TOKEN is not sent to "gitlab.example.com"')
   })
 })

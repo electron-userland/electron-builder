@@ -644,7 +644,7 @@ A token taken from the environment is now sent only to a host it belongs to. Bef
 
 - **the provider's public host:** `github.com`, `api.github.com` and `uploads.github.com`; `gitlab.com`; `api.keygen.sh`.
 - **the host the CI runner reports:** on GitHub Actions the hosts of `GITHUB_SERVER_URL` and `GITHUB_API_URL` (for a GitHub token), on GitLab CI the hosts of `CI_SERVER_URL` and `CI_API_V4_URL` (for a GitLab token). A GitHub Enterprise or self-managed GitLab runner therefore needs no change.
-- **a host listed in `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS`:** comma-separated host names (a port is allowed and ignored), e.g. `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS=github.example.com,gitlab.example.com`. Set it in the publishing job, not in the project, so a change to the project alone cannot redirect the token.
+- **a host listed in `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS`:** comma-separated host names (a port is allowed and ignored), e.g. `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS=github.example.com,gitlab.example.com`. Set it in the publishing job, not in the project, so a change to the project alone cannot redirect the token. For the same reason this variable, `GITHUB_SERVER_URL`, `GITHUB_API_URL`, `CI_SERVER_URL` and `CI_API_V4_URL` are ignored in `electron-builder.env`, with a warning.
 
 A token set in the configuration (`github.token`, `gitlab.token`, `squirrelWindows.remoteToken`) is explicit and still goes to the configured host. `GITHUB_RELEASE_TOKEN` still overrides `github.token`, and it is checked as a token from the environment.
 
@@ -652,7 +652,8 @@ A token set in the configuration (`github.token`, `gitlab.token`, `squirrelWindo
 <summary>What changed compared with v26</summary>
 
 - With a custom `github.host`, `gitlab.host` or `keygen.host` that is not allowed as above, publishing with a token from the environment **fails** before any request is sent.
-- `github.host`, `gitlab.host` and `keygen.host` must be a host name, optionally with a port. A value with user info (`user@host`), a path, a query or a fragment **fails**, with or without a token from the environment. v26 dropped a GitHub path silently and appended a GitLab one to the API URL.
+- `github.host`, `gitlab.host` and `keygen.host` must be an ASCII host name (punycode for an internationalized name), optionally with a port. A value with user info (`user@host`), a path, a query or a fragment **fails**, with or without a token from the environment. v26 dropped a GitHub path silently and appended a GitLab one to the API URL.
+- `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS`, `GITHUB_SERVER_URL`, `GITHUB_API_URL`, `CI_SERVER_URL` and `CI_API_V4_URL` in `electron-builder.env` are **ignored**, with a warning; set them in the environment of the publishing job.
 - `squirrelWindows.remoteReleases` on a host that is not allowed gets **no** token from the environment, with a warning; Squirrel.Windows then downloads the previous releases without authentication, which works for a public repository or a non-GitHub server. Without `remoteReleases` no token is passed.
 
 </details>

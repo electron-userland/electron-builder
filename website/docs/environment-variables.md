@@ -120,7 +120,7 @@ Since v27 a token from the environment (`GH_TOKEN`, `GITHUB_TOKEN`, `GITHUB_RELE
 
 | Variable | Description |
 |---|---|
-| `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS` | Comma-separated host names (a port is allowed and ignored), e.g. `github.example.com,gitlab.example.com`, that a token from the environment may also be sent to: a GitHub Enterprise, self-managed GitLab or self-hosted Keygen `host`, or the host of `squirrelWindows.remoteReleases`. Set it in the publishing job, not in the project. |
+| `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS` | Comma-separated host names (a port is allowed and ignored), e.g. `github.example.com,gitlab.example.com`, that a token from the environment may also be sent to: a GitHub Enterprise, self-managed GitLab or self-hosted Keygen `host`, or the host of `squirrelWindows.remoteReleases`. Set it in the publishing job, not in the project: this variable and the CI-reported URL variables above are ignored in `electron-builder.env`. |
 
 ### Cloudflare R2
 
