@@ -33,8 +33,8 @@ The changes are split by where you fix them. Each page opens with its own at-a-g
 | Page | What's on it | Changes |
 |---|---|:---:|
 | **[Config](./v27-config-changes.md)** | Removed, renamed and restructured config keys. `migrate-schema` rewrites most of them; any left behind fail the build. | 25 |
-| **[Build & Publish](./v27-build-changes.md)** | Node.js and CLI, toolsets and environment variables, dependency collection and validation, signing checks, publishing and update metadata, Flatpak build tooling. | 32 |
-| **[Runtime (Shipped App)](./v27-runtime-changes.md)** | What changes on users' machines: auto-update defaults and the electron-updater API, macOS entitlements and DMG, NSIS file associations, the Linux launcher, Flatpak and Snap defaults. | 22 |
+| **[Build & Publish](./v27-build-changes.md)** | Node.js and CLI, toolsets and environment variables, dependency collection and validation, signing checks, publishing and update metadata, Flatpak build tooling. | 33 |
+| **[Runtime (Shipped App)](./v27-runtime-changes.md)** | What changes on users' machines: auto-update defaults and the electron-updater API, macOS entitlements and DMG, NSIS file associations, the Linux launcher, Flatpak and Snap defaults. | 23 |
 | **[Developer-Only](./v27-developer-changes.md)** | Only if you write code against electron-builder: ESM packaging, the programmatic and plugin APIs, build hooks and custom signers, custom NSIS and maintainer scripts, type exports. | 10 |
 
 ---
@@ -65,6 +65,7 @@ The quickest way through an upgrade is:
 | [`http-parser` dropped from the default pacman `depends`](./v27-runtime-changes.md#pacman-default-dependencies-changed) | Your Arch package relies on `http-parser` | Runtime |
 | [Linux targets launch through a `*-launcher` script; AppImage adds `--no-sandbox` only for the legacy FUSE2 runtime](./v27-runtime-changes.md#linux-launcher-entrypoint) | You ship a custom `.desktop` file, AppArmor profile or MIME handler, or need the Chromium sandbox off in an AppImage | Runtime |
 | [Windows update signature verification fails closed](./v27-runtime-changes.md#windows-update-signature-verification-fails-closed) | Your users' machines may block PowerShell (AppLocker / WDAC), or your update installers are catalog-signed. Updates fail only on those machines | Runtime |
+| [Linux: gksudo, kdesudo and beesu refuse unsafe installer paths](./v27-runtime-changes.md#linux-gksudo-kdesudo-and-beesu-refuse-unsafe-installer-paths) | Your users' machines may lack polkit (`pkexec`), and the deb/rpm/pacman update's cache path (`artifactName`, `updaterCacheDirName`, the user name) can hold characters other than letters, digits and `._/+,:=@%-`. Updates fail only on those machines | Runtime |
 | [The `nsis-web` installer verifies its app package](./v27-runtime-changes.md#disablewebinstaller-defaults-to-true) | You run one web installer with a `--package-file` from another build | Runtime |
 | [`verifyUpdateCodeSignature` renamed (shim until v28)](./v27-runtime-changes.md#verifyupdatecodesignature-renamed-to-verifyupdatefileauthenticodesignature) | Your app sets `verifyUpdateCodeSignature`, or a subclass redeclares `_verifyUpdateCodeSignature` | Runtime |
 | [macOS names are no longer NFD-normalized](./v27-build-changes.md#macos-productname-and-executablename-are-validated-not-sanitized) | Your product name has accented characters and external tooling matches the bundle filename | Build |
