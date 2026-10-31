@@ -36,10 +36,11 @@ async function validateCustomToolset(custom: ToolsetCustom, resourcesDir?: strin
 
 // The path of a file:// toolset URL. "file:///..." is converted as a file URL, so that "file:///C:/tools/nsis.zip" (the form
 // pathToFileURL gives on Windows) is found on Windows instead of being read as "/C:/tools/nsis.zip", and percent-encoded
-// characters are decoded. "file://<relative path>" and "file://C:\..." are not file URLs and stay the path as written.
+// characters are decoded. "file://<relative path>" and "file://C:\..." are not file URLs and stay the path as written, and so
+// does a path with "?" or "#" in it: as a URL it would be cut there ("file:///opt/toolsets/#3/nsis.zip" would be "/opt/toolsets/").
 function fileUrlToPath(url: string): string {
   const p = url.slice("file://".length)
-  if (p.startsWith("/")) {
+  if (p.startsWith("/") && !/[?#]/.test(p)) {
     try {
       return fileURLToPath(url)
     } catch {
