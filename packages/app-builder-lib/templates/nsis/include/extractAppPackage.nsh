@@ -96,7 +96,60 @@
   CreateDirectory "$PLUGINSDIR\7z-out"
   ClearErrors
   SetOutPath "$PLUGINSDIR\7z-out"
+  !ifdef ONE_CLICK
+    Push $R2
+    Push $R3
+    Push $R4
+    Push $R5
+    Push $R6
+    Push $R7
+    StrCpy $R4 0
+    ${IfNot} ${Silent}
+      FindWindow $R2 "#32770" "" $hwndparent
+      FindWindow $R3 "#32770" "" $hwndparent $R2
+      GetDlgItem $R2 $R2 1004
+      GetDlgItem $R3 $R3 1001
+      ${If} $R3 <> 0
+        # SpiderBanner mirrors raw instruction-count positions from 1004. Detach it before extraction resets that scale.
+        System::Call 'user32::GetClassLongW(p R2, i -24) p .R4'
+      ${EndIf}
+    ${EndIf}
+    ${If} $R4 <> 0
+      System::Call 'user32::SetWindowLongW(p R2, i -4, p R4)'
+      SendMessage $R3 ${PBM_GETPOS} 0 0 $R4
+      GetLabelAddress $R5 extract7zaProgress
+      Nsis7z::ExtractWithCallback "${FILE}" $R5
+      SendMessage $R3 ${PBM_SETPOS} 30000 0
+      Goto extract7zaDone
+
+      extract7zaProgress:
+        Pop $R6
+        Pop $R7
+        ${If} $R7 != "0"
+          IntOp $R5 30000 - $R4
+          System::Int64Op $R6 * $R5
+          Pop $R6
+          System::Int64Op $R6 / $R7
+          Pop $R6
+          IntOp $R6 $R6 + $R4
+          SendMessage $R3 ${PBM_GETPOS} 0 0 $R5
+          ${If} $R6 > $R5
+            SendMessage $R3 ${PBM_SETPOS} $R6 0
+          ${EndIf}
+        ${EndIf}
+        Return
+    ${EndIf}
+  !endif
   Nsis7z::Extract "${FILE}"
+  !ifdef ONE_CLICK
+    extract7zaDone:
+    Pop $R7
+    Pop $R6
+    Pop $R5
+    Pop $R4
+    Pop $R3
+    Pop $R2
+  !endif
   Pop $R0
   SetOutPath $R0
 
