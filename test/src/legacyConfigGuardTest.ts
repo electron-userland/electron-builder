@@ -1,5 +1,7 @@
+import { checkBuildRequestOptions } from "app-builder-lib"
 import { checkLegacyConfiguration, RESOLVED_LEGACY_CONFIG_OPTIONS, validateConfiguration, validateSchema } from "app-builder-lib/internal"
 import { DebugLogger, InvalidConfigurationError, log } from "builder-util"
+import { configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/src/builder"
 import { readFileSync } from "fs"
 import * as path from "path"
 import { describe, expect, test, vi } from "vitest"
@@ -350,6 +352,16 @@ describe("checkLegacyConfiguration — extraMetadata.build / extraMetadata.direc
 
   test("a null extraMetadata (e.g. -c.extraMetadata=null) passes the guard", () => {
     expect(() => checkLegacyConfiguration({ extraMetadata: null } as any)).not.toThrow()
+  })
+
+  test("a literal --em.build / --em.directories on the command line names -c and the build-changes section", () => {
+    const yargs = createYargs()
+    configureBuildCommand(yargs)
+    for (const flag of ["--em.build.appId=com.example.app", "--em.directories.output=dist"]) {
+      const options = normalizeOptions(yargs.parse(flag) as any)
+      expect(() => checkBuildRequestOptions(options)).toThrow(InvalidConfigurationError)
+      expect(() => checkBuildRequestOptions(options)).toThrow(/`--em\.\*` flags .* not supported in electron-builder v27[\s\S]*`-c`[\s\S]*removed-flags-embuild-emdirectories/)
+    }
   })
 
   test("the build-changes page has the linked section", () => {

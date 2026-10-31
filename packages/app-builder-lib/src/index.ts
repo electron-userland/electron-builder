@@ -4,6 +4,7 @@ import { PublishOptions } from "electron-publish"
 import { Packager } from "./packager.js"
 import { PackagerOptions } from "./packagerApi.js"
 import { PublishManager } from "./publish/PublishManager.js"
+import { BUILD_CHANGES_URL } from "./util/config/legacyOptions.js"
 import { resolveFunction } from "./util/resolve.js"
 
 export { Arch, archFromString, getArchSuffix } from "builder-util"
@@ -116,6 +117,14 @@ const expectedOptions = new Set([
 export function checkBuildRequestOptions(options: PackagerOptions & PublishOptions) {
   for (const optionName of Object.keys(options)) {
     if (!expectedOptions.has(optionName) && (options as any)[optionName] !== undefined) {
+      if (optionName === "em") {
+        // a literal `--em.build=…` / `--em.directories=…` on the command line (the flags were removed in v22)
+        throw new InvalidConfigurationError(
+          "The `--em.*` flags (`--em.build`, `--em.directories`) are not supported in electron-builder v27.\n" +
+            "  Pass build configuration with `-c` (e.g. `-c.directories.output=dist`), and package.json properties with `-c.extraMetadata.<name>`.\n" +
+            `  ${BUILD_CHANGES_URL}#removed-flags-embuild-emdirectories`
+        )
+      }
       throw new InvalidConfigurationError(`Unknown option "${optionName}"`)
     }
   }
