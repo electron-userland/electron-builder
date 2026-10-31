@@ -910,7 +910,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   /**
    * Electron's `login` event of the update request to `requestUrl`: emitted as `login` unless the provider of the latest update check
-   * declines it ({@link Provider.onLoginChallenge} returns anything but `true`, or throws), which cancels the challenge. Before an update
+   * declines it ({@link Provider.onLoginChallenge} returns anything but `true`, or throws), which cancels the challenge. Until the first update
    * check, or with a custom provider without that method, every challenge is emitted. A challenge on a request whose URL cannot be
    * determined (`null`) is cancelled. With `allowInsecureFeed`, a server's challenge on a request that is not `https` is cancelled too:
    * nothing shows that it comes from the server the credentials are meant for.

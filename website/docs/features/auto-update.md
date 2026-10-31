@@ -472,7 +472,7 @@ Emitted when an update request gets an authentication challenge, from a proxy (`
 
 With [`allowInsecureFeed`](#allowinsecurefeed-new-defaults-to-false), a server's challenge on a request that is not `https` is cancelled without emitting `login` or asking the provider, as its authenticity cannot be determined; electron-updater logs a warning the first time. Serve the feed and the update files over `https` to answer it.
 
-Before emitting `login`, electron-updater asks the provider of the latest update check: `Provider.onLoginChallenge(authInfo, url)` gets the challenge and the URL of the request that got it (after a redirect, the redirect's target). It returns `true` to emit `login`; any other value, or a throw, cancels the challenge without emitting `login`. Before the first update check, and with the built-in providers, every challenge is emitted. A custom provider can override it to send your handler's credentials only to the servers they are meant for:
+To decide whether to emit `login`, electron-updater asks the provider of the latest update check: `Provider.onLoginChallenge(authInfo, url)` gets the challenge and the URL of the request that got it (after a redirect, the redirect's target). It returns `true` to emit `login`; any other value, or a throw, cancels the challenge without emitting `login`. Until the first update check, and with the built-in providers, every challenge is emitted. A custom provider can override it to send your handler's credentials only to the servers they are meant for:
 
 ```typescript
 class MyProvider extends Provider<UpdateInfo> {
