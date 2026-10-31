@@ -3,4 +3,4 @@
 "electron-updater": patch
 ---
 
-fix: link the v27 migration guide from the errors of web-installer updates being disabled and a missing update-manifest signing key
+fix: state the rule and link its migration section in the errors for disabled web-installer updates and a missing update-manifest signing key
