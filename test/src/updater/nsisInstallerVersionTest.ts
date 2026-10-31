@@ -8,7 +8,7 @@ import fsExtra from "fs-extra"
 import type { Server } from "http"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
-import { afterEach, describe, test } from "vitest"
+import { afterEach, describe, test, vi } from "vitest"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { createNsisUpdater, createTestAppAdapter, trackEvents, tuneTestUpdater, windowsExecutable, writeRawUpdateConfig, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
@@ -185,6 +185,46 @@ describe("NsisUpdater installer version check", () => {
   test("is skipped when the update config opts out of signature verification", async ({ expect, tmpDir }) => {
     const updater = await createNsisUpdater("1.0.0")
     updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: "https://example.com/updates" })
+    const file = await writeExecutable(tmpDir, windowsExecutable(["1.0.0"]))
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifyInstallerVersion(file, update("1.1.0"))).resolves.toBeUndefined()
+  })
+
+  // the publisherName is resolved as verifySignature resolves it, so an app verified against autoUpdater.publisherName is checked too
+  test.for<[string, (updater: NsisUpdater) => Promise<void>]>([
+    [
+      "a packaged app without an update config file",
+      async updater => {
+        updater.updateConfigPath = "/nonexistent/dir/app-update.yml"
+      },
+    ],
+    [
+      "an update config without publisherName",
+      async updater => {
+        updater.updateConfigPath = await writeRawUpdateConfig<GenericServerOptions>({ provider: "generic", url: "https://example.com/updates" })
+      },
+    ],
+    [
+      "an update config that opts out with verifyUpdateCodeSignature: false",
+      async updater => {
+        updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: "https://example.com/updates" })
+      },
+    ],
+  ])("checks the installer of %s verified against autoUpdater.publisherName", async ([, configure], { expect, tmpDir }) => {
+    const updater = await createNsisUpdater("1.0.0")
+    await configure(updater)
+    updater.publisherName = ["CN=Test"]
+    const file = await writeExecutable(tmpDir, windowsExecutable(["1.0.0"]))
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifyInstallerVersion(file, update("1.1.0"))).rejects.toMatchObject({ code: "ERR_UPDATER_INSTALLER_VERSION_MISMATCH" })
+  })
+
+  test("is skipped for an unpackaged app (dev mode) without an update config file, even with autoUpdater.publisherName", async ({ expect, tmpDir }) => {
+    const updater = await createNsisUpdater("1.0.0")
+    // @ts-expect-error accessing the protected app adapter
+    vi.spyOn(updater.app, "isPackaged", "get").mockReturnValue(false)
+    updater.updateConfigPath = "/nonexistent/dir/dev-app-update.yml"
+    updater.publisherName = ["CN=Test"]
     const file = await writeExecutable(tmpDir, windowsExecutable(["1.0.0"]))
     // @ts-expect-error accessing a private method
     await expect(updater.verifyInstallerVersion(file, update("1.1.0"))).resolves.toBeUndefined()

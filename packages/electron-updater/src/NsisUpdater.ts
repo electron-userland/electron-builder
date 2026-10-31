@@ -318,22 +318,12 @@ export class NsisUpdater extends BaseUpdater {
   // `update` is the update the file belongs to: the default verify function accepts a catalog signature for it when its verified manifest
   // allows one (see allowCatalogSignature). Without it, only NsisUpdater.allowCatalogSignature does.
   private async verifySignature(tempUpdateFile: string, update: UpdateInfoAndProvider | null = null): Promise<VerifyUpdateFileResult> {
-    let config: unknown = null
-    let hasConfigFile = true
-    try {
-      config = await this.configOnDisk.value
-    } catch (e: any) {
-      if (e?.code !== "ENOENT") {
-        throw e
-      }
-      if (!this.app.isPackaged) {
-        // no dev-app-update.yml in dev mode: nothing to verify against, stay silent
-        return { response: "success" }
-      }
-      hasConfigFile = false
+    const resolved = await this.resolveUpdatePublisherNames()
+    if (resolved == null) {
+      // no dev-app-update.yml in dev mode: nothing to verify against, stay silent
+      return { response: "success" }
     }
-
-    const publisherNames = readConfiguredPublisherNames(config) ?? readConfiguredPublisherNames({ publisherName: this.publisherName })
+    const { publisherNames, config, hasConfigFile } = resolved
     if (publisherNames != null) {
       const implementation = this._verifyUpdateFileAuthenticodeSignature
       if (implementation === this._defaultVerifyUpdateFileAuthenticodeSignature) {
@@ -361,26 +351,39 @@ export class NsisUpdater extends BaseUpdater {
     return { response: "failure", message: missingPublisherNameMessage() }
   }
 
+  // The publisherName an update is verified against (see verifySignature): the one of the update config, else the app's `publisherName`
+  // property. `null` for an unpackaged app (dev mode) without an update config file, which is not verified. `config` is null when a
+  // packaged app has no update config file.
+  private async resolveUpdatePublisherNames(): Promise<{ publisherNames: Array<string> | null; config: unknown; hasConfigFile: boolean } | null> {
+    let config: unknown = null
+    let hasConfigFile = true
+    try {
+      config = await this.configOnDisk.value
+    } catch (e: unknown) {
+      if (!(e instanceof Error && "code" in e && e.code === "ENOENT")) {
+        throw e
+      }
+      if (!this.app.isPackaged) {
+        return null
+      }
+      hasConfigFile = false
+    }
+    const publisherNames = readConfiguredPublisherNames(config) ?? readConfiguredPublisherNames({ publisherName: this.publisherName })
+    return { publisherNames, config, hasConfigFile }
+  }
+
   // A signature proves that the installer is a release of the app, not which one: an update manifest that is not signed could announce a
   // newer version and serve the signed installer of an older release, or a web installer built for another version. The ProductVersion
   // that electron-builder writes into the installer (the app version, also the version of latest.yml) must therefore be the version of the
-  // update. Not checked when the manifest signature was verified (it binds the installer by its sha512), and not when the signature isn't
-  // verified (no publisherName): any installer would be accepted then anyway.
+  // update. Checked whenever verifySignature verifies the signature against a publisherName (of the update config, or the app's
+  // `publisherName` property). Not checked when the manifest signature was verified (it binds the installer by its sha512), and not
+  // without a publisherName: the signature is then not verified (dev mode, `verifyUpdateCodeSignature: false`) or the update is rejected.
   private async verifyInstallerVersion(installerPath: string, update: UpdateInfoAndProvider): Promise<void> {
     if (update.manifestSignatureVerified === true) {
       return
     }
-    let config: unknown
-    try {
-      config = await this.configOnDisk.value
-    } catch (e: unknown) {
-      // no app-update.yml, as in verifySignature
-      if (e instanceof Error && "code" in e && e.code === "ENOENT") {
-        return
-      }
-      throw e
-    }
-    if (readConfiguredPublisherNames(config) == null) {
+    const resolved = await this.resolveUpdatePublisherNames()
+    if (resolved?.publisherNames == null) {
       return
     }
     const expected = update.info.version
