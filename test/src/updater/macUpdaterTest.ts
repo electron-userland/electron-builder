@@ -118,7 +118,7 @@ test.ifMac("mac updates", async ({ expect }) => {
     ;(updater as any)._testOnlyOptions.platform = process.platform
     const actualEvents = trackEvents(updater)
 
-    const updateCheckResult = await updater.checkForUpdates()
+    const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
     // todo when will be updated to use files
     // expect(removeUnstableProperties(updateCheckResult?.updateInfo.files)).toMatchSnapshot()
     const { updateFile, packageFile } = (await updateCheckResult!.downloadPromise)!
@@ -152,7 +152,7 @@ test.ifMac("mac updates abort when verifyUpdateFile rejects the downloaded temp 
     tuneTestUpdater(updater)
     updater._testOnlyOptions!.platform = process.platform as ProviderPlatform
     const actualEvents = trackEvents(updater)
-    const updateCheckResult = await updater.checkForUpdates()
+    const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
     const observation = await expectVerifyUpdateFileFailure({
       expect,

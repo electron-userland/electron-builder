@@ -77,7 +77,7 @@ export async function checkResult(expect: ExpectStatic, updater: BaseUpdater) {
   // disable automatic install otherwise mac updater will permanently wait on mocked electron's native updater to receive update (mocked server can't install)
   updater.autoInstallEvent = "manual"
 
-  const updateCheckResult = await updater.checkForUpdates()
+  const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   const downloadPromise = updateCheckResult?.downloadPromise
   // noinspection JSIgnoredPromiseFromCall
   expect(downloadPromise).not.toBeNull()

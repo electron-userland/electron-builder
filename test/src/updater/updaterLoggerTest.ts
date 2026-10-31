@@ -50,8 +50,8 @@ describe("AppUpdater logger", () => {
     const throwing = { info: vi.fn(fail), warn: vi.fn(fail), error: vi.fn(fail), debug: vi.fn(fail) }
     const updater = newUpdater(throwing)
 
-    await expect(updater.checkForUpdates()).resolves.toBeNull()
-    await expect(updater.checkForUpdatesAndNotify()).resolves.toBeNull()
+    await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).resolves.toBeNull()
+    await expect(updater.checkForUpdatesAndNotify({ crossOriginHeaders: defaults => defaults })).resolves.toBeNull()
 
     expect(throwing.info).toHaveBeenCalledWith(expect.stringContaining(SKIP_MESSAGE))
     expect(throwing.debug).toHaveBeenCalledWith(NO_DOWNLOAD_DEBUG)
@@ -77,17 +77,17 @@ describe("AppUpdater logger", () => {
     }
     ;(updater as any).clientPromise = Promise.resolve({ setRequestHeaders: () => {}, getLatestVersion: () => Promise.resolve(latest) })
 
-    await expect(updater.checkForUpdates()).resolves.toMatchObject({ isUpdateAvailable: true, updateInfo: { version: "2.0.0" } })
+    await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).resolves.toMatchObject({ isUpdateAvailable: true, updateInfo: { version: "2.0.0" } })
     expect(throwing.warn).toHaveBeenCalledWith(expect.stringContaining(VERIFICATION_DISABLED))
   })
 
   test("debug messages reach a logger that has debug(), and are dropped for one without it", async ({ expect }) => {
     const withDebug = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
-    await expect(newUpdater(withDebug).checkForUpdatesAndNotify()).resolves.toBeNull()
+    await expect(newUpdater(withDebug).checkForUpdatesAndNotify({ crossOriginHeaders: defaults => defaults })).resolves.toBeNull()
     expect(withDebug.debug).toHaveBeenCalledWith(NO_DOWNLOAD_DEBUG)
 
     const withoutDebug = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
-    await expect(newUpdater(withoutDebug).checkForUpdatesAndNotify()).resolves.toBeNull()
+    await expect(newUpdater(withoutDebug).checkForUpdatesAndNotify({ crossOriginHeaders: defaults => defaults })).resolves.toBeNull()
     expect(withoutDebug.info).toHaveBeenCalledWith(expect.stringContaining(SKIP_MESSAGE))
   })
 
@@ -95,6 +95,6 @@ describe("AppUpdater logger", () => {
     const updater = newUpdater(null)
 
     expect(updater.logger).toBeInstanceOf(NoOpLogger)
-    await expect(updater.checkForUpdatesAndNotify()).resolves.toBeNull()
+    await expect(updater.checkForUpdatesAndNotify({ crossOriginHeaders: defaults => defaults })).resolves.toBeNull()
   })
 })

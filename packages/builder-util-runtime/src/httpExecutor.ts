@@ -44,11 +44,33 @@ export const DEFAULT_CROSS_ORIGIN_HEADERS: ReadonlyArray<string> = Object.freeze
   "content-language",
 ])
 
+/** A request, or a redirect, to another origin: what a {@link CrossOriginHeadersCallback} decides the headers of. */
+export interface CrossOriginRequest {
+  /** The URL the headers are meant for: the update feed, or the URL that redirected. */
+  readonly from: URL
+  /** The URL on the other origin. */
+  readonly to: URL
+  /** `"redirect"` for a redirect to another origin, `"request"` for a request electron-updater makes to another origin than its feed. */
+  readonly kind: "redirect" | "request"
+}
+
 /**
- * Chooses the request headers sent on to another origin: gets {@link DEFAULT_CROSS_ORIGIN_HEADERS} and returns the header names to send
- * (case-insensitive), or `null` to send every header to every origin.
+ * Chooses the request headers sent to another origin, for one request or redirect: gets {@link DEFAULT_CROSS_ORIGIN_HEADERS} and the
+ * request, and returns the header names to send (case-insensitive), or `null` to send every header on that request. Called only for a
+ * request or redirect to another origin (see {@link HttpExecutor.isCrossOrigin}): the same origin gets every header. A throw, or a result
+ * that is not an array of header names or `null`, fails that request with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`.
+ *
+ * @example defaults => defaults // the default list
+ * @example (defaults, request) => (request.to.hostname === "cdn.example.com" ? [...defaults, "x-tenant"] : defaults)
  */
-export type CrossOriginHeaders = (defaults: ReadonlyArray<string>) => ReadonlyArray<string> | null
+export type CrossOriginHeadersCallback = (defaults: ReadonlyArray<string>, request: CrossOriginRequest) => ReadonlyArray<string> | null
+
+// an HTTP header name (RFC 9110 token)
+const HEADER_NAME_PATTERN = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/
+
+const CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-header-allowlist"
+
+const sendDefaultCrossOriginHeaders: CrossOriginHeadersCallback = defaults => defaults
 
 // Substrings: a field name containing any of these (after normalization) is redacted.
 const SENSITIVE_FIELD_PATTERNS: string[] = ["token", "password", "secret", "authorization", "credential", "apikey", "passphrase", "auth"] as const
@@ -148,16 +170,10 @@ export abstract class HttpExecutor<T extends Request> {
   protected readonly maxRedirects = 10
 
   /**
-   * @param crossOriginHeaders chooses the headers a redirect to another origin sends on (see {@link CrossOriginHeaders}), called for each such
-   * redirect; `null`, the default, sends {@link DEFAULT_CROSS_ORIGIN_HEADERS}.
+   * @param crossOriginHeaders chooses the headers each redirect to another origin sends on (see {@link CrossOriginHeadersCallback}); the
+   * default sends {@link DEFAULT_CROSS_ORIGIN_HEADERS}.
    */
-  constructor(private readonly crossOriginHeaders: CrossOriginHeaders | null = null) {}
-
-  /** The header names a redirect to another origin sends on (case-insensitive), `null` for every header. */
-  allowedCrossOriginHeaders(): ReadonlyArray<string> | null {
-    const crossOriginHeaders = this.crossOriginHeaders
-    return crossOriginHeaders == null ? DEFAULT_CROSS_ORIGIN_HEADERS : crossOriginHeaders(DEFAULT_CROSS_ORIGIN_HEADERS)
-  }
+  constructor(readonly crossOriginHeaders: CrossOriginHeadersCallback = sendDefaultCrossOriginHeaders) {}
 
   request(options: ApiRequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any } | null): Promise<string | null> {
     configureRequestOptions(options)
@@ -214,7 +230,7 @@ export abstract class HttpExecutor<T extends Request> {
   /**
    * Follows the redirects of `request` when it reports them as events instead of 3xx responses (Electron's `net` with
    * `redirect: "manual"`, see ElectronHttpExecutor): the request is aborted and `handler` gets the options for the redirect
-   * target from {@link HttpExecutor.prepareRedirectUrlOptions} (with {@link HttpExecutor.allowedCrossOriginHeaders}), or `reject` gets the too-many-redirects error when
+   * target from {@link HttpExecutor.prepareRedirectUrlOptions} (with {@link HttpExecutor.crossOriginHeaders}), or `reject` gets the too-many-redirects error when
    * `redirectCount`, the number of redirects already followed, has reached the limit. Node.js requests answer a redirect
    * with a 3xx response, so this does nothing here.
    */
@@ -275,7 +291,7 @@ Please double check that your authentication token is correct. Due to security r
         return
       }
 
-      this.doApiRequest(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options, this.allowedCrossOriginHeaders()), cancellationToken, requestProcessor, redirectCount + 1)
+      this.doApiRequest(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options, this.crossOriginHeaders), cancellationToken, requestProcessor, redirectCount + 1)
         .then(resolve)
         .catch(reject)
       return
@@ -428,7 +444,7 @@ Please double check that your authentication token is correct. Due to security r
         // a response listener: a throw (from preparing the options, or from sending the new request) would escape as an uncaught
         // exception and the download would never settle
         try {
-          const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions, this.allowedCrossOriginHeaders())
+          const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions, this.crossOriginHeaders)
           if (redirectOptions.protocol !== "http:" && redirectOptions.protocol !== "https:") {
             throw new Error(`Cannot follow the redirect to the "${redirectOptions.protocol ?? ""}" protocol`)
           }
@@ -472,14 +488,10 @@ Please double check that your authentication token is correct. Due to security r
   }
 
   /**
-   * Options for the request to `redirectUrl`, redirected from `options`. When the target is on another origin, only the headers named in
-   * `allowedCrossOriginHeaders` are kept (see {@link HttpExecutor.keepCrossOriginHeaders}) and the `auth` option is dropped.
+   * Options for the request to `redirectUrl`, redirected from `options`. When the target is on another origin, only the headers
+   * `crossOriginHeaders` returns for the redirect are kept (see {@link HttpExecutor.keepCrossOriginHeaders}) and the `auth` option is dropped.
    */
-  static prepareRedirectUrlOptions(
-    redirectUrl: string,
-    options: RequestOptions,
-    allowedCrossOriginHeaders: ReadonlyArray<string> | null = DEFAULT_CROSS_ORIGIN_HEADERS
-  ): RequestOptions {
+  static prepareRedirectUrlOptions(redirectUrl: string, options: RequestOptions, crossOriginHeaders: CrossOriginHeadersCallback = sendDefaultCrossOriginHeaders): RequestOptions {
     const newOptions = configureRequestOptionsFromUrl(redirectUrl, { ...options })
     // the target is hostname and port: Electron's net prefers `host` (where ElectronHttpExecutor moves a `Host` header) over them
     delete newOptions.host
@@ -494,27 +506,49 @@ Please double check that your authentication token is correct. Due to security r
     if (HttpExecutor.isCrossOriginRedirect(originalUrl, parsedRedirectUrl)) {
       // Node's `auth` option becomes a Basic Authorization header on the request, so it is a credential for the original origin too
       delete newOptions.auth
-      newOptions.headers = HttpExecutor.keepCrossOriginHeaders(headers, originalUrl, parsedRedirectUrl, allowedCrossOriginHeaders)
+      newOptions.headers = HttpExecutor.keepCrossOriginHeaders(headers, { from: originalUrl, to: parsedRedirectUrl, kind: "redirect" }, crossOriginHeaders)
     }
     return newOptions
   }
 
   /**
-   * The headers to send to `to` for a request whose headers are meant for `from`: all of `headers` when `to` is on the same origin (see
-   * {@link HttpExecutor.isCrossOrigin}), else only the ones named in `allowed` (case-insensitive, such as {@link DEFAULT_CROSS_ORIGIN_HEADERS}).
-   * `allowed` `null` keeps every header. Returns `headers` itself when it keeps all of them, else a copy: never mutates `headers`.
+   * The headers to send to `request.to` for a request whose headers are meant for `request.from`: all of `headers` when `to` is on the same
+   * origin (see {@link HttpExecutor.isCrossOrigin}), without calling `crossOriginHeaders`; else only the ones named in what
+   * `crossOriginHeaders` returns for the request (case-insensitive), or all of them for `null`. Returns `headers` itself when it keeps all
+   * of them, else a copy: never mutates `headers`. A throw of `crossOriginHeaders`, or a result that is not an array of header names or
+   * `null`, fails with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`, whose message holds neither the result nor a header value.
    */
-  static keepCrossOriginHeaders(headers: OutgoingHttpHeaders, from: URL, to: URL, allowed: ReadonlyArray<string> | null): OutgoingHttpHeaders {
-    if (allowed === null || !HttpExecutor.isCrossOriginRedirect(from, to)) {
+  static keepCrossOriginHeaders(headers: OutgoingHttpHeaders, request: CrossOriginRequest, crossOriginHeaders: CrossOriginHeadersCallback): OutgoingHttpHeaders {
+    const { from, to, kind } = request
+    if (!HttpExecutor.isCrossOriginRedirect(from, to)) {
       return headers
     }
-    if (!Array.isArray(allowed)) {
-      throw newError("The cross-origin headers must be an array of header names, or null to send every header to every origin", "ERR_INVALID_CROSS_ORIGIN_HEADERS")
+    const target = `the ${kind} from ${from.origin} to ${to.origin}`
+    let allowed: unknown
+    try {
+      allowed = crossOriginHeaders(DEFAULT_CROSS_ORIGIN_HEADERS, { from, to, kind })
+    } catch (e: unknown) {
+      // the updater's own "not configured" error explains itself
+      if (e instanceof Error && "code" in e && e.code === "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED") {
+        throw e
+      }
+      // never the error's message: it could hold a header value
+      throw newError(`crossOriginHeaders threw for ${target}, which is not sent. ${CROSS_ORIGIN_HEADERS_DOCS}`, "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS")
+    }
+    if (allowed === null) {
+      return headers
+    }
+    if (!Array.isArray(allowed) || !allowed.every((it): it is string => typeof it === "string" && HEADER_NAME_PATTERN.test(it))) {
+      // never the value: a mistaken result could hold a header value
+      throw newError(
+        `crossOriginHeaders must return an array of header names (such as "accept" or "x-tenant") or null: got ${Array.isArray(allowed) ? "an array with an entry that is not a header name" : typeof allowed} for ${target}, which is not sent. ${CROSS_ORIGIN_HEADERS_DOCS}`,
+        "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS"
+      )
     }
     if (debug.enabled) {
-      debug(`Cross-origin request (${from.host} → ${to.host}): keeping only the allowed cross-origin headers`)
+      debug(`Cross-origin ${kind} (${from.host} → ${to.host}): keeping only the cross-origin headers`)
     }
-    const allowedNames = new Set(allowed.filter(it => typeof it === "string").map(it => it.toLowerCase()))
+    const allowedNames = new Set(allowed.map(it => it.toLowerCase()))
     const result = deepAssign<OutgoingHttpHeaders>({}, headers)
     for (const key of Object.keys(result)) {
       if (!allowedNames.has(key.toLowerCase())) {

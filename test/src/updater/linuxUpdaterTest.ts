@@ -53,7 +53,7 @@ const runTest = async (expect: ExpectStatic, updaterClass: any, expectedExtensio
 
     const actualEvents = trackEvents(updater)
 
-    const updateCheckResult = await updater.checkForUpdates()
+    const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaders: (defaults: ReadonlyArray<string>) => defaults })
     // updateInfo is produced by the in-job build (sha512/size/releaseDate vary per build), so assert
     // the stable fields explicitly instead of snapshotting
     expect(updateCheckResult?.updateInfo.version).toBe(NEW_VERSION_NUMBER)

@@ -1,4 +1,4 @@
-import { CancellationToken, configureRequestOptions, configureRequestUrl, createHttpError, HttpExecutor, safeGetHeader } from "builder-util-runtime"
+import { CancellationToken, configureRequestOptions, configureRequestUrl, createHttpError, CrossOriginHeadersCallback, HttpExecutor, safeGetHeader } from "builder-util-runtime"
 import {
   BlockMapV3,
   BlockMapV3Group,
@@ -403,7 +403,7 @@ class BlockMapV3Fetcher {
           // a response listener: a throw (a malformed Location) would escape as an uncaught exception and never settle the request
           let redirectOptions: RequestOptions
           try {
-            redirectOptions = prepareRedirect(new URL(location, this.currentUrl), requestOptions, httpExecutor.allowedCrossOriginHeaders())
+            redirectOptions = prepareRedirect(new URL(location, this.currentUrl), requestOptions, httpExecutor.crossOriginHeaders)
           } catch (e: unknown) {
             reject(e instanceof Error ? e : new Error(`Cannot follow the redirect: ${String(e)}`))
             return
@@ -463,12 +463,12 @@ class BlockMapV3Fetcher {
   }
 }
 
-/** Options for a request to `target`, redirected from `options`: keeps only the `allowedCrossOriginHeaders` when `target` is on another origin. */
-function prepareRedirect(target: URL, options: RequestOptions, allowedCrossOriginHeaders: ReadonlyArray<string> | null): RequestOptions {
+/** Options for a request to `target`, redirected from `options`: keeps only the headers `crossOriginHeaders` returns when `target` is on another origin. */
+function prepareRedirect(target: URL, options: RequestOptions, crossOriginHeaders: CrossOriginHeadersCallback): RequestOptions {
   if (target.protocol !== "http:" && target.protocol !== "https:") {
     throw new Error(`Cannot follow the redirect to the "${target.protocol}" protocol`)
   }
-  return HttpExecutor.prepareRedirectUrlOptions(target.href, options, allowedCrossOriginHeaders)
+  return HttpExecutor.prepareRedirectUrlOptions(target.href, options, crossOriginHeaders)
 }
 
 function urlOf(options: RequestOptions): URL {

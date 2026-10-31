@@ -33,7 +33,7 @@ it("handles a failed checkForUpdatesAndNotify background download", async () => 
   } as any
   vi.spyOn(updater, "checkForUpdates").mockResolvedValue(result)
 
-  await expect(updater.checkForUpdatesAndNotify()).resolves.toBe(result)
+  await expect(updater.checkForUpdatesAndNotify({ crossOriginHeaders: defaults => defaults })).resolves.toBe(result)
   await new Promise(resolve => setImmediate(resolve))
 })
 

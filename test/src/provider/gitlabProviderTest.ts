@@ -59,7 +59,7 @@ test("stable release - getLatestVersion fetches API then channel file", async ({
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect(result?.updateInfo.version).toBe(STABLE_VERSION)
   expect(result?.updateInfo).toMatchSnapshot()
 })
@@ -71,7 +71,7 @@ test("API request URL - uses GitLab releases permalink/latest endpoint", async (
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
   const firstCallPath = requestSpy.mock.calls[0][0].path as string
   expect(firstCallPath).toContain(`projects/${MOCK_PROJECT_ID}/releases/permalink/latest`)
@@ -84,7 +84,7 @@ test("null API response - throws ERR_UPDATER_NO_PUBLISHED_VERSIONS", async ({ ex
 
   requestSpy.mockResolvedValueOnce(null)
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_NO_PUBLISHED_VERSIONS" })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_NO_PUBLISHED_VERSIONS" })
 })
 
 // upcoming_release=true → ERR_UPDATER_LATEST_VERSION_NOT_FOUND (scheduled, not yet published)
@@ -96,7 +96,7 @@ test("upcoming release - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", async ({ 
   release.upcoming_release = true
   requestSpy.mockResolvedValueOnce(JSON.stringify(release))
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_LATEST_VERSION_NOT_FOUND" })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_LATEST_VERSION_NOT_FOUND" })
 })
 
 // API request failure → ERR_UPDATER_LATEST_VERSION_NOT_FOUND
@@ -106,7 +106,7 @@ test("API request failure - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", async 
 
   requestSpy.mockRejectedValueOnce(new Error("Network failure"))
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_LATEST_VERSION_NOT_FOUND" })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_LATEST_VERSION_NOT_FOUND" })
 })
 
 // Channel file absent from release assets → ERR_UPDATER_CHANNEL_FILE_NOT_FOUND
@@ -119,7 +119,7 @@ test("missing channel file in assets - throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(release))
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" })
 })
 
 // Channel file asset URL returns 404 → ERR_UPDATER_CHANNEL_FILE_NOT_FOUND
@@ -129,7 +129,7 @@ test("channel file 404 - throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND", async ({ ex
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockRejectedValueOnce(new HttpError(404))
 
-  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" })
+  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" })
 })
 
 // Custom channel not in assets → falls back to default latest.yml
@@ -139,7 +139,7 @@ test("custom channel missing in assets - falls back to latest.yml", async ({ exp
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect(result?.updateInfo.version).toBe(STABLE_VERSION)
 })
 
@@ -150,7 +150,7 @@ test("PRIVATE-TOKEN auth - plain token sent as PRIVATE-TOKEN header", async ({ e
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
   const firstCallHeaders = requestSpy.mock.calls[0][0].headers as Record<string, string>
   expect(firstCallHeaders["PRIVATE-TOKEN"]).toBe("glpat-abc123")
@@ -173,7 +173,7 @@ test("token is not forwarded to an off-host direct_asset_url", async ({ expect }
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(release)).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
   // API request (same host as the GitLab API) still carries the token
   expect((requestSpy.mock.calls[0][0].headers as Record<string, string>)["PRIVATE-TOKEN"]).toBe("glpat-abc123")
@@ -194,7 +194,7 @@ test("token is not forwarded when direct_asset_url downgrades to http", async ({
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(release)).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
   const secondCallHeaders = (requestSpy.mock.calls[1][0].headers as Record<string, string>) ?? {}
   expect(secondCallHeaders["PRIVATE-TOKEN"]).toBeUndefined()
@@ -206,14 +206,13 @@ test("app credential headers are not forwarded to an off-host direct_asset_url",
   const requestSpy = createMockRequest()
   const updater = await createGitlabUpdater(requestSpy)
   updater.addAuthHeader("Bearer app-token")
-  updater.crossOriginHeaders = defaults => defaults
 
   const release = mockGitlabRelease(STABLE_VERSION)
   release.assets.links.find(l => l.name === "latest.yml")!.direct_asset_url = "https://attacker.example/collect/latest.yml"
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(release)).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
   // API request (on the feed origin) still carries the app's credentials
   expect((requestSpy.mock.calls[0][0].headers as Record<string, string>)["authorization"]).toBe("Bearer app-token")
@@ -228,11 +227,10 @@ test("app credential headers are kept on a published (same-origin) direct_asset_
   const requestSpy = createMockRequest()
   const updater = await createGitlabUpdater(requestSpy)
   updater.addAuthHeader("Bearer app-token")
-  updater.crossOriginHeaders = defaults => defaults
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
   expect(requestSpy.mock.calls[1][0].hostname).toBe("gitlab.com")
   expect((requestSpy.mock.calls[1][0].headers as Record<string, string>)["authorization"]).toBe("Bearer app-token")
@@ -245,7 +243,7 @@ test("Bearer auth - token starting with Bearer sent as authorization header", as
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
   const firstCallHeaders = requestSpy.mock.calls[0][0].headers as Record<string, string>
   expect(firstCallHeaders["authorization"]).toBe("Bearer gloas-oauth-token")
@@ -264,7 +262,7 @@ test("no token - no auth headers on API request", async ({ expect }) => {
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
   const firstCallHeaders = (requestSpy.mock.calls[0][0].headers as Record<string, string>) ?? {}
   expect(firstCallHeaders["PRIVATE-TOKEN"]).toBeUndefined()
@@ -278,7 +276,7 @@ test("resolveFiles - maps file URLs from GitLab release assets", async ({ expect
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   const provider = getProvider<GitLabProvider>(updater)
   const resolvedFiles = provider.resolveFiles(result?.updateInfo as any)
 
@@ -293,7 +291,7 @@ test("resolveFiles - throws ERR_UPDATER_ASSET_NOT_FOUND for unknown file", async
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   const provider = getProvider<GitLabProvider>(updater)
 
   const updateInfoWithMismatch = {
@@ -320,7 +318,7 @@ test("resolveFiles - normalizes underscores in asset names to match YAML filenam
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(release)).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   const provider = getProvider<GitLabProvider>(updater)
 
   const resolvedFiles = provider.resolveFiles(result?.updateInfo as any)
@@ -334,7 +332,7 @@ test("releaseName - populated from GitLab release name when absent from YAML", a
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION, { name: "My App v1.1.0 GA Release" }))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect(result?.updateInfo.releaseName).toBe("My App v1.1.0 GA Release")
 })
 
@@ -347,7 +345,7 @@ test("releaseNotes - populated from GitLab release description when absent from 
     .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION, { description: "## What's new\n- Fixed bug X" })))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   expect(result?.updateInfo.releaseNotes).toBe("## What's new\n- Fixed bug X")
 })
 
@@ -360,7 +358,7 @@ test("autoDownload=false - does not trigger download", async ({ expect }) => {
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const actualEvents = trackEvents(updater)
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
 
   assertDownloadNotTriggered(expect, result, actualEvents)
 })
@@ -373,7 +371,7 @@ test("getBlockMapFiles - generic_package derives blockmap URLs from the base URL
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   const provider = getProvider<GitLabProvider>(updater)
 
   const baseUrl = new URL("https://gitlab.com/my-app-Setup-1.1.0.exe")
@@ -396,7 +394,7 @@ test("getBlockMapFiles - project_upload resolves blockmap URLs from release asse
     // fetchReleaseInfoByVersion("1.0.0") — the old release carries its own uploaded blockmap asset
     .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease("1.0.0")))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   const provider = getProvider<GitLabProvider>(updater)
 
   const baseUrl = new URL(`${ASSET_BASE}/my-app-Setup-${STABLE_VERSION}.exe`)
@@ -421,7 +419,7 @@ test("getBlockMapFiles - project_upload throws ERR_UPDATER_BLOCKMAP_FILE_NOT_FOU
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
     .mockResolvedValueOnce(JSON.stringify(oldReleaseWithoutBlockMap))
 
-  await updater.checkForUpdates()
+  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   const provider = getProvider<GitLabProvider>(updater)
 
   const baseUrl = new URL(`${ASSET_BASE}/my-app-Setup-${STABLE_VERSION}.exe`)
@@ -435,11 +433,10 @@ test("feedBaseUrl - published asset URLs keep the request headers, an asset on a
   const requestSpy = createMockRequest()
   const updater = await createGitlabUpdater(requestSpy)
   updater.addAuthHeader("Bearer app-token")
-  updater.crossOriginHeaders = defaults => defaults
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates()
+  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
   const provider = getProvider<GitLabProvider>(updater)
   const downloadUpdateOptions = { updateInfoAndProvider: { info: result!.updateInfo, provider }, requestHeaders: (updater as any).computeRequestHeaders(provider) }
   const headersFor = (url: URL) => (updater as any).downloadRequestHeaders(url, downloadUpdateOptions)

@@ -19,6 +19,7 @@ export { PrivateGitHubProvider } from "./providers/PrivateGitHubProvider.js"
 export { ProviderRuntimeOptions } from "./providers/Provider.js"
 export { AppImageUpdater, AppUpdater, DebUpdater, MacUpdater, NsisUpdater, PacmanUpdater, RpmUpdater }
 export { NoOpLogger } from "./AppUpdater.js"
+export type { CheckForUpdatesAndNotifyOptions, CheckForUpdatesOptions, DownloadNotification } from "./AppUpdater.js"
 
 export { Provider } from "./providers/Provider.js"
 
