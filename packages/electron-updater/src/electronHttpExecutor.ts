@@ -96,7 +96,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
       }
       let requestUrl: URL | null = null
       try {
-        requestUrl = authority == null || typeof options.protocol !== "string" ? null : new URL(`${options.protocol}//${authority}${options.path || "/"}`)
+        requestUrl = authority == null ? null : new URL(`${options.protocol}//${authority}${options.path || "/"}`)
       } catch (_e: unknown) {
         requestUrl = null
       }
