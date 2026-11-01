@@ -521,7 +521,7 @@ Emitted when there is an error while updating.
 
 Emitted when an update request gets an authentication challenge, from a proxy (`authInfo.isProxy`) or from a server. Call `callback(username, password)` to answer it, or `callback()` to cancel it; the request then fails with the challenge's status.
 
-To decide whether to emit `login`, electron-updater asks the provider of the latest update check: `Provider.onLoginChallenge(authInfo, url)` gets the challenge and the URL of the request that got it (after a redirect, the redirect's target). It returns `true` to emit `login`; any other value, or a throw, cancels the challenge without emitting `login`. Until the first update check, and with the built-in providers, every challenge is emitted. A custom provider, which returns its feed URL from the required [`feedBaseUrl`](#custom-options-instantiating-updater-directly), can override it to send your handler's credentials only to the servers they are meant for:
+To decide whether to emit `login`, electron-updater asks the provider of the latest update check: `Provider.onLoginChallenge(authInfo, url)` gets the challenge and the URL of the request that got it (after a redirect, the redirect's target). It returns `true` to emit `login`; any other value, or a throw, cancels the challenge without emitting `login`. Until the first update check, and with the built-in providers, every challenge is emitted. A custom provider can override `onLoginChallenge` to send your handler's credentials only to the servers they are meant for (the example also implements the required [`feedBaseUrl`](#custom-options-instantiating-updater-directly)):
 
 ```typescript
 class MyProvider extends Provider<UpdateInfo> {
