@@ -4,7 +4,9 @@ import { readAsar, readAsarHeader } from "app-builder-lib/src/asar/asar"
 import { dynamicImport } from "app-builder-lib/src/util/dynamicImport"
 import { Platform } from "app-builder-lib"
 import * as fs from "fs/promises"
+import { createRequire } from "module"
 import * as path from "path"
+import { vi } from "vitest"
 import { app, appThrows, linuxDirTarget } from "./helpers/packTester.js"
 
 type Asar = { createPackage(src: string, dest: string): Promise<void>; extractFile(archive: string, filename: string): Buffer }
@@ -179,6 +181,24 @@ describe("alignAsarContent", () => {
 
     await expect(alignAsarContent(file, 512)).rejects.toThrow("refusing to align it")
     expect((await fs.readFile(file)).equals(truncated), "input must not be replaced").toBe(true)
+    await expect(fs.stat(`${file}.aligning`)).rejects.toThrow()
+  })
+
+  // No end-to-end route reaches this cleanup: once the size check has passed, a copy or write only fails when the disk does,
+  // so the first write is made to fail and the test checks that the temp file it had already opened is removed.
+  test("removes the temp file when a write fails after it was opened", async ({ expect, tmpDir }) => {
+    const tmp = await tmpDir.createTempDir()
+    const file = await packTree(tmp, "write-fails", makeTree())
+    const original = await fs.readFile(file)
+    // the same fs-extra copy asarAlign.ts loads: this test's own resolution finds another version
+    const fsExtra: typeof import("fs-extra") = createRequire(new URL("../../packages/app-builder-lib/package.json", import.meta.url))("fs-extra")
+    const write = vi.spyOn(fsExtra, "write").mockRejectedValueOnce(new Error("disk full"))
+    try {
+      await expect(alignAsarContent(file, 512)).rejects.toThrow("disk full")
+    } finally {
+      write.mockRestore()
+    }
+    expect((await fs.readFile(file)).equals(original), "input must not be replaced").toBe(true)
     await expect(fs.stat(`${file}.aligning`)).rejects.toThrow()
   })
 
