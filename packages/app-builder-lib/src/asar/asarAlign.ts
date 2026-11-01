@@ -1,5 +1,6 @@
 import { InvalidConfigurationError, log } from "builder-util"
 import chromiumPickleJs from "chromium-pickle-js"
+import { createHash } from "crypto"
 import fs from "fs-extra"
 import { Node, readAsarHeader } from "./asar.js"
 
@@ -30,20 +31,22 @@ export function validateContentAlignment(alignment: unknown): asserts alignment 
 
 interface PackedFile {
   node: Node
+  /** path inside the archive, for messages */
+  name: string
   offset: number
   size: number
 }
 
-function collectPackedFiles(node: Node, result: Array<PackedFile>): void {
+function collectPackedFiles(node: Node, result: Array<PackedFile>, prefix = ""): void {
   const files = node.files
   if (files == null) {
     return
   }
-  for (const child of Object.values(files)) {
+  for (const [name, child] of Object.entries(files)) {
     if (child.files != null) {
-      collectPackedFiles(child, result)
+      collectPackedFiles(child, result, `${prefix}${name}/`)
     } else if (child.offset != null && !child.unpacked && child.link == null) {
-      result.push({ node: child, offset: parseInt(child.offset, 10), size: child.size ?? 0 })
+      result.push({ node: child, name: `${prefix}${name}`, offset: parseInt(child.offset, 10), size: child.size ?? 0 })
     }
   }
 }
@@ -56,6 +59,44 @@ export function expectedArchiveSize(header: Node, headerSize: number): number {
   const files: Array<PackedFile> = []
   collectPackedFiles(header, files)
   return 8 + headerSize + files.reduce((end, file) => Math.max(end, file.offset + file.size), 0)
+}
+
+/**
+ * Hashes the content of every packed file and compares it with the SHA256 the header records for it. The header's
+ * `integrity.hash` is the SHA256 of the whole file (https://github.com/electron/asar/blob/fde819a/src/integrity.ts#L16-L60),
+ * stored per file when the archive is written (https://github.com/electron/asar/blob/fde819a/src/filesystem.ts#L202).
+ * A file without `integrity` is skipped. Unpacked and linked entries have no content in the archive and are skipped too.
+ * Reads each packed file once, in chunks, through one file handle.
+ */
+export async function verifyPackedContent(asarFile: string, header: Node, headerSize: number): Promise<void> {
+  const files: Array<PackedFile> = []
+  collectPackedFiles(header, files)
+  const contentStart = 8 + headerSize
+  const fd = await fs.open(asarFile, "r")
+  try {
+    const buffer = Buffer.allocUnsafe(COPY_CHUNK)
+    for (const file of files) {
+      const expected = file.node.integrity?.hash
+      if (expected == null) {
+        continue
+      }
+      const digest = createHash("sha256")
+      for (let read = 0; read < file.size; ) {
+        const n = Math.min(buffer.length, file.size - read)
+        const { bytesRead } = await fs.read(fd, buffer, 0, n, contentStart + file.offset + read)
+        if (bytesRead !== n) {
+          throw new Error(`packed file "${file.name}" ends before its header says it does`)
+        }
+        digest.update(buffer.subarray(0, n))
+        read += n
+      }
+      if (digest.digest("hex") !== expected) {
+        throw new Error(`the content of packed file "${file.name}" does not match the SHA256 its header records`)
+      }
+    }
+  } finally {
+    await fs.close(fd)
+  }
 }
 
 function serializeHeader(headerJson: string): Buffer {
