@@ -149,7 +149,7 @@ async function isReady() {
         app.quit()
       }, 90 * 1000)
     } else {
-      autoUpdater.checkForUpdates({ crossOriginHeaders: defaults => defaults }).catch(err => {
+      autoUpdater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults }).catch(err => {
         console.log("checkForUpdates rejected (handled via error event):", err?.message)
       })
     }

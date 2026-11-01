@@ -10,6 +10,8 @@ import { RpmUpdater } from "./RpmUpdater.js"
 
 import type { UpdateInfo } from "builder-util-runtime"
 
+export { DEFAULT_CROSS_ORIGIN_HEADERS } from "builder-util-runtime"
+
 export { BaseUpdater } from "./BaseUpdater.js"
 export { BitbucketProvider } from "./providers/BitbucketProvider.js"
 export { GitHubProvider } from "./providers/GitHubProvider.js"

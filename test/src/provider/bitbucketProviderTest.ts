@@ -27,7 +27,7 @@ test("stable release - getLatestVersion fetches channel file and returns UpdateI
 
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  const result = await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
   expect(result?.updateInfo.version).toBe(STABLE_VERSION)
   expect(result?.updateInfo).toMatchSnapshot()
 })
@@ -39,7 +39,7 @@ test("request URL - uses Bitbucket API downloads endpoint", async ({ expect }) =
 
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
 
   const callOptions = requestSpy.mock.calls[0][0]
   expect(callOptions.hostname).toBe("api.bitbucket.org")
@@ -54,7 +54,7 @@ test("default channel - requests latest.yml", async ({ expect }) => {
 
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
 
   const callPath = requestSpy.mock.calls[0][0].path as string
   expect(callPath).toContain("latest.yml")
@@ -67,7 +67,7 @@ test("custom channel via options - requests {channel}.yml", async ({ expect }) =
 
   requestSpy.mockResolvedValueOnce(mockYaml("1.2.0-beta.1"))
 
-  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
 
   const callPath = requestSpy.mock.calls[0][0].path as string
   expect(callPath).toContain("beta.yml")
@@ -81,7 +81,7 @@ test("custom channel via updater.channel - overrides options.channel", async ({ 
 
   requestSpy.mockResolvedValueOnce(mockYaml("2.0.0"))
 
-  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
 
   const callPath = requestSpy.mock.calls[0][0].path as string
   expect(callPath).toContain("nightly.yml")
@@ -94,7 +94,7 @@ test("channel file with YAML aliases that expand to too many values - throws ERR
 
   requestSpy.mockResolvedValueOnce(mockAliasChainYaml(STABLE_VERSION, 40))
 
-  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
+  await expect(updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })).rejects.toMatchObject({
     code: "ERR_UPDATER_INVALID_UPDATE_INFO",
     message: expect.stringMatching(/YAML aliases expand to more than/),
   })
@@ -106,7 +106,7 @@ test("channel file with YAML aliases in complex mapping keys - throws ERR_UPDATE
 
   requestSpy.mockResolvedValueOnce(mockComplexKeyYaml(STABLE_VERSION))
 
-  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
+  await expect(updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })).rejects.toMatchObject({
     code: "ERR_UPDATER_INVALID_UPDATE_INFO",
     message: expect.stringMatching(/YAML aliases expand to more than/),
   })
@@ -118,7 +118,7 @@ test("malformed channel file - throws ERR_UPDATER_INVALID_UPDATE_INFO", async ({
 
   requestSpy.mockResolvedValueOnce(`${mockYaml(STABLE_VERSION)}releaseNotes: [unclosed\n`)
 
-  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
+  await expect(updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })).rejects.toMatchObject({
     code: "ERR_UPDATER_INVALID_UPDATE_INFO",
     message: expect.stringMatching(/YAMLException/),
   })
@@ -131,7 +131,7 @@ test("request failure - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", async ({ e
 
   requestSpy.mockRejectedValueOnce(new Error("Connection reset"))
 
-  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_LATEST_VERSION_NOT_FOUND" })
+  await expect(updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_LATEST_VERSION_NOT_FOUND" })
 })
 
 // resolveFiles resolves YAML file URLs relative to the Bitbucket downloads base URL
@@ -141,7 +141,7 @@ test("resolveFiles - constructs download URLs relative to Bitbucket base", async
 
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  const result = await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
   const provider = getProvider<any>(updater)
   const resolvedFiles = provider.resolveFiles(result?.updateInfo)
 
@@ -158,7 +158,7 @@ test("autoDownload=false - does not trigger download", async ({ expect }) => {
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const actualEvents = trackEvents(updater)
-  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  const result = await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
 
   assertDownloadNotTriggered(expect, result, actualEvents)
 })
@@ -170,7 +170,7 @@ test("toString - includes owner, slug, and channel", async ({ expect }) => {
 
   requestSpy.mockResolvedValueOnce(mockYaml("1.2.0"))
 
-  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
 
   const provider = getProvider<any>(updater)
   expect(provider.toString()).toContain(MOCK_OWNER)

@@ -32,10 +32,6 @@ class TestProvider extends Provider<typeof UPDATE_INFO> {
     return new URL("https://feed.example.com/updates")
   }
 
-  crossOriginHeaders(defaults: ReadonlyArray<string>): ReadonlyArray<string> {
-    return defaults
-  }
-
   getLatestVersion() {
     return Promise.resolve(UPDATE_INFO)
   }
@@ -51,16 +47,12 @@ class TestProvider extends Provider<typeof UPDATE_INFO> {
   }
 }
 
-// a custom provider that does not extend Provider, so has no onLoginChallenge (crossOriginHeaders is required)
+// a custom provider that does not extend Provider, so has no onLoginChallenge (feedBaseUrl is required)
 class DuckTypedProvider {
   constructor(..._args: Array<unknown>) {}
 
-  get feedBaseUrl(): null {
-    return null
-  }
-
-  crossOriginHeaders(): null {
-    return null
+  get feedBaseUrl(): URL {
+    return new URL("https://feed.example.com/updates")
   }
 
   setRequestHeaders(): void {
@@ -106,7 +98,7 @@ async function createUpdater(tmpDir: TmpDir) {
 async function checkedUpdater(tmpDir: TmpDir, feed: Parameters<NsisUpdater["setFeedURL"]>[0]) {
   const result = await createUpdater(tmpDir)
   result.updater.setFeedURL(feed)
-  await result.updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  await result.updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
   return result
 }
 
@@ -156,6 +148,14 @@ describe("electron-updater login event", () => {
     expect(errors[0]).toContain("provider check failed")
   })
 
+  test("an onLoginChallenge that throws a value without a string form cancels the challenge", async ({ tmpDir, expect }) => {
+    withProviderAnswer(() => {
+      throw Object.create(null)
+    })
+    const { answer } = await checkedUpdater(tmpDir, { provider: "custom", updateProvider: TestProvider })
+    expect(answer(challenge("downloads.example.net", 443))).toBe(false)
+  })
+
   test("a custom provider without onLoginChallenge emits every challenge", async ({ tmpDir, expect }) => {
     const { answer } = await checkedUpdater(tmpDir, { provider: "custom", updateProvider: DuckTypedProvider })
     expect(answer(challenge("downloads.example.net", 443))).toBe(true)
@@ -173,7 +173,7 @@ describe("electron-updater login event", () => {
     withProviderAnswer(() => false)
     const { updater, answer } = await checkedUpdater(tmpDir, { provider: "generic", url: "https://feed.example.com/updates" })
     updater.setFeedURL({ provider: "custom", updateProvider: TestProvider })
-    await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+    await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
     expect(answer(challenge("downloads.example.net", 443))).toBe(false)
   })
 
@@ -261,6 +261,8 @@ describe("ElectronHttpExecutor login event", () => {
       "https://cdn.example.org/a.exe",
     ],
     ["no hostname", { protocol: "https:", path: "/a.exe" }, null],
+    ["an empty hostname", { protocol: "https:", hostname: "", path: "/a.exe" }, null],
+    ["an empty host", { protocol: "https:", host: "", hostname: "downloads.example.net", path: "/a.exe" }, "https://downloads.example.net/a.exe"],
     ["no protocol", { hostname: "downloads.example.net", path: "/a.exe" }, null],
     ["a hostname that is no URL host", { protocol: "https:", hostname: "downloads example net", path: "/a.exe" }, null],
   ])("passes the request URL from options with %s", ([_what, options, expected], { expect }) => {
@@ -268,7 +270,7 @@ describe("ElectronHttpExecutor login event", () => {
     const listener = vi.fn<(authInfo: AuthInfo, callback: LoginCallback, requestUrl: URL | null) => void>()
     withElectron(requests, () => {
       // the URL is built for any protocol: the insecure feed check is not what this covers
-      new ElectronHttpExecutor(listener, { isInsecureFeedAllowed: () => true }).createRequest(options, () => undefined)
+      new ElectronHttpExecutor(listener, { crossOriginHeaders: defaults => defaults, isInsecureFeedAllowed: () => true }).createRequest(options, () => undefined)
     })
     const authInfo = challenge("downloads.example.net", 443)
     const callback = vi.fn()
@@ -290,7 +292,12 @@ describe("the updater's own executor", () => {
       const updater = new NsisUpdater()
       updater.logger = makeLogger()
       // the provider of an update check (which needs a ready app)
-      ;(updater as any).checkProvider = new TestProvider(null, null, { isUseMultipleRangeRequest: true, platform: "win32", executor: updater.httpExecutor })
+      ;(updater as any).checkProvider = new TestProvider(null, null, {
+        isUseMultipleRangeRequest: true,
+        platform: "win32",
+        executor: updater.httpExecutor,
+        crossOriginHeaders: defaults => defaults,
+      })
       const onLogin = vi.fn()
       // the documented way to cancel: call the callback without credentials
       updater.on("login", (authInfo, callback) => {

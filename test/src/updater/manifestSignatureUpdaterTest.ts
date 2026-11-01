@@ -322,8 +322,8 @@ describe("AppUpdater: stagingPercentage in a signed manifest", () => {
     updater.updateManifestPublicKey = publicKeyPem
     updater.logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
     ;(updater as any).clientPromise = Promise.resolve({
+      feedBaseUrl: new URL("https://feed.example.com/"),
       setRequestHeaders: vi.fn(),
-      crossOriginHeaders: (defaults: ReadonlyArray<string>) => defaults,
       getLatestVersion: () => Promise.resolve(info),
     })
     ;(updater as any).stagingUserIdPromise = { value: Promise.resolve(STAGING_USER_ID) }
@@ -376,8 +376,8 @@ describe("AppUpdater.getUpdateInfoAndProvider: manifestSignatureVerified", () =>
     updater.logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
     // no feed and no staging id file: the provider returns the manifest as served
     ;(updater as any).clientPromise = Promise.resolve({
+      feedBaseUrl: new URL("https://feed.example.com/"),
       setRequestHeaders: vi.fn(),
-      crossOriginHeaders: (defaults: ReadonlyArray<string>) => defaults,
       getLatestVersion: () => Promise.resolve(info),
     })
     ;(updater as any).stagingUserIdPromise = { value: Promise.resolve("staging-id") }
