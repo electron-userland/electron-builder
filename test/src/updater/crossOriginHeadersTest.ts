@@ -5,17 +5,16 @@ import { DEFAULT_CROSS_ORIGIN_HEADERS as UPDATER_DEFAULT_CROSS_ORIGIN_HEADERS } 
 import { GenericProvider } from "electron-updater/src/providers/GenericProvider"
 import { createHash } from "crypto"
 import fsExtra from "fs-extra"
-import type { IncomingHttpHeaders, IncomingMessage, Server } from "http"
+import type { IncomingHttpHeaders, IncomingMessage, OutgoingHttpHeaders, Server } from "http"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
 import { afterEach, describe, test, vi } from "vitest"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
-// checkForUpdates({ crossOriginHeaderAllowlist }) decides the request headers of each request and redirect to another origin with the
-// update provider's crossOriginHeaders: a list goes first (the provider gets it and decides), a callback last (it gets the provider's
-// choice). Required for every app, asked per cross-origin request, and kept for the download of the check and the install of an update
-// marked for the next launch.
+// checkForUpdates({ crossOriginHeaderAllowlist }) decides the request headers of each request and redirect to another origin than the update
+// provider's feedBaseUrl: a list, or a callback asked per cross-origin request. Required for every app, and kept for the download of the check
+// and the install of an update marked for the next launch.
 
 const DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-header-allowlist"
 const INSTALLER = Buffer.from("cross-origin headers test installer — not a real executable")
@@ -286,56 +285,40 @@ describe("checkForUpdates({ crossOriginHeaderAllowlist })", () => {
     })
   })
 
-  // the update provider's crossOriginHeaders chooses first; the app's callback gets its choice as defaults and decides
-  describe("a callback comes after the update provider's crossOriginHeaders", () => {
-    test("the provider of the check is asked first, and its choice is the app's defaults", async ({ tmpDir, expect }) => {
-      const cdn = await serve(tmpDir)
-      await cdn.write(INSTALLER_NAME, INSTALLER)
-      const { updater, feed } = await createUpdater(tmpDir, () => `${cdn.url}/${INSTALLER_NAME}`)
-      const calls: Array<readonly [string, ReadonlyArray<string>, CrossOriginRequest]> = []
-      class TenantProvider extends GenericProvider {
-        crossOriginHeaders(defaults: ReadonlyArray<string>, request: CrossOriginRequest): ReadonlyArray<string> {
-          calls.push(["provider", defaults, request])
-          return [...defaults, "x-tenant"]
+  // e.g. a custom provider written in plain JavaScript, or built on another copy of electron-updater: without its feed's origin, no other
+  // origin can be told from it, so it gets no request header
+  describe("the update provider's feedBaseUrl", () => {
+    for (const [label, value] of [
+      ["null", null],
+      ["undefined", undefined],
+      ["a string", "http://127.0.0.1/"],
+    ] as const) {
+      test(`of ${label} fails the check with ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED before the provider gets the request headers`, async ({ tmpDir, expect }) => {
+        const { updater, feed, events } = await createUpdater(tmpDir)
+        const handedOver: Array<OutgoingHttpHeaders | null> = []
+        class PlainProvider extends GenericProvider {
+          constructor(...args: ConstructorParameters<typeof GenericProvider>) {
+            super(...args)
+            Object.defineProperty(this, "feedBaseUrl", { value })
+          }
+
+          setRequestHeaders(headers: OutgoingHttpHeaders | null): void {
+            handedOver.push(headers)
+            super.setRequestHeaders(headers)
+          }
         }
-      }
-      updater.setFeedURL({ provider: "custom", updateProvider: TenantProvider, url: feed.url } as unknown as CustomPublishOptions)
-      const crossOriginHeaderAllowlist = (defaults: ReadonlyArray<string>, request: CrossOriginRequest) => {
-        calls.push(["app", defaults, request])
-        return defaults
-      }
+        updater.setFeedURL({ provider: "custom", updateProvider: PlainProvider, url: feed.url } as unknown as CustomPublishOptions)
 
-      await updater.checkForUpdates({ crossOriginHeaderAllowlist })
-      await updater.downloadUpdate()
-
-      const request = { from: new URL(`${feed.url}/`), to: new URL(`${cdn.url}/${INSTALLER_NAME}`), kind: "request" }
-      expect(calls).toEqual([
-        ["provider", DEFAULT_CROSS_ORIGIN_HEADERS, request],
-        ["app", [...DEFAULT_CROSS_ORIGIN_HEADERS, "x-tenant"], request],
-      ])
-      expect(cdn.requests[0].headers["x-tenant"]).toBe("acme")
-      expect(cdn.requests[0].headers.authorization).toBeUndefined()
-    })
-
-    // e.g. a custom provider written in plain JavaScript: even a check whose requests all stay on the feed's origin fails
-    test("a provider without crossOriginHeaders fails the check with ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED before any request", async ({ tmpDir, expect }) => {
-      const { updater, feed, events } = await createUpdater(tmpDir)
-      class PlainProvider extends GenericProvider {
-        constructor(...args: ConstructorParameters<typeof GenericProvider>) {
-          super(...args)
-          Object.defineProperty(this, "crossOriginHeaders", { value: undefined })
-        }
-      }
-      updater.setFeedURL({ provider: "custom", updateProvider: PlainProvider, url: feed.url } as unknown as CustomPublishOptions)
-
-      const error = await rejection(updater.checkForUpdates({ crossOriginHeaderAllowlist: useDefaults }))
-      expect(error).toMatchObject({
-        code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED",
-        message: expect.stringMatching(/^The update provider PlainProvider has no crossOriginHeaders method: /),
+        const error = await rejection(updater.checkForUpdates({ crossOriginHeaderAllowlist: useDefaults }))
+        expect(error).toMatchObject({
+          code: "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED",
+          message: expect.stringMatching(/^The feedBaseUrl of the update provider PlainProvider is /),
+        })
+        expect(handedOver).toEqual([])
+        expect(feed.requests).toEqual([])
+        expect(events).toEqual(["checking-for-update", "error"])
       })
-      expect(feed.requests).toEqual([])
-      expect(events).toEqual(["checking-for-update", "error"])
-    })
+    }
   })
 
   describe("is kept from the last check", () => {

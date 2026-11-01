@@ -1,14 +1,13 @@
 import {
   CancellationToken,
-  CrossOriginRequest,
   getGitlabAuthHeaders,
   GitlabOptions,
-  GitlabReleaseAsset,
-  GitlabReleaseInfo,
   HttpError,
   newError,
   UpdateFileInfo,
   UpdateInfo,
+  GitlabReleaseInfo,
+  GitlabReleaseAsset,
 } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
@@ -71,11 +70,6 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
 
   get feedBaseUrl(): URL {
     return this.baseApiUrl
-  }
-
-  /** Returns `defaults` unchanged: the built-in list, or the app's `crossOriginHeaderAllowlist` when that is a list (with a callback, the app decides after it). */
-  crossOriginHeaders(defaults: ReadonlyArray<string>, _request: CrossOriginRequest): ReadonlyArray<string> | null {
-    return defaults
   }
 
   private get channel(): string {

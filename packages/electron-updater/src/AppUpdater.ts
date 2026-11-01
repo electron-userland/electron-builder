@@ -4,6 +4,7 @@ import {
   AllPublishOptions,
   asArray,
   CancellationToken,
+  CrossOriginRequest,
   DEFAULT_MAX_UPDATE_INFO_SIZE,
   isValidMaxUpdateInfoSize,
   newError,
@@ -36,15 +37,7 @@ import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor.js"
 import { GenericProvider } from "./providers/GenericProvider.js"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory.js"
-import {
-  checkCrossOriginHeadersImplemented,
-  crossOriginHeadersLayers,
-  isYamlAliasBudgetError,
-  Provider,
-  ProviderPlatform,
-  ProviderRuntimeOptions,
-  YAML_ALIAS_BUDGET_DOCS,
-} from "./providers/Provider.js"
+import { feedBaseUrlOf, isYamlAliasBudgetError, Provider, ProviderPlatform, ProviderRuntimeOptions, YAML_ALIAS_BUDGET_DOCS } from "./providers/Provider.js"
 import type { TypedEmitter } from "tiny-typed-emitter"
 type Session = Electron.Session
 import type { AuthInfo } from "electron"
@@ -403,17 +396,16 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   private checkCrossOriginHeaderAllowlist: CrossOriginHeaderAllowlist | null = null
 
   /**
-   * The `crossOriginHeaderAllowlist` of the last check, for the requests and redirects to another origin: without one, a callback that
-   * fails each of them with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`. builder-util-runtime validates what a callback returns.
+   * The header names sent on one request or redirect to another origin, from the `crossOriginHeaderAllowlist` of the last check: the list,
+   * or what the callback returns. Without a check, the request fails with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`.
+   * builder-util-runtime validates the result.
    */
-  private crossOriginHeaderAllowlist(): CrossOriginHeaderAllowlist {
+  private crossOriginHeadersFor(defaults: ReadonlyArray<string>, request: CrossOriginRequest): ReadonlyArray<string> | null {
     const allowlist = this.checkCrossOriginHeaderAllowlist
-    if (allowlist != null) {
-      return allowlist
-    }
-    return (_defaults, request) => {
+    if (allowlist == null) {
       throw crossOriginHeadersNotConfiguredError(`The ${request.kind} to ${request.to.origin} requires a checkForUpdates({ crossOriginHeaderAllowlist }) before it`)
     }
+    return typeof allowlist === "function" ? allowlist(defaults, request) : allowlist
   }
 
   // per updater instance, so several updaters (and tests) keep their own counts
@@ -563,8 +555,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   private clientPromise: Promise<Provider<any>> | null = null
-  // the provider of the latest update check, whose crossOriginHeaders chooses the headers of the redirects the updater follows to another origin
-  private checkProvider: Provider<any> | null = null
 
   protected readonly stagingUserIdPromise = new Lazy<string>(() => this.getOrCreateStagingUserId())
 
@@ -591,11 +581,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     if (app == null) {
       this.app = new ElectronAppAdapter()
-      // a redirect to another origin: the provider of the latest update check chooses its headers, then the app
       this.httpExecutor = new ElectronHttpExecutor(
         (authInfo, callback) => this.emit("login", authInfo, callback),
-        undefined,
-        () => crossOriginHeadersLayers(this.checkProvider, this.crossOriginHeaderAllowlist())
+        (defaults, request) => this.crossOriginHeadersFor(defaults, request)
       )
     } else {
       this.app = app
@@ -825,9 +813,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
 
     const client = await this.clientPromise
-    // before any request: a request on the feed's origin would not ask the provider
-    checkCrossOriginHeadersImplemented(client)
-    this.checkProvider = client
+    // before the request headers are handed over: only the feed's origin gets every one of them
+    feedBaseUrlOf(client)
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({ "x-user-staging-id": stagingUserId }))
     // autoUpdater.maxUpdateInfoSize wins over the publish configuration, so an app can raise the limit even when its config is invalid
@@ -960,7 +947,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       isUseMultipleRangeRequest: true,
       platform: this._testOnlyOptions == null ? (process.platform as ProviderPlatform) : this._testOnlyOptions.platform,
       executor: this.httpExecutor,
-      crossOriginHeaderAllowlist: () => this.crossOriginHeaderAllowlist(),
+      crossOriginHeaders: (defaults, request) => this.crossOriginHeadersFor(defaults, request),
     }
   }
 
@@ -1133,24 +1120,20 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   /**
    * Headers for a download from `url`: every one on the origin of `originUrl` (the feed, `Provider.feedBaseUrl`, by default); for another
-   * origin, or for any URL when there is no such URL, only the ones the provider's `crossOriginHeaders` and the `crossOriginHeaderAllowlist` of the
-   * last check choose.
+   * origin, only the ones the `crossOriginHeaderAllowlist` of the last check allows.
    */
   protected downloadRequestHeaders(url: URL, downloadUpdateOptions: DownloadUpdateOptions, originUrl?: URL): OutgoingHttpHeaders {
-    const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-    const feedBaseUrl = provider.feedBaseUrl ?? null
-    if (originUrl == null && feedBaseUrl != null && HttpExecutor.isCrossOrigin(feedBaseUrl, url)) {
+    const feedBaseUrl = feedBaseUrlOf(downloadUpdateOptions.updateInfoAndProvider.provider)
+    if (originUrl == null && HttpExecutor.isCrossOrigin(feedBaseUrl, url)) {
       this.announceCrossOriginDownload(url, feedBaseUrl)
     }
-    return HttpExecutor.keepCrossOriginHeaders(
-      downloadUpdateOptions.requestHeaders,
-      { from: originUrl ?? feedBaseUrl, to: url, kind: "request" },
-      crossOriginHeadersLayers(provider, this.crossOriginHeaderAllowlist())
+    return HttpExecutor.keepCrossOriginHeaders(downloadUpdateOptions.requestHeaders, { from: originUrl ?? feedBaseUrl, to: url, kind: "request" }, (defaults, request) =>
+      this.crossOriginHeadersFor(defaults, request)
     )
   }
 
-  // Only names are logged (query parameter names, origins), never values. The headers left off need no notice: the provider and the app
-  // chose them (with crossOriginHeaders and crossOriginHeaderAllowlist), while the feed query has no option.
+  // Only names are logged (query parameter names, origins), never values. The headers left off need no notice: the app chose them (with
+  // crossOriginHeaderAllowlist), while the feed query has no option.
   private announceCrossOriginDownload(url: URL, feedBaseUrl: URL): void {
     const feedQueryNames = [...new Set(feedBaseUrl.searchParams.keys())]
     if (feedQueryNames.length !== 0) {
@@ -1747,21 +1730,16 @@ export interface DownloadNotification {
 export interface CheckForUpdatesOptions {
   /**
    * Decides the request headers sent on each request and redirect to another origin: a redirect to another origin, and a download or
-   * channel file on another origin than the update feed (any request, when the update provider declares no feed URL: `from` is then
-   * `null`). Not used for the feed's own origin, which gets every header. Every header left out, such as `Authorization` from
-   * `addAuthHeader`, a custom header from `requestHeaders` or the `x-user-staging-id` electron-updater sends itself, stays on the original
-   * origin. Either:
+   * channel file on another origin than the update feed (`Provider.feedBaseUrl`; for private GitHub, the GitHub API). Not used for the
+   * feed's own origin, which gets every header. Every header left out, such as `Authorization` from `addAuthHeader`, a custom header from
+   * `requestHeaders` or the `x-user-staging-id` electron-updater sends itself, stays on the original origin. Either:
    * - A list of header names (case-insensitive), such as `DEFAULT_CROSS_ORIGIN_HEADERS` of electron-updater (`accept`, `user-agent`,
-   *   `range` and other content negotiation, caching and conditional headers). The update provider gets it in place of
-   *   `DEFAULT_CROSS_ORIGIN_HEADERS` (`Provider.crossOriginHeaders`) and decides last, per request: the built-in providers send exactly the
-   *   list, while `PrivateGitHubProvider` still sends every header (its token too) to the GitHub API's origin. An empty list sends none;
+   *   `range` and other content negotiation, caching and conditional headers): exactly what each of them sends. An empty list sends none;
    *   a list without `range` stops differential downloads that redirect to a CDN from sending `Range`. An entry that is not a header name
    *   fails each request to another origin with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`.
-   * - A callback: gets the update provider's choice (`Provider.crossOriginHeaders`, which gets `DEFAULT_CROSS_ORIGIN_HEADERS`; the built-in
-   *   providers return that list) as `defaults`, or the names of every header of the request when the provider chose `null`, and the
-   *   request (`from`, `to`, `kind`), and decides last: returns the header names to send (case-insensitive), or `null` to send every header
-   *   on that request. A throw, or a result that is not an array of header names or `null`, fails that request with
-   *   `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`.
+   * - A callback: gets `DEFAULT_CROSS_ORIGIN_HEADERS` as `defaults` and the request (`from`, `to`, `kind`), and returns the header names
+   *   to send on that request (case-insensitive), or `null` to send every header on it. A throw, or a result that is not an array of
+   *   header names or `null`, fails that request with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`.
    *
    * Required: without it, or with a value that is neither, the check rejects with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`. Kept
    * for the download of this check (with `autoDownload` too) and for the install of an update marked for the next launch.

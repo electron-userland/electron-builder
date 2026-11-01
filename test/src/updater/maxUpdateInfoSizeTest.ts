@@ -121,12 +121,8 @@ describe("electron-updater maxUpdateInfoSize", () => {
 class ForeignProvider {
   constructor(..._args: Array<unknown>) {}
 
-  get feedBaseUrl(): null {
-    return null
-  }
-
-  crossOriginHeaders(): null {
-    return null
+  get feedBaseUrl(): URL {
+    return new URL("https://feed.example.com/")
   }
 
   setRequestHeaders(): void {

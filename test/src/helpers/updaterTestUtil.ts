@@ -320,7 +320,7 @@ export class FakeElectronHttpExecutor extends ElectronHttpExecutor {
 
   constructor(
     private readonly answer: (url: string, headers: OutgoingHttpHeaders) => FakeNetAnswer,
-    crossOriginHeaders?: CrossOriginHeadersCallback
+    crossOriginHeaders: CrossOriginHeadersCallback = defaults => defaults
   ) {
     super(undefined, crossOriginHeaders)
   }

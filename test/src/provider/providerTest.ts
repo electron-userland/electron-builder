@@ -1,7 +1,7 @@
 import { serializeToYaml } from "builder-util"
-import { CancellationToken, type CrossOriginRequest, DEFAULT_CROSS_ORIGIN_HEADERS, UpdateInfo } from "builder-util-runtime"
+import { CancellationToken, UpdateInfo } from "builder-util-runtime"
 import { Provider, ProviderRuntimeOptions } from "electron-updater"
-import { parseUpdateInfo } from "electron-updater/src/providers/Provider"
+import { feedBaseUrlOf, parseUpdateInfo } from "electron-updater/src/providers/Provider"
 import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
 import { readFileSync } from "fs"
 import { OutgoingHttpHeaders } from "http"
@@ -26,9 +26,8 @@ class TestProvider extends Provider<UpdateInfo> {
     super(opts)
   }
 
-  // no feed URL: every request asks this, which sends every header
-  crossOriginHeaders(_defaults: ReadonlyArray<string>, _request: CrossOriginRequest): ReadonlyArray<string> | null {
-    return null
+  get feedBaseUrl(): URL {
+    return new URL("https://api.example.com/")
   }
 
   getLatestVersion(): Promise<UpdateInfo> {
@@ -58,7 +57,7 @@ class TestProvider extends Provider<UpdateInfo> {
 }
 
 function makeProvider(platform: ProviderRuntimeOptions["platform"] = "win32", isUseMultipleRangeRequest = true): TestProvider {
-  return new TestProvider({ isUseMultipleRangeRequest, platform, executor: httpExecutor as any })
+  return new TestProvider({ isUseMultipleRangeRequest, platform, executor: httpExecutor as any, crossOriginHeaders: defaults => defaults })
 }
 
 test("isUseMultipleRangeRequest - true when runtimeOptions flag is true", ({ expect }) => {
@@ -76,10 +75,33 @@ test("fileExtraDownloadHeaders - returns null by default", ({ expect }) => {
   expect(provider.fileExtraDownloadHeaders).toBeNull()
 })
 
-// no feed URL: the provider's crossOriginHeaders and the app's crossOriginHeaderAllowlist choose the headers of every request
-test("feedBaseUrl - returns undefined (no feed URL) by default", ({ expect }) => {
+// a custom provider written in plain JavaScript, or built on another copy of electron-updater, may return anything from feedBaseUrl
+test.for([
+  ["null", null, "null, which does not send the request headers to every origin"],
+  ["undefined", undefined, "undefined"],
+  ["a string", "https://api.example.com/", "a string"],
+] as const)("feedBaseUrlOf - a feedBaseUrl that is %s fails with ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED", ([, value, description], { expect }) => {
   const provider = makeProvider()
-  expect(provider.feedBaseUrl).toBeUndefined()
+  Object.defineProperty(provider, "feedBaseUrl", { value })
+
+  expect(() => feedBaseUrlOf(provider)).toThrow(
+    expect.objectContaining({
+      code: "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED",
+      message:
+        `The feedBaseUrl of the update provider TestProvider is ${description}: every provider returns the URL of its update feed there, the only origin that gets every request header. ` +
+        "Return the base URL of the update files, e.g. of the channel file. https://www.electron.build/docs/migration/v27-developer-changes#custom-provider-feed-base-url",
+    })
+  )
+})
+
+test("createRequestOptions - with request headers, fails with ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED for a feedBaseUrl that is not a URL", ({ expect }) => {
+  const provider = makeProvider()
+  Object.defineProperty(provider, "feedBaseUrl", { value: null })
+  provider.setRequestHeaders({ authorization: "Bearer secret" })
+
+  expect(() => provider.callCreateRequestOptions(new URL("https://api.example.com/v1/releases"))).toThrow(
+    expect.objectContaining({ code: "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED" })
+  )
 })
 
 test("getDefaultChannelName - win32 returns latest (no suffix)", ({ expect }) => {
@@ -164,37 +186,6 @@ test("createRequestOptions - merges setRequestHeaders with per-call headers", ({
 
   expect((opts.headers as any)["x-base"]).toBe("base-value")
   expect((opts.headers as any)["x-extra"]).toBe("extra-value")
-})
-
-// the provider chooses first, the runtime options' crossOriginHeaderAllowlist (the app's callback) gets its choice and decides
-test("createRequestOptions - without a feed URL, the provider and then the runtime options' crossOriginHeaderAllowlist choose the base headers", ({ expect }) => {
-  const calls: Array<readonly [string, ReadonlyArray<string>, unknown]> = []
-  const provider = new (class extends TestProvider {
-    crossOriginHeaders(defaults: ReadonlyArray<string>, request: CrossOriginRequest): ReadonlyArray<string> | null {
-      calls.push(["provider", defaults, request])
-      return [...defaults, "x-base"]
-    }
-  })({
-    isUseMultipleRangeRequest: true,
-    platform: "win32",
-    executor: httpExecutor as any,
-    crossOriginHeaderAllowlist: () => (defaults, request) => {
-      calls.push(["app", defaults, request])
-      return defaults.filter(it => it !== "accept")
-    },
-  })
-  provider.setRequestHeaders({ "x-base": "base-value", "x-other": "other-value", accept: "*/*" })
-
-  const url = new URL("https://api.example.com/v1/releases")
-  const opts = provider.callCreateRequestOptions(url, { "x-extra": "extra-value" })
-
-  const request = { from: null, to: url, kind: "request" }
-  expect(calls).toEqual([
-    ["provider", DEFAULT_CROSS_ORIGIN_HEADERS, request],
-    ["app", [...DEFAULT_CROSS_ORIGIN_HEADERS, "x-base"], request],
-  ])
-  // the per-call headers are sent as given
-  expect(opts.headers).toEqual({ "x-base": "base-value", "x-extra": "extra-value" })
 })
 
 test("createRequestOptions - per-call headers used alone when no base headers set", ({ expect }) => {

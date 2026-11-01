@@ -1,4 +1,4 @@
-import { CancellationToken, CrossOriginRequest, KeygenOptions, newError, UpdateInfo } from "builder-util-runtime"
+import { CancellationToken, KeygenOptions, newError, UpdateInfo } from "builder-util-runtime"
 import { AppUpdater } from "../AppUpdater.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
@@ -23,11 +23,6 @@ export class KeygenProvider extends Provider<UpdateInfo> {
 
   get feedBaseUrl(): URL {
     return this.baseUrl
-  }
-
-  /** Returns `defaults` unchanged: the built-in list, or the app's `crossOriginHeaderAllowlist` when that is a list (with a callback, the app decides after it). */
-  crossOriginHeaders(defaults: ReadonlyArray<string>, _request: CrossOriginRequest): ReadonlyArray<string> | null {
-    return defaults
   }
 
   private get channel(): string {

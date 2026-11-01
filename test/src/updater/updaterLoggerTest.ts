@@ -76,8 +76,8 @@ describe("AppUpdater logger", () => {
       releaseDate: "2026-01-01T00:00:00.000Z",
     }
     ;(updater as any).clientPromise = Promise.resolve({
+      feedBaseUrl: new URL("https://feed.example.com/"),
       setRequestHeaders: () => {},
-      crossOriginHeaders: (defaults: ReadonlyArray<string>) => defaults,
       getLatestVersion: () => Promise.resolve(latest),
     })
 
