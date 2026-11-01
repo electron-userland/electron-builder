@@ -35,6 +35,12 @@ exports[`blackboxWebWin > windows > nsis - web-installer update is rejected 1`] 
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -91,6 +97,12 @@ exports[`blackboxWebWin > windows > nsis - web-installer update is rejected 2`] 
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },

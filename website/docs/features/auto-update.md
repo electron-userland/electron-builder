@@ -350,13 +350,13 @@ Update will be shipped to 10% of userbase.
 electron-builder [signs update manifests](./signed-update-manifests.md) by default, and `stagingPercentage` is [covered by the signature](./signed-update-manifests.md#what-is-signed). Adding or changing it in a signed `latest.yml` by hand, without signing the file again, makes every install that embeds the public key reject the manifest with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`: the release then reaches none of your users instead of 10% of them. The same applies to every later change, such as raising the percentage or setting it to `0` to pause the rollout. Only an unsigned manifest (`updateManifest: false`) can be edited by hand.
 :::
 
-To set or change the percentage of a signed release, sign `latest.yml` again with the key(s) the release was signed with before you upload it. electron-builder has no command for this; a short Node.js script does it with `canonicalizeForSigning` from `builder-util-runtime` (the version that comes with the electron-builder that built the release) and `js-yaml`:
+To set or change the percentage of a signed release, sign `latest.yml` again with the key(s) the release was signed with before you upload it. electron-builder has no command for this; a short Node.js script does it with `canonicalizeForSigning` and `canonicalizeForSigningV2` from the latest `builder-util-runtime` and `js-yaml`. Like the build, it writes an `EBUM1` and an `EBUM2` signature for each key; updaters that predate `EBUM2` verify the `EBUM1` one:
 
 ```js
 // set-staging-percentage.mjs — usage: node set-staging-percentage.mjs dist/latest.yml 10
 import { readFileSync, writeFileSync } from "node:fs"
 import { createPrivateKey, sign } from "node:crypto"
-import { canonicalizeForSigning, createManifestSignatureEntry } from "builder-util-runtime"
+import { canonicalizeForSigning, canonicalizeForSigningV2, createManifestSignatureEntry } from "builder-util-runtime"
 import { dump, load } from "js-yaml"
 
 const [file, value = ""] = process.argv.slice(2)
@@ -366,10 +366,17 @@ if (!Number.isFinite(percentage) || percentage < 0 || percentage > 100) {
 }
 const info = load(readFileSync(file, "utf8"))
 info.stagingPercentage = percentage
-const payload = Buffer.from(canonicalizeForSigning(info), "utf8")
+const ebum2 = canonicalizeForSigningV2(info)
+if (!ebum2.ok) {
+  throw new Error(`cannot sign ${file}: ${ebum2.reason}`)
+}
 // every key the release was signed with, in the same order (one PEM file per key)
 const keys = ["update-private-key.pem"].map(keyFile => createPrivateKey(readFileSync(keyFile)))
-info.signatures = keys.map(key => createManifestSignatureEntry(key, sign(null, payload, key).toString("base64")))
+// the EBUM1 entries first, then the EBUM2 entries, as electron-builder writes them
+const payloads = [["EBUM1", canonicalizeForSigning(info)], ["EBUM2", ebum2.payload]]
+info.signatures = payloads.flatMap(([format, payload]) =>
+  keys.map(key => createManifestSignatureEntry(key, sign(null, Buffer.from(payload, "utf8"), key).toString("base64"), format))
+)
 info.signature = info.signatures[0].signature
 writeFileSync(file, dump(info, { lineWidth: -1 }))
 ```

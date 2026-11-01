@@ -256,10 +256,14 @@ async function appUpdateYmlFromCurrentBuilder(keys: Array<KeyObject>): Promise<s
   return serializeToYaml(await getAppUpdatePublishConfiguration(packager as any, null, Arch.x64, false))
 }
 
+// The EBUM1 signatures, without the `format` tag the released signer did not write: these are what electron-updater
+// 7.0.0-alpha.8 to alpha.13 verify, so they must stay byte-identical. The current builder appends EBUM2 entries after them.
 const signaturesOf = (yml: string) => {
   const info = yamlLoad(yml) as UpdateInfo
-  return { signature: info.signature, signatures: info.signatures }
+  const ebum1 = (info.signatures ?? []).filter(it => (it.format ?? "EBUM1") === "EBUM1").map(({ keyId, signature }) => ({ keyId, signature }))
+  return { signature: info.signature, signatures: ebum1 }
 }
+const ebum2KeyIdsOf = (yml: string) => ((yamlLoad(yml) as UpdateInfo).signatures ?? []).filter(it => it.format === "EBUM2").map(it => it.keyId)
 
 // MemoLazy runs its creator synchronously on first access, so resolve inside an async function to observe a rejection
 const resolveKeys = async (config: any, projectDir: string) => await new TestPackager(config, projectDir).updateSigningKeys.value
@@ -293,11 +297,15 @@ describe.each(inputFormats)("$name", format => {
       const yml = await signWithCurrentBuilder(tmpDir, keys, name)
       const frozenYml = (format.keys === "single" ? frozen.signedSingleKey : frozen.signedDualKey)[name]
       expect(signaturesOf(yml), name).toEqual(signaturesOf(frozenYml))
-      // and the current updater accepts it with the trust list this build embeds
+      expect(ebum2KeyIdsOf(yml), name).toEqual(expectedIds)
+      // and the current updater accepts it with the trust list this build embeds, preferring EBUM2
       expect(updaterVerify(appUpdateYml, yml), name).toMatchObject({
         ok: true,
         keyId: oldKey.keyId,
+        format: "EBUM2",
       })
+      // while the frozen EBUM1-only manifest still verifies, through EBUM1
+      expect(updaterVerify(appUpdateYml, frozenYml), name).toMatchObject({ ok: true, keyId: oldKey.keyId, format: "EBUM1" })
     }
   })
 })

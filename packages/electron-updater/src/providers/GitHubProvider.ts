@@ -4,7 +4,7 @@ import { URL } from "url"
 import { AppUpdater } from "../AppUpdater.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
-import { channelFileNotFoundError, parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider.js"
+import { carryUpdateManifestSource, channelFileNotFoundError, parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider.js"
 
 const hrefRegExp = /\/tag\/(v?[^/]+)$/
 
@@ -98,10 +98,10 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     if (result.releaseNotes == null && latestRelease != null) {
       result.releaseNotes = computeReleaseNotes(this.updater.currentVersion, this.updater.fullChangelog, releaseEntries, latestRelease)
     }
-    return {
+    return carryUpdateManifestSource(result, {
       tag: tag,
       ...result,
-    }
+    })
   }
 
   // allowPrerelease=true: the highest semver release eligible for the current channel. The Atom feed is ordered by
