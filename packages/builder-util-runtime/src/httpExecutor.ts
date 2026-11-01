@@ -372,11 +372,9 @@ Please double check that your authentication token is correct. Due to security r
       if (code >= 400) {
         // the body is not used: drain it, so the response ends and releases its socket (see the redirect below)
         response.resume()
-        options.callback(
-          new Error(
-            `Cannot download "${requestOptions.protocol || "https:"}//${requestOptions.hostname}${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`
-          )
-        )
+        // the path without its query, which can carry credentials (e.g. a signed release asset link)
+        const url = `${requestOptions.protocol || "https:"}//${requestOptions.hostname}${(requestOptions.path ?? "").replace(/[?#].*$/s, "")}`
+        options.callback(new HttpError(code, `Cannot download "${url}", status ${code}: ${response.statusMessage}`))
         return
       }
 
