@@ -350,7 +350,13 @@ Update will be shipped to 10% of userbase.
 electron-builder [signs update manifests](./signed-update-manifests.md) by default, and `stagingPercentage` is [covered by the signature](./signed-update-manifests.md#what-is-signed). Adding or changing it in a signed `latest.yml` by hand, without signing the file again, makes every install that embeds the public key reject the manifest with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`: the release then reaches none of your users instead of 10% of them. The same applies to every later change, such as raising the percentage or setting it to `0` to pause the rollout. Only an unsigned manifest (`updateManifest: false`) can be edited by hand.
 :::
 
-To set or change the percentage of a signed release, sign `latest.yml` again with the key(s) the release was signed with before you upload it. electron-builder has no command for this; a short Node.js script does it with `canonicalizeForSigning` from `builder-util-runtime` (the version that comes with the electron-builder that built the release) and `js-yaml`:
+To set or change the percentage of a signed release, sign `latest.yml` again with the key(s) the release was signed with before you upload it. Edit `stagingPercentage`, then run [`electron-builder sign-update-manifest`](./signed-update-manifests.md#re-signing-a-published-manifest) from the project directory; it takes the key(s) from the same configuration and environment variables as the build:
+
+```sh
+npx electron-builder sign-update-manifest dist/latest.yml
+```
+
+Where electron-builder cannot run, a short Node.js script does the same with `canonicalizeForSigning` from `builder-util-runtime` (the version that comes with the electron-builder that built the release) and `js-yaml`:
 
 ```js
 // set-staging-percentage.mjs — usage: node set-staging-percentage.mjs dist/latest.yml 10
