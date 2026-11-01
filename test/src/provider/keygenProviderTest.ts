@@ -27,7 +27,7 @@ test("stable release - getLatestVersion fetches channel file and returns UpdateI
 
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  const result = await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
   expect(result?.updateInfo.version).toBe(STABLE_VERSION)
   expect(result?.updateInfo).toMatchSnapshot()
 })
@@ -39,7 +39,7 @@ test("request URL - uses Keygen API with account and product", async ({ expect }
 
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
 
   const callOptions = requestSpy.mock.calls[0][0]
   expect(callOptions.hostname).toBe("api.keygen.sh")
@@ -54,7 +54,7 @@ test("request headers - sends Keygen-specific Accept and Keygen-Version headers"
 
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
 
   const headers = requestSpy.mock.calls[0][0].headers as Record<string, string>
   expect(headers["Accept"]).toBe("application/vnd.api+json")
@@ -68,7 +68,7 @@ test("default channel - requests stable.yml (Keygen default is stable, not lates
 
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
 
   const callPath = requestSpy.mock.calls[0][0].path as string
   expect(callPath).toContain("stable.yml")
@@ -81,7 +81,7 @@ test("custom channel via options - requests {channel}.yml", async ({ expect }) =
 
   requestSpy.mockResolvedValueOnce(mockYaml("1.2.0-beta.1"))
 
-  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
 
   const callPath = requestSpy.mock.calls[0][0].path as string
   expect(callPath).toContain("beta.yml")
@@ -95,7 +95,7 @@ test("custom channel via updater.channel - overrides options.channel", async ({ 
 
   requestSpy.mockResolvedValueOnce(mockYaml("2.0.0"))
 
-  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
 
   const callPath = requestSpy.mock.calls[0][0].path as string
   expect(callPath).toContain("nightly.yml")
@@ -108,7 +108,7 @@ test("custom host - uses configured host instead of api.keygen.sh", async ({ exp
 
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
 
   const callOptions = requestSpy.mock.calls[0][0]
   expect(callOptions.hostname).toBe("keygen.mycompany.com")
@@ -121,7 +121,7 @@ test("channel file with YAML aliases that expand to too many values - throws ERR
 
   requestSpy.mockResolvedValueOnce(mockAliasChainYaml(STABLE_VERSION, 40))
 
-  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
+  await expect(updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })).rejects.toMatchObject({
     code: "ERR_UPDATER_INVALID_UPDATE_INFO",
     message: expect.stringMatching(/YAML aliases expand to more than/),
   })
@@ -133,7 +133,7 @@ test("channel file with YAML aliases in complex mapping keys - throws ERR_UPDATE
 
   requestSpy.mockResolvedValueOnce(mockComplexKeyYaml(STABLE_VERSION))
 
-  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
+  await expect(updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })).rejects.toMatchObject({
     code: "ERR_UPDATER_INVALID_UPDATE_INFO",
     message: expect.stringMatching(/YAML aliases expand to more than/),
   })
@@ -145,7 +145,7 @@ test("malformed channel file - throws ERR_UPDATER_INVALID_UPDATE_INFO", async ({
 
   requestSpy.mockResolvedValueOnce(`${mockYaml(STABLE_VERSION)}releaseNotes: [unclosed\n`)
 
-  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({
+  await expect(updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })).rejects.toMatchObject({
     code: "ERR_UPDATER_INVALID_UPDATE_INFO",
     message: expect.stringMatching(/YAMLException/),
   })
@@ -158,7 +158,7 @@ test("request failure - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", async ({ e
 
   requestSpy.mockRejectedValueOnce(new Error("Network failure"))
 
-  await expect(updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_LATEST_VERSION_NOT_FOUND" })
+  await expect(updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_LATEST_VERSION_NOT_FOUND" })
 })
 
 // resolveFiles resolves YAML file URLs relative to the Keygen artifacts base URL
@@ -168,7 +168,7 @@ test("resolveFiles - constructs download URLs relative to Keygen artifacts base"
 
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  const result = await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
   const provider = getProvider<any>(updater)
   const resolvedFiles = provider.resolveFiles(result?.updateInfo)
 
@@ -187,7 +187,7 @@ test("autoDownload=false - does not trigger download", async ({ expect }) => {
   requestSpy.mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const actualEvents = trackEvents(updater)
-  const result = await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  const result = await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
 
   assertDownloadNotTriggered(expect, result, actualEvents)
 })
@@ -199,7 +199,7 @@ test("toString - includes account, product, platform, and channel", async ({ exp
 
   requestSpy.mockResolvedValueOnce(mockYaml("1.2.0"))
 
-  await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
 
   const provider = getProvider<any>(updater)
   const description = provider.toString()

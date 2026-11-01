@@ -76,7 +76,7 @@ test("fileExtraDownloadHeaders - returns null by default", ({ expect }) => {
   expect(provider.fileExtraDownloadHeaders).toBeNull()
 })
 
-// no feed URL: crossOriginHeaders of the provider, then of the app, choose the headers of every request
+// no feed URL: the provider's crossOriginHeaders and the app's crossOriginHeaderAllowlist choose the headers of every request
 test("feedBaseUrl - returns undefined (no feed URL) by default", ({ expect }) => {
   const provider = makeProvider()
   expect(provider.feedBaseUrl).toBeUndefined()
@@ -166,8 +166,8 @@ test("createRequestOptions - merges setRequestHeaders with per-call headers", ({
   expect((opts.headers as any)["x-extra"]).toBe("extra-value")
 })
 
-// the provider chooses first, the runtime options' crossOriginHeaders (the app's) gets its choice and decides
-test("createRequestOptions - without a feed URL, the provider and then the runtime options' crossOriginHeaders choose the base headers", ({ expect }) => {
+// the provider chooses first, the runtime options' crossOriginHeaderAllowlist (the app's callback) gets its choice and decides
+test("createRequestOptions - without a feed URL, the provider and then the runtime options' crossOriginHeaderAllowlist choose the base headers", ({ expect }) => {
   const calls: Array<readonly [string, ReadonlyArray<string>, unknown]> = []
   const provider = new (class extends TestProvider {
     crossOriginHeaders(defaults: ReadonlyArray<string>, request: CrossOriginRequest): ReadonlyArray<string> | null {
@@ -178,7 +178,7 @@ test("createRequestOptions - without a feed URL, the provider and then the runti
     isUseMultipleRangeRequest: true,
     platform: "win32",
     executor: httpExecutor as any,
-    crossOriginHeaders: (defaults, request) => {
+    crossOriginHeaderAllowlist: () => (defaults, request) => {
       calls.push(["app", defaults, request])
       return defaults.filter(it => it !== "accept")
     },

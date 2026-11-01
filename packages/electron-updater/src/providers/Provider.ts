@@ -2,7 +2,6 @@ import {
   ApiRequestOptions,
   CancellationToken,
   configureRequestUrl,
-  CrossOriginHeadersCallback,
   CrossOriginHeadersLayer,
   CrossOriginRequest,
   DEFAULT_MAX_UPDATE_INFO_SIZE,
@@ -17,7 +16,7 @@ import { OutgoingHttpHeaders } from "http"
 import { EventType, load, State } from "js-yaml"
 import { URL } from "url"
 import { ElectronHttpExecutor } from "../electronHttpExecutor.js"
-import { ResolvedUpdateFileInfo } from "../types.js"
+import { CrossOriginHeaderAllowlist, ResolvedUpdateFileInfo } from "../types.js"
 import { newUrlFromBase } from "../util.js"
 import escapeRegExp from "lodash.escaperegexp"
 
@@ -30,11 +29,11 @@ export interface ProviderRuntimeOptions {
   executor: ElectronHttpExecutor
 
   /**
-   * The app's choice of the request headers each update info request (e.g. a channel file) on another origin than `Provider.feedBaseUrl`
-   * gets, after the provider's {@link Provider.crossOriginHeaders} (the `crossOriginHeaders` of `AppUpdater.checkForUpdates`); without
-   * it, the provider's choice.
+   * Returns the app's choice of the request headers each update info request (e.g. a channel file) on another origin than
+   * `Provider.feedBaseUrl` gets, with the provider's {@link Provider.crossOriginHeaders}: the `crossOriginHeaderAllowlist` of the last
+   * `AppUpdater.checkForUpdates`, asked at each request since a provider outlives a check. Without it, the provider's choice.
    */
-  crossOriginHeaders?: CrossOriginHeadersCallback
+  crossOriginHeaderAllowlist?: () => CrossOriginHeaderAllowlist
 }
 
 /**
@@ -45,7 +44,7 @@ export function checkCrossOriginHeadersImplemented(provider: Provider<any>): voi
   if (typeof Reflect.get(provider, "crossOriginHeaders") !== "function") {
     throw newError(
       `The update provider ${provider.constructor.name} has no crossOriginHeaders method: each provider chooses the headers its requests and redirects send to another origin, ` +
-        `before the app's checkForUpdates({ crossOriginHeaders }). Implement crossOriginHeaders(defaults, request) and return defaults to use the built-in list. ` +
+        `with the app's checkForUpdates({ crossOriginHeaderAllowlist }). Implement crossOriginHeaders(defaults, request) and return defaults to use the built-in list. ` +
         `https://www.electron.build/docs/migration/v27-developer-changes#custom-provider-cross-origin-headers`,
       "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED"
     )
@@ -53,25 +52,27 @@ export function checkCrossOriginHeadersImplemented(provider: Provider<any>): voi
 }
 
 /**
- * The two layers that choose the headers of a request or redirect of `provider` to another origin: {@link Provider.crossOriginHeaders}
- * gets `DEFAULT_CROSS_ORIGIN_HEADERS`, and `app` (the `crossOriginHeaders` of `AppUpdater.checkForUpdates`) gets what the provider returned
- * (every header name of the request for `null`) and decides. Without a provider (a redirect before any update check), only `app`.
+ * The two layers that choose the headers of a request or redirect of `provider` to another origin, for `app` (the
+ * `crossOriginHeaderAllowlist` of `AppUpdater.checkForUpdates`):
+ * - a list: the list first, in place of `DEFAULT_CROSS_ORIGIN_HEADERS`, then {@link Provider.crossOriginHeaders} gets it and decides;
+ * - a callback: {@link Provider.crossOriginHeaders} first, with `DEFAULT_CROSS_ORIGIN_HEADERS`, then `app` gets what the provider returned
+ *   (every header name of the request for `null`) and decides.
+ * Without a provider (a redirect before any update check), only `app`.
  */
-export function crossOriginHeadersLayers(provider: Provider<any> | null, app: CrossOriginHeadersCallback): ReadonlyArray<CrossOriginHeadersLayer> {
-  const appLayer: CrossOriginHeadersLayer = { name: "crossOriginHeaders of checkForUpdates", crossOriginHeaders: app }
+export function crossOriginHeadersLayers(provider: Provider<any> | null, app: CrossOriginHeaderAllowlist): ReadonlyArray<CrossOriginHeadersLayer> {
+  const name = "crossOriginHeaderAllowlist of checkForUpdates"
+  const appLayer: CrossOriginHeadersLayer = typeof app === "function" ? { name, crossOriginHeaders: app } : { name, crossOriginHeaders: () => app }
   if (provider == null) {
     return [appLayer]
   }
-  return [
-    {
-      name: `crossOriginHeaders of the update provider ${provider.constructor.name}`,
-      crossOriginHeaders: (defaults, request) => {
-        checkCrossOriginHeadersImplemented(provider)
-        return provider.crossOriginHeaders(defaults, request)
-      },
+  const providerLayer: CrossOriginHeadersLayer = {
+    name: `crossOriginHeaders of the update provider ${provider.constructor.name}`,
+    crossOriginHeaders: (defaults, request) => {
+      checkCrossOriginHeadersImplemented(provider)
+      return provider.crossOriginHeaders(defaults, request)
     },
-    appLayer,
-  ]
+  }
+  return typeof app === "function" ? [providerLayer, appLayer] : [appLayer, providerLayer]
 }
 
 // Shared by the GitHub/GitLab/PrivateGitHub providers when a release channel file (e.g. latest.yml) 404s.
@@ -130,7 +131,7 @@ export abstract class Provider<T extends UpdateInfo> {
 
   /**
    * Base URL of the update feed: download URLs, and the URLs of the provider's own update info requests (e.g. the channel file), on its
-   * origin get every request header. For any other origin, {@link Provider.crossOriginHeaders} and then the app's `crossOriginHeaders`
+   * origin get every request header. For any other origin, {@link Provider.crossOriginHeaders} and the app's `crossOriginHeaderAllowlist`
    * (of `AppUpdater.checkForUpdates`) choose the headers, with the feed URL as the request's `from`. `null` or `undefined` (the default):
    * the provider has no feed URL, so they choose the headers of every request, with `from` set to `null`.
    */
@@ -141,10 +142,10 @@ export abstract class Provider<T extends UpdateInfo> {
   /**
    * Required. Chooses the headers a request or redirect sends to `request.to` when it is not on the feed's origin, or to any URL when
    * there is no feed URL ({@link Provider.feedBaseUrl}, `request.from` is then `null`). Gets `DEFAULT_CROSS_ORIGIN_HEADERS` of
-   * builder-util-runtime (`accept`, `user-agent`, `range` and other content negotiation, caching and conditional headers) and returns the
-   * header names to send (case-insensitive), or `null` for every header of that request. The app's `crossOriginHeaders` (of
-   * `AppUpdater.checkForUpdates`) then gets this result as its `defaults` (the names of every header of the request for `null`) and
-   * decides. Not called for the feed's own origin. For the redirects the updater follows, the updater asks the provider of its latest
+   * builder-util-runtime (`accept`, `user-agent`, `range` and other content negotiation, caching and conditional headers), or the app's
+   * list when its `crossOriginHeaderAllowlist` (of `AppUpdater.checkForUpdates`) is a list, and returns the header names to send
+   * (case-insensitive), or `null` for every header of that request. With a list, this result is what is sent; with a callback, the app's
+   * callback then gets this result as its `defaults` (the names of every header of the request for `null`) and decides. Not called for the feed's own origin. For the redirects the updater follows, the updater asks the provider of its latest
    * update check. A throw, or a result that is not an array of header names or `null`, fails that request with
    * `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`; a provider without this method fails the update check with
    * `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`.
@@ -208,10 +209,11 @@ export abstract class Provider<T extends UpdateInfo> {
     // the request headers this provider and then the app choose (by default the likes of Accept and User-Agent)
     let requestHeaders = this.requestHeaders
     if (requestHeaders != null) {
+      const appAllowlist = this.runtimeOptions.crossOriginHeaderAllowlist
       requestHeaders = HttpExecutor.keepCrossOriginHeaders(
         requestHeaders,
         { from: this.feedBaseUrl ?? null, to: url, kind: "request" },
-        crossOriginHeadersLayers(this, this.runtimeOptions.crossOriginHeaders ?? (defaults => defaults))
+        crossOriginHeadersLayers(this, appAllowlist == null ? defaults => defaults : appAllowlist())
       )
     }
     if (requestHeaders == null) {

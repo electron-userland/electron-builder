@@ -73,7 +73,7 @@ export type CrossOriginHeadersCallback = (defaults: ReadonlyArray<string>, reque
  * One step of a layered cross-origin header decision (see {@link HttpExecutor.keepCrossOriginHeaders}): the first layer gets
  * {@link DEFAULT_CROSS_ORIGIN_HEADERS}, each later one gets what the layer before it returned as its `defaults` (the names of every header
  * of the request when that was `null`), and the last one decides. `name` names the layer in error messages, e.g.
- * `"crossOriginHeaders of checkForUpdates"`.
+ * `"crossOriginHeaderAllowlist of checkForUpdates"`.
  */
 export interface CrossOriginHeadersLayer {
   readonly name: string
@@ -81,7 +81,7 @@ export interface CrossOriginHeadersLayer {
 }
 
 // an HTTP header name (RFC 9110 token)
-const HEADER_NAME_PATTERN = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/
+export const HEADER_NAME_PATTERN = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/
 
 const CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-header-allowlist"
 

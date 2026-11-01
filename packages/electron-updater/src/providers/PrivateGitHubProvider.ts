@@ -30,8 +30,8 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
 
   /**
    * Every header (the token too) for the GitHub API's origin (api.github.com, or the Enterprise host), where the release lookup, the
-   * channel file and the downloads go: they use its asset URLs, which need the token. `defaults` for any other origin, such as the
-   * storage the API redirects a download to.
+   * channel file and the downloads go: they use its asset URLs, which need the token. `defaults` (the built-in list, or the app's
+   * `crossOriginHeaderAllowlist` when that is a list) for any other origin, such as the storage the API redirects a download to.
    */
   crossOriginHeaders(defaults: ReadonlyArray<string>, request: CrossOriginRequest): ReadonlyArray<string> | null {
     return HttpExecutor.isCrossOrigin(this.baseUrl, request.to) ? defaults : null

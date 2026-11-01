@@ -59,7 +59,7 @@ export type VerifyUpdateFileAuthenticodeSignature = (
 Pass a custom verify function to the nsis updater. For example, if you want to use a native verify function, you can use [win-verify-signature](https://github.com/beyondkmp/win-verify-trust).
 
 ```ts
-import { NsisUpdater } from "electron-updater"
+import { DEFAULT_CROSS_ORIGIN_HEADERS, NsisUpdater } from "electron-updater"
 import { verifySignatureByPublishName } from "win-verify-signature"
 
 export default class AppUpdater {
@@ -79,7 +79,7 @@ export default class AppUpdater {
         }
         autoUpdater.addAuthHeader(`Bearer ${token}`)
         // which request headers may go to another origin: here only the default list, so Authorization stays on the feed's origin
-        autoUpdater.checkForUpdatesAndNotify({ crossOriginHeaders: defaults => defaults })
+        autoUpdater.checkForUpdatesAndNotify({ crossOriginHeaderAllowlist: DEFAULT_CROSS_ORIGIN_HEADERS })
     }
 }
 ```

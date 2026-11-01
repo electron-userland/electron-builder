@@ -20,7 +20,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
     return this.baseUrl
   }
 
-  /** The built-in list: another origin than the feed's gets the default cross-origin headers (the app's `crossOriginHeaders` decides). */
+  /** Returns `defaults` unchanged: the built-in list, or the app's `crossOriginHeaderAllowlist` when that is a list (with a callback, the app decides after it). */
   crossOriginHeaders(defaults: ReadonlyArray<string>, _request: CrossOriginRequest): ReadonlyArray<string> | null {
     return defaults
   }
