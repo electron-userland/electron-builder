@@ -171,13 +171,20 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 }
 
+// arch suffixes of per-arch artifacts; a universal build runs on every arch, so it is not one of them
+const FILE_NAME_ARCHS = ["ia32", "x64", "armv7l", "arm64"]
+
 export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>): ResolvedUpdateFileInfo | null | undefined {
   if (files.length === 0) {
     throw newError("No files provided", "ERR_UPDATER_NO_FILES_PROVIDED")
   }
 
   const filteredFiles = files.filter(it => it.url.pathname.toLowerCase().endsWith(`.${extension.toLowerCase()}`))
-  const result = filteredFiles.find(it => [it.url.pathname, it.info.url].some(n => n.includes(process.arch))) ?? filteredFiles.shift()
+  const namesArch = (it: ResolvedUpdateFileInfo, arch: string) => [it.url.pathname, it.info.url].some(n => n.includes(arch))
+  // Picked by name, not by position: the order of files is not covered by the update manifest signature.
+  // The default arch's file has no arch suffix (e.g. `App Setup 1.0.0.exe` next to `App Setup 1.0.0-arm64.exe`), so without a file named for this arch,
+  // one that names no other arch is preferred.
+  const result = filteredFiles.find(it => namesArch(it, process.arch)) ?? filteredFiles.find(it => !FILE_NAME_ARCHS.some(arch => namesArch(it, arch))) ?? filteredFiles.shift()
 
   if (result) {
     return result
