@@ -148,6 +148,14 @@ describe("electron-updater login event", () => {
     expect(errors[0]).toContain("provider check failed")
   })
 
+  test("an onLoginChallenge that throws a value without a string form cancels the challenge", async ({ tmpDir, expect }) => {
+    withProviderAnswer(() => {
+      throw Object.create(null)
+    })
+    const { answer } = await checkedUpdater(tmpDir, { provider: "custom", updateProvider: TestProvider })
+    expect(answer(challenge("downloads.example.net", 443))).toBe(false)
+  })
+
   test("a custom provider without onLoginChallenge emits every challenge", async ({ tmpDir, expect }) => {
     const { answer } = await checkedUpdater(tmpDir, { provider: "custom", updateProvider: DuckTypedProvider })
     expect(answer(challenge("downloads.example.net", 443))).toBe(true)
@@ -222,6 +230,8 @@ describe("ElectronHttpExecutor login event", () => {
       "https://cdn.example.org/a.exe",
     ],
     ["no hostname", { protocol: "https:", path: "/a.exe" }, null],
+    ["an empty hostname", { protocol: "https:", hostname: "", path: "/a.exe" }, null],
+    ["an empty host", { protocol: "https:", host: "", hostname: "downloads.example.net", path: "/a.exe" }, "https://downloads.example.net/a.exe"],
     ["no protocol", { hostname: "downloads.example.net", path: "/a.exe" }, null],
     ["a hostname that is no URL host", { protocol: "https:", hostname: "downloads example net", path: "/a.exe" }, null],
   ])("passes the request URL from options with %s", ([_what, options, expected], { expect }) => {

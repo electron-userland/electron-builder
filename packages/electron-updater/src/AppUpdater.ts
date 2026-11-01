@@ -965,7 +965,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
             `The update provider's onLoginChallenge threw, so the authentication challenge was cancelled: ${e instanceof Error ? (e.stack ?? e.message) : String(e)}`
           )
         } catch (_ignored) {
-          // a throwing logger must not leave the challenge unanswered
+          // building the message (String of a non-Error throw) must not leave the challenge unanswered
         }
       }
     }
