@@ -1,10 +1,18 @@
 import { CancellationToken, PackageFileInfo, ProgressInfo, UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
+import type { CrossOriginHeadersCallback } from "builder-util-runtime"
 import { EventEmitter } from "events"
 import { URL } from "url"
 import { LoginCallback } from "./electronHttpExecutor.js"
 
 export { CancellationToken, PackageFileInfo, ProgressInfo, UpdateFileInfo, UpdateInfo }
 export type { CrossOriginHeadersCallback, CrossOriginRequest } from "builder-util-runtime"
+
+/**
+ * The `crossOriginHeaderAllowlist` of `AppUpdater.checkForUpdates`: the request headers sent on each request and redirect to another origin.
+ * - A list of header names (case-insensitive), such as `DEFAULT_CROSS_ORIGIN_HEADERS`: exactly what each of them sends.
+ * - A {@link CrossOriginHeadersCallback}: gets `DEFAULT_CROSS_ORIGIN_HEADERS` as `defaults` and decides, per request.
+ */
+export type CrossOriginHeaderAllowlist = ReadonlyArray<string> | CrossOriginHeadersCallback
 
 export const DOWNLOAD_PROGRESS = "download-progress"
 export const UPDATE_DOWNLOADED = "update-downloaded"

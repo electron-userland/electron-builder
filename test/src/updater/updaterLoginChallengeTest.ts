@@ -32,10 +32,6 @@ class TestProvider extends Provider<typeof UPDATE_INFO> {
     return new URL("https://feed.example.com/updates")
   }
 
-  crossOriginHeaders(defaults: ReadonlyArray<string>): ReadonlyArray<string> {
-    return defaults
-  }
-
   getLatestVersion() {
     return Promise.resolve(UPDATE_INFO)
   }
@@ -51,16 +47,12 @@ class TestProvider extends Provider<typeof UPDATE_INFO> {
   }
 }
 
-// a custom provider that does not extend Provider, so has no onLoginChallenge (crossOriginHeaders is required)
+// a custom provider that does not extend Provider, so has no onLoginChallenge (feedBaseUrl is required)
 class DuckTypedProvider {
   constructor(..._args: Array<unknown>) {}
 
-  get feedBaseUrl(): null {
-    return null
-  }
-
-  crossOriginHeaders(): null {
-    return null
+  get feedBaseUrl(): URL {
+    return new URL("https://feed.example.com/updates")
   }
 
   setRequestHeaders(): void {
@@ -106,7 +98,7 @@ async function createUpdater(tmpDir: TmpDir) {
 async function checkedUpdater(tmpDir: TmpDir, feed: Parameters<NsisUpdater["setFeedURL"]>[0]) {
   const result = await createUpdater(tmpDir)
   result.updater.setFeedURL(feed)
-  await result.updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+  await result.updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
   return result
 }
 
@@ -173,7 +165,7 @@ describe("electron-updater login event", () => {
     withProviderAnswer(() => false)
     const { updater, answer } = await checkedUpdater(tmpDir, { provider: "generic", url: "https://feed.example.com/updates" })
     updater.setFeedURL({ provider: "custom", updateProvider: TestProvider })
-    await updater.checkForUpdates({ crossOriginHeaders: defaults => defaults })
+    await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
     expect(answer(challenge("downloads.example.net", 443))).toBe(false)
   })
 
@@ -236,7 +228,7 @@ describe("ElectronHttpExecutor login event", () => {
     const requests: Array<EventEmitter> = []
     const listener = vi.fn<(authInfo: AuthInfo, callback: LoginCallback, requestUrl: URL | null) => void>()
     withElectron(requests, () => {
-      new ElectronHttpExecutor(listener).createRequest(options, () => undefined)
+      new ElectronHttpExecutor(listener, defaults => defaults).createRequest(options, () => undefined)
     })
     const authInfo = challenge("downloads.example.net", 443)
     const callback = vi.fn()
@@ -258,7 +250,12 @@ describe("the updater's own executor", () => {
       const updater = new NsisUpdater()
       updater.logger = makeLogger()
       // the provider of an update check (which needs a ready app)
-      ;(updater as any).checkProvider = new TestProvider(null, null, { isUseMultipleRangeRequest: true, platform: "win32", executor: updater.httpExecutor })
+      ;(updater as any).checkProvider = new TestProvider(null, null, {
+        isUseMultipleRangeRequest: true,
+        platform: "win32",
+        executor: updater.httpExecutor,
+        crossOriginHeaders: defaults => defaults,
+      })
       const onLogin = vi.fn()
       // the documented way to cancel: call the callback without credentials
       updater.on("login", (authInfo, callback) => {

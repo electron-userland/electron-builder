@@ -2,7 +2,6 @@ import { expect, test, describe, vi } from "vitest"
 import {
   CancellationToken,
   type CrossOriginHeadersCallback,
-  type CrossOriginHeadersLayer,
   type CrossOriginRequest,
   DEFAULT_CROSS_ORIGIN_HEADERS,
   DigestTransform,
@@ -844,7 +843,7 @@ describe("HttpExecutor.keepCrossOriginHeaders", () => {
         expect.objectContaining({
           code: "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS",
           message: expect.stringMatching(
-            /^crossOriginHeaders must return an array of header names \(such as "accept" or "x-tenant"\) or null: got .+ for the request from https:\/\/feed\.example\.com to https:\/\/cdn\.example\.net, which is not sent\. https:\/\/www\.electron\.build\/docs\/migration\/v27-runtime-changes#cross-origin-header-allowlist$/
+            /^crossOriginHeaderAllowlist of checkForUpdates must return an array of header names \(such as "accept" or "x-tenant"\) or null: got .+ for the request from https:\/\/feed\.example\.com to https:\/\/cdn\.example\.net, which is not sent\. https:\/\/www\.electron\.build\/docs\/migration\/v27-runtime-changes#cross-origin-header-allowlist$/
           ),
         })
       )
@@ -858,7 +857,10 @@ describe("HttpExecutor.keepCrossOriginHeaders", () => {
         throw new Error("Bearer value-secret")
       })
     expect(run).toThrow(
-      expect.objectContaining({ code: "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS", message: expect.stringContaining("crossOriginHeaders threw for the request from") })
+      expect.objectContaining({
+        code: "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS",
+        message: expect.stringContaining("crossOriginHeaderAllowlist of checkForUpdates threw for the request from"),
+      })
     )
     expect(run).not.toThrow(/value-secret/)
   })
@@ -904,94 +906,9 @@ describe("HttpExecutor.keepCrossOriginHeaders", () => {
   })
 })
 
-// layers (electron-updater: the update provider's crossOriginHeaders, then the app's): each gets what the one before it chose, the last decides
-describe("HttpExecutor.keepCrossOriginHeaders with layers", () => {
-  const headers = () => ({ Authorization: "Bearer token123", "X-Tenant": "acme", "User-Agent": "electron-builder", accept: "*/*", "X-Unset": undefined })
-  const toCdn: CrossOriginRequest = { from: new URL("https://feed.example.com/updates/"), to: new URL("https://cdn.example.net/app.exe"), kind: "request" }
-  const layer = (name: string, crossOriginHeaders: CrossOriginHeadersCallback): CrossOriginHeadersLayer => ({ name, crossOriginHeaders })
-
-  test("the first layer gets the default list, a later one what the layer before it returned, and the last one decides", ({ expect }) => {
-    const first = vi.fn((defaults: ReadonlyArray<string>) => [...defaults, "x-tenant"])
-    const second = vi.fn((defaults: ReadonlyArray<string>) => defaults.filter(it => it !== "accept"))
-
-    expect(HttpExecutor.keepCrossOriginHeaders(headers(), toCdn, [layer("first", first), layer("second", second)])).toEqual({
-      "X-Tenant": "acme",
-      "User-Agent": "electron-builder",
-    })
-    expect(first).toHaveBeenCalledExactlyOnceWith(DEFAULT_CROSS_ORIGIN_HEADERS, toCdn)
-    expect(second).toHaveBeenCalledExactlyOnceWith([...DEFAULT_CROSS_ORIGIN_HEADERS, "x-tenant"], toCdn)
-    expect(first.mock.invocationCallOrder[0]).toBeLessThan(second.mock.invocationCallOrder[0])
-  })
-
-  test("a layer after one that returned null gets the names of the headers that are sent", ({ expect }) => {
-    const second = vi.fn((defaults: ReadonlyArray<string>) => defaults)
-
-    expect(HttpExecutor.keepCrossOriginHeaders(headers(), toCdn, [layer("first", () => null), layer("second", second)])).toEqual(headers())
-    expect(second).toHaveBeenCalledExactlyOnceWith(["Authorization", "X-Tenant", "User-Agent", "accept"], toCdn)
-  })
-
-  test("the last layer can send every header after an earlier one chose fewer", ({ expect }) => {
-    const all = headers()
-    expect(HttpExecutor.keepCrossOriginHeaders(all, toCdn, [layer("first", () => []), layer("second", () => null)])).toBe(all)
-  })
-
-  test.for([
-    ["throws", "first threw for the request from https://feed.example.com to https://cdn.example.net, which is not sent."],
-    ["returns a header value", "first must return an array of header names"],
-  ] as const)("a layer that %s fails the request, named, without asking the next one", ([label, message], { expect }) => {
-    const second = vi.fn((defaults: ReadonlyArray<string>) => defaults)
-    const first: CrossOriginHeadersCallback =
-      label === "throws"
-        ? () => {
-            throw new Error("Bearer value-secret")
-          }
-        : () => "Bearer value-secret" as unknown as ReadonlyArray<string>
-    const run = () => HttpExecutor.keepCrossOriginHeaders(headers(), toCdn, [layer("first", first), layer("second", second)])
-
-    expect(run).toThrow(expect.objectContaining({ code: "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS", message: expect.stringContaining(message) }))
-    expect(run).not.toThrow(/value-secret/)
-    expect(second).not.toHaveBeenCalled()
-  })
-
-  test("a later layer's invalid result fails the request, named", ({ expect }) => {
-    expect(() => HttpExecutor.keepCrossOriginHeaders(headers(), toCdn, [layer("first", defaults => defaults), layer("second", () => ["x tenant"])])).toThrow(
-      expect.objectContaining({ code: "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS", message: expect.stringMatching(/^second must return an array of header names/) })
-    )
-  })
-
-  // no feed URL: there is no origin the headers are meant for, so every request is asked about, even one to the same host
-  test("from null asks about every request", ({ expect }) => {
-    const crossOriginHeaders = vi.fn((defaults: ReadonlyArray<string>) => defaults)
-    const request: CrossOriginRequest = { from: null, to: new URL("https://feed.example.com/updates/app.exe"), kind: "request" }
-
-    expect(HttpExecutor.keepCrossOriginHeaders(headers(), request, crossOriginHeaders)).toEqual({ "User-Agent": "electron-builder", accept: "*/*" })
-    expect(crossOriginHeaders).toHaveBeenCalledExactlyOnceWith(DEFAULT_CROSS_ORIGIN_HEADERS, request)
-    expect(() => HttpExecutor.keepCrossOriginHeaders(headers(), request, () => "x" as unknown as ReadonlyArray<string>)).toThrow(
-      / for the request to https:\/\/feed\.example\.com, which is not sent\./
-    )
-  })
-
-  test("prepareRedirectUrlOptions asks the layers about a cross-origin redirect", ({ expect }) => {
-    const second = vi.fn((defaults: ReadonlyArray<string>) => defaults)
-    const result = HttpExecutor.prepareRedirectUrlOptions(
-      "https://cdn.example.net/app.exe",
-      { protocol: "https:", hostname: "feed.example.com", path: "/app.exe", headers: { "X-Tenant": "acme", Authorization: "Bearer s" } },
-      [layer("first", defaults => [...defaults, "x-tenant"]), layer("second", second)]
-    )
-
-    expect(second).toHaveBeenCalledExactlyOnceWith([...DEFAULT_CROSS_ORIGIN_HEADERS, "x-tenant"], {
-      from: new URL("https://feed.example.com/app.exe"),
-      to: new URL("https://cdn.example.net/app.exe"),
-      kind: "redirect",
-    })
-    expect(result.headers).toHaveProperty("X-Tenant", "acme")
-    expect(result.headers).not.toHaveProperty("Authorization")
-  })
-})
-
 // Node's `auth` option is sent as an Authorization header: on a cross-origin redirect it follows the choice for `authorization`
 describe("HttpExecutor.prepareRedirectUrlOptions auth option", () => {
-  const redirect = (crossOriginHeaders: CrossOriginHeadersCallback | ReadonlyArray<CrossOriginHeadersLayer>, headers: OutgoingHttpHeaders = {}) =>
+  const redirect = (crossOriginHeaders: CrossOriginHeadersCallback, headers: OutgoingHttpHeaders = {}) =>
     HttpExecutor.prepareRedirectUrlOptions(
       "https://cdn.example.net/app.exe",
       { protocol: "https:", hostname: "feed.example.com", path: "/app.exe", auth: "user:secret", headers },
@@ -1007,30 +924,6 @@ describe("HttpExecutor.prepareRedirectUrlOptions auth option", () => {
     ["a list naming authorization", (defaults: ReadonlyArray<string>) => [...defaults, "Authorization"]],
   ] as const)("is kept for %s", ([, crossOriginHeaders], { expect }) => {
     expect(redirect(crossOriginHeaders).auth).toBe("user:secret")
-  })
-
-  test("is one of the header names a layer after null gets", ({ expect }) => {
-    const second = vi.fn((defaults: ReadonlyArray<string>) => defaults)
-    const result = redirect([
-      { name: "first", crossOriginHeaders: () => null },
-      { name: "second", crossOriginHeaders: second },
-    ])
-
-    expect(second.mock.calls[0][0]).toContain("authorization")
-    expect(result.auth).toBe("user:secret")
-  })
-
-  test("is the authorization an explicit Authorization header already names", ({ expect }) => {
-    const second = vi.fn((defaults: ReadonlyArray<string>) => defaults)
-    redirect(
-      [
-        { name: "first", crossOriginHeaders: () => null },
-        { name: "second", crossOriginHeaders: second },
-      ],
-      { Authorization: "Bearer s" }
-    )
-
-    expect(second.mock.calls[0][0].filter((it: string) => it.toLowerCase() === "authorization")).toEqual(["Authorization"])
   })
 })
 

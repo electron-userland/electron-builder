@@ -75,7 +75,7 @@ describe("ElectronHttpExecutor redirects", () => {
   })
 })
 
-// A redirect to another origin sends on only the headers the executor's crossOriginHeaders returns for it (the crossOriginHeaders of
+// A redirect to another origin sends on only the headers the executor's crossOriginHeaders returns for it (the crossOriginHeaderAllowlist of
 // AppUpdater.checkForUpdates), by default the allowlist.
 describe("ElectronHttpExecutor cross-origin redirect headers", () => {
   const HEADERS = { "X-Api-Token": "custom-secret", "X-Tenant": "acme", range: "bytes=0-99", accept: "*/*" }

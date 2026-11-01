@@ -3,8 +3,6 @@ import {
   CancellationToken,
   configureRequestUrl,
   CrossOriginHeadersCallback,
-  CrossOriginHeadersLayer,
-  CrossOriginRequest,
   DEFAULT_MAX_UPDATE_INFO_SIZE,
   HttpExecutor,
   newError,
@@ -31,48 +29,28 @@ export interface ProviderRuntimeOptions {
   executor: ElectronHttpExecutor
 
   /**
-   * The app's choice of the request headers each update info request (e.g. a channel file) on another origin than `Provider.feedBaseUrl`
-   * gets, after the provider's {@link Provider.crossOriginHeaders} (the `crossOriginHeaders` of `AppUpdater.checkForUpdates`); without
-   * it, the provider's choice.
+   * Chooses the request headers each update info request (e.g. a channel file) on another origin than `Provider.feedBaseUrl` gets: the
+   * `crossOriginHeaderAllowlist` of the last `AppUpdater.checkForUpdates`, asked at each request since a provider outlives a check.
    */
-  crossOriginHeaders?: CrossOriginHeadersCallback
+  crossOriginHeaders: CrossOriginHeadersCallback
 }
 
 /**
- * Throws `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` when `provider` has no `crossOriginHeaders` method (e.g. a custom provider
- * written in plain JavaScript): every provider chooses the headers its requests send to another origin.
+ * The `feedBaseUrl` of `provider`, checked at run time: a custom provider written in plain JavaScript, or built on another copy of
+ * electron-updater, may return something else. Anything but a URL fails with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, before any request
+ * header is handed to the provider or sent.
  */
-export function checkCrossOriginHeadersImplemented(provider: Provider<any>): void {
-  if (typeof Reflect.get(provider, "crossOriginHeaders") !== "function") {
-    throw newError(
-      `The update provider ${provider.constructor.name} has no crossOriginHeaders method: each provider chooses the headers its requests and redirects send to another origin, ` +
-        `before the app's checkForUpdates({ crossOriginHeaders }). Implement crossOriginHeaders(defaults, request) and return defaults to use the built-in list. ` +
-        `https://www.electron.build/docs/migration/v27-developer-changes#custom-provider-cross-origin-headers`,
-      "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED"
-    )
+export function feedBaseUrlOf(provider: Provider<any>): URL {
+  const url: unknown = provider.feedBaseUrl
+  if (url instanceof URL) {
+    return url
   }
-}
-
-/**
- * The two layers that choose the headers of a request or redirect of `provider` to another origin: {@link Provider.crossOriginHeaders}
- * gets `DEFAULT_CROSS_ORIGIN_HEADERS`, and `app` (the `crossOriginHeaders` of `AppUpdater.checkForUpdates`) gets what the provider returned
- * (every header name of the request for `null`) and decides. Without a provider (a redirect before any update check), only `app`.
- */
-export function crossOriginHeadersLayers(provider: Provider<any> | null, app: CrossOriginHeadersCallback): ReadonlyArray<CrossOriginHeadersLayer> {
-  const appLayer: CrossOriginHeadersLayer = { name: "crossOriginHeaders of checkForUpdates", crossOriginHeaders: app }
-  if (provider == null) {
-    return [appLayer]
-  }
-  return [
-    {
-      name: `crossOriginHeaders of the update provider ${provider.constructor.name}`,
-      crossOriginHeaders: (defaults, request) => {
-        checkCrossOriginHeadersImplemented(provider)
-        return provider.crossOriginHeaders(defaults, request)
-      },
-    },
-    appLayer,
-  ]
+  const value = url === null ? "null, which does not send the request headers to every origin" : url === undefined ? "undefined" : `a ${typeof url}`
+  throw newError(
+    `The feedBaseUrl of the update provider ${provider.constructor.name} is ${value}: every provider returns the URL of its update feed there, the only origin that gets every request header. ` +
+      `Return the base URL of the update files, e.g. of the channel file. https://www.electron.build/docs/migration/v27-developer-changes#custom-provider-feed-base-url`,
+    "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED"
+  )
 }
 
 // Shared by the GitHub/GitLab/PrivateGitHub providers when a release channel file (e.g. latest.yml) 404s.
@@ -130,30 +108,12 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 
   /**
-   * Base URL of the update feed: download URLs, and the URLs of the provider's own update info requests (e.g. the channel file), on its
-   * origin get every request header. For any other origin, {@link Provider.crossOriginHeaders} and then the app's `crossOriginHeaders`
-   * (of `AppUpdater.checkForUpdates`) choose the headers, with the feed URL as the request's `from`. `null` or `undefined` (the default):
-   * the provider has no feed URL, so they choose the headers of every request, with `from` set to `null`.
+   * Required. Base URL of the update feed: download URLs, and the URLs of the provider's own update info requests (e.g. the channel file),
+   * on its origin get every request header. Any other origin gets only the headers the app's `crossOriginHeaderAllowlist` (of
+   * `AppUpdater.checkForUpdates`) allows, with this URL as the request's `from`. Anything but a URL fails the update check with
+   * `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`.
    */
-  get feedBaseUrl(): URL | null | undefined {
-    return undefined
-  }
-
-  /**
-   * Required. Decides which headers a request or redirect sends to `request.to` when it is not on the feed's origin, or to any URL when
-   * there is no feed URL ({@link Provider.feedBaseUrl}, `request.from` is then `null`): gets `DEFAULT_CROSS_ORIGIN_HEADERS` of
-   * builder-util-runtime (`accept`, `user-agent`, `range` and other content negotiation, caching and conditional headers) and returns the
-   * header names to send (case-insensitive), or `null` for every header of that request. The app's `crossOriginHeaders` (of
-   * `AppUpdater.checkForUpdates`) then gets this result as its `defaults` (the names of every header of the request for `null`) and
-   * decides. Called for each such request, never for the feed's own origin; for a redirect, the updater asks the provider of its latest
-   * update check. A throw, or a result that is not an array of header names or `null`, fails that request with
-   * `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`; a provider without this method fails the update check with
-   * `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`.
-   *
-   * @example crossOriginHeaders(defaults) { return defaults } // the built-in list
-   * @example crossOriginHeaders(defaults, request) { return request.to.origin === "https://api.example.com" ? [...defaults, "authorization"] : defaults }
-   */
-  abstract crossOriginHeaders(defaults: ReadonlyArray<string>, request: CrossOriginRequest): ReadonlyArray<string> | null
+  abstract get feedBaseUrl(): URL
 
   /**
    * Optional. Decides whether the updater emits its `login` event for an authentication challenge (a proxy's or a server's) of an update
@@ -219,14 +179,10 @@ export abstract class Provider<T extends UpdateInfo> {
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): ApiRequestOptions {
     const result: ApiRequestOptions = {}
     // the same feed-origin rule and cross-origin headers as for downloads and redirects: e.g. a channel file on another origin gets only
-    // the request headers this provider and then the app choose (by default the likes of Accept and User-Agent)
+    // the request headers the app's crossOriginHeaderAllowlist allows (by default the likes of Accept and User-Agent)
     let requestHeaders = this.requestHeaders
     if (requestHeaders != null) {
-      requestHeaders = HttpExecutor.keepCrossOriginHeaders(
-        requestHeaders,
-        { from: this.feedBaseUrl ?? null, to: url, kind: "request" },
-        crossOriginHeadersLayers(this, this.runtimeOptions.crossOriginHeaders ?? (defaults => defaults))
-      )
+      requestHeaders = HttpExecutor.keepCrossOriginHeaders(requestHeaders, { from: feedBaseUrlOf(this), to: url, kind: "request" }, this.runtimeOptions.crossOriginHeaders)
     }
     if (requestHeaders == null) {
       if (headers != null) {
