@@ -82,6 +82,8 @@ appRunning:
   uk: "${PRODUCT_NAME} запущено.\nКлацніть ОК для завершення.\nЯкщо завершення не вдалось — спробуйте вручну."
   zh_CN: "${PRODUCT_NAME} 正在运行.\n点击“确定”关闭."
   zh_TW: "${PRODUCT_NAME} 正在執行。\n點擊 OK 關閉。\n如果無法關閉，試著手動關閉。"
+appProcessCheckFailed:
+  en: "Could not check whether ${PRODUCT_NAME} is running.\nSetup will now exit. Close the application manually and run setup again."
 appCannotBeClosed:
   en: "${PRODUCT_NAME} cannot be closed. \nPlease close it manually and click Retry to continue."
   ar: "‫لم يتمكن من إغلاق ${PRODUCT_NAME} \nيُرجى إغلاقه يدويا ثم الضغط مرة أخرى على إعادة المحاولة للاستمرار.‏"
