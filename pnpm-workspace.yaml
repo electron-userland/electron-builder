@@ -30,6 +30,8 @@ minimumReleaseAgeExclude:
   - markdown-it@14.3.3
   # Renovate security update: electron@42.11.16
   - electron@42.11.16
+  # Renovate security update: minimatch@11.0.3
+  - minimatch@11.0.3
 patchedDependencies:
   '@changesets/cli@2.29.7': patches/@changesets__cli@2.29.7.patch
   '@changesets/assemble-release-plan@6.0.9': patches/@changesets__assemble-release-plan@6.0.9.patch
@@ -50,7 +52,7 @@ overrides:
   'brace-expansion@<1.1.21': '>=1.1.21 <2' # GHSA-3jxr-9vmj-r5cp, -mh99-v99m-4gvg, -rgw5-rvv9-x895, -6j4f-fj2g-mc7p, -qhr7-859c-m2p7 (high), GHSA-q2hr-2g5m-vwhr (med)
   'brace-expansion@>=2 <2.1.7': '>=2.1.7 <3' # same advisories as brace-expansion@<1.1.21
   'brace-expansion@>=5 <5.0.12': '>=5.0.12 <6' # same advisories as brace-expansion@<1.1.21
-  'minimatch@>=5 <5.1.8': '>=5.1.8 <6' # GHSA-7r86-cg39-jmmj, GHSA-23c5-xmqv-rm74, GHSA-3ppc-4f35-3m26 (high)
+  'minimatch@>=5 <5.1.8': '>=5.1.8 <12' # GHSA-7r86-cg39-jmmj, GHSA-23c5-xmqv-rm74, GHSA-3ppc-4f35-3m26 (high)
   'minimatch@>=7 <7.4.8': '>=7.4.8 <8' # GHSA-7r86-cg39-jmmj, GHSA-23c5-xmqv-rm74, GHSA-3ppc-4f35-3m26 (high)
   'js-yaml@>=3 <3.15.2': '^3.15.2' # GHSA-2883-xcg3-v3hh, GHSA-5p4m-2wfm-xmqj, GHSA-52cp-r559-cp3m (high)
   postcss: '>=8.5.18 <9' # GHSA-r28c-9q8g-f849, GHSA-6g55-p6wh-862q (high)
