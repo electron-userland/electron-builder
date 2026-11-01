@@ -23,8 +23,8 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
   /**
    * @param crossOriginHeaders chooses the headers each redirect to another origin sends on; without it, builder-util-runtime's
    * `DEFAULT_CROSS_ORIGIN_HEADERS`
-   * @param crossOriginHeadersLayers in place of `crossOriginHeaders`, the layers that choose them for each redirect (AppUpdater: the
-   * update provider's `crossOriginHeaders`, then the app's)
+   * @param crossOriginHeadersLayers in place of `crossOriginHeaders`, the layers that choose them for each redirect (AppUpdater: see
+   * `crossOriginHeadersLayers` in providers/Provider.ts, the app's list then the update provider, or the provider then the app's callback)
    */
   constructor(
     private readonly proxyLoginCallback?: (authInfo: AuthInfo, callback: LoginCallback) => void,

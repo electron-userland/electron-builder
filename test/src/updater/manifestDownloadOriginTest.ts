@@ -409,7 +409,7 @@ describe("differential downloads use the per-download headers", () => {
   test("private GitHub with a crossOriginHeaderAllowlist list: the token reaches the API's origin, not the storage it redirects to", async ({ tmpDir, expect }) => {
     const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
     // as a checkForUpdates({ crossOriginHeaderAllowlist: ["x-tenant"] }) keeps it
-    ;(updater as any).checkCrossOriginHeaderAllowlist = Object.freeze(["x-tenant"])
+    ;(updater as any).checkCrossOriginHeaderAllowlist = ["x-tenant"]
     const provider = createProvider(updater, { provider: "github", owner: "owner", repo: "repo", token: "t" } as GithubOptions)
     const options = downloadUpdateOptions(updater, provider, updateInfo("app-1.1.0.exe"))
     const headersFor = (url: string): OutgoingHttpHeaders => (updater as any).downloadRequestHeaders(new URL(url), options)
@@ -655,6 +655,13 @@ describe("the updater's own executor sends on the crossOriginHeaderAllowlist on 
       ;(updater as any).checkCrossOriginHeaderAllowlist = () => null
       expect((await redirect({ "X-Tenant": "acme", Authorization: "Bearer s" })).headers).toMatchObject({ "X-Tenant": "acme", Authorization: "Bearer s" })
 
+      // a list, before any check has a provider: exactly the list
+      ;(updater as any).checkCrossOriginHeaderAllowlist = ["x-tenant"]
+      const listed = await redirect({ "X-Tenant": "acme", Authorization: "Bearer s", accept: "*/*" })
+      expect(listed.headers).toMatchObject({ "X-Tenant": "acme" })
+      expect(listed.headers).not.toHaveProperty("Authorization")
+      expect(listed.headers).not.toHaveProperty("accept")
+
       // once a check has a provider, it chooses first, and the app gets its choice
       const calls: Array<readonly [string, ReadonlyArray<string>, CrossOriginRequest]> = []
       ;(updater as any).checkProvider = {
@@ -676,6 +683,20 @@ describe("the updater's own executor sends on the crossOriginHeaderAllowlist on 
         ["provider", DEFAULT_CROSS_ORIGIN_HEADERS, request],
         ["app", [...DEFAULT_CROSS_ORIGIN_HEADERS, "x-tenant"], request],
       ])
+
+      // a list goes first: the provider gets it in place of DEFAULT_CROSS_ORIGIN_HEADERS, and what it returns is sent
+      calls.length = 0
+      ;(updater as any).checkProvider = {
+        crossOriginHeaders: (defaults: ReadonlyArray<string>, request: CrossOriginRequest) => {
+          calls.push(["provider", defaults, request])
+          return [...defaults, "authorization"]
+        },
+      }
+      ;(updater as any).checkCrossOriginHeaderAllowlist = ["accept"]
+      const listThenProvider = await redirect({ "X-Tenant": "acme", Authorization: "Bearer s", accept: "*/*" })
+      expect(calls).toEqual([["provider", ["accept"], request]])
+      expect(listThenProvider.headers).toMatchObject({ Authorization: "Bearer s", accept: "*/*" })
+      expect(listThenProvider.headers).not.toHaveProperty("X-Tenant")
     } finally {
       moduleInternals._load = load
     }

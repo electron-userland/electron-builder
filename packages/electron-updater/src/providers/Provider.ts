@@ -206,7 +206,8 @@ export abstract class Provider<T extends UpdateInfo> {
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): ApiRequestOptions {
     const result: ApiRequestOptions = {}
     // the same feed-origin rule and cross-origin headers as for downloads and redirects: e.g. a channel file on another origin gets only
-    // the request headers this provider and then the app choose (by default the likes of Accept and User-Agent)
+    // the request headers chosen by crossOriginHeadersLayers (the app's list then this provider, or this provider then the app's callback;
+    // by default the likes of Accept and User-Agent)
     let requestHeaders = this.requestHeaders
     if (requestHeaders != null) {
       const appAllowlist = this.runtimeOptions.crossOriginHeaderAllowlist

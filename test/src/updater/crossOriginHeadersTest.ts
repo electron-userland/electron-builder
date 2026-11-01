@@ -72,11 +72,12 @@ describe("checkForUpdates({ crossOriginHeaderAllowlist })", () => {
     )
   }
 
+  const checks: ReadonlyArray<readonly [string, (updater: AppUpdater, options: unknown) => Promise<unknown>]> = [
+    ["checkForUpdates", (updater, options) => updater.checkForUpdates(options as CheckForUpdatesOptions)],
+    ["checkForUpdatesAndNotify", (updater, options) => updater.checkForUpdatesAndNotify(options as CheckForUpdatesAndNotifyOptions)],
+  ]
+
   describe("is required", () => {
-    const checks: ReadonlyArray<readonly [string, (updater: AppUpdater, options: unknown) => Promise<unknown>]> = [
-      ["checkForUpdates", (updater, options) => updater.checkForUpdates(options as CheckForUpdatesOptions)],
-      ["checkForUpdatesAndNotify", (updater, options) => updater.checkForUpdatesAndNotify(options as CheckForUpdatesAndNotifyOptions)],
-    ]
     const invalidOptions: ReadonlyArray<readonly [string, unknown]> = [
       ["no options", undefined],
       ["no crossOriginHeaderAllowlist", {}],
@@ -86,16 +87,16 @@ describe("checkForUpdates({ crossOriginHeaderAllowlist })", () => {
     ]
     for (const [method, check] of checks) {
       for (const [label, options] of invalidOptions) {
-        test(`${method} with ${label} fails before any request`, async ({ tmpDir, expect }) => {
+        test(`${method} with ${label} rejects before any request`, async ({ tmpDir, expect }) => {
           const { updater, feed, events } = await createUpdater(tmpDir)
 
           const error = await rejection(check(updater, options))
           expect(error).toMatchObject({
             code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED",
-            message: `${method} requires { crossOriginHeaderAllowlist }: requests and redirects to another origin carry only the headers it allows, a list of header names or a callback. Pass \`{ crossOriginHeaderAllowlist: DEFAULT_CROSS_ORIGIN_HEADERS }\` (from electron-updater) to send the default headers. ${DOCS}`,
+            message: `checkForUpdates requires { crossOriginHeaderAllowlist }: requests and redirects to another origin carry only the headers it allows, a list of header names or a callback. Pass \`{ crossOriginHeaderAllowlist: DEFAULT_CROSS_ORIGIN_HEADERS }\` (from electron-updater) to send the default headers. ${DOCS}`,
           })
           expect(feed.requests).toEqual([])
-          expect(events).toEqual(["error"])
+          expect(events).toEqual([])
         })
       }
     }
@@ -119,6 +120,19 @@ describe("checkForUpdates({ crossOriginHeaderAllowlist })", () => {
 
       expect((await updater.checkForUpdatesAndNotify({ crossOriginHeaderAllowlist: useDefaults, notification: { title: "t", body: "b" } }))!.isUpdateAvailable).toBe(true)
       expect(feed.requests.map(it => it.pathname)).toEqual(["/latest.yml"])
+    })
+
+    test("checkForUpdatesAndNotify passes a list on to the check", async ({ tmpDir, expect }) => {
+      const cdn = await serve(tmpDir)
+      await cdn.write(INSTALLER_NAME, INSTALLER)
+      const { updater } = await createUpdater(tmpDir, () => `${cdn.url}/${INSTALLER_NAME}`)
+
+      await updater.checkForUpdatesAndNotify({ crossOriginHeaderAllowlist: ["x-tenant"], notification: { title: "t", body: "b" } })
+      await updater.downloadUpdate()
+
+      expect(cdn.requests).toHaveLength(1)
+      expect(cdn.requests[0].headers["x-tenant"]).toBe("acme")
+      expect(cdn.requests[0].headers.authorization).toBeUndefined()
     })
   })
 
@@ -225,38 +239,47 @@ describe("checkForUpdates({ crossOriginHeaderAllowlist })", () => {
       expect(cdn.requests[0].headers.authorization).toBeUndefined()
     })
 
-    test("is copied by the check: changing the caller's array afterwards does not change what the download sends", async ({ tmpDir, expect }) => {
-      const cdn = await serve(tmpDir)
-      await cdn.write(INSTALLER_NAME, INSTALLER)
-      const { updater } = await createUpdater(tmpDir, () => `${cdn.url}/${INSTALLER_NAME}`)
-      const allowlist = ["accept"]
-
-      await updater.checkForUpdates({ crossOriginHeaderAllowlist: allowlist })
-      allowlist.push("x-tenant", "authorization")
-      await updater.downloadUpdate()
-
-      expect(cdn.requests).toHaveLength(1)
-      expect(cdn.requests[0].headers.accept).toBe("*/*")
-      expect(cdn.requests[0].headers["x-tenant"]).toBeUndefined()
-      expect(cdn.requests[0].headers.authorization).toBeUndefined()
-    })
-
-    for (const [label, allowlist, index] of [
-      ["an entry that is not a string", [1, "accept"], 0],
-      ["an entry that is not a header name", ["accept", "bad header"], 1],
+    // checked per request, like what a callback returns: the check on the feed's origin runs, the request to another origin is not sent
+    for (const [label, allowlist] of [
+      ["an entry that is not a string", [1, "accept"]],
+      ["an entry that is not a header name", ["accept", "bad header"]],
     ] as const) {
-      test(`with ${label} fails the check before any request with ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`, async ({ tmpDir, expect }) => {
-        const { updater, feed, events } = await createUpdater(tmpDir)
+      test(`with ${label} fails each request to another origin with ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`, async ({ tmpDir, expect }) => {
+        const cdn = await serve(tmpDir)
+        await cdn.write(INSTALLER_NAME, INSTALLER)
+        const { updater, feed } = await createUpdater(tmpDir, () => `${cdn.url}/${INSTALLER_NAME}`)
 
-        const error = await rejection(updater.checkForUpdates({ crossOriginHeaderAllowlist: allowlist as unknown as ReadonlyArray<string> }))
+        expect((await updater.checkForUpdates({ crossOriginHeaderAllowlist: allowlist as unknown as ReadonlyArray<string> }))!.isUpdateAvailable).toBe(true)
+        expect(feed.requests).toHaveLength(1)
+
+        const error = await rejection(updater.downloadUpdate())
         expect(error).toMatchObject({
           code: "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS",
-          message: `crossOriginHeaderAllowlist of checkForUpdates must list header names (such as "accept" or "x-tenant"): entry ${index} is not one. ${DOCS}`,
+          message: expect.stringContaining(`crossOriginHeaderAllowlist of checkForUpdates must return an array of header names`),
         })
-        expect(feed.requests).toEqual([])
-        expect(events).toEqual(["error"])
+        expect(cdn.requests).toEqual([])
       })
     }
+
+    test("is what a channel file on another origin gets, read again for each check", async ({ tmpDir, expect }) => {
+      const channelHost = await serve(tmpDir)
+      await channelHost.write("x.yml", channelYml(INSTALLER_NAME))
+      const { updater } = await createUpdater(tmpDir)
+      updater.channel = `${channelHost.url}/x`
+      updater.requestHeaders = { ...updater.requestHeaders, "Accept-Language": "de" }
+
+      await updater.checkForUpdates({ crossOriginHeaderAllowlist: ["accept-language"] })
+      expect(channelHost.requests).toHaveLength(1)
+      expect(channelHost.requests[0].headers["accept-language"]).toBe("de")
+      expect(channelHost.requests[0].headers["x-tenant"]).toBeUndefined()
+      expect(channelHost.requests[0].headers.authorization).toBeUndefined()
+
+      await updater.checkForUpdates({ crossOriginHeaderAllowlist: ["x-tenant"] })
+      expect(channelHost.requests).toHaveLength(2)
+      expect(channelHost.requests[1].headers["x-tenant"]).toBe("acme")
+      expect(channelHost.requests[1].headers["accept-language"]).toBeUndefined()
+      expect(channelHost.requests[1].headers.authorization).toBeUndefined()
+    })
 
     test("DEFAULT_CROSS_ORIGIN_HEADERS is exported by electron-updater", ({ expect }) => {
       expect(UPDATER_DEFAULT_CROSS_ORIGIN_HEADERS).toBe(DEFAULT_CROSS_ORIGIN_HEADERS)

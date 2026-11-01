@@ -1,5 +1,5 @@
 import { createRequire } from "node:module"
-import { blockMapV2ToV3Keys, decodeBlockMapV3, HEADER_NAME_PATTERN, isBlockMapV3, LogLimiter, toBlockMap } from "builder-util-runtime/internal"
+import { blockMapV2ToV3Keys, decodeBlockMapV3, isBlockMapV3, LogLimiter, toBlockMap } from "builder-util-runtime/internal"
 import {
   AllPublishOptions,
   asArray,
@@ -398,45 +398,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     })
   }
 
-  // the crossOriginHeaderAllowlist of the last checkForUpdates (a validated copy of a list): for the requests of that check, its download
-  // and the install of an update marked for the next launch
+  // the crossOriginHeaderAllowlist of the last checkForUpdates: for the requests of that check, its download and the install of an update
+  // marked for the next launch
   private checkCrossOriginHeaderAllowlist: CrossOriginHeaderAllowlist | null = null
-
-  /**
-   * Keeps the `crossOriginHeaderAllowlist` of `options` (see {@link CheckForUpdatesOptions}) for the check, a list as a frozen copy, or
-   * returns the error (emitted as `error` too): `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` when it is neither a list nor a function,
-   * `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS` when an entry of the list is not a header name.
-   */
-  private takeCrossOriginHeaderAllowlist(options: CheckForUpdatesOptions | null | undefined, method: string): Error | null {
-    const allowlist = options == null ? undefined : options.crossOriginHeaderAllowlist
-    if (typeof allowlist === "function") {
-      this.checkCrossOriginHeaderAllowlist = allowlist
-      return null
-    }
-    if (!Array.isArray(allowlist)) {
-      const error = crossOriginHeadersNotConfiguredError(`${method} requires { crossOriginHeaderAllowlist }`)
-      this.dispatchError(error)
-      return error
-    }
-    // a copy, so that a later change to the caller's array cannot change or bypass the validated list
-    const list: Array<unknown> = [...allowlist]
-    const names: Array<string> = []
-    for (let index = 0; index < list.length; index++) {
-      const name = list[index]
-      if (typeof name !== "string" || !HEADER_NAME_PATTERN.test(name)) {
-        // never the value: a mistaken entry could hold a header value
-        const error = newError(
-          `crossOriginHeaderAllowlist of ${method} must list header names (such as "accept" or "x-tenant"): entry ${index} is not one. ${CROSS_ORIGIN_HEADERS_DOCS}`,
-          "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS"
-        )
-        this.dispatchError(error)
-        return error
-      }
-      names.push(name)
-    }
-    this.checkCrossOriginHeaderAllowlist = Object.freeze(names)
-    return null
-  }
 
   /**
    * The `crossOriginHeaderAllowlist` of the last check, for the requests and redirects to another origin: without one, a callback that
@@ -687,10 +651,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * @returns null if the updater is disabled, otherwise info about the latest version
    */
   checkForUpdates(options: CheckForUpdatesOptions): Promise<UpdateCheckResult | null> {
-    const optionsError = this.takeCrossOriginHeaderAllowlist(options, "checkForUpdates")
-    if (optionsError != null) {
-      return Promise.reject(optionsError)
+    const allowlist = options?.crossOriginHeaderAllowlist
+    if (typeof allowlist !== "function" && !Array.isArray(allowlist)) {
+      return Promise.reject(crossOriginHeadersNotConfiguredError("checkForUpdates requires { crossOriginHeaderAllowlist }"))
     }
+    this.checkCrossOriginHeaderAllowlist = allowlist
     if (!this.isUpdaterActive()) {
       return Promise.resolve(null)
     }
@@ -733,11 +698,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * {@link checkForUpdates}, and shows a notification once the update is downloaded (with `autoDownload`): `notification`, or a default one.
    */
   checkForUpdatesAndNotify(options: CheckForUpdatesAndNotifyOptions): Promise<UpdateCheckResult | null> {
-    const optionsError = this.takeCrossOriginHeaderAllowlist(options, "checkForUpdatesAndNotify")
-    if (optionsError != null) {
-      return Promise.reject(optionsError)
-    }
-    const downloadNotification = options.notification
+    const downloadNotification = options?.notification
     return this.checkForUpdates(options).then(it => {
       if (!it?.downloadPromise) {
         this.log.debug("checkForUpdatesAndNotify called, downloadPromise is null")
@@ -1794,16 +1755,16 @@ export interface CheckForUpdatesOptions {
    *   `range` and other content negotiation, caching and conditional headers). The update provider gets it in place of
    *   `DEFAULT_CROSS_ORIGIN_HEADERS` (`Provider.crossOriginHeaders`) and decides last, per request: the built-in providers send exactly the
    *   list, while `PrivateGitHubProvider` still sends every header (its token too) to the GitHub API's origin. An empty list sends none;
-   *   a list without `range` stops differential downloads that redirect to a CDN from sending `Range`. Copied when the check starts.
+   *   a list without `range` stops differential downloads that redirect to a CDN from sending `Range`. An entry that is not a header name
+   *   fails each request to another origin with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`.
    * - A callback: gets the update provider's choice (`Provider.crossOriginHeaders`, which gets `DEFAULT_CROSS_ORIGIN_HEADERS`; the built-in
    *   providers return that list) as `defaults`, or the names of every header of the request when the provider chose `null`, and the
    *   request (`from`, `to`, `kind`), and decides last: returns the header names to send (case-insensitive), or `null` to send every header
    *   on that request. A throw, or a result that is not an array of header names or `null`, fails that request with
    *   `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`.
    *
-   * Required: without it, or with a value that is neither, the check fails with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`; a list
-   * entry that is not a header name fails it with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`. Kept for the download of this check (with
-   * `autoDownload` too) and for the install of an update marked for the next launch.
+   * Required: without it, or with a value that is neither, the check rejects with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`. Kept
+   * for the download of this check (with `autoDownload` too) and for the install of an update marked for the next launch.
    *
    * @example { crossOriginHeaderAllowlist: DEFAULT_CROSS_ORIGIN_HEADERS } // the default list
    * @example { crossOriginHeaderAllowlist: [...DEFAULT_CROSS_ORIGIN_HEADERS, "x-tenant"] }

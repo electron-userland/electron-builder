@@ -81,7 +81,7 @@ export interface CrossOriginHeadersLayer {
 }
 
 // an HTTP header name (RFC 9110 token)
-export const HEADER_NAME_PATTERN = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/
+const HEADER_NAME_PATTERN = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/
 
 const CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-header-allowlist"
 
@@ -192,7 +192,7 @@ export abstract class HttpExecutor<T extends Request> {
 
   /**
    * What decides the headers each redirect to another origin sends on: {@link HttpExecutor.crossOriginHeaders} here, while
-   * electron-updater's executor asks the update provider first (see {@link CrossOriginHeadersLayer}).
+   * electron-updater's executor combines the update provider with the app's `crossOriginHeaderAllowlist` (see {@link CrossOriginHeadersLayer}).
    */
   crossOriginRedirectHeaders(): CrossOriginHeadersCallback | ReadonlyArray<CrossOriginHeadersLayer> {
     return this.crossOriginHeaders
