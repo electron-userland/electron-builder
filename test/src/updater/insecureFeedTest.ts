@@ -137,6 +137,12 @@ describe("ElectronHttpExecutor rejects plain http", () => {
     expect(executor.sent).toEqual([])
   })
 
+  test("an http request whose host does not parse fails with ERR_UPDATER_INSECURE_FEED", async ({ expect }) => {
+    const executor = createExecutor()
+    await expect(executor.request(apiRequestOptions("http://127.0.0.1:8080/latest.yml", { Host: "feed example com" }))).rejects.toMatchObject(INSECURE_FEED)
+    expect(executor.sent).toEqual([])
+  })
+
   test("an insecure request is rejected once allowInsecureFeed is turned off again", async ({ expect }) => {
     let isAllowed = true
     const executor = createExecutor({}, () => isAllowed)
