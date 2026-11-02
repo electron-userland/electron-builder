@@ -1,0 +1,19 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`asar.stableLayout keeps the previous build's offsets; the default layout is unchanged 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`asar.stableLayout keeps the previous build's offsets; the default layout is unchanged 2`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`asar.stableLayout keeps the previous build's offsets; the default layout is unchanged 3`] = `
+{
+  "linux": [],
+}
+`;

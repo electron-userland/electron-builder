@@ -58,7 +58,7 @@ export { MsiOptions } from "./options/MsiOptions.js"
 export { MsiWrappedOptions } from "./options/MsiWrappedOptions.js"
 export { MsixOptions, MsixWindowsService } from "./options/MsixOptions.js"
 export { BackgroundAlignment, BackgroundScaling, PkgBackgroundOptions, PkgOptions } from "./options/pkgOptions.js"
-export { AsarOptions, FileSet, FilesBuildOptions, PlatformSpecificBuildOptions, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions.js"
+export { AsarOptions, AsarStableLayoutOptions, FileSet, FilesBuildOptions, PlatformSpecificBuildOptions, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions.js"
 export { PlugDescriptor, RemoteBuildOptions, SlotDescriptor, SnapcraftOptions, SnapOptions24, SnapOptionsCustom, SnapOptionsLegacy } from "./options/SnapOptions.js"
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions.js"
 export {
