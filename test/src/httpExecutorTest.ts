@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 import {
+  HttpError,
   HttpExecutor,
   safeStringifyJson,
   addSensitiveRedirectHeader,
@@ -934,7 +935,7 @@ class NodeExecutor extends HttpExecutor<ClientRequest> {
 
   runDownload(url: URL, timeout: number, callback: (error: Error | null) => void, agent?: Agent): void {
     this.doDownload(
-      { protocol: url.protocol, hostname: url.hostname, port: url.port, path: url.pathname, timeout, agent },
+      { protocol: url.protocol, hostname: url.hostname, port: url.port, path: `${url.pathname}${url.search}${url.hash}`, timeout, agent },
       {
         responseHandler: (response, done) => {
           response.resume()
@@ -1171,6 +1172,24 @@ describe("HttpExecutor request timeout on a kept-alive socket", () => {
         await new Promise(resolve => setTimeout(resolve, TIMEOUT * 4))
         expect(results).toHaveLength(1)
         expect(results[0]).toContain("status 404")
+      }
+    )
+  })
+
+  test("doDownload calls back with an HttpError for an error status, leaving the URL query and hash out of its message", async () => {
+    await withServer(
+      (_request, response) => {
+        response.writeHead(503, "Service Unavailable")
+        response.end()
+      },
+      async (url, agent) => {
+        const error = await new Promise<Error | null>(resolve => {
+          new NodeExecutor().runDownload(new URL("?token=secret-token&sig=secret-sig#frag", url), 5000, resolve, agent)
+        })
+        expect(error).toBeInstanceOf(HttpError)
+        expect(error).toMatchObject({ statusCode: 503, code: "HTTP_ERROR_503", message: 'Cannot download "http://127.0.0.1/file", status 503: Service Unavailable' })
+        expect(error instanceof HttpError && error.isServerError()).toBe(true)
+        expect(error?.message).not.toMatch(/secret|frag|\?/)
       }
     )
   })
