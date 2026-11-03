@@ -180,7 +180,7 @@ abstract class Provider<T extends UpdateInfo> {
 }
 ```
 
-Downloads and the provider's own update info requests (the channel file, or an API request through `httpRequest`) on the feed's origin get every request header; any other origin gets only the headers the app's [`crossOriginHeaderAllowlist` of `checkForUpdates`](./v27-runtime-changes.md#cross-origin-header-allowlist) allows, with the feed URL as the request's `from`. `null` no longer sends the request headers to every origin, and leaving `feedBaseUrl` out is no longer allowed either, so this applies to every custom provider that does not extend a built-in one, whether or not it sends credentials.
+Downloads and the provider's own update info requests (the channel file, or an API request through `httpRequest`) on the feed's origin get every request header; any other origin gets only the headers the app's [`crossOriginHeaderAllowlist` of `checkForUpdates`](./v27-runtime-changes.md#cross-origin-header-allowlist) allows, with the feed URL as the request's `from`. `feedBaseUrl` is required and returns a URL; `null`, or any other value that is not a URL, fails the update check with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED` before any request, so this applies to every custom provider that does not extend a built-in one, whether or not it sends credentials.
 
 The built-in providers (generic, s3, spaces, r2, github, gitlab, bitbucket, keygen) return their feed URL, so a provider that extends one inherits it. Private GitHub returns the GitHub API (`api.github.com`, or the Enterprise `host`), whose asset URLs its requests use with the token. A provider built on another copy of electron-updater passes the check when it returns a URL, and its own update info requests keep the header rules of that copy.
 

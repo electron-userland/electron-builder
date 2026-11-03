@@ -655,7 +655,9 @@ describe("the updater's own executor and providers send on the crossOriginHeader
       provider.setRequestHeaders({ "X-Tenant": "acme", Authorization: "Bearer s", accept: "*/*" })
       await expect(provider.getLatestVersion()).rejects.toMatchObject({
         code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED",
-        message: expect.stringMatching(/^The request to https:\/\/cdn\.example\.net requires a checkForUpdates\(\{ crossOriginHeaderAllowlist \}\) before it: /),
+        message: expect.stringMatching(
+          /^The request to https:\/\/cdn\.example\.net requires the updater's crossOriginHeaderAllowlist or a checkForUpdates\(\{ crossOriginHeaderAllowlist \}\) before it: /
+        ),
       })
       expect(requests).toEqual([])
 
