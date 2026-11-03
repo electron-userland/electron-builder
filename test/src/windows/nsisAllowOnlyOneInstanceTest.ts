@@ -440,19 +440,24 @@ describe("allowOnlyOneInstallerInstance.nsh", { concurrent: false }, () => {
     })
   }
 
+  // A real CimInstance (not a hashtable): a scalar CimInstance lacks .Count in Windows PowerShell 5.1. Built with the .NET API rather
+  // than New-CimInstance, and the error with $PSCmdlet.WriteError rather than Write-Error: a cmdlet outside Microsoft.PowerShell.Core
+  // is auto-loaded from a module, which can take longer than the timeout below on CI runners.
+  const cimProcess =
+    "$p = [Microsoft.Management.Infrastructure.CimInstance]::new('Win32_Process'); $p.CimInstanceProperties.Add([Microsoft.Management.Infrastructure.CimProperty]::Create('Path', 'fixture', [Microsoft.Management.Infrastructure.CimFlags]::None)); $p"
   test.runIf(process.platform === "win32").each([
     ["absent", "", 1],
-    ["one CIM process", "New-CimInstance -ClientOnly -ClassName Win32_Process -Property @{ Path = 'fixture' }", 0],
-    ["multiple CIM processes", "1..2 | % { New-CimInstance -ClientOnly -ClassName Win32_Process -Property @{ Path = 'fixture' } }", 0],
-    ["query error", "Write-Error 'simulated CIM failure'", 3],
+    ["one CIM process", cimProcess, 0],
+    ["multiple CIM processes", `1..2 | % { ${cimProcess} }`, 0],
+    ["query error", "$PSCmdlet.WriteError([Management.Automation.ErrorRecord]::new([Exception]::new('simulated CIM failure'), 'SimulatedCimFailure', 'NotSpecified', $null))", 3],
   ] as const)("PowerShell FIND contract: %s", (_name, output, expected) => {
     const command = findProcessMacro
       .match(/-C "([^\n]+)"`/)![1]
       .replaceAll("$$", "$")
       .replace("$processPathFilter", "$true")
-    // Real CimInstance objects lack scalar .Count in Windows PowerShell 5.1; a hashtable hides that regression.
-    // A function-local CIM stub also produces a non-terminating error without changing WMI.
-    const stub = `function Get-CimInstance { [CmdletBinding()] param([string] $ClassName) ${output} }; `
+    // A function-local CIM stub also produces a non-terminating error without changing WMI. Module auto-loading is disabled so that
+    // a fixture needing a module fails fast instead of reaching the timeout.
+    const stub = `$PSModuleAutoLoadingPreference = 'None'; function Get-CimInstance { [CmdletBinding()] param([string] $ClassName) ${output} }; `
     const systemRoot = process.env.SystemRoot!
     const run = spawnSync(path.join(systemRoot, "System32/WindowsPowerShell/v1.0/powershell.exe"), ["-NoProfile", "-NonInteractive", "-Command", stub + command], {
       env: { SystemRoot: systemRoot, SystemDrive: path.parse(systemRoot).root.slice(0, -1), TEMP: process.env.TEMP, TMP: process.env.TMP, USERPROFILE: process.env.USERPROFILE },
