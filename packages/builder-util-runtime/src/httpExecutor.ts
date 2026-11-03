@@ -455,7 +455,7 @@ Please double check that your authentication token is correct. Due to security r
 
     if (HttpExecutor.isCrossOriginRedirect(originalUrl, parsedRedirectUrl)) {
       if (debug.enabled) {
-        debug(`Cross-origin redirect (${originalUrl.host} → ${parsedRedirectUrl.host}): stripping sensitive headers`)
+        debug(`Cross-origin redirect (${originalUrl.host} → ${parsedRedirectUrl.host}): stripping sensitive headers and the auth option`)
       }
       // Node's `auth` option becomes a Basic Authorization header on the request, so it is a credential for the original origin too
       delete newOptions.auth
