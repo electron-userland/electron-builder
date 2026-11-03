@@ -4,7 +4,8 @@ import {
   AllPublishOptions,
   asArray,
   CancellationToken,
-  CrossOriginRequest,
+  CrossOriginHeaderPolicy,
+  deepAssign,
   DEFAULT_MAX_UPDATE_INFO_SIZE,
   isLoopbackHostname,
   isValidMaxUpdateInfoSize,
@@ -38,7 +39,7 @@ import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor.js"
 import { GenericProvider } from "./providers/GenericProvider.js"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory.js"
-import { feedBaseUrlOf, isYamlAliasBudgetError, Provider, ProviderPlatform, ProviderRuntimeOptions, YAML_ALIAS_BUDGET_DOCS } from "./providers/Provider.js"
+import { acceptHeaderOf, feedBaseUrlOf, isYamlAliasBudgetError, Provider, ProviderPlatform, ProviderRuntimeOptions, YAML_ALIAS_BUDGET_DOCS } from "./providers/Provider.js"
 import type { TypedEmitter } from "tiny-typed-emitter"
 type Session = Electron.Session
 import type { AuthInfo } from "electron"
@@ -49,7 +50,7 @@ import { fetchBlockMapV3 } from "./differentialDownloader/blockMapV3Fetcher.js"
 import { nonThrowingAppLogger, nonThrowingLogger, throwIfCancelled } from "./util.js"
 import {
   AutoInstallEvent,
-  CrossOriginHeaderAllowlist,
+  CrossOriginHeadersCallback,
   DOWNLOAD_PROGRESS,
   Logger,
   QuitAndInstallOptions,
@@ -70,24 +71,62 @@ const require = createRequire(import.meta.url ?? process.execPath)
 // shared rather than per-instance so that `updater.verifyUpdateFile === DEFAULT_VERIFY_UPDATE_FILE` identifies "no custom verifier"
 const DEFAULT_VERIFY_UPDATE_FILE: VerifyUpdateFile = _params => Promise.resolve({ response: "success" })
 
-const CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-header-allowlist"
+const CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-headers"
 
-/** `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`, for `subject` (what requires the `crossOriginHeaderAllowlist` of `checkForUpdates`). */
+/** `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`, for `subject`: what needs `autoUpdater.crossOriginHeaders`. */
 function crossOriginHeadersNotConfiguredError(subject: string): Error {
   return newError(
-    `${subject}: requests and redirects to another origin carry only the headers it allows, a list of header names or a callback. Pass \`{ crossOriginHeaderAllowlist: DEFAULT_CROSS_ORIGIN_HEADERS }\` (from electron-updater) to send the default headers. ${CROSS_ORIGIN_HEADERS_DOCS}`,
+    `${subject} requires autoUpdater.crossOriginHeaders, a function that gets the names of the request headers about to be sent to another origin than the update feed and returns the ones to send: ` +
+      `set \`autoUpdater.crossOriginHeaders = () => []\` to send none of them. ${CROSS_ORIGIN_HEADERS_DOCS}`,
     "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED"
   )
 }
 
-/** A `crossOriginHeaderAllowlist` the check accepts: a list of header names (each checked at its request) or a callback. */
-function isCrossOriginHeaderAllowlist(value: unknown): value is CrossOriginHeaderAllowlist {
-  return typeof value === "function" || Array.isArray(value)
+/**
+ * The updater's {@link CrossOriginHeaderPolicy}: asks the app's callback, read from `getCallback` at each hop, which of the request headers to
+ * send, and fails the request with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` without a callback, or with
+ * `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS` when it throws or returns anything but an array of strings. The callback never sees a header
+ * value, and the errors hold neither a value nor what the callback returned.
+ */
+export function createCrossOriginHeaderPolicy(getCallback: () => CrossOriginHeadersCallback | null): CrossOriginHeaderPolicy {
+  return (headers, hop) => {
+    const callback = getCallback()
+    // a plain-JavaScript app can set anything
+    if (typeof callback !== "function") {
+      throw crossOriginHeadersNotConfiguredError(`The request to ${hop.to.origin}, another origin than ${hop.from.origin},`)
+    }
+    const target = `the request from ${hop.from.origin} to ${hop.to.origin}`
+    const headerNames = [...new Set(Object.keys(headers).flatMap(name => (headers[name] == null ? [] : [name.toLowerCase()])))]
+    let kept: unknown
+    try {
+      // copies: the hop's URLs are the updater's
+      kept = callback(headerNames, { from: new URL(hop.from.href), to: new URL(hop.to.href) })
+    } catch {
+      // never the error's message: it could hold a header value
+      throw newError(`autoUpdater.crossOriginHeaders threw for ${target}, which is not sent. ${CROSS_ORIGIN_HEADERS_DOCS}`, "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS")
+    }
+    if (!Array.isArray(kept) || !kept.every((it: unknown): it is string => typeof it === "string")) {
+      // never the value: a mistaken result could hold a header value
+      throw newError(
+        `autoUpdater.crossOriginHeaders must return an array of header names: got ${Array.isArray(kept) ? "an array with an entry that is not a string" : kept === null ? "null" : typeof kept} for ${target}, which is not sent. ${CROSS_ORIGIN_HEADERS_DOCS}`,
+        "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS"
+      )
+    }
+    const keptNames = new Set(kept.map(it => it.toLowerCase()))
+    const result: OutgoingHttpHeaders = {}
+    for (const [name, value] of Object.entries(deepAssign<OutgoingHttpHeaders>({}, headers))) {
+      if (keptNames.has(name.toLowerCase())) {
+        result[name] = value
+      }
+    }
+    return result
+  }
 }
 
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
-  login: (info: AuthInfo, callback: LoginCallback) => void
+  /** `url` is the URL of the update request that got the authentication challenge (after a redirect, the redirect's target). */
+  login: (info: AuthInfo, callback: LoginCallback, url: string) => void
   "checking-for-update": () => void
   "update-not-available": (info: UpdateInfo) => void
   "update-available": (info: UpdateInfo) => void
@@ -413,38 +452,34 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   /**
-   * The request headers sent on each request and redirect to another origin than the update feed, for a `checkForUpdates` or
-   * `checkForUpdatesAndNotify` without a `crossOriginHeaderAllowlist` option and for requests before any check, such as the install of an
-   * update marked for the next launch: a list of header names or a callback, as the option of {@link CheckForUpdatesOptions}. A check's
-   * option takes precedence. Set it before the app is `ready` when the feed or its channel file is on, or redirects to, another origin
-   * and an update can be installed at launch.
-   * @example autoUpdater.crossOriginHeaderAllowlist = DEFAULT_CROSS_ORIGIN_HEADERS
+   * Required: chooses the request headers sent to another origin than the update feed (`Provider.feedBaseUrl`; for private GitHub, the
+   * GitHub API), on each request and redirect there. It gets the lowercase names of the request headers about to be sent (never their
+   * values) and the hop (`from`, the URL the headers are meant for, and `to`, the URL on the other origin), and returns the names of the ones
+   * to send. The feed's own origin gets every header without asking it. A header left out, such as `Authorization` from `addAuthHeader`, a
+   * custom header from `requestHeaders` or `x-user-staging-id`, stays on the original origin. The headers the updater builds for each request
+   * itself (the default `User-Agent`, `Cache-Control`, the `Accept` it sets and `Range`) are sent whatever it returns.
+   *
+   * Without a function, `checkForUpdates`, `checkForUpdatesAndNotify` and `downloadUpdate` reject (and emit `error`) with
+   * `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`, and so does any request to another origin, such as those of the install at launch of an
+   * update marked for the next launch: set it before the app is `ready`. A throw, or a result that is not an array of strings, fails that
+   * request with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`.
+   *
+   * @example autoUpdater.crossOriginHeaders = () => [] // none of them
+   * @example autoUpdater.crossOriginHeaders = (headerNames, hop) => (hop.to.hostname === "cdn.example.com" ? headerNames.filter(it => it === "x-tenant") : [])
    */
-  crossOriginHeaderAllowlist: CrossOriginHeaderAllowlist | null = null
+  crossOriginHeaders: CrossOriginHeadersCallback | null = null
 
-  // the crossOriginHeaderAllowlist of the last checkForUpdates (its option, else the property): for the requests of that check, its download
-  // and the install of an update marked for the next launch
-  private checkCrossOriginHeaderAllowlist: CrossOriginHeaderAllowlist | null = null
+  // the updater's executor, provider requests and downloads ask the app's crossOriginHeaders through it, at each hop
+  private readonly crossOriginHeaderPolicy: CrossOriginHeaderPolicy = createCrossOriginHeaderPolicy(() => this.crossOriginHeaders)
 
-  /**
-   * The header names sent on one request or redirect to another origin, from the `crossOriginHeaderAllowlist` of the last check, else the
-   * `crossOriginHeaderAllowlist` property: the list, or what the callback returns. Without either, the request fails with
-   * `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`. builder-util-runtime validates the result.
-   */
-  private crossOriginHeadersFor(defaults: ReadonlyArray<string>, request: CrossOriginRequest): ReadonlyArray<string> | null {
-    const allowlist = this.checkCrossOriginHeaderAllowlist ?? this.crossOriginHeaderAllowlist
-    if (!isCrossOriginHeaderAllowlist(allowlist)) {
-      throw crossOriginHeadersNotConfiguredError(
-        `The ${request.kind} to ${request.to.origin} requires the updater's crossOriginHeaderAllowlist or a checkForUpdates({ crossOriginHeaderAllowlist }) before it`
-      )
+  // Unset or not a function: what `subject` starts rejects before any request, and emits `error`
+  private checkCrossOriginHeadersConfigured(subject: string): Error | null {
+    if (typeof this.crossOriginHeaders === "function") {
+      return null
     }
-    return typeof allowlist === "function" ? allowlist(defaults, request) : allowlist
-  }
-
-  /** The `crossOriginHeaderAllowlist` of a check: its option, else the updater's property; validated by the caller. */
-  private crossOriginHeaderAllowlistOf(options: CheckForUpdatesOptions | undefined): unknown {
-    const option: unknown = options?.crossOriginHeaderAllowlist
-    return option === undefined ? this.crossOriginHeaderAllowlist : option
+    const error = crossOriginHeadersNotConfiguredError(subject)
+    this.dispatchError(error)
+    return error
   }
 
   // per updater instance, so several updaters (and tests) keep their own counts
@@ -594,8 +629,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   private clientPromise: Promise<Provider<any>> | null = null
-  // the provider of the latest update check, whose onLoginChallenge decides which authentication challenges reach the `login` event
-  private checkProvider: Provider<any> | null = null
 
   protected readonly stagingUserIdPromise = new Lazy<string>(() => this.getOrCreateStagingUserId())
 
@@ -623,7 +656,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     if (app == null) {
       this.app = new ElectronAppAdapter()
       this.httpExecutor = new ElectronHttpExecutor((authInfo, callback, requestUrl) => this.handleLoginChallenge(authInfo, callback, requestUrl), {
-        crossOriginHeaders: (defaults, request) => this.crossOriginHeadersFor(defaults, request),
+        crossOriginHeaderPolicy: this.crossOriginHeaderPolicy,
         isInsecureFeedAllowed: () => this.allowInsecureFeed,
       })
     } else {
@@ -675,21 +708,15 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   /**
    * Asks the server whether there is an update.
-   * @param options `crossOriginHeaderAllowlist` chooses the headers of each request and redirect to another origin, for this check, its download
-   * and the install of an update marked for the next launch (see {@link CheckForUpdatesOptions}). Required unless the updater's
-   * {@link crossOriginHeaderAllowlist} property is set, which serves a check without it.
    * @returns null if the updater is disabled, otherwise info about the latest version
    */
-  checkForUpdates(options?: CheckForUpdatesOptions): Promise<UpdateCheckResult | null> {
-    const allowlist = this.crossOriginHeaderAllowlistOf(options)
-    if (!isCrossOriginHeaderAllowlist(allowlist)) {
-      const error = crossOriginHeadersNotConfiguredError("checkForUpdates requires { crossOriginHeaderAllowlist } or the updater's crossOriginHeaderAllowlist")
-      this.dispatchError(error)
-      return Promise.reject(error)
-    }
-    this.checkCrossOriginHeaderAllowlist = allowlist
+  checkForUpdates(): Promise<UpdateCheckResult | null> {
     if (!this.isUpdaterActive()) {
       return Promise.resolve(null)
+    }
+    const notConfigured = this.checkCrossOriginHeadersConfigured("checkForUpdates")
+    if (notConfigured != null) {
+      return Promise.reject(notConfigured)
     }
 
     let checkForUpdatesPromise = this.checkForUpdatesPromise
@@ -726,19 +753,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   // noinspection JSUnusedGlobalSymbols
-  /**
-   * {@link checkForUpdates}, and shows a notification once the update is downloaded (with `autoDownload`): `notification`, or a default one.
-   */
-  checkForUpdatesAndNotify(options?: CheckForUpdatesAndNotifyOptions): Promise<UpdateCheckResult | null> {
-    if (!isCrossOriginHeaderAllowlist(this.crossOriginHeaderAllowlistOf(options))) {
-      const error = crossOriginHeadersNotConfiguredError(
-        "checkForUpdatesAndNotify requires { crossOriginHeaderAllowlist } or the updater's crossOriginHeaderAllowlist, with the notification in the same options object: { crossOriginHeaderAllowlist, notification }"
-      )
-      this.dispatchError(error)
-      return Promise.reject(error)
-    }
-    const downloadNotification = options?.notification
-    return this.checkForUpdates(options).then(it => {
+  checkForUpdatesAndNotify(downloadNotification?: DownloadNotification): Promise<UpdateCheckResult | null> {
+    return this.checkForUpdates().then(it => {
       if (!it?.downloadPromise) {
         this.log.debug("checkForUpdatesAndNotify called, downloadPromise is null")
         return it
@@ -866,7 +882,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const client = await this.clientPromise
     // before the request headers are handed over: only the feed's origin gets every one of them
     feedBaseUrlOf(client)
-    this.checkProvider = client
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({ "x-user-staging-id": stagingUserId }))
     // autoUpdater.maxUpdateInfoSize wins over the publish configuration, so an app can raise the limit even when its config is invalid
@@ -995,40 +1010,26 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   /**
-   * Electron's `login` event of the update request to `requestUrl`: emitted as `login` unless the provider of the latest update check
-   * declines it ({@link Provider.onLoginChallenge} returns anything but `true`, or throws), which cancels the challenge. Until the first update
-   * check, or with a custom provider without that method, every challenge is emitted. A challenge on a request whose URL cannot be
-   * determined (`null`), or one emitted without a `login` listener, is cancelled. With `allowInsecureFeed`, a server's challenge on a request
-   * that is not `https` and not to a loopback host is cancelled too: nothing shows that it comes from the server the credentials are meant for.
+   * Electron's `login` event of the update request to `requestUrl`: emitted as `login`, with the request's URL as its third argument
+   * (Electron's `AuthInfo` names only the challenger's host and port). A challenge on a request whose URL cannot be determined (`null`),
+   * or one emitted without a `login` listener, is cancelled: the callback is called once, without credentials. With `allowInsecureFeed`, a
+   * server's challenge on a request that is not `https` and not to a loopback host is cancelled too: nothing shows that it comes from the
+   * server the credentials are meant for.
    * @internal
    */
   protected handleLoginChallenge(authInfo: AuthInfo, callback: LoginCallback, requestUrl: URL | null): void {
-    let isEmitted = requestUrl != null
-    const provider = this.checkProvider
     if (requestUrl != null && !authInfo.isProxy && requestUrl.protocol !== "https:" && !isLoopbackHostname(requestUrl.hostname) && this.allowInsecureFeed) {
-      isEmitted = false
       // host and port only: the realm comes from the server
       this.limitedLogger("login-challenge-insecure").warn(
         `With allowInsecureFeed, electron-updater emits the login event for a server's authentication challenge only on an https or loopback request: ` +
           `the challenge from ${authInfo.host}:${authInfo.port} on a request that is neither https nor loopback was cancelled, as its authenticity cannot be determined. ` +
           `Serve the update feed and files over https to answer it. https://www.electron.build/docs/features/auto-update#event-login`
       )
-    } else if (requestUrl != null && provider != null && typeof provider.onLoginChallenge === "function") {
-      try {
-        isEmitted = provider.onLoginChallenge(authInfo, requestUrl) === true
-      } catch (e: unknown) {
-        isEmitted = false
-        try {
-          this.limitedLogger("login-challenge-hook-error").error(
-            `The update provider's onLoginChallenge threw, so the authentication challenge was cancelled: ${e instanceof Error ? (e.stack ?? e.message) : String(e)}`
-          )
-        } catch (_ignored) {
-          // building the message (String of a non-Error throw) must not leave the challenge unanswered
-        }
-      }
+      callback()
+      return
     }
     // no credentials: Electron cancels the authentication. Without a `login` listener nothing would answer the challenge
-    if (!isEmitted || !this.emit("login", authInfo, callback)) {
+    if (requestUrl == null || !this.emit("login", authInfo, callback, requestUrl.href)) {
       callback()
     }
   }
@@ -1038,7 +1039,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       isUseMultipleRangeRequest: true,
       platform: this._testOnlyOptions == null ? (process.platform as ProviderPlatform) : this._testOnlyOptions.platform,
       executor: this.httpExecutor,
-      crossOriginHeaders: (defaults, request) => this.crossOriginHeadersFor(defaults, request),
+      crossOriginHeaderPolicy: this.crossOriginHeaderPolicy,
     }
   }
 
@@ -1090,10 +1091,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * `packageFile` is the path to the NSIS web installer package and is only set for web installers.
    */
   downloadUpdate(cancellationToken: CancellationToken = new CancellationToken()): Promise<DownloadExecutorResult> {
-    if (this.checkCrossOriginHeaderAllowlist == null) {
-      const error = crossOriginHeadersNotConfiguredError("downloadUpdate requires a checkForUpdates({ crossOriginHeaderAllowlist }) before it")
-      this.dispatchError(error)
-      return Promise.reject(error)
+    const notConfigured = this.checkCrossOriginHeadersConfigured("downloadUpdate")
+    if (notConfigured != null) {
+      return Promise.reject(notConfigured)
     }
     const updateInfoAndProvider = this.updateInfoAndProvider
     if (updateInfoAndProvider == null) {
@@ -1211,20 +1211,32 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   /**
    * Headers for a download from `url`: every one on the origin of `originUrl` (the feed, `Provider.feedBaseUrl`, by default); for another
-   * origin, only the ones the `crossOriginHeaderAllowlist` of the last check allows.
+   * origin, the ones the app's `crossOriginHeaders` keeps and the download's own (see {@link downloadOwnHeaders}).
    */
   protected downloadRequestHeaders(url: URL, downloadUpdateOptions: DownloadUpdateOptions, originUrl?: URL): OutgoingHttpHeaders {
     const feedBaseUrl = feedBaseUrlOf(downloadUpdateOptions.updateInfoAndProvider.provider)
     if (originUrl == null && HttpExecutor.isCrossOrigin(feedBaseUrl, url)) {
       this.announceCrossOriginDownload(url, feedBaseUrl)
     }
-    return HttpExecutor.keepCrossOriginHeaders(downloadUpdateOptions.requestHeaders, { from: originUrl ?? feedBaseUrl, to: url, kind: "request" }, (defaults, request) =>
-      this.crossOriginHeadersFor(defaults, request)
+    return HttpExecutor.crossOriginHeaders(
+      downloadUpdateOptions.requestHeaders,
+      this.downloadOwnHeaders(downloadUpdateOptions),
+      { from: originUrl ?? feedBaseUrl, to: url },
+      this.crossOriginHeaderPolicy
     )
   }
 
+  /**
+   * The headers of a download the updater builds itself (see `ApiRequestOptions.ownHeaders`), sent to another origin whatever the app's
+   * `crossOriginHeaders` returns: the `Accept` that {@link computeRequestHeaders} sets: `*\/*`, or the provider's own.
+   */
+  protected downloadOwnHeaders(downloadUpdateOptions: DownloadUpdateOptions): OutgoingHttpHeaders {
+    const fileExtraDownloadHeaders = downloadUpdateOptions.updateInfoAndProvider.provider.fileExtraDownloadHeaders
+    return fileExtraDownloadHeaders == null ? { accept: "*/*" } : (acceptHeaderOf(fileExtraDownloadHeaders) ?? {})
+  }
+
   // Only names are logged (query parameter names, origins), never values. The headers left off need no notice: the app chose them (with
-  // crossOriginHeaderAllowlist), while the feed query has no option.
+  // crossOriginHeaders), while the feed query has no option.
   private announceCrossOriginDownload(url: URL, feedBaseUrl: URL): void {
     const feedQueryNames = [...new Set(feedBaseUrl.searchParams.keys())]
     if (feedQueryNames.length !== 0) {
@@ -1309,6 +1321,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
     const downloadOptions: DownloadOptions = {
       headers: this.downloadRequestHeaders(fileInfo.url, taskOptions.downloadUpdateOptions),
+      ownHeaders: this.downloadOwnHeaders(taskOptions.downloadUpdateOptions),
       cancellationToken: taskOptions.downloadUpdateOptions.cancellationToken,
       sha2: (fileInfo.info as any).sha2,
       sha512: fileInfo.info.sha512,
@@ -1496,6 +1509,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       const downloadBlockMap = async (url: URL, expectedFileSize: number | null, originUrl?: URL): Promise<LoadedBlockMap> => {
         const data = await this.httpExecutor.downloadToBuffer(url, {
           headers: this.downloadRequestHeaders(url, downloadUpdateOptions, originUrl),
+          ownHeaders: this.downloadOwnHeaders(downloadUpdateOptions),
           cancellationToken: downloadUpdateOptions.cancellationToken,
         })
 
@@ -1815,39 +1829,6 @@ export interface DownloadExecutorTask {
 export interface DownloadNotification {
   body: string
   title: string
-}
-
-/** The options of {@link AppUpdater.checkForUpdates}. */
-export interface CheckForUpdatesOptions {
-  /**
-   * Decides the request headers sent on each request and redirect to another origin: a redirect to another origin, and a download or
-   * channel file on another origin than the update feed (`Provider.feedBaseUrl`; for private GitHub, the GitHub API). Not used for the
-   * feed's own origin, which gets every header. Every header left out, such as `Authorization` from `addAuthHeader`, a custom header from
-   * `requestHeaders` or the `x-user-staging-id` electron-updater sends itself, stays on the original origin. Either:
-   * - A list of header names (case-insensitive), such as `DEFAULT_CROSS_ORIGIN_HEADERS` of electron-updater (`accept`, `user-agent`,
-   *   `range` and other content negotiation, caching and conditional headers): exactly what each of them sends. An empty list sends none;
-   *   a list without `range` stops differential downloads that redirect to a CDN from sending `Range`. An entry that is not a header name
-   *   fails each request to another origin with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`.
-   * - A callback: gets `DEFAULT_CROSS_ORIGIN_HEADERS` as `defaults` and the request (`from`, `to`, `kind`), and returns the header names
-   *   to send on that request (case-insensitive), or `null` to send every header on it. A throw, or a result that is not an array of
-   *   header names or `null`, fails that request with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`.
-   *
-   * Required unless the updater's `crossOriginHeaderAllowlist` property is set, which serves a check without it: without either, or with
-   * a value that is neither, the check rejects with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`. Kept for the download of this check
-   * (with `autoDownload` too) and for the install of an update marked for the next launch.
-   *
-   * @example { crossOriginHeaderAllowlist: DEFAULT_CROSS_ORIGIN_HEADERS } // the default list
-   * @example { crossOriginHeaderAllowlist: [...DEFAULT_CROSS_ORIGIN_HEADERS, "x-tenant"] }
-   * @example { crossOriginHeaderAllowlist: (defaults, request) => (request.to.hostname === "cdn.example.com" ? [...defaults, "x-tenant"] : defaults) }
-   * @example { crossOriginHeaderAllowlist: () => null } // every header to every origin
-   */
-  crossOriginHeaderAllowlist?: CrossOriginHeaderAllowlist
-}
-
-/** The options of {@link AppUpdater.checkForUpdatesAndNotify}. */
-export interface CheckForUpdatesAndNotifyOptions extends CheckForUpdatesOptions {
-  /** The notification shown once the update is downloaded; `{appName}` and `{version}` are replaced in its title and body. */
-  notification?: DownloadNotification
 }
 
 /** @private */

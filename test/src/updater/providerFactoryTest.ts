@@ -14,7 +14,7 @@ const runtimeOptions: ProviderRuntimeOptions = {
   isUseMultipleRangeRequest: true,
   platform: "darwin",
   executor: {} as any,
-  crossOriginHeaders: defaults => defaults,
+  crossOriginHeaderPolicy: () => ({}),
 }
 
 const updater = {} as AppUpdater

@@ -43,7 +43,7 @@ const REQUEST_HEADERS: OutgoingHttpHeaders = {
   Cookie: "session=secret",
   "X-Tenant": "acme",
 }
-// every header off the cross-origin allowlist, a custom one (X-Tenant) included, is treated as a credential
+// every header the app's crossOriginHeaders leaves out (the test executor's returns []), a custom one (X-Tenant) included, stays on the feed
 const CREDENTIAL_HEADERS = ["authorization", "PRIVATE-TOKEN", "X-Api-Key", "Cookie", "X-Tenant"]
 
 function parseRanges(header: unknown): Array<[number, number]> {

@@ -24,7 +24,7 @@ const result = await autoUpdater.checkForUpdates()
 const [installer] = (await result?.downloadPromise) ?? []
 
 // After (v7)
-const result = await autoUpdater.checkForUpdates({ crossOriginHeaderAllowlist: DEFAULT_CROSS_ORIGIN_HEADERS })
+const result = await autoUpdater.checkForUpdates()
 const download = await result?.downloadPromise
 const installer = download?.updateFile
 ```
