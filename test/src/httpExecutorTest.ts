@@ -1224,6 +1224,16 @@ describe("HttpExecutor request auth option on a redirect", () => {
   test("is dropped on a cross-origin redirect", async () => {
     expect(await authorizationAtTarget(true)).toBeUndefined()
   })
+
+  test.for([
+    ["another host", false, "https://cdn.example.net/app.exe"],
+    ["another port", false, "https://feed.example.com:8443/app.exe"],
+    ["another scheme", false, "http://feed.example.com/app.exe"],
+    ["the same origin", true, "/other/app.exe"],
+  ] as const)("a redirect to %s keeps the auth option: %s", ([, isKept, location]) => {
+    const options = HttpExecutor.prepareRedirectUrlOptions(location, { protocol: "https:", hostname: "feed.example.com", path: "/updates/app.exe", auth: "user:secret" })
+    expect(options.auth).toBe(isKept ? "user:secret" : undefined)
+  })
 })
 
 describe("HttpExecutor request timeout on a kept-alive socket", () => {

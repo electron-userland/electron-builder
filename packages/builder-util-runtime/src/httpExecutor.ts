@@ -443,10 +443,6 @@ Please double check that your authentication token is correct. Due to security r
     const newOptions = configureRequestOptionsFromUrl(redirectUrl, { ...options })
     // the target is hostname and port: Electron's net prefers `host` (where ElectronHttpExecutor moves a `Host` header) over them
     delete newOptions.host
-    const headers = newOptions.headers
-    if (headers == null) {
-      return newOptions
-    }
 
     const originalUrl = HttpExecutor.reconstructOriginalUrl(options)
     const parsedRedirectUrl = parseUrl(redirectUrl, options)
@@ -455,8 +451,10 @@ Please double check that your authentication token is correct. Due to security r
       if (debug.enabled) {
         debug(`Cross-origin redirect (${originalUrl.host} → ${parsedRedirectUrl.host}): stripping sensitive headers and the auth option`)
       }
-      // Node's `auth` option becomes a Basic Authorization header on the request, so it is a credential for the original origin too
+      // Node's `auth` option becomes a Basic Authorization header on the request, so it is a credential for the original origin: it is
+      // never sent on to another origin, whatever the headers are
       delete newOptions.auth
+      const headers = newOptions.headers ?? {}
       for (const key of Object.keys(headers)) {
         if (SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key))) {
           delete (headers as Record<string, unknown>)[key]
