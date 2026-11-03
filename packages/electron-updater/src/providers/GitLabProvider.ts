@@ -127,9 +127,9 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
       }
 
       channelFileUrl = new URL(channelAsset.direct_asset_url)
+      // on another origin than the API (the feed), the token goes only where the app's crossOriginHeaders keeps it
       const authHeaders = getGitlabAuthHeaders(this.options.token || null)
-      const isSameOriginAsApi = channelFileUrl.protocol === this.baseApiUrl.protocol && channelFileUrl.host === this.baseApiUrl.host
-      const headers = isSameOriginAsApi && Object.keys(authHeaders).length ? authHeaders : undefined
+      const headers = Object.keys(authHeaders).length ? authHeaders : undefined
 
       try {
         const result = await this.channelFileRequest(channelFileUrl, headers, cancellationToken)

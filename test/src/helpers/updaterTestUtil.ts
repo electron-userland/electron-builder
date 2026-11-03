@@ -1,7 +1,7 @@
 import { NodeHttpExecutor, serializeToYaml, TmpDir } from "builder-util"
 import { AllPublishOptions, BlockMap, DownloadOptions } from "builder-util-runtime"
 import { AppUpdater, NsisUpdater, type NonThrowableLogger, type VerifyUpdateFile, type VerifyUpdateFileResult } from "electron-updater"
-import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/src/AppUpdater"
+import { createCrossOriginHeaderPolicy, NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/src/AppUpdater"
 import { ElectronHttpExecutor, type ElectronHttpExecutorOptions } from "electron-updater/src/electronHttpExecutor"
 import { createHash } from "crypto"
 import { EventEmitter } from "events"
@@ -50,7 +50,7 @@ export async function writeRawUpdateConfig<T extends AllPublishOptions>(data: T)
 export async function validateDownload(expect: ExpectStatic, updater: AppUpdater, expectDownloadPromise = true) {
   const actualEvents = trackEvents(updater)
 
-  const updateCheckResult = await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
+  const updateCheckResult = await updater.checkForUpdates()
   const assets = (updateCheckResult?.updateInfo as any).assets
   if (assets != null) {
     for (const asset of assets) {
@@ -183,6 +183,7 @@ export function tuneTestUpdater(updater: AppUpdater, options?: TestOnlyUpdaterOp
     ...options,
   }
   updater.logger = new NoOpLogger()
+  updater.crossOriginHeaders = () => []
 }
 
 export function trackEvents(updater: AppUpdater) {
@@ -323,9 +324,10 @@ export class FakeElectronHttpExecutor extends ElectronHttpExecutor {
 
   constructor(
     private readonly answer: (url: string, headers: OutgoingHttpHeaders) => FakeNetAnswer,
+    // by default the updater's policy with the minimal crossOriginHeaders: none of the app's headers go to another origin
     options: Partial<ElectronHttpExecutorOptions> = {}
   ) {
-    super(undefined, { ...options, crossOriginHeaders: options.crossOriginHeaders ?? (defaults => defaults) })
+    super(undefined, { ...options, crossOriginHeaderPolicy: options.crossOriginHeaderPolicy ?? createCrossOriginHeaderPolicy(() => () => []) })
   }
 
   // the return type of the overridden method is Electron's ClientRequest, which the fake does not implement

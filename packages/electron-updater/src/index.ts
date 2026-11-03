@@ -10,8 +10,6 @@ import { RpmUpdater } from "./RpmUpdater.js"
 
 import type { UpdateInfo } from "builder-util-runtime"
 
-export { DEFAULT_CROSS_ORIGIN_HEADERS } from "builder-util-runtime"
-
 export { BaseUpdater } from "./BaseUpdater.js"
 export { BitbucketProvider } from "./providers/BitbucketProvider.js"
 export { GitHubProvider } from "./providers/GitHubProvider.js"
@@ -21,7 +19,6 @@ export { PrivateGitHubProvider } from "./providers/PrivateGitHubProvider.js"
 export { ProviderRuntimeOptions } from "./providers/Provider.js"
 export { AppImageUpdater, AppUpdater, DebUpdater, MacUpdater, NsisUpdater, PacmanUpdater, RpmUpdater }
 export { NoOpLogger } from "./AppUpdater.js"
-export type { CheckForUpdatesAndNotifyOptions, CheckForUpdatesOptions, DownloadNotification } from "./AppUpdater.js"
 
 export { Provider } from "./providers/Provider.js"
 

@@ -15,6 +15,7 @@ import { AddressInfo } from "net"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 import { gzipSync } from "zlib"
 import { httpExecutor, TestNodeHttpExecutor } from "../helpers/updaterTestUtil"
+import { createCrossOriginHeaderPolicy } from "electron-updater/src/AppUpdater"
 
 // Deterministic synthetic blocks: content-derived digests, sizes around a mean (same generator as blockMapV3Test).
 function makeBlocks(count: number, seed: number, avgSize = 4096, startOffset = 0): Array<BlockInput> {
@@ -474,7 +475,7 @@ describe("blockMapV3Fetcher", () => {
     const NEW = editedMap("redirect")
     cdn.files.set("cdn/new.blockmap", NEW)
     const result = await fetchWith("new.blockmap", OLD, false, {
-      requestHeaders: { authorization: "token secret", "x-custom": "dropped", "if-match": "kept" },
+      requestHeaders: { authorization: "token secret", "x-custom": "kept" },
       setUp: () => {
         server.redirects.set("new.blockmap", new URL("redirect/hop.blockmap", cdn.url).href)
         cdn.redirects.set("redirect/hop.blockmap", "../cdn/new.blockmap")
@@ -485,24 +486,21 @@ describe("blockMapV3Fetcher", () => {
     // the feed's origin got the credentials once, then every range went to the CDN without them
     expect(server.requests).toHaveLength(1)
     expect(server.headers[0].authorization).toBe("token secret")
-    expect(server.headers[0]["x-custom"]).toBe("dropped")
     expect(cdn.requests.length).toBeGreaterThan(2)
     expect(cdn.requests.filter(it => it.status === 302)).toHaveLength(1)
-    // only the cross-origin allowlist of headers goes on to the CDN, Range included
     for (const headers of cdn.headers) {
       expect(headers.authorization).toBeUndefined()
-      expect(headers["x-custom"]).toBeUndefined()
-      expect(headers["if-match"]).toBe("kept")
-      expect(headers.range).toBeDefined()
+      expect(headers["x-custom"]).toBe("kept")
     }
   })
 
-  test("a cross-origin redirect sends on the headers of the executor's crossOriginHeaders", async () => {
-    const NEW = editedMap("redirect-listed")
+  test("a cross-origin redirect sends the headers the executor's policy keeps, and the fetcher's own Accept and Range", async () => {
+    const NEW = editedMap("redirect-policy")
     cdn.files.set("cdn/new.blockmap", NEW)
     const result = await fetchWith("new.blockmap", OLD, false, {
-      requestHeaders: { authorization: "token secret", "x-custom": "listed" },
-      httpExecutor: new TestNodeHttpExecutor(defaults => [...defaults, "x-custom"]),
+      requestHeaders: { authorization: "token secret", "x-custom": "listed", "x-other": "dropped", accept: "application/json" },
+      // the updater's policy, with an app callback that keeps x-custom
+      httpExecutor: new TestNodeHttpExecutor(createCrossOriginHeaderPolicy(() => headerNames => headerNames.filter(it => it === "x-custom"))),
       setUp: () => server.redirects.set("new.blockmap", new URL("cdn/new.blockmap", cdn.url).href),
     })
     expect(result.buffer.equals(NEW)).toBe(true)
@@ -510,7 +508,11 @@ describe("blockMapV3Fetcher", () => {
     expect(cdn.headers.length).toBeGreaterThan(1)
     for (const headers of cdn.headers) {
       expect(headers.authorization).toBeUndefined()
+      expect(headers["x-other"]).toBeUndefined()
       expect(headers["x-custom"]).toBe("listed")
+      expect(headers.accept).toBe("*/*")
+      expect(headers.range).toBeDefined()
+      expect(headers["user-agent"]).toBe("electron-builder")
     }
   })
 

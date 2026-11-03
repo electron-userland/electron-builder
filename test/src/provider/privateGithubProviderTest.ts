@@ -1,3 +1,4 @@
+import { vi } from "vitest"
 import { GithubOptions, HttpError } from "builder-util-runtime"
 import { PrivateGitHubProvider } from "electron-updater/src/providers/PrivateGitHubProvider"
 import type { PrivateGitHubUpdateInfo } from "electron-updater/src/providers/PrivateGitHubProvider"
@@ -49,7 +50,7 @@ test("stable release - checkForUpdates returns correct UpdateInfo", async ({ exp
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
+  const result = await updater.checkForUpdates()
   const info = result?.updateInfo as PrivateGitHubUpdateInfo
 
   expect(info.version).toBe(STABLE_VERSION)
@@ -67,7 +68,7 @@ test("allowPrerelease=true - picks prerelease from release list", async ({ expec
     .mockResolvedValueOnce(JSON.stringify([mockRelease(STABLE_VERSION), mockRelease(PRERELEASE_VERSION, { prerelease: true })]))
     .mockResolvedValueOnce(mockYaml(PRERELEASE_VERSION))
 
-  const result = await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
+  const result = await updater.checkForUpdates()
   expect(result?.updateInfo.version).toBe(PRERELEASE_VERSION)
 })
 
@@ -78,7 +79,7 @@ test("allowPrerelease=false - uses /latest endpoint and returns stable release",
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
+  const result = await updater.checkForUpdates()
   expect(result?.updateInfo.version).toBe(STABLE_VERSION)
 
   // The first call should be to /releases/latest (not the list endpoint)
@@ -95,7 +96,7 @@ test("allowPrerelease=true - skips draft releases", async ({ expect }) => {
     .mockResolvedValueOnce(JSON.stringify([mockRelease(PRERELEASE_VERSION, { prerelease: true, draft: true }), mockRelease(STABLE_VERSION)]))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
+  const result = await updater.checkForUpdates()
   // Draft should be excluded, falls back to first non-draft
   expect(result?.updateInfo.version).toBe(STABLE_VERSION)
 })
@@ -111,7 +112,7 @@ test("missing channel file - throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND", async (
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(releaseWithNoChannelFile))
 
-  await expect(updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" })
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" })
 })
 
 test("404 on channel file asset - throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND", async ({ expect }) => {
@@ -120,7 +121,7 @@ test("404 on channel file asset - throws ERR_UPDATER_CHANNEL_FILE_NOT_FOUND", as
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockRejectedValueOnce(new HttpError(404))
 
-  await expect(updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" })
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" })
 })
 
 test("channel file with YAML aliases that expand to too many values - throws ERR_UPDATER_INVALID_UPDATE_INFO", async ({ expect }) => {
@@ -129,10 +130,7 @@ test("channel file with YAML aliases that expand to too many values - throws ERR
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockAliasChainYaml(STABLE_VERSION, 40))
 
-  await expect(updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })).rejects.toMatchObject({
-    code: "ERR_UPDATER_INVALID_UPDATE_INFO",
-    message: expect.stringMatching(/YAML aliases expand to more than/),
-  })
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringMatching(/YAML aliases expand to more than/) })
 })
 
 test("channel file with YAML aliases in complex mapping keys - throws ERR_UPDATER_INVALID_UPDATE_INFO while loading", async ({ expect }) => {
@@ -141,10 +139,7 @@ test("channel file with YAML aliases in complex mapping keys - throws ERR_UPDATE
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockComplexKeyYaml(STABLE_VERSION))
 
-  await expect(updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })).rejects.toMatchObject({
-    code: "ERR_UPDATER_INVALID_UPDATE_INFO",
-    message: expect.stringMatching(/YAML aliases expand to more than/),
-  })
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringMatching(/YAML aliases expand to more than/) })
 })
 
 test("malformed channel file - throws ERR_UPDATER_INVALID_UPDATE_INFO", async ({ expect }) => {
@@ -153,10 +148,7 @@ test("malformed channel file - throws ERR_UPDATER_INVALID_UPDATE_INFO", async ({
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(`${mockYaml(STABLE_VERSION)}releaseNotes: [unclosed\n`)
 
-  await expect(updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })).rejects.toMatchObject({
-    code: "ERR_UPDATER_INVALID_UPDATE_INFO",
-    message: expect.stringMatching(/YAMLException/),
-  })
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringMatching(/YAMLException/) })
 })
 
 test("no releases available - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", async ({ expect }) => {
@@ -165,7 +157,7 @@ test("no releases available - throws ERR_UPDATER_LATEST_VERSION_NOT_FOUND", asyn
 
   requestSpy.mockRejectedValueOnce(new Error("Network failure"))
 
-  await expect(updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })).rejects.toMatchObject({ code: "ERR_UPDATER_LATEST_VERSION_NOT_FOUND" })
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_LATEST_VERSION_NOT_FOUND" })
 })
 
 test("fileExtraDownloadHeaders - includes authorization token with correct format", async ({ expect }) => {
@@ -174,7 +166,7 @@ test("fileExtraDownloadHeaders - includes authorization token with correct forma
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
+  await updater.checkForUpdates()
 
   const provider = getProvider<PrivateGitHubProvider>(updater)
   expect(provider.fileExtraDownloadHeaders).toEqual({
@@ -189,7 +181,7 @@ test("resolveFiles - maps release assets to asset download URLs", async ({ expec
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  const result = await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
+  const result = await updater.checkForUpdates()
   const provider = getProvider<PrivateGitHubProvider>(updater)
   const updateInfo = result?.updateInfo as PrivateGitHubUpdateInfo
 
@@ -204,7 +196,7 @@ test("resolveFiles - throws ERR_UPDATER_ASSET_NOT_FOUND when asset missing from 
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
+  await updater.checkForUpdates()
   const provider = getProvider<PrivateGitHubProvider>(updater)
 
   const updateInfoWithEmptyAssets: PrivateGitHubUpdateInfo = {
@@ -227,7 +219,7 @@ test("autoDownload=false - checkForUpdates does not trigger download", async ({ 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   const actualEvents = trackEvents(updater)
-  const result = await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
+  const result = await updater.checkForUpdates()
 
   assertDownloadNotTriggered(expect, result, actualEvents)
 })
@@ -238,7 +230,7 @@ test("authorization header sent in GitHub API request", async ({ expect }) => {
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
+  await updater.checkForUpdates()
 
   const firstCallOptions = requestSpy.mock.calls[0][0]
   expect(firstCallOptions.headers).toMatchObject({
@@ -253,7 +245,7 @@ test("channel file request uses octet-stream accept header with authorization", 
 
   requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
+  await updater.checkForUpdates()
 
   const secondCallOptions = requestSpy.mock.calls[1][0]
   expect(secondCallOptions.headers).toMatchObject({
@@ -270,7 +262,7 @@ test("enterprise GitHub host - uses /api/v3 prefix in request path", async ({ ex
     .mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION, { apiBaseUrl: "https://github.mycompany.com/api/v3" })))
     .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-  await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
+  await updater.checkForUpdates()
 
   const firstCallOptions = requestSpy.mock.calls[0][0]
   expect(firstCallOptions.path).toMatch(/^\/api\/v3\/repos\//)
@@ -280,54 +272,36 @@ describe("release assets on another origin than the GitHub API", () => {
   const ENTERPRISE_HOST = "github.mycompany.com"
   const ASSET_ORIGIN = "https://assets.mycompany.com"
 
-  test("fail the check with ERR_UPDATER_ASSET_TOKEN_NOT_ALLOWED before the request when the allowlist drops authorization", async ({ expect }) => {
+  test("the channel file asset gets no token when crossOriginHeaders leaves out authorization, and keeps its Accept", async ({ expect }) => {
     const requestSpy = createMockRequest()
     const updater = await createPrivateUpdater(requestSpy, undefined, ENTERPRISE_HOST)
+    const crossOriginHeaders = vi.fn(() => [])
+    updater.crossOriginHeaders = crossOriginHeaders
 
     requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION, { apiBaseUrl: ASSET_ORIGIN }))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-    const error = await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults }).then(
-      () => null,
-      (e: unknown) => e
-    )
-    expect(error).toMatchObject({
-      code: "ERR_UPDATER_ASSET_TOKEN_NOT_ALLOWED",
-      message: expect.stringContaining(`latest.yml is on ${ASSET_ORIGIN}, another origin than the GitHub API (https://${ENTERPRISE_HOST})`),
+    expect((await updater.checkForUpdates())?.updateInfo.version).toBe(STABLE_VERSION)
+    // the release request on the API gets the token without asking
+    expect(requestSpy.mock.calls[0][0].headers).toMatchObject({ authorization: `token ${MOCK_TOKEN}` })
+    expect(requestSpy.mock.calls[1][0].headers).toEqual({ accept: "application/octet-stream" })
+    expect(crossOriginHeaders).toHaveBeenCalledExactlyOnceWith(expect.arrayContaining(["accept", "authorization"]), {
+      from: new URL(`https://${ENTERPRISE_HOST}/`),
+      to: new URL(`${ASSET_ORIGIN}/repos/${MOCK_OWNER}/${MOCK_REPO}/releases/assets/1001`),
     })
-    expect((error as Error).message).toContain("crossOriginHeaderAllowlist")
-    expect((error as Error).message).not.toContain(MOCK_TOKEN)
-    // only the release request: the channel file asset is not requested without its token
-    expect(requestSpy).toHaveBeenCalledTimes(1)
   })
 
-  test("send the token when the allowlist allows authorization for that origin", async ({ expect }) => {
+  test("the channel file asset gets the token when crossOriginHeaders keeps authorization for that origin", async ({ expect }) => {
     const requestSpy = createMockRequest()
     const updater = await createPrivateUpdater(requestSpy, undefined, ENTERPRISE_HOST)
+    updater.crossOriginHeaders = (headerNames, hop) => (hop.to.origin === ASSET_ORIGIN ? headerNames.filter(it => it === "authorization") : [])
 
     requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION, { apiBaseUrl: ASSET_ORIGIN }))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
-    const result = await updater.checkForUpdates({
-      crossOriginHeaderAllowlist: (defaults, request) => (request.to.origin === ASSET_ORIGIN ? [...defaults, "authorization"] : defaults),
-    })
+    const result = await updater.checkForUpdates()
     expect(result?.updateInfo.version).toBe(STABLE_VERSION)
-    expect(requestSpy.mock.calls[1][0].headers).toMatchObject({ authorization: `token ${MOCK_TOKEN}` })
+    expect(requestSpy.mock.calls[1][0].headers).toEqual({ accept: "application/octet-stream", authorization: `token ${MOCK_TOKEN}` })
 
     const provider = getProvider<PrivateGitHubProvider>(updater)
     expect(provider.resolveFiles(result?.updateInfo as PrivateGitHubUpdateInfo)[0].url.origin).toBe(ASSET_ORIGIN)
-  })
-
-  test("fail resolveFiles for a download asset on another origin when the allowlist drops authorization", async ({ expect }) => {
-    const requestSpy = createMockRequest()
-    const updater = await createPrivateUpdater(requestSpy, undefined, ENTERPRISE_HOST)
-    const apiBaseUrl = `https://${ENTERPRISE_HOST}/api/v3`
-    const release = mockRelease(STABLE_VERSION, { apiBaseUrl })
-    // the channel file on the API, the installer elsewhere
-    release.assets[1] = { ...release.assets[1], url: `${ASSET_ORIGIN}/repos/${MOCK_OWNER}/${MOCK_REPO}/releases/assets/1002` }
-
-    requestSpy.mockResolvedValueOnce(JSON.stringify(release)).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
-
-    const result = await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
-    const provider = getProvider<PrivateGitHubProvider>(updater)
-    expect(() => provider.resolveFiles(result?.updateInfo as PrivateGitHubUpdateInfo)).toThrow(expect.objectContaining({ code: "ERR_UPDATER_ASSET_TOKEN_NOT_ALLOWED" }))
   })
 })

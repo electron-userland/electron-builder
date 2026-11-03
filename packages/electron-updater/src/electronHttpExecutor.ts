@@ -1,10 +1,18 @@
 import { createRequire } from "node:module"
-import { CrossOriginHeadersCallback, DownloadOptions, HttpExecutor, configureRequestOptions, configureRequestUrl, isLoopbackHostname, newError } from "builder-util-runtime"
+import {
+  ApiRequestOptions,
+  CrossOriginHeaderPolicy,
+  DownloadOptions,
+  HttpExecutor,
+  configureRequestOptions,
+  configureRequestUrl,
+  isLoopbackHostname,
+  newError,
+} from "builder-util-runtime"
 
 // import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
 const require = createRequire(import.meta.url ?? process.execPath)
 import type { AuthInfo } from "electron"
-import { RequestOptions } from "http"
 type Session = Electron.Session
 type ClientRequest = Electron.ClientRequest
 
@@ -25,11 +33,8 @@ export function getNetSession(): Session {
 export type LoginChallengeListener = (authInfo: AuthInfo, callback: LoginCallback, requestUrl: URL | null) => void
 
 export interface ElectronHttpExecutorOptions {
-  /**
-   * Chooses the headers each redirect to another origin sends on (AppUpdater: the `crossOriginHeaderAllowlist` of its last
-   * `checkForUpdates`).
-   */
-  readonly crossOriginHeaders: CrossOriginHeadersCallback
+  /** Chooses the headers each redirect to another origin sends on (AppUpdater's asks the app's `crossOriginHeaders`). */
+  readonly crossOriginHeaderPolicy: CrossOriginHeaderPolicy
   /** Whether a request may use plain `http` to a host that is not loopback (`AppUpdater.allowInsecureFeed`); not by default. */
   readonly isInsecureFeedAllowed?: () => boolean
 }
@@ -42,7 +47,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     private readonly loginChallengeListener: LoginChallengeListener | undefined,
     options: ElectronHttpExecutorOptions
   ) {
-    super(options.crossOriginHeaders)
+    super(options.crossOriginHeaderPolicy)
     this.isInsecureFeedAllowed = options.isInsecureFeedAllowed ?? (() => false)
   }
 
@@ -50,6 +55,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     return await options.cancellationToken.createPromise<string>((resolve, reject, onCancel) => {
       const requestOptions = {
         headers: options.headers || undefined,
+        ownHeaders: options.ownHeaders,
         redirect: "manual",
       }
       configureRequestUrl(url, requestOptions)
@@ -139,12 +145,18 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
 
   /**
    * A redirect aborts `request` and `handler` sends a new one to the target: followRedirect() would resend every header,
-   * while {@link HttpExecutor.prepareRedirectUrlOptions} keeps only the headers {@link HttpExecutor.crossOriginHeaders} chooses when the
+   * while {@link HttpExecutor.prepareRedirectUrlOptions} keeps only the headers {@link HttpExecutor.crossOriginHeaderPolicy} chooses, and the request's own, when the
    * target is on another origin.
    * Up to `maxRedirects` redirects are followed; `redirectCount` is the number already followed. A redirect to a protocol other than
    * http(s) is rejected, and so is anything `handler` throws.
    */
-  addRedirectHandlers(request: ClientRequest, options: RequestOptions, reject: (error: Error) => void, redirectCount: number, handler: (options: RequestOptions) => void): void {
+  addRedirectHandlers(
+    request: ClientRequest,
+    options: ApiRequestOptions,
+    reject: (error: Error) => void,
+    redirectCount: number,
+    handler: (options: ApiRequestOptions) => void
+  ): void {
     request.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
       // no way to modify request options, abort old and make a new one
       // https://github.com/electron/electron/issues/11505
@@ -157,7 +169,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
       // an event listener: a throw (from preparing the options, or from the handler, which sends the new request) would escape as an
       // uncaught exception and the request would never settle
       try {
-        const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options, this.crossOriginHeaders)
+        const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options, this.crossOriginHeaderPolicy)
         // net.request throws for another protocol, where Electron following the redirect itself fails the request
         if (redirectOptions.protocol !== "http:" && redirectOptions.protocol !== "https:") {
           throw new Error(`Cannot follow the redirect to the "${redirectOptions.protocol ?? ""}" protocol`)
@@ -172,7 +184,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
 
 const INSECURE_FEED_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https"
 
-function checkInsecureRequestIsLoopback(options: RequestOptions): void {
+function checkInsecureRequestIsLoopback(options: ApiRequestOptions): void {
   // net.request connects to `host` (with its port) when it is set, else to `hostname` and `port`; without a protocol it uses http
   const host = options.host ?? `${options.hostname ?? ""}${options.port == null ? "" : `:${options.port}`}`
   let hostname: string | null = null
