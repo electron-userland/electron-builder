@@ -1,5 +1,6 @@
+import { Arch, Platform } from "app-builder-lib"
 import { log } from "builder-util"
-import { warnAboutInsecureFeed } from "app-builder-lib/src/publish/PublishManager"
+import { getAppUpdatePublishConfiguration, warnAboutInsecureFeed } from "app-builder-lib/src/publish/PublishManager"
 import type { PublishConfiguration } from "builder-util-runtime"
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
 
@@ -84,5 +85,37 @@ describe("plain http feed url in app-update.yml", () => {
     warnAboutInsecureFeed(config)
 
     expect(warn).not.toHaveBeenCalled()
+  })
+})
+
+// the build writes app-update.yml from the publish configuration and announces what electron-updater does with its feed url
+describe("app-update.yml publish configuration", () => {
+  beforeEach(() => log.resetLimits())
+  afterEach(() => vi.restoreAllMocks())
+
+  // the parts of a platform packager that getAppUpdatePublishConfiguration reads
+  function makePackager(publish: object): any {
+    return {
+      platform: Platform.LINUX,
+      platformOptions: {},
+      config: { publish },
+      appInfo: { updaterCacheDirName: "test-app", channel: null, version: "1.0.0" },
+      expandMacro: (value: string) => value,
+      updateManifestOptions: false,
+      updateSigningKeys: { value: Promise.resolve([]) },
+      requireUpdateSigningKeys: async () => [],
+    }
+  }
+
+  test("warns for a plain http feed and for a generic feed with a query string", async ({ expect }) => {
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+
+    await getAppUpdatePublishConfiguration(makePackager({ provider: "generic", url: "http://feed.example.com/u?token=secret-token" }), null, Arch.x64, false)
+
+    const messages = warn.mock.calls.map(it => String(it[1]))
+    expect(messages.some(it => it.includes("electron-updater rejects every update request over http to a host that is not loopback"))).toBe(true)
+    expect(warn.mock.calls.some(it => (it[0] as unknown as Record<string, string>).feed === "http://feed.example.com")).toBe(true)
+    expect(warn.mock.calls.some(it => (it[0] as unknown as Record<string, string>).queryParameters === "token")).toBe(true)
+    expect(JSON.stringify(warn.mock.calls)).not.toContain("secret-token")
   })
 })
