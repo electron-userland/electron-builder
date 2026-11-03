@@ -69,10 +69,10 @@ describe("autoUpdater.crossOriginHeaders", () => {
     )
   }
 
-  // a server that redirects every request to `target`, on another origin
+  // a server that redirects every request to `target`, a fixed URL on another origin (never built from the request)
   async function redirectTo(target: string): Promise<string> {
-    const redirector = createServer((request, response) => {
-      response.writeHead(302, { location: `${target}${request.url ?? "/"}` })
+    const redirector = createServer((_request, response) => {
+      response.writeHead(302, { location: target })
       response.end()
     })
     servers.push(redirector)
@@ -301,7 +301,7 @@ describe("autoUpdater.crossOriginHeaders", () => {
     async function createUpdaterWithRedirectedPendingInstall(tmpDir: TmpDir) {
       const channelHost = await serve(tmpDir)
       await channelHost.write("latest.yml", channelYml(INSTALLER_NAME))
-      const feedUrl = await redirectTo(channelHost.url)
+      const feedUrl = await redirectTo(`${channelHost.url}/latest.yml`)
       const updater = await createNsisUpdater("1.0.0")
       updater.updateConfigPath = await writeUpdateConfig({ provider: "generic", url: feedUrl })
       updater.autoDownload = false
