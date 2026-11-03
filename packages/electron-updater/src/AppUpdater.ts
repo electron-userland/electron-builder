@@ -639,10 +639,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     if (app == null) {
       this.app = new ElectronAppAdapter()
-      this.httpExecutor = new ElectronHttpExecutor(
-        (authInfo, callback, requestUrl) => this.handleLoginChallenge(authInfo, callback, requestUrl),
-        this.crossOriginHeaderPolicy
-      )
+      this.httpExecutor = new ElectronHttpExecutor((authInfo, callback, requestUrl) => this.handleLoginChallenge(authInfo, callback, requestUrl), this.crossOriginHeaderPolicy)
     } else {
       this.app = app
       this.httpExecutor = null as any
