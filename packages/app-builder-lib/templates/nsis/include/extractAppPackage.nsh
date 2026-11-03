@@ -122,6 +122,8 @@
       SendMessage $R3 ${PBM_SETPOS} 30000 0
       Goto extract7zaDone
 
+      # Nsis7z pushes the total and then the extracted byte count, so the extracted count is popped first. Instructions run here
+      # don't advance the banner: 1004 is detached, so only this callback moves 1001.
       extract7zaProgress:
         Pop $R6
         Pop $R7
