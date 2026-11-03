@@ -181,6 +181,48 @@ describe("electron-updater login event", () => {
     const { answer } = await checkedUpdater(tmpDir, { provider: "generic", url: "https://feed.example.com/updates" })
     expect(answer(challenge("downloads.example.net", 443), null)).toBe(false)
   })
+
+  test("without a login listener a challenge is cancelled", async ({ tmpDir, expect }) => {
+    const { updater } = await checkedUpdater(tmpDir, { provider: "generic", url: "https://feed.example.com/updates" })
+    updater.removeAllListeners("login")
+    const callback = vi.fn()
+    ;(updater as any).handleLoginChallenge(challenge("feed.example.com", 443), callback, new URL("https://feed.example.com/updates/latest.yml"))
+    expect(callback.mock.calls).toEqual([[]])
+  })
+
+  test("the provider of the check in progress decides a challenge during that check", async ({ tmpDir, expect }) => {
+    withProviderAnswer(() => false)
+    const channelFileUrl = new URL("https://feed.example.com/updates/latest.yml")
+    const server = challenge("feed.example.com", 443)
+    const callbacks: Array<ReturnType<typeof vi.fn>> = []
+    // a custom provider whose own update info request gets a challenge, while the updater's first check runs
+    class ChallengedProvider extends TestProvider {
+      constructor(
+        options: unknown,
+        private readonly updater: unknown,
+        runtimeOptions: ProviderRuntimeOptions
+      ) {
+        super(options, updater, runtimeOptions)
+      }
+
+      getLatestVersion() {
+        const callback = vi.fn()
+        callbacks.push(callback)
+        ;(this.updater as any).handleLoginChallenge(server, callback, channelFileUrl)
+        return super.getLatestVersion()
+      }
+    }
+    const { updater } = await createUpdater(tmpDir)
+    const onLogin = vi.fn()
+    updater.on("login", onLogin)
+    updater.setFeedURL({ provider: "custom", updateProvider: ChallengedProvider })
+
+    await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
+    expect(TestProvider.challenges).toEqual([[server, channelFileUrl]])
+    expect(onLogin).not.toHaveBeenCalled()
+    expect(callbacks).toHaveLength(1)
+    expect(callbacks[0].mock.calls).toEqual([[]])
+  })
 })
 
 // a stand-in for the "electron" module while `run` runs: its net.request returns an EventEmitter, pushed to `requests`

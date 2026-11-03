@@ -982,7 +982,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * Electron's `login` event of the update request to `requestUrl`: emitted as `login` unless the provider of the latest update check
    * declines it ({@link Provider.onLoginChallenge} returns anything but `true`, or throws), which cancels the challenge. Until the first update
    * check, or with a custom provider without that method, every challenge is emitted. A challenge on a request whose URL cannot be
-   * determined (`null`) is cancelled.
+   * determined (`null`), or one emitted without a `login` listener, is cancelled.
    * @internal
    */
   protected handleLoginChallenge(authInfo: AuthInfo, callback: LoginCallback, requestUrl: URL | null): void {
@@ -1002,10 +1002,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         }
       }
     }
-    if (isEmitted) {
-      this.emit("login", authInfo, callback)
-    } else {
-      // no credentials: Electron cancels the authentication
+    // no credentials: Electron cancels the authentication. Without a `login` listener nothing would answer the challenge
+    if (!isEmitted || !this.emit("login", authInfo, callback)) {
       callback()
     }
   }
