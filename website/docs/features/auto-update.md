@@ -495,36 +495,23 @@ Emitted when there is an error while updating.
 
 * `authInfo` [AuthInfo](https://www.electronjs.org/docs/latest/api/structures/auth-info)
 * `callback` Function — `callback(username, password)`; called without arguments, it cancels the authentication
+* `url` String — the URL of the update request that got the challenge (after a redirect, the redirect's target)
 
 Emitted when an update request gets an authentication challenge, from a proxy (`authInfo.isProxy`) or from a server. Call `callback(username, password)` to answer it, or `callback()` to cancel it; the request then fails with the challenge's status. Without a `login` listener, electron-updater cancels the challenge.
 
-To decide whether to emit `login`, electron-updater asks the provider of the latest update check: `Provider.onLoginChallenge(authInfo, url)` gets the challenge and the URL of the request that got it (after a redirect, the redirect's target). It returns `true` to emit `login`; any other value, or a throw, cancels the challenge without emitting `login`. Until the first update check, and with the built-in providers, every challenge is emitted. A custom provider can override `onLoginChallenge` to send your handler's credentials only to the servers they are meant for (the example also implements the required [`feedBaseUrl`](#custom-options-instantiating-updater-directly)):
+A challenge from any origin the updater requests reaches your handler: the feed, a download URL on another origin and the target of a redirect. Before answering with credentials, answer only the proxy or the server they are meant for: check `authInfo.isProxy` for a proxy, and for a server compare the request's origin, `new URL(url).origin`, with your feed's (`authInfo` has no scheme). Call `callback()` for any other:
 
 ```typescript
-class MyProvider extends Provider<UpdateInfo> {
-  get feedBaseUrl(): URL {
-    return new URL("https://updates.example.com/")
-  }
-  onLoginChallenge(authInfo: AuthInfo, url: URL): boolean {
-    return authInfo.isProxy || url.origin === "https://updates.example.com"
-  }
-  // getLatestVersion(), resolveFiles(), …
-}
-```
+const FEED_ORIGIN = "https://updates.example.com"
 
-With the built-in providers, a challenge from any origin the updater requests reaches your `login` handler: the feed, a download URL on another origin and the target of a redirect. Before answering with credentials, check `authInfo.isProxy`, `authInfo.host` and `authInfo.port` and answer only the proxy or the server the credentials are meant for, on its `https` port; call `callback()` for any other:
-
-```typescript
-autoUpdater.on("login", (authInfo, callback) => {
-  if (authInfo.isProxy || (authInfo.host === "updates.example.com" && authInfo.port === 443)) {
+autoUpdater.on("login", (authInfo, callback, url) => {
+  if (authInfo.isProxy || new URL(url).origin === FEED_ORIGIN) {
     callback(username, password)
   } else {
     callback()
   }
 })
 ```
-
-`authInfo` has no scheme: for an origin-exact decision, override `onLoginChallenge` in a custom provider and compare `url.origin`, as above.
 
 #### Event: `checking-for-update`
 

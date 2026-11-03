@@ -124,7 +124,8 @@ export function createCrossOriginHeaderPolicy(getCallback: () => CrossOriginHead
 
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
-  login: (info: AuthInfo, callback: LoginCallback) => void
+  /** `url` is the URL of the update request that got the authentication challenge (after a redirect, the redirect's target). */
+  login: (info: AuthInfo, callback: LoginCallback, url: string) => void
   "checking-for-update": () => void
   "update-not-available": (info: UpdateInfo) => void
   "update-available": (info: UpdateInfo) => void
@@ -612,8 +613,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   private clientPromise: Promise<Provider<any>> | null = null
-  // the provider of the latest update check, whose onLoginChallenge decides which authentication challenges reach the `login` event
-  private checkProvider: Provider<any> | null = null
 
   protected readonly stagingUserIdPromise = new Lazy<string>(() => this.getOrCreateStagingUserId())
 
@@ -867,7 +866,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const client = await this.clientPromise
     // before the request headers are handed over: only the feed's origin gets every one of them
     feedBaseUrlOf(client)
-    this.checkProvider = client
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({ "x-user-staging-id": stagingUserId }))
     // autoUpdater.maxUpdateInfoSize wins over the publish configuration, so an app can raise the limit even when its config is invalid
@@ -996,31 +994,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   /**
-   * Electron's `login` event of the update request to `requestUrl`: emitted as `login` unless the provider of the latest update check
-   * declines it ({@link Provider.onLoginChallenge} returns anything but `true`, or throws), which cancels the challenge. Until the first update
-   * check, or with a custom provider without that method, every challenge is emitted. A challenge on a request whose URL cannot be
-   * determined (`null`), or one emitted without a `login` listener, is cancelled.
+   * Electron's `login` event of the update request to `requestUrl`: emitted as `login`, with the request's URL as its third argument
+   * (Electron's `AuthInfo` names only the challenger's host and port). A challenge on a request whose URL cannot be determined (`null`),
+   * or one emitted without a `login` listener, is cancelled: the callback is called once, without credentials.
    * @internal
    */
   protected handleLoginChallenge(authInfo: AuthInfo, callback: LoginCallback, requestUrl: URL | null): void {
-    let isEmitted = requestUrl != null
-    const provider = this.checkProvider
-    if (requestUrl != null && provider != null && typeof provider.onLoginChallenge === "function") {
-      try {
-        isEmitted = provider.onLoginChallenge(authInfo, requestUrl) === true
-      } catch (e: unknown) {
-        isEmitted = false
-        try {
-          this.limitedLogger("login-challenge-hook-error").error(
-            `The update provider's onLoginChallenge threw, so the authentication challenge was cancelled: ${e instanceof Error ? (e.stack ?? e.message) : String(e)}`
-          )
-        } catch (_ignored) {
-          // building the message (String of a non-Error throw) must not leave the challenge unanswered
-        }
-      }
-    }
     // no credentials: Electron cancels the authentication. Without a `login` listener nothing would answer the challenge
-    if (!isEmitted || !this.emit("login", authInfo, callback)) {
+    if (requestUrl == null || !this.emit("login", authInfo, callback, requestUrl.href)) {
       callback()
     }
   }
