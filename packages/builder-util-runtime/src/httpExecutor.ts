@@ -564,7 +564,10 @@ Please double check that your authentication token is correct. Due to security r
       )
     }
     if (debug.enabled) {
-      debug(`Cross-origin ${kind} (${from.host} → ${to.host}): keeping only the cross-origin headers`)
+      // on a redirect, prepareRedirectUrlOptions keeps the `auth` option only when the list has `authorization`
+      debug(
+        `Cross-origin ${kind} (${from.host} → ${to.host}): keeping only the cross-origin headers${kind === "redirect" ? ", and the auth option only when they include authorization" : ""}`
+      )
     }
     return new Set(allowed.map(it => it.toLowerCase()))
   }
