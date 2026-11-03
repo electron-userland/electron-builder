@@ -523,7 +523,7 @@ Emitted when there is an error while updating.
 * `authInfo` [AuthInfo](https://www.electronjs.org/docs/latest/api/structures/auth-info)
 * `callback` Function — `callback(username, password)`; called without arguments, it cancels the authentication
 
-Emitted when an update request gets an authentication challenge, from a proxy (`authInfo.isProxy`) or from a server. Call `callback(username, password)` to answer it, or `callback()` to cancel it; the request then fails with the challenge's status.
+Emitted when an update request gets an authentication challenge, from a proxy (`authInfo.isProxy`) or from a server. Call `callback(username, password)` to answer it, or `callback()` to cancel it; the request then fails with the challenge's status. Without a `login` listener, electron-updater cancels the challenge.
 
 To decide whether to emit `login`, electron-updater asks the provider of the latest update check: `Provider.onLoginChallenge(authInfo, url)` gets the challenge and the URL of the request that got it (after a redirect, the redirect's target). It returns `true` to emit `login`; any other value, or a throw, cancels the challenge without emitting `login`. Until the first update check, and with the built-in providers, every challenge is emitted. A custom provider can override `onLoginChallenge` to send your handler's credentials only to the servers they are meant for (the example also implements the required [`feedBaseUrl`](#custom-options-instantiating-updater-directly)):
 
@@ -537,6 +537,18 @@ class MyProvider extends Provider<UpdateInfo> {
   }
   // getLatestVersion(), resolveFiles(), …
 }
+```
+
+With the built-in providers, a challenge from any origin the updater requests reaches your `login` handler: the feed, a download URL on another origin and the target of a redirect. Before answering with credentials, check `authInfo.isProxy` and `authInfo.host` and answer only the proxy or the hosts the credentials are meant for; call `callback()` for any other. Overriding `Provider.onLoginChallenge` in a custom provider makes the same decision at the provider level, with the request's URL:
+
+```typescript
+autoUpdater.on("login", (authInfo, callback) => {
+  if (authInfo.isProxy || authInfo.host === "updates.example.com") {
+    callback(username, password)
+  } else {
+    callback()
+  }
+})
 ```
 
 #### Event: `checking-for-update`
