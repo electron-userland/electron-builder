@@ -1219,6 +1219,14 @@ describe("migrateConfig — updater advisories", () => {
       expect(result.migrated).toEqual(input)
     })
 
+    test("states the feed-origin rule and the autoUpdater.crossOriginHeaders solution of the build warning, without version labels", () => {
+      expect(FEED_QUERY_ADVISORY).toContain("electron-updater adds the feed url's query string only to requests on the feed's origin")
+      expect(FEED_QUERY_ADVISORY).toContain("to a request or redirect to another origin only the ones the app's autoUpdater.crossOriginHeaders keeps for it")
+      expect(FEED_QUERY_ADVISORY).toContain("that the app's autoUpdater.crossOriginHeaders keeps for the origin that needs it")
+      const docs = "https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
+      expect(FEED_QUERY_ADVISORY.replace(docs, "")).not.toMatch(/electron-updater \d|electron-builder \d|\bv\d\d|\b(now|no longer)\b/i)
+    })
+
     test("a generic url without a query, string entries and other providers emit nothing", () => {
       expect(advisoriesOf({ publish: { provider: "generic", url: "https://updates.example.com/app" } })).toEqual([])
       expect(advisoriesOf({ publish: { provider: "generic" } })).toEqual([])

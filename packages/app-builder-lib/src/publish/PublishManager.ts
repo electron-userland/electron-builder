@@ -116,7 +116,7 @@ export function warnAboutGenericFeedQuery(publishConfig: PublishConfiguration): 
       "such as the channel file and the relative download URLs electron-builder writes: a URL on another origin, such as an absolute download url in latest*.yml, " +
       "keeps its own query string and is requested without the feed's. The request headers from requestHeaders / addAuthHeader go to every request on the feed's origin, " +
       "and to a request or redirect to another origin only the ones the app's autoUpdater.crossOriginHeaders keeps for it. " +
-      "See https://www.electron.build/docs/features/auto-update#custom-options-instantiating-updater-directly"
+      "See https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
   )
 }
 

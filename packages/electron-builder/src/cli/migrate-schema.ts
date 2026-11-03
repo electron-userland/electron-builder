@@ -113,12 +113,16 @@ export const FORCE_CODE_SIGNING_ADVISORY =
   "Provide the credentials wherever it is set, opt out explicitly with mac.notarize: false / updateManifest: false, or pass -c.forceCodeSigning=false to builds that cannot sign. " +
   "See https://www.electron.build/docs/migration/v27-build-changes#forcecodesigning-covers-notarization-and-update-manifests"
 
-// Advisory surfaced when a generic publish url carries a query string (typically a token). v27 electron-updater sends the feed
-// query and credential headers only to downloads on the feed's origin.
+// Advisory surfaced when a generic publish url carries a query string (typically a token). Same rule and solution as the build warning
+// (PublishManager's warnAboutGenericFeedQuery): the feed query stays on the feed's origin, and the app's autoUpdater.crossOriginHeaders
+// chooses the request headers sent to another origin.
 export const FEED_QUERY_ADVISORY =
-  "generic publish url with a query string detected. In v27, electron-updater sends the feed url's query string, and the credential headers from requestHeaders / addAuthHeader, " +
-  "only to downloads on the feed's origin (scheme, host and port); a download url in latest*.yml on another origin is requested without them. " +
-  "If those downloads need these credentials, serve the update files from the feed origin or use pre-signed URLs. " +
+  "generic publish url with a query string detected. electron-updater adds the feed url's query string only to requests on the feed's origin (scheme, host and port), " +
+  "such as the channel file and the relative download URLs electron-builder writes: a URL on another origin, such as an absolute download url in latest*.yml, " +
+  "keeps its own query string and is requested without the feed's. The request headers from requestHeaders / addAuthHeader go to every request on the feed's origin, " +
+  "and to a request or redirect to another origin only the ones the app's autoUpdater.crossOriginHeaders keeps for it. " +
+  "If a download on another origin needs the credential, serve the update files from the feed origin (relative files[].url, the default), use pre-signed URLs, " +
+  "or send the credential as a request header (requestHeaders / addAuthHeader) that the app's autoUpdater.crossOriginHeaders keeps for the origin that needs it. " +
   "See https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
 
 /**

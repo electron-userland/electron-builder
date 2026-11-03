@@ -24,8 +24,10 @@ describe("generic publish url with a query string", () => {
     // the feed query stays on the feed's origin; which headers reach another origin is the app's autoUpdater.crossOriginHeaders
     expect(message).toContain("electron-updater adds the feed url's query string only to requests on the feed's origin")
     expect(message).toContain("to a request or redirect to another origin only the ones the app's autoUpdater.crossOriginHeaders keeps for it")
-    expect(message).toContain("https://www.electron.build/docs/features/auto-update#custom-options-instantiating-updater-directly")
-    expect(message).not.toMatch(/electron-updater \d|v\d\d/)
+    // the migration guide's section on the feed-origin rule; the rule itself names no version
+    const docs = "https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
+    expect(message.endsWith(` See ${docs}`)).toBe(true)
+    expect(`${message} ${fields.solution}`.replace(docs, "")).not.toMatch(/electron-updater \d|electron-builder \d|\bv\d\d|\b(now|no longer)\b/i)
     const logged = JSON.stringify(warn.mock.calls)
     for (const secret of ["secret-token-value", "acme-tenant", "another-secret", "updates.example.com"]) {
       expect(logged).not.toContain(secret)
