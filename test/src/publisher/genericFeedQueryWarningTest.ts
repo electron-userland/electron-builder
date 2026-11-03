@@ -3,7 +3,7 @@ import { warnAboutGenericFeedQuery } from "app-builder-lib/src/publish/PublishMa
 import type { PublishConfiguration } from "builder-util-runtime"
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
 
-// The v27 feed-origin rule for the feed query announces itself at build time, since migrate-schema may never have been run.
+// The feed-origin rule for the feed query announces itself at build time, since migrate-schema may never have been run.
 describe("generic publish url with a query string", () => {
   beforeEach(() => log.resetLimits())
   afterEach(() => vi.restoreAllMocks())
@@ -20,10 +20,12 @@ describe("generic publish url with a query string", () => {
     expect(warn).toHaveBeenCalledTimes(1)
     const [fields, message] = warn.mock.calls[0] as unknown as [Record<string, string>, string]
     expect(fields.queryParameters).toBe("token, tenant")
-    expect(message).toContain(
-      "electron-updater 7 (electron-builder v27) adds it, and sends the credential headers from requestHeaders / addAuthHeader, only to downloads on the feed's origin"
-    )
-    expect(message).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin")
+    expect(fields.solution).toContain("crossOriginHeaderAllowlist")
+    // the feed query stays on the feed's origin; which headers reach another origin is the app's crossOriginHeaderAllowlist
+    expect(message).toContain("electron-updater adds the feed url's query string only to requests on the feed's origin")
+    expect(message).toContain("to a request or redirect to another origin only the ones the app's crossOriginHeaderAllowlist allows for it")
+    expect(message).toContain("https://www.electron.build/docs/features/auto-update#custom-options-instantiating-updater-directly")
+    expect(message).not.toMatch(/electron-updater \d|v\d\d/)
     const logged = JSON.stringify(warn.mock.calls)
     for (const secret of ["secret-token-value", "acme-tenant", "another-secret", "updates.example.com"]) {
       expect(logged).not.toContain(secret)
