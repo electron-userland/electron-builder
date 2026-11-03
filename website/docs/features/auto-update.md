@@ -187,7 +187,7 @@ A `failure` must carry a `message`; it is what the emitted error reports as the 
 
 When a downloaded update is automatically installed is controlled by `autoUpdater.autoInstallEvent` (`"manual" | "onQuit" | "onNextLaunch"`, default `"onQuit"`). With the default `"onQuit"`, the update is installed when the app quits: the updater spawns the installer as a detached process while the app is exiting. If the quit happens because the OS session is ending (shutdown, reboot or log off on Windows), the OS can kill that installer mid-install and leave the app in a broken, partially-uninstalled state ([#7807](https://github.com/electron-userland/electron-builder/issues/7807)).
 
-electron-updater ≥ 7.0 (electron-builder v27) mitigates this in two ways:
+electron-updater mitigates this in two ways:
 
 1. **Session-end guard (always on).** When the OS signals that the session is ending, the on-quit install is skipped and a warning is logged. The downloaded update stays cached and is installed on the next regular quit. Detection is best-effort: `powerMonitor` `shutdown` on macOS/Linux, and the `BrowserWindow` `session-end` event on Windows (windowless, e.g. tray-only, apps cannot be covered on Windows).
 
@@ -229,10 +229,10 @@ The *automatic* install at startup only runs for targets that can install the pe
 | deb / rpm / pacman | skipped — package managers always elevate (pkexec/sudo) | ✓ (auth prompt) |
 | macOS | n/a — Squirrel.Mac stages updates natively and applies them on relaunch | resolves `false` |
 
-electron-builder v27 sets `isAdminRightsRequired` in the update info of every per-machine `nsis` and `nsis-web` build (`perMachine: true`), including assisted installers (`oneClick: false`) and builds with `differentialPackage: false`, so their updates are started with `elevate.exe` and skipped by the automatic install at launch.
+electron-builder sets `isAdminRightsRequired` in the update info of every per-machine `nsis` and `nsis-web` build (`perMachine: true`), including assisted installers (`oneClick: false`) and builds with `differentialPackage: false`, so their updates are started with `elevate.exe` and skipped by the automatic install at launch.
 
 :::note[Planned default change in v28]
-`autoInstallEvent` defaults to `"onQuit"` in v27; `"onNextLaunch"` is planned to become the **default** in v28 to resolve this class of session-end corruption once and for all. macOS is unaffected: Squirrel.Mac natively stages downloaded updates and applies them on relaunch, without a killable installer process (there `"onQuit"` and `"onNextLaunch"` behave identically).
+`autoInstallEvent` defaults to `"onQuit"`; `"onNextLaunch"` is planned to become the **default** in v28 to resolve this class of session-end corruption once and for all. macOS is unaffected: Squirrel.Mac natively stages downloaded updates and applies them on relaunch, without a killable installer process (there `"onQuit"` and `"onNextLaunch"` behave identically).
 :::
 
 :::caution[Launching during an OS shutdown is a residual, best-effort-only race]
@@ -271,7 +271,7 @@ But it is not recommended, better to test auto-update for installed application 
 
 ## Compatibility
 
-Since electron-builder 27 the generated `latest*.yml` targets the modern `files[]` metadata format by default and no longer includes the legacy top-level `path`/`sha512` fields, which are needed only by electron-updater 1.x – 2.15.0.
+The generated `latest*.yml` uses the `files[]` metadata format. The legacy top-level `path`/`sha512` fields, which only electron-updater 1.x – 2.15.0 needs, are written only for an `electronUpdaterCompatibility` range that includes those versions.
 
 The `electronUpdaterCompatibility` option sets the electron-updater compatibility semver range: the electron-updater versions your installed apps ship, which have to read the update files a build publishes (e.g. `>=7`, `>=6`, `>=1.0.0`). Can be specified per platform (e.g. `win.electronUpdaterCompatibility`). Defaults to `>=7`. The range decides:
 
@@ -287,28 +287,28 @@ Metadata format history:
 * `2.16.0` files
 
 :::warning[sha2-only metadata is deprecated]
-Update metadata validated only by the legacy SHA-256 `sha2` checksum is deprecated — v27 warns and **v28 rejects it (fail-closed)**. Avoid pinning `electronUpdaterCompatibility` to a legacy range unless you actually ship 1.x–2.15 clients.
+Update metadata validated only by the legacy SHA-256 `sha2` checksum is deprecated: a build that writes it and an update validated with it log a warning, and **v28 is planned to reject it (fail-closed)**. Avoid pinning `electronUpdaterCompatibility` to a legacy range unless you actually ship 1.x–2.15 clients.
 :::
 
 ## Update security options
 
 The `AppUpdater` settings below protect the update path. See the [Security & Hardening](./security.md#update-security-electron-updater) page for the full rationale.
 
-The update manifest (`latest*.yml`) itself **is** cryptographically signed and verified before any download as of v27. Publishing a build that emits update metadata fails unless an Ed25519 signing key resolves; `updateManifest: false` is the only opt-out — see [Signed Update Manifests](./signed-update-manifests.md).
+The update manifest (`latest*.yml`) itself **is** cryptographically signed and verified before any download. Publishing a build that emits update metadata fails unless an Ed25519 signing key resolves; `updateManifest: false` is the only opt-out — see [Signed Update Manifests](./signed-update-manifests.md).
 
 A channel file (`latest*.yml`) larger than 10 MiB fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`: it is read into memory and parsed before the manifest signature is verified. Release feeds and provider API responses (such as the GitHub releases feed or a list of releases) are not limited, since their size grows with the release history. To allow larger channel files, set `maxUpdateInfoSize` (in bytes) in the `publish` configuration, which electron-builder writes into `app-update.yml` so installed apps use it, or `autoUpdater.maxUpdateInfoSize` in the app, which overrides it. Both take a positive integer, or `0` for no limit.
 
 Changing a signing key or certificate that installs in the field already trust requires a transition release — see [Key Rotation](./key-rotation.md).
 
-The manifest is parsed before its signature is checked, so electron-updater rejects a `latest*.yml` whose YAML aliases (`&name` / `*name`) expand to more than 100000 values plus key and string characters (or more than the file's length, if that is larger) with `ERR_UPDATER_INVALID_UPDATE_INFO`, with every built-in provider. A manifest without aliases is never rejected for its size. Aliases are counted while the manifest is loaded, including aliases inside a non-scalar mapping key (`? [*a, *a]`), which is expanded into a string as it is parsed. An alias counts at least as many characters as it adds to that string (an aliased timestamp, for example, about 60), so such a manifest is rejected before the string is built. electron-updater 6 accepted manifests over this limit; see [the v27 migration notes](../migration/v27-runtime-changes.md#update-manifest-yaml-aliases-are-limited).
+The manifest is parsed before its signature is checked, so electron-updater rejects a `latest*.yml` whose YAML aliases (`&name` / `*name`) expand to more than 100000 values plus key and string characters (or more than the file's length, if that is larger) with `ERR_UPDATER_INVALID_UPDATE_INFO`, with every built-in provider. A manifest without aliases is never rejected for its size. Aliases are counted while the manifest is loaded, including aliases inside a non-scalar mapping key (`? [*a, *a]`), which is expanded into a string as it is parsed. An alias counts at least as many characters as it adds to that string (an aliased timestamp, for example, about 60), so such a manifest is rejected before the string is built. See [the v27 migration notes](../migration/v27-runtime-changes.md#update-manifest-yaml-aliases-are-limited) for manifests that a tool of your own writes or rewrites.
 
-### `disableWebInstaller` (now defaults to `true`)
+### `disableWebInstaller` (defaults to `true`) {#disablewebinstaller}
 
-NSIS **web** installers download their full payload at install time from a manifest-supplied URL, which may not undergo signature verification. As of v27, `AppUpdater.disableWebInstaller` defaults to **`true`**, so a web-installer update is not loaded unless you opt in.
+NSIS **web** installers download their full payload at install time from a manifest-supplied URL, which may not undergo signature verification. `AppUpdater.disableWebInstaller` defaults to **`true`**, so a web-installer update is not loaded unless you opt in.
 
 Unless the flag is `false`, a web-installer update is rejected with `ERR_UPDATER_WEB_INSTALLER_DISABLED` — at download time (including an update already cached by a previous launch), before an [install on next launch](#install-on-next-launch-windowslinux), and at install time.
 
-Installs made by an `nsis-web` installer built with electron-builder v27+ carry a `resources/package-type` marker, and `NsisUpdater` then defaults the flag to `false` automatically. Set it yourself only for web-installer installs without that marker (installed by an installer built before v27, or with a custom script) or when switching an app from `nsis` to `nsis-web`:
+Installs made by an `nsis-web` installer carry a `resources/package-type` marker, and `NsisUpdater` then defaults the flag to `false` automatically. Set it yourself only for web-installer installs without that marker (installed by an installer from electron-builder 26 or earlier, or with a custom script) or when switching an app from `nsis` to `nsis-web`:
 
 ```ts
 import { NsisUpdater } from "electron-updater"
@@ -335,9 +335,9 @@ Over `http`, only a [signed update manifest](./signed-update-manifests.md) and t
 
 With `allowInsecureFeed`, a server's authentication challenge on a request that is neither `https` nor to a loopback host is cancelled without emitting [`login`](#event-login), as its authenticity cannot be determined, and electron-updater logs a warning the first time. A proxy's challenge, and a server's on a loopback request, reach `login` as on `https`. For your `login` handler to answer a server, serve the feed and the update files over `https`.
 
-### `allowUnverifiedLinuxPackages` (new)
+### `allowUnverifiedLinuxPackages` (defaults to `true`) {#allowunverifiedlinuxpackages}
 
-`AppUpdater.allowUnverifiedLinuxPackages` (default **`true`**, preserving historical behavior) controls GPG signature enforcement when installing `.deb` / `.rpm` auto-updates. Because electron-builder does not sign Linux packages itself, the default is permissive; set it to **`false`** to enforce signature checks where the package manager supports them:
+`AppUpdater.allowUnverifiedLinuxPackages` (default **`true`**) controls GPG signature enforcement when installing `.deb` / `.rpm` auto-updates. Because electron-builder does not sign Linux packages itself, the default is permissive; set it to **`false`** to enforce signature checks where the package manager supports them:
 
 ```ts
 import { autoUpdater } from "electron-updater"
