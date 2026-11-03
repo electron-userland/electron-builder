@@ -5,12 +5,12 @@ import { DEFAULT_CROSS_ORIGIN_HEADERS as UPDATER_DEFAULT_CROSS_ORIGIN_HEADERS } 
 import { GenericProvider } from "electron-updater/src/providers/GenericProvider"
 import { createHash } from "crypto"
 import fsExtra from "fs-extra"
-import type { IncomingHttpHeaders, IncomingMessage, OutgoingHttpHeaders, Server } from "http"
+import { createServer, type IncomingHttpHeaders, type IncomingMessage, type OutgoingHttpHeaders, type Server } from "http"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
 import { afterEach, describe, test, vi } from "vitest"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
-import { createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
+import { createNsisUpdater, TestNodeHttpExecutor, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
 // checkForUpdates({ crossOriginHeaderAllowlist }) decides the request headers of each request and redirect to another origin than the update
 // provider's feedBaseUrl: a list, or a callback asked per cross-origin request. Required for every app, and kept for the download of the check
@@ -71,9 +71,17 @@ describe("checkForUpdates({ crossOriginHeaderAllowlist })", () => {
     )
   }
 
-  const checks: ReadonlyArray<readonly [string, (updater: AppUpdater, options: unknown) => Promise<unknown>]> = [
-    ["checkForUpdates", (updater, options) => updater.checkForUpdates(options as CheckForUpdatesOptions)],
-    ["checkForUpdatesAndNotify", (updater, options) => updater.checkForUpdatesAndNotify(options as CheckForUpdatesAndNotifyOptions)],
+  const checks: ReadonlyArray<readonly [string, string, (updater: AppUpdater, options: unknown) => Promise<unknown>]> = [
+    [
+      "checkForUpdates",
+      "checkForUpdates requires { crossOriginHeaderAllowlist } or the updater's crossOriginHeaderAllowlist",
+      (updater, options) => updater.checkForUpdates(options as CheckForUpdatesOptions),
+    ],
+    [
+      "checkForUpdatesAndNotify",
+      "checkForUpdatesAndNotify requires { crossOriginHeaderAllowlist } or the updater's crossOriginHeaderAllowlist, with the notification in the same options object: { crossOriginHeaderAllowlist, notification }",
+      (updater, options) => updater.checkForUpdatesAndNotify(options as CheckForUpdatesAndNotifyOptions),
+    ],
   ]
 
   describe("is required", () => {
@@ -84,18 +92,21 @@ describe("checkForUpdates({ crossOriginHeaderAllowlist })", () => {
       ["a crossOriginHeaderAllowlist of null", { crossOriginHeaderAllowlist: null }],
       ["a notification in place of the options", { title: "Update", body: "{version} is ready" }],
     ]
-    for (const [method, check] of checks) {
+    for (const [method, requirement, check] of checks) {
       for (const [label, options] of invalidOptions) {
-        test(`${method} with ${label} rejects before any request`, async ({ tmpDir, expect }) => {
+        test(`${method} with ${label} emits error and rejects before any request`, async ({ tmpDir, expect }) => {
           const { updater, feed, events } = await createUpdater(tmpDir)
+          const errors: Array<Error> = []
+          updater.on("error", error => errors.push(error))
 
           const error = await rejection(check(updater, options))
           expect(error).toMatchObject({
             code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED",
-            message: `checkForUpdates requires { crossOriginHeaderAllowlist }: requests and redirects to another origin carry only the headers it allows, a list of header names or a callback. Pass \`{ crossOriginHeaderAllowlist: DEFAULT_CROSS_ORIGIN_HEADERS }\` (from electron-updater) to send the default headers. ${DOCS}`,
+            message: `${requirement}: requests and redirects to another origin carry only the headers it allows, a list of header names or a callback. Pass \`{ crossOriginHeaderAllowlist: DEFAULT_CROSS_ORIGIN_HEADERS }\` (from electron-updater) to send the default headers. ${DOCS}`,
           })
           expect(feed.requests).toEqual([])
-          expect(events).toEqual([])
+          expect(events).toEqual(["error"])
+          expect(errors).toEqual([error])
         })
       }
     }
@@ -373,7 +384,118 @@ describe("checkForUpdates({ crossOriginHeaderAllowlist })", () => {
 
       await expect(updater.installPendingUpdateIfAvailable()).rejects.toMatchObject({
         code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED",
-        message: expect.stringMatching(new RegExp(`^The request to ${channelHost.origin} requires a checkForUpdates\\(\\{ crossOriginHeaderAllowlist \\}\\) before it: `)),
+        message: expect.stringMatching(
+          new RegExp(
+            `^The request to ${channelHost.origin} requires the updater's crossOriginHeaderAllowlist or a checkForUpdates\\(\\{ crossOriginHeaderAllowlist \\}\\) before it: `
+          )
+        ),
+      })
+      expect(channelHost.requests).toEqual([])
+      expect(pendingInstall.clearPendingInstallMarker).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("the updater's crossOriginHeaderAllowlist property", () => {
+    test("serves a check without the option", async ({ tmpDir, expect }) => {
+      const cdn = await serve(tmpDir)
+      await cdn.write(INSTALLER_NAME, INSTALLER)
+      const { updater } = await createUpdater(tmpDir, () => `${cdn.url}/${INSTALLER_NAME}`)
+      updater.crossOriginHeaderAllowlist = ["x-tenant"]
+
+      expect((await updater.checkForUpdates())?.isUpdateAvailable).toBe(true)
+      await updater.downloadUpdate()
+
+      expect(cdn.requests).toHaveLength(1)
+      expect(cdn.requests[0].headers["x-tenant"]).toBe("acme")
+      expect(cdn.requests[0].headers.authorization).toBeUndefined()
+    })
+
+    test("serves checkForUpdatesAndNotify with only a notification", async ({ tmpDir, expect }) => {
+      const { updater, feed } = await createUpdater(tmpDir)
+      updater.crossOriginHeaderAllowlist = useDefaults
+
+      expect((await updater.checkForUpdatesAndNotify({ notification: { title: "t", body: "b" } }))?.isUpdateAvailable).toBe(true)
+      expect(feed.requests.map(it => it.pathname)).toEqual(["/latest.yml"])
+    })
+
+    test("is overridden by the option of a check", async ({ tmpDir, expect }) => {
+      const cdn = await serve(tmpDir)
+      await cdn.write(INSTALLER_NAME, INSTALLER)
+      const { updater } = await createUpdater(tmpDir, () => `${cdn.url}/${INSTALLER_NAME}`)
+      const property = vi.fn((defaults: ReadonlyArray<string>) => [...defaults, "x-tenant"])
+      updater.crossOriginHeaderAllowlist = property
+
+      await updater.checkForUpdates({ crossOriginHeaderAllowlist: useDefaults })
+      await updater.downloadUpdate()
+
+      expect(cdn.requests).toHaveLength(1)
+      expect(cdn.requests[0].headers["x-tenant"]).toBeUndefined()
+      expect(property).not.toHaveBeenCalled()
+    })
+
+    const invalid: ReadonlyArray<readonly [string, unknown, unknown]> = [
+      ["a property that is a string", "accept", undefined],
+      ["an option of null, with a valid property", useDefaults, { crossOriginHeaderAllowlist: null }],
+    ]
+    for (const [label, property, options] of invalid) {
+      test(`${label} fails the check before any request`, async ({ tmpDir, expect }) => {
+        const { updater, feed, events } = await createUpdater(tmpDir)
+        Object.assign(updater, { crossOriginHeaderAllowlist: property })
+
+        const error = await rejection(updater.checkForUpdates(options as CheckForUpdatesOptions | undefined))
+        expect(error).toMatchObject({ code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED" })
+        expect(feed.requests).toEqual([])
+        expect(events).toEqual(["error"])
+      })
+    }
+
+    // an update marked for the next launch, whose channel file on the feed redirects to another origin; the updater's executor asks the
+    // updater for the headers of a redirect, as the ElectronHttpExecutor of an app does
+    async function createUpdaterWithRedirectedPendingInstall(tmpDir: TmpDir) {
+      const channelHost = await serve(tmpDir)
+      await channelHost.write("latest.yml", channelYml(INSTALLER_NAME))
+      const redirector = createServer((request, response) => {
+        response.writeHead(302, { location: `${channelHost.url}${request.url ?? "/"}` })
+        response.end()
+      })
+      servers.push(redirector)
+      await new Promise<void>(resolve => redirector.listen(0, "127.0.0.1", resolve))
+      const address = redirector.address()
+      if (address == null || typeof address === "string") {
+        throw new Error("the redirecting feed has no port")
+      }
+      const updater = await createNsisUpdater("1.0.0")
+      updater.updateConfigPath = await writeUpdateConfig({ provider: "generic", url: `http://127.0.0.1:${address.port}` })
+      updater.autoDownload = false
+      updater.requestHeaders = { "X-Tenant": "acme" }
+      updater.addAuthHeader("Bearer s")
+      const crossOriginHeadersFor = (updater as any).crossOriginHeadersFor.bind(updater) as CrossOriginHeadersCallback
+      ;(updater as any).httpExecutor = new TestNodeHttpExecutor(crossOriginHeadersFor)
+      const pendingInstall = { getPendingInstallInfo: vi.fn().mockResolvedValue({ sha512: "pending" }), clearPendingInstallMarker: vi.fn().mockResolvedValue(undefined) }
+      vi.spyOn(updater as any, "getOrCreateDownloadHelper").mockResolvedValue(pendingInstall)
+      return { updater, channelHost, pendingInstall }
+    }
+
+    test("serves the install at launch before any check, whose channel file redirects to another origin", async ({ tmpDir, expect }) => {
+      const { updater, channelHost, pendingInstall } = await createUpdaterWithRedirectedPendingInstall(tmpDir)
+      const property = vi.fn((defaults: ReadonlyArray<string>, _request: CrossOriginRequest) => [...defaults, "x-tenant"])
+      updater.crossOriginHeaderAllowlist = property
+
+      // the cached update does not match the latest update info: its marker is cleared, after the update info request
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(pendingInstall.clearPendingInstallMarker).toHaveBeenCalled()
+      expect(channelHost.requests.map(it => it.pathname)).toEqual(["/latest.yml"])
+      expect(channelHost.requests[0].headers["x-tenant"]).toBe("acme")
+      expect(channelHost.requests[0].headers.authorization).toBeUndefined()
+      expect(property.mock.calls.map(([, request]) => [request.kind, request.to.origin])).toEqual([["redirect", channelHost.origin]])
+    })
+
+    test("without it, the install at launch before any check fails at the redirect to another origin", async ({ tmpDir, expect }) => {
+      const { updater, channelHost, pendingInstall } = await createUpdaterWithRedirectedPendingInstall(tmpDir)
+
+      await expect(updater.installPendingUpdateIfAvailable()).rejects.toMatchObject({
+        code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED",
+        message: expect.stringMatching(new RegExp(`^The redirect to ${channelHost.origin} requires the updater's crossOriginHeaderAllowlist or a checkForUpdates\\(`)),
       })
       expect(channelHost.requests).toEqual([])
       expect(pendingInstall.clearPendingInstallMarker).not.toHaveBeenCalled()

@@ -213,7 +213,7 @@ electron-updater ≥ 7.0 (electron-builder v27) mitigates this in two ways:
     await autoUpdater.installPendingUpdateIfAvailable()
     ```
 
-    The automatic install starts right after the app is `ready`, once your own `ready` handlers have run. Configure the updater (`autoInstallEvent`, `setFeedURL`, `addAuthHeader`, `requestHeaders`) before the app is `ready` or synchronously in a `ready` handler, not after an `await` in it. Its requests to another origin carry the headers the [`crossOriginHeaderAllowlist`](#crossoriginheaderallowlist) of the last `checkForUpdates` allows, so call `checkForUpdates({ crossOriginHeaderAllowlist })` synchronously in a `ready` handler too when the feed or its channel file is on, or redirects to, another origin. An explicit `installPendingUpdateIfAvailable()` call never runs at the same time as the automatic install: one waits for the other, and the update is installed once.
+    The automatic install starts right after the app is `ready`, once your own `ready` handlers have run. Configure the updater (`autoInstallEvent`, `setFeedURL`, `addAuthHeader`, `requestHeaders`, `crossOriginHeaderAllowlist`) before the app is `ready` or synchronously in a `ready` handler, not after an `await` in it. Its requests and redirects to another origin carry the headers the updater's [`crossOriginHeaderAllowlist`](#crossoriginheaderallowlist) allows (or that of the last `checkForUpdates`), so set `autoUpdater.crossOriginHeaderAllowlist` before the app is `ready` when the feed or its channel file is on, or redirects to, another origin. An explicit `installPendingUpdateIfAvailable()` call never runs at the same time as the automatic install: one waits for the other, and the update is installed once.
 
 ### Per-target behavior
 
@@ -329,14 +329,15 @@ autoUpdater.allowUnverifiedLinuxPackages = false
 
 ### `checkForUpdates({ crossOriginHeaderAllowlist })` {#crossoriginheaderallowlist}
 
-`checkForUpdates` and `checkForUpdatesAndNotify` take an options object whose `crossOriginHeaderAllowlist` decides the request headers sent on each request and redirect to another origin: a redirect to another origin (such as a feed that redirects to a CDN), and a download or channel file (`latest*.yml`) on another origin than the update feed. It is a list of header names or a callback.
+`checkForUpdates` and `checkForUpdatesAndNotify` take an options object whose `crossOriginHeaderAllowlist` decides the request headers sent on each request and redirect to another origin: a redirect to another origin (such as a feed that redirects to a CDN), and a download or channel file (`latest*.yml`) on another origin than the update feed. It is a list of header names or a callback. The updater's `crossOriginHeaderAllowlist` property, of the same type, serves a check without the option and the requests before any check, such as the install of an update marked for the next launch; a check's option takes precedence.
 
 ```ts
-checkForUpdates(options: CheckForUpdatesOptions): Promise<UpdateCheckResult | null>
-checkForUpdatesAndNotify(options: CheckForUpdatesAndNotifyOptions): Promise<UpdateCheckResult | null>
+checkForUpdates(options?: CheckForUpdatesOptions): Promise<UpdateCheckResult | null>
+checkForUpdatesAndNotify(options?: CheckForUpdatesAndNotifyOptions): Promise<UpdateCheckResult | null>
+crossOriginHeaderAllowlist: CrossOriginHeaderAllowlist | null // the updater's property, null by default
 
 interface CheckForUpdatesOptions {
-  crossOriginHeaderAllowlist: CrossOriginHeaderAllowlist
+  crossOriginHeaderAllowlist?: CrossOriginHeaderAllowlist // required unless the updater's property is set
 }
 interface CheckForUpdatesAndNotifyOptions extends CheckForUpdatesOptions {
   notification?: DownloadNotification // { title, body }: {appName} and {version} are replaced
@@ -374,13 +375,16 @@ await autoUpdater.checkForUpdates({
 await autoUpdater.checkForUpdates({ crossOriginHeaderAllowlist: () => null })
 // with a notification once the update is downloaded
 await autoUpdater.checkForUpdatesAndNotify({ crossOriginHeaderAllowlist: DEFAULT_CROSS_ORIGIN_HEADERS, notification: { title: "Update ready", body: "{appName} {version} installs on exit" } })
+// or on the updater, before the app is ready: for every check without the option and for the install at launch
+autoUpdater.crossOriginHeaderAllowlist = DEFAULT_CROSS_ORIGIN_HEADERS
+await autoUpdater.checkForUpdatesAndNotify()
 ```
 
 The default list is `DEFAULT_CROSS_ORIGIN_HEADERS`: `Accept`, `Accept-Encoding`, `Accept-Language`, `User-Agent`, `Cache-Control`, `Pragma`, `Range`, `If-Range`, `If-Match`, `If-None-Match`, `If-Modified-Since`, `If-Unmodified-Since`, `Content-Type`, `Content-Length`, `Content-Encoding` and `Content-Language`. `x-user-staging-id`, which electron-updater sends with update info requests for [staged rollouts](#staged-rollouts), is not on it: add it to the list to send it to a channel file on another origin or to the target of a redirect. An empty list sends none of the headers; an empty list, or one without `range`, stops differential downloads that redirect to a CDN from sending `Range` there. `null` is not a list: use the callback `() => null` to send every header.
 
-- **Required for every app.** A call without the options object, without `crossOriginHeaderAllowlist`, or with a value that is neither a list nor a function (such as a string or `null`) rejects with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` before any request. `downloadUpdate()` before such a check fails with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`.
+- **Required for every app**, as the option of each check or the updater's `crossOriginHeaderAllowlist` property. A call without either, or with a value that is neither a list nor a function (such as a string or `null`), emits `error` and rejects with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` before any request. `downloadUpdate()` before such a check fails with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`.
 - **Asked per request.** electron-updater applies your list, or asks your callback, for each request or redirect to another origin, with that request; the feed's own origin gets every header without asking. A list entry that is not a header name, or a throw or a result that is not an array of header names or `null` from your callback, fails that request with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`: the request is not sent, and the message names the option and the origins, never the result or a header value.
-- **Kept from the last check.** The list or callback of the last `checkForUpdates` also chooses the headers of its download (with `autoDownload` or `downloadUpdate()`) and of the install of an update marked for the [next launch](#install-on-next-launch-windowslinux), whose update info request comes first. An install at launch before any check fails at its first request to another origin with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` and keeps the update pending: when the feed or its channel file is on, or redirects to, another origin, call `checkForUpdates({ crossOriginHeaderAllowlist })` synchronously in a `ready` handler.
+- **Kept from the last check.** The list or callback of the last `checkForUpdates` (its option, else the property) also chooses the headers of its download (with `autoDownload` or `downloadUpdate()`) and of the install of an update marked for the [next launch](#install-on-next-launch-windowslinux), whose update info request comes first. Before any check, the updater's `crossOriginHeaderAllowlist` property chooses them: an install at launch without it fails at its first request or redirect to another origin with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` and keeps the update pending. When the feed or its channel file is on, or redirects to, another origin, set `autoUpdater.crossOriginHeaderAllowlist` before the app is `ready`.
 - Add a header only if every origin your feed redirects to, and every origin `latest*.yml` points at, may receive it, or use a callback and return it only for the origins that may (`request.to`). A custom provider that does not extend a built-in one returns its feed URL from `Provider.feedBaseUrl` (see [above](#custom-options-instantiating-updater-directly)).
 
 See [Only an explicit list of headers goes to another origin](../migration/v27-runtime-changes.md#cross-origin-header-allowlist).

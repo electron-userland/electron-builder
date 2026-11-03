@@ -79,6 +79,11 @@ function crossOriginHeadersNotConfiguredError(subject: string): Error {
   )
 }
 
+/** A `crossOriginHeaderAllowlist` the check accepts: a list of header names (each checked at its request) or a callback. */
+function isCrossOriginHeaderAllowlist(value: unknown): value is CrossOriginHeaderAllowlist {
+  return typeof value === "function" || Array.isArray(value)
+}
+
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
   login: (info: AuthInfo, callback: LoginCallback) => void
@@ -391,21 +396,39 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     })
   }
 
-  // the crossOriginHeaderAllowlist of the last checkForUpdates: for the requests of that check, its download and the install of an update
-  // marked for the next launch
+  /**
+   * The request headers sent on each request and redirect to another origin than the update feed, for a `checkForUpdates` or
+   * `checkForUpdatesAndNotify` without a `crossOriginHeaderAllowlist` option and for requests before any check, such as the install of an
+   * update marked for the next launch: a list of header names or a callback, as the option of {@link CheckForUpdatesOptions}. A check's
+   * option takes precedence. Set it before the app is `ready` when the feed or its channel file is on, or redirects to, another origin
+   * and an update can be installed at launch.
+   * @example autoUpdater.crossOriginHeaderAllowlist = DEFAULT_CROSS_ORIGIN_HEADERS
+   */
+  crossOriginHeaderAllowlist: CrossOriginHeaderAllowlist | null = null
+
+  // the crossOriginHeaderAllowlist of the last checkForUpdates (its option, else the property): for the requests of that check, its download
+  // and the install of an update marked for the next launch
   private checkCrossOriginHeaderAllowlist: CrossOriginHeaderAllowlist | null = null
 
   /**
-   * The header names sent on one request or redirect to another origin, from the `crossOriginHeaderAllowlist` of the last check: the list,
-   * or what the callback returns. Without a check, the request fails with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`.
-   * builder-util-runtime validates the result.
+   * The header names sent on one request or redirect to another origin, from the `crossOriginHeaderAllowlist` of the last check, else the
+   * `crossOriginHeaderAllowlist` property: the list, or what the callback returns. Without either, the request fails with
+   * `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`. builder-util-runtime validates the result.
    */
   private crossOriginHeadersFor(defaults: ReadonlyArray<string>, request: CrossOriginRequest): ReadonlyArray<string> | null {
-    const allowlist = this.checkCrossOriginHeaderAllowlist
-    if (allowlist == null) {
-      throw crossOriginHeadersNotConfiguredError(`The ${request.kind} to ${request.to.origin} requires a checkForUpdates({ crossOriginHeaderAllowlist }) before it`)
+    const allowlist = this.checkCrossOriginHeaderAllowlist ?? this.crossOriginHeaderAllowlist
+    if (!isCrossOriginHeaderAllowlist(allowlist)) {
+      throw crossOriginHeadersNotConfiguredError(
+        `The ${request.kind} to ${request.to.origin} requires the updater's crossOriginHeaderAllowlist or a checkForUpdates({ crossOriginHeaderAllowlist }) before it`
+      )
     }
     return typeof allowlist === "function" ? allowlist(defaults, request) : allowlist
+  }
+
+  /** The `crossOriginHeaderAllowlist` of a check: its option, else the updater's property; validated by the caller. */
+  private crossOriginHeaderAllowlistOf(options: CheckForUpdatesOptions | undefined): unknown {
+    const option: unknown = options?.crossOriginHeaderAllowlist
+    return option === undefined ? this.crossOriginHeaderAllowlist : option
   }
 
   // per updater instance, so several updaters (and tests) keep their own counts
@@ -637,13 +660,16 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   /**
    * Asks the server whether there is an update.
    * @param options `crossOriginHeaderAllowlist` chooses the headers of each request and redirect to another origin, for this check, its download
-   * and the install of an update marked for the next launch (see {@link CheckForUpdatesOptions}).
+   * and the install of an update marked for the next launch (see {@link CheckForUpdatesOptions}). Required unless the updater's
+   * {@link crossOriginHeaderAllowlist} property is set, which serves a check without it.
    * @returns null if the updater is disabled, otherwise info about the latest version
    */
-  checkForUpdates(options: CheckForUpdatesOptions): Promise<UpdateCheckResult | null> {
-    const allowlist = options?.crossOriginHeaderAllowlist
-    if (typeof allowlist !== "function" && !Array.isArray(allowlist)) {
-      return Promise.reject(crossOriginHeadersNotConfiguredError("checkForUpdates requires { crossOriginHeaderAllowlist }"))
+  checkForUpdates(options?: CheckForUpdatesOptions): Promise<UpdateCheckResult | null> {
+    const allowlist = this.crossOriginHeaderAllowlistOf(options)
+    if (!isCrossOriginHeaderAllowlist(allowlist)) {
+      const error = crossOriginHeadersNotConfiguredError("checkForUpdates requires { crossOriginHeaderAllowlist } or the updater's crossOriginHeaderAllowlist")
+      this.dispatchError(error)
+      return Promise.reject(error)
     }
     this.checkCrossOriginHeaderAllowlist = allowlist
     if (!this.isUpdaterActive()) {
@@ -687,7 +713,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   /**
    * {@link checkForUpdates}, and shows a notification once the update is downloaded (with `autoDownload`): `notification`, or a default one.
    */
-  checkForUpdatesAndNotify(options: CheckForUpdatesAndNotifyOptions): Promise<UpdateCheckResult | null> {
+  checkForUpdatesAndNotify(options?: CheckForUpdatesAndNotifyOptions): Promise<UpdateCheckResult | null> {
+    if (!isCrossOriginHeaderAllowlist(this.crossOriginHeaderAllowlistOf(options))) {
+      const error = crossOriginHeadersNotConfiguredError(
+        "checkForUpdatesAndNotify requires { crossOriginHeaderAllowlist } or the updater's crossOriginHeaderAllowlist, with the notification in the same options object: { crossOriginHeaderAllowlist, notification }"
+      )
+      this.dispatchError(error)
+      return Promise.reject(error)
+    }
     const downloadNotification = options?.notification
     return this.checkForUpdates(options).then(it => {
       if (!it?.downloadPromise) {
@@ -1776,15 +1809,16 @@ export interface CheckForUpdatesOptions {
    *   to send on that request (case-insensitive), or `null` to send every header on it. A throw, or a result that is not an array of
    *   header names or `null`, fails that request with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`.
    *
-   * Required: without it, or with a value that is neither, the check rejects with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`. Kept
-   * for the download of this check (with `autoDownload` too) and for the install of an update marked for the next launch.
+   * Required unless the updater's `crossOriginHeaderAllowlist` property is set, which serves a check without it: without either, or with
+   * a value that is neither, the check rejects with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`. Kept for the download of this check
+   * (with `autoDownload` too) and for the install of an update marked for the next launch.
    *
    * @example { crossOriginHeaderAllowlist: DEFAULT_CROSS_ORIGIN_HEADERS } // the default list
    * @example { crossOriginHeaderAllowlist: [...DEFAULT_CROSS_ORIGIN_HEADERS, "x-tenant"] }
    * @example { crossOriginHeaderAllowlist: (defaults, request) => (request.to.hostname === "cdn.example.com" ? [...defaults, "x-tenant"] : defaults) }
    * @example { crossOriginHeaderAllowlist: () => null } // every header to every origin
    */
-  crossOriginHeaderAllowlist: CrossOriginHeaderAllowlist
+  crossOriginHeaderAllowlist?: CrossOriginHeaderAllowlist
 }
 
 /** The options of {@link AppUpdater.checkForUpdatesAndNotify}. */
