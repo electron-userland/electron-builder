@@ -98,7 +98,7 @@ async function createUpdater(tmpDir: TmpDir) {
 async function checkedUpdater(tmpDir: TmpDir, feed: Parameters<NsisUpdater["setFeedURL"]>[0]) {
   const result = await createUpdater(tmpDir)
   result.updater.setFeedURL(feed)
-  await result.updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
+  await result.updater.checkForUpdates()
   return result
 }
 
@@ -173,7 +173,7 @@ describe("electron-updater login event", () => {
     withProviderAnswer(() => false)
     const { updater, answer } = await checkedUpdater(tmpDir, { provider: "generic", url: "https://feed.example.com/updates" })
     updater.setFeedURL({ provider: "custom", updateProvider: TestProvider })
-    await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
+    await updater.checkForUpdates()
     expect(answer(challenge("downloads.example.net", 443))).toBe(false)
   })
 
@@ -217,7 +217,7 @@ describe("electron-updater login event", () => {
     updater.on("login", onLogin)
     updater.setFeedURL({ provider: "custom", updateProvider: ChallengedProvider })
 
-    await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults })
+    await updater.checkForUpdates()
     expect(TestProvider.challenges).toEqual([[server, channelFileUrl]])
     expect(onLogin).not.toHaveBeenCalled()
     expect(callbacks).toHaveLength(1)
@@ -280,7 +280,7 @@ describe("ElectronHttpExecutor login event", () => {
     const requests: Array<EventEmitter> = []
     const listener = vi.fn<(authInfo: AuthInfo, callback: LoginCallback, requestUrl: URL | null) => void>()
     withElectron(requests, () => {
-      new ElectronHttpExecutor(listener, defaults => defaults).createRequest(options, () => undefined)
+      new ElectronHttpExecutor(listener, () => ({})).createRequest(options, () => undefined)
     })
     const authInfo = challenge("downloads.example.net", 443)
     const callback = vi.fn()
@@ -306,7 +306,7 @@ describe("the updater's own executor", () => {
         isUseMultipleRangeRequest: true,
         platform: "win32",
         executor: updater.httpExecutor,
-        crossOriginHeaders: defaults => defaults,
+        crossOriginHeaderPolicy: () => ({}),
       })
       const onLogin = vi.fn()
       // the documented way to cancel: call the callback without credentials

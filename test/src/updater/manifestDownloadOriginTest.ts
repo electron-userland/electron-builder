@@ -20,8 +20,8 @@ import { gzipSync } from "zlib"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { createNsisUpdater, createTestAppAdapter, FakeElectronHttpExecutor, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
-// The app's request headers (requestHeaders / addAuthHeader) other than its crossOriginHeaderAllowlist, and the feed URL's query, are only sent to
-// download URLs on the feed's origin.
+// The app's request headers (requestHeaders / addAuthHeader) other than the ones its crossOriginHeaders keeps, and the feed URL's query, are
+// only sent to download URLs on the feed's origin. The test updaters set crossOriginHeaders to () => [] (see tuneTestUpdater).
 
 const sha512 = (data: Buffer) => createHash("sha512").update(data).digest("base64")
 
@@ -78,7 +78,7 @@ describe("download URLs chosen by the update manifest", () => {
     const updater = await createUpdater(feed.url)
     const events = trackEvents(updater)
 
-    const { updateFile } = (await (await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults }))!.downloadPromise)!
+    const { updateFile } = (await (await updater.checkForUpdates())!.downloadPromise)!
     expect(await fsExtra.readFile(updateFile)).toEqual(INSTALLER)
     expect(events).not.toContain("error")
 
@@ -93,7 +93,7 @@ describe("download URLs chosen by the update manifest", () => {
     expect(foreign.requests[0].headers).toMatchObject({ accept: "*/*", "user-agent": "electron-builder" })
   })
 
-  test("a download and a channel file on another origin get the headers crossOriginHeaderAllowlist lists, every header for null", async ({ tmpDir, expect }) => {
+  test("a download and a channel file on another origin get the headers crossOriginHeaders keeps", async ({ tmpDir, expect }) => {
     const feed = await serve(tmpDir)
     const foreign = await serve(tmpDir)
     await foreign.write("x.yml", channelYml(`${foreign.url}/${INSTALLER_NAME}`))
@@ -101,7 +101,8 @@ describe("download URLs chosen by the update manifest", () => {
     const updater = await createUpdater(feed.url)
     updater.channel = `${foreign.url}/x`
 
-    await (await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => [...defaults, "x-tenant"] }))!.downloadPromise
+    updater.crossOriginHeaders = headerNames => headerNames.filter(it => it === "x-tenant")
+    await (await updater.checkForUpdates())!.downloadPromise
     expect(foreign.requests.map(it => it.pathname)).toEqual(["/x.yml", `/${INSTALLER_NAME}`])
     for (const { headers } of foreign.requests) {
       expect(headers).toMatchObject({ "x-tenant": "acme" })
@@ -110,7 +111,8 @@ describe("download URLs chosen by the update manifest", () => {
 
     // the update is downloaded already: the channel file shows the headers
     updater.autoDownload = false
-    await updater.checkForUpdates({ crossOriginHeaderAllowlist: () => null })
+    updater.crossOriginHeaders = headerNames => headerNames
+    await updater.checkForUpdates()
     expect(foreign.requests).toHaveLength(3)
     expect(foreign.requests[2].headers).toMatchObject({ "x-tenant": "acme", authorization: "Bearer feed-secret" })
   })
@@ -125,7 +127,7 @@ describe("download URLs chosen by the update manifest", () => {
     updater.disableWebInstaller = false
     const events = trackEvents(updater)
 
-    const { packageFile } = (await (await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults }))!.downloadPromise)!
+    const { packageFile } = (await (await updater.checkForUpdates())!.downloadPromise)!
     expect(await fsExtra.readFile(packageFile!)).toEqual(PACKAGE)
     expect(events).not.toContain("error")
 
@@ -140,7 +142,7 @@ describe("download URLs chosen by the update manifest", () => {
     expect(foreign.requests[0].headers).toMatchObject({ accept: "*/*", "user-agent": "electron-builder" })
   })
 
-  test("a channel file on another origin gets only the allowlisted headers and no feed query; a channel on the feed keeps them", async ({ tmpDir, expect }) => {
+  test("a channel file on another origin gets none of the app's headers by default and no feed query; a channel on the feed keeps them", async ({ tmpDir, expect }) => {
     const feed = await serve(tmpDir)
     const foreign = await serve(tmpDir)
     await feed.write("beta.yml", channelYml(INSTALLER_NAME))
@@ -150,25 +152,27 @@ describe("download URLs chosen by the update manifest", () => {
     updater.requestHeaders = { ...updater.requestHeaders, "Accept-Language": "de" }
 
     updater.channel = "beta"
-    expect((await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults }))!.isUpdateAvailable).toBe(true)
+    expect((await updater.checkForUpdates())!.isUpdateAvailable).toBe(true)
     expect(feed.requests).toHaveLength(1)
     expect(feed.requests[0]).toMatchObject({ pathname: "/beta.yml", search: "?token=feed-secret" })
     expect(feed.requests[0].headers).toMatchObject({ authorization: "Bearer feed-secret", "x-tenant": "acme" })
 
     // a channel name that is a URL resolves against the feed URL to another origin
     updater.channel = `${foreign.url}/x`
-    expect((await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults }))!.isUpdateAvailable).toBe(true)
+    expect((await updater.checkForUpdates())!.isUpdateAvailable).toBe(true)
     expect(feed.requests).toHaveLength(1)
     expect(foreign.requests).toHaveLength(1)
     expect(foreign.requests[0]).toMatchObject({ pathname: "/x.yml", search: "" })
-    // the cross-origin allowlist, as on a redirect or a download: a custom header such as X-Tenant stays on the feed origin too
+    // the app's crossOriginHeaders, as on a redirect or a download: a custom header such as X-Tenant stays on the feed origin too
     expect(foreign.requests[0].headers.authorization).toBeUndefined()
     expect(foreign.requests[0].headers["x-tenant"]).toBeUndefined()
-    expect(foreign.requests[0].headers).toMatchObject({ "accept-language": "de" })
+    expect(foreign.requests[0].headers["accept-language"]).toBeUndefined()
+    // the updater's own User-Agent is sent whatever crossOriginHeaders returns
+    expect(foreign.requests[0].headers).toMatchObject({ "user-agent": "electron-builder" })
   })
 
-  // electron-updater adds x-user-staging-id to update info requests itself: like the app's headers, it goes to another origin only when listed
-  test("a channel file on another origin gets the staging id only when crossOriginHeaderAllowlist lists it", async ({ tmpDir, expect }) => {
+  // electron-updater adds x-user-staging-id to update info requests itself: like the app's headers, it goes to another origin only when kept
+  test("a channel file on another origin gets the staging id only when crossOriginHeaders keeps it", async ({ tmpDir, expect }) => {
     const feed = await serve(tmpDir)
     const foreign = await serve(tmpDir)
     await feed.write("beta.yml", channelYml(INSTALLER_NAME))
@@ -178,15 +182,16 @@ describe("download URLs chosen by the update manifest", () => {
     updater.autoDownload = false
 
     updater.channel = "beta"
-    expect((await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults }))!.isUpdateAvailable).toBe(true)
+    expect((await updater.checkForUpdates())!.isUpdateAvailable).toBe(true)
     expect(feed.requests[0].headers["x-user-staging-id"]).toEqual(expect.any(String))
 
     updater.channel = `${foreign.url}/x`
-    expect((await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults }))!.isUpdateAvailable).toBe(true)
+    expect((await updater.checkForUpdates())!.isUpdateAvailable).toBe(true)
     expect(foreign.requests).toHaveLength(1)
     expect(foreign.requests[0].headers["x-user-staging-id"]).toBeUndefined()
 
-    expect((await updater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => [...defaults, "x-user-staging-id"] }))!.isUpdateAvailable).toBe(true)
+    updater.crossOriginHeaders = headerNames => headerNames.filter(it => it === "x-user-staging-id")
+    expect((await updater.checkForUpdates())!.isUpdateAvailable).toBe(true)
     expect(foreign.requests).toHaveLength(2)
     expect(foreign.requests[1].headers["x-user-staging-id"]).toBe(feed.requests[0].headers["x-user-staging-id"])
   })
@@ -205,14 +210,17 @@ describe("differential downloads use the per-download headers", () => {
     tuneTestUpdater(updater, { platform: "win32", isUseDifferentialDownload: true })
     updater.requestHeaders = { "X-Tenant": "acme" }
     updater.addAuthHeader("Bearer s")
-    // the crossOriginHeaderAllowlist a checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults }) keeps for the download
-    ;(updater as any).checkCrossOriginHeaderAllowlist = (defaults: ReadonlyArray<string>) => defaults
     ;(updater as any).downloadedUpdateHelper = new DownloadedUpdateHelper(await tmpDir.getTempDir({ prefix: "manifest-origin-cache" }), updater.log)
     return updater
   }
 
   function createProvider(updater: AppUpdater, options: PublishConfiguration): Provider<any> {
-    return createClient(options, updater, { isUseMultipleRangeRequest: false, platform: "win32", executor: {} as any, crossOriginHeaders: defaults => defaults })
+    return createClient(options, updater, {
+      isUseMultipleRangeRequest: false,
+      platform: "win32",
+      executor: {} as any,
+      crossOriginHeaderPolicy: (updater as any).crossOriginHeaderPolicy,
+    })
   }
 
   function updateInfo(fileUrl: string, extra: object = {}): UpdateInfo {
@@ -382,7 +390,7 @@ describe("differential downloads use the per-download headers", () => {
   })
 
   // its feed is the GitHub API, whose asset URLs need the token
-  test("private GitHub: the request headers go to the API's asset URLs, only the default list elsewhere", async ({ tmpDir, expect }) => {
+  test("private GitHub: the request headers go to the API's asset URLs, only the download's own Accept elsewhere", async ({ tmpDir, expect }) => {
     const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
     const provider = createProvider(updater, { provider: "github", owner: "owner", repo: "repo", token: "t" } as GithubOptions)
     const options = downloadUpdateOptions(updater, provider, updateInfo("app-1.1.0.exe"))
@@ -394,30 +402,30 @@ describe("differential downloads use the per-download headers", () => {
     expect(headersFor("https://objects.example.net/app-1.1.0.exe")).toEqual({ accept: "application/octet-stream" })
   })
 
-  // the API redirects a download to its storage: the redirect gets the app's list, like any other origin
-  test("private GitHub with a crossOriginHeaderAllowlist list: the token reaches the API's asset URL, not the storage it redirects to", async ({ tmpDir, expect }) => {
+  // the API redirects a download to its storage: the redirect gets what the app's crossOriginHeaders keeps, like any other origin
+  test("private GitHub: the token reaches the API's asset URL, not the storage it redirects to", async ({ tmpDir, expect }) => {
     const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
-    // as a checkForUpdates({ crossOriginHeaderAllowlist: ["x-tenant"] }) keeps it
-    ;(updater as any).checkCrossOriginHeaderAllowlist = ["x-tenant"]
+    updater.crossOriginHeaders = headerNames => headerNames.filter(it => it === "x-tenant")
     const provider = createProvider(updater, { provider: "github", owner: "owner", repo: "repo", token: "t" } as GithubOptions)
     const options = downloadUpdateOptions(updater, provider, updateInfo("app-1.1.0.exe"))
     const assetUrl = "https://api.github.com/repos/owner/repo/releases/assets/1"
     const storageUrl = "https://objects.example.net/app-1.1.0.exe"
-    // the updater's own executor asks the same crossOriginHeaderAllowlist about each redirect (see the real-constructor test below)
+    // the updater's own executor has the updater's policy (see the real-constructor test below)
     const executor = new FakeElectronHttpExecutor(
       url => (url === assetUrl ? { location: storageUrl } : { statusCode: 200, body: Buffer.from("update") }),
-      (defaults, request) => (updater as any).crossOriginHeadersFor(defaults, request)
+      (updater as any).crossOriginHeaderPolicy
     )
     const destination = path.join(await tmpDir.createTempDir({ prefix: "manifest-origin-private-github" }), "app.exe")
 
     await executor.download(new URL(assetUrl), destination, {
       headers: (updater as any).downloadRequestHeaders(new URL(assetUrl), options),
+      ownHeaders: (updater as any).downloadOwnHeaders(options),
       cancellationToken: new CancellationToken(),
     })
 
     expect(executor.sent.map(it => it.url)).toEqual([assetUrl, storageUrl])
-    expect(executor.sent[0].headers).toMatchObject({ authorization: "Bearer s", "X-Tenant": "acme" })
-    expect(executor.sent[1].headers).toEqual({ "X-Tenant": "acme" })
+    expect(executor.sent[0].headers).toMatchObject({ authorization: "Bearer s", "X-Tenant": "acme", accept: "application/octet-stream" })
+    expect(executor.sent[1].headers).toEqual({ "X-Tenant": "acme", accept: "application/octet-stream", "User-Agent": "electron-builder", "Cache-Control": "no-cache" })
   })
 
   // e.g. a custom provider written in plain JavaScript: no download is sent without the feed's origin to tell another origin from
@@ -560,7 +568,7 @@ describe("differential downloads use the per-download headers", () => {
       return { updater, headersFor, warnings }
     }
 
-    // the headers left off are the ones crossOriginHeaderAllowlist leaves out, which the app chose: only the feed query is announced
+    // the headers left off are the ones crossOriginHeaders leaves out, which the app chose: only the feed query is announced
     test("a cross-origin download announces the feed query once, by name only, and not the headers left off", async ({ tmpDir, expect }) => {
       const { headersFor, warnings } = await setUp(tmpDir)
 
@@ -587,7 +595,7 @@ describe("differential downloads use the per-download headers", () => {
       expect(warnings()).toEqual([])
     })
 
-    test("only allowlisted headers and no feed query: a cross-origin download announces nothing", async ({ tmpDir, expect }) => {
+    test("no feed query: a cross-origin download announces nothing", async ({ tmpDir, expect }) => {
       const { headersFor, warnings } = await setUp(tmpDir, { feedUrl: "https://feed.example.com/updates/", auth: false })
 
       headersFor("https://cdn.example.net/app-1.1.0.exe")
@@ -613,10 +621,10 @@ describe("differential downloads use the per-download headers", () => {
   })
 })
 
-// The updater's own executor (built when no app adapter is passed) follows a cross-origin redirect with the crossOriginHeaderAllowlist of the last
-// check, and its providers' requests to another origin get the same choice.
-describe("the updater's own executor and providers send on the crossOriginHeaderAllowlist to another origin", () => {
-  test("a redirect, and a channel file, on another origin through Electron's net send on the headers crossOriginHeaderAllowlist lists", async ({ expect }) => {
+// The updater's own executor (built when no app adapter is passed) follows a cross-origin redirect with the headers the app's
+// crossOriginHeaders keeps, read at each hop, and its providers' requests to another origin get the same choice.
+describe("the updater's own executor and providers send on what crossOriginHeaders keeps to another origin", () => {
+  test("a redirect, and a channel file, on another origin through Electron's net send on the headers crossOriginHeaders keeps", async ({ expect }) => {
     const requests: Array<EventEmitter> = []
     const requestOptions: Array<RequestOptions> = []
     const electron = {
@@ -650,20 +658,17 @@ describe("the updater's own executor and providers send on the crossOriginHeader
       const updater = new NsisUpdater()
       updater.logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
 
-      // a channel file on another origin than the feed, before any check: not sent
+      // a channel file on another origin than the feed, without crossOriginHeaders: not sent
       updater.setFeedURL({ provider: "generic", url: "https://feed.example.com/updates/", channel: "https://cdn.example.net/x" })
       const provider: Provider<any> = await (updater as any).clientPromise
       provider.setRequestHeaders({ "X-Tenant": "acme", Authorization: "Bearer s", accept: "*/*" })
       await expect(provider.getLatestVersion()).rejects.toMatchObject({
         code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED",
-        message: expect.stringMatching(
-          /^The request to https:\/\/cdn\.example\.net requires the updater's crossOriginHeaderAllowlist or a checkForUpdates\(\{ crossOriginHeaderAllowlist \}\) before it: /
-        ),
+        message: expect.stringMatching(/^The request to https:\/\/cdn\.example\.net, another origin than https:\/\/feed\.example\.com, requires autoUpdater\.crossOriginHeaders/),
       })
       expect(requests).toEqual([])
 
-      // as a checkForUpdates({ crossOriginHeaderAllowlist }) keeps them
-      ;(updater as any).checkCrossOriginHeaderAllowlist = (defaults: ReadonlyArray<string>) => [...defaults, "x-tenant"]
+      updater.crossOriginHeaders = headerNames => headerNames.filter(it => it === "x-tenant" || it === "accept")
       const redirect = async (headers: OutgoingHttpHeaders) => {
         const done = updater.httpExecutor.request({ protocol: "https:", hostname: "feed.example.com", path: "/updates/latest.yml", headers }).catch((e: unknown) => e)
         requests[requests.length - 1].emit("redirect", 302, "GET", "https://cdn.example.net/latest.yml")
@@ -677,18 +682,17 @@ describe("the updater's own executor and providers send on the crossOriginHeader
       expect(redirected.headers).toMatchObject({ "X-Tenant": "acme", accept: "*/*" })
       expect(redirected.headers).not.toHaveProperty("Authorization")
 
-      // the function of a later check takes effect on the next redirect
-      ;(updater as any).checkCrossOriginHeaderAllowlist = () => null
+      // the property is read at each hop: a new function takes effect on the next redirect
+      updater.crossOriginHeaders = headerNames => headerNames
       expect((await redirect({ "X-Tenant": "acme", Authorization: "Bearer s" })).headers).toMatchObject({ "X-Tenant": "acme", Authorization: "Bearer s" })
 
-      // a list: exactly the list
-      ;(updater as any).checkCrossOriginHeaderAllowlist = ["x-tenant"]
-      const listed = await redirect({ "X-Tenant": "acme", Authorization: "Bearer s", accept: "*/*" })
-      expect(listed.headers).toMatchObject({ "X-Tenant": "acme" })
-      expect(listed.headers).not.toHaveProperty("Authorization")
-      expect(listed.headers).not.toHaveProperty("accept")
+      updater.crossOriginHeaders = headerNames => headerNames.filter(it => it === "x-tenant")
+      const kept = await redirect({ "X-Tenant": "acme", Authorization: "Bearer s", accept: "*/*" })
+      expect(kept.headers).toMatchObject({ "X-Tenant": "acme" })
+      expect(kept.headers).not.toHaveProperty("Authorization")
+      expect(kept.headers).not.toHaveProperty("accept")
 
-      // the provider's channel file on another origin, after a check: the same list
+      // the provider's channel file on another origin: the same choice
       const sent = requests.length
       const channelFile = provider.getLatestVersion().catch((e: unknown) => e)
       expect(requests).toHaveLength(sent + 1)
