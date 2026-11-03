@@ -163,7 +163,7 @@ import { autoUpdater } from "electron-updater"
 autoUpdater.allowInsecureFeed = true
 ```
 
-With `allowInsecureFeed` set, a server's authentication challenge on a request that is neither `https` nor to a loopback host is cancelled, and `login` is not emitted for it, as its authenticity cannot be determined; a proxy's challenge is emitted (see [Event: `login`](../features/auto-update.md#event-login)).
+With `allowInsecureFeed` set, a server's authentication challenge on a request that is neither `https` nor to a loopback host is cancelled, and `login` is not emitted for it, as its authenticity cannot be determined; a proxy's challenge goes to the provider's `onLoginChallenge` and to `login` as on `https` (see [Event: `login`](../features/auto-update.md#event-login)).
 
 Set the publish `url` to `https`, and keep the `http` URL redirecting to the `https` feed: installs that have not updated yet poll the `http` URL from their `app-update.yml` and follow that redirect.
 
