@@ -6,6 +6,7 @@ import {
   CancellationToken,
   CrossOriginRequest,
   DEFAULT_MAX_UPDATE_INFO_SIZE,
+  isLoopbackHostname,
   isValidMaxUpdateInfoSize,
   newError,
   PublishConfiguration,
@@ -231,8 +232,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    *
    * Set it to `true` only for a feed that cannot be served over `https`: anyone on the network path can then tamper with the update
    * information and files, so only a [signed update manifest](https://www.electron.build/docs/features/signed-update-manifests) and the
-   * code signature of the update protect it. A server's authentication challenge on a request that is not `https` is then cancelled
-   * without emitting `login`, as its authenticity cannot be determined: serve the feed over `https` for the app's `login` handler to answer it.
+   * code signature of the update protect it. A server's authentication challenge on a request that is not `https` and not to a loopback
+   * host is then cancelled without emitting `login`, as its authenticity cannot be determined: serve the feed over `https` for the app's
+   * `login` handler to answer it.
    *
    * @default false
    */
@@ -997,18 +999,18 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * declines it ({@link Provider.onLoginChallenge} returns anything but `true`, or throws), which cancels the challenge. Until the first update
    * check, or with a custom provider without that method, every challenge is emitted. A challenge on a request whose URL cannot be
    * determined (`null`), or one emitted without a `login` listener, is cancelled. With `allowInsecureFeed`, a server's challenge on a request
-   * that is not `https` is cancelled too: nothing shows that it comes from the server the credentials are meant for.
+   * that is not `https` and not to a loopback host is cancelled too: nothing shows that it comes from the server the credentials are meant for.
    * @internal
    */
   protected handleLoginChallenge(authInfo: AuthInfo, callback: LoginCallback, requestUrl: URL | null): void {
     let isEmitted = requestUrl != null
     const provider = this.checkProvider
-    if (requestUrl != null && !authInfo.isProxy && requestUrl.protocol !== "https:" && this.allowInsecureFeed) {
+    if (requestUrl != null && !authInfo.isProxy && requestUrl.protocol !== "https:" && !isLoopbackHostname(requestUrl.hostname) && this.allowInsecureFeed) {
       isEmitted = false
       // host and port only: the realm comes from the server
       this.limitedLogger("login-challenge-insecure").warn(
-        `With allowInsecureFeed, electron-updater emits the login event for a server's authentication challenge only on an https request: ` +
-          `the challenge from ${authInfo.host}:${authInfo.port} on a request that is not https was cancelled, as its authenticity cannot be determined. ` +
+        `With allowInsecureFeed, electron-updater emits the login event for a server's authentication challenge only on an https or loopback request: ` +
+          `the challenge from ${authInfo.host}:${authInfo.port} on a request that is neither https nor loopback was cancelled, as its authenticity cannot be determined. ` +
           `Serve the update feed and files over https to answer it. https://www.electron.build/docs/features/auto-update#event-login`
       )
     } else if (requestUrl != null && provider != null && typeof provider.onLoginChallenge === "function") {

@@ -120,8 +120,8 @@ export abstract class Provider<T extends UpdateInfo> {
    * request: return `true` to emit `login`, or `false` to cancel the challenge without emitting it (the request then fails with the
    * challenge's status). `url` is the URL of the request that got the challenge (a redirect's target after a redirect). Called for each
    * challenge; the updater asks the provider of its latest update check. The default returns `true`; any value other than `true`, or a
-   * throw, cancels. With `AppUpdater.allowInsecureFeed`, a server's challenge on a request that is not `https` is cancelled without calling
-   * this. See [Event: `login`](https://www.electron.build/docs/features/auto-update#event-login).
+   * throw, cancels. With `AppUpdater.allowInsecureFeed`, a server's challenge on a request that is not `https` and not to a loopback host is
+   * cancelled without calling this. See [Event: `login`](https://www.electron.build/docs/features/auto-update#event-login).
    *
    * @example onLoginChallenge(authInfo, url) { return authInfo.isProxy || url.origin === "https://downloads.example.com" }
    */

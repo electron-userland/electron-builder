@@ -250,6 +250,15 @@ describe("login event with allowInsecureFeed", () => {
     expect(logger.warns.filter(it => it.includes("login event"))).toEqual([])
   })
 
+  test("a server's challenge on an http request to a loopback host is emitted", async ({ tmpDir, expect }) => {
+    const { updater, answer, logger } = await checkedUpdater(tmpDir, { provider: "generic", url: "https://feed.example.com/updates" })
+    updater.allowInsecureFeed = true
+    expect(answer(challenge("127.0.0.1", 8080), new URL("http://127.0.0.1:8080/TestApp-Setup-1.1.0.exe"))).toBe(true)
+    expect(answer(challenge("localhost", 8080), new URL("http://localhost:8080/TestApp-Setup-1.1.0.exe"))).toBe(true)
+    expect(answer(challenge("::1", 8080), new URL("http://[::1]:8080/TestApp-Setup-1.1.0.exe"))).toBe(true)
+    expect(logger.warns.filter(it => it.includes("login event"))).toEqual([])
+  })
+
   test("without allowInsecureFeed, a server's challenge on an http request (to a loopback host) is emitted", async ({ tmpDir, expect }) => {
     const { answer } = await checkedUpdater(tmpDir, { provider: "generic", url: "https://feed.example.com/updates" })
     expect(answer(challenge("127.0.0.1", 8080), new URL("http://127.0.0.1:8080/TestApp-Setup-1.1.0.exe"))).toBe(true)
