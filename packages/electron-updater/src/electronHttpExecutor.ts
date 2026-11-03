@@ -1,10 +1,9 @@
 import { createRequire } from "node:module"
-import { CrossOriginHeadersCallback, DownloadOptions, HttpExecutor, configureRequestOptions, configureRequestUrl } from "builder-util-runtime"
+import { ApiRequestOptions, CrossOriginHeaderPolicy, DownloadOptions, HttpExecutor, configureRequestOptions, configureRequestUrl } from "builder-util-runtime"
 
 // import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
 const require = createRequire(import.meta.url ?? process.execPath)
 import type { AuthInfo } from "electron"
-import { RequestOptions } from "http"
 type Session = Electron.Session
 type ClientRequest = Electron.ClientRequest
 
@@ -21,20 +20,21 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
   private cachedSession: Session | null = null
 
   /**
-   * @param crossOriginHeaders chooses the headers each redirect to another origin sends on (AppUpdater: the `crossOriginHeaderAllowlist` of
-   * its last `checkForUpdates`)
+   * @param crossOriginHeaderPolicy chooses the headers each redirect to another origin sends on (AppUpdater's asks the app's
+   * `crossOriginHeaders`)
    */
   constructor(
     private readonly proxyLoginCallback: ((authInfo: AuthInfo, callback: LoginCallback) => void) | undefined,
-    crossOriginHeaders: CrossOriginHeadersCallback
+    crossOriginHeaderPolicy: CrossOriginHeaderPolicy
   ) {
-    super(crossOriginHeaders)
+    super(crossOriginHeaderPolicy)
   }
 
   async download(url: URL, destination: string, options: DownloadOptions): Promise<string> {
     return await options.cancellationToken.createPromise<string>((resolve, reject, onCancel) => {
       const requestOptions = {
         headers: options.headers || undefined,
+        ownHeaders: options.ownHeaders,
         redirect: "manual",
       }
       configureRequestUrl(url, requestOptions)
@@ -100,12 +100,18 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
 
   /**
    * A redirect aborts `request` and `handler` sends a new one to the target: followRedirect() would resend every header,
-   * while {@link HttpExecutor.prepareRedirectUrlOptions} keeps only the headers {@link HttpExecutor.crossOriginHeaders} chooses when the
+   * while {@link HttpExecutor.prepareRedirectUrlOptions} keeps only the headers {@link HttpExecutor.crossOriginHeaderPolicy} chooses, and the request's own, when the
    * target is on another origin.
    * Up to `maxRedirects` redirects are followed; `redirectCount` is the number already followed. A redirect to a protocol other than
    * http(s) is rejected, and so is anything `handler` throws.
    */
-  addRedirectHandlers(request: ClientRequest, options: RequestOptions, reject: (error: Error) => void, redirectCount: number, handler: (options: RequestOptions) => void): void {
+  addRedirectHandlers(
+    request: ClientRequest,
+    options: ApiRequestOptions,
+    reject: (error: Error) => void,
+    redirectCount: number,
+    handler: (options: ApiRequestOptions) => void
+  ): void {
     request.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
       // no way to modify request options, abort old and make a new one
       // https://github.com/electron/electron/issues/11505
@@ -118,7 +124,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
       // an event listener: a throw (from preparing the options, or from the handler, which sends the new request) would escape as an
       // uncaught exception and the request would never settle
       try {
-        const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options, this.crossOriginHeaders)
+        const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options, this.crossOriginHeaderPolicy)
         // net.request throws for another protocol, where Electron following the redirect itself fails the request
         if (redirectOptions.protocol !== "http:" && redirectOptions.protocol !== "https:") {
           throw new Error(`Cannot follow the redirect to the "${redirectOptions.protocol ?? ""}" protocol`)

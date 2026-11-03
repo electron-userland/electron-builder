@@ -1,4 +1,4 @@
-import { CancellationToken, CrossOriginHeadersCallback, GithubOptions, HttpError, HttpExecutor, newError, UpdateInfo } from "builder-util-runtime"
+import { CancellationToken, GithubOptions, HttpError, newError, UpdateInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import * as path from "path"
 import { AppUpdater } from "../AppUpdater.js"
@@ -13,8 +13,6 @@ export interface PrivateGitHubUpdateInfo extends UpdateInfo {
 }
 
 export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdateInfo> {
-  private readonly crossOriginHeaders: CrossOriginHeadersCallback
-
   constructor(
     options: GithubOptions,
     private readonly updater: AppUpdater,
@@ -22,10 +20,10 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     runtimeOptions: ProviderRuntimeOptions
   ) {
     super(options, "api.github.com", runtimeOptions)
-    this.crossOriginHeaders = runtimeOptions.crossOriginHeaders
   }
 
-  // the GitHub API (api.github.com or the Enterprise host): the asset URLs come from it, not from latest*.yml, and need the token
+  // the GitHub API (api.github.com or the Enterprise host): the asset URLs come from it, not from latest*.yml, and need the token. An asset
+  // URL on another origin gets it only when the app's crossOriginHeaders keeps `authorization` there
   get feedBaseUrl(): URL {
     return this.baseUrl
   }
@@ -47,7 +45,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       throw newError(`Cannot find ${channelFile} in the release ${releaseInfo.html_url || releaseInfo.name}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
     }
 
-    const url = this.assetUrl(asset)
+    const url = new URL(asset.url)
     let result: any
     try {
       result = parseUpdateInfo(await this.channelFileRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken), channelFile, url)
@@ -108,31 +106,10 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       }
 
       return {
-        url: this.assetUrl(asset),
+        url: new URL(asset.url),
         info: it,
       }
     })
-  }
-
-  /**
-   * The URL of a release asset, which needs the token. On another origin than the GitHub API it gets the token only if the app's
-   * `crossOriginHeaderAllowlist` allows `authorization` there; otherwise this fails with `ERR_UPDATER_ASSET_TOKEN_NOT_ALLOWED` before the request.
-   */
-  private assetUrl(asset: Asset): URL {
-    const url = new URL(asset.url)
-    const feedBaseUrl = this.feedBaseUrl
-    // a placeholder value: only whether the allowlist keeps the header name matters
-    const kept = HttpExecutor.keepCrossOriginHeaders({ authorization: "token" }, { from: feedBaseUrl, to: url, kind: "request" }, this.crossOriginHeaders)
-    if (kept.authorization == null) {
-      throw newError(
-        `The release asset ${asset.name} is on ${url.origin}, another origin than the GitHub API (${feedBaseUrl.origin}), and needs the token: ` +
-          `the \`crossOriginHeaderAllowlist\` of checkForUpdates sends \`authorization\` to ${url.origin} only if it allows it, ` +
-          `e.g. \`(defaults, request) => (request.to.origin === "${url.origin}" ? [...defaults, "authorization"] : defaults)\`. ` +
-          `https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-header-allowlist`,
-        "ERR_UPDATER_ASSET_TOKEN_NOT_ALLOWED"
-      )
-    }
-    return url
   }
 }
 

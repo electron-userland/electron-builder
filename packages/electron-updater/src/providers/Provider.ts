@@ -2,7 +2,7 @@ import {
   ApiRequestOptions,
   CancellationToken,
   configureRequestUrl,
-  CrossOriginHeadersCallback,
+  CrossOriginHeaderPolicy,
   DEFAULT_MAX_UPDATE_INFO_SIZE,
   HttpExecutor,
   newError,
@@ -28,10 +28,11 @@ export interface ProviderRuntimeOptions {
   executor: ElectronHttpExecutor
 
   /**
-   * Chooses the request headers each update info request (e.g. a channel file) on another origin than `Provider.feedBaseUrl` gets: the
-   * `crossOriginHeaderAllowlist` of the last `AppUpdater.checkForUpdates`, asked at each request since a provider outlives a check.
+   * Chooses the request headers each update info request (e.g. a channel file) on another origin than `Provider.feedBaseUrl` sends: the
+   * updater's, which asks the app's `crossOriginHeaders`. Set by electron-updater; code that constructs a built-in provider passes on the
+   * runtime options it was given.
    */
-  crossOriginHeaders: CrossOriginHeadersCallback
+  crossOriginHeaderPolicy: CrossOriginHeaderPolicy
 }
 
 /**
@@ -108,9 +109,8 @@ export abstract class Provider<T extends UpdateInfo> {
 
   /**
    * Required. Base URL of the update feed: download URLs, and the URLs of the provider's own update info requests (e.g. the channel file),
-   * on its origin get every request header. Any other origin gets only the headers the app's `crossOriginHeaderAllowlist` (of
-   * `AppUpdater.checkForUpdates`) allows, with this URL as the request's `from`. Anything but a URL fails the update check with
-   * `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`.
+   * on its origin get every request header. Any other origin gets only the headers the app's `crossOriginHeaders` keeps, with this URL as
+   * the hop's `from`. Anything but a URL fails the update check with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`.
    */
   abstract get feedBaseUrl(): URL
 
@@ -162,25 +162,36 @@ export abstract class Provider<T extends UpdateInfo> {
     }
   }
 
+  /**
+   * Options for an update info request to `url`, with the updater's request headers and `headers`, the provider's own for this request (an
+   * `Accept`, a token). On another origin than {@link feedBaseUrl} all of them go through the app's `crossOriginHeaders`, and the `Accept` of
+   * `headers` is added back (see `ApiRequestOptions.ownHeaders`), also on a redirect to another origin.
+   */
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): ApiRequestOptions {
     const result: ApiRequestOptions = {}
-    // the same feed-origin rule and cross-origin headers as for downloads and redirects: e.g. a channel file on another origin gets only
-    // the request headers the app's crossOriginHeaderAllowlist allows (by default the likes of Accept and User-Agent)
-    let requestHeaders = this.requestHeaders
-    if (requestHeaders != null) {
-      requestHeaders = HttpExecutor.keepCrossOriginHeaders(requestHeaders, { from: feedBaseUrlOf(this), to: url, kind: "request" }, this.runtimeOptions.crossOriginHeaders)
+    const requestHeaders = this.requestHeaders
+    const merged = requestHeaders == null ? headers : headers == null ? requestHeaders : { ...requestHeaders, ...headers }
+    const ownHeaders = acceptHeaderOf(headers)
+    if (merged != null) {
+      result.headers = HttpExecutor.crossOriginHeaders(merged, ownHeaders, { from: feedBaseUrlOf(this), to: url }, this.runtimeOptions.crossOriginHeaderPolicy)
     }
-    if (requestHeaders == null) {
-      if (headers != null) {
-        result.headers = headers
-      }
-    } else {
-      result.headers = headers == null ? requestHeaders : { ...requestHeaders, ...headers }
+    if (ownHeaders != null) {
+      result.ownHeaders = ownHeaders
     }
 
     configureRequestUrl(url, result)
     return result
   }
+}
+
+/** The `Accept` of `headers` (any case), which the updater or the provider builds for a request: added back after the app's crossOriginHeaders. */
+export function acceptHeaderOf(headers: OutgoingHttpHeaders | null | undefined): OutgoingHttpHeaders | null {
+  for (const [name, value] of Object.entries(headers ?? {})) {
+    if (value != null && name.toLowerCase() === "accept") {
+      return { [name]: value }
+    }
+  }
+  return null
 }
 
 export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>): ResolvedUpdateFileInfo | null | undefined {

@@ -57,7 +57,7 @@ class TestProvider extends Provider<UpdateInfo> {
 }
 
 function makeProvider(platform: ProviderRuntimeOptions["platform"] = "win32", isUseMultipleRangeRequest = true): TestProvider {
-  return new TestProvider({ isUseMultipleRangeRequest, platform, executor: httpExecutor as any, crossOriginHeaders: defaults => defaults })
+  return new TestProvider({ isUseMultipleRangeRequest, platform, executor: httpExecutor as any, crossOriginHeaderPolicy: () => ({}) })
 }
 
 test("isUseMultipleRangeRequest - true when runtimeOptions flag is true", ({ expect }) => {

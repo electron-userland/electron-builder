@@ -87,6 +87,8 @@ async function isReady() {
       debug: () => {},
     }
     autoUpdater.autoRunAppAfterInstall = false
+    // required; set it before the pending-install check at launch, for the same reason as autoInstallEvent below
+    autoUpdater.crossOriginHeaders = () => []
     // Must be assigned synchronously after require: BaseUpdater schedules the automatic
     // pending-install check on app.whenReady(), which has already resolved at this point.
     autoUpdater.autoInstallEvent = isAutoInstallOnNextLaunchMode ? "onNextLaunch" : "onQuit"
@@ -149,7 +151,7 @@ async function isReady() {
         app.quit()
       }, 90 * 1000)
     } else {
-      autoUpdater.checkForUpdates({ crossOriginHeaderAllowlist: defaults => defaults }).catch(err => {
+      autoUpdater.checkForUpdates().catch(err => {
         console.log("checkForUpdates rejected (handled via error event):", err?.message)
       })
     }

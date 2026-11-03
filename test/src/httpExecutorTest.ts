@@ -1,19 +1,11 @@
 import { expect, test, describe, vi } from "vitest"
-import {
-  CancellationToken,
-  type CrossOriginHeadersCallback,
-  type CrossOriginRequest,
-  DEFAULT_CROSS_ORIGIN_HEADERS,
-  DigestTransform,
-  HttpError,
-  HttpExecutor,
-} from "builder-util-runtime"
+import { type ApiRequestOptions, CancellationToken, type CrossOriginHeaderPolicy, type CrossOriginHop, DigestTransform, HttpError, HttpExecutor } from "builder-util-runtime"
 import { hashSensitiveValue, REDACTED_VALUE, safeStringifyJson } from "builder-util-runtime/internal"
-import { addSensitiveFieldPattern, detectSha512Encoding, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
+import { addSensitiveFieldPattern, addSensitiveRedirectHeader, detectSha512Encoding, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
 import { createHash } from "crypto"
 import { EventEmitter } from "events"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
-import { PassThrough, Readable, Writable } from "stream"
+import { Readable, Writable } from "stream"
 import { pipeline } from "stream/promises"
 import * as http from "http"
 
@@ -710,78 +702,7 @@ describe("sensitive header stripping", () => {
   })
 })
 
-describe("cross-origin header allowlist", () => {
-  const options = (): RequestOptions => ({
-    protocol: "https:",
-    hostname: "feed.example.com",
-    path: "/updates/app.exe",
-    headers: {
-      "X-Api-Token": "custom-secret",
-      "X-My-Auth": "other-secret",
-      Range: "bytes=0-99",
-      "If-Range": '"etag"',
-      Accept: "*/*",
-      "Accept-Encoding": "gzip",
-      "Content-Type": "application/octet-stream",
-    },
-  })
-  const allowlisted = { Range: "bytes=0-99", "If-Range": '"etag"', Accept: "*/*", "Accept-Encoding": "gzip", "Content-Type": "application/octet-stream" }
-
-  test("a cross-origin redirect drops a custom header and keeps the allowlisted ones, Range included", ({ expect }) => {
-    const result = HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", options())
-    expect(result.headers).toEqual({ ...allowlisted, "User-Agent": "electron-builder", "Cache-Control": "no-cache" })
-  })
-
-  test("a same-origin redirect keeps a custom header", ({ expect }) => {
-    const result = HttpExecutor.prepareRedirectUrlOptions("https://feed.example.com/other/app.exe", options())
-    expect(result.headers).toMatchObject({ "X-Api-Token": "custom-secret", "X-My-Auth": "other-secret", Range: "bytes=0-99" })
-  })
-
-  test("a cross-origin redirect keeps the headers crossOriginHeaders returns for it, or every header for null", ({ expect }) => {
-    const crossOriginHeaders = vi.fn(() => ["x-api-token", "range"])
-    const listed = HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", options(), crossOriginHeaders)
-    expect(listed.headers).toEqual({ "X-Api-Token": "custom-secret", Range: "bytes=0-99" })
-    expect(crossOriginHeaders).toHaveBeenCalledExactlyOnceWith(DEFAULT_CROSS_ORIGIN_HEADERS, {
-      from: new URL("https://feed.example.com/updates/app.exe"),
-      to: new URL("https://cdn.example.net/app.exe"),
-      kind: "redirect",
-    })
-    const unfiltered = HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", options(), () => null)
-    expect(unfiltered.headers).toMatchObject({ ...allowlisted, "X-Api-Token": "custom-secret", "X-My-Auth": "other-secret" })
-  })
-
-  test("a same-origin redirect does not call crossOriginHeaders", ({ expect }) => {
-    const crossOriginHeaders = vi.fn(() => [])
-    HttpExecutor.prepareRedirectUrlOptions("https://feed.example.com/other/app.exe", options(), crossOriginHeaders)
-    expect(crossOriginHeaders).not.toHaveBeenCalled()
-  })
-})
-
-describe("DEFAULT_CROSS_ORIGIN_HEADERS", () => {
-  test("is the frozen allowlist of lowercase header names", ({ expect }) => {
-    expect(DEFAULT_CROSS_ORIGIN_HEADERS).toEqual([
-      "accept",
-      "accept-encoding",
-      "accept-language",
-      "user-agent",
-      "cache-control",
-      "pragma",
-      "range",
-      "if-range",
-      "if-match",
-      "if-none-match",
-      "if-modified-since",
-      "if-unmodified-since",
-      "content-type",
-      "content-length",
-      "content-encoding",
-      "content-language",
-    ])
-    expect(Object.isFrozen(DEFAULT_CROSS_ORIGIN_HEADERS)).toBe(true)
-  })
-})
-
-describe("HttpExecutor.keepCrossOriginHeaders", () => {
+describe("HttpExecutor.crossOriginHeaders", () => {
   const feedUrl = new URL("https://feed.example.com/updates/")
   const cdnUrl = new URL("https://cdn.example.net/app.exe")
   const credentialHeaders = () => ({
@@ -792,212 +713,113 @@ describe("HttpExecutor.keepCrossOriginHeaders", () => {
     "User-Agent": "electron-builder",
     accept: "*/*",
   })
-  const toCdn: CrossOriginRequest = { from: feedUrl, to: cdnUrl, kind: "request" }
-  const returning =
-    (result: unknown): CrossOriginHeadersCallback =>
-    () =>
-      result as ReadonlyArray<string> | null
+  // the default policy of an HttpExecutor without its own (electron-builder's publishers)
+  const defaultPolicy: CrossOriginHeaderPolicy = (headers, hop) => new NodeExecutor().crossOriginHeaderPolicy(headers, hop)
 
-  test("keeps only the default headers for another origin", ({ expect }) => {
-    expect(HttpExecutor.keepCrossOriginHeaders(credentialHeaders(), toCdn, defaults => defaults)).toEqual({ "User-Agent": "electron-builder", accept: "*/*" })
+  test("the default policy strips the sensitive headers for another origin and keeps the rest", ({ expect }) => {
+    expect(HttpExecutor.crossOriginHeaders(credentialHeaders(), null, { from: feedUrl, to: cdnUrl }, defaultPolicy)).toEqual({ "User-Agent": "electron-builder", accept: "*/*" })
   })
 
-  test("calls crossOriginHeaders with the default list and the request", ({ expect }) => {
-    const crossOriginHeaders = vi.fn((defaults: ReadonlyArray<string>) => defaults)
-    HttpExecutor.keepCrossOriginHeaders(credentialHeaders(), toCdn, crossOriginHeaders)
-    expect(crossOriginHeaders).toHaveBeenCalledExactlyOnceWith(DEFAULT_CROSS_ORIGIN_HEADERS, toCdn)
-  })
-
-  test("matches the allowed names case-insensitively, both ways", ({ expect }) => {
-    expect(HttpExecutor.keepCrossOriginHeaders(credentialHeaders(), toCdn, () => ["private-token", "ACCEPT"])).toEqual({ "PRIVATE-TOKEN": "glpat-secret", accept: "*/*" })
-  })
-
-  test("null keeps every header for another origin", ({ expect }) => {
+  test("returns the same headers for a same-origin URL without calling the policy", ({ expect }) => {
     const headers = credentialHeaders()
-    expect(HttpExecutor.keepCrossOriginHeaders(headers, toCdn, () => null)).toBe(headers)
+    const policy = vi.fn(() => ({}))
+    expect(HttpExecutor.crossOriginHeaders(headers, null, { from: feedUrl, to: new URL("https://feed.example.com/other/app.exe") }, policy)).toBe(headers)
+    expect(policy).not.toHaveBeenCalled()
   })
 
-  test("an empty list keeps no header for another origin", ({ expect }) => {
-    expect(HttpExecutor.keepCrossOriginHeaders(credentialHeaders(), toCdn, () => [])).toEqual({})
-  })
-
-  test("returns the same headers for a same-origin URL without calling crossOriginHeaders", ({ expect }) => {
+  test("passes the policy a copy of the headers and the hop, and does not mutate its input", ({ expect }) => {
     const headers = credentialHeaders()
-    const crossOriginHeaders = vi.fn(() => [])
-    expect(HttpExecutor.keepCrossOriginHeaders(headers, { ...toCdn, to: new URL("https://feed.example.com/other/app.exe") }, crossOriginHeaders)).toBe(headers)
-    expect(crossOriginHeaders).not.toHaveBeenCalled()
-  })
-
-  // fail closed: never every header, and never the result in the message, which could hold a header value
-  for (const [label, result] of [
-    ["undefined", undefined],
-    ["a string", "Bearer value-secret"],
-    ["an object", { authorization: "Bearer value-secret" }],
-    ["an array with an empty name", ["accept", ""]],
-    ["an array with a name with a space", ["accept", "x value-secret"]],
-    ["an array with a name that is not a string", ["accept", 42]],
-  ] as const) {
-    test(`a result that is ${label} fails the request`, ({ expect }) => {
-      const run = () => HttpExecutor.keepCrossOriginHeaders(credentialHeaders(), toCdn, returning(result))
-      expect(run).toThrow(
-        expect.objectContaining({
-          code: "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS",
-          message: expect.stringMatching(
-            /^crossOriginHeaderAllowlist of checkForUpdates must return an array of header names \(such as "accept" or "x-tenant"\) or null: got .+ for the request from https:\/\/feed\.example\.com to https:\/\/cdn\.example\.net, which is not sent\. https:\/\/www\.electron\.build\/docs\/migration\/v27-runtime-changes#cross-origin-header-allowlist$/
-          ),
-        })
-      )
-      expect(run).not.toThrow(/value-secret/)
+    const received: Array<[OutgoingHttpHeaders, CrossOriginHop]> = []
+    HttpExecutor.crossOriginHeaders(headers, null, { from: feedUrl, to: cdnUrl }, (copy, hop) => {
+      received.push([{ ...copy }, hop])
+      delete copy.Authorization
+      return copy
     })
-  }
-
-  test("a throw of crossOriginHeaders fails the request, without its message", ({ expect }) => {
-    const run = () =>
-      HttpExecutor.keepCrossOriginHeaders(credentialHeaders(), toCdn, () => {
-        throw new Error("Bearer value-secret")
-      })
-    expect(run).toThrow(
-      expect.objectContaining({
-        code: "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS",
-        message: expect.stringContaining("crossOriginHeaderAllowlist of checkForUpdates threw for the request from"),
-      })
-    )
-    expect(run).not.toThrow(/value-secret/)
-  })
-
-  test("the updater's not-configured error passes through as is", ({ expect }) => {
-    const notConfigured = Object.assign(new Error("not configured"), { code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED" })
-    expect(() =>
-      HttpExecutor.keepCrossOriginHeaders(credentialHeaders(), toCdn, () => {
-        throw notConfigured
-      })
-    ).toThrow(notConfigured)
-  })
-
-  test("does not mutate its input", ({ expect }) => {
-    const headers = credentialHeaders()
-    HttpExecutor.keepCrossOriginHeaders(headers, toCdn, defaults => defaults)
+    expect(received).toEqual([[credentialHeaders(), { from: feedUrl, to: cdnUrl }]])
     expect(headers).toEqual(credentialHeaders())
   })
 
+  test("adds back the own headers the policy left out, and keeps the value of one it kept", ({ expect }) => {
+    const headers = { Authorization: "Bearer t", Accept: "application/json", range: "bytes=0-9" }
+    const own = { accept: "*/*", range: "bytes=0-9" }
+    expect(HttpExecutor.crossOriginHeaders(headers, own, { from: feedUrl, to: cdnUrl }, () => ({}))).toEqual(own)
+    expect(HttpExecutor.crossOriginHeaders(headers, own, { from: feedUrl, to: cdnUrl }, () => ({ Accept: "application/json" }))).toEqual({
+      Accept: "application/json",
+      range: "bytes=0-9",
+    })
+  })
+
+  test("what the policy throws fails the call", ({ expect }) => {
+    const error = new Error("not allowed")
+    expect(() =>
+      HttpExecutor.crossOriginHeaders(credentialHeaders(), null, { from: feedUrl, to: cdnUrl }, () => {
+        throw error
+      })
+    ).toThrow(error)
+  })
+
   test("another port on the same host is cross-origin", ({ expect }) => {
-    const result = HttpExecutor.keepCrossOriginHeaders(credentialHeaders(), { ...toCdn, to: new URL("https://feed.example.com:8443/app.exe") }, defaults => defaults)
+    const result = HttpExecutor.crossOriginHeaders(credentialHeaders(), null, { from: feedUrl, to: new URL("https://feed.example.com:8443/app.exe") }, defaultPolicy)
     expect(result.Authorization).toBeUndefined()
   })
 
   test("https → http on the same host is cross-origin", ({ expect }) => {
-    const result = HttpExecutor.keepCrossOriginHeaders(credentialHeaders(), { ...toCdn, to: new URL("http://feed.example.com/updates/app.exe") }, defaults => defaults)
+    const result = HttpExecutor.crossOriginHeaders(credentialHeaders(), null, { from: feedUrl, to: new URL("http://feed.example.com/updates/app.exe") }, defaultPolicy)
     expect(result.Authorization).toBeUndefined()
     expect(result["PRIVATE-TOKEN"]).toBeUndefined()
   })
 
-  test("http → https upgrade on the same host keeps them (same rule as a redirect)", ({ expect }) => {
+  test("http → https upgrade on the same host is the same origin (same rule as a redirect)", ({ expect }) => {
     const headers = credentialHeaders()
-    const upgrade: CrossOriginRequest = { from: new URL("http://feed.example.com/updates/"), to: new URL("https://feed.example.com/updates/app.exe"), kind: "redirect" }
-    expect(HttpExecutor.keepCrossOriginHeaders(headers, upgrade, () => [])).toBe(headers)
+    expect(
+      HttpExecutor.crossOriginHeaders(headers, null, { from: new URL("http://feed.example.com/updates/"), to: new URL("https://feed.example.com/updates/app.exe") }, defaultPolicy)
+    ).toBe(headers)
   })
 
   test("a __proto__ key in the headers does not change the prototype of the result", ({ expect }) => {
     const headers = JSON.parse(`{"__proto__": {"Authorization": "Bearer token123"}, "accept": "*/*"}`)
-    const result = HttpExecutor.keepCrossOriginHeaders(headers, toCdn, () => ["authorization", "accept"])
+    const result = HttpExecutor.crossOriginHeaders(headers, null, { from: feedUrl, to: cdnUrl }, received => received)
     expect(Object.getPrototypeOf(result)).toBe(Object.prototype)
     expect(result.Authorization).toBeUndefined()
     expect(result).toEqual({ accept: "*/*" })
   })
 })
 
-// Node's `auth` option is sent as an Authorization header: on a cross-origin redirect it follows the choice for `authorization`
-describe("HttpExecutor.prepareRedirectUrlOptions auth option", () => {
-  const redirect = (crossOriginHeaders: CrossOriginHeadersCallback, headers: OutgoingHttpHeaders = {}) =>
-    HttpExecutor.prepareRedirectUrlOptions(
-      "https://cdn.example.net/app.exe",
-      { protocol: "https:", hostname: "feed.example.com", path: "/app.exe", auth: "user:secret", headers },
-      crossOriginHeaders
-    )
-
-  test("is dropped when the choice leaves out authorization", ({ expect }) => {
-    expect(redirect(defaults => defaults).auth).toBeUndefined()
+describe("HttpExecutor.prepareRedirectUrlOptions with a cross-origin header policy", () => {
+  const options = (): ApiRequestOptions => ({
+    protocol: "https:",
+    hostname: "feed.example.com",
+    path: "/updates/app.exe",
+    headers: { Authorization: "Bearer t", "X-Tenant": "acme", "User-Agent": "my-app", "Cache-Control": "max-age=0", accept: "application/json", range: "bytes=0-9" },
+    ownHeaders: { accept: "*/*", range: "bytes=0-9" },
   })
 
-  test.for([
-    ["null", () => null],
-    ["a list naming authorization", (defaults: ReadonlyArray<string>) => [...defaults, "Authorization"]],
-  ] as const)("is kept for %s", ([, crossOriginHeaders], { expect }) => {
-    expect(redirect(crossOriginHeaders).auth).toBe("user:secret")
+  test("a cross-origin redirect sends what the policy keeps, the own headers and the default User-Agent and Cache-Control", ({ expect }) => {
+    const policy = vi.fn(() => ({}))
+    const result = HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", options(), policy)
+    expect(policy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ "X-Tenant": "acme" }), {
+      from: new URL("https://feed.example.com/updates/app.exe"),
+      to: new URL("https://cdn.example.net/app.exe"),
+    })
+    expect(result.headers).toEqual({ accept: "*/*", range: "bytes=0-9", "User-Agent": "electron-builder", "Cache-Control": "no-cache" })
+    expect(result.ownHeaders).toEqual({ accept: "*/*", range: "bytes=0-9" })
   })
-})
 
-// an executor's crossOriginHeaders chooses the headers its redirects send on to another origin
-describe("HttpExecutor crossOriginHeaders", () => {
-  const headers = { "X-Tenant": "acme", Authorization: "Bearer t", accept: "*/*" }
+  test("a same-origin redirect keeps every header without calling the policy", ({ expect }) => {
+    const policy = vi.fn(() => ({}))
+    const result = HttpExecutor.prepareRedirectUrlOptions("/other/app.exe", options(), policy)
+    expect(policy).not.toHaveBeenCalled()
+    expect(result.headers).toMatchObject({ Authorization: "Bearer t", "X-Tenant": "acme", "User-Agent": "my-app", accept: "application/json" })
+  })
 
-  // answers feed.example.com with a redirect to cdn.example.net, which answers with a body; records the headers of each request
-  class RedirectingExecutor extends HttpExecutor<any> {
-    readonly sent: Array<OutgoingHttpHeaders> = []
-
-    createRequest(options: RequestOptions, callback: (response: any) => void): any {
-      this.sent.push({ ...options.headers })
-      const isFeed = options.hostname === "feed.example.com"
-      const response = Object.assign(new PassThrough(), {
-        statusCode: isFeed ? 302 : 200,
-        statusMessage: isFeed ? "Found" : "OK",
-        headers: isFeed ? { location: "https://cdn.example.net/app.exe" } : {},
+  test("what the policy throws fails the redirect", ({ expect }) => {
+    const error = new Error("not configured")
+    expect(() =>
+      HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", options(), () => {
+        throw error
       })
-      return Object.assign(new EventEmitter(), {
-        end: () => {
-          callback(response)
-          response.end(isFeed ? undefined : "body")
-        },
-        abort: () => {},
-      })
-    }
-  }
-
-  for (const [label, run] of [
-    ["an API request", (executor: RedirectingExecutor) => executor.request({ protocol: "https:", hostname: "feed.example.com", path: "/app.exe", headers: { ...headers } })],
-    [
-      "a download",
-      (executor: RedirectingExecutor) =>
-        executor.downloadToBuffer(new URL("https://feed.example.com/app.exe"), { headers: { ...headers }, cancellationToken: new CancellationToken() }),
-    ],
-  ] as const) {
-    test(`a cross-origin redirect of ${label} sends on the headers the executor's crossOriginHeaders returns for it`, async ({ expect }) => {
-      const crossOriginHeaders = vi.fn((defaults: ReadonlyArray<string>) => [...defaults, "x-tenant"])
-      const executor = new RedirectingExecutor(crossOriginHeaders)
-      await run(executor)
-      expect(executor.sent).toHaveLength(2)
-      expect(executor.sent[0]).toMatchObject(headers)
-      expect(executor.sent[1]).toMatchObject({ "X-Tenant": "acme", accept: "*/*" })
-      expect(executor.sent[1]).not.toHaveProperty("Authorization")
-      expect(crossOriginHeaders).toHaveBeenCalledExactlyOnceWith(DEFAULT_CROSS_ORIGIN_HEADERS, {
-        from: new URL("https://feed.example.com/app.exe"),
-        to: new URL("https://cdn.example.net/app.exe"),
-        kind: "redirect",
-      })
-    })
-
-    test(`a cross-origin redirect of ${label} sends on every header for null`, async ({ expect }) => {
-      const executor = new RedirectingExecutor(() => null)
-      await run(executor)
-      expect(executor.sent[1]).toMatchObject(headers)
-    })
-
-    test(`a cross-origin redirect of ${label} fails, unfollowed, when crossOriginHeaders throws`, async ({ expect }) => {
-      const executor = new RedirectingExecutor(() => {
-        throw new Error("no")
-      })
-      await expect(run(executor)).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS" })
-      expect(executor.sent).toHaveLength(1)
-    })
-
-    test(`a cross-origin redirect of ${label} sends on only the default list without a callback`, async ({ expect }) => {
-      const executor = new RedirectingExecutor()
-      await run(executor)
-      expect(executor.sent[1]).toMatchObject({ accept: "*/*" })
-      expect(executor.sent[1]).not.toHaveProperty("X-Tenant")
-      expect(executor.sent[1]).not.toHaveProperty("Authorization")
-    })
-  }
+    ).toThrow(error)
+  })
 })
 
 describe("safeStringifyJson field redaction", () => {
@@ -1095,7 +917,22 @@ describe("safeStringifyJson field redaction", () => {
   })
 })
 
-describe("addSensitiveFieldPattern", () => {
+describe("addSensitiveRedirectHeader / addSensitiveFieldPattern", () => {
+  test("addSensitiveRedirectHeader causes custom header to be stripped on cross-origin redirect", () => {
+    addSensitiveRedirectHeader("X-Zz-Test-Custom-Auth")
+
+    const originalOptions: RequestOptions = {
+      protocol: "https:",
+      hostname: "api.example.com",
+      path: "/endpoint",
+      headers: { "X-Zz-Test-Custom-Auth": "secret-value", "User-Agent": "test" },
+    }
+    const result = HttpExecutor.prepareRedirectUrlOptions("https://cdn.other.com/asset.zip", originalOptions)
+
+    expect(result.headers?.["X-Zz-Test-Custom-Auth"]).toBeUndefined()
+    expect(result.headers?.["User-Agent"]).toBe("test")
+  })
+
   test("addSensitiveFieldPattern causes matching fields to be redacted by safeStringifyJson", () => {
     addSensitiveFieldPattern("zzTestCustomCred")
 
@@ -1409,7 +1246,7 @@ describe("HttpExecutor request auth option on a redirect", () => {
     return address.port
   }
 
-  async function authorizationAtTarget(crossOrigin: boolean, executor: NodeExecutor = new NodeExecutor()): Promise<string | undefined> {
+  async function authorizationAtTarget(crossOrigin: boolean): Promise<string | undefined> {
     let received: string | undefined = "<not requested>"
     const target = http.createServer((request, response) => {
       received = request.headers.authorization
@@ -1427,7 +1264,7 @@ describe("HttpExecutor request auth option on a redirect", () => {
     })
     const originPort = await listen(origin)
     try {
-      await executor.request({ protocol: "http:", hostname: "127.0.0.1", port: originPort, path: "/start", auth: "user:secret" })
+      await new NodeExecutor().request({ protocol: "http:", hostname: "127.0.0.1", port: originPort, path: "/start", auth: "user:secret" })
       return received
     } finally {
       for (const server of [origin, target]) {
@@ -1443,10 +1280,6 @@ describe("HttpExecutor request auth option on a redirect", () => {
 
   test("is dropped on a cross-origin redirect", async () => {
     expect(await authorizationAtTarget(true)).toBeUndefined()
-  })
-
-  test("is kept on a cross-origin redirect whose crossOriginHeaders returns null", async () => {
-    expect(await authorizationAtTarget(true, new NodeExecutor(() => null))).toBe(`Basic ${Buffer.from("user:secret").toString("base64")}`)
   })
 
   test.for([
