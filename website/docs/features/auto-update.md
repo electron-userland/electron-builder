@@ -539,7 +539,7 @@ class MyProvider extends Provider<UpdateInfo> {
 }
 ```
 
-With the built-in providers, a challenge from any origin the updater requests reaches your `login` handler: the feed, a download URL on another origin and the target of a redirect. Before answering with credentials, check `authInfo.isProxy`, `authInfo.host` and `authInfo.port` and answer only the proxy or the server the credentials are meant for, on its `https` port; call `callback()` for any other. `authInfo` has no scheme, so a custom provider's `onLoginChallenge`, which compares `url.origin`, gives the origin-exact decision:
+With the built-in providers, a challenge from any origin the updater requests reaches your `login` handler: the feed, a download URL on another origin and the target of a redirect. Before answering with credentials, check `authInfo.isProxy`, `authInfo.host` and `authInfo.port` and answer only the proxy or the server the credentials are meant for, on its `https` port; call `callback()` for any other:
 
 ```typescript
 autoUpdater.on("login", (authInfo, callback) => {
@@ -550,6 +550,8 @@ autoUpdater.on("login", (authInfo, callback) => {
   }
 })
 ```
+
+`authInfo` has no scheme: for an origin-exact decision, override `onLoginChallenge` in a custom provider and compare `url.origin`, as above.
 
 #### Event: `checking-for-update`
 
