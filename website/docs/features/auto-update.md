@@ -331,7 +331,7 @@ autoUpdater.allowInsecureFeed = true // anyone on the network path can then tamp
 
 Over `http`, only a [signed update manifest](./signed-update-manifests.md) and the code signature of the update protect it.
 
-With `allowInsecureFeed`, a server's authentication challenge on a request that is not `https` is cancelled without emitting [`login`](#event-login), as its authenticity cannot be determined, and electron-updater logs a warning the first time. A proxy's challenge is emitted. For your `login` handler to answer a server, serve the feed and the update files over `https`.
+With `allowInsecureFeed`, a server's authentication challenge on a request that is neither `https` nor to a loopback host is cancelled without emitting [`login`](#event-login), as its authenticity cannot be determined, and electron-updater logs a warning the first time. A proxy's challenge, and a server's on a loopback request, go to the provider's `onLoginChallenge` and to `login` as on `https`. For your `login` handler to answer a server, serve the feed and the update files over `https`.
 
 ### `allowUnverifiedLinuxPackages` (new)
 

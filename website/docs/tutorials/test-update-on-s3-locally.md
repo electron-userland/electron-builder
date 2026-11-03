@@ -18,6 +18,8 @@ electron-builder --publish always \
   --config.publish.awsCredentials.source=env
 ```
 
+electron-updater accepts a plain `http` feed only on a loopback host (`localhost`, `127.0.0.0/8`, `::1`), as here. To test from another machine, serve Minio over `https`, or set `autoUpdater.allowInsecureFeed = true` in the test build (see [`allowInsecureFeed`](../features/auto-update.md#allowinsecurefeed)).
+
 ## 3. Bump the version and test
 
 Update the `version` field in `package.json` to a higher number than the installed app, then install the previously built app and launch it. The updater should detect and apply the update from your local Minio bucket. Logs are written to:
