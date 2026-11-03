@@ -20,10 +20,10 @@ describe("generic publish url with a query string", () => {
     expect(warn).toHaveBeenCalledTimes(1)
     const [fields, message] = warn.mock.calls[0] as unknown as [Record<string, string>, string]
     expect(fields.queryParameters).toBe("token, tenant")
-    expect(fields.solution).toContain("crossOriginHeaderAllowlist")
-    // the feed query stays on the feed's origin; which headers reach another origin is the app's crossOriginHeaderAllowlist
+    expect(fields.solution).toContain("autoUpdater.crossOriginHeaders")
+    // the feed query stays on the feed's origin; which headers reach another origin is the app's autoUpdater.crossOriginHeaders
     expect(message).toContain("electron-updater adds the feed url's query string only to requests on the feed's origin")
-    expect(message).toContain("to a request or redirect to another origin only the ones the app's crossOriginHeaderAllowlist allows for it")
+    expect(message).toContain("to a request or redirect to another origin only the ones the app's autoUpdater.crossOriginHeaders keeps for it")
     expect(message).toContain("https://www.electron.build/docs/features/auto-update#custom-options-instantiating-updater-directly")
     expect(message).not.toMatch(/electron-updater \d|v\d\d/)
     const logged = JSON.stringify(warn.mock.calls)

@@ -90,7 +90,7 @@ function checkOptions(publishPolicy: any) {
 
 /**
  * electron-updater adds the query string of a generic feed url (typically a token) only to requests on the feed's origin, and sends
- * another origin only the request headers the app's `crossOriginHeaderAllowlist` allows. An app whose latest*.yml points downloads at
+ * another origin only the request headers the app's `autoUpdater.crossOriginHeaders` keeps. An app whose latest*.yml points downloads at
  * another origin that relies on that query gets 401/403 at update time, inside a shipped app, with nothing at build time saying why —
  * `migrate-schema` prints a similar advisory, but cannot be relied on to have been run. Only the query parameter names are logged,
  * never the url or the values.
@@ -110,12 +110,12 @@ export function warnAboutGenericFeedQuery(publishConfig: PublishConfiguration): 
       queryParameters: queryParameters.length === 0 ? "(none)" : queryParameters.join(", "),
       solution:
         "serve the update files from the feed origin (relative files[].url, the default), use pre-signed URLs, or send the credential as a request header " +
-        "(requestHeaders / addAuthHeader) that the app's crossOriginHeaderAllowlist allows for the origin that needs it",
+        "(requestHeaders / addAuthHeader) that the app's autoUpdater.crossOriginHeaders keeps for the origin that needs it",
     },
     "the generic publish url has a query string. electron-updater adds the feed url's query string only to requests on the feed's origin (scheme, host and port), " +
       "such as the channel file and the relative download URLs electron-builder writes: a URL on another origin, such as an absolute download url in latest*.yml, " +
       "keeps its own query string and is requested without the feed's. The request headers from requestHeaders / addAuthHeader go to every request on the feed's origin, " +
-      "and to a request or redirect to another origin only the ones the app's crossOriginHeaderAllowlist allows for it. " +
+      "and to a request or redirect to another origin only the ones the app's autoUpdater.crossOriginHeaders keeps for it. " +
       "See https://www.electron.build/docs/features/auto-update#custom-options-instantiating-updater-directly"
   )
 }
