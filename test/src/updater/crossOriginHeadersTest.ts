@@ -71,9 +71,13 @@ describe("checkForUpdates({ crossOriginHeaderAllowlist })", () => {
     )
   }
 
-  const checks: ReadonlyArray<readonly [string, (updater: AppUpdater, options: unknown) => Promise<unknown>]> = [
-    ["checkForUpdates", (updater, options) => updater.checkForUpdates(options as CheckForUpdatesOptions)],
-    ["checkForUpdatesAndNotify", (updater, options) => updater.checkForUpdatesAndNotify(options as CheckForUpdatesAndNotifyOptions)],
+  const checks: ReadonlyArray<readonly [string, string, (updater: AppUpdater, options: unknown) => Promise<unknown>]> = [
+    ["checkForUpdates", "checkForUpdates requires { crossOriginHeaderAllowlist }", (updater, options) => updater.checkForUpdates(options as CheckForUpdatesOptions)],
+    [
+      "checkForUpdatesAndNotify",
+      "checkForUpdatesAndNotify requires { crossOriginHeaderAllowlist }, with the notification in the same options object: { crossOriginHeaderAllowlist, notification }",
+      (updater, options) => updater.checkForUpdatesAndNotify(options as CheckForUpdatesAndNotifyOptions),
+    ],
   ]
 
   describe("is required", () => {
@@ -84,18 +88,21 @@ describe("checkForUpdates({ crossOriginHeaderAllowlist })", () => {
       ["a crossOriginHeaderAllowlist of null", { crossOriginHeaderAllowlist: null }],
       ["a notification in place of the options", { title: "Update", body: "{version} is ready" }],
     ]
-    for (const [method, check] of checks) {
+    for (const [method, requirement, check] of checks) {
       for (const [label, options] of invalidOptions) {
-        test(`${method} with ${label} rejects before any request`, async ({ tmpDir, expect }) => {
+        test(`${method} with ${label} emits error and rejects before any request`, async ({ tmpDir, expect }) => {
           const { updater, feed, events } = await createUpdater(tmpDir)
+          const errors: Array<Error> = []
+          updater.on("error", error => errors.push(error))
 
           const error = await rejection(check(updater, options))
           expect(error).toMatchObject({
             code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED",
-            message: `checkForUpdates requires { crossOriginHeaderAllowlist }: requests and redirects to another origin carry only the headers it allows, a list of header names or a callback. Pass \`{ crossOriginHeaderAllowlist: DEFAULT_CROSS_ORIGIN_HEADERS }\` (from electron-updater) to send the default headers. ${DOCS}`,
+            message: `${requirement}: requests and redirects to another origin carry only the headers it allows, a list of header names or a callback. Pass \`{ crossOriginHeaderAllowlist: DEFAULT_CROSS_ORIGIN_HEADERS }\` (from electron-updater) to send the default headers. ${DOCS}`,
           })
           expect(feed.requests).toEqual([])
-          expect(events).toEqual([])
+          expect(events).toEqual(["error"])
+          expect(errors).toEqual([error])
         })
       }
     }

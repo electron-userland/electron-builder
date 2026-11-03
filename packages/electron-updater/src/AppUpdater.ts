@@ -79,6 +79,11 @@ function crossOriginHeadersNotConfiguredError(subject: string): Error {
   )
 }
 
+/** A `crossOriginHeaderAllowlist` the check accepts: a list of header names (each checked at its request) or a callback. */
+function isCrossOriginHeaderAllowlist(value: unknown): value is CrossOriginHeaderAllowlist {
+  return typeof value === "function" || Array.isArray(value)
+}
+
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
   login: (info: AuthInfo, callback: LoginCallback) => void
@@ -640,8 +645,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   checkForUpdates(options: CheckForUpdatesOptions): Promise<UpdateCheckResult | null> {
     const allowlist = options?.crossOriginHeaderAllowlist
-    if (typeof allowlist !== "function" && !Array.isArray(allowlist)) {
-      return Promise.reject(crossOriginHeadersNotConfiguredError("checkForUpdates requires { crossOriginHeaderAllowlist }"))
+    if (!isCrossOriginHeaderAllowlist(allowlist)) {
+      const error = crossOriginHeadersNotConfiguredError("checkForUpdates requires { crossOriginHeaderAllowlist }")
+      this.dispatchError(error)
+      return Promise.reject(error)
     }
     this.checkCrossOriginHeaderAllowlist = allowlist
     if (!this.isUpdaterActive()) {
@@ -686,7 +693,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * {@link checkForUpdates}, and shows a notification once the update is downloaded (with `autoDownload`): `notification`, or a default one.
    */
   checkForUpdatesAndNotify(options: CheckForUpdatesAndNotifyOptions): Promise<UpdateCheckResult | null> {
-    const downloadNotification = options?.notification
+    if (!isCrossOriginHeaderAllowlist(options?.crossOriginHeaderAllowlist)) {
+      const error = crossOriginHeadersNotConfiguredError(
+        "checkForUpdatesAndNotify requires { crossOriginHeaderAllowlist }, with the notification in the same options object: { crossOriginHeaderAllowlist, notification }"
+      )
+      this.dispatchError(error)
+      return Promise.reject(error)
+    }
+    const downloadNotification = options.notification
     return this.checkForUpdates(options).then(it => {
       if (!it?.downloadPromise) {
         this.log.debug("checkForUpdatesAndNotify called, downloadPromise is null")
