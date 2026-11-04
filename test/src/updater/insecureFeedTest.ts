@@ -86,7 +86,7 @@ describe("ElectronHttpExecutor rejects plain http", () => {
       )
       expect(error).toMatchObject(INSECURE_FEED)
       expect((error as Error).message).toContain("electron-updater rejects the update request to http://feed.example.com:")
-      expect((error as Error).message).toContain("autoUpdater.allowInsecureFeed = true")
+      expect((error as Error).message).toContain("autoUpdater.allowInsecureFeed = !app.isPackaged")
       expect((error as Error).message).toContain(DOCS)
       expect(executor.sent).toEqual([])
     })
@@ -119,6 +119,34 @@ describe("ElectronHttpExecutor rejects plain http", () => {
       expect(executor.sent.map(it => it.url)).toEqual([HTTP_URL, HTTPS_URL, HTTP_TARGET_URL])
     })
   }
+
+  // a host that is not loopback must not reach the user's machine through a redirect: loopback is exempt only for a chain that stayed on it
+  describe("a redirect to a loopback host", () => {
+    const LOOPBACK_REDIRECT = { code: "ERR_UPDATER_LOOPBACK_REDIRECT" }
+    for (const [kind, send] of REQUESTS) {
+      for (const target of ["http://127.0.0.1:8080/app.exe", "https://localhost/app.exe"]) {
+        test(`from a host that is not loopback to ${target} fails ${kind}, also with allowInsecureFeed`, async ({ tmpDir, expect }) => {
+          for (const isInsecureFeedAllowed of [() => false, () => true]) {
+            const executor = createExecutor({ [HTTPS_URL]: target }, isInsecureFeedAllowed)
+            await expect(send(executor, HTTPS_URL, tmpDir)).rejects.toMatchObject(LOOPBACK_REDIRECT)
+            expect(executor.sent.map(it => it.url)).toEqual([HTTPS_URL])
+          }
+        })
+      }
+
+      test(`from a host that is not loopback, through a loopback hop, fails ${kind}`, async ({ tmpDir, expect }) => {
+        const executor = createExecutor({ "http://127.0.0.1:8080/app.exe": HTTPS_URL, [HTTPS_URL]: "http://localhost:8080/app.exe" })
+        await expect(send(executor, "http://127.0.0.1:8080/app.exe", tmpDir)).rejects.toMatchObject(LOOPBACK_REDIRECT)
+        expect(executor.sent.map(it => it.url)).toEqual(["http://127.0.0.1:8080/app.exe", HTTPS_URL])
+      })
+
+      test(`from a loopback host is followed by ${kind}`, async ({ tmpDir, expect }) => {
+        const executor = createExecutor({ "http://127.0.0.1:8080/app.exe": "http://localhost:9090/app.exe" })
+        await send(executor, "http://127.0.0.1:8080/app.exe", tmpDir)
+        expect(executor.sent.map(it => it.url)).toEqual(["http://127.0.0.1:8080/app.exe", "http://localhost:9090/app.exe"])
+      })
+    }
+  })
 
   // Electron reports a 300 (and other non-redirect 3xx) as a response, whose Location a download follows itself
   test("a 300 response with a Location to http fails a download", async ({ tmpDir, expect }) => {
