@@ -40,14 +40,15 @@ export interface CrossOriginHop {
 export type CrossOriginHeaderPolicy = (headers: OutgoingHttpHeaders, hop: CrossOriginHop) => OutgoingHttpHeaders
 
 // the policy of an HttpExecutor without its own (electron-builder's publishers): every header but the credential-bearing ones
-const dropSensitiveHeaders: CrossOriginHeaderPolicy = headers => {
-  const result = deepAssign<OutgoingHttpHeaders>({}, headers)
-  for (const key of Object.keys(result)) {
-    if (SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key))) {
-      delete result[key]
-    }
-  }
-  return result
+const dropSensitiveHeaders: CrossOriginHeaderPolicy = headers => filterHeaders(headers, name => !SENSITIVE_REDIRECT_HEADERS.has(normalizeName(name)))
+
+/**
+ * A copy of the headers of `headers` that `keep` accepts. Built with {@link deepAssign}, which never assigns `__proto__`, `constructor` or
+ * `prototype`: a header name, from a server, the app or a provider, cannot reach an object's prototype. Every header object built from
+ * another one by name goes through here.
+ */
+export function filterHeaders(headers: OutgoingHttpHeaders, keep: (name: string, value: OutgoingHttpHeaders[string]) => boolean): OutgoingHttpHeaders {
+  return deepAssign<OutgoingHttpHeaders>({}, Object.fromEntries(Object.entries(headers).filter(([name, value]) => keep(name, value))))
 }
 
 /**
@@ -498,10 +499,14 @@ Please double check that your authentication token is correct. Due to security r
     const parsedRedirectUrl = parseUrl(redirectUrl, options)
     const newOptions: ApiRequestOptions = { ...options }
     // net.request connects to `host` when it is set (where ElectronHttpExecutor moves a `Host` header), else to the hostname
-    if (
-      options.redirectedFromNonLoopback === true ||
-      !isLoopbackHostname(typeof options.host === "string" && options.host !== "" ? hostnameOf(options.host) : originalUrl.hostname)
-    ) {
+    let hostname = originalUrl.hostname
+    try {
+      hostname = options.host ? new URL(`http://${options.host}`).hostname : hostname
+    } catch {
+      // a host that does not parse is not loopback
+      hostname = String(options.host)
+    }
+    if (options.redirectedFromNonLoopback === true || !isLoopbackHostname(hostname)) {
       newOptions.redirectedFromNonLoopback = true
     }
     // the target is hostname and port: Electron's net prefers `host` (where ElectronHttpExecutor moves a `Host` header) over them
@@ -526,7 +531,7 @@ Please double check that your authentication token is correct. Due to security r
    * (see {@link HttpExecutor.isCrossOrigin}), without calling `crossOriginHeaderPolicy`; else the ones `crossOriginHeaderPolicy` returns,
    * and the request's `ownHeaders` it left out. A `Host` header is never sent to another origin: it is removed before the policy is asked, and
    * from what it returns, since Electron's `net` connects to a `Host` header's value instead of `hop.to`. Never mutates `headers`; what
-   * `crossOriginHeaderPolicy` throws fails the request.
+   * `crossOriginHeaderPolicy` throws fails the request. The headers are copied with {@link filterHeaders}.
    */
   static crossOriginHeaders(
     headers: OutgoingHttpHeaders,
@@ -537,13 +542,10 @@ Please double check that your authentication token is correct. Due to security r
     if (!HttpExecutor.isCrossOriginRedirect(hop.from, hop.to)) {
       return headers
     }
-    const result = withoutHostHeader(deepAssign<OutgoingHttpHeaders>({}, crossOriginHeaderPolicy(withoutHostHeader(deepAssign<OutgoingHttpHeaders>({}, headers)), hop)))
-    const keptNames = new Set(Object.keys(result).map(it => it.toLowerCase()))
-    for (const [name, value] of Object.entries(ownHeaders ?? {})) {
-      if (value != null && !keptNames.has(name.toLowerCase())) {
-        result[name] = value
-      }
-    }
+    const isNotHost = (name: string) => name.toLowerCase() !== "host"
+    const sent = filterHeaders(crossOriginHeaderPolicy(filterHeaders(headers, isNotHost), hop), isNotHost)
+    const sentNames = new Set(Object.keys(sent).map(it => it.toLowerCase()))
+    const result = { ...sent, ...filterHeaders(ownHeaders ?? {}, (name, value) => value != null && !sentNames.has(name.toLowerCase())) }
     if (debug.enabled) {
       // names only: a value could be a credential
       debug(`Cross-origin request (${hop.from.host} → ${hop.to.host}): sending the headers ${Object.keys(result).join(", ")}`)
@@ -630,16 +632,6 @@ export interface DownloadCallOptions {
   options: DownloadOptions
 
   destination: string | null
-}
-
-// `headers` without its `Host` header, whatever its case (changes `headers`, a copy)
-function withoutHostHeader(headers: OutgoingHttpHeaders): OutgoingHttpHeaders {
-  for (const name of Object.keys(headers)) {
-    if (name.toLowerCase() === "host") {
-      delete headers[name]
-    }
-  }
-  return headers
 }
 
 /**
@@ -871,15 +863,6 @@ export function configureRequestOptions(options: RequestOptions, token?: string 
  * Whether `hostname` (a URL hostname: an IPv6 address may be in brackets) names the loopback interface: `localhost`, an address
  * in `127.0.0.0/8` or `::1`. A plain `http` update feed on such a host never leaves the machine.
  */
-// the hostname of a `host` request option (a host with an optional port), or the host itself when it does not parse (then not loopback)
-function hostnameOf(host: string): string {
-  try {
-    return new URL(`http://${host}`).hostname
-  } catch {
-    return host
-  }
-}
-
 export function isLoopbackHostname(hostname: string): boolean {
   const host = hostname.toLowerCase().replace(/^\[(.*)\]$/, "$1")
   return host === "localhost" || host === "::1" || (isIPv4(host) && host.startsWith("127."))

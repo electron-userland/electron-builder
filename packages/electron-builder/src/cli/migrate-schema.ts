@@ -14,7 +14,7 @@ import {
   RESOLVED_LEGACY_CONFIG_OPTIONS,
 } from "app-builder-lib/internal"
 import { log, orNullIfFileNotExist } from "builder-util"
-import { isLoopbackHostname, isValidPublisherNameDn } from "builder-util-runtime"
+import { asArray, isLoopbackHostname, isValidPublisherNameDn } from "builder-util-runtime"
 import { resolveDefaultKeywordList } from "builder-util/internal"
 import { promises as fs } from "fs"
 import * as path from "path"
@@ -162,12 +162,6 @@ export function isInsecureFeedEntry(entry: unknown): boolean {
   } catch {
     return false
   }
-}
-
-function detectInsecureFeed(config: Record<string, any>): boolean {
-  return [config, ...Object.values(config)].some(
-    section => isPlainObject(section) && (Array.isArray(section.publish) ? section.publish : [section.publish]).some(isInsecureFeedEntry)
-  )
 }
 
 /**
@@ -670,7 +664,7 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   if (detectGenericFeedQuery(c)) {
     advisories.push(FEED_QUERY_ADVISORY)
   }
-  if (detectInsecureFeed(c)) {
+  if ([c, ...Object.values(c)].some(section => isPlainObject(section) && asArray(section.publish).some(isInsecureFeedEntry))) {
     advisories.push(INSECURE_FEED_ADVISORY)
   }
   const pdbPatterns = pdbFilesPatterns(c)

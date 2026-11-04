@@ -180,7 +180,7 @@ export abstract class Provider<T extends UpdateInfo> {
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): ApiRequestOptions {
     const result: ApiRequestOptions = {}
     const requestHeaders = this.requestHeaders
-    const merged = requestHeaders == null ? headers : headers == null ? requestHeaders : { ...requestHeaders, ...headers }
+    const merged = requestHeaders == null || headers == null ? (requestHeaders ?? headers) : { ...requestHeaders, ...headers }
     const ownHeaders = acceptHeaderOf(headers)
     if (merged != null) {
       result.headers = HttpExecutor.crossOriginHeaders(merged, ownHeaders, { from: feedBaseUrlOf(this), to: url }, this.runtimeOptions.crossOriginHeaderPolicy)
