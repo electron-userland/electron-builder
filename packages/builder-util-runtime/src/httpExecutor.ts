@@ -270,7 +270,7 @@ export abstract class HttpExecutor<T extends Request> {
       reject(
         createHttpError(
           response,
-          `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${options.path}
+          `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${urlWithoutQuery(options.path ?? "")}
 
 Please double check that your authentication token is correct. Due to security reasons, actual status maybe not reported, but 404.
 `
@@ -339,7 +339,7 @@ Please double check that your authentication token is correct. Due to security r
           reject(
             createHttpError(
               response,
-              `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${options.path}
+              `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${urlWithoutQuery(options.path ?? "")}
 
           Data:
           ${isJson ? safeStringifyJson(JSON.parse(data)) : data}
@@ -421,7 +421,7 @@ Please double check that your authentication token is correct. Due to security r
         // the body is not used: drain it, so the response ends and releases its socket (see the redirect below)
         response.resume()
         // the path without its query, which can carry credentials (e.g. a signed release asset link)
-        const url = `${requestOptions.protocol || "https:"}//${requestOptions.hostname}${(requestOptions.path ?? "").replace(/[?#].*$/s, "")}`
+        const url = `${requestOptions.protocol || "https:"}//${requestOptions.hostname}${urlWithoutQuery(requestOptions.path ?? "")}`
         options.callback(new HttpError(code, `Cannot download "${url}", status ${code}: ${response.statusMessage}`))
         return
       }
@@ -640,6 +640,22 @@ function withoutHostHeader(headers: OutgoingHttpHeaders): OutgoingHttpHeaders {
     }
   }
   return headers
+}
+
+/**
+ * `url` as logs and error messages name it: without its query and fragment, which can carry a credential (such as the signature of a
+ * pre-signed URL or a feed token), nor its user info. A relative URL or a request path (such as a `files[].url` of `latest*.yml`) keeps its
+ * path.
+ */
+export function urlWithoutQuery(url: URL | string): string {
+  let parsed: URL
+  try {
+    parsed = typeof url === "string" ? new URL(url) : url
+  } catch {
+    // relative: a path
+    return String(url).replace(/[?#].*$/s, "")
+  }
+  return `${parsed.protocol}//${parsed.host}${parsed.pathname}`
 }
 
 function parseUrl(url: string, options: RequestOptions): URL {

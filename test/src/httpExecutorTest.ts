@@ -1,6 +1,6 @@
 import { expect, test, describe, vi } from "vitest"
 import { type ApiRequestOptions, CancellationToken, type CrossOriginHeaderPolicy, type CrossOriginHop, DigestTransform, HttpError, HttpExecutor } from "builder-util-runtime"
-import { hashSensitiveValue, REDACTED_VALUE, safeStringifyJson } from "builder-util-runtime/internal"
+import { hashSensitiveValue, REDACTED_VALUE, safeStringifyJson, urlWithoutQuery } from "builder-util-runtime/internal"
 import { addSensitiveFieldPattern, addSensitiveRedirectHeader, detectSha512Encoding, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
 import { createHash } from "crypto"
 import { createRequire } from "module"
@@ -1340,6 +1340,43 @@ describe("HttpExecutor request auth option on a redirect", () => {
     expect(authLines).toHaveLength(1)
     expect(authLines[0]).toContain("https://feed.example.com → https://cdn.example.net")
     expect(lines.join("\n")).not.toContain("secret")
+  })
+})
+
+// a query or fragment can carry a credential (a pre-signed URL's signature, a feed token): logs and error messages name a URL without them
+describe("urlWithoutQuery", () => {
+  test.each([
+    ["https://cdn.example.net/app.exe?X-Amz-Signature=secret#frag", "https://cdn.example.net/app.exe"],
+    ["https://user:secret@feed.example.com:8443/updates/latest.yml?token=secret", "https://feed.example.com:8443/updates/latest.yml"],
+    ["app-1.1.0.exe?sig=secret", "app-1.1.0.exe"],
+    ["/updates/app.exe?token=secret", "/updates/app.exe"],
+  ])("%s is named %s", (url, expected) => {
+    expect(urlWithoutQuery(url)).toBe(expected)
+    if (url.includes("://")) {
+      expect(urlWithoutQuery(new URL(url))).toBe(expected)
+    }
+  })
+
+  test("an API request's 404 error names the path without its query", async () => {
+    const server = http.createServer((_request, response) => {
+      response.writeHead(404)
+      response.end()
+    })
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    try {
+      const address = server.address()
+      if (address == null || typeof address === "string") {
+        throw new Error("server has no port")
+      }
+      const error = await new NodeExecutor().request({ protocol: "http:", hostname: "127.0.0.1", port: address.port, path: "/latest.yml?token=feed-secret" }).then(
+        () => null,
+        (e: unknown) => e
+      )
+      expect(String(error)).toContain(`url: http://127.0.0.1:${address.port}/latest.yml`)
+      expect(String(error)).not.toContain("feed-secret")
+    } finally {
+      await new Promise(resolve => server.close(resolve))
+    }
   })
 })
 
