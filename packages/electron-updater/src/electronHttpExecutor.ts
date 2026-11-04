@@ -93,17 +93,26 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
       // remove header property 'Host', if not removed causes net::ERR_INVALID_ARGUMENT exception
       delete options.headers.Host
     }
+    // net.request connects to `host` (with its port) when it is set, else to `hostname` and `port`
+    const host: string = options.host ?? `${options.hostname ?? ""}${options.port == null ? "" : `:${options.port}`}`
+    // WHATWG-normalized (e.g. `0x7f.1` is `127.0.0.1`, `[::ffff:127.0.0.1]` is `[::ffff:7f00:1]`); null for a host that does not parse
+    let hostname: string | null = null
+    try {
+      hostname = new URL(`http://${host}`).hostname
+    } catch {
+      // neither loopback nor this machine
+    }
     // a host that is not loopback must not reach the user's machine through a redirect, whatever the scheme and allowInsecureFeed
-    if (options.redirectedFromNonLoopback === true && reachesThisMachine(options)) {
+    if (options.redirectedFromNonLoopback === true && hostname != null && reachesThisMachine(hostname)) {
       throw newError(
-        `electron-updater rejects the redirect to ${options.protocol ?? "http:"}//${requestHost(options)}, a loopback host, from a host that is not loopback: ` +
+        `electron-updater rejects the redirect to ${options.protocol ?? "http:"}//${host}, a loopback host, from a host that is not loopback: ` +
           `a loopback update URL is only followed when every URL before it is on a loopback host. See ${INSECURE_FEED_DOCS}`,
         "ERR_UPDATER_LOOPBACK_REDIRECT"
       )
     }
-    if (options.protocol !== "https:" && !this.isInsecureFeedAllowed() && !isLoopbackRequest(options)) {
+    if (options.protocol !== "https:" && !this.isInsecureFeedAllowed() && (hostname == null || !isLoopbackHostname(hostname))) {
       throw newError(
-        `electron-updater rejects the update request to ${options.protocol ?? "http:"}//${requestHost(options)}: the update feed, its downloads and every redirect must use https, ` +
+        `electron-updater rejects the update request to ${options.protocol ?? "http:"}//${host}: the update feed, its downloads and every redirect must use https, ` +
           "except to a loopback host (localhost, 127.0.0.0/8, ::1). Serve your updates over https; for a test server on another machine, set autoUpdater.allowInsecureFeed = !app.isPackaged, which accepts plain http in dev runs only. " +
           `See ${INSECURE_FEED_DOCS}`,
         "ERR_UPDATER_INSECURE_FEED"
@@ -199,49 +208,24 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
 
 const INSECURE_FEED_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https"
 
-// net.request connects to `host` (with its port) when it is set, else to `hostname` and `port`
-function requestHost(options: ApiRequestOptions): string {
-  return options.host ?? `${options.hostname ?? ""}${options.port == null ? "" : `:${options.port}`}`
-}
-
-// the WHATWG-normalized hostname net.request connects to (e.g. `0x7f.1` is `127.0.0.1`, `[::ffff:127.0.0.1]` is `[::ffff:7f00:1]`), or null
-function requestHostname(options: ApiRequestOptions): string | null {
-  try {
-    return new URL(`http://${requestHost(options)}`).hostname
-  } catch {
-    // not a host
-    return null
-  }
-}
-
-function isLoopbackRequest(options: ApiRequestOptions): boolean {
-  const hostname = requestHostname(options)
-  return hostname != null && isLoopbackHostname(hostname)
-}
-
 /**
- * Whether the request connects to this machine: a loopback host, the unspecified address (`0.0.0.0`, `::`), which Linux and macOS connect
+ * Whether `hostname` (WHATWG-normalized) is this machine: a loopback host, the unspecified address (`0.0.0.0`, `::`), which Linux and macOS connect
  * to the local machine, or an IPv4-mapped IPv6 address of either (`::ffff:127.0.0.0/104`, `::ffff:0.0.0.0`), which dual-stack hosts do. Wider
  * than the loopback exemption of the https rule, on purpose: it also covers `localhost.` and every `*.localhost` name, which Chromium resolves
  * to loopback without DNS. Another DNS name that resolves to such an address is not caught: that needs the resolved address, which
  * net.request does not expose before it connects.
  */
-function reachesThisMachine(options: ApiRequestOptions): boolean {
-  const requested = requestHostname(options)
-  if (requested == null) {
-    return false
-  }
-  // one trailing dot names the same host (`localhost.`)
-  const hostname = requested.toLowerCase().replace(/\.$/, "")
+function reachesThisMachine(hostname: string): boolean {
+  // without brackets, and without one trailing dot, which names the same host (`localhost.`)
+  const host = hostname
+    .toLowerCase()
+    .replace(/\.$/, "")
+    .replace(/^\[(.*)\]$/, "$1")
   // Chromium resolves `localhost` and every `*.localhost` name to loopback itself, without DNS
-  if (isLoopbackHostname(hostname) || hostname === "0.0.0.0" || hostname.endsWith(".localhost")) {
+  if (isLoopbackHostname(host) || host === "0.0.0.0" || host === "::" || host.endsWith(".localhost")) {
     return true
   }
-  const ipv6 = hostname.replace(/^\[(.*)\]$/, "$1")
-  if (ipv6 === "::") {
-    return true
-  }
-  const mapped = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(ipv6)
+  const mapped = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(host)
   if (mapped == null) {
     return false
   }

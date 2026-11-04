@@ -895,8 +895,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   protected async getUpdateInfoAndProvider(): Promise<UpdateInfoAndProvider> {
     await this.app.whenReady()
+    // allowInsecureFeed is meant for development: a packaged app that ships with it accepts tampered update information over plain http
     if (this.allowInsecureFeed && this.app.isPackaged) {
-      this.announceInsecureFeedAllowed()
+      this.limitedLogger("insecure-feed-packaged").warn(
+        "autoUpdater.allowInsecureFeed is true in a packaged app: its update requests and redirects may use plain http to any host, where anyone on the network path can tamper with them. " +
+          "It is meant for development only: set `autoUpdater.allowInsecureFeed = !app.isPackaged` and serve the production feed over https. " +
+          "https://www.electron.build/docs/features/auto-update#allowinsecurefeed"
+      )
     }
 
     if (this.clientPromise == null) {
@@ -952,15 +957,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       provider: client,
       manifestSignatureVerified,
     }
-  }
-
-  // allowInsecureFeed is meant for development: a packaged app that ships with it accepts tampered update information over plain http
-  private announceInsecureFeedAllowed(): void {
-    this.limitedLogger("insecure-feed-packaged").warn(
-      "autoUpdater.allowInsecureFeed is true in a packaged app: its update requests and redirects may use plain http to any host, where anyone on the network path can tamper with them. " +
-        "It is meant for development only: set `autoUpdater.allowInsecureFeed = !app.isPackaged` and serve the production feed over https. " +
-        "https://www.electron.build/docs/features/auto-update#allowinsecurefeed"
-    )
   }
 
   // A v27 behaviour change that only shows on installed apps: announced once per updater, without the feed URL (it may carry a token in its query)
