@@ -137,6 +137,8 @@ External consumers should use the two new public helpers instead:
 
 `ProtonFramework`, `LibUiFramework`, and `SnapOptions` are removed from the public exports of `app-builder-lib` and `electron-builder`. `CustomNsisBinary` is removed from the public exports of `app-builder-lib`, together with the [`customNsisBinary` option](./v27-config-changes.md#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis); use `ToolsetCustom` (for `toolsets.nsis`) instead. Use the Electron framework and the [`snapcraft`](./v27-config-changes.md#snap-snapcraft) config shape respectively. The removed framework support means `framework: "proton" | "libui"` no longer has any effect — see [`framework` removed](./v27-config-changes.md#framework-nodeversion-launchuiversion).
 
+The pre-release-only `HttpExecutor.sensitiveHeaderNames`, `HttpExecutor.removeCrossOriginSensitiveHeaders` (builder-util-runtime) and `ProviderRuntimeOptions.onCrossOriginHeadersRemoved` (electron-updater) are not exported: use [a cross-origin header policy](#builder-util-runtime-cross-origin-headers) and `HttpExecutor.crossOriginHeaders`.
+
 ### Renamed type exports {#renamed-type-exports}
 
 **How you'll find out:** **TypeScript error only.**
@@ -166,7 +168,7 @@ An `HttpExecutor` follows each redirect to another origin with the headers its c
 
 ### Custom electron-updater providers return a URL from `feedBaseUrl` {#custom-provider-feed-base-url}
 
-**How you'll find out:** a custom provider class without it is a **TS error** (`Provider.feedBaseUrl` is abstract); in plain JavaScript, or when it returns anything but a URL, the update check **fails at run time** with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, naming the provider class and what it returned, before the provider gets any request header, with a link here.
+**How you'll find out:** a custom provider class without it is a **TS error** (`Provider.feedBaseUrl` is abstract); in plain JavaScript, or when it returns anything but a URL, the update check **fails at run time** with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, naming the provider class and what it returned, before the provider gets any request header, with a link here. A provider constructed with runtime options without a `crossOriginHeaderPolicy` throws `ERR_UPDATER_CROSS_ORIGIN_HEADER_POLICY_MISSING`.
 
 Every update provider returns the URL of its update feed:
 
@@ -181,7 +183,7 @@ Downloads and the provider's own update info requests (the channel file, or an A
 
 The built-in providers (generic, s3, spaces, r2, github, gitlab, bitbucket, keygen) return their feed URL, so a provider that extends one inherits it. Private GitHub returns the GitHub API (`api.github.com`, or the Enterprise `host`), whose asset URLs its requests use with the token. A provider built on another copy of electron-updater passes the check when it returns a URL, and its own update info requests keep the header rules of that copy.
 
-`ProviderRuntimeOptions`, the runtime options electron-updater passes to a provider's constructor, has a required `crossOriginHeaderPolicy` (a `CrossOriginHeaderPolicy`), which electron-updater sets to its own, the one that asks the app's `crossOriginHeaders`. Code that constructs a built-in provider itself passes on the runtime options it was given, spreading them to change another field (e.g. `{ ...runtimeOptions, isUseMultipleRangeRequest: false }`).
+`ProviderRuntimeOptions`, the runtime options electron-updater passes to a provider's constructor, has a required `crossOriginHeaderPolicy` (a `CrossOriginHeaderPolicy`), which electron-updater sets to its own, the one that asks the app's `crossOriginHeaders`. A provider constructed with runtime options whose `crossOriginHeaderPolicy` is not a function throws `ERR_UPDATER_CROSS_ORIGIN_HEADER_POLICY_MISSING`, with a link here. Code that constructs a built-in provider itself passes on the runtime options it was given, spreading them to change another field (e.g. `{ ...runtimeOptions, isUseMultipleRangeRequest: false }`).
 
 **Action:** return the feed URL from `feedBaseUrl` in a custom provider that does not extend a built-in one. If its update checks call an API on another origin that needs your request headers, the app keeps them for that origin in `autoUpdater.crossOriginHeaders`; the headers passed in `httpRequest`'s `headers` argument go through it too, their `Accept` excepted:
 
