@@ -511,7 +511,9 @@ Please double check that your authentication token is correct. Due to security r
   /**
    * The headers to send to `hop.to` for a request whose headers are meant for `hop.from`: `headers` itself when `to` is on the same origin
    * (see {@link HttpExecutor.isCrossOrigin}), without calling `crossOriginHeaderPolicy`; else the ones `crossOriginHeaderPolicy` returns,
-   * and the request's `ownHeaders` it left out. Never mutates `headers`; what `crossOriginHeaderPolicy` throws fails the request.
+   * and the request's `ownHeaders` it left out. A `Host` header is never sent to another origin: it is removed before the policy is asked, and
+   * from what it returns, since Electron's `net` connects to a `Host` header's value instead of `hop.to`. Never mutates `headers`; what
+   * `crossOriginHeaderPolicy` throws fails the request.
    */
   static crossOriginHeaders(
     headers: OutgoingHttpHeaders,
@@ -522,7 +524,7 @@ Please double check that your authentication token is correct. Due to security r
     if (!HttpExecutor.isCrossOriginRedirect(hop.from, hop.to)) {
       return headers
     }
-    const result = deepAssign<OutgoingHttpHeaders>({}, crossOriginHeaderPolicy(deepAssign<OutgoingHttpHeaders>({}, headers), hop))
+    const result = withoutHostHeader(deepAssign<OutgoingHttpHeaders>({}, crossOriginHeaderPolicy(withoutHostHeader(deepAssign<OutgoingHttpHeaders>({}, headers)), hop)))
     const keptNames = new Set(Object.keys(result).map(it => it.toLowerCase()))
     for (const [name, value] of Object.entries(ownHeaders ?? {})) {
       if (value != null && !keptNames.has(name.toLowerCase())) {
@@ -615,6 +617,16 @@ export interface DownloadCallOptions {
   options: DownloadOptions
 
   destination: string | null
+}
+
+// `headers` without its `Host` header, whatever its case (changes `headers`, a copy)
+function withoutHostHeader(headers: OutgoingHttpHeaders): OutgoingHttpHeaders {
+  for (const name of Object.keys(headers)) {
+    if (name.toLowerCase() === "host") {
+      delete headers[name]
+    }
+  }
+  return headers
 }
 
 function parseUrl(url: string, options: RequestOptions): URL {

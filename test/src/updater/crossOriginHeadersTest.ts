@@ -9,7 +9,7 @@ import * as path from "path"
 import type { TmpDir } from "temp-file"
 import { afterEach, describe, test, vi } from "vitest"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
-import { createNsisUpdater, TestNodeHttpExecutor, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
+import { createNsisUpdater, makeLogger, TestNodeHttpExecutor, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
 // autoUpdater.crossOriginHeaders decides the request headers of each request and redirect to another origin than the update provider's
 // feedBaseUrl: it gets the lowercase names of the headers about to be sent and returns the ones to send. Required for every packaged app.
@@ -273,6 +273,117 @@ describe("autoUpdater.crossOriginHeaders", () => {
         expect(cdn.requests).toEqual([])
       })
     }
+  })
+
+  // a host or CDN that starts redirecting to a new origin shows up in the log: names and origins only, once per origin
+  describe("announces the headers it leaves out", () => {
+    function droppedNotices(logger: ReturnType<typeof makeLogger>): Array<string> {
+      return logger.warns.filter(it => it.startsWith("autoUpdater.crossOriginHeaders left out"))
+    }
+
+    test("once per origin, with the header names and both origins, never a value", async ({ tmpDir, expect }) => {
+      const first = await serve(tmpDir)
+      const second = await serve(tmpDir)
+      for (const host of [first, second]) {
+        await host.write("x.yml", channelYml(INSTALLER_NAME))
+      }
+      const { updater, feed } = await createUpdater(tmpDir)
+      const logger = makeLogger()
+      updater.logger = logger
+      updater.crossOriginHeaders = headerNames => headerNames.filter(it => it === "x-tenant")
+
+      updater.channel = `${first.url}/x`
+      await updater.checkForUpdates()
+      await updater.checkForUpdates()
+      updater.channel = `${second.url}/x`
+      await updater.checkForUpdates()
+
+      const notices = droppedNotices(logger)
+      expect(notices).toHaveLength(2)
+      for (const [notice, host] of [
+        [notices[0], first],
+        [notices[1], second],
+      ] as const) {
+        expect(notice).toContain(`left out authorization, x-user-staging-id for the request from ${feed.origin} to ${host.origin}`)
+        expect(notice).toContain(DOCS)
+        for (const value of ["Bearer s", "acme"]) {
+          expect(notice).not.toContain(value)
+        }
+      }
+    })
+
+    test("not when only the updater's own headers are left out", async ({ tmpDir, expect }) => {
+      const cdn = await serve(tmpDir)
+      await cdn.write(INSTALLER_NAME, INSTALLER)
+      const { updater } = await createUpdater(tmpDir, () => `${cdn.url}/${INSTALLER_NAME}`)
+      updater.requestHeaders = null
+      const logger = makeLogger()
+      updater.logger = logger
+      const crossOriginHeaders = vi.fn((_headerNames: string[]) => [])
+      updater.crossOriginHeaders = crossOriginHeaders
+
+      await updater.checkForUpdates()
+      await updater.downloadUpdate()
+
+      expect(cdn.requests).toHaveLength(1)
+      expect(crossOriginHeaders).toHaveBeenCalled()
+      expect(droppedNotices(logger)).toEqual([])
+    })
+
+    test("not when it keeps every header", async ({ tmpDir, expect }) => {
+      const cdn = await serve(tmpDir)
+      await cdn.write(INSTALLER_NAME, INSTALLER)
+      const { updater } = await createUpdater(tmpDir, () => `${cdn.url}/${INSTALLER_NAME}`)
+      const logger = makeLogger()
+      updater.logger = logger
+      updater.crossOriginHeaders = headerNames => headerNames
+
+      await updater.checkForUpdates()
+      await updater.downloadUpdate()
+
+      expect(cdn.requests[0].headers).toMatchObject({ authorization: "Bearer s", "x-tenant": "acme" })
+      expect(droppedNotices(logger)).toEqual([])
+    })
+  })
+
+  // runtime options built by hand (or in plain JavaScript) without the updater's policy: no request to another origin could choose its headers
+  for (const [label, value] of [
+    ["left out", undefined],
+    ["null", null],
+    ["an object", {}],
+  ] as const) {
+    test(`a provider whose runtime options have a crossOriginHeaderPolicy ${label} throws ERR_UPDATER_CROSS_ORIGIN_HEADER_POLICY_MISSING`, async ({ expect }) => {
+      const updater = await createNsisUpdater("1.0.0")
+      const runtimeOptions = { ...(updater as any).createProviderRuntimeOptions(), crossOriginHeaderPolicy: value }
+      expect(() => new GenericProvider({ provider: "generic", url: "https://feed.example.com/" }, updater, runtimeOptions)).toThrow(
+        expect.objectContaining({
+          code: "ERR_UPDATER_CROSS_ORIGIN_HEADER_POLICY_MISSING",
+          message: expect.stringContaining("https://www.electron.build/docs/migration/v27-developer-changes#custom-provider-feed-base-url"),
+        })
+      )
+    })
+  }
+
+  // Electron's net connects to a Host header's value instead of the URL's host: it never goes to another origin, even with a callback
+  // that keeps every header
+  test("a Host header is never offered to it nor sent to another origin", async ({ tmpDir, expect }) => {
+    const cdn = await serve(tmpDir)
+    await cdn.write(INSTALLER_NAME, INSTALLER)
+    const { updater } = await createUpdater(tmpDir, () => `${cdn.url}/${INSTALLER_NAME}`)
+    updater.requestHeaders = { ...updater.requestHeaders, Host: "feed.internal.example" }
+    const crossOriginHeaders = vi.fn((headerNames: string[]) => headerNames)
+    updater.crossOriginHeaders = crossOriginHeaders
+
+    await updater.checkForUpdates()
+    await updater.downloadUpdate()
+
+    expect(crossOriginHeaders).toHaveBeenCalled()
+    for (const [headerNames] of crossOriginHeaders.mock.calls) {
+      expect(headerNames).not.toContain("host")
+    }
+    expect(cdn.requests).toHaveLength(1)
+    expect(cdn.requests[0].headers.host).toBe(new URL(cdn.url).host)
+    expect(cdn.requests[0].headers["x-tenant"]).toBe("acme")
   })
 
   // e.g. a custom provider written in plain JavaScript, or built on another copy of electron-updater: without its feed's origin, no other

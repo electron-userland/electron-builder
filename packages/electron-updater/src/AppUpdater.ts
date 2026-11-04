@@ -5,6 +5,7 @@ import {
   asArray,
   CancellationToken,
   CrossOriginHeaderPolicy,
+  CrossOriginHop,
   deepAssign,
   DEFAULT_MAX_UPDATE_INFO_SIZE,
   isValidMaxUpdateInfoSize,
@@ -81,13 +82,21 @@ function crossOriginHeadersNotConfiguredError(subject: string): Error {
   )
 }
 
+// The headers the updater builds for each request itself: sent to another origin whatever the callback returns (see
+// HttpExecutor.crossOriginHeaders and configureRequestOptions), so leaving them out drops nothing
+const UPDATER_OWN_HEADER_NAMES: ReadonlySet<string> = new Set(["accept", "cache-control", "range", "user-agent"])
+
 /**
  * The updater's {@link CrossOriginHeaderPolicy}: asks the app's callback, read from `getCallback` at each hop, which of the request headers to
  * send, and fails the request with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` without a callback, or with
  * `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS` when it throws or returns anything but an array of strings. The callback never sees a header
- * value, and the errors hold neither a value nor what the callback returned.
+ * value, and the errors hold neither a value nor what the callback returned. `onDropped` gets the lowercase names of the app's and the
+ * provider's headers the callback left out (never the updater's own), when there are any.
  */
-export function createCrossOriginHeaderPolicy(getCallback: () => CrossOriginHeadersCallback | null): CrossOriginHeaderPolicy {
+export function createCrossOriginHeaderPolicy(
+  getCallback: () => CrossOriginHeadersCallback | null,
+  onDropped: (headerNames: ReadonlyArray<string>, hop: CrossOriginHop) => void = () => undefined
+): CrossOriginHeaderPolicy {
   return (headers, hop) => {
     const callback = getCallback()
     // a plain-JavaScript app can set anything
@@ -112,6 +121,10 @@ export function createCrossOriginHeaderPolicy(getCallback: () => CrossOriginHead
       )
     }
     const keptNames = new Set(kept.map(it => it.toLowerCase()))
+    const droppedNames = headerNames.filter(it => !keptNames.has(it) && !UPDATER_OWN_HEADER_NAMES.has(it))
+    if (droppedNames.length !== 0) {
+      onDropped(droppedNames, hop)
+    }
     const result: OutgoingHttpHeaders = {}
     for (const [name, value] of Object.entries(deepAssign<OutgoingHttpHeaders>({}, headers))) {
       if (keptNames.has(name.toLowerCase())) {
@@ -448,12 +461,23 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * request with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`.
    *
    * @example autoUpdater.crossOriginHeaders = () => [] // none of them
-   * @example autoUpdater.crossOriginHeaders = (headerNames, hop) => (hop.to.hostname === "cdn.example.com" ? headerNames.filter(it => it === "x-tenant") : [])
+   * @example autoUpdater.crossOriginHeaders = (headerNames, hop) => (hop.to.origin === "https://cdn.example.com" ? headerNames.filter(it => it === "x-tenant") : [])
    */
   crossOriginHeaders: CrossOriginHeadersCallback | null = null
 
   // the updater's executor, provider requests and downloads ask the app's crossOriginHeaders through it, at each hop
-  private readonly crossOriginHeaderPolicy: CrossOriginHeaderPolicy = createCrossOriginHeaderPolicy(() => this.crossOriginHeaders)
+  private readonly crossOriginHeaderPolicy: CrossOriginHeaderPolicy = createCrossOriginHeaderPolicy(
+    () => this.crossOriginHeaders,
+    (headerNames, hop) => this.announceDroppedCrossOriginHeaders(headerNames, hop)
+  )
+
+  // Once per origin, names and origins only (never a value): a host or CDN that starts redirecting to a new origin shows up in the log
+  private announceDroppedCrossOriginHeaders(headerNames: ReadonlyArray<string>, hop: CrossOriginHop): void {
+    this.limitedLogger(`cross-origin-headers-dropped ${hop.to.origin}`).warn(
+      `autoUpdater.crossOriginHeaders left out ${[...headerNames].sort().join(", ")} for the request from ${hop.from.origin} to ${hop.to.origin}, another origin than the update feed, so they are not sent there. ` +
+        `If that server needs one, keep it for that origin (hop.to.origin) in the callback, or serve the update files from the feed origin. ${CROSS_ORIGIN_HEADERS_DOCS}`
+    )
+  }
 
   // Unset or not a function: what `subject` starts rejects before any request, and emits `error`
   private checkCrossOriginHeadersConfigured(subject: string): Error | null {
@@ -1192,8 +1216,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     return fileExtraDownloadHeaders == null ? { accept: "*/*" } : (acceptHeaderOf(fileExtraDownloadHeaders) ?? {})
   }
 
-  // Only names are logged (query parameter names, origins), never values. The headers left off need no notice: the app chose them (with
-  // crossOriginHeaders), while the feed query has no option.
+  // Only names are logged (query parameter names, origins), never values. The headers left off are announced by
+  // announceDroppedCrossOriginHeaders; the feed query has no option.
   private announceCrossOriginDownload(url: URL, feedBaseUrl: URL): void {
     const feedQueryNames = [...new Set(feedBaseUrl.searchParams.keys())]
     if (feedQueryNames.length !== 0) {

@@ -1243,6 +1243,26 @@ describe("HttpExecutor download Location handling", () => {
   })
 })
 
+// Electron's net connects to a Host header's value instead of the URL's host: on another origin it is removed, whatever the policy keeps
+describe("HttpExecutor.crossOriginHeaders and a Host header", () => {
+  const hop = { from: new URL("https://feed.example.com/updates/"), to: new URL("https://cdn.example.net/app.exe") }
+
+  test("is not offered to the policy, nor sent when the policy adds one", () => {
+    const offered: Array<Array<string>> = []
+    const headers = HttpExecutor.crossOriginHeaders({ Host: "feed.internal.example", "X-Tenant": "acme" }, null, hop, given => {
+      offered.push(Object.keys(given))
+      return { ...given, HOST: "other.example.org" }
+    })
+    expect(offered).toEqual([["X-Tenant"]])
+    expect(headers).toEqual({ "X-Tenant": "acme" })
+  })
+
+  test("is kept on the same origin", () => {
+    const headers = { Host: "feed.internal.example" }
+    expect(HttpExecutor.crossOriginHeaders(headers, null, { from: hop.from, to: new URL("https://feed.example.com/app.exe") }, () => ({}))).toBe(headers)
+  })
+})
+
 describe("HttpExecutor request auth option on a redirect", () => {
   // Node's `auth` option is sent as a Basic Authorization header. Two servers on different ports are two origins.
   async function listen(server: http.Server): Promise<number> {
