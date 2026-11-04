@@ -20,6 +20,7 @@ Changes that only matter if you write code that plugs into electron-builder: bui
 | [ProtonFramework & LibUiFramework removed](#removed-exports) | Import / TS error | Migrate to an Electron-based build setup |
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | TS error | Import the new names — no compat aliases |
 | [`SnapOptions`, `ProtonFramework`, `LibUiFramework` exports removed](#removed-exports) | Import / TS error | Use the `snapcraft` config shape / Electron framework |
+| [builder-util-runtime: a redirect to another origin drops the `auth` option](#builder-util-runtime-cross-origin-headers) | Debug log | None: Basic credentials from a request's `auth` option go only to the original origin |
 | [Hooks reading `files` / `extraResources` / `extraFiles`](#hooks-reading-file-options) | Warns / fails | Read and write `fileOptions.files` / `.extraResources` / `.extraFiles` instead; assigning a flat key throws |
 | [NSIS `customInstallMode` macro guard casing corrected](#nsis-custominstallmode-macro-guard-casing-corrected) | Silent | Rename a `customInstallmode` (lowercase `m`) macro definition in custom NSIS scripts to the documented `customInstallMode` |
 | [Linux maintainer-script EJS syntax removed](#linux-maintainer-script-ejs-template-syntax) | Fails build | Use `${var}` instead of `<%= var %>` |
@@ -148,6 +149,14 @@ These exported TypeScript types were **renamed with no compatibility alias** —
 | `WindowsSigntoolConfiguration` | `WindowsSigntoolSigningConfig` |
 
 `ElectronGetOptions` is re-exported from the top-level `electron-builder` package, so this affects ordinary TypeScript consumers, not just `app-builder-lib` plugin authors.
+
+### builder-util-runtime: a redirect to another origin drops the `auth` option {#builder-util-runtime-cross-origin-headers}
+
+**How you'll find out:** with `DEBUG=electron-builder`, a debug line names both origins (never the credentials).
+
+An `HttpExecutor` follows a redirect to another origin (another host, port or scheme, except an `http` → `https` upgrade of the same host on the default ports) without the request's `auth` option, the Basic credentials Node.js sends as an `Authorization` header for the original origin, whatever the request's headers are.
+
+**Action:** none. A server on another origin that needs credentials gets its own, such as a pre-signed URL.
 
 ---
 

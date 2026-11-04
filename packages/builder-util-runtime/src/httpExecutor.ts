@@ -449,7 +449,11 @@ Please double check that your authentication token is correct. Due to security r
 
     if (HttpExecutor.isCrossOriginRedirect(originalUrl, parsedRedirectUrl)) {
       if (debug.enabled) {
-        debug(`Cross-origin redirect (${originalUrl.host} → ${parsedRedirectUrl.host}): stripping sensitive headers and the auth option`)
+        debug(`Cross-origin redirect (${originalUrl.host} → ${parsedRedirectUrl.host}): stripping sensitive headers`)
+        if (newOptions.auth != null) {
+          // the origins only: never the credentials
+          debug(`Cross-origin redirect (${originalUrl.origin} → ${parsedRedirectUrl.origin}): dropping the request's auth option`)
+        }
       }
       // Node's `auth` option becomes a Basic Authorization header on the request, so it is a credential for the original origin: it is
       // never sent on to another origin, whatever the headers are
