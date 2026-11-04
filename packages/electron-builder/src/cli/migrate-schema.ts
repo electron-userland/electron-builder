@@ -14,7 +14,7 @@ import {
   RESOLVED_LEGACY_CONFIG_OPTIONS,
 } from "app-builder-lib/internal"
 import { log, orNullIfFileNotExist } from "builder-util"
-import { isValidPublisherNameDn } from "builder-util-runtime"
+import { isLoopbackHostname, isValidPublisherNameDn } from "builder-util-runtime"
 import { resolveDefaultKeywordList } from "builder-util/internal"
 import { promises as fs } from "fs"
 import * as path from "path"
@@ -120,6 +120,51 @@ export const FEED_QUERY_ADVISORY =
   "only to downloads on the feed's origin (scheme, host and port); a download url in latest*.yml on another origin is requested without them. " +
   "If those downloads need these credentials, serve the update files from the feed origin or use pre-signed URLs. " +
   "See https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
+
+// Advisory surfaced for a publish feed that electron-updater requests over plain http to a host that is not loopback. Same rule and
+// solution as the build warning (PublishManager's warnAboutInsecureFeed).
+export const INSECURE_FEED_ADVISORY =
+  'publish feed over plain http to a host that is not loopback detected (a generic or custom url, a github protocol: "http" or an s3 endpoint). ' +
+  "electron-updater rejects every update request over http to a host that is not loopback (localhost, 127.0.0.0/8, ::1) with ERR_UPDATER_INSECURE_FEED, " +
+  "unless the app sets autoUpdater.allowInsecureFeed (meant for dev runs: autoUpdater.allowInsecureFeed = !app.isPackaged). Serve the updates over https. " +
+  "See https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https"
+
+/**
+ * Whether electron-updater requests the feed of the publish entry `entry` over plain http to a host that is not loopback, as the build
+ * warns for it (see PublishManager's warnAboutInsecureFeed): a generic or custom `url`, a github `protocol: "http"` (the `host`, github.com
+ * by default) or an s3 `endpoint` without `accelerate`. A value that is not a string (or, for `accelerate`, not a boolean) is not read.
+ *
+ * @internal exported for migrate-schema-programmatic
+ */
+export function isInsecureFeedEntry(entry: unknown): boolean {
+  if (!isPlainObject(entry)) {
+    return false
+  }
+  let url: unknown
+  if (entry.provider === "generic" || entry.provider === "custom") {
+    url = entry.url
+  } else if (entry.provider === "github") {
+    const host: unknown = entry.host === undefined ? "github.com" : entry.host
+    url = entry.protocol === "http" && typeof host === "string" ? `http://${host}` : null
+  } else if (entry.provider === "s3") {
+    url = entry.accelerate === undefined || entry.accelerate === false ? entry.endpoint : null
+  }
+  if (typeof url !== "string") {
+    return false
+  }
+  try {
+    const feed = new URL(url)
+    return feed.protocol === "http:" && !isLoopbackHostname(feed.hostname)
+  } catch {
+    return false
+  }
+}
+
+function detectInsecureFeed(config: Record<string, any>): boolean {
+  return [config, ...Object.values(config)].some(
+    section => isPlainObject(section) && (Array.isArray(section.publish) ? section.publish : [section.publish]).some(isInsecureFeedEntry)
+  )
+}
 
 /**
  * macOS signing/universal fields that v26 accepted as `null` (meaning "unset") but whose v27 type has no `null`
@@ -620,6 +665,9 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   }
   if (detectGenericFeedQuery(c)) {
     advisories.push(FEED_QUERY_ADVISORY)
+  }
+  if (detectInsecureFeed(c)) {
+    advisories.push(INSECURE_FEED_ADVISORY)
   }
   const pdbPatterns = pdbFilesPatterns(c)
   if (pdbPatterns.length > 0) {

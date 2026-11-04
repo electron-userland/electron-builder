@@ -160,6 +160,8 @@ With `allowInsecureFeed` set, a server's authentication challenge on a request t
 
 Set the publish `url` to `https`, and keep the `http` URL redirecting to the `https` feed: installs that have not updated yet poll the `http` URL from their `app-update.yml` and follow that redirect.
 
+> **Tip:** `electron-builder migrate-schema` prints an advisory for a publish feed that uses `http` to a host that is not loopback (a `generic` or `custom` `url`, a `github` `protocol: "http"` or an `s3` `endpoint`).
+
 ### Windows update signature verification fails closed {#windows-update-signature-verification-fails-closed}
 
 **How you'll find out:** **Silent** at build time. On users' machines the update fails with `ERR_UPDATER_SIGNATURE_UNVERIFIABLE` (with a link here) or `ERR_UPDATER_INVALID_SIGNATURE`.
