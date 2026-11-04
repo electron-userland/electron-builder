@@ -3,6 +3,7 @@ import { createHash } from "crypto"
 import fsExtra from "fs-extra"
 import type { Server } from "http"
 import * as path from "path"
+import { channelFileNotFoundError } from "electron-updater/src/providers/Provider"
 import { afterEach, describe, test } from "vitest"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { createNsisUpdater, makeLogger, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
@@ -44,4 +45,11 @@ describe("the update file URLs the updater logs", () => {
     expect(named).toEqual([`Found version 1.1.0 (url: http://127.0.0.1:${port}/app-1.1.0.exe)`, `Downloading update from http://127.0.0.1:${port}/app-1.1.0.exe`])
     expect(JSON.stringify(logger.infos)).not.toContain("signature-secret")
   })
+})
+
+// a provider's channel file URL copies the feed URL's query (e.g. a token): its errors name it without the query
+test("a provider's channel file error names the URL without its query", ({ expect }) => {
+  const error = channelFileNotFoundError("latest.yml", new URL("https://gitlab.example.com/api/v4/latest.yml?private_token=token-secret"), new Error("404"))
+  expect(error.message).toContain("(https://gitlab.example.com/api/v4/latest.yml)")
+  expect(error.message).not.toContain("token-secret")
 })
