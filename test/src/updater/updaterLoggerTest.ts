@@ -3,7 +3,8 @@ import { DebUpdater, NoOpLogger, type Logger } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import { describe, test, vi } from "vitest"
 
-// isPackaged: false and no forceDevUpdateConfig, so checkForUpdates() logs why it skips and resolves to null
+// isPackaged: false and no forceDevUpdateConfig, so checkForUpdates() logs why it skips and resolves to null (crossOriginHeaders set: it is
+// required unpackaged too)
 const stubApp: AppAdapter = {
   name: "TestApp",
   version: "1.0.0",
@@ -24,6 +25,7 @@ const NO_DOWNLOAD_DEBUG = "checkForUpdatesAndNotify called, downloadPromise is n
 const newUpdater = (logger: Logger | null) => {
   const updater = new DebUpdater(null, stubApp)
   updater.logger = logger
+  updater.crossOriginHeaders = () => []
   return updater
 }
 
