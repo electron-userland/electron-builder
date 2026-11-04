@@ -131,6 +131,9 @@ describe("ElectronHttpExecutor rejects plain http", () => {
         "http://0.0.0.0:8080/app.exe",
         "https://[::]/app.exe",
         "https://[::ffff:7f00:1]/app.exe",
+        // Chromium resolves these to loopback without DNS
+        "https://evil.localhost/app.exe",
+        "https://localhost./app.exe",
       ]) {
         test(`from a host that is not loopback to ${target} fails ${kind}, also with allowInsecureFeed`, async ({ tmpDir, expect }) => {
           for (const isInsecureFeedAllowed of [() => false, () => true]) {
