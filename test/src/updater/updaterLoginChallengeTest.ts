@@ -13,6 +13,7 @@ import { TestAppAdapter } from "../helpers/TestAppAdapter.js"
 // A challenge nothing answers is cancelled: the callback is called without credentials.
 
 const DOWNLOAD_URL = new URL("https://downloads.example.net/TestApp-Setup-1.1.0.exe")
+const LOGIN_DOCS = "https://www.electron.build/docs/features/auto-update#event-login"
 
 function challenge(host: string, port: number, isProxy = false): AuthInfo {
   return { isProxy, scheme: "basic", host, port, realm: "updates" }
@@ -45,8 +46,8 @@ describe("electron-updater login event", () => {
     const proxyCallback = emitChallenge(updater, proxy, feedUrl)
 
     expect(onLogin.mock.calls).toEqual([
-      [server, serverCallback, DOWNLOAD_URL.href],
-      [proxy, proxyCallback, feedUrl.href],
+      [server, expect.any(Function), DOWNLOAD_URL.href],
+      [proxy, expect.any(Function), feedUrl.href],
     ])
     // left to the handler, which did not answer
     expect(serverCallback).not.toHaveBeenCalled()
@@ -83,6 +84,82 @@ describe("electron-updater login event", () => {
 
     expect(emitChallenge(updater, challenge("feed.example.com", 443), new URL("https://feed.example.com/updates/latest.yml")).mock.calls).toEqual([[]])
     expect(emitChallenge(updater, challenge("proxy.corp.example", 3128, true), DOWNLOAD_URL).mock.calls).toEqual([[]])
+  })
+
+  // the warning is the feature: a cancelled challenge would otherwise only show as a 401 or 407
+  test("without a login listener the first cancelled challenge is announced, with the challenger's host and port, not its realm", async ({ tmpDir, expect }) => {
+    const updater = await createUpdater(tmpDir)
+    const logger = makeLogger()
+    updater.logger = logger
+
+    emitChallenge(updater, challenge("proxy.corp.example", 3128, true), DOWNLOAD_URL)
+    emitChallenge(updater, challenge("feed.example.com", 443), new URL("https://feed.example.com/updates/latest.yml"))
+
+    expect(logger.warns).toEqual([
+      "the proxy proxy.corp.example:3128 asked for credentials on an update request, and the challenge was cancelled: autoUpdater has no login listener. " +
+        `Add one that answers it, or serve the updates without authentication. ${LOGIN_DOCS}`,
+    ])
+    expect(logger.warns.join("\n")).not.toContain('updates"')
+  })
+
+  describe("a handler without the url argument", () => {
+    async function createUpdaterWithFeed(tmpDir: TmpDir) {
+      const updater = await createUpdater(tmpDir)
+      const logger = makeLogger()
+      updater.logger = logger
+      // set by the update check, from Provider.feedBaseUrl
+      ;(updater as any).feedOrigin = "https://feed.example.com"
+      return { updater, logger }
+    }
+
+    test("is warned about once, for a server's challenge from another origin than the feed", async ({ tmpDir, expect }) => {
+      const { updater, logger } = await createUpdaterWithFeed(tmpDir)
+      updater.on("login", (_authInfo: AuthInfo, callback: LoginCallback) => callback("user", "secret"))
+
+      emitChallenge(updater, challenge("feed.example.com", 443), new URL("https://feed.example.com/updates/latest.yml"))
+      emitChallenge(updater, challenge("proxy.corp.example", 3128, true), DOWNLOAD_URL)
+      expect(logger.warns).toEqual([])
+
+      emitChallenge(updater, challenge("downloads.example.net", 443), DOWNLOAD_URL)
+      emitChallenge(updater, challenge("other.example.org", 443), new URL("https://other.example.org/app.exe"))
+      expect(logger.warns).toEqual([
+        "the server downloads.example.net:443, on https://downloads.example.net, another origin than the update feed (https://feed.example.com), asked for credentials, and every login handler answers without the url argument: " +
+          `such a handler answers a challenge from any server. Take (authInfo, callback, url) and answer only when new URL(url).origin is the origin your credentials are meant for. ${LOGIN_DOCS}`,
+      ])
+      expect(logger.warns.join("\n")).not.toContain("secret")
+    })
+
+    test("is not warned about when a handler takes url", async ({ tmpDir, expect }) => {
+      const { updater, logger } = await createUpdaterWithFeed(tmpDir)
+      updater.on("login", (_authInfo: AuthInfo, callback: LoginCallback, _url: string) => callback())
+
+      emitChallenge(updater, challenge("downloads.example.net", 443), DOWNLOAD_URL)
+      expect(logger.warns).toEqual([])
+    })
+  })
+
+  describe("a throwing handler", () => {
+    test("cancels the challenge instead of stalling the request", async ({ tmpDir, expect }) => {
+      const updater = await createUpdater(tmpDir)
+      updater.on("login", () => {
+        throw new Error("Bearer value-secret")
+      })
+
+      expect(emitChallenge(updater, challenge("feed.example.com", 443), new URL("https://feed.example.com/updates/latest.yml")).mock.calls).toEqual([[]])
+    })
+
+    test("that answered first keeps its answer: the callback is called once", async ({ tmpDir, expect }) => {
+      const updater = await createUpdater(tmpDir)
+      const logger = makeLogger()
+      updater.logger = logger
+      updater.on("login", (_authInfo, callback, _url) => {
+        callback("user", "secret")
+        throw new Error("Bearer value-secret")
+      })
+
+      expect(emitChallenge(updater, challenge("feed.example.com", 443), new URL("https://feed.example.com/updates/latest.yml")).mock.calls).toEqual([["user", "secret"]])
+      expect(logger.warns.join("\n")).not.toContain("value-secret")
+    })
   })
 })
 
@@ -234,9 +311,10 @@ describe("the updater's own executor", () => {
       requests[0].emit("login", proxy, proxyCallback)
       expect(proxyCallback.mock.calls).toEqual([["user", "secret"]])
 
+      // the callback each handler gets answers the challenge once (see "a throwing handler")
       expect(onLogin.mock.calls).toEqual([
-        [server, serverCallback, DOWNLOAD_URL.href],
-        [proxy, proxyCallback, DOWNLOAD_URL.href],
+        [server, expect.any(Function), DOWNLOAD_URL.href],
+        [proxy, expect.any(Function), DOWNLOAD_URL.href],
       ])
     })
   })

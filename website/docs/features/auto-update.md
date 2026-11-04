@@ -387,7 +387,7 @@ import { autoUpdater } from "electron-updater"
 // none of the app's headers go to another origin
 autoUpdater.crossOriginHeaders = () => []
 // a tenant header for your CDN, nothing for any other origin
-autoUpdater.crossOriginHeaders = (headerNames, hop) => (hop.to.hostname === "cdn.example.com" ? headerNames.filter(it => it === "x-tenant") : [])
+autoUpdater.crossOriginHeaders = (headerNames, hop) => (hop.to.origin === "https://cdn.example.com" ? headerNames.filter(it => it === "x-tenant") : [])
 ```
 
 - **Headers the updater builds.** The headers electron-updater sets for each request itself are sent whatever the callback returns: its default `User-Agent`, `Cache-Control`, the `Accept` it or the provider sets and, for differential downloads, `Range`. A `User-Agent` of your own from `requestHeaders` goes to another origin only when the callback keeps `user-agent`.
@@ -395,6 +395,8 @@ autoUpdater.crossOriginHeaders = (headerNames, hop) => (hop.to.hostname === "cdn
 - **Required, packaged or not.** Without a function, `checkForUpdates()`, `checkForUpdatesAndNotify()` and `downloadUpdate()` emit `error` and reject with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` before any request, and so does each request or redirect to another origin, such as one of the install at launch of an update marked for the next launch, which keeps the update pending. An unpackaged app without `forceDevUpdateConfig`, whose `checkForUpdates()` otherwise skips the check and resolves `null`, gets the same error, so a missing callback shows up in development: set it in dev runs too.
 - **Fails closed.** A callback that throws, or returns anything but an array of strings, fails that request, unsent, with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`. Its message holds no header value.
 - **Read at each hop**, so a new function serves the next request.
+- **Announces what it leaves out.** The first time a request to an origin goes without some of your headers or a provider's (never the updater's own), electron-updater logs a warning, once per origin, naming those headers and both origins (never a value), with a link to the migration guide.
+- **Compare the whole origin** (`hop.to.origin`, scheme and port included), not `hop.to.hostname`, so an `http` URL or another port on the same host does not get your headers.
 
 See [The app chooses the headers sent to another origin](../migration/v27-runtime-changes.md#cross-origin-headers).
 
@@ -402,6 +404,7 @@ See [The app chooses the headers sent to another origin](../migration/v27-runtim
 
 Production updates can start failing with a 401 or 403, or a failed download, when the update host or its CDN starts redirecting to a new origin (a new CDN hostname or storage bucket): that origin gets only the headers your callback keeps for it.
 
+- **Look at the warning.** electron-updater logs one, once per origin, naming the headers your callback left out for that origin and both origins.
 - **Look at the hops.** The callback receives each hop: log `hop.from.origin` and `hop.to.origin` while testing (origins, not full URLs, whose query can hold a signed token). With `DEBUG=electron-builder`, the updater also logs a debug line for each cross-origin request naming the two hosts and the header names it sends, never their values.
 - **Allow specific headers only for origins you trust**, keyed on `hop.to.origin`. Never return all of `headerNames`: that sends your credentials to whatever origin the host redirects to.
 
@@ -547,16 +550,20 @@ Emitted when there is an error while updating.
 * `callback` Function — `callback(username, password)`; called without arguments, it cancels the authentication
 * `url` String — the URL of the update request that got the challenge (after a redirect, the redirect's target)
 
-Emitted when an update request gets an authentication challenge, from a proxy (`authInfo.isProxy`) or from a server. Call `callback(username, password)` to answer it, or `callback()` to cancel it; the request then fails with the challenge's status. Without a `login` listener, electron-updater cancels the challenge.
+Emitted when an update request gets an authentication challenge, from a proxy (`authInfo.isProxy`) or from a server. Call `callback(username, password)` to answer it, or `callback()` to cancel it; the request then fails with the challenge's status. Without a `login` listener, electron-updater cancels the challenge and logs a warning once, naming the challenger's host and port; a listener that throws cancels it too.
 
-A challenge from any origin the updater requests reaches your handler: the feed, a download URL on another origin and the target of a redirect. Before answering with credentials, answer only the proxy or the server they are meant for: check `authInfo.isProxy` for a proxy, and for a server compare the request's origin, `new URL(url).origin`, with your feed's (`authInfo` has no scheme). Call `callback()` for any other:
+A challenge from any origin the updater requests reaches your handler: the feed, a download URL on another origin and the target of a redirect. Answer only the proxy or the server your credentials are meant for: give a proxy its own credentials after checking `authInfo.host`, answer a server only when the request's origin, `new URL(url).origin`, is your feed's (`authInfo` has no scheme), and call `callback()` for any other. A server's challenge from another origin than the feed logs a warning once when no handler takes the `url` argument.
 
 ```typescript
 const FEED_ORIGIN = "https://updates.example.com"
+const PROXY_HOST = "proxy.corp.example"
 
 autoUpdater.on("login", (authInfo, callback, url) => {
-  if (authInfo.isProxy || new URL(url).origin === FEED_ORIGIN) {
-    callback(username, password)
+  if (authInfo.isProxy) {
+    // the proxy's own credentials, never the feed's
+    authInfo.host === PROXY_HOST ? callback(proxyUsername, proxyPassword) : callback()
+  } else if (new URL(url).origin === FEED_ORIGIN) {
+    callback(feedUsername, feedPassword)
   } else {
     callback()
   }

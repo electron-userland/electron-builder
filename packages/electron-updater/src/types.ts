@@ -13,7 +13,7 @@ export type { CrossOriginHop } from "builder-util-runtime"
  * and redirect to another origin than the update feed, never for the feed's own origin, which gets every header.
  *
  * @example () => [] // none of them
- * @example (headerNames, hop) => (hop.to.hostname === "cdn.example.com" ? headerNames.filter(it => it === "x-tenant") : [])
+ * @example (headerNames, hop) => (hop.to.origin === "https://cdn.example.com" ? headerNames.filter(it => it === "x-tenant") : [])
  */
 export type CrossOriginHeadersCallback = (headerNames: string[], hop: CrossOriginHop) => string[]
 
