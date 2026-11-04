@@ -1244,6 +1244,34 @@ describe("HttpExecutor download Location handling", () => {
 })
 
 // Electron's net connects to a Host header's value instead of the URL's host: on another origin it is removed, whatever the policy keeps
+// header names come from servers, apps and providers: __proto__, constructor or prototype must never reach an object's prototype
+describe("HttpExecutor.crossOriginHeaders and header names that are object keys", () => {
+  const hop = { from: new URL("https://feed.example.com/updates/"), to: new URL("https://cdn.example.net/app.exe") }
+  const hostile = () => JSON.parse('{"__proto__": {"polluted": "yes"}, "constructor": "c", "prototype": "p", "X-Tenant": "acme"}') as http.OutgoingHttpHeaders
+
+  test("never pollute a prototype, from the headers, the policy's result or the request's own headers", () => {
+    const result = HttpExecutor.crossOriginHeaders(hostile(), hostile(), hop, given => ({ ...given, ...hostile() }))
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined()
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype)
+    expect((result as Record<string, unknown>).polluted).toBeUndefined()
+    // dropped like the unsafe keys deepAssign never assigns; the other headers are kept
+    expect(Object.keys(result)).toEqual(["X-Tenant"])
+  })
+
+  test("the default policy drops them too", () => {
+    const options = HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", {
+      protocol: "https:",
+      hostname: "feed.example.com",
+      path: "/app.exe",
+      headers: hostile(),
+    })
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined()
+    expect(Object.getPrototypeOf(options.headers)).toBe(Object.prototype)
+    expect(options.headers).toMatchObject({ "X-Tenant": "acme" })
+    expect(Object.keys(options.headers ?? {})).not.toContain("constructor")
+  })
+})
+
 describe("HttpExecutor.crossOriginHeaders and a Host header", () => {
   const hop = { from: new URL("https://feed.example.com/updates/"), to: new URL("https://cdn.example.net/app.exe") }
 

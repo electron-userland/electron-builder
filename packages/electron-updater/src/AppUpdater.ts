@@ -1,12 +1,11 @@
 import { createRequire } from "node:module"
-import { blockMapV2ToV3Keys, decodeBlockMapV3, isBlockMapV3, LogLimiter, toBlockMap } from "builder-util-runtime/internal"
+import { blockMapV2ToV3Keys, decodeBlockMapV3, filterHeaders, isBlockMapV3, LogLimiter, toBlockMap } from "builder-util-runtime/internal"
 import {
   AllPublishOptions,
   asArray,
   CancellationToken,
   CrossOriginHeaderPolicy,
   CrossOriginHop,
-  deepAssign,
   DEFAULT_MAX_UPDATE_INFO_SIZE,
   isValidMaxUpdateInfoSize,
   newError,
@@ -104,7 +103,7 @@ export function createCrossOriginHeaderPolicy(
       throw crossOriginHeadersNotConfiguredError(`The request to ${hop.to.origin}, another origin than ${hop.from.origin},`)
     }
     const target = `the request from ${hop.from.origin} to ${hop.to.origin}`
-    const headerNames = [...new Set(Object.keys(headers).flatMap(name => (headers[name] == null ? [] : [name.toLowerCase()])))]
+    const headerNames = [...new Set(Object.entries(headers).flatMap(([name, value]) => (value == null ? [] : [name.toLowerCase()])))]
     let kept: unknown
     try {
       // copies: the hop's URLs are the updater's
@@ -125,13 +124,7 @@ export function createCrossOriginHeaderPolicy(
     if (droppedNames.length !== 0) {
       onDropped(droppedNames, hop)
     }
-    const result: OutgoingHttpHeaders = {}
-    for (const [name, value] of Object.entries(deepAssign<OutgoingHttpHeaders>({}, headers))) {
-      if (keptNames.has(name.toLowerCase())) {
-        result[name] = value
-      }
-    }
-    return result
+    return filterHeaders(headers, name => keptNames.has(name.toLowerCase()))
   }
 }
 
@@ -466,18 +459,16 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   crossOriginHeaders: CrossOriginHeadersCallback | null = null
 
   // the updater's executor, provider requests and downloads ask the app's crossOriginHeaders through it, at each hop
+  // Dropped headers are announced once per origin, names and origins only (never a value): a host or CDN that starts redirecting to a new
+  // origin shows up in the log
   private readonly crossOriginHeaderPolicy: CrossOriginHeaderPolicy = createCrossOriginHeaderPolicy(
     () => this.crossOriginHeaders,
-    (headerNames, hop) => this.announceDroppedCrossOriginHeaders(headerNames, hop)
+    (headerNames, hop) =>
+      this.limitedLogger(`cross-origin-headers-dropped ${hop.to.origin}`).warn(
+        `autoUpdater.crossOriginHeaders left out ${[...headerNames].sort().join(", ")} for the request from ${hop.from.origin} to ${hop.to.origin}, another origin than the update feed, so they are not sent there. ` +
+          `If that server needs one, keep it for that origin (hop.to.origin) in the callback, or serve the update files from the feed origin. ${CROSS_ORIGIN_HEADERS_DOCS}`
+      )
   )
-
-  // Once per origin, names and origins only (never a value): a host or CDN that starts redirecting to a new origin shows up in the log
-  private announceDroppedCrossOriginHeaders(headerNames: ReadonlyArray<string>, hop: CrossOriginHop): void {
-    this.limitedLogger(`cross-origin-headers-dropped ${hop.to.origin}`).warn(
-      `autoUpdater.crossOriginHeaders left out ${[...headerNames].sort().join(", ")} for the request from ${hop.from.origin} to ${hop.to.origin}, another origin than the update feed, so they are not sent there. ` +
-        `If that server needs one, keep it for that origin (hop.to.origin) in the callback, or serve the update files from the feed origin. ${CROSS_ORIGIN_HEADERS_DOCS}`
-    )
-  }
 
   // Unset or not a function: what `subject` starts rejects before any request, and emits `error`
   private checkCrossOriginHeadersConfigured(subject: string): Error | null {

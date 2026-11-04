@@ -1,6 +1,7 @@
 import { serializeToYaml } from "builder-util"
 import { type CustomPublishOptions } from "builder-util-runtime"
 import type { CrossOriginHeadersCallback, CrossOriginHop } from "electron-updater"
+import { createCrossOriginHeaderPolicy } from "electron-updater/src/AppUpdater"
 import { GenericProvider } from "electron-updater/src/providers/GenericProvider"
 import { createHash } from "crypto"
 import fsExtra from "fs-extra"
@@ -363,6 +364,16 @@ describe("autoUpdater.crossOriginHeaders", () => {
       )
     })
   }
+
+  // header names come from servers, apps and providers: a keep-all callback must not let __proto__ or constructor reach a prototype
+  test("a header named __proto__ or constructor never pollutes a prototype", ({ expect }) => {
+    const policy = createCrossOriginHeaderPolicy(() => headerNames => headerNames)
+    const headers = JSON.parse('{"__proto__": {"polluted": "yes"}, "constructor": "c", "X-Tenant": "acme"}') as OutgoingHttpHeaders
+    const result = policy(headers, { from: new URL("https://feed.example.com/"), to: new URL("https://cdn.example.net/app.exe") })
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined()
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype)
+    expect(result).toEqual({ "X-Tenant": "acme" })
+  })
 
   // Electron's net connects to a Host header's value instead of the URL's host: it never goes to another origin, even with a callback
   // that keeps every header
