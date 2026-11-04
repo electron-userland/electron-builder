@@ -514,16 +514,20 @@ Emitted when there is an error while updating.
 * `callback` Function — `callback(username, password)`; called without arguments, it cancels the authentication
 * `url` String — the URL of the update request that got the challenge (after a redirect, the redirect's target)
 
-Emitted when an update request gets an authentication challenge, from a proxy (`authInfo.isProxy`) or from a server. Call `callback(username, password)` to answer it, or `callback()` to cancel it; the request then fails with the challenge's status. Without a `login` listener, electron-updater cancels the challenge.
+Emitted when an update request gets an authentication challenge, from a proxy (`authInfo.isProxy`) or from a server. Call `callback(username, password)` to answer it, or `callback()` to cancel it; the request then fails with the challenge's status. Without a `login` listener, electron-updater cancels the challenge and logs a warning once, naming the challenger's host and port; a listener that throws cancels it too.
 
-A challenge from any origin the updater requests reaches your handler: the feed, a download URL on another origin and the target of a redirect. Before answering with credentials, answer only the proxy or the server they are meant for: check `authInfo.isProxy` for a proxy, and for a server compare the request's origin, `new URL(url).origin`, with your feed's (`authInfo` has no scheme). Call `callback()` for any other:
+A challenge from any origin the updater requests reaches your handler: the feed, a download URL on another origin and the target of a redirect. Answer only the proxy or the server your credentials are meant for: give a proxy its own credentials after checking `authInfo.host`, answer a server only when the request's origin, `new URL(url).origin`, is your feed's (`authInfo` has no scheme), and call `callback()` for any other. A server's challenge from another origin than the feed logs a warning once when no handler takes the `url` argument.
 
 ```typescript
 const FEED_ORIGIN = "https://updates.example.com"
+const PROXY_HOST = "proxy.corp.example"
 
 autoUpdater.on("login", (authInfo, callback, url) => {
-  if (authInfo.isProxy || new URL(url).origin === FEED_ORIGIN) {
-    callback(username, password)
+  if (authInfo.isProxy) {
+    // the proxy's own credentials, never the feed's
+    authInfo.host === PROXY_HOST ? callback(proxyUsername, proxyPassword) : callback()
+  } else if (new URL(url).origin === FEED_ORIGIN) {
+    callback(feedUsername, feedPassword)
   } else {
     callback()
   }
