@@ -94,7 +94,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
       delete options.headers.Host
     }
     // a host that is not loopback must not reach the user's machine through a redirect, whatever the scheme and allowInsecureFeed
-    if (options.redirectedFromNonLoopback === true && isLoopbackRequest(options)) {
+    if (options.redirectedFromNonLoopback === true && reachesThisMachine(options)) {
       throw newError(
         `electron-updater rejects the redirect to ${options.protocol ?? "http:"}//${requestHost(options)}, a loopback host, from a host that is not loopback: ` +
           `a loopback update URL is only followed when every URL before it is on a loopback host. See ${INSECURE_FEED_DOCS}`,
@@ -203,14 +203,45 @@ function requestHost(options: ApiRequestOptions): string {
   return options.host ?? `${options.hostname ?? ""}${options.port == null ? "" : `:${options.port}`}`
 }
 
-function isLoopbackRequest(options: ApiRequestOptions): boolean {
-  let hostname: string | null = null
+// the WHATWG-normalized hostname net.request connects to (e.g. `0x7f.1` is `127.0.0.1`, `[::ffff:127.0.0.1]` is `[::ffff:7f00:1]`), or null
+function requestHostname(options: ApiRequestOptions): string | null {
   try {
-    hostname = new URL(`http://${requestHost(options)}`).hostname
+    return new URL(`http://${requestHost(options)}`).hostname
   } catch {
-    // not a host: not loopback
+    // not a host
+    return null
   }
+}
+
+function isLoopbackRequest(options: ApiRequestOptions): boolean {
+  const hostname = requestHostname(options)
   return hostname != null && isLoopbackHostname(hostname)
+}
+
+/**
+ * Whether the request connects to this machine: a loopback host, the unspecified address (`0.0.0.0`, `::`), which Linux and macOS connect
+ * to the local machine, or an IPv4-mapped IPv6 address of either (`::ffff:127.0.0.0/104`, `::ffff:0.0.0.0`), which dual-stack hosts do. Wider
+ * than the loopback exemption of the https rule, on purpose. A DNS name that resolves to such an address is not caught: that needs the
+ * resolved address, which net.request does not expose before it connects.
+ */
+function reachesThisMachine(options: ApiRequestOptions): boolean {
+  const hostname = requestHostname(options)
+  if (hostname == null) {
+    return false
+  }
+  if (isLoopbackHostname(hostname) || hostname === "0.0.0.0") {
+    return true
+  }
+  const ipv6 = hostname.toLowerCase().replace(/^\[(.*)\]$/, "$1")
+  if (ipv6 === "::") {
+    return true
+  }
+  const mapped = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(ipv6)
+  if (mapped == null) {
+    return false
+  }
+  const high = Number.parseInt(mapped[1], 16)
+  return high >> 8 === 0x7f || (high === 0 && Number.parseInt(mapped[2], 16) === 0)
 }
 
 function addIdleTimeout(request: ClientRequest, reject: (error: Error) => void, timeout: number): void {

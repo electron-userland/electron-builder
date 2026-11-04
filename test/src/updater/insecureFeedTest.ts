@@ -124,7 +124,14 @@ describe("ElectronHttpExecutor rejects plain http", () => {
   describe("a redirect to a loopback host", () => {
     const LOOPBACK_REDIRECT = { code: "ERR_UPDATER_LOOPBACK_REDIRECT" }
     for (const [kind, send] of REQUESTS) {
-      for (const target of ["http://127.0.0.1:8080/app.exe", "https://localhost/app.exe"]) {
+      // the unspecified address and IPv4-mapped loopback reach this machine too (on Linux and macOS, and on dual-stack hosts)
+      for (const target of [
+        "http://127.0.0.1:8080/app.exe",
+        "https://localhost/app.exe",
+        "http://0.0.0.0:8080/app.exe",
+        "https://[::]/app.exe",
+        "https://[::ffff:7f00:1]/app.exe",
+      ]) {
         test(`from a host that is not loopback to ${target} fails ${kind}, also with allowInsecureFeed`, async ({ tmpDir, expect }) => {
           for (const isInsecureFeedAllowed of [() => false, () => true]) {
             const executor = createExecutor({ [HTTPS_URL]: target }, isInsecureFeedAllowed)
