@@ -108,7 +108,7 @@ electron-builder warns once per feed when a `generic` publish `url` (the feed wr
 
 ### The app chooses the headers sent to another origin {#cross-origin-headers}
 
-**How you'll find out:** **runtime error.** Without `autoUpdater.crossOriginHeaders`, `checkForUpdates()`, `checkForUpdatesAndNotify()` and `downloadUpdate()` emit `error` and reject with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` before any request, with a link here, and so does each request or redirect to another origin, such as one of the install at launch of an update marked for the next launch. An unpackaged app without `forceDevUpdateConfig` gets `null` from `checkForUpdates()` without it.
+**How you'll find out:** **runtime error.** Without `autoUpdater.crossOriginHeaders`, `checkForUpdates()`, `checkForUpdatesAndNotify()` and `downloadUpdate()` emit `error` and reject with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` before any request, with a link here, and so does each request or redirect to another origin, such as one of the install at launch of an update marked for the next launch. An unpackaged app without `forceDevUpdateConfig`, which skips the check, gets the same error, so a missing callback shows up in development.
 
 electron-updater asks the app which request headers to send on each request and redirect to another origin than the update feed: a redirect to another origin (another scheme, host or port; an `http` → `https` upgrade of the same host on the default ports is the same origin), and a download, channel file (`latest*.yml`), blockmap, differential range request or other update info request on another origin (see [Update credentials stay on the feed's origin](#update-credentials-stay-on-the-feeds-origin)). `autoUpdater.crossOriginHeaders` is a function that gets the lowercase names of the request headers about to be sent (never their values) and the hop (`{ from, to }`: the feed URL or the URL that redirected, and the URL on the other origin), and returns the names of the ones to send. The feed's own origin, `Provider.feedBaseUrl` (for private GitHub, the GitHub API), gets every header without asking it.
 
@@ -141,12 +141,15 @@ Keep a header only for the origins that may receive it (`hop.to`); otherwise ser
 
 electron-updater rejects every update request over plain `http` before it is sent: the feed (`app-update.yml` or `setFeedURL`), the update files, blockmaps, differential range requests and every redirect they follow, so an `https` request redirected to `http` fails too. Requests to a loopback host (`localhost`, `127.0.0.0/8`, `::1`) are always allowed, so a local test server can serve updates over `http`. This applies to every provider, including a GitHub Enterprise `protocol: "http"` feed and an `s3` `endpoint` that uses `http`. electron-builder's own publishing is not affected.
 
-**Action:** serve the feed and the update files over `https`. Only if a feed cannot be served over `https`, opt out in your main process (anyone on the network path can then tamper with the update information and files; a [signed update manifest](../features/signed-update-manifests.md) and the code signature of the update are then all that protect it):
+**Action:** serve the feed and the update files over `https`. For a test server on another machine, opt out in dev runs only, so it cannot ship enabled (see [Testing against a local update server](../features/auto-update.md#local-update-server)):
 
 ```ts
+import { app } from "electron"
 import { autoUpdater } from "electron-updater"
-autoUpdater.allowInsecureFeed = true
+autoUpdater.allowInsecureFeed = !app.isPackaged
 ```
+
+A packaged app with `allowInsecureFeed` set logs a warning once, at its first update check. Set it to `true` there only for a feed that cannot be served over `https`: anyone on the network path can then tamper with the update information and files, and a [signed update manifest](../features/signed-update-manifests.md) and the code signature of the update are all that protect it.
 
 With `allowInsecureFeed` set, a server's authentication challenge on a request that is neither `https` nor to a loopback host is cancelled, and `login` is not emitted for it, as its authenticity cannot be determined; a proxy's challenge reaches `login` as on `https` (see [Event: `login`](../features/auto-update.md#event-login)).
 

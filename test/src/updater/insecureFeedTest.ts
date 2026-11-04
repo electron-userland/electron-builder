@@ -9,8 +9,8 @@ import type { OutgoingHttpHeaders, RequestOptions } from "http"
 import Module from "node:module"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
-import { describe, test } from "vitest"
-import { blockMapOf, FakeElectronHttpExecutor, FakeNetAnswer, tuneTestUpdater } from "../helpers/updaterTestUtil.js"
+import { describe, test, vi } from "vitest"
+import { blockMapOf, FakeElectronHttpExecutor, FakeNetAnswer, makeLogger, tuneTestUpdater } from "../helpers/updaterTestUtil.js"
 import { TestAppAdapter } from "../helpers/TestAppAdapter.js"
 
 // electron-updater sends every update request (feed, downloads, blockmaps, differential ranges and every redirect) over https,
@@ -192,6 +192,48 @@ describe("AppUpdater.allowInsecureFeed", () => {
     } finally {
       moduleInternals._load = load
     }
+  })
+})
+
+// allowInsecureFeed is meant for development: a packaged app that ships with it announces it, once per updater, at its update checks
+describe("allowInsecureFeed in a packaged app", () => {
+  const ANNOUNCEMENT =
+    "autoUpdater.allowInsecureFeed is true in a packaged app: its update requests and redirects may use plain http to any host, where anyone on the network path can tamper with them. " +
+    "It is meant for development only: set `autoUpdater.allowInsecureFeed = !app.isPackaged` and serve the production feed over https. " +
+    "https://www.electron.build/docs/features/auto-update#allowinsecurefeed"
+
+  async function checkTwice(tmpDir: TmpDir, configure: (updater: NsisUpdater) => void): Promise<Array<string>> {
+    const updater = new NsisUpdater(null, new TestAppAdapter("1.0.0", await tmpDir.getTempDir({ prefix: "insecure-feed-app" })))
+    tuneTestUpdater(updater)
+    const logger = makeLogger()
+    updater.logger = logger
+    updater.autoDownload = false
+    ;(updater as any).httpExecutor = createExecutor()
+    updater.setFeedURL({ provider: "generic", url: "http://feed.example.com/updates" })
+    configure(updater)
+    for (let i = 0; i < 2; i++) {
+      // the fake feed's channel file is not valid update info: only the warnings matter here
+      await updater.checkForUpdates().catch(() => null)
+    }
+    return logger.warns.filter(it => it.includes("allowInsecureFeed"))
+  }
+
+  test("warns once, naming the dev-only setting and the docs", async ({ tmpDir, expect }) => {
+    expect(await checkTwice(tmpDir, updater => (updater.allowInsecureFeed = true))).toEqual([ANNOUNCEMENT])
+  })
+
+  test("does not warn without it", async ({ tmpDir, expect }) => {
+    expect(await checkTwice(tmpDir, () => undefined)).toEqual([])
+  })
+
+  test("does not warn in an unpackaged run (forceDevUpdateConfig)", async ({ tmpDir, expect }) => {
+    const warns = await checkTwice(tmpDir, updater => {
+      // @ts-expect-error accessing the protected app adapter
+      vi.spyOn(updater.app, "isPackaged", "get").mockReturnValue(false)
+      updater.forceDevUpdateConfig = true
+      updater.allowInsecureFeed = true
+    })
+    expect(warns).toEqual([])
   })
 })
 

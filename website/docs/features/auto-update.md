@@ -255,6 +255,7 @@ Note that in order to develop/test UI/UX of updating without packaging the appli
 In latest version you need [force the updater](https://github.com/electron-userland/electron-builder/issues/6863) to work in "dev" mode:
 ```js
 autoUpdater.forceDevUpdateConfig = true
+autoUpdater.crossOriginHeaders = () => [] // required in dev runs too
 ```
 :::note
 If you see this in logs:
@@ -268,6 +269,25 @@ process.env.APPIMAGE = path.join(__dirname, 'dist', `app_name-${app.getVersion()
 :::
 
 But it is not recommended, better to test auto-update for installed application (especially on Windows). [Minio](https://github.com/electron-userland/electron-builder/issues/3053#issuecomment-401001573) is recommended as a local server for testing updates.
+
+### Testing against a local update server {#local-update-server}
+
+- **Loopback `http` works as is.** A feed on `localhost`, `127.0.0.0/8` or `::1` may use plain `http` with no opt-in, e.g. `url: http://localhost:8080` in `dev-app-update.yml` or the publish configuration.
+- **Another machine (LAN host or VM)** is not loopback, so plain `http` to it fails with `ERR_UPDATER_INSECURE_FEED`. Either serve it over `https` with a certificate the test machine trusts (e.g. made with [mkcert](https://github.com/FiloSottile/mkcert), its root CA installed on that machine), or set [`autoUpdater.allowInsecureFeed = !app.isPackaged`](#allowinsecurefeed) for a dev run. An installed test build is packaged, so it needs `https`.
+- **A redirect from `https` to `http`** (other than to loopback) is rejected with `ERR_UPDATER_INSECURE_FEED`: point the feed straight at the URL that serves the files.
+- **Set [`autoUpdater.crossOriginHeaders`](#crossoriginheaders) in dev runs too.** `checkForUpdates()` rejects with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` without it, unpackaged or not.
+
+```ts
+import { app } from "electron"
+import { autoUpdater } from "electron-updater"
+
+autoUpdater.crossOriginHeaders = () => []
+autoUpdater.allowInsecureFeed = !app.isPackaged // only for an http feed on another machine
+autoUpdater.forceDevUpdateConfig = !app.isPackaged // reads dev-app-update.yml
+await autoUpdater.checkForUpdates()
+```
+
+For a local S3 server, see [Testing Auto-Update Locally with Minio](../tutorials/test-update-on-s3-locally.md).
 
 ## Compatibility
 
@@ -324,14 +344,15 @@ A web update cached by a previous launch, or pending an install on next launch, 
 
 Every request electron-updater sends — the update feed (`app-update.yml` or `setFeedURL`), the update files, blockmaps, differential range requests and every redirect they follow — must use `https`. A request over plain `http`, including an `https` request redirected to `http`, fails with `ERR_UPDATER_INSECURE_FEED` before anything is sent to that URL. Requests to a loopback host (`localhost`, `127.0.0.0/8`, `::1`) are always allowed, so a local test server can serve updates over `http`. electron-builder warns during the build when the feed written to `app-update.yml` (a `generic` or `custom` publish `url`, a `github` `protocol: "http"` or an `s3` `endpoint`) uses `http` to a host that is not loopback.
 
-Serve your updates over `https`. Only if a feed cannot be served over `https`, opt out:
+Serve your updates over `https`. `allowInsecureFeed` is meant for development, such as a [local test server](#local-update-server) on another machine: tie it to `app.isPackaged` so it cannot ship enabled.
 
 ```ts
+import { app } from "electron"
 import { autoUpdater } from "electron-updater"
-autoUpdater.allowInsecureFeed = true // anyone on the network path can then tamper with the update information and files
+autoUpdater.allowInsecureFeed = !app.isPackaged // plain http in dev runs only
 ```
 
-Over `http`, only a [signed update manifest](./signed-update-manifests.md) and the code signature of the update protect it.
+A packaged app with `allowInsecureFeed` set logs a warning once, at its first update check, pointing here. Over `http`, anyone on the network path can tamper with the update information and files: only a [signed update manifest](./signed-update-manifests.md) and the code signature of the update protect them. Set it to `true` in a packaged app only for a feed that cannot be served over `https`.
 
 With `allowInsecureFeed`, a server's authentication challenge on a request that is neither `https` nor to a loopback host is cancelled without emitting [`login`](#event-login), as its authenticity cannot be determined, and electron-updater logs a warning the first time. A proxy's challenge, and a server's on a loopback request, reach `login` as on `https`. For your `login` handler to answer a server, serve the feed and the update files over `https`.
 
@@ -371,11 +392,25 @@ autoUpdater.crossOriginHeaders = (headerNames, hop) => (hop.to.hostname === "cdn
 
 - **Headers the updater builds.** The headers electron-updater sets for each request itself are sent whatever the callback returns: its default `User-Agent`, `Cache-Control`, the `Accept` it or the provider sets and, for differential downloads, `Range`. A `User-Agent` of your own from `requestHeaders` goes to another origin only when the callback keeps `user-agent`.
 - **Headers it leaves out stay on the original origin**: `Authorization` from `addAuthHeader`, your `requestHeaders`, a provider's token (private GitHub, GitLab) and `x-user-staging-id`, which electron-updater sends with update info requests for [staged rollouts](#staged-rollouts).
-- **Required for every packaged app.** Without a function, `checkForUpdates()`, `checkForUpdatesAndNotify()` and `downloadUpdate()` emit `error` and reject with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` before any request, and so does each request or redirect to another origin, such as one of the install at launch of an update marked for the next launch, which keeps the update pending. An unpackaged app without `forceDevUpdateConfig` gets `null` from `checkForUpdates()` without it.
+- **Required, packaged or not.** Without a function, `checkForUpdates()`, `checkForUpdatesAndNotify()` and `downloadUpdate()` emit `error` and reject with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` before any request, and so does each request or redirect to another origin, such as one of the install at launch of an update marked for the next launch, which keeps the update pending. An unpackaged app without `forceDevUpdateConfig`, whose `checkForUpdates()` otherwise skips the check and resolves `null`, gets the same error, so a missing callback shows up in development: set it in dev runs too.
 - **Fails closed.** A callback that throws, or returns anything but an array of strings, fails that request, unsent, with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`. Its message holds no header value.
 - **Read at each hop**, so a new function serves the next request.
 
 See [The app chooses the headers sent to another origin](../migration/v27-runtime-changes.md#cross-origin-headers).
+
+#### When the update host changes its redirects {#cross-origin-host-changes}
+
+Production updates can start failing with a 401 or 403, or a failed download, when the update host or its CDN starts redirecting to a new origin (a new CDN hostname or storage bucket): that origin gets only the headers your callback keeps for it.
+
+- **Look at the hops.** The callback receives each hop: log `hop.from.origin` and `hop.to.origin` while testing (origins, not full URLs, whose query can hold a signed token). With `DEBUG=electron-builder`, the updater also logs a debug line for each cross-origin request naming the two hosts and the header names it sends, never their values.
+- **Allow specific headers only for origins you trust**, keyed on `hop.to.origin`. Never return all of `headerNames`: that sends your credentials to whatever origin the host redirects to.
+
+  ```typescript
+  const allowed = new Map([["https://cdn.example.com", ["x-tenant"]]])
+  autoUpdater.crossOriginHeaders = (headerNames, hop) => headerNames.filter(it => allowed.get(hop.to.origin)?.includes(it) ?? false)
+  ```
+
+- **Test against a staging feed** that redirects the way production will, before you roll out a new host, CDN or app release. Installed apps keep the callback they shipped with: until they update to a release that allows the new origin, keep serving them from an origin they allow, or from URLs that need none of your headers (such as pre-signed URLs).
 
 ### Linux installs with gksudo, kdesudo or beesu
 

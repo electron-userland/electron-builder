@@ -269,9 +269,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * file downloads, blockmaps and every redirect they follow) must use `https`, except to a loopback host (`localhost`, `127.0.0.0/8`,
    * `::1`): any other request, including an `https` request redirected to `http`, fails with `ERR_UPDATER_INSECURE_FEED`.
    *
-   * Set it to `true` only for a feed that cannot be served over `https`: anyone on the network path can then tamper with the update
-   * information and files, so only a [signed update manifest](https://www.electron.build/docs/features/signed-update-manifests) and the
-   * code signature of the update protect it. A server's authentication challenge on a request that is not `https` and not to a loopback
+   * Meant for development and local test servers: set it to `!app.isPackaged` so that it never ships enabled. A packaged app with it set
+   * logs a warning once, at its first update check. Set it to `true` in a packaged app only for a feed that cannot be served over `https`:
+   * anyone on the network path can then tamper with the update information and files, so only a
+   * [signed update manifest](https://www.electron.build/docs/features/signed-update-manifests) and the code signature of the update
+   * protect it. A server's authentication challenge on a request that is not `https` and not to a loopback
    * host is then cancelled without emitting `login`, as its authenticity cannot be determined: serve the feed over `https` for the app's
    * `login` handler to answer it.
    *
@@ -460,7 +462,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * itself (the default `User-Agent`, `Cache-Control`, the `Accept` it sets and `Range`) are sent whatever it returns.
    *
    * Without a function, `checkForUpdates`, `checkForUpdatesAndNotify` and `downloadUpdate` reject (and emit `error`) with
-   * `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`, and so does any request to another origin, such as those of the install at launch of an
+   * `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`, also in an unpackaged run that would skip the check, and so does any request to another origin, such as those of the install at launch of an
    * update marked for the next launch: set it before the app is `ready`. A throw, or a result that is not an array of strings, fails that
    * request with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`.
    *
@@ -708,15 +710,17 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   /**
    * Asks the server whether there is an update.
-   * @returns null if the updater is disabled, otherwise info about the latest version
+   * @returns null if the updater is disabled, otherwise info about the latest version. Rejects with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`
+   * without {@link crossOriginHeaders}, whether or not the updater is disabled.
    */
   checkForUpdates(): Promise<UpdateCheckResult | null> {
-    if (!this.isUpdaterActive()) {
-      return Promise.resolve(null)
-    }
+    // before isUpdaterActive: an unpackaged run without the callback reports it too, so a missing one shows up in development
     const notConfigured = this.checkCrossOriginHeadersConfigured("checkForUpdates")
     if (notConfigured != null) {
       return Promise.reject(notConfigured)
+    }
+    if (!this.isUpdaterActive()) {
+      return Promise.resolve(null)
     }
 
     let checkForUpdatesPromise = this.checkForUpdatesPromise
@@ -871,6 +875,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   protected async getUpdateInfoAndProvider(): Promise<UpdateInfoAndProvider> {
     await this.app.whenReady()
+    if (this.allowInsecureFeed && this.app.isPackaged) {
+      this.announceInsecureFeedAllowed()
+    }
 
     if (this.clientPromise == null) {
       this.clientPromise = this.configOnDisk.value.then(it => {
@@ -925,6 +932,15 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       provider: client,
       manifestSignatureVerified,
     }
+  }
+
+  // allowInsecureFeed is meant for development: a packaged app that ships with it accepts tampered update information over plain http
+  private announceInsecureFeedAllowed(): void {
+    this.limitedLogger("insecure-feed-packaged").warn(
+      "autoUpdater.allowInsecureFeed is true in a packaged app: its update requests and redirects may use plain http to any host, where anyone on the network path can tamper with them. " +
+        "It is meant for development only: set `autoUpdater.allowInsecureFeed = !app.isPackaged` and serve the production feed over https. " +
+        "https://www.electron.build/docs/features/auto-update#allowinsecurefeed"
+    )
   }
 
   // A v27 behaviour change that only shows on installed apps: announced once per updater, without the feed URL (it may carry a token in its query)
