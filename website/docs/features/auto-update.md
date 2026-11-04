@@ -255,6 +255,7 @@ Note that in order to develop/test UI/UX of updating without packaging the appli
 In latest version you need [force the updater](https://github.com/electron-userland/electron-builder/issues/6863) to work in "dev" mode:
 ```js
 autoUpdater.forceDevUpdateConfig = true
+autoUpdater.crossOriginHeaders = () => [] // required in dev runs too
 ```
 :::note
 If you see this in logs:
@@ -268,6 +269,25 @@ process.env.APPIMAGE = path.join(__dirname, 'dist', `app_name-${app.getVersion()
 :::
 
 But it is not recommended, better to test auto-update for installed application (especially on Windows). [Minio](https://github.com/electron-userland/electron-builder/issues/3053#issuecomment-401001573) is recommended as a local server for testing updates.
+
+### Testing against a local update server {#local-update-server}
+
+- **Loopback `http` works as is.** A feed on `localhost`, `127.0.0.0/8` or `::1` may use plain `http` with no opt-in, e.g. `url: http://localhost:8080` in `dev-app-update.yml` or the publish configuration.
+- **Another machine (LAN host or VM)** is not loopback, so plain `http` to it fails with `ERR_UPDATER_INSECURE_FEED`. Either serve it over `https` with a certificate the test machine trusts (e.g. made with [mkcert](https://github.com/FiloSottile/mkcert), its root CA installed on that machine), or set [`autoUpdater.allowInsecureFeed = !app.isPackaged`](#allowinsecurefeed) for a dev run. An installed test build is packaged, so it needs `https`.
+- **A redirect from `https` to `http`** (other than to loopback) is rejected with `ERR_UPDATER_INSECURE_FEED`: point the feed straight at the URL that serves the files.
+- **Set [`autoUpdater.crossOriginHeaders`](#crossoriginheaders) in dev runs too.** `checkForUpdates()` rejects with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` without it, unpackaged or not.
+
+```ts
+import { app } from "electron"
+import { autoUpdater } from "electron-updater"
+
+autoUpdater.crossOriginHeaders = () => []
+autoUpdater.allowInsecureFeed = !app.isPackaged // only for an http feed on another machine
+autoUpdater.forceDevUpdateConfig = !app.isPackaged // reads dev-app-update.yml
+await autoUpdater.checkForUpdates()
+```
+
+For a local S3 server, see [Testing Auto-Update Locally with Minio](../tutorials/test-update-on-s3-locally.md).
 
 ## Compatibility
 
@@ -324,7 +344,7 @@ A web update cached by a previous launch, or pending an install on next launch, 
 
 Every request electron-updater sends — the update feed (`app-update.yml` or `setFeedURL`), the update files, blockmaps, differential range requests and every redirect they follow — must use `https`. A request over plain `http`, including an `https` request redirected to `http`, fails with `ERR_UPDATER_INSECURE_FEED` before anything is sent to that URL. Requests to a loopback host (`localhost`, `127.0.0.0/8`, `::1`) are always allowed, so a local test server can serve updates over `http`. electron-builder warns during the build when the feed written to `app-update.yml` (a `generic` or `custom` publish `url`, a `github` `protocol: "http"` or an `s3` `endpoint`) uses `http` to a host that is not loopback.
 
-Serve your updates over `https`. `allowInsecureFeed` is meant for development, such as a local test server on another machine: tie it to `app.isPackaged` so it cannot ship enabled.
+Serve your updates over `https`. `allowInsecureFeed` is meant for development, such as a [local test server](#local-update-server) on another machine: tie it to `app.isPackaged` so it cannot ship enabled.
 
 ```ts
 import { app } from "electron"

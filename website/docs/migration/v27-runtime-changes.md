@@ -141,7 +141,7 @@ Keep a header only for the origins that may receive it (`hop.to`); otherwise ser
 
 electron-updater rejects every update request over plain `http` before it is sent: the feed (`app-update.yml` or `setFeedURL`), the update files, blockmaps, differential range requests and every redirect they follow, so an `https` request redirected to `http` fails too. Requests to a loopback host (`localhost`, `127.0.0.0/8`, `::1`) are always allowed, so a local test server can serve updates over `http`. This applies to every provider, including a GitHub Enterprise `protocol: "http"` feed and an `s3` `endpoint` that uses `http`. electron-builder's own publishing is not affected.
 
-**Action:** serve the feed and the update files over `https`. For a test server on another machine, opt out in dev runs only, so it cannot ship enabled:
+**Action:** serve the feed and the update files over `https`. For a test server on another machine, opt out in dev runs only, so it cannot ship enabled (see [Testing against a local update server](../features/auto-update.md#local-update-server)):
 
 ```ts
 import { app } from "electron"
