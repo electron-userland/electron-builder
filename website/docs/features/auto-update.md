@@ -362,6 +362,20 @@ autoUpdater.crossOriginHeaders = (headerNames, hop) => (hop.to.hostname === "cdn
 
 See [The app chooses the headers sent to another origin](../migration/v27-runtime-changes.md#cross-origin-headers).
 
+#### When the update host changes its redirects {#cross-origin-host-changes}
+
+Production updates can start failing with a 401 or 403, or a failed download, when the update host or its CDN starts redirecting to a new origin (a new CDN hostname or storage bucket): that origin gets only the headers your callback keeps for it.
+
+- **Look at the hops.** The callback receives each hop: log `hop.from.origin` and `hop.to.origin` while testing (origins, not full URLs, whose query can hold a signed token). With `DEBUG=electron-builder`, the updater also logs a debug line for each cross-origin request naming the two hosts and the header names it sends, never their values.
+- **Allow specific headers only for origins you trust**, keyed on `hop.to.origin`. Never return all of `headerNames`: that sends your credentials to whatever origin the host redirects to.
+
+  ```typescript
+  const allowed = new Map([["https://cdn.example.com", ["x-tenant"]]])
+  autoUpdater.crossOriginHeaders = (headerNames, hop) => headerNames.filter(it => allowed.get(hop.to.origin)?.includes(it) ?? false)
+  ```
+
+- **Test against a staging feed** that redirects the way production will, before you roll out a new host, CDN or app release. Installed apps keep the callback they shipped with: until they update to a release that allows the new origin, keep serving them from an origin they allow, or from URLs that need none of your headers (such as pre-signed URLs).
+
 ### Linux installs with gksudo, kdesudo or beesu
 
 To install a deb, rpm or pacman update, electron-updater elevates the package manager with the first helper it finds: `pkexec`, then `gksudo`, `kdesudo` and `beesu`, else `sudo`. `pkexec` and `sudo` take the command as separate arguments, so any installer path works with them. `gksudo`, `kdesudo` and `beesu` take the install command as a single string that a shell and the helper parse again, so with one of them the path of the downloaded package (in the updater's cache directory, file name included) may only hold ASCII letters and digits, the characters `.` `_` `/` `+` `,` `:` `=` `@` `%` `-` (with `kdesudo`, a space too) and non-ASCII characters such as `é`, `中`, `™`, `–`, `’` or emoji. Non-ASCII control, format (such as bidi controls) and separator characters (such as a no-break space or U+2028) are not allowed. Any other path fails the install with `ERR_UPDATER_UNSAFE_INSTALLER_PATH` before the helper runs. Installing polkit, which provides `pkexec`, avoids this: electron-updater then elevates with `pkexec` whatever the path. See [the migration note](../migration/v27-runtime-changes.md#linux-gksudo-kdesudo-and-beesu-refuse-unsafe-installer-paths).
