@@ -186,6 +186,7 @@ describe("login event with allowInsecureFeed", () => {
     expect(warnings).toHaveLength(1)
     expect(warnings[0]).toContain("downloads.example.net:80")
     expect(warnings[0]).toContain("Serve the update feed and files over https")
+    expect(warnings[0]).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https")
   })
 
   test("a server's challenge on an https request and a proxy's challenge on an http request are emitted", async ({ tmpDir, expect }) => {

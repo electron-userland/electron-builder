@@ -104,7 +104,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     if (options.protocol !== "https:" && !this.isInsecureFeedAllowed() && !isLoopbackRequest(options)) {
       throw newError(
         `electron-updater rejects the update request to ${options.protocol ?? "http:"}//${requestHost(options)}: the update feed, its downloads and every redirect must use https, ` +
-          "except to a loopback host (localhost, 127.0.0.0/8, ::1). Serve your updates over https, or set autoUpdater.allowInsecureFeed = true to accept plain http (not recommended). " +
+          "except to a loopback host (localhost, 127.0.0.0/8, ::1). Serve your updates over https; for a test server on another machine, set autoUpdater.allowInsecureFeed = !app.isPackaged, which accepts plain http in dev runs only. " +
           `See ${INSECURE_FEED_DOCS}`,
         "ERR_UPDATER_INSECURE_FEED"
       )

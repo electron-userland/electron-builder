@@ -1069,7 +1069,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       this.limitedLogger("login-challenge-insecure").warn(
         `With allowInsecureFeed, electron-updater emits the login event for a server's authentication challenge only on an https or loopback request: ` +
           `the challenge from ${authInfo.host}:${authInfo.port} on a request that is neither https nor loopback was cancelled, as its authenticity cannot be determined. ` +
-          `Serve the update feed and files over https to answer it. https://www.electron.build/docs/features/auto-update#event-login`
+          `Serve the update feed and files over https to answer it. https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https`
       )
       callback()
       return

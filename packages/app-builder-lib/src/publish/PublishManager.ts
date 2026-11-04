@@ -156,9 +156,9 @@ export function warnAboutInsecureFeed(publishConfig: PublishConfiguration): void
   log
     .once(`insecure-feed:${origin}`)
     .warn(
-      { feed: origin, solution: "serve the updates over https, or set autoUpdater.allowInsecureFeed = true in the app (not recommended)" },
+      { feed: origin, solution: "serve the updates over https; for a test server, set autoUpdater.allowInsecureFeed = !app.isPackaged in the app (dev runs only)" },
       "the update feed written to app-update.yml uses plain http. electron-updater rejects every update request over http to a host " +
-        "that is not loopback (localhost, 127.0.0.0/8, ::1) with ERR_UPDATER_INSECURE_FEED, unless the app sets autoUpdater.allowInsecureFeed = true. " +
+        "that is not loopback (localhost, 127.0.0.0/8, ::1) with ERR_UPDATER_INSECURE_FEED, unless the app sets autoUpdater.allowInsecureFeed (meant for dev runs: autoUpdater.allowInsecureFeed = !app.isPackaged). " +
         "See https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https"
     )
 }

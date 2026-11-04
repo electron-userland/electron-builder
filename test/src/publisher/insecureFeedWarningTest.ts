@@ -22,7 +22,8 @@ describe("plain http feed url in app-update.yml", () => {
     const [fields, message] = warn.mock.calls[0] as unknown as [Record<string, string>, string]
     expect(fields.feed).toBe("http://updates.example.com:8080")
     expect(message).toContain("electron-updater rejects every update request over http to a host that is not loopback")
-    expect(message).toContain("autoUpdater.allowInsecureFeed = true")
+    expect(message).toContain("autoUpdater.allowInsecureFeed = !app.isPackaged")
+    expect(fields.solution).toContain("autoUpdater.allowInsecureFeed = !app.isPackaged")
     expect(message).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https")
     const logged = JSON.stringify(warn.mock.calls)
     for (const secret of ["secret-password", "secret-token", "/win/", "user:"]) {

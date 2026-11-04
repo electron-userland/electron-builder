@@ -86,7 +86,7 @@ describe("ElectronHttpExecutor rejects plain http", () => {
       )
       expect(error).toMatchObject(INSECURE_FEED)
       expect((error as Error).message).toContain("electron-updater rejects the update request to http://feed.example.com:")
-      expect((error as Error).message).toContain("autoUpdater.allowInsecureFeed = true")
+      expect((error as Error).message).toContain("autoUpdater.allowInsecureFeed = !app.isPackaged")
       expect((error as Error).message).toContain(DOCS)
       expect(executor.sent).toEqual([])
     })
