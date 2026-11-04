@@ -120,11 +120,28 @@ describe("autoUpdater.crossOriginHeaders", () => {
       }
     }
 
-    // an app run unpackaged without forceDevUpdateConfig never checks, so it needs no configuration
-    test("not by an unpackaged app, whose checkForUpdates resolves null", async ({ tmpDir, expect }) => {
+    // an app run unpackaged without forceDevUpdateConfig never checks, but still reports a missing callback, so it shows up in development
+    for (const [method, , call] of calls) {
+      test(`${method} of an unpackaged app without it emits error and rejects`, async ({ tmpDir, expect }) => {
+        const { updater, feed, events } = await createUpdater(tmpDir)
+        // @ts-expect-error accessing the protected app adapter
+        vi.spyOn(updater.app, "isPackaged", "get").mockReturnValue(false)
+        updater.crossOriginHeaders = null
+        const errors: Array<Error> = []
+        updater.on("error", error => errors.push(error))
+
+        const error = await rejection(call(updater))
+        expect(error).toMatchObject({ code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED" })
+        expect(feed.requests).toEqual([])
+        expect(events).toEqual(["error"])
+        expect(errors).toEqual([error])
+      })
+    }
+
+    test("an unpackaged app with it skips the check: checkForUpdates resolves null", async ({ tmpDir, expect }) => {
       const { updater, feed, events } = await createUpdater(tmpDir)
-      Object.defineProperty((updater as any).app, "isPackaged", { value: false })
-      updater.crossOriginHeaders = null
+      // @ts-expect-error accessing the protected app adapter
+      vi.spyOn(updater.app, "isPackaged", "get").mockReturnValue(false)
 
       await expect(updater.checkForUpdates()).resolves.toBeNull()
       await expect(updater.checkForUpdatesAndNotify()).resolves.toBeNull()

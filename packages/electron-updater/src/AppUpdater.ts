@@ -443,7 +443,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * itself (the default `User-Agent`, `Cache-Control`, the `Accept` it sets and `Range`) are sent whatever it returns.
    *
    * Without a function, `checkForUpdates`, `checkForUpdatesAndNotify` and `downloadUpdate` reject (and emit `error`) with
-   * `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`, and so does any request to another origin, such as those of the install at launch of an
+   * `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`, also in an unpackaged run that would skip the check, and so does any request to another origin, such as those of the install at launch of an
    * update marked for the next launch: set it before the app is `ready`. A throw, or a result that is not an array of strings, fails that
    * request with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`.
    *
@@ -688,15 +688,17 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   /**
    * Asks the server whether there is an update.
-   * @returns null if the updater is disabled, otherwise info about the latest version
+   * @returns null if the updater is disabled, otherwise info about the latest version. Rejects with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`
+   * without {@link crossOriginHeaders}, whether or not the updater is disabled.
    */
   checkForUpdates(): Promise<UpdateCheckResult | null> {
-    if (!this.isUpdaterActive()) {
-      return Promise.resolve(null)
-    }
+    // before isUpdaterActive: an unpackaged run without the callback reports it too, so a missing one shows up in development
     const notConfigured = this.checkCrossOriginHeadersConfigured("checkForUpdates")
     if (notConfigured != null) {
       return Promise.reject(notConfigured)
+    }
+    if (!this.isUpdaterActive()) {
+      return Promise.resolve(null)
     }
 
     let checkForUpdatesPromise = this.checkForUpdatesPromise
