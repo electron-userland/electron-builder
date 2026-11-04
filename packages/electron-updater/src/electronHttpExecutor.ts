@@ -82,7 +82,8 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
 
   /**
    * Every request of the updater, a redirected one included, is created here: one that is not https throws `ERR_UPDATER_INSECURE_FEED`
-   * unless it goes to a loopback host or the app set `allowInsecureFeed`.
+   * unless it goes to a loopback host or the app set `allowInsecureFeed`, and a redirect to a loopback host from a URL that is not on one
+   * throws `ERR_UPDATER_LOOPBACK_REDIRECT` (see `ApiRequestOptions.redirectedFromNonLoopback`).
    */
   createRequest(options: any, callback: (response: any) => void): Electron.ClientRequest {
     // fix (node 7+) for making electron updater work when using AWS private buckets, check if headers contain Host property
@@ -92,8 +93,21 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
       // remove header property 'Host', if not removed causes net::ERR_INVALID_ARGUMENT exception
       delete options.headers.Host
     }
-    if (options.protocol !== "https:" && !this.isInsecureFeedAllowed()) {
-      checkInsecureRequestIsLoopback(options)
+    // a host that is not loopback must not reach the user's machine through a redirect, whatever the scheme and allowInsecureFeed
+    if (options.redirectedFromNonLoopback === true && isLoopbackRequest(options)) {
+      throw newError(
+        `electron-updater rejects the redirect to ${options.protocol ?? "http:"}//${requestHost(options)}, a loopback host, from a host that is not loopback: ` +
+          `a loopback update URL is only followed when every URL before it is on a loopback host. See ${INSECURE_FEED_DOCS}`,
+        "ERR_UPDATER_LOOPBACK_REDIRECT"
+      )
+    }
+    if (options.protocol !== "https:" && !this.isInsecureFeedAllowed() && !isLoopbackRequest(options)) {
+      throw newError(
+        `electron-updater rejects the update request to ${options.protocol ?? "http:"}//${requestHost(options)}: the update feed, its downloads and every redirect must use https, ` +
+          "except to a loopback host (localhost, 127.0.0.0/8, ::1). Serve your updates over https, or set autoUpdater.allowInsecureFeed = true to accept plain http (not recommended). " +
+          `See ${INSECURE_FEED_DOCS}`,
+        "ERR_UPDATER_INSECURE_FEED"
+      )
     }
     return this.createNetRequest(options, callback)
   }
@@ -184,24 +198,19 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
 
 const INSECURE_FEED_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https"
 
-function checkInsecureRequestIsLoopback(options: ApiRequestOptions): void {
-  // net.request connects to `host` (with its port) when it is set, else to `hostname` and `port`; without a protocol it uses http
-  const host = options.host ?? `${options.hostname ?? ""}${options.port == null ? "" : `:${options.port}`}`
+// net.request connects to `host` (with its port) when it is set, else to `hostname` and `port`
+function requestHost(options: ApiRequestOptions): string {
+  return options.host ?? `${options.hostname ?? ""}${options.port == null ? "" : `:${options.port}`}`
+}
+
+function isLoopbackRequest(options: ApiRequestOptions): boolean {
   let hostname: string | null = null
   try {
-    hostname = new URL(`http://${host}`).hostname
+    hostname = new URL(`http://${requestHost(options)}`).hostname
   } catch {
     // not a host: not loopback
   }
-  if (hostname != null && isLoopbackHostname(hostname)) {
-    return
-  }
-  throw newError(
-    `electron-updater rejects the update request to ${options.protocol ?? "http:"}//${host}: the update feed, its downloads and every redirect must use https, ` +
-      "except to a loopback host (localhost, 127.0.0.0/8, ::1). Serve your updates over https, or set autoUpdater.allowInsecureFeed = true to accept plain http (not recommended). " +
-      `See ${INSECURE_FEED_DOCS}`,
-    "ERR_UPDATER_INSECURE_FEED"
-  )
+  return hostname != null && isLoopbackHostname(hostname)
 }
 
 function addIdleTimeout(request: ClientRequest, reject: (error: Error) => void, timeout: number): void {
