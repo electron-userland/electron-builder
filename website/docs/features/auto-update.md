@@ -351,7 +351,7 @@ import { autoUpdater } from "electron-updater"
 // none of the app's headers go to another origin
 autoUpdater.crossOriginHeaders = () => []
 // a tenant header for your CDN, nothing for any other origin
-autoUpdater.crossOriginHeaders = (headerNames, hop) => (hop.to.hostname === "cdn.example.com" ? headerNames.filter(it => it === "x-tenant") : [])
+autoUpdater.crossOriginHeaders = (headerNames, hop) => (hop.to.origin === "https://cdn.example.com" ? headerNames.filter(it => it === "x-tenant") : [])
 ```
 
 - **Headers the updater builds.** The headers electron-updater sets for each request itself are sent whatever the callback returns: its default `User-Agent`, `Cache-Control`, the `Accept` it or the provider sets and, for differential downloads, `Range`. A `User-Agent` of your own from `requestHeaders` goes to another origin only when the callback keeps `user-agent`.
@@ -359,6 +359,8 @@ autoUpdater.crossOriginHeaders = (headerNames, hop) => (hop.to.hostname === "cdn
 - **Required, packaged or not.** Without a function, `checkForUpdates()`, `checkForUpdatesAndNotify()` and `downloadUpdate()` emit `error` and reject with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` before any request, and so does each request or redirect to another origin, such as one of the install at launch of an update marked for the next launch, which keeps the update pending. An unpackaged app without `forceDevUpdateConfig`, whose `checkForUpdates()` otherwise skips the check and resolves `null`, gets the same error, so a missing callback shows up in development: set it in dev runs too.
 - **Fails closed.** A callback that throws, or returns anything but an array of strings, fails that request, unsent, with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`. Its message holds no header value.
 - **Read at each hop**, so a new function serves the next request.
+- **Announces what it leaves out.** The first time a request to an origin goes without some of your headers or a provider's (never the updater's own), electron-updater logs a warning, once per origin, naming those headers and both origins (never a value), with a link to the migration guide.
+- **Compare the whole origin** (`hop.to.origin`, scheme and port included), not `hop.to.hostname`, so an `http` URL or another port on the same host does not get your headers.
 
 See [The app chooses the headers sent to another origin](../migration/v27-runtime-changes.md#cross-origin-headers).
 
@@ -366,6 +368,7 @@ See [The app chooses the headers sent to another origin](../migration/v27-runtim
 
 Production updates can start failing with a 401 or 403, or a failed download, when the update host or its CDN starts redirecting to a new origin (a new CDN hostname or storage bucket): that origin gets only the headers your callback keeps for it.
 
+- **Look at the warning.** electron-updater logs one, once per origin, naming the headers your callback left out for that origin and both origins.
 - **Look at the hops.** The callback receives each hop: log `hop.from.origin` and `hop.to.origin` while testing (origins, not full URLs, whose query can hold a signed token). With `DEBUG=electron-builder`, the updater also logs a debug line for each cross-origin request naming the two hosts and the header names it sends, never their values.
 - **Allow specific headers only for origins you trust**, keyed on `hop.to.origin`. Never return all of `headerNames`: that sends your credentials to whatever origin the host redirects to.
 

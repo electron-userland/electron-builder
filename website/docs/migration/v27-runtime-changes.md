@@ -99,7 +99,7 @@ electron-updater sends the headers from `requestHeaders` / `addAuthHeader` other
 
 </details>
 
-electron-builder warns once per feed when a `generic` publish `url` (the feed written to `app-update.yml`) has a query string, naming its parameters, and electron-updater logs a warning at run time, once per updater, the first time a download does not get the feed query, naming the query parameters (never their values). The headers left off a request to another origin are the ones your [`crossOriginHeaders`](#cross-origin-headers) leaves out, so no warning names them. A signature failure on a manifest with a `blockMapUrl` says that it is covered by the signature.
+electron-builder warns once per feed when a `generic` publish `url` (the feed written to `app-update.yml`) has a query string, naming its parameters, and electron-updater logs a warning at run time, once per updater, the first time a download does not get the feed query, naming the query parameters (never their values). The first time a request to an origin goes without some of the app's or a provider's headers, because your [`crossOriginHeaders`](#cross-origin-headers) leaves them out, electron-updater logs a warning, once per origin, naming those headers and both origins (never a value). A signature failure on a manifest with a `blockMapUrl` says that it is covered by the signature.
 
 **Action:** set [`autoUpdater.crossOriginHeaders`](#cross-origin-headers). A custom provider that does not extend a built-in one returns its feed URL from `Provider.feedBaseUrl` (see [the developer changes](./v27-developer-changes.md#custom-provider-feed-base-url)). If its update checks call an API on another origin and the API needs those headers, keep them for that origin in `crossOriginHeaders`; otherwise the update check fails (for example with 401 or 403). Otherwise none if your update files are served from the feed origin. If `latest*.yml` uses absolute URLs on another origin that authenticate with your `requestHeaders` / `addAuthHeader`, or with a token in the feed URL's query (e.g. `url: https://updates.example.com/?key=…`), those downloads fail (for example with 401 or 403). Serve the files from the feed origin, or use pre-signed URLs. The manifest signature, [required by default](./v27-build-changes.md#signed-update-manifests-are-required), covers `files[].url` and `packages.<arch>.path`, so pre-signed URLs have to be in `latest*.yml` before it is signed (see [Key storage](../features/key-rotation.md#key-storage)); installs with a public key refuse a manifest whose URLs changed after signing.
 
@@ -114,6 +114,9 @@ electron-updater asks the app which request headers to send on each request and 
 - Every header it leaves out stays on the original origin: `Authorization` from `addAuthHeader`, your `requestHeaders`, a provider's token (private GitHub, GitLab) and `x-user-staging-id`, the per-install ID electron-updater adds to update info requests itself. A request's `auth` option (Basic credentials) never follows a redirect to another origin.
 - The headers electron-updater builds for each request itself are sent whatever it returns: its default `User-Agent`, `Cache-Control`, the `Accept` it or the provider sets, and `Range`, so differential downloads redirected to a CDN keep working with `() => []`. A `User-Agent` of your own from `requestHeaders` goes to another origin only when it keeps `user-agent`.
 - A callback that throws, or returns anything but an array of strings, fails that request, unsent, with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`; the message names the property and the origins, never the result or a header value.
+- The first time a request to an origin goes without some of the app's or a provider's headers, electron-updater logs a warning, once per origin, naming those headers and both origins, never a value, with a link here.
+- builder-util-runtime's `addSensitiveRedirectHeader` does not affect electron-updater: its callback decides every header sent to another origin.
+- A `Host` header is never sent to another origin, whatever the callback returns.
 - It is read at each hop, before the first check and for the install at launch alike. See [`autoUpdater.crossOriginHeaders`](../features/auto-update.md#crossoriginheaders) for the full API.
 
 In builder-util-runtime, an `HttpExecutor` takes a cross-origin header policy as its constructor argument for its own redirects; see [the developer changes](./v27-developer-changes.md#builder-util-runtime-cross-origin-headers).
@@ -127,7 +130,7 @@ autoUpdater.addAuthHeader(`Bearer ${token}`)
 // none of your headers go to another origin: Authorization and your custom headers stay on the feed's origin
 autoUpdater.crossOriginHeaders = () => []
 // or send a header to one other origin only (here a tenant header and the staging ID to your CDN)
-autoUpdater.crossOriginHeaders = (headerNames, hop) => (hop.to.hostname === "cdn.example.com" ? headerNames.filter(it => it === "x-tenant" || it === "x-user-staging-id") : [])
+autoUpdater.crossOriginHeaders = (headerNames, hop) => (hop.to.origin === "https://cdn.example.com" ? headerNames.filter(it => it === "x-tenant" || it === "x-user-staging-id") : [])
 
 await autoUpdater.checkForUpdatesAndNotify()
 ```

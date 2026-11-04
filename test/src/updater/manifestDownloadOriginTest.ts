@@ -568,16 +568,25 @@ describe("differential downloads use the per-download headers", () => {
       return { updater, headersFor, warnings }
     }
 
-    // the headers left off are the ones crossOriginHeaders leaves out, which the app chose: only the feed query is announced
-    test("a cross-origin download announces the feed query once, by name only, and not the headers left off", async ({ tmpDir, expect }) => {
+    // the feed query once per updater, and the headers crossOriginHeaders leaves out once per origin (see crossOriginHeadersTest)
+    test("a cross-origin download announces the feed query once, and the headers left off once per origin, by name only", async ({ tmpDir, expect }) => {
       const { headersFor, warnings } = await setUp(tmpDir)
 
       expect(headersFor("https://cdn.example.net/app-1.1.0.exe")).not.toHaveProperty("authorization")
       headersFor("https://cdn.example.net/app-1.1.0.exe.blockmap")
       headersFor("https://other.example.org/app-1.0.0.exe.blockmap")
 
-      expect(warnings()).toHaveLength(1)
-      const [queryNotice] = warnings()
+      expect(warnings()).toHaveLength(3)
+      const queryNotices = warnings().filter(it => it.includes("query string"))
+      expect(queryNotices).toHaveLength(1)
+      const headerNotices = warnings().filter(it => it.startsWith("autoUpdater.crossOriginHeaders left out"))
+      expect(headerNotices.map(it => /to (\S+), another origin/.exec(it)?.[1])).toEqual(["https://cdn.example.net", "https://other.example.org"])
+      for (const notice of headerNotices) {
+        for (const secret of ["Bearer s", "feed-secret-value", "tenant-secret-value", "acme"]) {
+          expect(notice).not.toContain(secret)
+        }
+      }
+      const [queryNotice] = queryNotices
       expect(queryNotice).toContain("adds the feed URL's query string (token, tenant) only to URLs on the update feed's origin (https://feed.example.com)")
       expect(queryNotice).toContain("not added to the download from https://cdn.example.net")
       expect(queryNotice).toContain(DOCS)
@@ -595,8 +604,9 @@ describe("differential downloads use the per-download headers", () => {
       expect(warnings()).toEqual([])
     })
 
-    test("no feed query: a cross-origin download announces nothing", async ({ tmpDir, expect }) => {
-      const { headersFor, warnings } = await setUp(tmpDir, { feedUrl: "https://feed.example.com/updates/", auth: false })
+    test("no feed query, and every header kept: a cross-origin download announces nothing", async ({ tmpDir, expect }) => {
+      const { updater, headersFor, warnings } = await setUp(tmpDir, { feedUrl: "https://feed.example.com/updates/", auth: false })
+      updater.crossOriginHeaders = headerNames => headerNames
 
       headersFor("https://cdn.example.net/app-1.1.0.exe")
 
@@ -616,7 +626,7 @@ describe("differential downloads use the per-download headers", () => {
 
       expect(headersFor("https://cdn.example.net/app-1.0.0.exe.blockmap", "https://blockmaps.example.org/old/")).not.toHaveProperty("authorization")
 
-      expect(warnings()).toEqual([])
+      expect(warnings().filter(it => it.includes("query string"))).toEqual([])
     })
   })
 })

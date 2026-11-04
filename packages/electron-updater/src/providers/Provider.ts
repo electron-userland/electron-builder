@@ -30,7 +30,7 @@ export interface ProviderRuntimeOptions {
   /**
    * Chooses the request headers each update info request (e.g. a channel file) on another origin than `Provider.feedBaseUrl` sends: the
    * updater's, which asks the app's `crossOriginHeaders`. Set by electron-updater; code that constructs a built-in provider passes on the
-   * runtime options it was given.
+   * runtime options it was given. Without a function, the provider's constructor throws `ERR_UPDATER_CROSS_ORIGIN_HEADER_POLICY_MISSING`.
    */
   crossOriginHeaderPolicy: CrossOriginHeaderPolicy
 }
@@ -65,6 +65,15 @@ export abstract class Provider<T extends UpdateInfo> {
   protected readonly executor: ElectronHttpExecutor
 
   protected constructor(private readonly runtimeOptions: ProviderRuntimeOptions) {
+    // plain JavaScript, or runtime options built by hand, can leave it out: without it no request to another origin could choose its headers
+    const policy: unknown = runtimeOptions.crossOriginHeaderPolicy
+    if (typeof policy !== "function") {
+      throw newError(
+        `The runtime options of the update provider ${new.target.name} have no crossOriginHeaderPolicy (got ${policy === null ? "null" : typeof policy}): ` +
+          `pass on the runtime options electron-updater gave your code, spreading them to change another field. https://www.electron.build/docs/migration/v27-developer-changes#custom-provider-feed-base-url`,
+        "ERR_UPDATER_CROSS_ORIGIN_HEADER_POLICY_MISSING"
+      )
+    }
     this.executor = runtimeOptions.executor
   }
 
