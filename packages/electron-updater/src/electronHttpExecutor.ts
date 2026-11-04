@@ -86,22 +86,23 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     })
     request.on("response", callback)
     const loginChallengeListener = this.loginChallengeListener
-    if (loginChallengeListener != null) {
-      // like Electron's net, `host` (where a Host header goes) wins over hostname and port
-      let authority: string | null = null
-      if (typeof options.host === "string" && options.host !== "") {
-        authority = options.host
-      } else if (typeof options.hostname === "string" && options.hostname !== "") {
-        authority = options.port ? `${options.hostname}:${options.port}` : options.hostname
-      }
-      let requestUrl: URL | null = null
-      try {
-        requestUrl = authority == null ? null : new URL(`${options.protocol}//${authority}${options.path || "/"}`)
-      } catch (_e: unknown) {
-        requestUrl = null
-      }
-      request.on("login", (authInfo: AuthInfo, loginCallback: LoginCallback) => loginChallengeListener(authInfo, loginCallback, requestUrl))
+    if (loginChallengeListener == null) {
+      return request
     }
+    // like Electron's net, `host` (where a Host header goes) wins over hostname and port
+    let authority: string | null = null
+    if (typeof options.host === "string" && options.host !== "") {
+      authority = options.host
+    } else if (typeof options.hostname === "string" && options.hostname !== "") {
+      authority = options.port ? `${options.hostname}:${options.port}` : options.hostname
+    }
+    let requestUrl: URL | null = null
+    try {
+      requestUrl = authority == null ? null : new URL(`${options.protocol}//${authority}${options.path || "/"}`)
+    } catch {
+      // not a URL: the listener cancels the challenge
+    }
+    request.on("login", (authInfo: AuthInfo, loginCallback: LoginCallback) => loginChallengeListener(authInfo, loginCallback, requestUrl))
     return request
   }
 
