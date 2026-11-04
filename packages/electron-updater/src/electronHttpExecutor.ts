@@ -221,18 +221,22 @@ function isLoopbackRequest(options: ApiRequestOptions): boolean {
 /**
  * Whether the request connects to this machine: a loopback host, the unspecified address (`0.0.0.0`, `::`), which Linux and macOS connect
  * to the local machine, or an IPv4-mapped IPv6 address of either (`::ffff:127.0.0.0/104`, `::ffff:0.0.0.0`), which dual-stack hosts do. Wider
- * than the loopback exemption of the https rule, on purpose. A DNS name that resolves to such an address is not caught: that needs the
- * resolved address, which net.request does not expose before it connects.
+ * than the loopback exemption of the https rule, on purpose: it also covers `localhost.` and every `*.localhost` name, which Chromium resolves
+ * to loopback without DNS. Another DNS name that resolves to such an address is not caught: that needs the resolved address, which
+ * net.request does not expose before it connects.
  */
 function reachesThisMachine(options: ApiRequestOptions): boolean {
-  const hostname = requestHostname(options)
-  if (hostname == null) {
+  const requested = requestHostname(options)
+  if (requested == null) {
     return false
   }
-  if (isLoopbackHostname(hostname) || hostname === "0.0.0.0") {
+  // one trailing dot names the same host (`localhost.`)
+  const hostname = requested.toLowerCase().replace(/\.$/, "")
+  // Chromium resolves `localhost` and every `*.localhost` name to loopback itself, without DNS
+  if (isLoopbackHostname(hostname) || hostname === "0.0.0.0" || hostname.endsWith(".localhost")) {
     return true
   }
-  const ipv6 = hostname.toLowerCase().replace(/^\[(.*)\]$/, "$1")
+  const ipv6 = hostname.replace(/^\[(.*)\]$/, "$1")
   if (ipv6 === "::") {
     return true
   }
