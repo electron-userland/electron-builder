@@ -140,7 +140,7 @@ jobs:
         shard: ${{ fromJson(needs.validate-and-shard.outputs.linux) }}
         include:
           - platform: linux
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
             cache-path: ~/.cache/electron
             cache-key: v-39.8.5-linux-electron
     runs-on: ${{ matrix.runner }}
