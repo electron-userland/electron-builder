@@ -1648,6 +1648,9 @@ exports[`posix smart unpack 3`] = `
                 "re.js": {
                   "size": "<size>",
                 },
+                "trim-comparator-whitespace.js": {
+                  "size": "<size>",
+                },
               },
             },
             "package.json": {
