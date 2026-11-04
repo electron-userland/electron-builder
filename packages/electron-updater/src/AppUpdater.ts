@@ -1316,7 +1316,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const fileInfo = taskOptions.fileInfo
     if (fileInfo.info.sha512 == null && (fileInfo.info as any).sha2 != null) {
       this.log.warn(
-        "Update artifact is validated with a SHA-256 (sha2) checksum only. SHA-256 update checksums are deprecated; electron-builder v28 will require SHA-512 and reject SHA-256-only update metadata (fail-closed). Regenerate latest*.yml with a current electron-builder and avoid pinning electronUpdaterCompatibility to a legacy (<2.15 / 1.x) range."
+        "Update artifact is validated with a SHA-256 (sha2) checksum only. sha2 is deprecated, and update metadata without sha512 will be rejected (fail-closed): publish sha512, which electron-builder generates by default, by regenerating latest*.yml with a current electron-builder and not pinning electronUpdaterCompatibility to a legacy (<2.15 / 1.x) range."
       )
     }
     const downloadOptions: DownloadOptions = {
