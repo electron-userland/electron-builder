@@ -40,14 +40,15 @@ export interface CrossOriginHop {
 export type CrossOriginHeaderPolicy = (headers: OutgoingHttpHeaders, hop: CrossOriginHop) => OutgoingHttpHeaders
 
 // the policy of an HttpExecutor without its own (electron-builder's publishers): every header but the credential-bearing ones
-const dropSensitiveHeaders: CrossOriginHeaderPolicy = headers => {
-  const result = deepAssign<OutgoingHttpHeaders>({}, headers)
-  for (const key of Object.keys(result)) {
-    if (SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key))) {
-      delete result[key]
-    }
-  }
-  return result
+const dropSensitiveHeaders: CrossOriginHeaderPolicy = headers => filterHeaders(headers, name => !SENSITIVE_REDIRECT_HEADERS.has(normalizeName(name)))
+
+/**
+ * A copy of the headers of `headers` that `keep` accepts. Built with {@link deepAssign}, which never assigns `__proto__`, `constructor` or
+ * `prototype`: a header name, from a server, the app or a provider, cannot reach an object's prototype. Every header object built from
+ * another one by name goes through here.
+ */
+export function filterHeaders(headers: OutgoingHttpHeaders, keep: (name: string, value: OutgoingHttpHeaders[string]) => boolean): OutgoingHttpHeaders {
+  return deepAssign<OutgoingHttpHeaders>({}, Object.fromEntries(Object.entries(headers).filter(([name, value]) => keep(name, value))))
 }
 
 /**
@@ -513,7 +514,7 @@ Please double check that your authentication token is correct. Due to security r
    * (see {@link HttpExecutor.isCrossOrigin}), without calling `crossOriginHeaderPolicy`; else the ones `crossOriginHeaderPolicy` returns,
    * and the request's `ownHeaders` it left out. A `Host` header is never sent to another origin: it is removed before the policy is asked, and
    * from what it returns, since Electron's `net` connects to a `Host` header's value instead of `hop.to`. Never mutates `headers`; what
-   * `crossOriginHeaderPolicy` throws fails the request.
+   * `crossOriginHeaderPolicy` throws fails the request. The headers are copied with {@link filterHeaders}.
    */
   static crossOriginHeaders(
     headers: OutgoingHttpHeaders,
@@ -524,13 +525,10 @@ Please double check that your authentication token is correct. Due to security r
     if (!HttpExecutor.isCrossOriginRedirect(hop.from, hop.to)) {
       return headers
     }
-    const result = withoutHostHeader(deepAssign<OutgoingHttpHeaders>({}, crossOriginHeaderPolicy(withoutHostHeader(deepAssign<OutgoingHttpHeaders>({}, headers)), hop)))
-    const keptNames = new Set(Object.keys(result).map(it => it.toLowerCase()))
-    for (const [name, value] of Object.entries(ownHeaders ?? {})) {
-      if (value != null && !keptNames.has(name.toLowerCase())) {
-        result[name] = value
-      }
-    }
+    const isNotHost = (name: string) => name.toLowerCase() !== "host"
+    const sent = filterHeaders(crossOriginHeaderPolicy(filterHeaders(headers, isNotHost), hop), isNotHost)
+    const sentNames = new Set(Object.keys(sent).map(it => it.toLowerCase()))
+    const result = { ...sent, ...filterHeaders(ownHeaders ?? {}, (name, value) => value != null && !sentNames.has(name.toLowerCase())) }
     if (debug.enabled) {
       // names only: a value could be a credential
       debug(`Cross-origin request (${hop.from.host} → ${hop.to.host}): sending the headers ${Object.keys(result).join(", ")}`)
@@ -617,16 +615,6 @@ export interface DownloadCallOptions {
   options: DownloadOptions
 
   destination: string | null
-}
-
-// `headers` without its `Host` header, whatever its case (changes `headers`, a copy)
-function withoutHostHeader(headers: OutgoingHttpHeaders): OutgoingHttpHeaders {
-  for (const name of Object.keys(headers)) {
-    if (name.toLowerCase() === "host") {
-      delete headers[name]
-    }
-  }
-  return headers
 }
 
 function parseUrl(url: string, options: RequestOptions): URL {
