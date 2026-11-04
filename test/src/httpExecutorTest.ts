@@ -3,11 +3,19 @@ import { type ApiRequestOptions, CancellationToken, type CrossOriginHeaderPolicy
 import { hashSensitiveValue, REDACTED_VALUE, safeStringifyJson } from "builder-util-runtime/internal"
 import { addSensitiveFieldPattern, addSensitiveRedirectHeader, detectSha512Encoding, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
 import { createHash } from "crypto"
+import { createRequire } from "module"
+import * as path from "path"
 import { EventEmitter } from "events"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { Readable, Writable } from "stream"
 import { pipeline } from "stream/promises"
 import * as http from "http"
+
+interface DebugModule {
+  log: (...args: Array<unknown>) => void
+  enable: (namespaces: string) => void
+  disable: () => string
+}
 
 describe("HttpExecutor.prepareRedirectUrlOptions", () => {
   describe("basic functionality", () => {
@@ -1290,6 +1298,28 @@ describe("HttpExecutor request auth option on a redirect", () => {
   ] as const)("a redirect to %s keeps the auth option: %s", ([, isKept, location]) => {
     const options = HttpExecutor.prepareRedirectUrlOptions(location, { protocol: "https:", hostname: "feed.example.com", path: "/updates/app.exe", auth: "user:secret" })
     expect(options.auth).toBe(isKept ? "user:secret" : undefined)
+  })
+
+  // the debug line is the feature: DEBUG=electron-builder shows the dropped option with both origins, never the credentials
+  test("a dropped auth option is logged at debug level with both origins, without the credentials", () => {
+    // the debug module builder-util-runtime itself loads
+    const runtimeDebug = createRequire(path.join(__dirname, "..", "..", "packages", "builder-util-runtime", "package.json"))("debug") as DebugModule
+    const lines: Array<string> = []
+    const previousLog = runtimeDebug.log
+    const previousNamespaces = runtimeDebug.disable()
+    runtimeDebug.log = (...args: Array<unknown>) => lines.push(args.map(String).join(" "))
+    runtimeDebug.enable("electron-builder")
+    try {
+      HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", { protocol: "https:", hostname: "feed.example.com", path: "/app.exe", auth: "user:secret" })
+      HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", { protocol: "https:", hostname: "feed.example.com", path: "/app.exe" })
+    } finally {
+      runtimeDebug.log = previousLog
+      runtimeDebug.enable(previousNamespaces)
+    }
+    const authLines = lines.filter(it => it.includes("auth option"))
+    expect(authLines).toHaveLength(1)
+    expect(authLines[0]).toContain("https://feed.example.com → https://cdn.example.net")
+    expect(lines.join("\n")).not.toContain("secret")
   })
 })
 
