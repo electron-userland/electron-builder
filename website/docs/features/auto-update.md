@@ -324,14 +324,15 @@ A web update cached by a previous launch, or pending an install on next launch, 
 
 Every request electron-updater sends — the update feed (`app-update.yml` or `setFeedURL`), the update files, blockmaps, differential range requests and every redirect they follow — must use `https`. A request over plain `http`, including an `https` request redirected to `http`, fails with `ERR_UPDATER_INSECURE_FEED` before anything is sent to that URL. Requests to a loopback host (`localhost`, `127.0.0.0/8`, `::1`) are always allowed, so a local test server can serve updates over `http`. electron-builder warns during the build when the feed written to `app-update.yml` (a `generic` or `custom` publish `url`, a `github` `protocol: "http"` or an `s3` `endpoint`) uses `http` to a host that is not loopback.
 
-Serve your updates over `https`. Only if a feed cannot be served over `https`, opt out:
+Serve your updates over `https`. `allowInsecureFeed` is meant for development, such as a local test server on another machine: tie it to `app.isPackaged` so it cannot ship enabled.
 
 ```ts
+import { app } from "electron"
 import { autoUpdater } from "electron-updater"
-autoUpdater.allowInsecureFeed = true // anyone on the network path can then tamper with the update information and files
+autoUpdater.allowInsecureFeed = !app.isPackaged // plain http in dev runs only
 ```
 
-Over `http`, only a [signed update manifest](./signed-update-manifests.md) and the code signature of the update protect it.
+A packaged app with `allowInsecureFeed` set logs a warning once, at its first update check, pointing here. Over `http`, anyone on the network path can tamper with the update information and files: only a [signed update manifest](./signed-update-manifests.md) and the code signature of the update protect them. Set it to `true` in a packaged app only for a feed that cannot be served over `https`.
 
 With `allowInsecureFeed`, a server's authentication challenge on a request that is neither `https` nor to a loopback host is cancelled without emitting [`login`](#event-login), as its authenticity cannot be determined, and electron-updater logs a warning the first time. A proxy's challenge, and a server's on a loopback request, reach `login` as on `https`. For your `login` handler to answer a server, serve the feed and the update files over `https`.
 
