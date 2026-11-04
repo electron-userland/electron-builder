@@ -1694,7 +1694,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         if (!(await isBlockMapOfFile(oldBlockMapData.map, downloadOptions.oldFile))) {
           // e.g. a server that serves another release's blockmap under the derived name: planned against it, the download fails the sha512 check
           this.log.info(
-            `The blockmap downloaded from "${oldBlockMapUrl}" does not describe the cached "${oldInstallerFileName}" (malformed, or its blocks do not end at the file size): downloading the full update`
+            `The blockmap downloaded from "${urlWithoutQuery(oldBlockMapUrl)}" does not describe the cached "${oldInstallerFileName}" (malformed, or its blocks do not end at the file size): downloading the full update`
           )
           return true
         }
