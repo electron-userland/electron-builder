@@ -237,7 +237,7 @@ function checkElectronUpdater(metadata: Metadata, devMetadata: any | null, error
     const ranges = [...new Set(unsatisfied.map(it => `"${it.range}"`))].join(", ")
     const platforms = unsatisfied.map(it => it.platform).join(", ")
     errors.push(
-      `electron-updater ${version}${source} does not satisfy electronUpdaterCompatibility ${ranges} of ${platforms} (the default is "${DEFAULT_ELECTRON_UPDATER_COMPATIBILITY}" since electron-builder 27). ` +
+      `electron-updater ${version}${source} does not satisfy electronUpdaterCompatibility ${ranges} of ${platforms} (the default is "${DEFAULT_ELECTRON_UPDATER_COMPATIBILITY}"). ` +
         `Upgrade electron-updater to 7, or set electronUpdaterCompatibility to a range that includes "<7" (e.g. ">=6"), which switches the build to the JSON block map. ` +
         `See ${BLOCK_MAP_FORMAT_DOCS_URL}`
     )
