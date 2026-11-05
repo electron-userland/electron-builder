@@ -6,8 +6,8 @@ title: "Security & Hardening"
 
 electron-builder aims to be secure-by-default across the whole release pipeline — from how updates are verified, to how your app's contents are integrity-checked, to how artifacts are signed and published. This page is a map of those controls; each section links out to the detailed guide rather than repeating it.
 
-:::info[Upgrading from v26]
-The defaults below cover auto-update web installers, update-metadata format, and explicit publishing. If you are upgrading from v26, read this page alongside the [v27 Breaking Changes](../migration/v27-breaking-changes.md).
+:::info[Upgrading]
+The defaults below cover auto-update web installers, update-metadata format, and explicit publishing. When upgrading, read this page alongside the [migration guide](../migration/v27-breaking-changes.md).
 :::
 
 ## Update security (electron-updater)
@@ -61,10 +61,10 @@ Signing proves your app's identity and lets the OS confirm it hasn't been tamper
 
 ## Safe publishing
 
-v27 **removed implicit `--publish`**. Earlier versions could auto-publish based on the presence of CI tag environment variables, git tags, or npm lifecycle events — which risked accidentally exposing secrets or shipping unfinished releases. v27 never publishes unless you ask it to: pass `--publish <always|onTag|onTagOrDraft|never>` explicitly in your release scripts, or set the `publish` option in your configuration.
+electron-builder **publishes only when you ask it to**: pass `--publish <always|onTag|onTagOrDraft|never>` explicitly in your release scripts, or set the `publish` option in your configuration. A CI tag environment variable, a git tag or an npm lifecycle event alone never publishes, so secrets and unfinished releases are not shipped by accident.
 
 ```bash
-electron-builder --publish always   # explicit — required in v27
+electron-builder --publish always   # explicit
 ```
 
 **See also:** [Publish configuration](../publish.md) · [Implicit `--publish` removed](../migration/v27-build-changes.md#implicit-publish-removed)
