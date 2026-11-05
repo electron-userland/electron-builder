@@ -322,9 +322,6 @@ importers:
       source-map-support:
         specifier: ^0.5.19
         version: 0.5.21
-      stat-mode:
-        specifier: ^1.0.0
-        version: 1.0.0
       temp-file:
         specifier: ^3.4.0
         version: 3.4.0
@@ -670,9 +667,6 @@ importers:
       semver:
         specifier: 7.7.2
         version: 7.7.2
-      stat-mode:
-        specifier: ^1.0.0
-        version: 1.0.0
       tar:
         specifier: ^7.5.7
         version: 7.5.21
@@ -8356,10 +8350,6 @@ packages:
   stack-utils@2.0.6:
     resolution: {integrity: sha512-XlkWvfIm6RmsWtNJx+uqtKLS8eqFbxUg0ZzLXqY0caEy9l7hruX8IpiDnjsLavoBgqCCR71TqWO8MaXYheJ3RQ==}
     engines: {node: '>=10'}
-
-  stat-mode@1.0.0:
-    resolution: {integrity: sha512-jH9EhtKIjuXZ2cWxmXS8ZP80XyC3iasQxMDV8jzhNJpfDb7VbQLVW4Wvsxz9QZvzV+G4YoSfBUVKDOyxLzi/sg==}
-    engines: {node: '>= 6'}
 
   statuses@1.5.0:
     resolution: {integrity: sha512-OpZ3zP+jT1PI7I8nemJX4AKmAX070ZkYPVWV/AaKTJl+tXCTGyVdC1a4SL8RUQYEwk/f34ZX8UTykN68FwrqAA==}
@@ -18819,8 +18809,6 @@ snapshots:
   stack-utils@2.0.6:
     dependencies:
       escape-string-regexp: 2.0.0
-
-  stat-mode@1.0.0: {}
 
   statuses@1.5.0: {}
 
