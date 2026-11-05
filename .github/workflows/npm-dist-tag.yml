@@ -60,7 +60,7 @@ jobs:
     steps:
       # the merge commit of the pull request; master for a dry run, whichever branch it was started on
       - name: Checkout code repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && github.event.repository.default_branch || '' }}
           persist-credentials: false
@@ -169,7 +169,7 @@ jobs:
 
       # the file of master now, not of the commit of the run: a re-run of an older run must not move a tag back
       - name: Checkout ${{ github.event.repository.default_branch }}
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.repository.default_branch }}
           persist-credentials: false

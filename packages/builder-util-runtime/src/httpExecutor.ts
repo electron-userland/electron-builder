@@ -3,7 +3,7 @@ import { sleep } from "./retry.js"
 import _debug from "debug"
 import { createWriteStream } from "fs"
 import { IncomingMessage, OutgoingHttpHeader, OutgoingHttpHeaders, RequestOptions } from "http"
-import { Socket } from "net"
+import { isIPv4, Socket } from "net"
 import { Transform } from "stream"
 import { URL } from "url"
 import { Nullish } from "./index.js"
@@ -20,9 +20,45 @@ const debug = _debug("electron-builder")
 // Shared by both registries so lookup is always separator-agnostic.
 const normalizeName = (name: string): string => name.toLowerCase().replace(/[-_]/g, "")
 
-// HTTP header names (normalised) stripped on cross-origin redirects.
-// Stored normalised; lookup normalises the incoming key with normalizeName().
+// HTTP header names (normalised) that an HttpExecutor without a cross-origin header policy of its own (electron-builder's publishers)
+// leaves off a redirect to another origin. Stored normalised; lookup normalises the incoming key with normalizeName().
 const SENSITIVE_REDIRECT_HEADERS = new Set(["authorization", "proxyauthorization", "privatetoken", "xapikey", "xauthtoken", "xaccesstoken", "xgitlabtoken", "cookie", "xcsrftoken"])
+
+/** A request, or a redirect, from one origin to another (see {@link HttpExecutor.isCrossOrigin}). */
+export interface CrossOriginHop {
+  /** The URL the request's headers are meant for: the update feed, or the URL that redirected. */
+  readonly from: URL
+  /** The URL on the other origin. */
+  readonly to: URL
+}
+
+/**
+ * Chooses the request headers a hop to another origin sends: gets the headers the request is about to send (a copy) and returns the ones
+ * to send. A throw fails the request. Afterwards the request's own headers ({@link ApiRequestOptions.ownHeaders}) that it left out, and the
+ * default `User-Agent` and `Cache-Control` of {@link configureRequestOptions}, are added back.
+ */
+export type CrossOriginHeaderPolicy = (headers: OutgoingHttpHeaders, hop: CrossOriginHop) => OutgoingHttpHeaders
+
+// the policy of an HttpExecutor without its own (electron-builder's publishers): every header but the credential-bearing ones
+const dropSensitiveHeaders: CrossOriginHeaderPolicy = headers => filterHeaders(headers, name => !SENSITIVE_REDIRECT_HEADERS.has(normalizeName(name)))
+
+/**
+ * A copy of the headers of `headers` that `keep` accepts. Built with {@link deepAssign}, which never assigns `__proto__`, `constructor` or
+ * `prototype`: a header name, from a server, the app or a provider, cannot reach an object's prototype. Every header object built from
+ * another one by name goes through here.
+ */
+export function filterHeaders(headers: OutgoingHttpHeaders, keep: (name: string, value: OutgoingHttpHeaders[string]) => boolean): OutgoingHttpHeaders {
+  return deepAssign<OutgoingHttpHeaders>({}, Object.fromEntries(Object.entries(headers).filter(([name, value]) => keep(name, value))))
+}
+
+/**
+ * Register an additional HTTP header to strip on cross-origin redirects by an HttpExecutor without a cross-origin header policy of its own,
+ * such as electron-builder's publishers. Intended for custom publishers (e.g. GenericPublisher with a non-standard auth header).
+ * electron-updater does not use this list: the app chooses the headers sent to another origin with `autoUpdater.crossOriginHeaders`.
+ */
+export function addSensitiveRedirectHeader(header: string): void {
+  SENSITIVE_REDIRECT_HEADERS.add(normalizeName(header))
+}
 
 // Substrings: a field name containing any of these (after normalization) is redacted.
 const SENSITIVE_FIELD_PATTERNS: string[] = ["token", "password", "secret", "authorization", "credential", "apikey", "passphrase", "auth"] as const
@@ -31,14 +67,6 @@ const SENSITIVE_FIELD_PATTERNS: string[] = ["token", "password", "secret", "auth
 // Intentionally greedy — "publicKey" is also stripped; over-stripping debug logs is
 // acceptable, under-stripping a credential is not.
 const SENSITIVE_FIELD_SUFFIXES: string[] = ["key"] as const
-
-/**
- * Register an additional HTTP header to strip on cross-origin redirects.
- * Intended for custom publishers (e.g. GenericPublisher with a non-standard auth header).
- */
-export function addSensitiveRedirectHeader(header: string): void {
-  SENSITIVE_REDIRECT_HEADERS.add(normalizeName(header))
-}
 
 /**
  * Register an additional substring pattern used by {@link safeStringifyJson} to
@@ -61,10 +89,24 @@ export interface ApiRequestOptions extends RequestOptions {
    * least 0, and is kept on redirects, whose options are copied from these.
    */
   maxResponseSize?: number
+
+  /**
+   * The headers of `headers` the request's sender builds for this request itself, such as `Accept` or `Range`: a hop to another origin adds
+   * back the ones its {@link CrossOriginHeaderPolicy} left out, so the policy decides only the other headers. Kept on redirects.
+   */
+  ownHeaders?: OutgoingHttpHeaders | null
+
+  /**
+   * Set by {@link HttpExecutor.prepareRedirectUrlOptions} on a redirect's options when a URL of the redirect chain so far is not on a loopback
+   * host (see {@link isLoopbackHostname}): electron-updater rejects a redirect from such a host to a loopback one.
+   */
+  redirectedFromNonLoopback?: boolean
 }
 
 export interface DownloadOptions {
   readonly headers?: OutgoingHttpHeaders | null
+  /** The request's own headers, part of `headers` too: see {@link ApiRequestOptions.ownHeaders}. */
+  readonly ownHeaders?: OutgoingHttpHeaders | null
   readonly sha2?: string | null
   readonly sha512?: string | null
 
@@ -129,6 +171,12 @@ interface Request {
 export abstract class HttpExecutor<T extends Request> {
   protected readonly maxRedirects = 10
 
+  /**
+   * @param crossOriginHeaderPolicy chooses the headers each redirect to another origin sends on; the default leaves out the credential-bearing
+   * ones (see {@link addSensitiveRedirectHeader}).
+   */
+  constructor(readonly crossOriginHeaderPolicy: CrossOriginHeaderPolicy = dropSensitiveHeaders) {}
+
   request(options: ApiRequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any } | null): Promise<string | null> {
     configureRequestOptions(options)
     const json = data == null ? undefined : JSON.stringify(data)
@@ -184,13 +232,13 @@ export abstract class HttpExecutor<T extends Request> {
   /**
    * Follows the redirects of `request` when it reports them as events instead of 3xx responses (Electron's `net` with
    * `redirect: "manual"`, see ElectronHttpExecutor): the request is aborted and `handler` gets the options for the redirect
-   * target from {@link HttpExecutor.prepareRedirectUrlOptions}, or `reject` gets the too-many-redirects error when
+   * target from {@link HttpExecutor.prepareRedirectUrlOptions} (with {@link HttpExecutor.crossOriginHeaderPolicy}), or `reject` gets the too-many-redirects error when
    * `redirectCount`, the number of redirects already followed, has reached the limit. Node.js requests answer a redirect
    * with a 3xx response, so this does nothing here.
    */
   // noinspection JSUnusedLocalSymbols
   // eslint-disable-next-line
-  addRedirectHandlers(request: any, options: RequestOptions, reject: (error: Error) => void, redirectCount: number, handler: (options: RequestOptions) => void) {
+  addRedirectHandlers(request: any, options: ApiRequestOptions, reject: (error: Error) => void, redirectCount: number, handler: (options: ApiRequestOptions) => void) {
     // not required for NodeJS
   }
 
@@ -223,7 +271,7 @@ export abstract class HttpExecutor<T extends Request> {
       reject(
         createHttpError(
           response,
-          `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${options.path}
+          `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${urlWithoutQuery(options.path ?? "")}
 
 Please double check that your authentication token is correct. Due to security reasons, actual status maybe not reported, but 404.
 `
@@ -245,7 +293,7 @@ Please double check that your authentication token is correct. Due to security r
         return
       }
 
-      this.doApiRequest(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount + 1)
+      this.doApiRequest(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options, this.crossOriginHeaderPolicy), cancellationToken, requestProcessor, redirectCount + 1)
         .then(resolve)
         .catch(reject)
       return
@@ -292,7 +340,7 @@ Please double check that your authentication token is correct. Due to security r
           reject(
             createHttpError(
               response,
-              `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${options.path}
+              `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${urlWithoutQuery(options.path ?? "")}
 
           Data:
           ${isJson ? safeStringifyJson(JSON.parse(data)) : data}
@@ -316,6 +364,7 @@ Please double check that your authentication token is correct. Due to security r
       const responseChunks: Buffer[] = []
       const requestOptions = {
         headers: options.headers || undefined,
+        ownHeaders: options.ownHeaders,
         // because PrivateGitHubProvider requires HttpExecutor.prepareRedirectUrlOptions logic, so, we need to redirect manually
         redirect: "manual",
       }
@@ -366,14 +415,14 @@ Please double check that your authentication token is correct. Due to security r
     })
   }
 
-  protected doDownload(requestOptions: RequestOptions, options: DownloadCallOptions, redirectCount: number) {
+  protected doDownload(requestOptions: ApiRequestOptions, options: DownloadCallOptions, redirectCount: number) {
     const request = this.createRequest(requestOptions, (response: IncomingMessage) => {
       const code = response.statusCode ?? 0
       if (code >= 400) {
         // the body is not used: drain it, so the response ends and releases its socket (see the redirect below)
         response.resume()
         // the path without its query, which can carry credentials (e.g. a signed release asset link)
-        const url = `${requestOptions.protocol || "https:"}//${requestOptions.hostname}${(requestOptions.path ?? "").replace(/[?#].*$/s, "")}`
+        const url = `${requestOptions.protocol || "https:"}//${requestOptions.hostname}${urlWithoutQuery(requestOptions.path ?? "")}`
         options.callback(new HttpError(code, `Cannot download "${url}", status ${code}: ${response.statusMessage}`))
         return
       }
@@ -396,7 +445,7 @@ Please double check that your authentication token is correct. Due to security r
         // a response listener: a throw (from preparing the options, or from sending the new request) would escape as an uncaught
         // exception and the download would never settle
         try {
-          const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions)
+          const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions, this.crossOriginHeaderPolicy)
           if (redirectOptions.protocol !== "http:" && redirectOptions.protocol !== "https:") {
             throw new Error(`Cannot follow the redirect to the "${redirectOptions.protocol ?? ""}" protocol`)
           }
@@ -439,54 +488,69 @@ Please double check that your authentication token is correct. Due to security r
     })
   }
 
-  static prepareRedirectUrlOptions(redirectUrl: string, options: RequestOptions): RequestOptions {
-    const newOptions = configureRequestOptionsFromUrl(redirectUrl, { ...options })
-    // the target is hostname and port: Electron's net prefers `host` (where ElectronHttpExecutor moves a `Host` header) over them
-    delete newOptions.host
-    const headers = newOptions.headers
-    if (headers == null) {
-      return newOptions
-    }
-
+  /**
+   * Options for the request to `redirectUrl`, redirected from `options`. When the target is on another origin, the headers are the ones
+   * `crossOriginHeaderPolicy` chooses with the request's own headers added back (see {@link HttpExecutor.crossOriginHeaders}), and the `auth`
+   * option, which Node.js sends as an `Authorization` header for the original origin, is dropped. The default `User-Agent` and
+   * `Cache-Control` are set after that (see {@link configureRequestOptions}).
+   */
+  static prepareRedirectUrlOptions(redirectUrl: string, options: ApiRequestOptions, crossOriginHeaderPolicy: CrossOriginHeaderPolicy = dropSensitiveHeaders): ApiRequestOptions {
     const originalUrl = HttpExecutor.reconstructOriginalUrl(options)
     const parsedRedirectUrl = parseUrl(redirectUrl, options)
+    const newOptions: ApiRequestOptions = { ...options }
+    // net.request connects to `host` when it is set (where ElectronHttpExecutor moves a `Host` header), else to the hostname
+    let hostname = originalUrl.hostname
+    try {
+      hostname = options.host ? new URL(`http://${options.host}`).hostname : hostname
+    } catch {
+      // a host that does not parse is not loopback
+      hostname = String(options.host)
+    }
+    if (options.redirectedFromNonLoopback === true || !isLoopbackHostname(hostname)) {
+      newOptions.redirectedFromNonLoopback = true
+    }
+    // the target is hostname and port: Electron's net prefers `host` (where ElectronHttpExecutor moves a `Host` header) over them
+    delete newOptions.host
 
     if (HttpExecutor.isCrossOriginRedirect(originalUrl, parsedRedirectUrl)) {
-      if (debug.enabled) {
-        debug(`Cross-origin redirect (${originalUrl.host} → ${parsedRedirectUrl.host}): stripping sensitive headers`)
+      if (newOptions.auth != null && debug.enabled) {
+        // the origins only: never the credentials
+        debug(`Cross-origin redirect (${originalUrl.origin} → ${parsedRedirectUrl.origin}): dropping the request's auth option`)
       }
-      for (const key of Object.keys(headers)) {
-        if (SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key))) {
-          delete (headers as Record<string, unknown>)[key]
-        }
-      }
+      // Node's `auth` option becomes a Basic Authorization header on the request, so it is a credential for the original origin: it is
+      // never sent on to another origin, whatever the headers are
+      delete newOptions.auth
+      newOptions.headers = HttpExecutor.crossOriginHeaders(options.headers ?? {}, options.ownHeaders, { from: originalUrl, to: parsedRedirectUrl }, crossOriginHeaderPolicy)
     }
-    return newOptions
+    // after the policy: the default User-Agent and Cache-Control are the executor's own
+    return configureRequestOptionsFromUrl(redirectUrl, newOptions)
   }
 
   /**
-   * `headers` without the credential-bearing ones stripped on cross-origin redirects (see {@link addSensitiveRedirectHeader})
-   * when `targetUrl` is on another origin than `originUrl` (same rule as a redirect), else `headers` itself. Never mutates `headers`.
+   * The headers to send to `hop.to` for a request whose headers are meant for `hop.from`: `headers` itself when `to` is on the same origin
+   * (see {@link HttpExecutor.isCrossOrigin}), without calling `crossOriginHeaderPolicy`; else the ones `crossOriginHeaderPolicy` returns,
+   * and the request's `ownHeaders` it left out. A `Host` header is never sent to another origin: it is removed before the policy is asked, and
+   * from what it returns, since Electron's `net` connects to a `Host` header's value instead of `hop.to`. Never mutates `headers`; what
+   * `crossOriginHeaderPolicy` throws fails the request. The headers are copied with {@link filterHeaders}.
    */
-  static removeCrossOriginSensitiveHeaders(headers: OutgoingHttpHeaders, originUrl: URL, targetUrl: URL): OutgoingHttpHeaders {
-    if (!HttpExecutor.isCrossOriginRedirect(originUrl, targetUrl)) {
+  static crossOriginHeaders(
+    headers: OutgoingHttpHeaders,
+    ownHeaders: OutgoingHttpHeaders | null | undefined,
+    hop: CrossOriginHop,
+    crossOriginHeaderPolicy: CrossOriginHeaderPolicy
+  ): OutgoingHttpHeaders {
+    if (!HttpExecutor.isCrossOriginRedirect(hop.from, hop.to)) {
       return headers
     }
+    const isNotHost = (name: string) => name.toLowerCase() !== "host"
+    const sent = filterHeaders(crossOriginHeaderPolicy(filterHeaders(headers, isNotHost), hop), isNotHost)
+    const sentNames = new Set(Object.keys(sent).map(it => it.toLowerCase()))
+    const result = { ...sent, ...filterHeaders(ownHeaders ?? {}, (name, value) => value != null && !sentNames.has(name.toLowerCase())) }
     if (debug.enabled) {
-      debug(`Cross-origin request (${originUrl.host} → ${targetUrl.host}): stripping sensitive headers`)
-    }
-    const result = deepAssign<OutgoingHttpHeaders>({}, headers)
-    for (const key of Object.keys(result)) {
-      if (SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key))) {
-        delete result[key]
-      }
+      // names only: a value could be a credential
+      debug(`Cross-origin request (${hop.from.host} → ${hop.to.host}): sending the headers ${Object.keys(result).join(", ")}`)
     }
     return result
-  }
-
-  /** The names in `headers` of the credential-bearing headers stripped on cross-origin redirects (see {@link addSensitiveRedirectHeader}). */
-  static sensitiveHeaderNames(headers: OutgoingHttpHeaders): Array<string> {
-    return Object.keys(headers).filter(key => headers[key] != null && SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key)))
   }
 
   private static reconstructOriginalUrl(options: RequestOptions): URL {
@@ -568,6 +632,22 @@ export interface DownloadCallOptions {
   options: DownloadOptions
 
   destination: string | null
+}
+
+/**
+ * `url` as logs and error messages name it: without its query and fragment, which can carry a credential (such as the signature of a
+ * pre-signed URL or a feed token), nor its user info. A relative URL or a request path (such as a `files[].url` of `latest*.yml`) keeps its
+ * path.
+ */
+export function urlWithoutQuery(url: URL | string): string {
+  let parsed: URL
+  try {
+    parsed = typeof url === "string" ? new URL(url) : url
+  } catch {
+    // relative: a path
+    return String(url).replace(/[?#].*$/s, "")
+  }
+  return `${parsed.protocol}//${parsed.host}${parsed.pathname}`
 }
 
 function parseUrl(url: string, options: RequestOptions): URL {
@@ -777,6 +857,15 @@ export function configureRequestOptions(options: RequestOptions, token?: string 
     options.protocol = "https:"
   }
   return options
+}
+
+/**
+ * Whether `hostname` (a URL hostname: an IPv6 address may be in brackets) names the loopback interface: `localhost`, an address
+ * in `127.0.0.0/8` or `::1`. A plain `http` update feed on such a host never leaves the machine.
+ */
+export function isLoopbackHostname(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^\[(.*)\]$/, "$1")
+  return host === "localhost" || host === "::1" || (isIPv4(host) && host.startsWith("127."))
 }
 
 export function isSensitiveFieldName(name: string): boolean {
