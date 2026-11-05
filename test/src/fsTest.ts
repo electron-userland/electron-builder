@@ -1,9 +1,40 @@
-import { ensureDir, ensureNotBusy } from "builder-util/src/fs"
+import { copyOrLinkFile, ensureDir, ensureNotBusy } from "builder-util/src/fs"
 import { vi } from "vitest"
 import * as fs from "fs/promises"
 import * as path from "path"
 
 const codeError = (code: string) => Object.assign(new Error(`${code}: simulated`), { code })
+
+describe("copyOrLinkFile permissions", () => {
+  for (const [sourceMode, expectedMode] of [
+    [0o640, 0o644],
+    [0o740, 0o755],
+    [0o6750, 0o755],
+    [0o1710, 0o1755],
+    [0o620, 0o664],
+    [0o644, 0o644],
+    [0o755, 0o755],
+  ]) {
+    test.ifNotWindows(`${sourceMode.toString(8)} → ${expectedMode.toString(8)}`, async ({ expect, tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const source = path.join(dir, "source")
+      const destination = path.join(dir, "destination")
+      await fs.writeFile(source, "contents")
+      await fs.chmod(source, sourceMode)
+      const stats = await fs.stat(source)
+
+      await copyOrLinkFile(source, destination, stats, true)
+
+      const sourceStats = await fs.stat(source)
+      const destinationStats = await fs.stat(destination)
+      expect(destinationStats.mode & 0o7777).toBe(expectedMode)
+      expect(sourceStats.mode & 0o7777).toBe(sourceMode)
+      expect(stats.mode).toBe(destinationStats.mode)
+      expect(destinationStats.ino === sourceStats.ino).toBe(sourceMode === expectedMode)
+      expect(await fs.readFile(destination, "utf8")).toBe("contents")
+    })
+  }
+})
 
 describe("ensureDir", () => {
   test("creates the directory (recursive) on the happy path", async ({ expect, tmpDir }) => {
