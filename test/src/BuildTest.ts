@@ -485,6 +485,7 @@ test.ifNotWindows("posix smart unpack", ({ expect }) =>
       },
     },
     {
+      storeDepsLockfileSnapshot: true,
       projectDirCreated: projectDir => {
         process.env.npm_config_user_agent = "npm"
         return packageJson(it => {
