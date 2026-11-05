@@ -1,4 +1,13 @@
-import { CancellationToken, configureRequestOptions, configureRequestUrl, createHttpError, HttpExecutor, safeGetHeader } from "builder-util-runtime"
+import {
+  ApiRequestOptions,
+  CancellationToken,
+  configureRequestOptions,
+  configureRequestUrl,
+  createHttpError,
+  CrossOriginHeaderPolicy,
+  HttpExecutor,
+  safeGetHeader,
+} from "builder-util-runtime"
 import {
   BlockMapV3,
   BlockMapV3Group,
@@ -25,11 +34,11 @@ import {
   recordsStart,
   SUPER_SIZE,
   superHashOfGroups,
+  urlWithoutQuery,
 } from "builder-util-runtime/internal"
 import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
 import { Logger } from "../types.js"
-import { urlForLog } from "../util.js"
 import { parseMultipartBoundary } from "./DataSplitter.js"
 
 /** Upper bound of the first Range request: header + super-group table of maps up to ~4k super-groups (≈ 2 GB of 16 KiB blocks). */
@@ -124,7 +133,7 @@ class BlockMapV3Fetcher {
   private wireBytes = 0
   private requests = 0
   /** options of the current target: retargeted by every redirect (later ranges go directly to e.g. the CDN a feed redirects to) */
-  private requestOptions: RequestOptions
+  private requestOptions: ApiRequestOptions
   private currentUrl: URL
   /** the header, every response body and every Range request are bounded by it */
   private readonly maxSize: number
@@ -132,12 +141,14 @@ class BlockMapV3Fetcher {
   constructor(private readonly options: BlockMapV3FetchOptions) {
     const maxBlockMapSize = options.maxBlockMapSize
     this.maxSize = maxBlockMapSize != null && maxBlockMapSize > 0 ? Math.min(maxBlockMapSize, MAX_BLOCK_MAP_SIZE) : MAX_BLOCK_MAP_SIZE
-    // Electron's net reports redirects as events instead of following them, so they can be followed without the credentials
-    const requestOptions: RequestOptions & { redirect?: "manual" } = {
+    // Electron's net reports redirects as events instead of following them, so a cross-origin one sends the headers the executor's
+    // cross-origin header policy keeps and its own Accept (each request sets its Range itself)
+    const requestOptions: ApiRequestOptions & { redirect?: "manual" } = {
       headers: {
         ...options.requestHeaders,
         accept: "*/*",
       },
+      ownHeaders: { accept: "*/*" },
       redirect: "manual",
     }
     configureRequestUrl(options.url, requestOptions)
@@ -268,7 +279,7 @@ class BlockMapV3Fetcher {
 
   private verifiedWhole(body: Buffer): BlockMapV3FetchResult {
     if (!isBlockMapV3(body)) {
-      this.options.logger?.info?.(`Block map ${urlForLog(this.options.url)} is not a v3 map; downloaded it whole`)
+      this.options.logger?.info?.(`Block map ${urlWithoutQuery(this.options.url)} is not a v3 map; downloaded it whole`)
       return this.result(body, { supers: 0, groups: 0 }, { supers: 0, groups: 0 })
     }
     // the header (expected file size, size limit, exact length) and the tables are checked before any record is decoded
@@ -283,7 +294,7 @@ class BlockMapV3Fetcher {
     if (first.totalSize == null) {
       body = await this.fetchWhole()
     } else if (first.totalSize > this.maxSize) {
-      throw new Error(`Blockmap "${urlForLog(this.options.url)}" is ${first.totalSize} bytes, more than the ${this.maxSize}-byte limit`)
+      throw new Error(`Blockmap "${urlWithoutQuery(this.options.url)}" is ${first.totalSize} bytes, more than the ${this.maxSize}-byte limit`)
     } else if (body.length < first.totalSize) {
       const rest = await this.rangeRequest([{ start: body.length, end: first.totalSize }])
       body = rest.status === 200 ? rest.body : Buffer.concat([body, rest.body])
@@ -297,7 +308,7 @@ class BlockMapV3Fetcher {
       throw new Error(`block map v3: unexpected status ${response.status} for a full download`)
     }
     if (response.body.length === 0) {
-      throw new Error(`Blockmap "${urlForLog(this.options.url)}" is empty`)
+      throw new Error(`Blockmap "${urlWithoutQuery(this.options.url)}" is empty`)
     }
     return response.body
   }
@@ -363,7 +374,7 @@ class BlockMapV3Fetcher {
       return response
     }
     if (response.status === 200) {
-      this.options.logger?.warn?.(`Server ignored the Range request for ${urlForLog(this.options.url)}, downloaded the whole block map`)
+      this.options.logger?.warn?.(`Server ignored the Range request for ${urlWithoutQuery(this.options.url)}, downloaded the whole block map`)
       return response
     }
     throw new Error(`block map v3: unexpected status ${response.status} for a Range request`)
@@ -382,8 +393,8 @@ class BlockMapV3Fetcher {
       } else {
         headers.range = `bytes=${ranges.map(it => `${it.start}-${it.end - 1}`).join(", ")}`
       }
-      const requestOptions: RequestOptions = { ...this.requestOptions, headers }
-      const followRedirect = (redirectOptions: RequestOptions) => {
+      const requestOptions: ApiRequestOptions = { ...this.requestOptions, headers }
+      const followRedirect = (redirectOptions: ApiRequestOptions) => {
         this.retarget(redirectOptions)
         this.doRequest(ranges, maxPartialBytes, redirectCount + 1).then(resolve, reject)
       }
@@ -402,9 +413,9 @@ class BlockMapV3Fetcher {
             return
           }
           // a response listener: a throw (a malformed Location) would escape as an uncaught exception and never settle the request
-          let redirectOptions: RequestOptions
+          let redirectOptions: ApiRequestOptions
           try {
-            redirectOptions = prepareRedirect(new URL(location, this.currentUrl), requestOptions)
+            redirectOptions = prepareRedirect(new URL(location, this.currentUrl), requestOptions, httpExecutor.crossOriginHeaderPolicy)
           } catch (e: unknown) {
             reject(e instanceof Error ? e : new Error(`Cannot follow the redirect: ${String(e)}`))
             return
@@ -445,8 +456,8 @@ class BlockMapV3Fetcher {
           })
         })
       })
-      // Electron's net: the redirect arrives as an event; the executor aborts the request, strips credentials on a cross-origin
-      // target, counts the redirect against its limit and hands over the options of the new request
+      // Electron's net: the redirect arrives as an event; the executor aborts the request, applies its cross-origin header policy on a
+      // cross-origin target, counts the redirect against its limit and hands over the options of the new request
       httpExecutor.addRedirectHandlers(request, requestOptions, reject, redirectCount, followRedirect)
       httpExecutor.addErrorAndTimeoutHandlers(request, reject)
       onCancel(() => request.abort())
@@ -454,8 +465,8 @@ class BlockMapV3Fetcher {
     })
   }
 
-  /** Later ranges go directly to the redirect target (e.g. GitHub → CDN), with the credentials already stripped if it is cross-origin. */
-  private retarget(redirectOptions: RequestOptions): void {
+  /** Later ranges go directly to the redirect target (e.g. GitHub → CDN), with the headers its redirect kept if it is cross-origin. */
+  private retarget(redirectOptions: ApiRequestOptions): void {
     const headers: OutgoingHttpHeaders = { ...redirectOptions.headers }
     delete headers.range
     this.requestOptions = { ...redirectOptions, headers }
@@ -464,12 +475,12 @@ class BlockMapV3Fetcher {
   }
 }
 
-/** Options for a request to `target`, redirected from `options`: credential headers are left out when `target` is on another origin. */
-function prepareRedirect(target: URL, options: RequestOptions): RequestOptions {
+/** Options for a request to `target`, redirected from `options`: the headers `crossOriginHeaderPolicy` keeps and the own ones when `target` is on another origin. */
+function prepareRedirect(target: URL, options: ApiRequestOptions, crossOriginHeaderPolicy: CrossOriginHeaderPolicy): ApiRequestOptions {
   if (target.protocol !== "http:" && target.protocol !== "https:") {
     throw new Error(`Cannot follow the redirect to the "${target.protocol}" protocol`)
   }
-  return HttpExecutor.prepareRedirectUrlOptions(target.href, options)
+  return HttpExecutor.prepareRedirectUrlOptions(target.href, options, crossOriginHeaderPolicy)
 }
 
 function urlOf(options: RequestOptions): URL {
