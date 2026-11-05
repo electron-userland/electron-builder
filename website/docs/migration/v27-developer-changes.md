@@ -20,7 +20,8 @@ Changes that only matter if you write code that plugs into electron-builder: bui
 | [ProtonFramework & LibUiFramework removed](#removed-exports) | Import / TS error | Migrate to an Electron-based build setup |
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | TS error | Import the new names — no compat aliases |
 | [`SnapOptions`, `ProtonFramework`, `LibUiFramework` exports removed](#removed-exports) | Import / TS error | Use the `snapcraft` config shape / Electron framework |
-| [builder-util-runtime: a redirect to another origin drops the `auth` option](#builder-util-runtime-cross-origin-headers) | Debug log | None: Basic credentials from a request's `auth` option go only to the original origin |
+| [builder-util-runtime: a cross-origin header policy per `HttpExecutor`](#builder-util-runtime-cross-origin-headers) | Advisory | None for custom publishers: an `HttpExecutor` without a policy leaves the credential-bearing headers (see `addSensitiveRedirectHeader`) off a redirect to another origin. Pass a `CrossOriginHeaderPolicy` to its constructor to choose the headers yourself |
+| [Custom electron-updater providers return a URL from `feedBaseUrl`](#custom-provider-feed-base-url) | TS error, runtime error | Return the feed URL from `Provider.feedBaseUrl`; anything else, `null` included, fails the update check with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED` |
 | [Hooks reading `files` / `extraResources` / `extraFiles`](#hooks-reading-file-options) | Warns / fails | Read and write `fileOptions.files` / `.extraResources` / `.extraFiles` instead; assigning a flat key throws |
 | [NSIS `customInstallMode` macro guard casing corrected](#nsis-custominstallmode-macro-guard-casing-corrected) | Silent | Rename a `customInstallmode` (lowercase `m`) macro definition in custom NSIS scripts to the documented `customInstallMode` |
 | [Linux maintainer-script EJS syntax removed](#linux-maintainer-script-ejs-template-syntax) | Fails build | Use `${var}` instead of `<%= var %>` |
@@ -136,6 +137,8 @@ External consumers should use the two new public helpers instead:
 
 `ProtonFramework`, `LibUiFramework`, and `SnapOptions` are removed from the public exports of `app-builder-lib` and `electron-builder`. `CustomNsisBinary` is removed from the public exports of `app-builder-lib`, together with the [`customNsisBinary` option](./v27-config-changes.md#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis); use `ToolsetCustom` (for `toolsets.nsis`) instead. Use the Electron framework and the [`snapcraft`](./v27-config-changes.md#snap-snapcraft) config shape respectively. The removed framework support means `framework: "proton" | "libui"` no longer has any effect — see [`framework` removed](./v27-config-changes.md#framework-nodeversion-launchuiversion).
 
+builder-util-runtime does not export `HttpExecutor.sensitiveHeaderNames` or `HttpExecutor.removeCrossOriginSensitiveHeaders`, and electron-updater's `ProviderRuntimeOptions` takes no `onCrossOriginHeadersRemoved` callback: use [a cross-origin header policy](#builder-util-runtime-cross-origin-headers) and `HttpExecutor.crossOriginHeaders`.
+
 ### Renamed type exports {#renamed-type-exports}
 
 **How you'll find out:** **TypeScript error only.**
@@ -150,13 +153,48 @@ These exported TypeScript types were **renamed with no compatibility alias** —
 
 `ElectronGetOptions` is re-exported from the top-level `electron-builder` package, so this affects ordinary TypeScript consumers, not just `app-builder-lib` plugin authors.
 
-### builder-util-runtime: a redirect to another origin drops the `auth` option {#builder-util-runtime-cross-origin-headers}
+### builder-util-runtime: a cross-origin header policy per `HttpExecutor` {#builder-util-runtime-cross-origin-headers}
 
-**How you'll find out:** with `DEBUG=electron-builder`, a debug line names both origins (never the credentials).
+**How you'll find out:** **Advisory**: new, optional APIs.
 
-An `HttpExecutor` follows a redirect to another origin (another host, port or scheme, except an `http` → `https` upgrade of the same host on the default ports) without the request's `auth` option, the Basic credentials Node.js sends as an `Authorization` header for the original origin, whatever the request's headers are.
+An `HttpExecutor` follows each redirect to another origin with the headers its cross-origin header policy chooses. electron-updater's executor asks the app's [`autoUpdater.crossOriginHeaders`](./v27-runtime-changes.md#cross-origin-headers); electron-builder's publishers use the default policy, which leaves out the credential-bearing headers (`Authorization`, `Cookie`, `PRIVATE-TOKEN`, `X-Api-Key` and the like, plus the ones registered with `addSensitiveRedirectHeader`). A redirect to another origin never carries the request's `auth` option (Basic credentials); with `DEBUG=electron-builder`, a debug line names both origins when it drops one.
 
-**Action:** none. A server on another origin that needs credentials gets its own, such as a pre-signed URL.
+- `CrossOriginHop`: `{ from: URL, to: URL }`, a request or redirect to another origin: the URL its headers are meant for (the feed, or the URL that redirected) and the URL on the other origin.
+- `CrossOriginHeaderPolicy`: `(headers: OutgoingHttpHeaders, hop: CrossOriginHop) => OutgoingHttpHeaders`, gets a copy of the headers about to be sent and returns the ones to send; a throw fails the request. An `HttpExecutor` takes one as its constructor argument (`executor.crossOriginHeaderPolicy`), and `HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options, policy)` as its third.
+- `ApiRequestOptions.ownHeaders` and `DownloadOptions.ownHeaders`: the headers a request builds for itself (such as `Accept` or `Range`), part of its `headers` too. A hop to another origin adds back the ones the policy left out, and the default `User-Agent` and `Cache-Control` (see `configureRequestOptions`).
+- `HttpExecutor.crossOriginHeaders(headers, ownHeaders, hop, policy)`: the headers to send to `hop.to` for a request whose headers are meant for `hop.from`. All of them, without calling the policy, when `to` is on the same origin; else what the policy returns, with the own headers it left out. It never changes `headers`.
+
+**Action:** none for a custom publisher. To choose the headers a redirect to another origin sends yourself, pass a `CrossOriginHeaderPolicy` to your `HttpExecutor` subclass's constructor.
+
+### Custom electron-updater providers return a URL from `feedBaseUrl` {#custom-provider-feed-base-url}
+
+**How you'll find out:** a custom provider class without it is a **TS error** (`Provider.feedBaseUrl` is abstract); in plain JavaScript, or when it returns anything but a URL, the update check **fails at run time** with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, naming the provider class and what it returned, before the provider gets any request header, with a link here. A provider constructed with runtime options without a `crossOriginHeaderPolicy` throws `ERR_UPDATER_CROSS_ORIGIN_HEADER_POLICY_MISSING`.
+
+Every update provider returns the URL of its update feed:
+
+```ts
+abstract class Provider<T extends UpdateInfo> {
+  /** Required. The update feed: its origin gets every request header. */
+  abstract get feedBaseUrl(): URL
+}
+```
+
+Downloads and the provider's own update info requests (the channel file, or an API request through `httpRequest`) on the feed's origin get every request header; any other origin gets only the headers the app's [`autoUpdater.crossOriginHeaders`](./v27-runtime-changes.md#cross-origin-headers) keeps, with the feed URL as the hop's `from`. `feedBaseUrl` is required and returns a URL; `null`, or any other value that is not a URL, fails the update check with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED` before any request, so this applies to every custom provider that does not extend a built-in one, whether or not it sends credentials.
+
+The built-in providers (generic, s3, spaces, r2, github, gitlab, bitbucket, keygen) return their feed URL, so a provider that extends one inherits it. Private GitHub returns the GitHub API (`api.github.com`, or the Enterprise `host`), whose asset URLs its requests use with the token. A provider built on another copy of electron-updater passes the check when it returns a URL, and its own update info requests keep the header rules of that copy.
+
+`ProviderRuntimeOptions`, the runtime options electron-updater passes to a provider's constructor, has a required `crossOriginHeaderPolicy` (a `CrossOriginHeaderPolicy`), which electron-updater sets to its own, the one that asks the app's `crossOriginHeaders`. A provider constructed with runtime options whose `crossOriginHeaderPolicy` is not a function throws `ERR_UPDATER_CROSS_ORIGIN_HEADER_POLICY_MISSING`, with a link here. Code that constructs a built-in provider itself passes on the runtime options it was given, spreading them to change another field (e.g. `{ ...runtimeOptions, isUseMultipleRangeRequest: false }`).
+
+**Action:** return the feed URL from `feedBaseUrl` in a custom provider that does not extend a built-in one. If its update checks call an API on another origin that needs your request headers, the app keeps them for that origin in `autoUpdater.crossOriginHeaders`; the headers passed in `httpRequest`'s `headers` argument go through it too, their `Accept` excepted:
+
+```ts
+class MyProvider extends Provider<UpdateInfo> {
+  get feedBaseUrl(): URL {
+    return new URL("https://updates.example.com/")
+  }
+  // getLatestVersion(), resolveFiles(), …
+}
+```
 
 ---
 
@@ -175,7 +213,6 @@ These are documented on other pages:
 - **`afterPack` hooks on macOS:** with Electron 41+, the Electron Framework is patched and signed again ad hoc after `afterPack`. If you sign the app in `afterPack`, or change `app.asar` / `Info.plist` after it, see [the ASAR integrity digest](./v27-runtime-changes.md#macos-asar-integrity-digest).
 - **Custom Windows signing hooks** move to `win.sign.sign` ([config change](./v27-config-changes.md#custom-windows-signing-hooks-move-to-winsignsign)) and now need `win.sign.publisherName` ([build check](./v27-build-changes.md#windows-publishername-is-validated-against-the-signing-certificate)).
 - **Custom macOS signing functions** (`mac.sign: "./customSign.js"`) can no longer sit next to sibling signing options: see [macOS signing → `mac.sign`](./v27-config-changes.md#macos-signing-macsign).
-- **Custom electron-updater providers** that don't extend a built-in provider must override `Provider.feedBaseUrl` when used with credential headers: see [Update credentials stay on the feed's origin](./v27-runtime-changes.md#update-credentials-stay-on-the-feeds-origin).
 
 ---
 

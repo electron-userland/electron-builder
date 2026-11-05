@@ -13,7 +13,7 @@ describe("ElectronHttpExecutor request timeout", { concurrent: false }, () => {
     vi.useFakeTimers()
     request = new FakeNetRequest()
     errors = []
-    new ElectronHttpExecutor().addErrorAndTimeoutHandlers(request, error => errors.push(error), TIMEOUT)
+    new ElectronHttpExecutor(undefined, () => ({})).addErrorAndTimeoutHandlers(request, error => errors.push(error), TIMEOUT)
   })
 
   afterEach(() => {
@@ -76,7 +76,7 @@ describe("ElectronHttpExecutor request timeout", { concurrent: false }, () => {
 
     const aborted = new FakeNetRequest()
     const abortedErrors: Array<Error> = []
-    new ElectronHttpExecutor().addErrorAndTimeoutHandlers(aborted, error => abortedErrors.push(error), TIMEOUT)
+    new ElectronHttpExecutor(undefined, () => ({})).addErrorAndTimeoutHandlers(aborted, error => abortedErrors.push(error), TIMEOUT)
     aborted.abort()
     vi.advanceTimersByTime(10 * TIMEOUT)
     expect(abortedErrors).toHaveLength(0)
@@ -85,7 +85,7 @@ describe("ElectronHttpExecutor request timeout", { concurrent: false }, () => {
   test("a timeout of 0 disables it, like socket.setTimeout(0)", ({ expect }) => {
     const unlimited = new FakeNetRequest()
     const unlimitedErrors: Array<Error> = []
-    new ElectronHttpExecutor().addErrorAndTimeoutHandlers(unlimited, error => unlimitedErrors.push(error), 0)
+    new ElectronHttpExecutor(undefined, () => ({})).addErrorAndTimeoutHandlers(unlimited, error => unlimitedErrors.push(error), 0)
     vi.advanceTimersByTime(10 * 60 * 1000)
     expect(unlimitedErrors).toHaveLength(0)
     expect(unlimited.aborted).toBe(false)

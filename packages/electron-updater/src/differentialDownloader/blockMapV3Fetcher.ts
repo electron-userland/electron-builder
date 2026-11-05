@@ -1,4 +1,13 @@
-import { CancellationToken, configureRequestOptions, configureRequestUrl, createHttpError, HttpExecutor, safeGetHeader } from "builder-util-runtime"
+import {
+  ApiRequestOptions,
+  CancellationToken,
+  configureRequestOptions,
+  configureRequestUrl,
+  createHttpError,
+  CrossOriginHeaderPolicy,
+  HttpExecutor,
+  safeGetHeader,
+} from "builder-util-runtime"
 import {
   BlockMapV3,
   BlockMapV3Group,
@@ -123,7 +132,7 @@ class BlockMapV3Fetcher {
   private wireBytes = 0
   private requests = 0
   /** options of the current target: retargeted by every redirect (later ranges go directly to e.g. the CDN a feed redirects to) */
-  private requestOptions: RequestOptions
+  private requestOptions: ApiRequestOptions
   private currentUrl: URL
   /** the header, every response body and every Range request are bounded by it */
   private readonly maxSize: number
@@ -131,12 +140,14 @@ class BlockMapV3Fetcher {
   constructor(private readonly options: BlockMapV3FetchOptions) {
     const maxBlockMapSize = options.maxBlockMapSize
     this.maxSize = maxBlockMapSize != null && maxBlockMapSize > 0 ? Math.min(maxBlockMapSize, MAX_BLOCK_MAP_SIZE) : MAX_BLOCK_MAP_SIZE
-    // Electron's net reports redirects as events instead of following them, so they can be followed without the credentials
-    const requestOptions: RequestOptions & { redirect?: "manual" } = {
+    // Electron's net reports redirects as events instead of following them, so a cross-origin one sends the headers the executor's
+    // cross-origin header policy keeps and its own Accept (each request sets its Range itself)
+    const requestOptions: ApiRequestOptions & { redirect?: "manual" } = {
       headers: {
         ...options.requestHeaders,
         accept: "*/*",
       },
+      ownHeaders: { accept: "*/*" },
       redirect: "manual",
     }
     configureRequestUrl(options.url, requestOptions)
@@ -381,8 +392,8 @@ class BlockMapV3Fetcher {
       } else {
         headers.range = `bytes=${ranges.map(it => `${it.start}-${it.end - 1}`).join(", ")}`
       }
-      const requestOptions: RequestOptions = { ...this.requestOptions, headers }
-      const followRedirect = (redirectOptions: RequestOptions) => {
+      const requestOptions: ApiRequestOptions = { ...this.requestOptions, headers }
+      const followRedirect = (redirectOptions: ApiRequestOptions) => {
         this.retarget(redirectOptions)
         this.doRequest(ranges, maxPartialBytes, redirectCount + 1).then(resolve, reject)
       }
@@ -401,9 +412,9 @@ class BlockMapV3Fetcher {
             return
           }
           // a response listener: a throw (a malformed Location) would escape as an uncaught exception and never settle the request
-          let redirectOptions: RequestOptions
+          let redirectOptions: ApiRequestOptions
           try {
-            redirectOptions = prepareRedirect(new URL(location, this.currentUrl), requestOptions)
+            redirectOptions = prepareRedirect(new URL(location, this.currentUrl), requestOptions, httpExecutor.crossOriginHeaderPolicy)
           } catch (e: unknown) {
             reject(e instanceof Error ? e : new Error(`Cannot follow the redirect: ${String(e)}`))
             return
@@ -444,8 +455,8 @@ class BlockMapV3Fetcher {
           })
         })
       })
-      // Electron's net: the redirect arrives as an event; the executor aborts the request, strips credentials on a cross-origin
-      // target, counts the redirect against its limit and hands over the options of the new request
+      // Electron's net: the redirect arrives as an event; the executor aborts the request, applies its cross-origin header policy on a
+      // cross-origin target, counts the redirect against its limit and hands over the options of the new request
       httpExecutor.addRedirectHandlers(request, requestOptions, reject, redirectCount, followRedirect)
       httpExecutor.addErrorAndTimeoutHandlers(request, reject)
       onCancel(() => request.abort())
@@ -453,8 +464,8 @@ class BlockMapV3Fetcher {
     })
   }
 
-  /** Later ranges go directly to the redirect target (e.g. GitHub → CDN), with the credentials already stripped if it is cross-origin. */
-  private retarget(redirectOptions: RequestOptions): void {
+  /** Later ranges go directly to the redirect target (e.g. GitHub → CDN), with the headers its redirect kept if it is cross-origin. */
+  private retarget(redirectOptions: ApiRequestOptions): void {
     const headers: OutgoingHttpHeaders = { ...redirectOptions.headers }
     delete headers.range
     this.requestOptions = { ...redirectOptions, headers }
@@ -463,12 +474,12 @@ class BlockMapV3Fetcher {
   }
 }
 
-/** Options for a request to `target`, redirected from `options`: credential headers are left out when `target` is on another origin. */
-function prepareRedirect(target: URL, options: RequestOptions): RequestOptions {
+/** Options for a request to `target`, redirected from `options`: the headers `crossOriginHeaderPolicy` keeps and the own ones when `target` is on another origin. */
+function prepareRedirect(target: URL, options: ApiRequestOptions, crossOriginHeaderPolicy: CrossOriginHeaderPolicy): ApiRequestOptions {
   if (target.protocol !== "http:" && target.protocol !== "https:") {
     throw new Error(`Cannot follow the redirect to the "${target.protocol}" protocol`)
   }
-  return HttpExecutor.prepareRedirectUrlOptions(target.href, options)
+  return HttpExecutor.prepareRedirectUrlOptions(target.href, options, crossOriginHeaderPolicy)
 }
 
 function urlOf(options: RequestOptions): URL {

@@ -1,5 +1,5 @@
-import { CancellationError, createHttpError, newError, safeGetHeader } from "builder-util-runtime"
-import { IncomingMessage, RequestOptions } from "http"
+import { ApiRequestOptions, CancellationError, createHttpError, newError, safeGetHeader } from "builder-util-runtime"
+import { IncomingMessage } from "http"
 import { Writable } from "stream"
 import { copyData, DataSplitter, parseMultipartBoundary, PartListDataTask } from "./DataSplitter.js"
 import { DifferentialDownloader } from "./DifferentialDownloader.js"
@@ -208,7 +208,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
 
 /** Where a range is requested: the update URL, or the redirect target once a request to it was redirected. */
 export interface RangeRequestTarget {
-  options: RequestOptions
+  options: ApiRequestOptions
 }
 
 export interface AbortableRequest {
@@ -218,7 +218,8 @@ export interface AbortableRequest {
 /**
  * Requests `range` (a `Range` header value) from `target`, whose options ask for manual redirects (see
  * DifferentialDownloader.createRequestOptions). The executor's redirect handler aborts a redirected request and it is sent
- * again to the redirect target, without the credential headers when the target is on another origin, up to the executor's
+ * again to the redirect target, with the headers the executor's cross-origin header policy keeps and its own (Accept, `range`) when the
+ * target is on another origin, up to the executor's
  * redirect limit. The redirect target becomes the `target`, so a caller that passes the same `target` again requests the next
  * range from the redirect target. `onResponse` gets the request that was answered.
  *
@@ -234,7 +235,7 @@ export function requestRange(
   out?: Writable
 ): void {
   const { httpExecutor } = differentialDownloader
-  const send = (requestOptions: RequestOptions, redirectCount: number): void => {
+  const send = (requestOptions: ApiRequestOptions, redirectCount: number): void => {
     if (differentialDownloader.options.cancellationToken.cancelled) {
       reject(new CancellationError())
       return
@@ -252,11 +253,12 @@ export function requestRange(
     })
     request.end()
   }
-  send({ ...target.options, headers: { ...target.options.headers, range } }, 0)
+  // `range` is the request's own: a redirect to another origin sends it whatever the cross-origin header policy keeps
+  send({ ...target.options, headers: { ...target.options.headers, range }, ownHeaders: { ...target.options.ownHeaders, range } }, 0)
 }
 
 // the query of a redirect target (a pre-signed URL) can hold a signature, and the user info is not in the options
-function urlWithoutQuery(options: RequestOptions): string {
+function urlWithoutQuery(options: ApiRequestOptions): string {
   const port = options.port == null ? "" : `:${options.port}`
   const path = options.path ?? "/"
   const queryIndex = path.indexOf("?")

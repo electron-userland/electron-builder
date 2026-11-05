@@ -1,4 +1,4 @@
-import { BlockMapDataHolder, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
+import { ApiRequestOptions, BlockMapDataHolder, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
 import { BlockMap } from "builder-util-runtime"
 import { detectSha512Encoding } from "builder-util-runtime/internal"
 import fsExtra from "fs-extra"
@@ -70,13 +70,15 @@ export abstract class DifferentialDownloader {
     this.isUseMultipleRangeRequest = options.isUseMultipleRangeRequest === true
   }
 
-  createRequestOptions(): RequestOptions {
-    // requestRange follows a redirect itself, without the credential headers when the target is on another origin
-    const result: RequestOptions & { redirect: "manual" } = {
+  createRequestOptions(): ApiRequestOptions {
+    // requestRange follows a redirect itself, with the headers the executor's cross-origin header policy keeps and its own (Accept, Range)
+    // when the target is on another origin
+    const result: ApiRequestOptions & { redirect: "manual" } = {
       headers: {
         ...this.options.requestHeaders,
         accept: "*/*",
       },
+      ownHeaders: { accept: "*/*" },
       redirect: "manual",
     }
     configureRequestUrl(this.options.newUrl, result)

@@ -1,9 +1,11 @@
 import { CancellationToken } from "builder-util-runtime"
+import { createCrossOriginHeaderPolicy } from "electron-updater/src/AppUpdater"
+import type { CrossOriginHeadersCallback } from "electron-updater/src/types"
 import fsExtra from "fs-extra"
 import type { RequestOptions } from "http"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
-import { describe, test } from "vitest"
+import { describe, test, vi } from "vitest"
 import { FakeElectronHttpExecutor, FakeNetRequest } from "../helpers/updaterTestUtil.js"
 
 // ElectronHttpExecutor follows the redirects of its full downloads and of manual-redirect API requests (GitLab, private GitHub)
@@ -72,6 +74,106 @@ describe("ElectronHttpExecutor redirects", () => {
     const executor = createExecutor({ [FILE_URL]: TARGET_URL })
     expect(await executor.request(apiRequestOptions())).toBe(BODY.toString())
     expect(executor.sent.map(it => it.url)).toEqual([FILE_URL, TARGET_URL])
+  })
+})
+
+// A redirect to another origin sends on the headers the app's autoUpdater.crossOriginHeaders keeps (through the updater's policy), and the
+// request's own headers and default User-Agent whatever it returns.
+describe("ElectronHttpExecutor cross-origin redirect headers", () => {
+  const HEADERS = { "X-Api-Token": "custom-secret", "X-Tenant": "acme", "User-Agent": "my-app", accept: "*/*" }
+
+  function createRedirectingExecutor(target: string, crossOriginHeaders: CrossOriginHeadersCallback | null) {
+    return new FakeElectronHttpExecutor(
+      url => (url === FILE_URL ? { location: target } : { statusCode: 200, body: BODY }),
+      createCrossOriginHeaderPolicy(() => crossOriginHeaders)
+    )
+  }
+
+  async function download(executor: FakeElectronHttpExecutor, tmpDir: TmpDir): Promise<void> {
+    const destination = path.join(await tmpDir.createTempDir({ prefix: "electron-http-executor-redirect" }), "app.exe")
+    await executor.download(new URL(FILE_URL), destination, { headers: HEADERS, ownHeaders: { accept: "*/*" }, cancellationToken: new CancellationToken() })
+  }
+
+  async function downloadError(executor: FakeElectronHttpExecutor, tmpDir: TmpDir): Promise<unknown> {
+    return await download(executor, tmpDir).then(
+      () => null,
+      (e: unknown) => e
+    )
+  }
+
+  test("a cross-origin redirect with crossOriginHeaders returning [] sends only the own Accept and the default User-Agent", async ({ tmpDir, expect }) => {
+    const executor = createRedirectingExecutor(TARGET_URL, () => [])
+    await download(executor, tmpDir)
+
+    expect(executor.sent.map(it => it.url)).toEqual([FILE_URL, TARGET_URL])
+    expect(executor.sent[0].headers).toMatchObject(HEADERS)
+    expect(executor.sent[1].headers).toEqual({ accept: "*/*", "User-Agent": "electron-builder", "Cache-Control": "no-cache" })
+  })
+
+  test("a cross-origin redirect sends on the headers crossOriginHeaders keeps, whatever their case", async ({ tmpDir, expect }) => {
+    const executor = createRedirectingExecutor(TARGET_URL, () => ["X-TENANT", "user-agent"])
+    await download(executor, tmpDir)
+
+    expect(executor.sent[1].headers).toMatchObject({ "X-Tenant": "acme", "User-Agent": "my-app", accept: "*/*" })
+    expect(executor.sent[1].headers).not.toHaveProperty("X-Api-Token")
+  })
+
+  test("crossOriginHeaders gets the lowercase header names and the hop", async ({ tmpDir, expect }) => {
+    const crossOriginHeaders = vi.fn((_headerNames: string[]) => [])
+    await download(createRedirectingExecutor(TARGET_URL, crossOriginHeaders), tmpDir)
+
+    expect(crossOriginHeaders).toHaveBeenCalledExactlyOnceWith(expect.arrayContaining(["x-api-token", "x-tenant", "user-agent", "accept"]), {
+      from: new URL(FILE_URL),
+      to: new URL(TARGET_URL),
+    })
+    const headerNames = crossOriginHeaders.mock.calls[0][0]
+    expect(headerNames).toEqual(headerNames.map(it => it.toLowerCase()))
+  })
+
+  test("a same-origin redirect keeps every header without calling crossOriginHeaders", async ({ tmpDir, expect }) => {
+    const sameOrigin = "https://feed.example.com/other/app-1.1.0.exe"
+    const crossOriginHeaders = vi.fn(() => [])
+    const executor = createRedirectingExecutor(sameOrigin, crossOriginHeaders)
+    await download(executor, tmpDir)
+
+    expect(crossOriginHeaders).not.toHaveBeenCalled()
+    expect(executor.sent.map(it => it.url)).toEqual([FILE_URL, sameOrigin])
+    expect(executor.sent[1].headers).toMatchObject(HEADERS)
+  })
+
+  // fail closed: the redirect is not followed with every header, or at all
+  const invalidCrossOriginHeaders: ReadonlyArray<readonly [string, CrossOriginHeadersCallback]> = [
+    [
+      "throws",
+      () => {
+        throw new Error("x-api-token custom-secret")
+      },
+    ],
+    ["returns a header value", () => "custom-secret" as unknown as string[]],
+    ["returns null", () => null as unknown as string[]],
+    ["returns an array with a number", () => [1] as unknown as string[]],
+  ]
+  test.for(invalidCrossOriginHeaders)("a crossOriginHeaders that %s fails the redirect without following it", async ([, crossOriginHeaders], { tmpDir, expect }) => {
+    const executor = createRedirectingExecutor(TARGET_URL, crossOriginHeaders)
+    const error = await downloadError(executor, tmpDir)
+
+    expect(error).toMatchObject({
+      code: "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS",
+      message: expect.stringContaining(`the request from https://feed.example.com to https://bucket.example.net`),
+    })
+    expect(String((error as Error).message)).not.toContain("custom-secret")
+    expect(executor.sent.map(it => it.url)).toEqual([FILE_URL])
+  })
+
+  test("without crossOriginHeaders a cross-origin redirect fails with ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED, unfollowed", async ({ tmpDir, expect }) => {
+    const executor = createRedirectingExecutor(TARGET_URL, null)
+    const error = await downloadError(executor, tmpDir)
+
+    expect(error).toMatchObject({
+      code: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED",
+      message: expect.stringContaining("autoUpdater.crossOriginHeaders = () => []"),
+    })
+    expect(executor.sent.map(it => it.url)).toEqual([FILE_URL])
   })
 })
 

@@ -1,9 +1,21 @@
 import { CancellationToken, PackageFileInfo, ProgressInfo, UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
+import type { CrossOriginHop } from "builder-util-runtime"
 import { EventEmitter } from "events"
 import { URL } from "url"
 import { LoginCallback } from "./electronHttpExecutor.js"
 
 export { CancellationToken, PackageFileInfo, ProgressInfo, UpdateFileInfo, UpdateInfo }
+export type { CrossOriginHop } from "builder-util-runtime"
+
+/**
+ * Chooses the request headers sent to another origin (see `AppUpdater.crossOriginHeaders`): gets the lowercase names of the request headers
+ * about to be sent on `hop` (names only, no values) and returns the names of the ones to send (case-insensitive). Called for each request
+ * and redirect to another origin than the update feed, never for the feed's own origin, which gets every header.
+ *
+ * @example () => [] // none of them
+ * @example (headerNames, hop) => (hop.to.origin === "https://cdn.example.com" ? headerNames.filter(it => it === "x-tenant") : [])
+ */
+export type CrossOriginHeadersCallback = (headerNames: string[], hop: CrossOriginHop) => string[]
 
 export const DOWNLOAD_PROGRESS = "download-progress"
 export const UPDATE_DOWNLOADED = "update-downloaded"

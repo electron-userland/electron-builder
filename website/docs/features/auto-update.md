@@ -71,7 +71,7 @@ The `electron-updater` package offers a different functionality compared to Elec
     }
     ```
 
-5. Call `autoUpdater.checkForUpdatesAndNotify()`. Or, if you need custom behaviour, implement `electron-updater` events, check examples below.
+5. Set [`autoUpdater.crossOriginHeaders`](#crossoriginheaders), which is required and chooses the request headers sent to another origin (`() => []` sends none of yours), then call `autoUpdater.checkForUpdatesAndNotify()`. Or, if you need custom behaviour, implement `electron-updater` events, check examples below.
 
 :::note
 Do not call `setFeedURL`. electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it). Its feed is the first provider that receives the update manifest (`publishAutoUpdate` not `false`) in the `publish` settings of the targets that write update info — a target-level `publish` such as `nsis.publish` counts — see [which settings become the auto-update feed](../publish.md#app-update-yml-feed).
@@ -88,6 +88,8 @@ export default class AppUpdater {
     const log = require("electron-log")
     log.transports.file.level = "debug"
     autoUpdater.logger = log
+    // none of the app's request headers go to another origin than the update feed
+    autoUpdater.crossOriginHeaders = () => []
     autoUpdater.checkForUpdatesAndNotify()
   }
 }
@@ -117,18 +119,20 @@ export default class AppUpdater {
 
         const autoUpdater = new NsisUpdater(options)
         autoUpdater.addAuthHeader(`Bearer ${token}`)
+        // which request headers may go to another origin: here none, so Authorization stays on the feed's origin
+        autoUpdater.crossOriginHeaders = () => []
         autoUpdater.checkForUpdatesAndNotify()
     }
 }
 ```
 
 :::note[Credentials are only sent to the update feed's origin]
-The credential headers in `requestHeaders` / `addAuthHeader` — headers such as `Authorization`, the same set that is removed on a cross-origin redirect — and the query string of the feed `url` are only sent to the feed's origin (scheme, host and port; as on redirects, an `http` → `https` upgrade of the feed host on the default ports keeps the headers and the feed query). With the generic, s3, spaces, r2, keygen, bitbucket, github and gitlab providers, an update file whose URL in `latest*.yml` is on another origin, and the blockmaps and differential range requests derived from it, are downloaded without them; such a URL keeps its own query string. A channel file on another origin (a GitLab release link to another host, or a `channel` that is a URL) is requested without them too. A blockmap is downloaded from `${url}.blockmap` with the file URL's query string, so a pre-signed installer URL's signature does not fit it: set `files[].blockMapUrl` in `latest*.yml` to the blockmap's own (pre-signed) URL. A relative value resolves like `url` (against the feed URL); an absolute URL is used as-is, with its own host and query string. Either follows the same origin rule. With a `blockMapUrl`, the old version's blockmap comes from the local cache or from `previousBlockmapBaseUrlOverride`; when neither has it, that one update is downloaded in full, which fills the cache for the next one (the private GitHub and GitLab providers, which resolve files from the release assets, ignore `blockMapUrl`). With every provider, including custom ones, a URL that electron-updater resolves against the feed URL (such as `files[].url` or a blockmap) gets the feed query only on the feed's origin. Serve the update files from the feed origin (relative `files[].url`, the default) or use pre-signed URLs. [Signed update manifests](./signed-update-manifests.md) cover `files[].url` and `packages.<arch>.path`, so a pre-signed URL has to be in `latest*.yml` before it is signed (see [Key storage](./key-rotation.md#key-storage)). A custom provider (one that does not extend a built-in provider such as `GenericProvider`) declares where these headers go by overriding `Provider.feedBaseUrl`: return its feed URL to send them only to that origin, or `null` to send the request headers to every download and update info URL. The declared origin also applies to the provider's own `httpRequest` calls (for example an API request in `getLatestVersion`): one to another origin is sent without the credential headers from `requestHeaders` / `addAuthHeader`, while headers passed in `httpRequest`'s `headers` argument are sent as given. If it declares neither and the downloads carry credential headers, `downloadUpdate()` fails with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED` before any download request:
+The headers in `requestHeaders` / `addAuthHeader` other than the ones [`autoUpdater.crossOriginHeaders`](#crossoriginheaders) keeps for a request (the same rule as on a cross-origin redirect) and the query string of the feed `url` are only sent to the feed's origin (scheme, host and port; as on redirects, an `http` → `https` upgrade of the feed host on the default ports keeps the headers and the feed query). With the generic, s3, spaces, r2, keygen, bitbucket, github and gitlab providers, an update file whose URL in `latest*.yml` is on another origin, and the blockmaps and differential range requests derived from it, are downloaded without them; such a URL keeps its own query string. A channel file on another origin (a GitLab release link to another host, or a `channel` that is a URL) is requested without them too. A blockmap is downloaded from `${url}.blockmap` with the file URL's query string, so a pre-signed installer URL's signature does not fit it: set `files[].blockMapUrl` in `latest*.yml` to the blockmap's own (pre-signed) URL. A relative value resolves like `url` (against the feed URL); an absolute URL is used as-is, with its own host and query string. Either follows the same origin rule. With a `blockMapUrl`, the old version's blockmap comes from the local cache or from `previousBlockmapBaseUrlOverride`; when neither has it, that one update is downloaded in full, which fills the cache for the next one (the private GitHub and GitLab providers, which resolve files from the release assets, ignore `blockMapUrl`). With every provider, including custom ones, a URL that electron-updater resolves against the feed URL (such as `files[].url` or a blockmap) gets the feed query only on the feed's origin. Serve the update files from the feed origin (relative `files[].url`, the default) or use pre-signed URLs. [Signed update manifests](./signed-update-manifests.md) cover `files[].url` and `packages.<arch>.path`, so a pre-signed URL has to be in `latest*.yml` before it is signed (see [Key storage](./key-rotation.md#key-storage)). A custom provider (one that does not extend a built-in provider such as `GenericProvider`) returns its feed URL from `Provider.feedBaseUrl`, which is required: that origin gets every header, and every other origin only the headers `crossOriginHeaders` keeps, with the feed URL as the hop's `from`. The same rule applies to the provider's own `httpRequest` calls (for example an API request in `getLatestVersion`), the headers passed in `httpRequest`'s `headers` argument included; their `Accept` is sent whatever `crossOriginHeaders` returns. A provider whose `feedBaseUrl` is not a URL (for example one written in plain JavaScript that leaves it out, or one that returns `null`) fails the update check with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED` before any request:
 
 ```typescript
 class MyProvider extends Provider<UpdateInfo> {
-  get feedBaseUrl(): URL | null {
-    return new URL("https://updates.example.com/") // or null
+  get feedBaseUrl(): URL {
+    return new URL("https://updates.example.com/")
   }
   // getLatestVersion(), resolveFiles(), …
 }
@@ -211,7 +215,7 @@ electron-updater ≥ 7.0 (electron-builder v27) mitigates this in two ways:
     await autoUpdater.installPendingUpdateIfAvailable()
     ```
 
-    The automatic install starts right after the app is `ready`, once your own `ready` handlers have run. Configure the updater (`autoInstallEvent`, `setFeedURL`, `addAuthHeader`, `requestHeaders`) before the app is `ready` or synchronously in a `ready` handler, not after an `await` in it. An explicit `installPendingUpdateIfAvailable()` call never runs at the same time as the automatic install: one waits for the other, and the update is installed once.
+    The automatic install starts right after the app is `ready`, once your own `ready` handlers have run. Configure the updater (`autoInstallEvent`, `setFeedURL`, `addAuthHeader`, `requestHeaders`, `crossOriginHeaders`) before the app is `ready` or synchronously in a `ready` handler, not after an `await` in it. Its requests and redirects to another origin carry the headers that [`autoUpdater.crossOriginHeaders`](#crossoriginheaders) keeps, and fail without it. An explicit `installPendingUpdateIfAvailable()` call never runs at the same time as the automatic install: one waits for the other, and the update is installed once.
 
 ### Per-target behavior
 
@@ -324,6 +328,56 @@ A web update cached by a previous launch, or pending an install on next launch, 
 import { autoUpdater } from "electron-updater"
 autoUpdater.allowUnverifiedLinuxPackages = false
 ```
+
+### `autoUpdater.crossOriginHeaders` {#crossoriginheaders}
+
+`autoUpdater.crossOriginHeaders` decides the request headers sent on each request and redirect to another origin than the update feed: a redirect to another origin (such as a feed that redirects to a CDN), a download or channel file (`latest*.yml`) on another origin, the blockmaps and differential range requests of such a download and their redirects, and a private GitHub release asset or GitLab release link on another origin. It is required: set it before the first check, and before the app is `ready` when an update can be installed at [the next launch](#install-on-next-launch-windowslinux).
+
+```typescript
+crossOriginHeaders: CrossOriginHeadersCallback | null // null by default
+
+type CrossOriginHeadersCallback = (headerNames: string[], hop: CrossOriginHop) => string[]
+interface CrossOriginHop {
+  readonly from: URL // the URL the headers are meant for: the update feed, or the URL that redirected
+  readonly to: URL // the URL on the other origin
+}
+```
+
+It gets the lowercase names of the request headers about to be sent, never their values, and returns the names of the ones to send (case-insensitive). The feed's own origin (`Provider.feedBaseUrl`) gets every header without asking it. Private GitHub's feed is the GitHub API (`api.github.com`, or the Enterprise `host`), whose asset URLs its release lookup, channel file and downloads use: they get every header, the token too, and the storage the API redirects a download to gets only what your callback keeps. `electron-updater` exports both types.
+
+```typescript
+import { autoUpdater } from "electron-updater"
+
+// none of the app's headers go to another origin
+autoUpdater.crossOriginHeaders = () => []
+// a tenant header for your CDN, nothing for any other origin
+autoUpdater.crossOriginHeaders = (headerNames, hop) => (hop.to.origin === "https://cdn.example.com" ? headerNames.filter(it => it === "x-tenant") : [])
+```
+
+- **Headers the updater builds.** The headers electron-updater sets for each request itself are sent whatever the callback returns: its default `User-Agent`, `Cache-Control`, the `Accept` it or the provider sets and, for differential downloads, `Range`. A `User-Agent` of your own from `requestHeaders` goes to another origin only when the callback keeps `user-agent`.
+- **Headers it leaves out stay on the original origin**: `Authorization` from `addAuthHeader`, your `requestHeaders`, a provider's token (private GitHub, GitLab) and `x-user-staging-id`, which electron-updater sends with update info requests for [staged rollouts](#staged-rollouts).
+- **Required, packaged or not.** Without a function, `checkForUpdates()`, `checkForUpdatesAndNotify()` and `downloadUpdate()` emit `error` and reject with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` before any request, and so does each request or redirect to another origin, such as one of the install at launch of an update marked for the next launch, which keeps the update pending. An unpackaged app without `forceDevUpdateConfig`, whose `checkForUpdates()` otherwise skips the check and resolves `null`, gets the same error, so a missing callback shows up in development: set it in dev runs too.
+- **Fails closed.** A callback that throws, or returns anything but an array of strings, fails that request, unsent, with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`. Its message holds no header value.
+- **Read at each hop**, so a new function serves the next request.
+- **Announces what it leaves out.** The first time a request to an origin goes without some of your headers or a provider's (never the updater's own), electron-updater logs a warning, once per origin, naming those headers and both origins (never a value), with a link to the migration guide.
+- **Compare the whole origin** (`hop.to.origin`, scheme and port included), not `hop.to.hostname`, so an `http` URL or another port on the same host does not get your headers.
+
+See [The app chooses the headers sent to another origin](../migration/v27-runtime-changes.md#cross-origin-headers).
+
+#### When the update host changes its redirects {#cross-origin-host-changes}
+
+Production updates can start failing with a 401 or 403, or a failed download, when the update host or its CDN starts redirecting to a new origin (a new CDN hostname or storage bucket): that origin gets only the headers your callback keeps for it.
+
+- **Look at the warning.** electron-updater logs one, once per origin, naming the headers your callback left out for that origin and both origins.
+- **Look at the hops.** The callback receives each hop: log `hop.from.origin` and `hop.to.origin` while testing (origins, not full URLs, whose query can hold a signed token). With `DEBUG=electron-builder`, the updater also logs a debug line for each cross-origin request naming the two hosts and the header names it sends, never their values.
+- **Allow specific headers only for origins you trust**, keyed on `hop.to.origin`. Never return all of `headerNames`: that sends your credentials to whatever origin the host redirects to.
+
+  ```typescript
+  const allowed = new Map([["https://cdn.example.com", ["x-tenant"]]])
+  autoUpdater.crossOriginHeaders = (headerNames, hop) => headerNames.filter(it => allowed.get(hop.to.origin)?.includes(it) ?? false)
+  ```
+
+- **Test against a staging feed** that redirects the way production will, before you roll out a new host, CDN or app release. Installed apps keep the callback they shipped with: until they update to a release that allows the new origin, keep serving them from an origin they allow, or from URLs that need none of your headers (such as pre-signed URLs).
 
 ### Linux installs with gksudo, kdesudo or beesu
 

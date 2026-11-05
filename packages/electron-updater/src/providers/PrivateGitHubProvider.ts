@@ -22,9 +22,10 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     super(options, "api.github.com", runtimeOptions)
   }
 
-  // the asset URLs come from the GitHub API (api.github.com or the Enterprise host), not from latest*.yml, and need the token
-  get feedBaseUrl(): null {
-    return null
+  // the GitHub API (api.github.com or the Enterprise host): the asset URLs come from it, not from latest*.yml, and need the token. An asset
+  // URL on another origin gets it only when the app's crossOriginHeaders keeps `authorization` there
+  get feedBaseUrl(): URL {
+    return this.baseUrl
   }
 
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
