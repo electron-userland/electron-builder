@@ -154,7 +154,7 @@ import { autoUpdater } from "electron-updater"
 autoUpdater.allowInsecureFeed = !app.isPackaged
 ```
 
-A packaged app with `allowInsecureFeed` set logs a warning once, at its first update check. Set it to `true` there only for a feed that cannot be served over `https`: anyone on the network path can then tamper with the update information and files, and a [signed update manifest](../features/signed-update-manifests.md) and the code signature of the update are all that protect it.
+A packaged app with `allowInsecureFeed` set logs a warning once, the first time it loads update info (an update check, or the validation of an update pending install at launch). Set it to `true` there only for a feed that cannot be served over `https`: anyone on the network path can then tamper with the update information and files, and a [signed update manifest](../features/signed-update-manifests.md) and the code signature of the update are all that protect it.
 
 With `allowInsecureFeed` set, a server's authentication challenge on a request that is neither `https` nor to a loopback host is cancelled, and `login` is not emitted for it, as its authenticity cannot be determined; a proxy's challenge reaches `login` as on `https` (see [Event: `login`](../features/auto-update.md#event-login)).
 
