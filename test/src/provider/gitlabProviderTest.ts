@@ -1,4 +1,5 @@
-import { GitlabOptions, GitlabReleaseInfo, HttpError } from "builder-util-runtime"
+import { type CrossOriginHop, GitlabOptions, GitlabReleaseInfo, HttpError } from "builder-util-runtime"
+import { vi } from "vitest"
 import { GitLabProvider } from "electron-updater/internal"
 import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil.js"
 import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
@@ -182,6 +183,29 @@ test("token is not forwarded to an off-host direct_asset_url", async ({ expect }
   const secondCallHeaders = (requestSpy.mock.calls[1][0].headers as Record<string, string>) ?? {}
   expect(secondCallHeaders["PRIVATE-TOKEN"]).toBeUndefined()
   expect(secondCallHeaders["authorization"]).toBeUndefined()
+})
+
+// the app decides with autoUpdater.crossOriginHeaders: a direct_asset_url on its own asset host gets the token when the app keeps it there
+test("the token goes to an off-host direct_asset_url only when crossOriginHeaders keeps it for that origin", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy, "0.0.1", { token: "glpat-abc123" })
+  const crossOriginHeaders = vi.fn((headerNames: string[], hop: CrossOriginHop) =>
+    hop.to.origin === "https://assets.example" ? headerNames.filter(it => it === "private-token") : []
+  )
+  updater.crossOriginHeaders = crossOriginHeaders
+
+  const release = mockGitlabRelease(STABLE_VERSION)
+  release.assets.links.find(l => l.name === "latest.yml")!.direct_asset_url = "https://assets.example/uploads/latest.yml"
+
+  requestSpy.mockResolvedValueOnce(JSON.stringify(release)).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+  await updater.checkForUpdates()
+
+  expect(crossOriginHeaders).toHaveBeenCalledExactlyOnceWith(expect.arrayContaining(["private-token"]), {
+    from: new URL("https://gitlab.com/api/v4/"),
+    to: new URL("https://assets.example/uploads/latest.yml"),
+  })
+  expect((requestSpy.mock.calls[1][0].headers as Record<string, string>)["PRIVATE-TOKEN"]).toBe("glpat-abc123")
 })
 
 // SECURITY: an http:// downgrade of direct_asset_url (even on the same host) must NOT receive the token

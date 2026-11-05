@@ -1,6 +1,6 @@
-import { BlockMapDataHolder, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
+import { ApiRequestOptions, BlockMapDataHolder, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
 import { BlockMap } from "builder-util-runtime"
-import { detectSha512Encoding } from "builder-util-runtime/internal"
+import { detectSha512Encoding, urlWithoutQuery } from "builder-util-runtime/internal"
 import fsExtra from "fs-extra"
 import { createWriteStream, WriteStream } from "fs"
 import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
@@ -70,13 +70,15 @@ export abstract class DifferentialDownloader {
     this.isUseMultipleRangeRequest = options.isUseMultipleRangeRequest === true
   }
 
-  createRequestOptions(): RequestOptions {
-    // requestRange follows a redirect itself, without the credential headers when the target is on another origin
-    const result: RequestOptions & { redirect: "manual" } = {
+  createRequestOptions(): ApiRequestOptions {
+    // requestRange follows a redirect itself, with the headers the executor's cross-origin header policy keeps and its own (Accept, Range)
+    // when the target is on another origin
+    const result: ApiRequestOptions & { redirect: "manual" } = {
       headers: {
         ...this.options.requestHeaders,
         accept: "*/*",
       },
+      ownHeaders: { accept: "*/*" },
       redirect: "manual",
     }
     configureRequestUrl(this.options.newUrl, result)
@@ -262,7 +264,7 @@ export abstract class DifferentialDownloader {
       }
 
       let downloadOperationCount = 0
-      this.logger.info(`Differential download: ${this.options.newUrl}`)
+      this.logger.info(`Differential download: ${urlWithoutQuery(this.options.newUrl)}`)
 
       // once a request is redirected, the remaining ranges are requested from the redirect target
       const target: RangeRequestTarget = { options: this.createRequestOptions() }
