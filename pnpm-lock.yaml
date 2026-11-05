@@ -173,8 +173,8 @@ importers:
         specifier: ^1.0.5
         version: 1.0.5
       minimatch:
-        specifier: ^11.0.1
-        version: 11.0.3
+        specifier: ^10.2.5 || ^11.0.1
+        version: 10.2.5
       pkijs:
         specifier: ^3.4.0
         version: 3.4.0
@@ -684,6 +684,9 @@ importers:
       lazy-val:
         specifier: ^1.0.5
         version: 1.0.5
+      minimatch-11:
+        specifier: npm:minimatch@11.0.3
+        version: minimatch@11.0.3
       path-sort:
         specifier: ^0.1.0
         version: 0.1.0

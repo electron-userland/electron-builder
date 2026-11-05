@@ -2,4 +2,4 @@
 "app-builder-lib": patch
 ---
 
-Upgrade `minimatch` to `^11.0.1` to pick up the fix for GHSA-g3hv-75wg-m249. minimatch 11 still ships a CommonJS build, so file patterns keep matching as before.
+Allow `minimatch` 11 alongside 10 (`^10.2.5 || ^11.0.1`) so projects can override to the release patched for GHSA-g3hv-75wg-m249. File pattern matching behaves the same on both versions.
