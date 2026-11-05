@@ -1,6 +1,6 @@
 import { CancellationToken, GithubOptions, githubTagPrefix, HttpError, newError, UpdateInfo } from "builder-util-runtime"
+import { urlWithoutQuery } from "builder-util-runtime/internal"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
-import { load } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
 import { AppUpdater } from "../AppUpdater.js"
@@ -8,7 +8,7 @@ import { URL } from "url"
 import { getChannelFilename, newUrlFromBase } from "../util.js"
 import { BaseGitHubProvider, pickHighestRelease, prereleaseChannelOf, releaseEligibility } from "./GitHubProvider.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
-import { channelFileNotFoundError, getFileList, ProviderRuntimeOptions } from "./Provider.js"
+import { channelFileNotFoundError, getFileList, parseUpdateInfo, ProviderRuntimeOptions } from "./Provider.js"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>
@@ -24,9 +24,10 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     super(options, "api.github.com", runtimeOptions)
   }
 
-  // the asset URLs come from the GitHub API (api.github.com or the Enterprise host), not from latest*.yml, and need the token
-  get feedBaseUrl(): null {
-    return null
+  // the GitHub API (api.github.com or the Enterprise host): the asset URLs come from it, not from latest*.yml, and need the token. An asset
+  // URL on another origin gets it only when the app's crossOriginHeaders keeps `authorization` there
+  get feedBaseUrl(): URL {
+    return this.baseUrl
   }
 
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
@@ -55,7 +56,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     const url = new URL(asset.url)
     let result: any
     try {
-      result = load((await this.httpRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken))!)
+      result = parseUpdateInfo(await this.channelFileRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken), channelFile, url)
     } catch (e: any) {
       if (e instanceof HttpError && e.statusCode === 404) {
         throw channelFileNotFoundError(channelFile, url, e)
@@ -104,7 +105,10 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       // An entry that is not an object with a string tag_name and a list of assets is skipped.
       candidates = version.filter((it: unknown): it is ReleaseInfo => hasAssetList(it) && typeof it.tag_name === "string" && !it.draft)
     } catch (e: any) {
-      throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
+      throw newError(
+        `Unable to find latest version on GitHub (${urlWithoutQuery(url)}), please ensure a production release exists: ${e.stack || e.message}`,
+        "ERR_UPDATER_LATEST_VERSION_NOT_FOUND"
+      )
     }
 
     // the list is ordered by creation date, not by version: like GitHubProvider, pick the highest semver release eligible for the current channel.

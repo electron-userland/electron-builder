@@ -2,6 +2,8 @@ import { blake2b } from "@noble/hashes/blake2.js"
 import { BlockMap } from "builder-util-runtime"
 import {
   BlockInput,
+  blockMapV3Size,
+  checkBlockMapV3Header,
   blockMapV2ToV3Keys,
   decodeBlockMapV3,
   encodeBlockMapV3,
@@ -11,7 +13,9 @@ import {
   groupBlocks,
   groupEntryRanges,
   groupSupers,
+  groupTableStart,
   HEADER_FIXED_SIZE,
+  MAX_BLOCK_MAP_V3_SIZE,
   parseBlockMapV3Groups,
   parseBlockMapV3Header,
   parseBlockMapV3Records,
@@ -26,6 +30,7 @@ import {
   superHashOfGroups,
   toBlockMap,
 } from "builder-util-runtime/internal"
+import { vi } from "vitest"
 
 // Deterministic synthetic blocks: content-derived digests, sizes around a mean.
 function makeBlocks(count: number, seed: number, avgSize = 4096, startOffset = 0): Array<BlockInput> {
@@ -62,6 +67,7 @@ describe("block map v3 format", () => {
     expect(buf.length).toBe(map.header.headerLen + map.supers.length * SUPER_SIZE + map.groups.length * GROUP_SIZE + 1000 * RECORD_SIZE)
     expect(map.records.map(r => r.size)).toEqual(blocks.map(b => b.size))
     expect(map.records[0].hash).toBe(Buffer.from(blocks[0].digest.subarray(0, 8)).toString("hex"))
+    expect(map.records.map(r => r.hash)).toEqual(blocks.map(b => Buffer.from(b.digest.subarray(0, 8)).toString("hex")))
     expect(map.groups.reduce((sum, g) => sum + g.byteLength, 0)).toBe(fileSize)
     expect(map.groups.reduce((sum, g) => sum + g.blockCount, 0)).toBe(1000)
     expect(map.supers.reduce((sum, s) => sum + s.groupCount, 0)).toBe(map.groups.length)
@@ -198,6 +204,84 @@ describe("block map v3 format", () => {
     expect(() => parseBlockMapV3Header(withCount(20, header.fileSize + 1))).toThrow("inconsistent counts")
     expect(() => parseBlockMapV3Header(withCount(16, header.blockCount + 1))).toThrow("inconsistent counts")
     expect(() => parseBlockMapV3Header(withCount(42, header.groupCount + 1))).toThrow("inconsistent counts")
+  })
+
+  // a map is downloaded whole when there is no cached one to range-fetch against: its header and tables are checked before any of its
+  // (possibly millions of) records is decoded
+  const blocks = makeBlocks(400, 21)
+  const fileSize = blocks.reduce((s, b) => s + b.size, 0)
+  const encoded = encodeBlockMapV3(blocks, { fileSize, defaultChunker: DEFAULT })
+  const encodedHeader = parseBlockMapV3Header(encoded)
+
+  /** A copy of `encoded` with a u16/u32 at `offset` changed, and a counter of the record fields read from it. */
+  function tampered(change?: { offset: number; value: number; bits: 16 | 32 }) {
+    const buf = Buffer.from(encoded)
+    if (change != null) {
+      if (change.bits === 16) {
+        buf.writeUInt16LE(change.value, change.offset)
+      } else {
+        buf.writeUInt32LE(change.value, change.offset)
+      }
+    }
+    const reads = vi.spyOn(buf, "readUInt16LE")
+    return { buf, recordReads: () => reads.mock.calls.filter(([offset]) => (offset ?? 0) >= recordsStart(encodedHeader)).length }
+  }
+
+  test("an expected file size other than the header's is rejected before any record is read", ({ expect }) => {
+    const { buf, recordReads } = tampered()
+    expect(() => decodeBlockMapV3(buf, fileSize + 1)).toThrow(`describes a ${fileSize}-byte file, the update is ${fileSize + 1} bytes`)
+    expect(recordReads()).toBe(0)
+    expect(decodeBlockMapV3(buf, fileSize).records).toHaveLength(400)
+    expect(decodeBlockMapV3(buf, null).records).toHaveLength(400)
+  })
+
+  test("a map longer than its header declares is rejected", ({ expect }) => {
+    expect(blockMapV3Size(encodedHeader)).toBe(encoded.length)
+    expect(() => decodeBlockMapV3(Buffer.concat([encoded, Buffer.alloc(1)]))).toThrow(`file size ${encoded.length + 1} does not match header (expected ${encoded.length})`)
+  })
+
+  test("a header that declares a map over the size limit is rejected before its tables are read", ({ expect }) => {
+    // 2^50-byte file, one super-group, one group, 14M records (140 MB): only the header and the two table entries are present
+    const buf = Buffer.alloc(HEADER_FIXED_SIZE + SUPER_SIZE + GROUP_SIZE)
+    encoded.copy(buf, 0, 0, HEADER_FIXED_SIZE)
+    buf.writeUInt16LE(0, 40)
+    buf.writeUInt32LE(HEADER_FIXED_SIZE, 24)
+    buf.writeBigUInt64LE(BigInt(2 ** 50), 8)
+    buf.writeUInt32LE(1, 42)
+    buf.writeUInt32LE(1, 16)
+    buf.writeUInt32LE(14_000_000, 20)
+    expect(() => decodeBlockMapV3(buf)).toThrow(/the header declares a 140000078-byte map, more than the \d+-byte limit/)
+  })
+
+  test("a map larger than the given size limit is rejected before any record is read", ({ expect }) => {
+    const { buf, recordReads } = tampered()
+    expect(() => decodeBlockMapV3(buf, fileSize, encoded.length - 1)).toThrow(`the header declares a ${encoded.length}-byte map, more than the ${encoded.length - 1}-byte limit`)
+    expect(recordReads()).toBe(0)
+    expect(decodeBlockMapV3(buf, fileSize, encoded.length).records).toHaveLength(400)
+  })
+
+  test.for([
+    { name: "larger than MAX_BLOCK_MAP_V3_SIZE", maxSize: MAX_BLOCK_MAP_V3_SIZE + 1 },
+    { name: "NaN", maxSize: NaN },
+    { name: "zero", maxSize: 0 },
+  ])("a size limit that is $name leaves the map held to MAX_BLOCK_MAP_V3_SIZE", ({ maxSize }, { expect }) => {
+    const header = { ...encodedHeader, blockCount: Math.ceil(MAX_BLOCK_MAP_V3_SIZE / RECORD_SIZE) }
+    expect(() => checkBlockMapV3Header(header, { maxSize })).toThrow(`more than the ${MAX_BLOCK_MAP_V3_SIZE}-byte limit`)
+  })
+
+  const superAt = encodedHeader.headerLen
+  const groupAt = groupTableStart(encodedHeader)
+  const firstSuper = parseBlockMapV3Supers(encodedHeader, encoded)[0]
+  const firstGroup = parseBlockMapV3Groups(encodedHeader, encoded)[0]
+  test.for([
+    { name: "an empty super-group", change: { offset: superAt + 12, value: 0, bits: 16 as const }, error: "empty super-group" },
+    { name: "super-group block counts off by one", change: { offset: superAt + 8, value: firstSuper.blockCount + 1, bits: 32 as const }, error: "super-group counts do not sum" },
+    { name: "an empty group", change: { offset: groupAt + 12, value: 0, bits: 16 as const }, error: "empty group" },
+    { name: "group block counts off by one", change: { offset: groupAt + 12, value: firstGroup.blockCount + 1, bits: 16 as const }, error: "group block counts do not sum" },
+  ])("$name is rejected before any record is read", ({ change, error }, { expect }) => {
+    const { buf, recordReads } = tampered(change)
+    expect(() => decodeBlockMapV3(buf)).toThrow(error)
+    expect(recordReads()).toBe(0)
   })
 })
 

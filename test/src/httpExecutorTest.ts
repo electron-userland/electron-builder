@@ -1,11 +1,21 @@
-import { expect, test, describe } from "vitest"
-import { CancellationToken, DigestTransform, HttpExecutor } from "builder-util-runtime"
-import { hashSensitiveValue, REDACTED_VALUE, safeStringifyJson } from "builder-util-runtime/internal"
+import { expect, test, describe, vi } from "vitest"
+import { type ApiRequestOptions, CancellationToken, type CrossOriginHeaderPolicy, type CrossOriginHop, DigestTransform, HttpError, HttpExecutor } from "builder-util-runtime"
+import { hashSensitiveValue, REDACTED_VALUE, safeStringifyJson, urlWithoutQuery } from "builder-util-runtime/internal"
 import { addSensitiveFieldPattern, addSensitiveRedirectHeader, detectSha512Encoding, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
 import { createHash } from "crypto"
-import { RequestOptions } from "http"
+import { createRequire } from "module"
+import * as path from "path"
+import { EventEmitter } from "events"
+import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { Readable, Writable } from "stream"
 import { pipeline } from "stream/promises"
+import * as http from "http"
+
+interface DebugModule {
+  log: (...args: Array<unknown>) => void
+  enable: (namespaces: string) => void
+  disable: () => string
+}
 
 describe("HttpExecutor.prepareRedirectUrlOptions", () => {
   describe("basic functionality", () => {
@@ -700,8 +710,9 @@ describe("sensitive header stripping", () => {
   })
 })
 
-describe("HttpExecutor.removeCrossOriginSensitiveHeaders", () => {
+describe("HttpExecutor.crossOriginHeaders", () => {
   const feedUrl = new URL("https://feed.example.com/updates/")
+  const cdnUrl = new URL("https://cdn.example.net/app.exe")
   const credentialHeaders = () => ({
     Authorization: "Bearer token123",
     "PRIVATE-TOKEN": "glpat-secret",
@@ -710,56 +721,112 @@ describe("HttpExecutor.removeCrossOriginSensitiveHeaders", () => {
     "User-Agent": "electron-builder",
     accept: "*/*",
   })
+  // the default policy of an HttpExecutor without its own (electron-builder's publishers)
+  const defaultPolicy: CrossOriginHeaderPolicy = (headers, hop) => new NodeExecutor().crossOriginHeaderPolicy(headers, hop)
 
-  test("strips the sensitive headers for another origin, keeps the rest", () => {
-    const result = HttpExecutor.removeCrossOriginSensitiveHeaders(credentialHeaders(), feedUrl, new URL("https://cdn.example.net/app.exe"))
-    expect(result).toEqual({ "User-Agent": "electron-builder", accept: "*/*" })
+  test("the default policy strips the sensitive headers for another origin and keeps the rest", ({ expect }) => {
+    expect(HttpExecutor.crossOriginHeaders(credentialHeaders(), null, { from: feedUrl, to: cdnUrl }, defaultPolicy)).toEqual({ "User-Agent": "electron-builder", accept: "*/*" })
   })
 
-  test("returns the same headers for a same-origin URL", () => {
+  test("returns the same headers for a same-origin URL without calling the policy", ({ expect }) => {
     const headers = credentialHeaders()
-    expect(HttpExecutor.removeCrossOriginSensitiveHeaders(headers, feedUrl, new URL("https://feed.example.com/other/app.exe"))).toBe(headers)
+    const policy = vi.fn(() => ({}))
+    expect(HttpExecutor.crossOriginHeaders(headers, null, { from: feedUrl, to: new URL("https://feed.example.com/other/app.exe") }, policy)).toBe(headers)
+    expect(policy).not.toHaveBeenCalled()
   })
 
-  test("does not mutate its input", () => {
+  test("passes the policy a copy of the headers and the hop, and does not mutate its input", ({ expect }) => {
     const headers = credentialHeaders()
-    HttpExecutor.removeCrossOriginSensitiveHeaders(headers, feedUrl, new URL("https://cdn.example.net/app.exe"))
+    const received: Array<[OutgoingHttpHeaders, CrossOriginHop]> = []
+    HttpExecutor.crossOriginHeaders(headers, null, { from: feedUrl, to: cdnUrl }, (copy, hop) => {
+      received.push([{ ...copy }, hop])
+      delete copy.Authorization
+      return copy
+    })
+    expect(received).toEqual([[credentialHeaders(), { from: feedUrl, to: cdnUrl }]])
     expect(headers).toEqual(credentialHeaders())
   })
 
-  test("another port on the same host is cross-origin", () => {
-    const result = HttpExecutor.removeCrossOriginSensitiveHeaders(credentialHeaders(), feedUrl, new URL("https://feed.example.com:8443/app.exe"))
+  test("adds back the own headers the policy left out, and keeps the value of one it kept", ({ expect }) => {
+    const headers = { Authorization: "Bearer t", Accept: "application/json", range: "bytes=0-9" }
+    const own = { accept: "*/*", range: "bytes=0-9" }
+    expect(HttpExecutor.crossOriginHeaders(headers, own, { from: feedUrl, to: cdnUrl }, () => ({}))).toEqual(own)
+    expect(HttpExecutor.crossOriginHeaders(headers, own, { from: feedUrl, to: cdnUrl }, () => ({ Accept: "application/json" }))).toEqual({
+      Accept: "application/json",
+      range: "bytes=0-9",
+    })
+  })
+
+  test("what the policy throws fails the call", ({ expect }) => {
+    const error = new Error("not allowed")
+    expect(() =>
+      HttpExecutor.crossOriginHeaders(credentialHeaders(), null, { from: feedUrl, to: cdnUrl }, () => {
+        throw error
+      })
+    ).toThrow(error)
+  })
+
+  test("another port on the same host is cross-origin", ({ expect }) => {
+    const result = HttpExecutor.crossOriginHeaders(credentialHeaders(), null, { from: feedUrl, to: new URL("https://feed.example.com:8443/app.exe") }, defaultPolicy)
     expect(result.Authorization).toBeUndefined()
   })
 
-  test("https → http on the same host is cross-origin", () => {
-    const result = HttpExecutor.removeCrossOriginSensitiveHeaders(credentialHeaders(), feedUrl, new URL("http://feed.example.com/updates/app.exe"))
+  test("https → http on the same host is cross-origin", ({ expect }) => {
+    const result = HttpExecutor.crossOriginHeaders(credentialHeaders(), null, { from: feedUrl, to: new URL("http://feed.example.com/updates/app.exe") }, defaultPolicy)
     expect(result.Authorization).toBeUndefined()
     expect(result["PRIVATE-TOKEN"]).toBeUndefined()
   })
 
-  test("http → https upgrade on the same host keeps them (same rule as a redirect)", () => {
+  test("http → https upgrade on the same host is the same origin (same rule as a redirect)", ({ expect }) => {
     const headers = credentialHeaders()
-    expect(HttpExecutor.removeCrossOriginSensitiveHeaders(headers, new URL("http://feed.example.com/updates/"), new URL("https://feed.example.com/updates/app.exe"))).toBe(headers)
+    expect(
+      HttpExecutor.crossOriginHeaders(headers, null, { from: new URL("http://feed.example.com/updates/"), to: new URL("https://feed.example.com/updates/app.exe") }, defaultPolicy)
+    ).toBe(headers)
   })
 
-  test("a __proto__ key in the headers does not change the prototype of the result", () => {
+  test("a __proto__ key in the headers does not change the prototype of the result", ({ expect }) => {
     const headers = JSON.parse(`{"__proto__": {"Authorization": "Bearer token123"}, "accept": "*/*"}`)
-    const result = HttpExecutor.removeCrossOriginSensitiveHeaders(headers, feedUrl, new URL("https://cdn.example.net/app.exe"))
+    const result = HttpExecutor.crossOriginHeaders(headers, null, { from: feedUrl, to: cdnUrl }, received => received)
     expect(Object.getPrototypeOf(result)).toBe(Object.prototype)
     expect(result.Authorization).toBeUndefined()
     expect(result).toEqual({ accept: "*/*" })
   })
 })
 
-describe("HttpExecutor.sensitiveHeaderNames", () => {
-  test("names the headers stripped on a cross-origin redirect, whatever their spelling", ({ expect }) => {
-    const headers = { Authorization: "Bearer t", private_token: "p", "X-Api-Key": "k", "User-Agent": "electron-builder", accept: "*/*" }
-    expect(HttpExecutor.sensitiveHeaderNames(headers)).toEqual(["Authorization", "private_token", "X-Api-Key"])
+describe("HttpExecutor.prepareRedirectUrlOptions with a cross-origin header policy", () => {
+  const options = (): ApiRequestOptions => ({
+    protocol: "https:",
+    hostname: "feed.example.com",
+    path: "/updates/app.exe",
+    headers: { Authorization: "Bearer t", "X-Tenant": "acme", "User-Agent": "my-app", "Cache-Control": "max-age=0", accept: "application/json", range: "bytes=0-9" },
+    ownHeaders: { accept: "*/*", range: "bytes=0-9" },
   })
 
-  test("ignores a sensitive header without a value", ({ expect }) => {
-    expect(HttpExecutor.sensitiveHeaderNames({ authorization: undefined, accept: "*/*" })).toEqual([])
+  test("a cross-origin redirect sends what the policy keeps, the own headers and the default User-Agent and Cache-Control", ({ expect }) => {
+    const policy = vi.fn(() => ({}))
+    const result = HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", options(), policy)
+    expect(policy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ "X-Tenant": "acme" }), {
+      from: new URL("https://feed.example.com/updates/app.exe"),
+      to: new URL("https://cdn.example.net/app.exe"),
+    })
+    expect(result.headers).toEqual({ accept: "*/*", range: "bytes=0-9", "User-Agent": "electron-builder", "Cache-Control": "no-cache" })
+    expect(result.ownHeaders).toEqual({ accept: "*/*", range: "bytes=0-9" })
+  })
+
+  test("a same-origin redirect keeps every header without calling the policy", ({ expect }) => {
+    const policy = vi.fn(() => ({}))
+    const result = HttpExecutor.prepareRedirectUrlOptions("/other/app.exe", options(), policy)
+    expect(policy).not.toHaveBeenCalled()
+    expect(result.headers).toMatchObject({ Authorization: "Bearer t", "X-Tenant": "acme", "User-Agent": "my-app", accept: "application/json" })
+  })
+
+  test("what the policy throws fails the redirect", ({ expect }) => {
+    const error = new Error("not configured")
+    expect(() =>
+      HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", options(), () => {
+        throw error
+      })
+    ).toThrow(error)
   })
 })
 
@@ -831,6 +898,30 @@ describe("safeStringifyJson field redaction", () => {
     const parsed = JSON.parse(safeStringifyJson(data, new Set(["name"])))
     expect(parsed.name).toBe(hashSensitiveValue("myapp"))
     expect(parsed.url).toBe("https://example.com")
+  })
+
+  // a fingerprint is costly to compute, and the data can come from a server (an error response body or its headers)
+  test("computes at most 16 fingerprints per call and logs the other sensitive values as <redacted>", () => {
+    const data = Array.from({ length: 1000 }, (_, i) => ({ key: `v${i}`, secretKey: { nested: true }, name: `n${i}` }))
+    const parsed = JSON.parse(safeStringifyJson(data))
+
+    expect(parsed.slice(0, 16).map((it: any) => it.key)).toEqual(data.slice(0, 16).map(it => hashSensitiveValue(it.key)))
+    expect(parsed.slice(16).every((it: any) => it.key === REDACTED_VALUE)).toBe(true)
+    expect(parsed.every((it: any, i: number) => it.secretKey === "<stripped sensitive data>" && it.name === `n${i}`)).toBe(true)
+
+    // the limit is per call
+    expect(JSON.parse(safeStringifyJson({ token: "x" })).token).toBe(hashSensitiveValue("x"))
+  })
+
+  // the publish manager and the update info builder use the result as the key of a publish configuration
+  test("fingerprints every sensitive value when called with no limit, so data differing in any of them stringify differently", () => {
+    const config = (last: string) => ({ ...Object.fromEntries(Array.from({ length: 16 }, (_, i) => [`token${i}`, "same"])), lastToken: last })
+
+    expect(safeStringifyJson(config("a"))).toBe(safeStringifyJson(config("b")))
+    const unlimited = safeStringifyJson(config("a"), undefined, Number.POSITIVE_INFINITY)
+    expect(unlimited).not.toBe(safeStringifyJson(config("b"), undefined, Number.POSITIVE_INFINITY))
+    expect(JSON.parse(unlimited).lastToken).toBe(hashSensitiveValue("a"))
+    expect(unlimited).not.toContain(REDACTED_VALUE)
   })
 })
 
@@ -937,6 +1028,7 @@ describe("HttpExecutor redirect limit", () => {
         statusMessage: "Found",
         headers: { location: "https://example.com/loop" },
         on() {},
+        resume() {},
         setEncoding() {},
       }
       // synchronous is fine at depth ~maxRedirects; exercises the recursion path directly
@@ -973,6 +1065,510 @@ describe("HttpExecutor redirect limit", () => {
     )
     // Same limit as doDownload: maxRedirects recursions + the initial request
     expect(executor.requestCount).toBe(executor["maxRedirects"] + 1)
+  })
+})
+
+// A real request through Node's http module, by default through its keep-alive global agent
+class NodeExecutor extends HttpExecutor<http.ClientRequest> {
+  createRequest(options: RequestOptions, callback: (response: http.IncomingMessage) => void): http.ClientRequest {
+    return http.request(options, callback)
+  }
+
+  runDownload(url: URL, timeout: number, callback: (error: Error | null) => void, agent?: http.Agent): void {
+    this.doDownload(
+      { protocol: url.protocol, hostname: url.hostname, port: url.port, path: url.pathname, timeout, agent },
+      {
+        responseHandler: (response, done) => {
+          response.resume()
+          response.on("end", () => done(null))
+        },
+        onCancel: () => {},
+        callback,
+        options: { cancellationToken: new CancellationToken() },
+        destination: null,
+      },
+      0
+    )
+  }
+}
+
+describe("HttpExecutor download Location handling", () => {
+  // Answers every request synchronously with `statusCode` and a Location to `location`; like http.request, createRequest throws for a
+  // protocol other than http(s). Without the guard, that throw escaped from the response listener (an uncaught exception).
+  class LocationExecutor extends HttpExecutor<any> {
+    requestCount = 0
+
+    constructor(
+      private readonly statusCode: number,
+      private readonly location: string,
+      // when set, what createRequest throws for the request of a redirect
+      private readonly thrownOnRedirect: unknown = null
+    ) {
+      super()
+    }
+
+    createRequest(options: RequestOptions, callback: (response: any) => void): any {
+      if (options.protocol !== "http:" && options.protocol !== "https:") {
+        throw new TypeError(`Protocol "${options.protocol}" not supported. Expected "http:"`)
+      }
+      if (this.requestCount > 0 && this.thrownOnRedirect != null) {
+        // oxlint-disable-next-line typescript/only-throw-error -- the test needs a non-Error throw
+        throw this.thrownOnRedirect
+      }
+      this.requestCount++
+      callback({ statusCode: this.statusCode, statusMessage: "", headers: { location: this.location }, on() {}, resume() {}, setEncoding() {} })
+      return { on() {}, end() {}, abort() {} }
+    }
+
+    runDownload(callback: (error: Error | null) => void): void {
+      this.doDownload(
+        { protocol: "https:", hostname: "example.com", path: "/start" },
+        { responseHandler: (_response, done) => done(null), onCancel: () => {}, callback, options: {} as any, destination: null },
+        0
+      )
+    }
+  }
+
+  for (const [label, location, message] of [
+    ["to a protocol other than http(s)", "ftp://example.com/x", 'Cannot follow the redirect to the "ftp:" protocol'],
+    ["that is not a valid URL", "http://exa mple.com/x", "Invalid URL"],
+  ] as const) {
+    test(`doDownload fails, rather than throws, on a redirect ${label}`, () => {
+      const executor = new LocationExecutor(302, location)
+      const errors: Array<Error | null> = []
+      expect(() => executor.runDownload(e => errors.push(e))).not.toThrow()
+      expect(errors).toHaveLength(1)
+      expect(errors[0]).toBeInstanceOf(Error)
+      expect(errors[0]!.message).toContain(message)
+      expect(executor.requestCount).toBe(1)
+    })
+  }
+
+  test("doDownload fails with an Error when following a redirect throws something else", () => {
+    const executor = new LocationExecutor(302, "https://example.com/next", "not an Error")
+    const errors: Array<Error | null> = []
+    expect(() => executor.runDownload(e => errors.push(e))).not.toThrow()
+    expect(errors).toHaveLength(1)
+    expect(errors[0]).toBeInstanceOf(Error)
+    expect(errors[0]?.message).toBe("Cannot follow the redirect: not an Error")
+    expect(executor.requestCount).toBe(1)
+  })
+
+  // A real request through Node's keep-alive agent: a redirect's body that is not read keeps its socket busy, and the socket's timeout
+  // then calls back a second time, after the download has settled
+  for (const [label, location, error] of [
+    ["is followed", "/target", null],
+    ["cannot be followed", "ftp://example.com/x", 'Cannot follow the redirect to the "ftp:" protocol'],
+  ] as const) {
+    test(`doDownload calls back once when a redirect ${label}`, async () => {
+      const TIMEOUT = 200
+      const server = http.createServer((request, response) => {
+        if (request.url === "/start") {
+          response.writeHead(302, { Location: location, "Content-Length": 5 })
+          response.end("moved")
+        } else {
+          response.end("body")
+        }
+      })
+      await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+      try {
+        const address = server.address()
+        if (address == null || typeof address === "string") {
+          throw new Error("server has no port")
+        }
+        const results: Array<string | null> = []
+        await new Promise<void>(resolve => {
+          new NodeExecutor().runDownload(new URL(`http://127.0.0.1:${address.port}/start`), TIMEOUT, e => {
+            results.push(e == null ? null : e.message)
+            resolve()
+          })
+        })
+        // nothing to wait for but the request's timeout passing without a second call
+        await new Promise(resolve => setTimeout(resolve, TIMEOUT * 4))
+        expect(results).toEqual([error])
+      } finally {
+        server.closeAllConnections()
+        await new Promise(resolve => server.close(resolve))
+      }
+    })
+  }
+
+  // the redirect's drained socket goes back to the agent, which sets its own idle timeout on it while the target is still streaming
+  test("doDownload is not failed by the agent's idle timeout on the redirect's socket", async () => {
+    const AGENT_TIMEOUT = 100
+    const server = http.createServer((request, response) => {
+      if (request.url === "/start") {
+        response.writeHead(302, { Location: "/target", "Content-Length": 5 })
+        response.end("moved")
+      } else {
+        response.writeHead(200, { "Content-Length": 8 })
+        response.write("body")
+        setTimeout(() => response.end("done"), AGENT_TIMEOUT * 4)
+      }
+    })
+    const agent = new http.Agent({ keepAlive: true, timeout: AGENT_TIMEOUT })
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    try {
+      const address = server.address()
+      if (address == null || typeof address === "string") {
+        throw new Error("server has no port")
+      }
+      const results: Array<string | null> = []
+      await new Promise<void>(resolve => {
+        new NodeExecutor().runDownload(
+          new URL(`http://127.0.0.1:${address.port}/start`),
+          5000,
+          e => {
+            results.push(e == null ? null : e.message)
+            resolve()
+          },
+          agent
+        )
+      })
+      await new Promise(resolve => setTimeout(resolve, AGENT_TIMEOUT * 2))
+      expect(results).toEqual([null])
+    } finally {
+      agent.destroy()
+      server.closeAllConnections()
+      await new Promise(resolve => server.close(resolve))
+    }
+  })
+
+  test("doDownload ignores a Location on a response that is not a redirect", () => {
+    const executor = new LocationExecutor(200, "ftp://example.com/x")
+    const errors: Array<Error | null> = []
+    executor.runDownload(e => errors.push(e))
+    expect(errors).toEqual([null])
+    expect(executor.requestCount).toBe(1)
+  })
+})
+
+// Electron's net connects to a Host header's value instead of the URL's host: on another origin it is removed, whatever the policy keeps
+// header names come from servers, apps and providers: __proto__, constructor or prototype must never reach an object's prototype
+describe("HttpExecutor.crossOriginHeaders and header names that are object keys", () => {
+  const hop = { from: new URL("https://feed.example.com/updates/"), to: new URL("https://cdn.example.net/app.exe") }
+  const hostile = () => JSON.parse('{"__proto__": {"polluted": "yes"}, "constructor": "c", "prototype": "p", "X-Tenant": "acme"}') as http.OutgoingHttpHeaders
+
+  test("never pollute a prototype, from the headers, the policy's result or the request's own headers", () => {
+    const result = HttpExecutor.crossOriginHeaders(hostile(), hostile(), hop, given => ({ ...given, ...hostile() }))
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined()
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype)
+    expect((result as Record<string, unknown>).polluted).toBeUndefined()
+    // dropped like the unsafe keys deepAssign never assigns; the other headers are kept
+    expect(Object.keys(result)).toEqual(["X-Tenant"])
+  })
+
+  test("the default policy drops them too", () => {
+    const options = HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", {
+      protocol: "https:",
+      hostname: "feed.example.com",
+      path: "/app.exe",
+      headers: hostile(),
+    })
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined()
+    expect(Object.getPrototypeOf(options.headers)).toBe(Object.prototype)
+    expect(options.headers).toMatchObject({ "X-Tenant": "acme" })
+    expect(Object.keys(options.headers ?? {})).not.toContain("constructor")
+  })
+})
+
+describe("HttpExecutor.crossOriginHeaders and a Host header", () => {
+  const hop = { from: new URL("https://feed.example.com/updates/"), to: new URL("https://cdn.example.net/app.exe") }
+
+  test("is not offered to the policy, nor sent when the policy adds one", () => {
+    const offered: Array<Array<string>> = []
+    const headers = HttpExecutor.crossOriginHeaders({ Host: "feed.internal.example", "X-Tenant": "acme" }, null, hop, given => {
+      offered.push(Object.keys(given))
+      return { ...given, HOST: "other.example.org" }
+    })
+    expect(offered).toEqual([["X-Tenant"]])
+    expect(headers).toEqual({ "X-Tenant": "acme" })
+  })
+
+  test("is kept on the same origin", () => {
+    const headers = { Host: "feed.internal.example" }
+    expect(HttpExecutor.crossOriginHeaders(headers, null, { from: hop.from, to: new URL("https://feed.example.com/app.exe") }, () => ({}))).toBe(headers)
+  })
+})
+
+describe("HttpExecutor request auth option on a redirect", () => {
+  // Node's `auth` option is sent as a Basic Authorization header. Two servers on different ports are two origins.
+  async function listen(server: http.Server): Promise<number> {
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    const address = server.address()
+    if (address == null || typeof address === "string") {
+      throw new Error("server has no port")
+    }
+    return address.port
+  }
+
+  async function authorizationAtTarget(crossOrigin: boolean): Promise<string | undefined> {
+    let received: string | undefined = "<not requested>"
+    const target = http.createServer((request, response) => {
+      received = request.headers.authorization
+      response.end("ok")
+    })
+    const targetPort = await listen(target)
+    const origin = http.createServer((request, response) => {
+      if (request.url === "/start") {
+        response.writeHead(302, { Location: crossOrigin ? `http://127.0.0.1:${targetPort}/target` : "/target" })
+        response.end()
+      } else {
+        received = request.headers.authorization
+        response.end("ok")
+      }
+    })
+    const originPort = await listen(origin)
+    try {
+      await new NodeExecutor().request({ protocol: "http:", hostname: "127.0.0.1", port: originPort, path: "/start", auth: "user:secret" })
+      return received
+    } finally {
+      for (const server of [origin, target]) {
+        server.closeAllConnections()
+        await new Promise(resolve => server.close(resolve))
+      }
+    }
+  }
+
+  test("is kept on a same-origin redirect", async () => {
+    expect(await authorizationAtTarget(false)).toBe(`Basic ${Buffer.from("user:secret").toString("base64")}`)
+  })
+
+  test("is dropped on a cross-origin redirect", async () => {
+    expect(await authorizationAtTarget(true)).toBeUndefined()
+  })
+
+  test.for([
+    ["another host", false, "https://cdn.example.net/app.exe"],
+    ["another port", false, "https://feed.example.com:8443/app.exe"],
+    ["another scheme", false, "http://feed.example.com/app.exe"],
+    ["the same origin", true, "/other/app.exe"],
+  ] as const)("a redirect to %s keeps the auth option: %s", ([, isKept, location]) => {
+    const options = HttpExecutor.prepareRedirectUrlOptions(location, { protocol: "https:", hostname: "feed.example.com", path: "/updates/app.exe", auth: "user:secret" })
+    expect(options.auth).toBe(isKept ? "user:secret" : undefined)
+  })
+
+  // the debug line is the feature: DEBUG=electron-builder shows the dropped option with both origins, never the credentials
+  test("a dropped auth option is logged at debug level with both origins, without the credentials", () => {
+    // the debug module builder-util-runtime itself loads
+    const runtimeDebug = createRequire(path.join(__dirname, "..", "..", "packages", "builder-util-runtime", "package.json"))("debug") as DebugModule
+    const lines: Array<string> = []
+    const previousLog = runtimeDebug.log
+    const previousNamespaces = runtimeDebug.disable()
+    runtimeDebug.log = (...args: Array<unknown>) => lines.push(args.map(String).join(" "))
+    runtimeDebug.enable("electron-builder")
+    try {
+      HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", { protocol: "https:", hostname: "feed.example.com", path: "/app.exe", auth: "user:secret" })
+      HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", { protocol: "https:", hostname: "feed.example.com", path: "/app.exe" })
+    } finally {
+      runtimeDebug.log = previousLog
+      runtimeDebug.enable(previousNamespaces)
+    }
+    const authLines = lines.filter(it => it.includes("auth option"))
+    expect(authLines).toHaveLength(1)
+    expect(authLines[0]).toContain("https://feed.example.com → https://cdn.example.net")
+    expect(lines.join("\n")).not.toContain("secret")
+  })
+})
+
+// a query or fragment can carry a credential (a pre-signed URL's signature, a feed token): logs and error messages name a URL without them
+describe("urlWithoutQuery", () => {
+  test.each([
+    ["https://cdn.example.net/app.exe?X-Amz-Signature=secret#frag", "https://cdn.example.net/app.exe"],
+    ["https://user:secret@feed.example.com:8443/updates/latest.yml?token=secret", "https://feed.example.com:8443/updates/latest.yml"],
+    ["app-1.1.0.exe?sig=secret", "app-1.1.0.exe"],
+    ["/updates/app.exe?token=secret", "/updates/app.exe"],
+  ])("%s is named %s", (url, expected) => {
+    expect(urlWithoutQuery(url)).toBe(expected)
+    if (url.includes("://")) {
+      expect(urlWithoutQuery(new URL(url))).toBe(expected)
+    }
+  })
+
+  test("an API request's 404 error names the path without its query", async () => {
+    const server = http.createServer((_request, response) => {
+      response.writeHead(404)
+      response.end()
+    })
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    try {
+      const address = server.address()
+      if (address == null || typeof address === "string") {
+        throw new Error("server has no port")
+      }
+      const error = await new NodeExecutor().request({ protocol: "http:", hostname: "127.0.0.1", port: address.port, path: "/latest.yml?token=feed-secret" }).then(
+        () => null,
+        (e: unknown) => e
+      )
+      expect(String(error)).toContain(`url: http://127.0.0.1:${address.port}/latest.yml`)
+      expect(String(error)).not.toContain("feed-secret")
+    } finally {
+      await new Promise(resolve => server.close(resolve))
+    }
+  })
+})
+
+describe("HttpExecutor request timeout on a kept-alive socket", () => {
+  // the agent keeps a finished request's socket and sets its own idle timeout on it: that timeout must not reach the request's callback
+  const AGENT_TIMEOUT = 100
+
+  async function withServer(handler: http.RequestListener, task: (url: URL, agent: http.Agent) => Promise<void>, agentTimeout = AGENT_TIMEOUT): Promise<void> {
+    const server = http.createServer(handler)
+    const agent = new http.Agent({ keepAlive: true, timeout: agentTimeout })
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    try {
+      const address = server.address()
+      if (address == null || typeof address === "string") {
+        throw new Error("server has no port")
+      }
+      await task(new URL(`http://127.0.0.1:${address.port}/file`), agent)
+    } finally {
+      agent.destroy()
+      server.closeAllConnections()
+      await new Promise(resolve => server.close(resolve))
+    }
+  }
+
+  function download(url: URL, agent: http.Agent, timeout: number, results: Array<string | null>): Promise<void> {
+    return new Promise<void>(resolve => {
+      new NodeExecutor().runDownload(
+        url,
+        timeout,
+        e => {
+          results.push(e == null ? null : e.message)
+          resolve()
+        },
+        agent
+      )
+    })
+  }
+
+  function freeSocket(agent: http.Agent) {
+    const sockets = Object.values(agent.freeSockets).flat()
+    expect(sockets).toHaveLength(1)
+    const socket = sockets[0]
+    if (socket == null) {
+      throw new Error("the agent keeps no socket")
+    }
+    return socket
+  }
+
+  test("doDownload calls back once when the agent's idle timeout passes after the download", async () => {
+    await withServer(
+      (_request, response) => response.end("body"),
+      async (url, agent) => {
+        const results: Array<string | null> = []
+        await download(url, agent, 5000, results)
+        await new Promise(resolve => setTimeout(resolve, AGENT_TIMEOUT * 4))
+        expect(results).toEqual([null])
+      }
+    )
+  })
+
+  test("doDownload calls back once for an error status, whose body it does not use", async () => {
+    const TIMEOUT = 200
+    await withServer(
+      (_request, response) => {
+        response.writeHead(404, { "Content-Length": 9 })
+        response.end("not found")
+      },
+      async (url, agent) => {
+        const results: Array<string | null> = []
+        await download(url, agent, TIMEOUT, results)
+        await new Promise(resolve => setTimeout(resolve, TIMEOUT * 4))
+        expect(results).toHaveLength(1)
+        expect(results[0]).toContain("status 404")
+      }
+    )
+  })
+
+  test("requests over one kept-alive socket do not add up timeout listeners on it", async () => {
+    await withServer(
+      (_request, response) => response.end("body"),
+      async (url, agent) => {
+        const results: Array<string | null> = []
+        await download(url, agent, 5000, results)
+        // the agent takes the socket back after the request closes
+        await new Promise(resolve => setImmediate(resolve))
+        const socket = freeSocket(agent)
+        const listeners = socket.listenerCount("timeout")
+        for (let i = 0; i < 3; i++) {
+          await download(url, agent, 5000, results)
+          await new Promise(resolve => setImmediate(resolve))
+        }
+        expect(freeSocket(agent)).toBe(socket)
+        expect(socket.listenerCount("timeout")).toBe(listeners)
+        expect(results).toEqual([null, null, null, null])
+      },
+      // an idle timeout long enough to keep the socket between the requests
+      5000
+    )
+  })
+
+  test("a stalled body still times out", async () => {
+    await withServer(
+      (_request, response) => {
+        response.writeHead(200, { "Content-Length": 100 })
+        response.write("start")
+      },
+      async (url, agent) => {
+        const results: Array<string | null> = []
+        await download(url, agent, 200, results)
+        expect(results[0]).toBe("Request timed out")
+      }
+    )
+  })
+})
+
+describe("HttpExecutor error response redaction", () => {
+  // Answers the request with `statusCode`, `headers` and `body`. The error message of a response of 400 or more logs its headers and
+  // a JSON body with sensitive values replaced by fingerprints.
+  class ErrorExecutor extends HttpExecutor<any> {
+    constructor(
+      private readonly statusCode: number,
+      private readonly headers: Record<string, string>,
+      private readonly body: string
+    ) {
+      super()
+    }
+
+    createRequest(_options: RequestOptions, callback: (response: any) => void): any {
+      const response = Object.assign(new EventEmitter(), { statusCode: this.statusCode, statusMessage: "", headers: this.headers, setEncoding() {} })
+      return Object.assign(new EventEmitter(), {
+        abort() {},
+        end: () => {
+          callback(response)
+          response.emit("data", this.body)
+          response.emit("end")
+        },
+      })
+    }
+  }
+
+  const FINGERPRINTS = /[a-f0-9]{32} \(redacted fingerprint\)/g
+
+  function requestError(executor: ErrorExecutor): Promise<any> {
+    return executor.request({ protocol: "https:", hostname: "example.com", path: "/latest.yml" }).catch(e => e)
+  }
+
+  test("a JSON error body with many sensitive values fails the request without fingerprinting each of them", async () => {
+    const body = JSON.stringify(Array.from({ length: 2000 }, (_, i) => ({ key: `v${i}` })))
+    const error = await requestError(new ErrorExecutor(500, { "content-type": "application/json" }, body))
+
+    expect(error).toBeInstanceOf(HttpError)
+    expect(error.statusCode).toBe(500)
+    expect(error.message.match(FINGERPRINTS)).toHaveLength(16)
+    expect(error.message).toContain(REDACTED_VALUE)
+  })
+
+  test("a 404 with many sensitive headers fails the request without fingerprinting each of them", async () => {
+    const headers = Object.fromEntries(Array.from({ length: 500 }, (_, i) => [`x${i}-key`, `v${i}`]))
+    const error = await requestError(new ErrorExecutor(404, headers, ""))
+
+    expect(error).toBeInstanceOf(HttpError)
+    expect(error.statusCode).toBe(404)
+    expect(error.message.match(FINGERPRINTS)).toHaveLength(16)
+    expect(error.message).toContain(REDACTED_VALUE)
   })
 })
 

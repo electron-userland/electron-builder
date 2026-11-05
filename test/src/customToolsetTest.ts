@@ -3,6 +3,7 @@ import { createHash } from "crypto"
 import { promises as fs } from "fs"
 import * as path from "path"
 import * as tar from "tar"
+import { pathToFileURL } from "url"
 import { afterEach, beforeEach, vi } from "vitest"
 import { clearCustomToolsetCache, getCustomToolsetPath } from "app-builder-lib/src/toolsets/custom"
 import type { ToolsetCustom } from "app-builder-lib/internal"
@@ -84,6 +85,30 @@ describe("getCustomToolsetPath memoization", { concurrent: false }, () => {
 
   test("directory type resolves to the directory path", async ({ expect, tmpDir }) => {
     const dir = await tmpDir.createTempDir()
+    const result = await getCustomToolsetPath(dirToolset(dir), "")
+    expect(result).toBe(dir)
+  })
+
+  // pathToFileURL gives "file:///C:/..." on Windows and percent-encodes characters such as spaces
+  test("a file:// URL made with pathToFileURL resolves to the directory path", async ({ expect, tmpDir }) => {
+    const dir = path.join(await tmpDir.createTempDir(), "my toolset")
+    await fs.mkdir(dir)
+    const result = await getCustomToolsetPath({ url: pathToFileURL(dir).href }, "")
+    expect(result).toBe(dir)
+  })
+
+  // fileURLToPath rejects an encoded "/" on macOS and Linux, so "file:///.../a%2Fb" falls back to the path as written
+  test.ifNotWindows("a file:/// path that is not a valid file URL, such as a folder named a%2Fb, is used as written", async ({ expect, tmpDir }) => {
+    const dir = path.join(await tmpDir.createTempDir(), "a%2Fb")
+    await fs.mkdir(dir)
+    const result = await getCustomToolsetPath(dirToolset(dir), "")
+    expect(result).toBe(dir)
+  })
+
+  // "file://C:\..." is not a file URL (that is "file:///C:/..."), so it is the path as written and "%20" is not decoded
+  test.ifWindows("a file://C:\\... path is used as written, so a folder named my%20dir resolves to that folder", async ({ expect, tmpDir }) => {
+    const dir = path.join(await tmpDir.createTempDir(), "my%20dir")
+    await fs.mkdir(dir)
     const result = await getCustomToolsetPath(dirToolset(dir), "")
     expect(result).toBe(dir)
   })
@@ -198,4 +223,20 @@ describe("custom toolset file:// archive verification", { concurrent: false }, (
 
     await expect(getCustomToolsetPath(toolset, "")).rejects.toThrow(/sha256 checksum mismatch/)
   })
+
+  // "#" and "?" start the fragment and the query of a URL. Converted as a file URL, "file:///opt/toolsets/#3/nsis.zip" would be
+  // the folder "/opt/toolsets/", which is used as a directory toolset without the archive's checksum ever being read.
+  for (const char of ["#", "?"]) {
+    test.ifNotWindows(`a ${char} in a file:/// path is part of the path, so the archive's checksum is still verified`, async ({ expect, tmpDir }) => {
+      const dir = path.join(await tmpDir.createTempDir(), `${char}3`)
+      await fs.mkdir(dir)
+      const archive = path.join(dir, "bundle.tar.gz")
+      await fs.writeFile(archive, "not a real archive")
+
+      const error = await getCustomToolsetPath({ url: `file://${archive}`, checksum: sha256Hex("another archive") }, "").catch(e => e)
+
+      expect(error).toBeInstanceOf(InvalidConfigurationError)
+      expect(error.message).toContain(`the local toolset archive ${archive}`)
+    })
+  }
 })

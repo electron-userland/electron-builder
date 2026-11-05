@@ -82,10 +82,19 @@ function setGithubOutput(key: string, value: string) {
 
 const DOWNLOAD_ATTEMPTS = 3
 const DOWNLOAD_RETRY_DELAY_MS = 5000
+// GitHub's artifact blob storage throttles the whole account when many jobs download at once ("HTTP 503: Egress is over the
+// account limit"). That lasts minutes, not seconds, so for the pinned restore of a shard job, where a miss fails the job, those
+// failures get more attempts and an exponential backoff with jitter (15s, 30s, 60s, 120s plus up to 20% each, under 5 minutes in
+// total) to keep the many shards of one run from retrying in lockstep. The shard planner can plan without a cache, so it keeps the
+// short retry rather than holding up the whole matrix for minutes.
+const THROTTLED_DOWNLOAD_ATTEMPTS = 5
+const THROTTLED_RETRY_BASE_DELAY_MS = 15_000
+const THROTTLED_RETRY_MAX_DELAY_MS = 120_000
+const THROTTLED_ERROR_PATTERN = /HTTP 503|Egress is over the account limit/i
 
 // `gh run download` fails now and then on a transient GitHub API or blob storage error, so it is tried a few times, and
 // what gh reports is printed: without it, the failure of a pinned restore says nothing about its cause.
-function downloadArtifact(runId: number, artifactName: string, dest: string): boolean {
+export function downloadArtifact(runId: number, artifactName: string, dest: string, options: { backOffWhenThrottled?: boolean } = {}): boolean {
   const tmpDir = path.join(path.dirname(dest), ".cache-download-tmp")
   try {
     for (let attempt = 1; ; attempt++) {
@@ -96,11 +105,19 @@ function downloadArtifact(runId: number, artifactName: string, dest: string): bo
         break
       }
       const reason = (result.stderr || result.error?.message || `exit code ${result.status}`).trim()
-      console.log(`  gh run download failed (attempt ${attempt}/${DOWNLOAD_ATTEMPTS}): ${reason}`)
-      if (attempt === DOWNLOAD_ATTEMPTS) {
+      const throttled = options.backOffWhenThrottled === true && THROTTLED_ERROR_PATTERN.test(reason)
+      const maxAttempts = throttled ? THROTTLED_DOWNLOAD_ATTEMPTS : DOWNLOAD_ATTEMPTS
+      console.log(`  gh run download failed (attempt ${attempt}/${maxAttempts}): ${reason}`)
+      if (attempt >= maxAttempts) {
         return false
       }
-      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, DOWNLOAD_RETRY_DELAY_MS)
+      let delayMs = DOWNLOAD_RETRY_DELAY_MS
+      if (throttled) {
+        const baseDelayMs = Math.min(THROTTLED_RETRY_BASE_DELAY_MS * 2 ** (attempt - 1), THROTTLED_RETRY_MAX_DELAY_MS)
+        delayMs = Math.round(baseDelayMs * (1 + Math.random() * 0.2))
+        console.log(`  Artifact storage is throttling downloads; retrying in ${Math.round(delayMs / 1000)}s`)
+      }
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delayMs)
     }
     const downloaded = fs.readdirSync(tmpDir).find(f => f === "_vitest-smart-cache.json")
     if (!downloaded) {
@@ -149,17 +166,17 @@ function restorePinnedSource(source: string, dest: string) {
     return
   }
   console.log(`Restoring smart cache pinned by the shard planner: ${parsed.name} from run ${parsed.runId}`)
-  if (!downloadArtifact(parsed.runId, parsed.name, dest)) {
+  if (!downloadArtifact(parsed.runId, parsed.name, dest, { backOffWhenThrottled: true })) {
     throw new Error(`Failed to download pinned smart cache ${parsed.name} from run ${parsed.runId}`)
   }
   console.log(`✓ Restored ${parsed.name} → ${dest}`)
   summarize(dest)
 }
 
-function main() {
+export function main(dest: string = CACHE_FILE) {
   const pinned = process.env.VITEST_SMART_CACHE_SOURCE?.trim()
   if (pinned) {
-    restorePinnedSource(pinned, CACHE_FILE)
+    restorePinnedSource(pinned, dest)
     return
   }
 
@@ -178,7 +195,6 @@ function main() {
 
   const cacheName = `vitest-smart-cache-${sanitizeRef(ref)}`
   const fallbackName = "vitest-smart-cache-master"
-  const dest = CACHE_FILE
 
   for (const name of [cacheName, fallbackName]) {
     console.log(`Looking for artifact: ${name}`)
@@ -202,4 +218,6 @@ function main() {
   console.log("No smart cache artifact found. Run 'pnpm ci:test:count' to see the default plan.")
 }
 
-main()
+if (require.main === module) {
+  main()
+}
