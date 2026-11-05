@@ -71,7 +71,7 @@ The `electron-updater` package offers a different functionality compared to Elec
     }
     ```
 
-5. Call `autoUpdater.checkForUpdatesAndNotify()`. Or, if you need custom behaviour, implement `electron-updater` events, check examples below.
+5. Set [`autoUpdater.crossOriginHeaders`](#crossoriginheaders), which is required and chooses the request headers sent to another origin (`() => []` sends none of yours), then call `autoUpdater.checkForUpdatesAndNotify()`. Or, if you need custom behaviour, implement `electron-updater` events, check examples below.
 
 :::note
 Do not call `setFeedURL`. electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it). Its feed is the first provider that receives the update manifest (`publishAutoUpdate` not `false`) in the `publish` settings of the targets that write update info — a target-level `publish` such as `nsis.publish` counts — see [which settings become the auto-update feed](../publish.md#app-update-yml-feed).
@@ -88,6 +88,8 @@ export default class AppUpdater {
     const log = require("electron-log")
     log.transports.file.level = "debug"
     autoUpdater.logger = log
+    // none of the app's request headers go to another origin than the update feed
+    autoUpdater.crossOriginHeaders = () => []
     autoUpdater.checkForUpdatesAndNotify()
   }
 }
@@ -117,18 +119,20 @@ export default class AppUpdater {
 
         const autoUpdater = new NsisUpdater(options)
         autoUpdater.addAuthHeader(`Bearer ${token}`)
+        // which request headers may go to another origin: here none, so Authorization stays on the feed's origin
+        autoUpdater.crossOriginHeaders = () => []
         autoUpdater.checkForUpdatesAndNotify()
     }
 }
 ```
 
 :::note[Credentials are only sent to the update feed's origin]
-The credential headers in `requestHeaders` / `addAuthHeader` — headers such as `Authorization`, the same set that is removed on a cross-origin redirect — and the query string of the feed `url` are only sent to the feed's origin (scheme, host and port; as on redirects, an `http` → `https` upgrade of the feed host on the default ports keeps the headers and the feed query). With the generic, s3, spaces, r2, keygen, bitbucket, github and gitlab providers, an update file whose URL in `latest*.yml` is on another origin, and the blockmaps and differential range requests derived from it, are downloaded without them; such a URL keeps its own query string. A channel file on another origin (a GitLab release link to another host, or a `channel` that is a URL) is requested without them too. A blockmap is downloaded from `${url}.blockmap` with the file URL's query string, so a pre-signed installer URL's signature does not fit it: set `files[].blockMapUrl` in `latest*.yml` to the blockmap's own (pre-signed) URL. A relative value resolves like `url` (against the feed URL); an absolute URL is used as-is, with its own host and query string. Either follows the same origin rule. With a `blockMapUrl`, the old version's blockmap comes from the local cache or from `previousBlockmapBaseUrlOverride`; when neither has it, that one update is downloaded in full, which fills the cache for the next one (the private GitHub and GitLab providers, which resolve files from the release assets, ignore `blockMapUrl`). With every provider, including custom ones, a URL that electron-updater resolves against the feed URL (such as `files[].url` or a blockmap) gets the feed query only on the feed's origin. Serve the update files from the feed origin (relative `files[].url`, the default) or use pre-signed URLs. [Signed update manifests](./signed-update-manifests.md) cover `files[].url` and `packages.<arch>.path`, so a pre-signed URL has to be in `latest*.yml` before it is signed (see [Key storage](./key-rotation.md#key-storage)). A custom provider (one that does not extend a built-in provider such as `GenericProvider`) declares where these headers go by overriding `Provider.feedBaseUrl`: return its feed URL to send them only to that origin, or `null` to send the request headers to every download and update info URL. The declared origin also applies to the provider's own `httpRequest` calls (for example an API request in `getLatestVersion`): one to another origin is sent without the credential headers from `requestHeaders` / `addAuthHeader`, while headers passed in `httpRequest`'s `headers` argument are sent as given. If it declares neither and the downloads carry credential headers, `downloadUpdate()` fails with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED` before any download request:
+The headers in `requestHeaders` / `addAuthHeader` other than the ones [`autoUpdater.crossOriginHeaders`](#crossoriginheaders) keeps for a request (the same rule as on a cross-origin redirect) and the query string of the feed `url` are only sent to the feed's origin (scheme, host and port; as on redirects, an `http` → `https` upgrade of the feed host on the default ports keeps the headers and the feed query). With the generic, s3, spaces, r2, keygen, bitbucket, github and gitlab providers, an update file whose URL in `latest*.yml` is on another origin, and the blockmaps and differential range requests derived from it, are downloaded without them; such a URL keeps its own query string. A channel file on another origin (a GitLab release link to another host, or a `channel` that is a URL) is requested without them too. A blockmap is downloaded from `${url}.blockmap` with the file URL's query string, so a pre-signed installer URL's signature does not fit it: set `files[].blockMapUrl` in `latest*.yml` to the blockmap's own (pre-signed) URL. A relative value resolves like `url` (against the feed URL); an absolute URL is used as-is, with its own host and query string. Either follows the same origin rule. With a `blockMapUrl`, the old version's blockmap comes from the local cache or from `previousBlockmapBaseUrlOverride`; when neither has it, that one update is downloaded in full, which fills the cache for the next one (the private GitHub and GitLab providers, which resolve files from the release assets, ignore `blockMapUrl`). With every provider, including custom ones, a URL that electron-updater resolves against the feed URL (such as `files[].url` or a blockmap) gets the feed query only on the feed's origin. Serve the update files from the feed origin (relative `files[].url`, the default) or use pre-signed URLs. [Signed update manifests](./signed-update-manifests.md) cover `files[].url` and `packages.<arch>.path`, so a pre-signed URL has to be in `latest*.yml` before it is signed (see [Key storage](./key-rotation.md#key-storage)). A custom provider (one that does not extend a built-in provider such as `GenericProvider`) returns its feed URL from `Provider.feedBaseUrl`, which is required: that origin gets every header, and every other origin only the headers `crossOriginHeaders` keeps, with the feed URL as the hop's `from`. The same rule applies to the provider's own `httpRequest` calls (for example an API request in `getLatestVersion`), the headers passed in `httpRequest`'s `headers` argument included; their `Accept` is sent whatever `crossOriginHeaders` returns. A provider whose `feedBaseUrl` is not a URL (for example one written in plain JavaScript that leaves it out, or one that returns `null`) fails the update check with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED` before any request:
 
 ```typescript
 class MyProvider extends Provider<UpdateInfo> {
-  get feedBaseUrl(): URL | null {
-    return new URL("https://updates.example.com/") // or null
+  get feedBaseUrl(): URL {
+    return new URL("https://updates.example.com/")
   }
   // getLatestVersion(), resolveFiles(), …
 }
@@ -183,7 +187,7 @@ A `failure` must carry a `message`; it is what the emitted error reports as the 
 
 When a downloaded update is automatically installed is controlled by `autoUpdater.autoInstallEvent` (`"manual" | "onQuit" | "onNextLaunch"`, default `"onQuit"`). With the default `"onQuit"`, the update is installed when the app quits: the updater spawns the installer as a detached process while the app is exiting. If the quit happens because the OS session is ending (shutdown, reboot or log off on Windows), the OS can kill that installer mid-install and leave the app in a broken, partially-uninstalled state ([#7807](https://github.com/electron-userland/electron-builder/issues/7807)).
 
-electron-updater ≥ 7.0 (electron-builder v27) mitigates this in two ways:
+electron-updater mitigates this in two ways:
 
 1. **Session-end guard (always on).** When the OS signals that the session is ending, the on-quit install is skipped and a warning is logged. The downloaded update stays cached and is installed on the next regular quit. Detection is best-effort: `powerMonitor` `shutdown` on macOS/Linux, and the `BrowserWindow` `session-end` event on Windows (windowless, e.g. tray-only, apps cannot be covered on Windows).
 
@@ -211,7 +215,7 @@ electron-updater ≥ 7.0 (electron-builder v27) mitigates this in two ways:
     await autoUpdater.installPendingUpdateIfAvailable()
     ```
 
-    The automatic install starts right after the app is `ready`, once your own `ready` handlers have run. Configure the updater (`autoInstallEvent`, `setFeedURL`, `addAuthHeader`, `requestHeaders`) before the app is `ready` or synchronously in a `ready` handler, not after an `await` in it. An explicit `installPendingUpdateIfAvailable()` call never runs at the same time as the automatic install: one waits for the other, and the update is installed once.
+    The automatic install starts right after the app is `ready`, once your own `ready` handlers have run. Configure the updater (`autoInstallEvent`, `setFeedURL`, `addAuthHeader`, `requestHeaders`, `crossOriginHeaders`) before the app is `ready` or synchronously in a `ready` handler, not after an `await` in it. Its requests and redirects to another origin carry the headers that [`autoUpdater.crossOriginHeaders`](#crossoriginheaders) keeps, and fail without it. An explicit `installPendingUpdateIfAvailable()` call never runs at the same time as the automatic install: one waits for the other, and the update is installed once.
 
 ### Per-target behavior
 
@@ -225,10 +229,10 @@ The *automatic* install at startup only runs for targets that can install the pe
 | deb / rpm / pacman | skipped — package managers always elevate (pkexec/sudo) | ✓ (auth prompt) |
 | macOS | n/a — Squirrel.Mac stages updates natively and applies them on relaunch | resolves `false` |
 
-electron-builder v27 sets `isAdminRightsRequired` in the update info of every per-machine `nsis` and `nsis-web` build (`perMachine: true`), including assisted installers (`oneClick: false`) and builds with `differentialPackage: false`, so their updates are started with `elevate.exe` and skipped by the automatic install at launch.
+electron-builder sets `isAdminRightsRequired` in the update info of every per-machine `nsis` and `nsis-web` build (`perMachine: true`), including assisted installers (`oneClick: false`) and builds with `differentialPackage: false`, so their updates are started with `elevate.exe` and skipped by the automatic install at launch.
 
 :::note[Planned default change in v28]
-`autoInstallEvent` defaults to `"onQuit"` in v27; `"onNextLaunch"` is planned to become the **default** in v28 to resolve this class of session-end corruption once and for all. macOS is unaffected: Squirrel.Mac natively stages downloaded updates and applies them on relaunch, without a killable installer process (there `"onQuit"` and `"onNextLaunch"` behave identically).
+`autoInstallEvent` defaults to `"onQuit"`; `"onNextLaunch"` is planned to become the **default** in v28 to resolve this class of session-end corruption once and for all. macOS is unaffected: Squirrel.Mac natively stages downloaded updates and applies them on relaunch, without a killable installer process (there `"onQuit"` and `"onNextLaunch"` behave identically).
 :::
 
 :::caution[Launching during an OS shutdown is a residual, best-effort-only race]
@@ -251,6 +255,7 @@ Note that in order to develop/test UI/UX of updating without packaging the appli
 In latest version you need [force the updater](https://github.com/electron-userland/electron-builder/issues/6863) to work in "dev" mode:
 ```js
 autoUpdater.forceDevUpdateConfig = true
+autoUpdater.crossOriginHeaders = () => [] // required in dev runs too
 ```
 :::note
 If you see this in logs:
@@ -265,9 +270,28 @@ process.env.APPIMAGE = path.join(__dirname, 'dist', `app_name-${app.getVersion()
 
 But it is not recommended, better to test auto-update for installed application (especially on Windows). [Minio](https://github.com/electron-userland/electron-builder/issues/3053#issuecomment-401001573) is recommended as a local server for testing updates.
 
+### Testing against a local update server {#local-update-server}
+
+- **Loopback `http` works as is.** A feed on `localhost`, `127.0.0.0/8` or `::1` may use plain `http` with no opt-in, e.g. `url: http://localhost:8080` in `dev-app-update.yml` or the publish configuration.
+- **Another machine (LAN host or VM)** is not loopback, so plain `http` to it fails with `ERR_UPDATER_INSECURE_FEED`. Either serve it over `https` with a certificate the test machine trusts (e.g. made with [mkcert](https://github.com/FiloSottile/mkcert), its root CA installed on that machine), or set [`autoUpdater.allowInsecureFeed = !app.isPackaged`](#allowinsecurefeed) for a dev run. An installed test build is packaged, so it needs `https`.
+- **A redirect from `https` to `http`** (other than to loopback) is rejected with `ERR_UPDATER_INSECURE_FEED`, and a redirect from another machine to a loopback host with `ERR_UPDATER_LOOPBACK_REDIRECT`: point the feed straight at the URL that serves the files.
+- **Set [`autoUpdater.crossOriginHeaders`](#crossoriginheaders) in dev runs too.** `checkForUpdates()` rejects with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` without it, unpackaged or not.
+
+```ts
+import { app } from "electron"
+import { autoUpdater } from "electron-updater"
+
+autoUpdater.crossOriginHeaders = () => []
+autoUpdater.allowInsecureFeed = !app.isPackaged // only for an http feed on another machine
+autoUpdater.forceDevUpdateConfig = !app.isPackaged // reads dev-app-update.yml
+await autoUpdater.checkForUpdates()
+```
+
+For a local S3 server, see [Testing Auto-Update Locally with Minio](../tutorials/test-update-on-s3-locally.md).
+
 ## Compatibility
 
-Since electron-builder 27 the generated `latest*.yml` targets the modern `files[]` metadata format by default and no longer includes the legacy top-level `path`/`sha512` fields, which are needed only by electron-updater 1.x – 2.15.0.
+The generated `latest*.yml` uses the `files[]` metadata format. The legacy top-level `path`/`sha512` fields, which only electron-updater 1.x – 2.15.0 needs, are written only for an `electronUpdaterCompatibility` range that includes those versions.
 
 The `electronUpdaterCompatibility` option sets the electron-updater compatibility semver range: the electron-updater versions your installed apps ship, which have to read the update files a build publishes (e.g. `>=7`, `>=6`, `>=1.0.0`). Can be specified per platform (e.g. `win.electronUpdaterCompatibility`). Defaults to `>=7`. The range decides:
 
@@ -283,28 +307,28 @@ Metadata format history:
 * `2.16.0` files
 
 :::warning[sha2-only metadata is deprecated]
-Update metadata validated only by the legacy SHA-256 `sha2` checksum is deprecated — v27 warns and **v28 rejects it (fail-closed)**. Avoid pinning `electronUpdaterCompatibility` to a legacy range unless you actually ship 1.x–2.15 clients.
+Update metadata validated only by the legacy SHA-256 `sha2` checksum is deprecated: a build that writes it and an update validated with it log a warning, and **v28 is planned to reject it (fail-closed)**. Avoid pinning `electronUpdaterCompatibility` to a legacy range unless you actually ship 1.x–2.15 clients.
 :::
 
 ## Update security options
 
-Two `AppUpdater` settings changed or were added in v27. See the [Security & Hardening](./security.md#update-security-electron-updater) page for the full rationale.
+The `AppUpdater` settings below protect the update path. See the [Security & Hardening](./security.md#update-security-electron-updater) page for the full rationale.
 
-The update manifest (`latest*.yml`) itself **is** cryptographically signed and verified before any download as of v27. Publishing a build that emits update metadata fails unless an Ed25519 signing key resolves; `updateManifest: false` is the only opt-out — see [Signed Update Manifests](./signed-update-manifests.md).
+The update manifest (`latest*.yml`) itself **is** cryptographically signed and verified before any download. Publishing a build that emits update metadata fails unless an Ed25519 signing key resolves; `updateManifest: false` is the only opt-out — see [Signed Update Manifests](./signed-update-manifests.md).
 
 A channel file (`latest*.yml`) larger than 10 MiB fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`: it is read into memory and parsed before the manifest signature is verified. Release feeds and provider API responses (such as the GitHub releases feed or a list of releases) are not limited, since their size grows with the release history. To allow larger channel files, set `maxUpdateInfoSize` (in bytes) in the `publish` configuration, which electron-builder writes into `app-update.yml` so installed apps use it, or `autoUpdater.maxUpdateInfoSize` in the app, which overrides it. Both take a positive integer, or `0` for no limit.
 
 Changing a signing key or certificate that installs in the field already trust requires a transition release — see [Key Rotation](./key-rotation.md).
 
-The manifest is parsed before its signature is checked, so electron-updater rejects a `latest*.yml` whose YAML aliases (`&name` / `*name`) expand to more than 100000 values plus key and string characters (or more than the file's length, if that is larger) with `ERR_UPDATER_INVALID_UPDATE_INFO`, with every built-in provider. A manifest without aliases is never rejected for its size. Aliases are counted while the manifest is loaded, including aliases inside a non-scalar mapping key (`? [*a, *a]`), which is expanded into a string as it is parsed. An alias counts at least as many characters as it adds to that string (an aliased timestamp, for example, about 60), so such a manifest is rejected before the string is built. electron-updater 6 accepted manifests over this limit; see [the v27 migration notes](../migration/v27-runtime-changes.md#update-manifest-yaml-aliases-are-limited).
+The manifest is parsed before its signature is checked, so electron-updater rejects a `latest*.yml` whose YAML aliases (`&name` / `*name`) expand to more than 100000 values plus key and string characters (or more than the file's length, if that is larger) with `ERR_UPDATER_INVALID_UPDATE_INFO`, with every built-in provider. A manifest without aliases is never rejected for its size. Aliases are counted while the manifest is loaded, including aliases inside a non-scalar mapping key (`? [*a, *a]`), which is expanded into a string as it is parsed. An alias counts at least as many characters as it adds to that string (an aliased timestamp, for example, about 60), so such a manifest is rejected before the string is built. See [the v27 migration notes](../migration/v27-runtime-changes.md#update-manifest-yaml-aliases-are-limited) for manifests that a tool of your own writes or rewrites.
 
-### `disableWebInstaller` (now defaults to `true`)
+### `disableWebInstaller` (defaults to `true`) {#disablewebinstaller}
 
-NSIS **web** installers download their full payload at install time from a manifest-supplied URL, which may not undergo signature verification. As of v27, `AppUpdater.disableWebInstaller` defaults to **`true`**, so a web-installer update is not loaded unless you opt in.
+NSIS **web** installers download their full payload at install time from a manifest-supplied URL, which may not undergo signature verification. `AppUpdater.disableWebInstaller` defaults to **`true`**, so a web-installer update is not loaded unless you opt in.
 
 Unless the flag is `false`, a web-installer update is rejected with `ERR_UPDATER_WEB_INSTALLER_DISABLED` — at download time (including an update already cached by a previous launch), before an [install on next launch](#install-on-next-launch-windowslinux), and at install time.
 
-Installs made by an `nsis-web` installer built with electron-builder v27+ carry a `resources/package-type` marker, and `NsisUpdater` then defaults the flag to `false` automatically. Set it yourself only for web-installer installs without that marker (installed by an installer built before v27, or with a custom script) or when switching an app from `nsis` to `nsis-web`:
+Installs made by an `nsis-web` installer carry a `resources/package-type` marker, and `NsisUpdater` then defaults the flag to `false` automatically. Set it yourself only for web-installer installs without that marker (installed by an installer from electron-builder 26 or earlier, or with a custom script) or when switching an app from `nsis` to `nsis-web`:
 
 ```ts
 import { NsisUpdater } from "electron-updater"
@@ -316,14 +340,80 @@ Set it before the app is `ready`, e.g. right after creating the updater, or sync
 
 A web update cached by a previous launch, or pending an install on next launch, is used only if its web package still matches the freshly fetched manifest; otherwise it is discarded. The `nsis-web` installer itself verifies the package electron-updater passes to it and installs its own copy — see [Web Installer](../nsis.md#web-installer). Once the app runs the version of that update, `NsisUpdater` removes the package from its `pending` cache directory at startup (app `ready`); the package of an update that is not installed yet, or whose install failed, is kept for the install or a retry. Because the manifest vouches for the web package, don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./signed-update-manifests.md) cover its path, SHA-512 and size.
 
-### `allowUnverifiedLinuxPackages` (new)
+### `allowInsecureFeed` (defaults to `false`) {#allowinsecurefeed}
 
-`AppUpdater.allowUnverifiedLinuxPackages` (default **`true`**, preserving historical behavior) controls GPG signature enforcement when installing `.deb` / `.rpm` auto-updates. Because electron-builder does not sign Linux packages itself, the default is permissive; set it to **`false`** to enforce signature checks where the package manager supports them:
+Every request electron-updater sends — the update feed (`app-update.yml` or `setFeedURL`), the update files, blockmaps, differential range requests and every redirect they follow — must use `https`. A request over plain `http`, including an `https` request redirected to `http`, fails with `ERR_UPDATER_INSECURE_FEED` before anything is sent to that URL. Requests to a loopback host (`localhost`, `127.0.0.0/8`, `::1`) are allowed over `http`, so a local test server can serve updates over `http`. A redirect to a loopback host, over `http` or `https`, from a URL that is not on one fails with `ERR_UPDATER_LOOPBACK_REDIRECT`, whatever `allowInsecureFeed` is: a remote server cannot point the updater at the user's machine. The same goes for the unspecified address (`0.0.0.0`, `[::]`), IPv4-mapped loopback (`[::ffff:127.0.0.1]`), `localhost.` and `*.localhost` names; another host name that resolves to a loopback address is not detected. electron-builder warns during the build when the feed written to `app-update.yml` (a `generic` or `custom` publish `url`, a `github` `protocol: "http"` or an `s3` `endpoint`) uses `http` to a host that is not loopback.
+
+Serve your updates over `https`. `allowInsecureFeed` is meant for development, such as a [local test server](#local-update-server) on another machine: tie it to `app.isPackaged` so it cannot ship enabled.
+
+```ts
+import { app } from "electron"
+import { autoUpdater } from "electron-updater"
+autoUpdater.allowInsecureFeed = !app.isPackaged // plain http in dev runs only
+```
+
+A packaged app with `allowInsecureFeed` set logs a warning once, the first time it loads update info (an update check, or the validation of an update pending install at launch), pointing here. Over `http`, anyone on the network path can tamper with the update information and files: only a [signed update manifest](./signed-update-manifests.md) and the code signature of the update protect them. Set it to `true` in a packaged app only for a feed that cannot be served over `https`.
+
+With `allowInsecureFeed`, a server's authentication challenge on a request that is neither `https` nor to a loopback host is cancelled without emitting [`login`](#event-login), as its authenticity cannot be determined, and electron-updater logs a warning the first time. A proxy's challenge, and a server's on a loopback request, reach `login` as on `https`. For your `login` handler to answer a server, serve the feed and the update files over `https`.
+
+### `allowUnverifiedLinuxPackages` (defaults to `true`) {#allowunverifiedlinuxpackages}
+
+`AppUpdater.allowUnverifiedLinuxPackages` (default **`true`**) controls GPG signature enforcement when installing `.deb` / `.rpm` auto-updates. Because electron-builder does not sign Linux packages itself, the default is permissive; set it to **`false`** to enforce signature checks where the package manager supports them:
 
 ```ts
 import { autoUpdater } from "electron-updater"
 autoUpdater.allowUnverifiedLinuxPackages = false
 ```
+
+### `autoUpdater.crossOriginHeaders` {#crossoriginheaders}
+
+`autoUpdater.crossOriginHeaders` decides the request headers sent on each request and redirect to another origin than the update feed: a redirect to another origin (such as a feed that redirects to a CDN), a download or channel file (`latest*.yml`) on another origin, the blockmaps and differential range requests of such a download and their redirects, and a private GitHub release asset or GitLab release link on another origin. It is required: set it before the first check, and before the app is `ready` when an update can be installed at [the next launch](#install-on-next-launch-windowslinux).
+
+```typescript
+crossOriginHeaders: CrossOriginHeadersCallback | null // null by default
+
+type CrossOriginHeadersCallback = (headerNames: string[], hop: CrossOriginHop) => string[]
+interface CrossOriginHop {
+  readonly from: URL // the URL the headers are meant for: the update feed, or the URL that redirected
+  readonly to: URL // the URL on the other origin
+}
+```
+
+It gets the lowercase names of the request headers about to be sent, never their values, and returns the names of the ones to send (case-insensitive). The feed's own origin (`Provider.feedBaseUrl`) gets every header without asking it. Private GitHub's feed is the GitHub API (`api.github.com`, or the Enterprise `host`), whose asset URLs its release lookup, channel file and downloads use: they get every header, the token too, and the storage the API redirects a download to gets only what your callback keeps. `electron-updater` exports both types.
+
+```typescript
+import { autoUpdater } from "electron-updater"
+
+// none of the app's headers go to another origin
+autoUpdater.crossOriginHeaders = () => []
+// a tenant header for your CDN, nothing for any other origin
+autoUpdater.crossOriginHeaders = (headerNames, hop) => (hop.to.origin === "https://cdn.example.com" ? headerNames.filter(it => it === "x-tenant") : [])
+```
+
+- **Headers the updater builds.** The headers electron-updater sets for each request itself are sent whatever the callback returns: its default `User-Agent`, `Cache-Control`, the `Accept` it or the provider sets and, for differential downloads, `Range`. A `User-Agent` of your own from `requestHeaders` goes to another origin only when the callback keeps `user-agent`.
+- **Headers it leaves out stay on the original origin**: `Authorization` from `addAuthHeader`, your `requestHeaders`, a provider's token (private GitHub, GitLab) and `x-user-staging-id`, which electron-updater sends with update info requests for [staged rollouts](#staged-rollouts).
+- **Required, packaged or not.** Without a function, `checkForUpdates()`, `checkForUpdatesAndNotify()` and `downloadUpdate()` emit `error` and reject with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` before any request, and so does each request or redirect to another origin, such as one of the install at launch of an update marked for the next launch, which keeps the update pending. An unpackaged app without `forceDevUpdateConfig`, whose `checkForUpdates()` otherwise skips the check and resolves `null`, gets the same error, so a missing callback shows up in development: set it in dev runs too.
+- **Fails closed.** A callback that throws, or returns anything but an array of strings, fails that request, unsent, with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`. Its message holds no header value.
+- **Read at each hop**, so a new function serves the next request.
+- **Announces what it leaves out.** The first time a request to an origin goes without some of your headers or a provider's (never the updater's own), electron-updater logs a warning, once per origin, naming those headers and both origins (never a value), with a link to the migration guide.
+- **Compare the whole origin** (`hop.to.origin`, scheme and port included), not `hop.to.hostname`, so an `http` URL or another port on the same host does not get your headers.
+
+See [The app chooses the headers sent to another origin](../migration/v27-runtime-changes.md#cross-origin-headers).
+
+#### When the update host changes its redirects {#cross-origin-host-changes}
+
+Production updates can start failing with a 401 or 403, or a failed download, when the update host or its CDN starts redirecting to a new origin (a new CDN hostname or storage bucket): that origin gets only the headers your callback keeps for it.
+
+- **Look at the warning.** electron-updater logs one, once per origin, naming the headers your callback left out for that origin and both origins.
+- **Look at the hops.** The callback receives each hop: log `hop.from.origin` and `hop.to.origin` while testing (origins, not full URLs, whose query can hold a signed token). With `DEBUG=electron-builder`, the updater also logs a debug line for each cross-origin request naming the two hosts and the header names it sends, never their values.
+- **Allow specific headers only for origins you trust**, keyed on `hop.to.origin`. Never return all of `headerNames`: that sends your credentials to whatever origin the host redirects to.
+
+  ```typescript
+  const allowed = new Map([["https://cdn.example.com", ["x-tenant"]]])
+  autoUpdater.crossOriginHeaders = (headerNames, hop) => headerNames.filter(it => allowed.get(hop.to.origin)?.includes(it) ?? false)
+  ```
+
+- **Test against a staging feed** that redirects the way production will, before you roll out a new host, CDN or app release. Installed apps keep the callback they shipped with: until they update to a release that allows the new origin, keep serving them from an origin they allow, or from URLs that need none of your headers (such as pre-signed URLs).
 
 ### Linux installs with gksudo, kdesudo or beesu
 
@@ -455,6 +545,34 @@ The `autoUpdater` object emits the following events:
 * `error` Error
 
 Emitted when there is an error while updating.
+
+#### Event: `login`
+
+* `authInfo` [AuthInfo](https://www.electronjs.org/docs/latest/api/structures/auth-info)
+* `callback` Function — `callback(username, password)`; called without arguments, it cancels the authentication
+* `url` String — the URL of the update request that got the challenge (after a redirect, the redirect's target)
+
+Emitted when an update request gets an authentication challenge, from a proxy (`authInfo.isProxy`) or from a server. Call `callback(username, password)` to answer it, or `callback()` to cancel it; the request then fails with the challenge's status. Without a `login` listener, electron-updater cancels the challenge and logs a warning once, naming the challenger's host and port; a listener that throws cancels it too.
+
+A challenge from any origin the updater requests reaches your handler: the feed, a download URL on another origin and the target of a redirect. Answer only the proxy or the server your credentials are meant for: give a proxy its own credentials after checking `authInfo.host`, answer a server only when the request's origin, `new URL(url).origin`, is your feed's (`authInfo` has no scheme), and call `callback()` for any other. A server's challenge from another origin than the feed logs a warning once when no handler takes the `url` argument.
+
+```typescript
+const FEED_ORIGIN = "https://updates.example.com"
+const PROXY_HOST = "proxy.corp.example"
+
+autoUpdater.on("login", (authInfo, callback, url) => {
+  if (authInfo.isProxy) {
+    // the proxy's own credentials, never the feed's
+    authInfo.host === PROXY_HOST ? callback(proxyUsername, proxyPassword) : callback()
+  } else if (new URL(url).origin === FEED_ORIGIN) {
+    callback(feedUsername, feedPassword)
+  } else {
+    callback()
+  }
+})
+```
+
+With [`allowInsecureFeed`](#allowinsecurefeed), a server's challenge on a request that is not `https` and not to a loopback host is cancelled without emitting `login`, as its authenticity cannot be determined; electron-updater logs a warning the first time. Serve the feed and the update files over `https` to answer it.
 
 #### Event: `checking-for-update`
 

@@ -362,6 +362,31 @@ describe.heavy.ifMac("dmg", { concurrent: false }, () => {
       }
     ))
 
+  test("window overrides background size", ({ expect }) =>
+    app(expect, {
+      targets: dmgTarget,
+      config: {
+        publish: null,
+        // dmg can mount only one volume name, so, to test in parallel, we set different product name
+        productName: "Window-Size",
+        dmg: {
+          title: "Window Size",
+          window: { x: 200, y: 300, width: 540, height: 412 },
+        },
+      },
+      effectiveOptionComputed: async it => {
+        if (!("volumePath" in it)) {
+          return false
+        }
+
+        await assertThat(expect, path.join(it.volumePath, ".background.tiff")).isFile()
+        // dmgbuild stores the window frame as a plain string in the .DS_Store bwsp plist
+        const dsStore = await fs.readFile(path.join(it.volumePath, ".DS_Store"))
+        expect(dsStore.includes("{{200, 300}, {540, 412}}")).toBe(true)
+        return false
+      },
+    }))
+
   // Verifies the full dmgbuild + mac_alias pipeline end-to-end: builds a DMG with a background
   // image (which exercises alias.to_bytes() / uuid in mac_alias), then simulates what a user
   // does — mounts, copies the .app out, verifies the bundle is intact — and immediately removes
