@@ -118,7 +118,10 @@ asar:
 : electron-builder generates `latest.yml` (Windows), `latest-mac.yml` (macOS), or `latest-linux.yml` only when publishing. Ensure you ran `--publish always` (or `--publish onTagOrDraft`) when building the release.
 
 **"sha512 checksum mismatch"**
-: The downloaded update file is corrupt or the wrong file is being served. Verify that the artifact and the `.yml` metadata file were generated together in the same build and not mixed from different builds. As of electron-builder 27, the manifest `sha512` should be base64-encoded — a 128-hex-character "expected" value in the error message is the tell that a hand-rolled manifest still uses hex, which is accepted but deprecated in v27 and will be removed in v28; convert it with `sha512sum file.ext | cut -d' ' -f1 | xxd -r -p | base64 -w0`.
+: The downloaded update file is corrupt or the wrong file is being served. Verify that the artifact and the `.yml` metadata file were generated together in the same build and not mixed from different builds. The manifest `sha512` should be base64-encoded — a 128-hex-character "expected" value in the error message is the tell that a hand-rolled manifest uses hex, which is accepted but deprecated, and is planned to be removed in v28; convert it with `sha512sum file.ext | cut -d' ' -f1 | xxd -r -p | base64 -w0`.
+
+**401/403 or a failed download after the update host or CDN changed its redirects**
+: A redirect to a new origin gets only the headers [`autoUpdater.crossOriginHeaders`](./features/auto-update.md#crossoriginheaders) keeps for it. Log the hops the callback receives, allow specific headers only for trusted origins (`hop.to.origin`), and test against a staging feed before rollout. See [When the update host changes its redirects](./features/auto-update.md#cross-origin-host-changes).
 
 **`ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED`: "The download is larger than the … bytes declared for it"**
 : The server sent more bytes than the `size` that `latest*.yml` declares for the file, so electron-updater stopped the download. As with a checksum mismatch, the artifact and the `.yml` were not generated together, or the file was changed after the `.yml` was written. Publish the `.yml` generated with the file. See [Full downloads stop at the declared size](./migration/v27-runtime-changes.md#full-downloads-stop-at-the-declared-size).
