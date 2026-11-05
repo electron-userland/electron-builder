@@ -42,7 +42,7 @@ A mismatch, a `--package-file` package that cannot be copied, or a package that 
 
 An update run (`--updated`, as electron-updater starts the installer) must pass `--package-file`: without it the installer aborts (exit code `2`), and neither looks for a package next to it nor downloads one. electron-updater passes it whenever `latest.yml` lists the web installer's `packages`, as the one electron-builder writes does.
 
-For auto-update, electron-updater installs web-installer updates only when `disableWebInstaller` is `false`; installs made by an `nsis-web` installer built with electron-builder v27+ default to `false` automatically — see [Auto Update](./features/auto-update.md#disablewebinstaller-now-defaults-to-true). Don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./features/signed-update-manifests.md) cover the web package's path, SHA-512 and size.
+For auto-update, electron-updater installs web-installer updates only when `disableWebInstaller` is `false`; installs made by an `nsis-web` installer (which carries a `resources/package-type` marker) default to `false` automatically — see [Auto Update](./features/auto-update.md#disablewebinstaller). Don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./features/signed-update-manifests.md) cover the web package's path, SHA-512 and size.
 
 ## Custom NSIS script
 

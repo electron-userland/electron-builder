@@ -282,6 +282,7 @@ export class NsisUpdater extends BaseUpdater {
               const packageUrl = new URL(packageInfo.path)
               await this.httpExecutor.download(packageUrl, packageFile, {
                 headers: this.downloadRequestHeaders(packageUrl, downloadUpdateOptions),
+                ownHeaders: this.downloadOwnHeaders(downloadUpdateOptions),
                 cancellationToken: downloadUpdateOptions.cancellationToken,
                 sha512: packageInfo.sha512,
               })

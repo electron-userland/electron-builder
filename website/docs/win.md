@@ -78,6 +78,8 @@ export default class AppUpdater {
             return result.signed ? { response: "success" } : { response: "failure", message: result.message }
         }
         autoUpdater.addAuthHeader(`Bearer ${token}`)
+        // which request headers may go to another origin: here none, so Authorization stays on the feed's origin
+        autoUpdater.crossOriginHeaders = () => []
         autoUpdater.checkForUpdatesAndNotify()
     }
 }

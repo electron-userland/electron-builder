@@ -140,6 +140,7 @@ async function update(tmpDir: TmpDir, c: Case): Promise<Outcome> {
     const updater = new NsisUpdater(null, new TestAppAdapter("1.0.0", baseCachePath))
     Object.assign(updater, { httpExecutor: new VerifyingNodeHttpExecutor(), _testOnlyOptions: { platform: "win32" } })
     updater.logger = c.logger
+    updater.crossOriginHeaders = () => []
     updater.autoDownload = false
     updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
       provider: "generic",
