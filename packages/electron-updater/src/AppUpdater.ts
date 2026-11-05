@@ -1,5 +1,5 @@
 import { createRequire } from "node:module"
-import { blockMapV2ToV3Keys, decodeBlockMapV3, filterHeaders, isBlockMapV3, LogLimiter, toBlockMap } from "builder-util-runtime/internal"
+import { blockMapV2ToV3Keys, decodeBlockMapV3, filterHeaders, isBlockMapV3, LogLimiter, toBlockMap, urlWithoutQuery } from "builder-util-runtime/internal"
 import {
   AllPublishOptions,
   asArray,
@@ -1147,7 +1147,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   protected onUpdateAvailable(updateInfo: UpdateInfo): void {
     this.log.info(
       `Found version ${updateInfo.version} (url: ${asArray(updateInfo.files)
-        .map(it => it.url)
+        .map(it => urlWithoutQuery(it.url))
         .join(", ")})`
     )
     this.emit("update-available", updateInfo)
@@ -1177,7 +1177,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     this.log.info(
       `Downloading update from ${asArray(updateInfoAndProvider.info.files)
-        .map(it => it.url)
+        .map(it => urlWithoutQuery(it.url))
         .join(", ")}`
     )
     const errorHandler = (e: Error): Error => {
@@ -1384,7 +1384,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const fileInfo = taskOptions.fileInfo
     if (fileInfo.info.sha512 == null && (fileInfo.info as any).sha2 != null) {
       this.log.warn(
-        "Update artifact is validated with a SHA-256 (sha2) checksum only. SHA-256 update checksums are deprecated; electron-builder v28 will require SHA-512 and reject SHA-256-only update metadata (fail-closed). Regenerate latest*.yml with a current electron-builder and avoid pinning electronUpdaterCompatibility to a legacy (<2.15 / 1.x) range."
+        "Update artifact is validated with a SHA-256 (sha2) checksum only. sha2 is deprecated, and update metadata without sha512 will be rejected (fail-closed): publish sha512, which electron-builder generates by default, by regenerating latest*.yml with a current electron-builder and not pinning electronUpdaterCompatibility to a legacy (<2.15 / 1.x) range."
       )
     }
     const downloadOptions: DownloadOptions = {
@@ -1566,7 +1566,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         newBlockMapUrl = fileInfo.blockMapUrl
         oldBlockMapUrl = override ? (await getBlockMapFiles())[0] : null
       }
-      this.log.info(`Download block maps (old: "${oldBlockMapUrl ?? "cache only"}", new: ${newBlockMapUrl})`)
+      this.log.info(`Download block maps (old: "${oldBlockMapUrl == null ? "cache only" : urlWithoutQuery(oldBlockMapUrl)}", new: ${urlWithoutQuery(newBlockMapUrl)})`)
 
       // a v2 map may inflate to, and a v3 map may be, at most this many bytes; the old map is held to the new file's limit too: it has
       // ample headroom for a release of a different size
@@ -1582,9 +1582,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         })
 
         if (data == null || data.length === 0) {
-          throw new Error(`Blockmap "${url.href}" is empty`)
+          throw new Error(`Blockmap "${urlWithoutQuery(url)}" is empty`)
         }
-        return parseBlockMapData(data, url.href, blockMapLimit, expectedFileSize)
+        return parseBlockMapData(data, urlWithoutQuery(url), blockMapLimit, expectedFileSize)
       }
 
       const downloadOptions: DifferentialDownloaderOptions = {
@@ -1644,12 +1644,12 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
             isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
             logger: this.log,
           })
-          newBlockMapData = parseBlockMapData(fetched.buffer, newBlockMapUrl.href, blockMapLimit, newFileSize)
+          newBlockMapData = parseBlockMapData(fetched.buffer, urlWithoutQuery(newBlockMapUrl), blockMapLimit, newFileSize)
         } catch (e: unknown) {
           // a host or CDN that mishandles Range requests, or a map that fails verification: a plain GET of the new map still
           // allows a differential update
           throwIfCancelled(e, downloadUpdateOptions.cancellationToken)
-          this.log.warn(`Cannot fetch the changed parts of the block map "${newBlockMapUrl.href}", downloading it whole: ${e instanceof Error ? e.message : String(e)}`)
+          this.log.warn(`Cannot fetch the changed parts of the block map "${urlWithoutQuery(newBlockMapUrl)}", downloading it whole: ${e instanceof Error ? e.message : String(e)}`)
         }
       }
       newBlockMapData ??= await downloadBlockMap(newBlockMapUrl, newFileSize)
@@ -1670,19 +1670,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
           // download copies the installed installer unchanged and fails the sha512 check. The new blockmap downloaded above is cached
           // with the update, so the next update can be differential.
           this.log.info(
-            `No cached blockmap for the old installer, and the URL of the installed version's blockmap is the update's own ("${newBlockMapUrl}") because the ` +
+            `No cached blockmap for the old installer, and the URL of the installed version's blockmap is the update's own ("${urlWithoutQuery(newBlockMapUrl)}") because the ` +
               "artifact name has no version: downloading the full update (add ${version} to the artifact name, or set previousBlockmapBaseUrlOverride, " +
               "to make the first update after an install differential)"
           )
           return true
         }
-        this.log.info(`No cached blockmap for the old installer, downloading it from "${oldBlockMapUrl}"`)
+        this.log.info(`No cached blockmap for the old installer, downloading it from "${urlWithoutQuery(oldBlockMapUrl)}"`)
         // the old blockmap comes from previousBlockmapBaseUrlOverride when the app sets it, so that origin gets the credentials
         oldBlockMapData = await downloadBlockMap(oldBlockMapUrl, null, override ? new URL(override) : undefined)
         if (!(await isBlockMapOfFile(oldBlockMapData.map, downloadOptions.oldFile))) {
           // e.g. a server that serves another release's blockmap under the derived name: planned against it, the download fails the sha512 check
           this.log.info(
-            `The blockmap downloaded from "${oldBlockMapUrl}" does not describe the cached "${oldInstallerFileName}" (malformed, or its blocks do not end at the file size): downloading the full update`
+            `The blockmap downloaded from "${urlWithoutQuery(oldBlockMapUrl)}" does not describe the cached "${oldInstallerFileName}" (malformed, or its blocks do not end at the file size): downloading the full update`
           )
           return true
         }

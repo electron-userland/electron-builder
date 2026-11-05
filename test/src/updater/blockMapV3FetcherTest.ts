@@ -14,7 +14,7 @@ import * as http from "http"
 import { AddressInfo } from "net"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 import { gzipSync } from "zlib"
-import { httpExecutor, TestNodeHttpExecutor } from "../helpers/updaterTestUtil"
+import { httpExecutor, makeLogger, TestNodeHttpExecutor } from "../helpers/updaterTestUtil"
 import { createCrossOriginHeaderPolicy } from "electron-updater/src/AppUpdater"
 
 // Deterministic synthetic blocks: content-derived digests, sizes around a mean (same generator as blockMapV3Test).
@@ -379,6 +379,27 @@ describe("blockMapV3Fetcher", () => {
       const result = await fetchWith("v2-small.blockmap", OLD, false)
       expect(result.buffer.equals(small)).toBe(true)
       expect(server.requests).toHaveLength(1)
+    })
+
+    // a pre-signed block map URL carries its signature in the query: the fetcher's log lines name the URL without it
+    test("a server that ignores Range is logged with the block map URL without its query", async () => {
+      server.files.set("v2.blockmap", V2)
+      server.rangeSupport = false
+      const logger = makeLogger()
+      try {
+        await fetchBlockMapV3({
+          url: new URL("v2.blockmap?X-Amz-Signature=signature-secret", server.url),
+          oldMap: OLD,
+          httpExecutor,
+          cancellationToken: new CancellationToken(),
+          isUseMultipleRangeRequest: false,
+          logger,
+        })
+      } finally {
+        server.rangeSupport = true
+      }
+      expect(logger.warns).toEqual([`Server ignored the Range request for ${new URL("v2.blockmap", server.url).href}, downloaded the whole block map`])
+      expect(JSON.stringify([logger.infos, logger.warns])).not.toContain("signature-secret")
     })
 
     test("a server that ignores Range returns the v2 map whole in one response", async () => {

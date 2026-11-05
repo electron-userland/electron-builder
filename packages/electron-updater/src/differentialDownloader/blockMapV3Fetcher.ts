@@ -34,6 +34,7 @@ import {
   recordsStart,
   SUPER_SIZE,
   superHashOfGroups,
+  urlWithoutQuery,
 } from "builder-util-runtime/internal"
 import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
@@ -278,7 +279,7 @@ class BlockMapV3Fetcher {
 
   private verifiedWhole(body: Buffer): BlockMapV3FetchResult {
     if (!isBlockMapV3(body)) {
-      this.options.logger?.info?.(`Block map ${this.options.url.href} is not a v3 map; downloaded it whole`)
+      this.options.logger?.info?.(`Block map ${urlWithoutQuery(this.options.url)} is not a v3 map; downloaded it whole`)
       return this.result(body, { supers: 0, groups: 0 }, { supers: 0, groups: 0 })
     }
     // the header (expected file size, size limit, exact length) and the tables are checked before any record is decoded
@@ -293,7 +294,7 @@ class BlockMapV3Fetcher {
     if (first.totalSize == null) {
       body = await this.fetchWhole()
     } else if (first.totalSize > this.maxSize) {
-      throw new Error(`Blockmap "${this.options.url.href}" is ${first.totalSize} bytes, more than the ${this.maxSize}-byte limit`)
+      throw new Error(`Blockmap "${urlWithoutQuery(this.options.url)}" is ${first.totalSize} bytes, more than the ${this.maxSize}-byte limit`)
     } else if (body.length < first.totalSize) {
       const rest = await this.rangeRequest([{ start: body.length, end: first.totalSize }])
       body = rest.status === 200 ? rest.body : Buffer.concat([body, rest.body])
@@ -307,7 +308,7 @@ class BlockMapV3Fetcher {
       throw new Error(`block map v3: unexpected status ${response.status} for a full download`)
     }
     if (response.body.length === 0) {
-      throw new Error(`Blockmap "${this.options.url.href}" is empty`)
+      throw new Error(`Blockmap "${urlWithoutQuery(this.options.url)}" is empty`)
     }
     return response.body
   }
@@ -373,7 +374,7 @@ class BlockMapV3Fetcher {
       return response
     }
     if (response.status === 200) {
-      this.options.logger?.warn?.(`Server ignored the Range request for ${this.options.url.href}, downloaded the whole block map`)
+      this.options.logger?.warn?.(`Server ignored the Range request for ${urlWithoutQuery(this.options.url)}, downloaded the whole block map`)
       return response
     }
     throw new Error(`block map v3: unexpected status ${response.status} for a Range request`)

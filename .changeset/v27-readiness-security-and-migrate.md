@@ -9,7 +9,7 @@
 Security hardening and a migrate-schema fix:
 
 - `builder-util` `removePassword`: redact single-letter/URI secret flags (`security … -k <password>`, `osslsigncode -key <pkcs11-uri?pin-value=…>`) and whitespace-containing secrets in debug logs, and make the `/b … /c` block-redaction regex ReDoS-safe.
-- `builder-util-runtime` `httpExecutor`: fix the non-functional `maxRedirects` guard (the redirect counter was never advanced), so a redirect loop from a malicious feed/mirror no longer hangs the updater.
-- `electron-updater` `GitLabProvider`: only forward the GitLab token to the channel-file request when its URL is same-origin as the API host, so an off-host/`http://` `direct_asset_url` in the release JSON cannot exfiltrate the token.
+- `builder-util-runtime` `httpExecutor`: the `maxRedirects` guard advances the redirect counter on every redirect, so a redirect loop from a malicious feed/mirror fails the request after 10 redirects instead of hanging the updater.
+- `electron-updater` `GitLabProvider`: the GitLab token goes to a channel-file request on another origin than the GitLab host only when the app's `autoUpdater.crossOriginHeaders` keeps it, so an off-host `direct_asset_url` in the release JSON does not receive the token unless the app allows it.
 - `app-builder-lib`: defense-in-depth hardening — validate `executableName` before interpolating it into the generated Flatpak launcher, contain custom-toolset extraction within the cache dir, and XML-escape MSI file-association `ext`/`description`.
 - `electron-builder` `migrate-schema`: auto-remove the removed `linux.syncDesktopName` flag.

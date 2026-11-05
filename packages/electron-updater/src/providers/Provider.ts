@@ -11,6 +11,7 @@ import {
   UpdateInfo,
   WindowsUpdateInfo,
 } from "builder-util-runtime"
+import { urlWithoutQuery } from "builder-util-runtime/internal"
 import { OutgoingHttpHeaders } from "http"
 import { EventType, load, State } from "js-yaml"
 import { URL } from "url"
@@ -55,7 +56,7 @@ export function feedBaseUrlOf(provider: Provider<any>): URL {
 
 // Shared by the GitHub/GitLab/PrivateGitHub providers when a release channel file (e.g. latest.yml) 404s.
 export function channelFileNotFoundError(channelFile: string, channelFileUrl: URL | string, e: any): Error {
-  return newError(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
+  return newError(`Cannot find ${channelFile} in the latest release artifacts (${urlWithoutQuery(channelFileUrl)}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
 }
 
 export abstract class Provider<T extends UpdateInfo> {
