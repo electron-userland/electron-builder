@@ -255,6 +255,7 @@ Note that in order to develop/test UI/UX of updating without packaging the appli
 In latest version you need [force the updater](https://github.com/electron-userland/electron-builder/issues/6863) to work in "dev" mode:
 ```js
 autoUpdater.forceDevUpdateConfig = true
+autoUpdater.crossOriginHeaders = () => [] // required in dev runs too
 ```
 :::note
 If you see this in logs:
@@ -268,6 +269,25 @@ process.env.APPIMAGE = path.join(__dirname, 'dist', `app_name-${app.getVersion()
 :::
 
 But it is not recommended, better to test auto-update for installed application (especially on Windows). [Minio](https://github.com/electron-userland/electron-builder/issues/3053#issuecomment-401001573) is recommended as a local server for testing updates.
+
+### Testing against a local update server {#local-update-server}
+
+- **Loopback `http` works as is.** A feed on `localhost`, `127.0.0.0/8` or `::1` may use plain `http` with no opt-in, e.g. `url: http://localhost:8080` in `dev-app-update.yml` or the publish configuration.
+- **Another machine (LAN host or VM)** is not loopback, so plain `http` to it fails with `ERR_UPDATER_INSECURE_FEED`. Either serve it over `https` with a certificate the test machine trusts (e.g. made with [mkcert](https://github.com/FiloSottile/mkcert), its root CA installed on that machine), or set [`autoUpdater.allowInsecureFeed = !app.isPackaged`](#allowinsecurefeed) for a dev run. An installed test build is packaged, so it needs `https`.
+- **A redirect from `https` to `http`** (other than to loopback) is rejected with `ERR_UPDATER_INSECURE_FEED`, and a redirect from another machine to a loopback host with `ERR_UPDATER_LOOPBACK_REDIRECT`: point the feed straight at the URL that serves the files.
+- **Set [`autoUpdater.crossOriginHeaders`](#crossoriginheaders) in dev runs too.** `checkForUpdates()` rejects with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` without it, unpackaged or not.
+
+```ts
+import { app } from "electron"
+import { autoUpdater } from "electron-updater"
+
+autoUpdater.crossOriginHeaders = () => []
+autoUpdater.allowInsecureFeed = !app.isPackaged // only for an http feed on another machine
+autoUpdater.forceDevUpdateConfig = !app.isPackaged // reads dev-app-update.yml
+await autoUpdater.checkForUpdates()
+```
+
+For a local S3 server, see [Testing Auto-Update Locally with Minio](../tutorials/test-update-on-s3-locally.md).
 
 ## Compatibility
 
@@ -292,7 +312,7 @@ Update metadata validated only by the legacy SHA-256 `sha2` checksum is deprecat
 
 ## Update security options
 
-Two `AppUpdater` settings changed or were added in v27. See the [Security & Hardening](./security.md#update-security-electron-updater) page for the full rationale.
+The `AppUpdater` settings below protect the update path. See the [Security & Hardening](./security.md#update-security-electron-updater) page for the full rationale.
 
 The update manifest (`latest*.yml`) itself **is** cryptographically signed and verified before any download as of v27. Publishing a build that emits update metadata fails unless an Ed25519 signing key resolves; `updateManifest: false` is the only opt-out — see [Signed Update Manifests](./signed-update-manifests.md).
 
@@ -319,6 +339,22 @@ updater.disableWebInstaller = false // only if you intentionally ship a web inst
 Set it before the app is `ready`, e.g. right after creating the updater, or synchronously in a `ready` handler: a web-installer update marked for [install on next launch](#install-on-next-launch-windowslinux) is checked against the flag right after the app is ready, once your own `ready` handlers have run, and rejected (its pending-install marker cleared) while the flag is `true`.
 
 A web update cached by a previous launch, or pending an install on next launch, is used only if its web package still matches the freshly fetched manifest; otherwise it is discarded. The `nsis-web` installer itself verifies the package electron-updater passes to it and installs its own copy — see [Web Installer](../nsis.md#web-installer). Once the app runs the version of that update, `NsisUpdater` removes the package from its `pending` cache directory at startup (app `ready`); the package of an update that is not installed yet, or whose install failed, is kept for the install or a retry. Because the manifest vouches for the web package, don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./signed-update-manifests.md) cover its path, SHA-512 and size.
+
+### `allowInsecureFeed` (defaults to `false`) {#allowinsecurefeed}
+
+Every request electron-updater sends — the update feed (`app-update.yml` or `setFeedURL`), the update files, blockmaps, differential range requests and every redirect they follow — must use `https`. A request over plain `http`, including an `https` request redirected to `http`, fails with `ERR_UPDATER_INSECURE_FEED` before anything is sent to that URL. Requests to a loopback host (`localhost`, `127.0.0.0/8`, `::1`) are allowed over `http`, so a local test server can serve updates over `http`. A redirect to a loopback host, over `http` or `https`, from a URL that is not on one fails with `ERR_UPDATER_LOOPBACK_REDIRECT`, whatever `allowInsecureFeed` is: a remote server cannot point the updater at the user's machine. The same goes for the unspecified address (`0.0.0.0`, `[::]`), IPv4-mapped loopback (`[::ffff:127.0.0.1]`), `localhost.` and `*.localhost` names; another host name that resolves to a loopback address is not detected. electron-builder warns during the build when the feed written to `app-update.yml` (a `generic` or `custom` publish `url`, a `github` `protocol: "http"` or an `s3` `endpoint`) uses `http` to a host that is not loopback.
+
+Serve your updates over `https`. `allowInsecureFeed` is meant for development, such as a [local test server](#local-update-server) on another machine: tie it to `app.isPackaged` so it cannot ship enabled.
+
+```ts
+import { app } from "electron"
+import { autoUpdater } from "electron-updater"
+autoUpdater.allowInsecureFeed = !app.isPackaged // plain http in dev runs only
+```
+
+A packaged app with `allowInsecureFeed` set logs a warning once, the first time it loads update info (an update check, or the validation of an update pending install at launch), pointing here. Over `http`, anyone on the network path can tamper with the update information and files: only a [signed update manifest](./signed-update-manifests.md) and the code signature of the update protect them. Set it to `true` in a packaged app only for a feed that cannot be served over `https`.
+
+With `allowInsecureFeed`, a server's authentication challenge on a request that is neither `https` nor to a loopback host is cancelled without emitting [`login`](#event-login), as its authenticity cannot be determined, and electron-updater logs a warning the first time. A proxy's challenge, and a server's on a loopback request, reach `login` as on `https`. For your `login` handler to answer a server, serve the feed and the update files over `https`.
 
 ### `allowUnverifiedLinuxPackages` (new)
 
@@ -533,6 +569,8 @@ autoUpdater.on("login", (authInfo, callback, url) => {
   }
 })
 ```
+
+With [`allowInsecureFeed`](#allowinsecurefeed), a server's challenge on a request that is not `https` and not to a loopback host is cancelled without emitting `login`, as its authenticity cannot be determined; electron-updater logs a warning the first time. Serve the feed and the update files over `https` to answer it.
 
 #### Event: `checking-for-update`
 

@@ -25,6 +25,7 @@ export {
   HttpError,
   hashSensitiveValue,
   HttpExecutor,
+  isLoopbackHostname,
   isSensitiveFieldName,
   parseJson,
   RequestHeaders,

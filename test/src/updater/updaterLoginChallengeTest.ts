@@ -163,6 +163,56 @@ describe("electron-updater login event", () => {
   })
 })
 
+// With allowInsecureFeed, a server's challenge on a request that is not https cannot be told from one by anyone on the network path.
+describe("login event with allowInsecureFeed", () => {
+  const HTTP_URL = new URL("http://downloads.example.net/TestApp-Setup-1.1.0.exe")
+
+  async function createInsecureFeedUpdater(tmpDir: TmpDir, allowInsecureFeed = true) {
+    const updater = await createUpdater(tmpDir)
+    const logger = makeLogger()
+    updater.logger = logger
+    updater.allowInsecureFeed = allowInsecureFeed
+    const onLogin = vi.fn()
+    updater.on("login", onLogin)
+    return { updater, logger, onLogin }
+  }
+
+  test("a server's challenge on an http request is cancelled without emitting login, and announced once", async ({ tmpDir, expect }) => {
+    const { updater, logger, onLogin } = await createInsecureFeedUpdater(tmpDir)
+    expect(emitChallenge(updater, challenge("downloads.example.net", 80), HTTP_URL).mock.calls).toEqual([[]])
+    expect(emitChallenge(updater, challenge("cdn.example.org", 80), new URL("http://cdn.example.org/a.exe")).mock.calls).toEqual([[]])
+    expect(onLogin).not.toHaveBeenCalled()
+    const warnings = logger.warns.filter(it => it.includes("login event"))
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0]).toContain("downloads.example.net:80")
+    expect(warnings[0]).toContain("Serve the update feed and files over https")
+    expect(warnings[0]).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https")
+  })
+
+  test("a server's challenge on an https request and a proxy's challenge on an http request are emitted", async ({ tmpDir, expect }) => {
+    const { updater, logger, onLogin } = await createInsecureFeedUpdater(tmpDir)
+    expect(emitChallenge(updater, challenge("downloads.example.net", 443), DOWNLOAD_URL)).not.toHaveBeenCalled()
+    expect(emitChallenge(updater, challenge("proxy.corp.example", 3128, true), HTTP_URL)).not.toHaveBeenCalled()
+    expect(onLogin.mock.calls.map(it => it[2])).toEqual([DOWNLOAD_URL.href, HTTP_URL.href])
+    expect(logger.warns.filter(it => it.includes("login event"))).toEqual([])
+  })
+
+  test("a server's challenge on an http request to a loopback host is emitted", async ({ tmpDir, expect }) => {
+    const { updater, logger, onLogin } = await createInsecureFeedUpdater(tmpDir)
+    emitChallenge(updater, challenge("127.0.0.1", 8080), new URL("http://127.0.0.1:8080/TestApp-Setup-1.1.0.exe"))
+    emitChallenge(updater, challenge("localhost", 8080), new URL("http://localhost:8080/TestApp-Setup-1.1.0.exe"))
+    emitChallenge(updater, challenge("::1", 8080), new URL("http://[::1]:8080/TestApp-Setup-1.1.0.exe"))
+    expect(onLogin).toHaveBeenCalledTimes(3)
+    expect(logger.warns.filter(it => it.includes("login event"))).toEqual([])
+  })
+
+  test("without allowInsecureFeed, a server's challenge on an http request (to a loopback host) is emitted", async ({ tmpDir, expect }) => {
+    const { updater, onLogin } = await createInsecureFeedUpdater(tmpDir, false)
+    emitChallenge(updater, challenge("127.0.0.1", 8080), new URL("http://127.0.0.1:8080/TestApp-Setup-1.1.0.exe"))
+    expect(onLogin).toHaveBeenCalledTimes(1)
+  })
+})
+
 // a stand-in for the "electron" module while `run` runs: its net.request returns an EventEmitter, pushed to `requests`
 function withElectron(requests: Array<EventEmitter>, run: () => void): void {
   const electron = {
@@ -218,7 +268,8 @@ describe("ElectronHttpExecutor login event", () => {
     const requests: Array<EventEmitter> = []
     const listener = vi.fn<(authInfo: AuthInfo, callback: LoginCallback, requestUrl: URL | null) => void>()
     withElectron(requests, () => {
-      new ElectronHttpExecutor(listener, () => ({})).createRequest(options, () => undefined)
+      // the URL is built for any protocol: the insecure feed check is not what this covers
+      new ElectronHttpExecutor(listener, { crossOriginHeaderPolicy: () => ({}), isInsecureFeedAllowed: () => true }).createRequest(options, () => undefined)
     })
     const authInfo = challenge("downloads.example.net", 443)
     const callback = vi.fn()

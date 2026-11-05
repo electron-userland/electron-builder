@@ -3,7 +3,7 @@ import { sleep } from "./retry.js"
 import _debug from "debug"
 import { createWriteStream } from "fs"
 import { IncomingMessage, OutgoingHttpHeader, OutgoingHttpHeaders, RequestOptions } from "http"
-import { Socket } from "net"
+import { isIPv4, Socket } from "net"
 import { Transform } from "stream"
 import { URL } from "url"
 import { Nullish } from "./index.js"
@@ -95,6 +95,12 @@ export interface ApiRequestOptions extends RequestOptions {
    * back the ones its {@link CrossOriginHeaderPolicy} left out, so the policy decides only the other headers. Kept on redirects.
    */
   ownHeaders?: OutgoingHttpHeaders | null
+
+  /**
+   * Set by {@link HttpExecutor.prepareRedirectUrlOptions} on a redirect's options when a URL of the redirect chain so far is not on a loopback
+   * host (see {@link isLoopbackHostname}): electron-updater rejects a redirect from such a host to a loopback one.
+   */
+  redirectedFromNonLoopback?: boolean
 }
 
 export interface DownloadOptions {
@@ -492,6 +498,17 @@ Please double check that your authentication token is correct. Due to security r
     const originalUrl = HttpExecutor.reconstructOriginalUrl(options)
     const parsedRedirectUrl = parseUrl(redirectUrl, options)
     const newOptions: ApiRequestOptions = { ...options }
+    // net.request connects to `host` when it is set (where ElectronHttpExecutor moves a `Host` header), else to the hostname
+    let hostname = originalUrl.hostname
+    try {
+      hostname = options.host ? new URL(`http://${options.host}`).hostname : hostname
+    } catch {
+      // a host that does not parse is not loopback
+      hostname = String(options.host)
+    }
+    if (options.redirectedFromNonLoopback === true || !isLoopbackHostname(hostname)) {
+      newOptions.redirectedFromNonLoopback = true
+    }
     // the target is hostname and port: Electron's net prefers `host` (where ElectronHttpExecutor moves a `Host` header) over them
     delete newOptions.host
 
@@ -824,6 +841,15 @@ export function configureRequestOptions(options: RequestOptions, token?: string 
     options.protocol = "https:"
   }
   return options
+}
+
+/**
+ * Whether `hostname` (a URL hostname: an IPv6 address may be in brackets) names the loopback interface: `localhost`, an address
+ * in `127.0.0.0/8` or `::1`. A plain `http` update feed on such a host never leaves the machine.
+ */
+export function isLoopbackHostname(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^\[(.*)\]$/, "$1")
+  return host === "localhost" || host === "::1" || (isIPv4(host) && host.startsWith("127."))
 }
 
 export function isSensitiveFieldName(name: string): boolean {

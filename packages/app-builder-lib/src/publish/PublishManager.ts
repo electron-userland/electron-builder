@@ -22,12 +22,14 @@ import {
   githubTagPrefix,
   githubUrl,
   GitlabOptions,
+  isLoopbackHostname,
   isValidMaxUpdateInfoSize,
   KeygenOptions,
   normalizePublicKeyList,
   Nullish,
   PublishConfiguration,
   PublishProvider,
+  S3Options,
   SnapStoreOptions,
 } from "builder-util-runtime"
 import type { KeyObject } from "crypto"
@@ -112,6 +114,53 @@ export function warnAboutGenericFeedQuery(publishConfig: PublishConfiguration): 
       "Nothing changes for the relative URLs electron-builder writes. " +
       "See https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
   )
+}
+
+/**
+ * electron-updater rejects an update request over plain http to a host that is not loopback (`ERR_UPDATER_INSECURE_FEED`) unless
+ * the app sets `allowInsecureFeed`: a feed in app-update.yml that uses http (a generic or custom `url`, a github `protocol: "http"`,
+ * an s3 `endpoint`) fails every update check of the shipped app. The build succeeds (the app may opt in); only the feed origin
+ * is logged, never its path, query or user info.
+ *
+ * @internal exported for tests
+ */
+export function warnAboutInsecureFeed(publishConfig: PublishConfiguration): void {
+  let url: unknown
+  if (publishConfig.provider === "generic" || publishConfig.provider === "custom") {
+    url = (publishConfig as GenericServerOptions).url
+  } else if (publishConfig.provider === "github") {
+    // electron-updater requests the release feed and the GitHub API with this protocol
+    const options = publishConfig as GithubOptions
+    url = options.protocol === "http" ? githubUrl(options) : null
+  } else if (publishConfig.provider === "s3") {
+    // electron-updater reads the bucket through the endpoint, unless accelerate selects the (https) accelerated endpoint
+    const options = publishConfig as S3Options
+    url = options.accelerate === true ? null : options.endpoint
+  } else {
+    return
+  }
+  if (typeof url !== "string") {
+    return
+  }
+  let feed: URL
+  try {
+    feed = new URL(url)
+  } catch {
+    return
+  }
+  if (feed.protocol !== "http:" || isLoopbackHostname(feed.hostname)) {
+    return
+  }
+  const origin = `${feed.protocol}//${feed.host}`
+  // once per feed origin per process — app-update.yml is written for every pack
+  log
+    .once(`insecure-feed:${origin}`)
+    .warn(
+      { feed: origin, solution: "serve the updates over https; for a test server, set autoUpdater.allowInsecureFeed = !app.isPackaged in the app (dev runs only)" },
+      "the update feed written to app-update.yml uses plain http. electron-updater rejects every update request over http to a host " +
+        "that is not loopback (localhost, 127.0.0.0/8, ::1) with ERR_UPDATER_INSECURE_FEED, unless the app sets autoUpdater.allowInsecureFeed (meant for dev runs: autoUpdater.allowInsecureFeed = !app.isPackaged). " +
+        "See https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https"
+    )
 }
 
 /**
@@ -559,6 +608,7 @@ async function createAppUpdateConfiguration(
     updaterCacheDirName: packager.appInfo.updaterCacheDirName,
   }
   warnAboutGenericFeedQuery(publishConfig)
+  warnAboutInsecureFeed(publishConfig)
 
   // electron-updater fails every update check of an installed app whose app-update.yml has an invalid limit
   const maxUpdateInfoSize: unknown = publishConfig.maxUpdateInfoSize

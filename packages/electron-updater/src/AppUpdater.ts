@@ -7,6 +7,7 @@ import {
   CrossOriginHeaderPolicy,
   CrossOriginHop,
   DEFAULT_MAX_UPDATE_INFO_SIZE,
+  isLoopbackHostname,
   isValidMaxUpdateInfoSize,
   newError,
   PublishConfiguration,
@@ -270,6 +271,24 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * @default false
    */
   allowDowngrade = false
+
+  /**
+   * Whether update requests may use plain `http`. Every request of the updater (the update feed, the update
+   * file downloads, blockmaps and every redirect they follow) must use `https`, except to a loopback host (`localhost`, `127.0.0.0/8`,
+   * `::1`): any other request, including an `https` request redirected to `http`, fails with `ERR_UPDATER_INSECURE_FEED`.
+   *
+   * Meant for development and local test servers: set it to `!app.isPackaged` so that it never ships enabled. A packaged app with it set
+   * logs a warning once, the first time it loads update info (an update check, or the validation of an update pending install). Set it to
+   * `true` in a packaged app only for a feed that cannot be served over `https`:
+   * anyone on the network path can then tamper with the update information and files, so only a
+   * [signed update manifest](https://www.electron.build/docs/features/signed-update-manifests) and the code signature of the update
+   * protect it. A server's authentication challenge on a request that is not `https` and not to a loopback
+   * host is then cancelled without emitting `login`, as its authenticity cannot be determined: serve the feed over `https` for the app's
+   * `login` handler to answer it.
+   *
+   * @default false
+   */
+  allowInsecureFeed = false
 
   /**
    * *Linux only.* Whether to allow installing unverified (unsigned / failing-GPG) `.deb` and `.rpm` packages during auto-update.
@@ -659,7 +678,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     if (app == null) {
       this.app = new ElectronAppAdapter()
-      this.httpExecutor = new ElectronHttpExecutor((authInfo, callback, requestUrl) => this.handleLoginChallenge(authInfo, callback, requestUrl), this.crossOriginHeaderPolicy)
+      this.httpExecutor = new ElectronHttpExecutor((authInfo, callback, requestUrl) => this.handleLoginChallenge(authInfo, callback, requestUrl), {
+        crossOriginHeaderPolicy: this.crossOriginHeaderPolicy,
+        isInsecureFeedAllowed: () => this.allowInsecureFeed,
+      })
     } else {
       this.app = app
       this.httpExecutor = null as any
@@ -874,6 +896,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   protected async getUpdateInfoAndProvider(): Promise<UpdateInfoAndProvider> {
     await this.app.whenReady()
+    // allowInsecureFeed is meant for development: a packaged app that ships with it accepts tampered update information over plain http
+    if (this.allowInsecureFeed && this.app.isPackaged) {
+      this.limitedLogger("insecure-feed-packaged").warn(
+        "autoUpdater.allowInsecureFeed is true in a packaged app: its update requests and redirects may use plain http to any host, where anyone on the network path can tamper with them. " +
+          "It is meant for development only: set `autoUpdater.allowInsecureFeed = !app.isPackaged` and serve the production feed over https. " +
+          "https://www.electron.build/docs/features/auto-update#allowinsecurefeed"
+      )
+    }
 
     if (this.clientPromise == null) {
       this.clientPromise = this.configOnDisk.value.then(it => {
@@ -1017,9 +1047,21 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * (Electron's `AuthInfo` names only the challenger's host and port). A challenge on a request whose URL cannot be determined (`null`),
    * or one emitted without a `login` listener (which logs a warning once), is cancelled: the callback is called once, without credentials, and
    * so is one whose listener throws. A server's challenge from another origin than the feed logs a warning once when no listener takes `url`.
+   * With `allowInsecureFeed`, a server's challenge on a request that is not `https` and not to a loopback host is cancelled too: nothing shows
+   * that it comes from the server the credentials are meant for.
    * @internal
    */
   protected handleLoginChallenge(authInfo: AuthInfo, callback: LoginCallback, requestUrl: URL | null): void {
+    if (requestUrl != null && !authInfo.isProxy && requestUrl.protocol !== "https:" && !isLoopbackHostname(requestUrl.hostname) && this.allowInsecureFeed) {
+      // host and port only: the realm comes from the server
+      this.limitedLogger("login-challenge-insecure").warn(
+        `With allowInsecureFeed, electron-updater emits the login event for a server's authentication challenge only on an https or loopback request: ` +
+          `the challenge from ${authInfo.host}:${authInfo.port} on a request that is neither https nor loopback was cancelled, as its authenticity cannot be determined. ` +
+          `Serve the update feed and files over https to answer it. https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https`
+      )
+      callback()
+      return
+    }
     // no credentials: Electron cancels the authentication
     if (requestUrl == null) {
       callback()

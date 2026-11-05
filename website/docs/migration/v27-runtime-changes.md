@@ -18,6 +18,7 @@ What the installed app, its installer or its auto-updater does differently on yo
 | [NSIS: per-machine builds set `isAdminRightsRequired` in the update info](#nsis-per-machine-builds-set-isadminrightsrequired) | Advisory | None for most apps. Their updates are started with `elevate.exe`; with `autoInstallEvent: "onNextLaunch"`, per-machine apps call `installPendingUpdateIfAvailable()` to install a pending update |
 | [Update credentials are only sent to the feed's origin (electron-updater)](#update-credentials-stay-on-the-feeds-origin) | Warns, advisory, runtime error, runtime log | Only if `latest*.yml` points downloads at another origin (another host, or another port or scheme) that needs your `requestHeaders` / `addAuthHeader` credentials or a token in the feed URL's query: serve the files from the feed origin or use pre-signed URLs. A custom provider returns its feed URL from `Provider.feedBaseUrl` (else `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`) |
 | [The app chooses the headers sent to another origin (electron-updater, builder-util-runtime)](#cross-origin-headers) | Runtime error | Every app sets `autoUpdater.crossOriginHeaders` before its first check, and before `ready` for an install at launch (else `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`): `autoUpdater.crossOriginHeaders = () => []` sends none of the app's headers to another origin; return the names of the ones an origin may receive to send them there |
+| [Update requests require https (electron-updater)](#update-requests-require-https) | Warns (generic/custom/github/s3 feed), runtime error | An `http` feed, download or redirect to a host that is not loopback fails with `ERR_UPDATER_INSECURE_FEED`: serve updates over `https`; for a test server on another machine, set `autoUpdater.allowInsecureFeed = !app.isPackaged` |
 | [Windows update signature verification fails closed (electron-updater)](#windows-update-signature-verification-fails-closed) | Runtime error | An NSIS update is installed only when PowerShell verifies it: one electron-updater 6 installed with a warning (PowerShell could not be started or run, Windows 7/8) is now rejected (`ERR_UPDATER_SIGNATURE_UNVERIFIABLE`); a catalog signature is rejected as an invalid signature (`ERR_UPDATER_INVALID_SIGNATURE`) unless the app opts in with `allowCatalogSignature = true` (or the release with `win.allowCatalogSignature` in a signed manifest). If PowerShell may be blocked on your users' machines, assign a native `verifyUpdateFileAuthenticodeSignature` in your first electron-updater 7 release |
 | [Linux: gksudo, kdesudo and beesu refuse unsafe installer paths (electron-updater)](#linux-gksudo-kdesudo-and-beesu-refuse-unsafe-installer-paths) | Runtime error | Only on Linux systems without polkit (`pkexec`): a deb/rpm/pacman update whose installer path has characters the helper's command string cannot carry fails with `ERR_UPDATER_UNSAFE_INSTALLER_PATH`; installing polkit avoids it |
 | [Update manifests whose YAML aliases expand too far are rejected (electron-updater)](#update-manifest-yaml-aliases-are-limited) | Runtime error, runtime log | Only if a tool other than electron-builder writes or rewrites `latest*.yml` with YAML aliases (`&name` / `*name`), e.g. a CI script that merges manifests with js-yaml `dump` without `noRefs`: write it without aliases (`noRefs: true`) or repeat the shared values inline. Bitbucket and Keygen report a manifest they cannot parse with `ERR_UPDATER_INVALID_UPDATE_INFO` (was `ERR_UPDATER_LATEST_VERSION_NOT_FOUND`) |
@@ -138,6 +139,28 @@ await autoUpdater.checkForUpdatesAndNotify()
 ```
 
 Keep a header only for the origins that may receive it (`hop.to`); otherwise serve the update files from the feed origin, or use pre-signed URLs that carry their own authorization. A custom provider that does not extend a built-in provider returns its feed URL from `Provider.feedBaseUrl` (see [the developer changes](./v27-developer-changes.md#custom-provider-feed-base-url)).
+
+### Update requests require https {#update-requests-require-https}
+
+**How you'll find out:** **Warns during the build** when the feed written to `app-update.yml` (a `generic` or `custom` publish `url`, a `github` `protocol: "http"` or an `s3` `endpoint`) uses `http` to a host that is not loopback. On users' machines the update check or download fails with `ERR_UPDATER_INSECURE_FEED`, whose message links here.
+
+electron-updater rejects every update request over plain `http` before it is sent: the feed (`app-update.yml` or `setFeedURL`), the update files, blockmaps, differential range requests and every redirect they follow, so an `https` request redirected to `http` fails too. Requests to a loopback host (`localhost`, `127.0.0.0/8`, `::1`) are allowed over `http`, so a local test server can serve updates over `http`; a redirect to a loopback host (over `http` or `https`, the unspecified address `0.0.0.0` / `[::]` and IPv4-mapped loopback included) from a URL that is not on one fails with `ERR_UPDATER_LOOPBACK_REDIRECT`, with or without `allowInsecureFeed`. This applies to every provider, including a GitHub Enterprise `protocol: "http"` feed and an `s3` `endpoint` that uses `http`. electron-builder's own publishing is not affected.
+
+**Action:** serve the feed and the update files over `https`. For a test server on another machine, opt out in dev runs only, so it cannot ship enabled (see [Testing against a local update server](../features/auto-update.md#local-update-server)):
+
+```ts
+import { app } from "electron"
+import { autoUpdater } from "electron-updater"
+autoUpdater.allowInsecureFeed = !app.isPackaged
+```
+
+A packaged app with `allowInsecureFeed` set logs a warning once, the first time it loads update info (an update check, or the validation of an update pending install at launch). Set it to `true` there only for a feed that cannot be served over `https`: anyone on the network path can then tamper with the update information and files, and a [signed update manifest](../features/signed-update-manifests.md) and the code signature of the update are all that protect it.
+
+With `allowInsecureFeed` set, a server's authentication challenge on a request that is neither `https` nor to a loopback host is cancelled, and `login` is not emitted for it, as its authenticity cannot be determined; a proxy's challenge reaches `login` as on `https` (see [Event: `login`](../features/auto-update.md#event-login)).
+
+Set the publish `url` to `https`, and keep the `http` URL redirecting to the `https` feed: installs that have not updated yet poll the `http` URL from their `app-update.yml` and follow that redirect.
+
+> **Tip:** `electron-builder migrate-schema` prints an advisory for a publish feed that uses `http` to a host that is not loopback (a `generic` or `custom` `url`, a `github` `protocol: "http"` or an `s3` `endpoint`).
 
 ### Windows update signature verification fails closed {#windows-update-signature-verification-fails-closed}
 

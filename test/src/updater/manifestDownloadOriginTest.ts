@@ -411,10 +411,9 @@ describe("differential downloads use the per-download headers", () => {
     const assetUrl = "https://api.github.com/repos/owner/repo/releases/assets/1"
     const storageUrl = "https://objects.example.net/app-1.1.0.exe"
     // the updater's own executor has the updater's policy (see the real-constructor test below)
-    const executor = new FakeElectronHttpExecutor(
-      url => (url === assetUrl ? { location: storageUrl } : { statusCode: 200, body: Buffer.from("update") }),
-      (updater as any).crossOriginHeaderPolicy
-    )
+    const executor = new FakeElectronHttpExecutor(url => (url === assetUrl ? { location: storageUrl } : { statusCode: 200, body: Buffer.from("update") }), {
+      crossOriginHeaderPolicy: (updater as any).crossOriginHeaderPolicy,
+    })
     const destination = path.join(await tmpDir.createTempDir({ prefix: "manifest-origin-private-github" }), "app.exe")
 
     await executor.download(new URL(assetUrl), destination, {

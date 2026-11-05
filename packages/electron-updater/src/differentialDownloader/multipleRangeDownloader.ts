@@ -48,7 +48,7 @@ export function executeTasksUsingMultipleRangeRequests(
   tasks: Array<Operation>,
   out: Writable,
   oldFileFd: number,
-  reject: (error: Error) => void
+  reject: (error: unknown) => void
 ): (taskOffset: number) => void {
   const w = (taskOffset: number): void => {
     if (taskOffset >= tasks.length) {
@@ -78,7 +78,7 @@ export function executeTasksUsingMultipleRangeRequests(
 
 // Each request starts at the update URL and follows its own redirects: a redirect target can be a pre-signed URL that
 // expires before a later batch of a long download.
-function doExecuteTasks(differentialDownloader: DifferentialDownloader, options: PartListDataTask, out: Writable, resolve: () => void, reject: (error: Error) => void): void {
+function doExecuteTasks(differentialDownloader: DifferentialDownloader, options: PartListDataTask, out: Writable, resolve: () => void, reject: (error: unknown) => void): void {
   let ranges = "bytes="
   let partCount = 0
   let grandTotalBytes = 0
@@ -231,7 +231,7 @@ export function requestRange(
   target: RangeRequestTarget,
   range: string,
   onResponse: (response: IncomingMessage, request: AbortableRequest) => void,
-  reject: (error: Error) => void,
+  reject: (error: unknown) => void,
   out?: Writable
 ): void {
   const { httpExecutor } = differentialDownloader
@@ -244,7 +244,16 @@ export function requestRange(
       reject(new Error("Cannot request a range: the output stream is destroyed"))
       return
     }
-    const request = differentialDownloader.createRangeRequest(requestOptions, (response: IncomingMessage) => onResponse(response, request))
+    // sent from stream and response callbacks too: a request that cannot be created (a URL the updater rejects, a protocol net.request
+    // does not support) would escape from them as an uncaught exception, and the download would never settle
+    let request: AbortableRequest & { end(): void }
+    try {
+      request = differentialDownloader.createRangeRequest(requestOptions, (response: IncomingMessage) => onResponse(response, request))
+    } catch (e: unknown) {
+      // as is, like a throw from the first request, which is sent inside the download's promise executor
+      reject(e)
+      return
+    }
     httpExecutor.addErrorAndTimeoutHandlers(request, reject)
     httpExecutor.addRedirectHandlers(request, requestOptions, reject, redirectCount, redirectOptions => {
       differentialDownloader.logger.info(`Redirect to ${urlWithoutQuery(redirectOptions)}`)

@@ -83,10 +83,9 @@ describe("ElectronHttpExecutor cross-origin redirect headers", () => {
   const HEADERS = { "X-Api-Token": "custom-secret", "X-Tenant": "acme", "User-Agent": "my-app", accept: "*/*" }
 
   function createRedirectingExecutor(target: string, crossOriginHeaders: CrossOriginHeadersCallback | null) {
-    return new FakeElectronHttpExecutor(
-      url => (url === FILE_URL ? { location: target } : { statusCode: 200, body: BODY }),
-      createCrossOriginHeaderPolicy(() => crossOriginHeaders)
-    )
+    return new FakeElectronHttpExecutor(url => (url === FILE_URL ? { location: target } : { statusCode: 200, body: BODY }), {
+      crossOriginHeaderPolicy: createCrossOriginHeaderPolicy(() => crossOriginHeaders),
+    })
   }
 
   async function download(executor: FakeElectronHttpExecutor, tmpDir: TmpDir): Promise<void> {
