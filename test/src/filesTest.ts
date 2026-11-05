@@ -3,7 +3,6 @@ import { Configuration, DIR_TARGET, Platform } from "electron-builder"
 import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
-import statMode from "stat-mode"
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
 import { ExpectStatic } from "vitest"
@@ -369,25 +368,13 @@ test.ifNotWindows("postpone symlink", async ({ tmpDir }) => {
 })
 
 async function allCan(file: string, execute: boolean) {
-  const mode = new statMode.Mode(await fs.stat(file))
-
-  function checkExecute(value: statMode.RWX) {
-    if (value.execute !== execute) {
-      throw new Error(`${file} is ${execute ? "not " : ""}executable`)
-    }
+  const { mode } = await fs.stat(file)
+  const executeBits = mode & 0o111
+  if (executeBits !== (execute ? 0o111 : 0)) {
+    throw new Error(`${file} is ${execute ? "not " : ""}executable`)
   }
 
-  function checkRead(value: statMode.RWX) {
-    if (!value.read) {
-      throw new Error(`${file} is not readable`)
-    }
+  if ((mode & 0o444) !== 0o444) {
+    throw new Error(`${file} is not readable`)
   }
-
-  checkExecute(mode.owner)
-  checkExecute(mode.group)
-  checkExecute(mode.others)
-
-  checkRead(mode.owner)
-  checkRead(mode.group)
-  checkRead(mode.others)
 }
