@@ -2,6 +2,7 @@ import {
   ApiRequestOptions,
   CancellationToken,
   configureRequestUrl,
+  CrossOriginHeaderPolicy,
   DEFAULT_MAX_UPDATE_INFO_SIZE,
   HttpExecutor,
   newError,
@@ -10,6 +11,7 @@ import {
   UpdateInfo,
   WindowsUpdateInfo,
 } from "builder-util-runtime"
+import { urlWithoutQuery } from "builder-util-runtime/internal"
 import { OutgoingHttpHeaders } from "http"
 import { EventType, load, State } from "js-yaml"
 import { URL } from "url"
@@ -27,15 +29,34 @@ export interface ProviderRuntimeOptions {
   executor: ElectronHttpExecutor
 
   /**
-   * Called when an update info request (e.g. a channel file) goes to another origin than `Provider.feedBaseUrl` and so is sent
-   * without the credential headers `headerNames` (names only, never values). The updater warns about it once.
+   * Chooses the request headers each update info request (e.g. a channel file) on another origin than `Provider.feedBaseUrl` sends: the
+   * updater's, which asks the app's `crossOriginHeaders`. Set by electron-updater; code that constructs a built-in provider passes on the
+   * runtime options it was given. Without a function, the provider's constructor throws `ERR_UPDATER_CROSS_ORIGIN_HEADER_POLICY_MISSING`.
    */
-  onCrossOriginHeadersRemoved?: (url: URL, feedBaseUrl: URL, headerNames: Array<string>) => void
+  crossOriginHeaderPolicy: CrossOriginHeaderPolicy
+}
+
+/**
+ * The `feedBaseUrl` of `provider`, checked at run time: a custom provider written in plain JavaScript, or built on another copy of
+ * electron-updater, may return something else. Anything but a URL fails with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, before any request
+ * header is handed to the provider or sent.
+ */
+export function feedBaseUrlOf(provider: Provider<any>): URL {
+  const url: unknown = provider.feedBaseUrl
+  if (url instanceof URL) {
+    return url
+  }
+  const value = url === null ? "null, which does not send the request headers to every origin" : url === undefined ? "undefined" : `a ${typeof url}`
+  throw newError(
+    `The feedBaseUrl of the update provider ${provider.constructor.name} is ${value}: every provider returns the URL of its update feed there, the only origin that gets every request header. ` +
+      `Return the base URL of the update files, e.g. of the channel file. https://www.electron.build/docs/migration/v27-developer-changes#custom-provider-feed-base-url`,
+    "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED"
+  )
 }
 
 // Shared by the GitHub/GitLab/PrivateGitHub providers when a release channel file (e.g. latest.yml) 404s.
 export function channelFileNotFoundError(channelFile: string, channelFileUrl: URL | string, e: any): Error {
-  return newError(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
+  return newError(`Cannot find ${channelFile} in the latest release artifacts (${urlWithoutQuery(channelFileUrl)}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
 }
 
 export abstract class Provider<T extends UpdateInfo> {
@@ -45,6 +66,15 @@ export abstract class Provider<T extends UpdateInfo> {
   protected readonly executor: ElectronHttpExecutor
 
   protected constructor(private readonly runtimeOptions: ProviderRuntimeOptions) {
+    // plain JavaScript, or runtime options built by hand, can leave it out: without it no request to another origin could choose its headers
+    const policy: unknown = runtimeOptions.crossOriginHeaderPolicy
+    if (typeof policy !== "function") {
+      throw newError(
+        `The runtime options of the update provider ${new.target.name} have no crossOriginHeaderPolicy (got ${policy === null ? "null" : typeof policy}): ` +
+          `pass on the runtime options electron-updater gave your code, spreading them to change another field. https://www.electron.build/docs/migration/v27-developer-changes#custom-provider-feed-base-url`,
+        "ERR_UPDATER_CROSS_ORIGIN_HEADER_POLICY_MISSING"
+      )
+    }
     this.executor = runtimeOptions.executor
   }
 
@@ -88,15 +118,11 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 
   /**
-   * Base URL of the update feed: the credential-bearing request headers (the ones stripped on a cross-origin redirect) are only sent to
-   * download URLs, and to the URLs of the provider's own update info requests (e.g. the channel file), on its origin. `null` sends the
-   * request headers to every URL.
-   * The default, `undefined`, means not declared: a download with credential headers (from `requestHeaders` / `addAuthHeader`) then fails
-   * with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, so a custom provider used with credentials must override this getter.
+   * Required. Base URL of the update feed: download URLs, and the URLs of the provider's own update info requests (e.g. the channel file),
+   * on its origin get every request header. Any other origin gets only the headers the app's `crossOriginHeaders` keeps, with this URL as
+   * the hop's `from`. Anything but a URL fails the update check with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`.
    */
-  get feedBaseUrl(): URL | null | undefined {
-    return undefined
-  }
+  abstract get feedBaseUrl(): URL
 
   setRequestHeaders(value: OutgoingHttpHeaders | null): void {
     this.requestHeaders = value
@@ -146,29 +172,36 @@ export abstract class Provider<T extends UpdateInfo> {
     }
   }
 
+  /**
+   * Options for an update info request to `url`, with the updater's request headers and `headers`, the provider's own for this request (an
+   * `Accept`, a token). On another origin than {@link feedBaseUrl} all of them go through the app's `crossOriginHeaders`, and the `Accept` of
+   * `headers` is added back (see `ApiRequestOptions.ownHeaders`), also on a redirect to another origin.
+   */
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): ApiRequestOptions {
     const result: ApiRequestOptions = {}
-    // the same feed-origin rule as for downloads: e.g. a channel file on another origin gets no credential headers
-    const feedBaseUrl = this.feedBaseUrl
-    let requestHeaders = this.requestHeaders
-    if (requestHeaders != null && feedBaseUrl != null && HttpExecutor.isCrossOrigin(feedBaseUrl, url)) {
-      const headerNames = HttpExecutor.sensitiveHeaderNames(requestHeaders)
-      requestHeaders = HttpExecutor.removeCrossOriginSensitiveHeaders(requestHeaders, feedBaseUrl, url)
-      if (headerNames.length !== 0) {
-        this.runtimeOptions.onCrossOriginHeadersRemoved?.(url, feedBaseUrl, headerNames)
-      }
+    const requestHeaders = this.requestHeaders
+    const merged = requestHeaders == null || headers == null ? (requestHeaders ?? headers) : { ...requestHeaders, ...headers }
+    const ownHeaders = acceptHeaderOf(headers)
+    if (merged != null) {
+      result.headers = HttpExecutor.crossOriginHeaders(merged, ownHeaders, { from: feedBaseUrlOf(this), to: url }, this.runtimeOptions.crossOriginHeaderPolicy)
     }
-    if (requestHeaders == null) {
-      if (headers != null) {
-        result.headers = headers
-      }
-    } else {
-      result.headers = headers == null ? requestHeaders : { ...requestHeaders, ...headers }
+    if (ownHeaders != null) {
+      result.ownHeaders = ownHeaders
     }
 
     configureRequestUrl(url, result)
     return result
   }
+}
+
+/** The `Accept` of `headers` (any case), which the updater or the provider builds for a request: added back after the app's crossOriginHeaders. */
+export function acceptHeaderOf(headers: OutgoingHttpHeaders | null | undefined): OutgoingHttpHeaders | null {
+  for (const [name, value] of Object.entries(headers ?? {})) {
+    if (value != null && name.toLowerCase() === "accept") {
+      return { [name]: value }
+    }
+  }
+  return null
 }
 
 // without `not`, the first file is the fallback, and `files` is not empty: a file is always found

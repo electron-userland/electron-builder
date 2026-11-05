@@ -1,4 +1,4 @@
-import { ApiRequestOptions, CancellationToken, HttpExecutor } from "builder-util-runtime"
+import { ApiRequestOptions, CancellationToken, HttpError, HttpExecutor } from "builder-util-runtime"
 import { EventEmitter } from "events"
 import { describe, expect, test, vi } from "vitest"
 
@@ -50,6 +50,19 @@ test("fails a file download that has neither a destination nor a response handle
   })
 
   await expect(download).rejects.toMatchObject({ code: "ERR_UPDATER_DOWNLOAD_DESTINATION_NOT_SET" })
+})
+
+test("rejects a failed download with an HttpError that leaves the query out of its message", async () => {
+  const executor = new BufferExecutor()
+  Object.assign(executor.response, { statusCode: 503, statusMessage: "Service Unavailable", resume: vi.fn() })
+  const download = executor.downloadToBuffer(new URL("https://example.com/update.zip?sig=secret-sig&jwt=secret-jwt#frag"), {
+    cancellationToken: new CancellationToken(),
+  })
+
+  const error = await download.catch((e: unknown) => e)
+  expect(error).toBeInstanceOf(HttpError)
+  expect(error).toMatchObject({ statusCode: 503, code: "HTTP_ERROR_503", message: 'Cannot download "https://example.com/update.zip", status 503: Service Unavailable' })
+  expect(error instanceof HttpError && error.isServerError()).toBe(true)
 })
 
 describe("API request size limit (maxResponseSize)", () => {
