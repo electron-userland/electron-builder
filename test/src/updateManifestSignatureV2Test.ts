@@ -556,7 +556,11 @@ describe("allowCatalogSignature under EBUM2 and the EBUM1 fallback", () => {
       const updater = new DebUpdater(null, stubApp)
       updater.updateManifestPublicKey = publicKeyPem
       updater.logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
-      ;(updater as any).clientPromise = Promise.resolve({ setRequestHeaders: vi.fn(), getLatestVersion: () => Promise.resolve(info) })
+      ;(updater as any).clientPromise = Promise.resolve({
+        feedBaseUrl: new URL("https://feed.example.com/"),
+        setRequestHeaders: vi.fn(),
+        getLatestVersion: () => Promise.resolve(info),
+      })
       ;(updater as any).stagingUserIdPromise = { value: Promise.resolve("staging-id") }
       return updater
     }

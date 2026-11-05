@@ -9,6 +9,7 @@ import {
   GitlabReleaseInfo,
   GitlabReleaseAsset,
 } from "builder-util-runtime"
+import { urlWithoutQuery } from "builder-util-runtime/internal"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
 import escapeRegExp from "lodash.escaperegexp"
@@ -88,7 +89,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
     try {
       releaseResponse = await this.httpRequest(latestReleaseUrl, header, cancellationToken)
     } catch (e: any) {
-      throw newError(`Unable to find latest release on GitLab (${latestReleaseUrl}): ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
+      throw newError(`Unable to find latest release on GitLab (${urlWithoutQuery(latestReleaseUrl)}): ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
 
     if (!releaseResponse) {
@@ -100,7 +101,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
       latestRelease = JSON.parse(releaseResponse)
     } catch (e: any) {
       throw newError(
-        `Unable to parse latest release response from GitLab (${latestReleaseUrl}): response was not valid JSON: ${e.stack || e.message}`,
+        `Unable to parse latest release response from GitLab (${urlWithoutQuery(latestReleaseUrl)}): response was not valid JSON: ${e.stack || e.message}`,
         "ERR_UPDATER_LATEST_VERSION_NOT_FOUND"
       )
     }
@@ -127,14 +128,14 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
       }
 
       channelFileUrl = new URL(channelAsset.direct_asset_url)
+      // on another origin than the API (the feed), the token goes only where the app's crossOriginHeaders keeps it
       const authHeaders = getGitlabAuthHeaders(this.options.token || null)
-      const isSameOriginAsApi = channelFileUrl.protocol === this.baseApiUrl.protocol && channelFileUrl.host === this.baseApiUrl.host
-      const headers = isSameOriginAsApi && Object.keys(authHeaders).length ? authHeaders : undefined
+      const headers = Object.keys(authHeaders).length ? authHeaders : undefined
 
       try {
         const result = await this.channelFileRequest(channelFileUrl, headers, cancellationToken)
         if (!result) {
-          throw newError(`Empty response from ${channelFileUrl}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
+          throw newError(`Empty response from ${urlWithoutQuery(channelFileUrl)}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
         }
         return result
       } catch (e: any) {
@@ -234,7 +235,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
           continue
         }
         // For other errors, throw immediately
-        throw newError(`Unable to find release ${releaseId} on GitLab (${releaseUrl}): ${e.stack || e.message}`, "ERR_UPDATER_RELEASE_NOT_FOUND")
+        throw newError(`Unable to find release ${releaseId} on GitLab (${urlWithoutQuery(releaseUrl)}): ${e.stack || e.message}`, "ERR_UPDATER_RELEASE_NOT_FOUND")
       }
     }
 
