@@ -137,7 +137,7 @@ External consumers should use the two new public helpers instead:
 
 `ProtonFramework`, `LibUiFramework`, and `SnapOptions` are removed from the public exports of `app-builder-lib` and `electron-builder`. `CustomNsisBinary` is removed from the public exports of `app-builder-lib`, together with the [`customNsisBinary` option](./v27-config-changes.md#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis); use `ToolsetCustom` (for `toolsets.nsis`) instead. Use the Electron framework and the [`snapcraft`](./v27-config-changes.md#snap-snapcraft) config shape respectively. The removed framework support means `framework: "proton" | "libui"` no longer has any effect — see [`framework` removed](./v27-config-changes.md#framework-nodeversion-launchuiversion).
 
-The pre-release-only `HttpExecutor.sensitiveHeaderNames`, `HttpExecutor.removeCrossOriginSensitiveHeaders` (builder-util-runtime) and `ProviderRuntimeOptions.onCrossOriginHeadersRemoved` (electron-updater) are not exported: use [a cross-origin header policy](#builder-util-runtime-cross-origin-headers) and `HttpExecutor.crossOriginHeaders`.
+builder-util-runtime does not export `HttpExecutor.sensitiveHeaderNames` or `HttpExecutor.removeCrossOriginSensitiveHeaders`, and electron-updater's `ProviderRuntimeOptions` takes no `onCrossOriginHeadersRemoved` callback: use [a cross-origin header policy](#builder-util-runtime-cross-origin-headers) and `HttpExecutor.crossOriginHeaders`.
 
 ### Renamed type exports {#renamed-type-exports}
 
