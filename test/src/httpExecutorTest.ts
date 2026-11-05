@@ -12,7 +12,15 @@ import {
 import { CancellationToken } from "builder-util-runtime/src/CancellationToken"
 import { createHash } from "crypto"
 import { Agent, ClientRequest, IncomingMessage, RequestListener, RequestOptions, Server, ServerResponse, createServer, request as httpRequest } from "http"
+import { createRequire } from "module"
 import { AddressInfo } from "net"
+import * as path from "path"
+
+interface DebugModule {
+  log: (...args: Array<unknown>) => void
+  enable: (namespaces: string) => void
+  disable: () => string
+}
 
 describe("HttpExecutor.prepareRedirectUrlOptions", () => {
   describe("basic functionality", () => {
@@ -1099,6 +1107,86 @@ describe("HttpExecutor download Location handling", () => {
     executor.runDownload(e => errors.push(e))
     expect(errors).toEqual([null])
     expect(executor.requestCount).toBe(1)
+  })
+})
+
+describe("HttpExecutor request auth option on a redirect", () => {
+  // Node's `auth` option is sent as a Basic Authorization header. Two servers on different ports are two origins.
+  async function listen(server: Server): Promise<number> {
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    const address = server.address()
+    if (address == null || typeof address === "string") {
+      throw new Error("server has no port")
+    }
+    return address.port
+  }
+
+  async function authorizationAtTarget(crossOrigin: boolean): Promise<string | undefined> {
+    let received: string | undefined = "<not requested>"
+    const target = createServer((request, response) => {
+      received = request.headers.authorization
+      response.end("ok")
+    })
+    const targetPort = await listen(target)
+    const origin = createServer((request, response) => {
+      if (request.url === "/start") {
+        response.writeHead(302, { Location: crossOrigin ? `http://127.0.0.1:${targetPort}/target` : "/target" })
+        response.end()
+      } else {
+        received = request.headers.authorization
+        response.end("ok")
+      }
+    })
+    const originPort = await listen(origin)
+    try {
+      await new NodeExecutor().request({ protocol: "http:", hostname: "127.0.0.1", port: originPort, path: "/start", auth: "user:secret" })
+      return received
+    } finally {
+      for (const server of [origin, target]) {
+        server.closeAllConnections()
+        await new Promise(resolve => server.close(resolve))
+      }
+    }
+  }
+
+  test("is kept on a same-origin redirect", async () => {
+    expect(await authorizationAtTarget(false)).toBe(`Basic ${Buffer.from("user:secret").toString("base64")}`)
+  })
+
+  test("is dropped on a cross-origin redirect", async () => {
+    expect(await authorizationAtTarget(true)).toBeUndefined()
+  })
+
+  test.for([
+    ["another host", false, "https://cdn.example.net/app.exe"],
+    ["another port", false, "https://feed.example.com:8443/app.exe"],
+    ["another scheme", false, "http://feed.example.com/app.exe"],
+    ["the same origin", true, "/other/app.exe"],
+  ] as const)("a redirect to %s keeps the auth option: %s", ([, isKept, location]) => {
+    const options = HttpExecutor.prepareRedirectUrlOptions(location, { protocol: "https:", hostname: "feed.example.com", path: "/updates/app.exe", auth: "user:secret" })
+    expect(options.auth).toBe(isKept ? "user:secret" : undefined)
+  })
+
+  // the debug line is the feature: DEBUG=electron-builder shows the dropped option with both origins, never the credentials
+  test("a dropped auth option is logged at debug level with both origins, without the credentials", () => {
+    // the debug module builder-util-runtime itself loads
+    const runtimeDebug = createRequire(path.join(__dirname, "..", "..", "packages", "builder-util-runtime", "package.json"))("debug") as DebugModule
+    const lines: Array<string> = []
+    const previousLog = runtimeDebug.log
+    const previousNamespaces = runtimeDebug.disable()
+    runtimeDebug.log = (...args: Array<unknown>) => lines.push(args.map(String).join(" "))
+    runtimeDebug.enable("electron-builder")
+    try {
+      HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", { protocol: "https:", hostname: "feed.example.com", path: "/app.exe", auth: "user:secret" })
+      HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", { protocol: "https:", hostname: "feed.example.com", path: "/app.exe" })
+    } finally {
+      runtimeDebug.log = previousLog
+      runtimeDebug.enable(previousNamespaces)
+    }
+    const authLines = lines.filter(it => it.includes("auth option"))
+    expect(authLines).toHaveLength(1)
+    expect(authLines[0]).toContain("https://feed.example.com → https://cdn.example.net")
+    expect(lines.join("\n")).not.toContain("secret")
   })
 })
 
