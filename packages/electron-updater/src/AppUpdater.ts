@@ -70,6 +70,8 @@ const require = createRequire(import.meta.url ?? process.execPath)
 // shared rather than per-instance so that `updater.verifyUpdateFile === DEFAULT_VERIFY_UPDATE_FILE` identifies "no custom verifier"
 const DEFAULT_VERIFY_UPDATE_FILE: VerifyUpdateFile = _params => Promise.resolve({ response: "success" })
 
+const LOGIN_EVENT_DOCS = "https://www.electron.build/docs/features/auto-update#event-login"
+
 const CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-headers"
 
 /** `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`, for `subject`: what needs `autoUpdater.crossOriginHeaders`. */
@@ -130,7 +132,8 @@ export function createCrossOriginHeaderPolicy(
 
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
-  login: (info: AuthInfo, callback: LoginCallback) => void
+  /** `url` is the URL of the update request that got the authentication challenge (after a redirect, the redirect's target). */
+  login: (info: AuthInfo, callback: LoginCallback, url: string) => void
   "checking-for-update": () => void
   "update-not-available": (info: UpdateInfo) => void
   "update-available": (info: UpdateInfo) => void
@@ -458,6 +461,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   crossOriginHeaders: CrossOriginHeadersCallback | null = null
 
+  // the origin of the update feed (Provider.feedBaseUrl) of the last update check, null before the first one
+  private feedOrigin: string | null = null
+
   // the updater's executor, provider requests and downloads ask the app's crossOriginHeaders through it, at each hop
   // Dropped headers are announced once per origin, names and origins only (never a value): a host or CDN that starts redirecting to a new
   // origin shows up in the log
@@ -653,7 +659,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     if (app == null) {
       this.app = new ElectronAppAdapter()
-      this.httpExecutor = new ElectronHttpExecutor((authInfo, callback) => this.emit("login", authInfo, callback), this.crossOriginHeaderPolicy)
+      this.httpExecutor = new ElectronHttpExecutor((authInfo, callback, requestUrl) => this.handleLoginChallenge(authInfo, callback, requestUrl), this.crossOriginHeaderPolicy)
     } else {
       this.app = app
       this.httpExecutor = null as any
@@ -878,7 +884,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     const client = await this.clientPromise
     // before the request headers are handed over: only the feed's origin gets every one of them
-    feedBaseUrlOf(client)
+    this.feedOrigin = feedBaseUrlOf(client).origin
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({ "x-user-staging-id": stagingUserId }))
     // autoUpdater.maxUpdateInfoSize wins over the publish configuration, so an app can raise the limit even when its config is invalid
@@ -1004,6 +1010,54 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this.log.debug(`Update manifest for version ${info.version} verified with trusted key ${result.keyId}`)
     this.log.info(`Update manifest signature verified for version ${info.version}`)
     return true
+  }
+
+  /**
+   * Electron's `login` event of the update request to `requestUrl`: emitted as `login`, with the request's URL as its third argument
+   * (Electron's `AuthInfo` names only the challenger's host and port). A challenge on a request whose URL cannot be determined (`null`),
+   * or one emitted without a `login` listener (which logs a warning once), is cancelled: the callback is called once, without credentials, and
+   * so is one whose listener throws. A server's challenge from another origin than the feed logs a warning once when no listener takes `url`.
+   * @internal
+   */
+  protected handleLoginChallenge(authInfo: AuthInfo, callback: LoginCallback, requestUrl: URL | null): void {
+    // no credentials: Electron cancels the authentication
+    if (requestUrl == null) {
+      callback()
+      return
+    }
+    // host, port and proxy-or-server only: never the realm, which the challenger chooses
+    const challenger = `the ${authInfo.isProxy ? "proxy" : "server"} ${authInfo.host}:${authInfo.port}`
+    const listeners = this.listeners("login")
+    if (listeners.length === 0) {
+      this.limitedLogger("login-challenge-no-listener").warn(
+        `${challenger} asked for credentials on an update request, and the challenge was cancelled: autoUpdater has no login listener. ` +
+          `Add one that answers it, or serve the updates without authentication. ${LOGIN_EVENT_DOCS}`
+      )
+      callback()
+      return
+    }
+    // a handler without the url parameter cannot tell the feed from another origin
+    if (!authInfo.isProxy && this.feedOrigin != null && requestUrl.origin !== this.feedOrigin && listeners.every(it => it.length < 3)) {
+      this.limitedLogger("login-challenge-other-origin").warn(
+        `${challenger}, on ${requestUrl.origin}, another origin than the update feed (${this.feedOrigin}), asked for credentials, and every login handler answers without the url argument: ` +
+          `such a handler answers a challenge from any server. Take (authInfo, callback, url) and answer only when new URL(url).origin is the origin your credentials are meant for. ${LOGIN_EVENT_DOCS}`
+      )
+    }
+    let isAnswered = false
+    // the arguments as given: Electron cancels on a call without any
+    const answer: LoginCallback = (...credentials) => {
+      if (!isAnswered) {
+        isAnswered = true
+        callback(...credentials)
+      }
+    }
+    try {
+      this.emit("login", authInfo, answer, requestUrl.href)
+    } catch {
+      // a throwing handler must not stall the request; never its error's message, which could hold the credentials
+      this.limitedLogger("login-listener-threw").warn(`A login listener threw for ${challenger}: the challenge was cancelled. ${LOGIN_EVENT_DOCS}`)
+      answer()
+    }
   }
 
   private createProviderRuntimeOptions(): ProviderRuntimeOptions {

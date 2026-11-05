@@ -7,7 +7,8 @@ import type { AuthInfo } from "electron"
 type Session = Electron.Session
 type ClientRequest = Electron.ClientRequest
 
-export type LoginCallback = (username: string, password: string) => void
+/** Electron's `login` callback: called without credentials, it cancels the authentication. */
+export type LoginCallback = (username?: string, password?: string) => void
 export const NET_SESSION_NAME = "electron-updater"
 
 export function getNetSession(): Session {
@@ -15,6 +16,12 @@ export function getNetSession(): Session {
     cache: false,
   })
 }
+
+/**
+ * Gets Electron's `login` event of a request: `requestUrl` is the URL of that request (Electron's `AuthInfo` names only the challenger's
+ * host and port), `null` when it cannot be determined from the request options.
+ */
+export type LoginChallengeListener = (authInfo: AuthInfo, callback: LoginCallback, requestUrl: URL | null) => void
 
 export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
   private cachedSession: Session | null = null
@@ -24,7 +31,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
    * `crossOriginHeaders`)
    */
   constructor(
-    private readonly proxyLoginCallback: ((authInfo: AuthInfo, callback: LoginCallback) => void) | undefined,
+    private readonly loginChallengeListener: LoginChallengeListener | undefined,
     crossOriginHeaderPolicy: CrossOriginHeaderPolicy
   ) {
     super(crossOriginHeaderPolicy)
@@ -78,9 +85,24 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
       session: this.cachedSession,
     })
     request.on("response", callback)
-    if (this.proxyLoginCallback != null) {
-      request.on("login", this.proxyLoginCallback)
+    const loginChallengeListener = this.loginChallengeListener
+    if (loginChallengeListener == null) {
+      return request
     }
+    // like Electron's net, `host` (where a Host header goes) wins over hostname and port
+    let authority: string | null = null
+    if (typeof options.host === "string" && options.host !== "") {
+      authority = options.host
+    } else if (typeof options.hostname === "string" && options.hostname !== "") {
+      authority = options.port ? `${options.hostname}:${options.port}` : options.hostname
+    }
+    let requestUrl: URL | null = null
+    try {
+      requestUrl = authority == null ? null : new URL(`${options.protocol}//${authority}${options.path || "/"}`)
+    } catch {
+      // not a URL: the listener cancels the challenge
+    }
+    request.on("login", (authInfo: AuthInfo, loginCallback: LoginCallback) => loginChallengeListener(authInfo, loginCallback, requestUrl))
     return request
   }
 

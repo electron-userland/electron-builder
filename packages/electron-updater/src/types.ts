@@ -69,7 +69,9 @@ export class UpdaterSignal {
   constructor(private emitter: EventEmitter) {}
 
   /**
-   * Emitted when an authenticating proxy is [asking for user credentials](https://github.com/electron/electron/blob/master/docs/api/client-request.md#event-login).
+   * Emitted when an authenticating proxy or server is [asking for user credentials](https://github.com/electron/electron/blob/master/docs/api/client-request.md#event-login)
+   * on an update request, with the URL of that request. Call the callback without arguments to cancel it; without a `login` listener the
+   * updater cancels it.
    */
   login(handler: LoginHandler): void {
     addHandler(this.emitter, "login", handler)
@@ -143,7 +145,8 @@ export interface ResolvedUpdateFileInfo {
 
 export type UpdaterEvents = "login" | "checking-for-update" | "update-available" | "update-not-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "error"
 
-export type LoginHandler = (authInfo: any, callback: LoginCallback) => void
+/** The `login` event's handler: `url` is the URL of the update request that got the authentication challenge. */
+export type LoginHandler = (authInfo: any, callback: LoginCallback, url: string) => void
 
 /**
  * Outcome of a downloaded-update-file verification. A failure must carry a `message` explaining why, so that the

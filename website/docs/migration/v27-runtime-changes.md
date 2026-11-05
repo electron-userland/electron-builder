@@ -105,6 +105,8 @@ electron-builder warns once per feed when a `generic` publish `url` (the feed wr
 
 > **Tip:** `electron-builder migrate-schema` prints an advisory for a `generic` publish configuration whose `url` has a query string.
 
+An authentication challenge on an update request, a proxy's or a server's, reaches the [`login` event](../features/auto-update.md#event-login) with the URL of that request as its third argument. Without a `login` listener it is cancelled, and electron-updater logs a warning once naming the challenger's host and port and whether it is a proxy or a server; so is one whose listener throws. A server's challenge from another origin than the feed logs a warning once when no `login` handler takes the `url` argument: answer a server only when `new URL(url).origin` is the origin your credentials are meant for.
+
 ### The app chooses the headers sent to another origin {#cross-origin-headers}
 
 **How you'll find out:** **runtime error.** Without `autoUpdater.crossOriginHeaders`, `checkForUpdates()`, `checkForUpdatesAndNotify()` and `downloadUpdate()` emit `error` and reject with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` before any request, with a link here, and so does each request or redirect to another origin, such as one of the install at launch of an update marked for the next launch. An unpackaged app without `forceDevUpdateConfig`, which skips the check, gets the same error, so a missing callback shows up in development.
