@@ -278,7 +278,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * `::1`): any other request, including an `https` request redirected to `http`, fails with `ERR_UPDATER_INSECURE_FEED`.
    *
    * Meant for development and local test servers: set it to `!app.isPackaged` so that it never ships enabled. A packaged app with it set
-   * logs a warning once, at its first update check. Set it to `true` in a packaged app only for a feed that cannot be served over `https`:
+   * logs a warning once, the first time it loads update info (an update check, or the validation of an update pending install). Set it to
+   * `true` in a packaged app only for a feed that cannot be served over `https`:
    * anyone on the network path can then tamper with the update information and files, so only a
    * [signed update manifest](https://www.electron.build/docs/features/signed-update-manifests) and the code signature of the update
    * protect it. A server's authentication challenge on a request that is not `https` and not to a loopback
