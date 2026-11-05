@@ -66,7 +66,8 @@ describe("executeDownload blockmap cache consistency", { concurrent: false }, ()
       downloadUpdateOptions: {
         updateInfoAndProvider: {
           info: { version: "2.0.0", files: [], path: "", sha512: "", releaseDate: "" },
-          provider: { feedBaseUrl: null } as any,
+          // the download is on the feed's origin: no crossOriginHeaders is asked
+          provider: { feedBaseUrl: new URL("https://example.com/") } as any,
         },
         requestHeaders: {},
         cancellationToken: new CancellationToken(),
@@ -209,6 +210,8 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
     const provider = {
       getBlockMapFiles: () => Promise.resolve([new URL(options.oldBlockMapUrl ?? OLD_BLOCKMAP_URL), new URL(NEW_BLOCKMAP_URL)]),
       isUseMultipleRangeRequest: true,
+      // the blockmaps are on the feed's origin: no crossOriginHeaders is asked
+      feedBaseUrl: new URL("https://example.com/"),
     } as any
     const fileInfo = {
       url: new URL("https://example.com/TestApp-Setup-2.0.0.exe"),

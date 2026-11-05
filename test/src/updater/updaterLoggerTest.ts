@@ -3,7 +3,8 @@ import { DebUpdater, NoOpLogger, type Logger } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import { describe, test, vi } from "vitest"
 
-// isPackaged: false and no forceDevUpdateConfig, so checkForUpdates() logs why it skips and resolves to null
+// isPackaged: false and no forceDevUpdateConfig, so checkForUpdates() logs why it skips and resolves to null (crossOriginHeaders set: it is
+// required unpackaged too)
 const stubApp: AppAdapter = {
   name: "TestApp",
   version: "1.0.0",
@@ -24,6 +25,7 @@ const NO_DOWNLOAD_DEBUG = "checkForUpdatesAndNotify called, downloadPromise is n
 const newUpdater = (logger: Logger | null) => {
   const updater = new DebUpdater(null, stubApp)
   updater.logger = logger
+  updater.crossOriginHeaders = () => []
   return updater
 }
 
@@ -66,6 +68,7 @@ describe("AppUpdater logger", () => {
     // packaged, so the check runs; no manifest key, so verifyManifestSignature warns through limitedLogger
     const updater = new DebUpdater(null, { ...stubApp, isPackaged: true, userDataPath })
     updater.logger = throwing
+    updater.crossOriginHeaders = () => []
     updater.updateManifestPublicKey = null
     updater.autoDownload = false
     const latest: UpdateInfo = {
@@ -75,7 +78,11 @@ describe("AppUpdater logger", () => {
       sha512: "hash",
       releaseDate: "2026-01-01T00:00:00.000Z",
     }
-    ;(updater as any).clientPromise = Promise.resolve({ setRequestHeaders: () => {}, getLatestVersion: () => Promise.resolve(latest) })
+    ;(updater as any).clientPromise = Promise.resolve({
+      feedBaseUrl: new URL("https://feed.example.com/"),
+      setRequestHeaders: () => {},
+      getLatestVersion: () => Promise.resolve(latest),
+    })
 
     await expect(updater.checkForUpdates()).resolves.toMatchObject({ isUpdateAvailable: true, updateInfo: { version: "2.0.0" } })
     expect(throwing.warn).toHaveBeenCalledWith(expect.stringContaining(VERIFICATION_DISABLED))
