@@ -1,8 +1,8 @@
 import { NodeHttpExecutor, serializeToYaml, TmpDir } from "builder-util"
 import { AllPublishOptions, BlockMap, DownloadOptions } from "builder-util-runtime"
 import { AppUpdater, NsisUpdater, type NonThrowableLogger, type VerifyUpdateFile, type VerifyUpdateFileResult } from "electron-updater"
-import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/src/AppUpdater"
-import { ElectronHttpExecutor } from "electron-updater/src/electronHttpExecutor"
+import { createCrossOriginHeaderPolicy, NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/src/AppUpdater"
+import { ElectronHttpExecutor, type ElectronHttpExecutorOptions } from "electron-updater/src/electronHttpExecutor"
 import { createHash } from "crypto"
 import { EventEmitter } from "events"
 import fsExtra from "fs-extra"
@@ -183,6 +183,7 @@ export function tuneTestUpdater(updater: AppUpdater, options?: TestOnlyUpdaterOp
     ...options,
   }
   updater.logger = new NoOpLogger()
+  updater.crossOriginHeaders = () => []
 }
 
 export function trackEvents(updater: AppUpdater) {
@@ -312,18 +313,25 @@ export class FakeNetRequest extends EventEmitter {
   }
 }
 
-/** An ElectronHttpExecutor whose requests are {@link FakeNetRequest}s answered by `answer`; `sent` lists what they sent. */
+/**
+ * An ElectronHttpExecutor whose requests, once ElectronHttpExecutor.createRequest has checked them, are {@link FakeNetRequest}s
+ * answered by `answer`; `sent` lists what they sent.
+ */
 export class FakeElectronHttpExecutor extends ElectronHttpExecutor {
   readonly sent: Array<FakeNetSentRequest> = []
   /** createRequest throws for these URLs, as net.request does for options it cannot make a request of */
   readonly unrequestableUrls = new Set<string>()
 
-  constructor(private readonly answer: (url: string, headers: OutgoingHttpHeaders) => FakeNetAnswer) {
-    super()
+  constructor(
+    private readonly answer: (url: string, headers: OutgoingHttpHeaders) => FakeNetAnswer,
+    // by default the updater's policy with the minimal crossOriginHeaders: none of the app's headers go to another origin
+    options: Partial<ElectronHttpExecutorOptions> = {}
+  ) {
+    super(undefined, { ...options, crossOriginHeaderPolicy: options.crossOriginHeaderPolicy ?? createCrossOriginHeaderPolicy(() => () => []) })
   }
 
   // the return type of the overridden method is Electron's ClientRequest, which the fake does not implement
-  createRequest(options: RequestOptions, callback: (response: any) => void): any {
+  protected createNetRequest(options: RequestOptions, callback: (response: any) => void): any {
     // like net.request: `host` (with its port) wins over `hostname` and `port`
     const host = options.host ?? `${options.hostname}${options.port == null ? "" : `:${options.port}`}`
     const redirect = "redirect" in options && typeof options.redirect === "string" ? options.redirect : undefined
