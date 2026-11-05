@@ -280,7 +280,7 @@ class CustomPublisher {
 module.exports = CustomPublisher
 ```
 
-electron-updater can only read a `custom` feed when the app passes a provider class itself, for example `autoUpdater.setFeedURL({ provider: "custom", updateProvider: MyProvider })`. To serve updates from your own server without writing a provider, use the [generic](#byo-generic-create-your-own) provider.
+electron-updater can only read a `custom` feed when the app passes a provider class itself, for example `autoUpdater.setFeedURL({ provider: "custom", updateProvider: MyProvider })`. The provider class returns its feed URL from `Provider.feedBaseUrl` (see [Auto Update](./features/auto-update.md#custom-options-instantiating-updater-directly)). To serve updates from your own server without writing a provider, use the [generic](#byo-generic-create-your-own) provider.
 
 ## BYO Generic (create-your-own)
 (And maybe submit it upstream in a PR!)
