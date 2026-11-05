@@ -18,7 +18,15 @@ import type { TmpDir } from "temp-file"
 import { afterEach, describe, test, vi } from "vitest"
 import { gzipSync } from "zlib"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
-import { createNsisUpdater, createTestAppAdapter, FakeElectronHttpExecutor, trackEvents, tuneTestUpdater, windowsExecutable, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
+import {
+  createNsisUpdater,
+  createTestAppAdapter,
+  FakeElectronHttpExecutor,
+  trackEvents,
+  tuneTestUpdater,
+  windowsExecutable,
+  writeUpdateConfig,
+} from "../helpers/updaterTestUtil.js"
 
 // The app's request headers (requestHeaders / addAuthHeader) other than the ones its crossOriginHeaders keeps, and the feed URL's query, are
 // only sent to download URLs on the feed's origin. The test updaters set crossOriginHeaders to () => [] (see tuneTestUpdater).
