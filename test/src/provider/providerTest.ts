@@ -1,7 +1,7 @@
 import { serializeToYaml } from "builder-util"
 import { CancellationToken, UpdateInfo } from "builder-util-runtime"
 import { Provider, ProviderRuntimeOptions } from "electron-updater"
-import { parseUpdateInfo } from "electron-updater/src/providers/Provider"
+import { feedBaseUrlOf, parseUpdateInfo } from "electron-updater/src/providers/Provider"
 import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
 import { readFileSync } from "fs"
 import { OutgoingHttpHeaders } from "http"
@@ -24,6 +24,10 @@ afterEach(() => vi.restoreAllMocks())
 class TestProvider extends Provider<UpdateInfo> {
   constructor(opts: ProviderRuntimeOptions) {
     super(opts)
+  }
+
+  get feedBaseUrl(): URL {
+    return new URL("https://api.example.com/")
   }
 
   getLatestVersion(): Promise<UpdateInfo> {
@@ -53,7 +57,7 @@ class TestProvider extends Provider<UpdateInfo> {
 }
 
 function makeProvider(platform: ProviderRuntimeOptions["platform"] = "win32", isUseMultipleRangeRequest = true): TestProvider {
-  return new TestProvider({ isUseMultipleRangeRequest, platform, executor: httpExecutor as any })
+  return new TestProvider({ isUseMultipleRangeRequest, platform, executor: httpExecutor as any, crossOriginHeaderPolicy: () => ({}) })
 }
 
 test("isUseMultipleRangeRequest - true when runtimeOptions flag is true", ({ expect }) => {
@@ -71,10 +75,33 @@ test("fileExtraDownloadHeaders - returns null by default", ({ expect }) => {
   expect(provider.fileExtraDownloadHeaders).toBeNull()
 })
 
-// undeclared: a download with credential headers fails until a custom provider overrides feedBaseUrl (URL or null)
-test("feedBaseUrl - returns undefined (not declared) by default", ({ expect }) => {
+// a custom provider written in plain JavaScript, or built on another copy of electron-updater, may return anything from feedBaseUrl
+test.for([
+  ["null", null, "null, which does not send the request headers to every origin"],
+  ["undefined", undefined, "undefined"],
+  ["a string", "https://api.example.com/", "a string"],
+] as const)("feedBaseUrlOf - a feedBaseUrl that is %s fails with ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED", ([, value, description], { expect }) => {
   const provider = makeProvider()
-  expect(provider.feedBaseUrl).toBeUndefined()
+  Object.defineProperty(provider, "feedBaseUrl", { value })
+
+  expect(() => feedBaseUrlOf(provider)).toThrow(
+    expect.objectContaining({
+      code: "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED",
+      message:
+        `The feedBaseUrl of the update provider TestProvider is ${description}: every provider returns the URL of its update feed there, the only origin that gets every request header. ` +
+        "Return the base URL of the update files, e.g. of the channel file. https://www.electron.build/docs/migration/v27-developer-changes#custom-provider-feed-base-url",
+    })
+  )
+})
+
+test("createRequestOptions - with request headers, fails with ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED for a feedBaseUrl that is not a URL", ({ expect }) => {
+  const provider = makeProvider()
+  Object.defineProperty(provider, "feedBaseUrl", { value: null })
+  provider.setRequestHeaders({ authorization: "Bearer secret" })
+
+  expect(() => provider.callCreateRequestOptions(new URL("https://api.example.com/v1/releases"))).toThrow(
+    expect.objectContaining({ code: "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED" })
+  )
 })
 
 test("getDefaultChannelName - win32 returns latest (no suffix)", ({ expect }) => {
