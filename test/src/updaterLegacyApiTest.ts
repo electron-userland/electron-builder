@@ -209,7 +209,12 @@ describe("the removed UpdateCheckResult.versionInfo", () => {
     updater.logger = logger
     updater.updateManifestPublicKey = null
     updater.autoDownload = false
-    ;(updater as any).clientPromise = Promise.resolve({ setRequestHeaders: () => {}, getLatestVersion: () => Promise.resolve(latest) })
+    updater.crossOriginHeaders = () => []
+    ;(updater as any).clientPromise = Promise.resolve({
+      feedBaseUrl: new URL("https://feed.example.com/"),
+      setRequestHeaders: () => {},
+      getLatestVersion: () => Promise.resolve(latest),
+    })
     const removedWarnings = () => logger.warn.mock.calls.map(it => String(it[0])).filter(it => it.includes(REMOVED))
     return { updater, removedWarnings }
   }
