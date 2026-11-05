@@ -1,4 +1,5 @@
 import { CancellationToken, GithubOptions, githubUrl, HttpError, newError, parseXml, ReleaseNoteInfo, UpdateInfo, XElement } from "builder-util-runtime"
+import { urlWithoutQuery } from "builder-util-runtime/internal"
 import * as semver from "semver"
 import { URL } from "url"
 import { AppUpdater } from "../AppUpdater.js"
@@ -147,7 +148,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     const channelFile = getChannelFilename(channelName)
     const channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(String(tag), channelFile), this.baseUrl)
     try {
-      const rawData = (await this.executor.request(this.createRequestOptions(channelFileUrl), cancellationToken))!
+      const rawData = (await this.channelFileRequest(channelFileUrl, undefined, cancellationToken))!
       return { rawData, channelFile, channelFileUrl }
     } catch (e: any) {
       if (e instanceof HttpError && e.statusCode === 404) {
@@ -173,7 +174,10 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
       const releaseInfo: GithubReleaseInfo = JSON.parse(rawData)
       return releaseInfo.tag_name
     } catch (e: any) {
-      throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
+      throw newError(
+        `Unable to find latest version on GitHub (${urlWithoutQuery(url)}), please ensure a production release exists: ${e.stack || e.message}`,
+        "ERR_UPDATER_LATEST_VERSION_NOT_FOUND"
+      )
     }
   }
 

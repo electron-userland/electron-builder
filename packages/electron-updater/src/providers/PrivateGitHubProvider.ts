@@ -1,13 +1,13 @@
 import { CancellationToken, GithubOptions, HttpError, newError, UpdateInfo } from "builder-util-runtime"
+import { urlWithoutQuery } from "builder-util-runtime/internal"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
-import { load } from "js-yaml"
 import * as path from "path"
 import { AppUpdater } from "../AppUpdater.js"
 import { URL } from "url"
 import { getChannelFilename, newUrlFromBase } from "../util.js"
 import { BaseGitHubProvider } from "./GitHubProvider.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
-import { channelFileNotFoundError, getFileList, ProviderRuntimeOptions } from "./Provider.js"
+import { channelFileNotFoundError, getFileList, parseUpdateInfo, ProviderRuntimeOptions } from "./Provider.js"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>
@@ -23,9 +23,10 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     super(options, "api.github.com", runtimeOptions)
   }
 
-  // the asset URLs come from the GitHub API (api.github.com or the Enterprise host), not from latest*.yml, and need the token
-  get feedBaseUrl(): null {
-    return null
+  // the GitHub API (api.github.com or the Enterprise host): the asset URLs come from it, not from latest*.yml, and need the token. An asset
+  // URL on another origin gets it only when the app's crossOriginHeaders keeps `authorization` there
+  get feedBaseUrl(): URL {
+    return this.baseUrl
   }
 
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
@@ -48,7 +49,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     const url = new URL(asset.url)
     let result: any
     try {
-      result = load((await this.httpRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken))!)
+      result = parseUpdateInfo(await this.channelFileRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken), channelFile, url)
     } catch (e: any) {
       if (e instanceof HttpError && e.statusCode === 404) {
         throw channelFileNotFoundError(channelFile, url, e)
@@ -89,7 +90,10 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
         return version
       }
     } catch (e: any) {
-      throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
+      throw newError(
+        `Unable to find latest version on GitHub (${urlWithoutQuery(url)}), please ensure a production release exists: ${e.stack || e.message}`,
+        "ERR_UPDATER_LATEST_VERSION_NOT_FOUND"
+      )
     }
   }
 

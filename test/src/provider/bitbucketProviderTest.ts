@@ -1,5 +1,5 @@
 import { BitbucketOptions } from "builder-util-runtime"
-import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil.js"
+import { assertDownloadNotTriggered, getProvider, mockAliasChainYaml, mockComplexKeyYaml, mockYaml } from "../helpers/providerTestUtil.js"
 import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
 const MOCK_OWNER = "test-owner"
@@ -85,6 +85,34 @@ test("custom channel via updater.channel - overrides options.channel", async ({ 
 
   const callPath = requestSpy.mock.calls[0][0].path as string
   expect(callPath).toContain("nightly.yml")
+})
+
+// The channel file is parsed like with the other providers: a manifest that cannot be parsed keeps ERR_UPDATER_INVALID_UPDATE_INFO
+test("channel file with YAML aliases that expand to too many values - throws ERR_UPDATER_INVALID_UPDATE_INFO", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createBitbucketUpdater(requestSpy)
+
+  requestSpy.mockResolvedValueOnce(mockAliasChainYaml(STABLE_VERSION, 40))
+
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringMatching(/YAML aliases expand to more than/) })
+})
+
+test("channel file with YAML aliases in complex mapping keys - throws ERR_UPDATER_INVALID_UPDATE_INFO while loading", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createBitbucketUpdater(requestSpy)
+
+  requestSpy.mockResolvedValueOnce(mockComplexKeyYaml(STABLE_VERSION))
+
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringMatching(/YAML aliases expand to more than/) })
+})
+
+test("malformed channel file - throws ERR_UPDATER_INVALID_UPDATE_INFO", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createBitbucketUpdater(requestSpy)
+
+  requestSpy.mockResolvedValueOnce(`${mockYaml(STABLE_VERSION)}releaseNotes: [unclosed\n`)
+
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_INFO", message: expect.stringMatching(/YAMLException/) })
 })
 
 // Any request failure is wrapped as ERR_UPDATER_LATEST_VERSION_NOT_FOUND

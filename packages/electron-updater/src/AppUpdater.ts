@@ -1,9 +1,14 @@
 import { createRequire } from "node:module"
-import { blockMapV2ToV3Keys, decodeBlockMapV3, isBlockMapV3, LogLimiter, toBlockMap } from "builder-util-runtime/internal"
+import { blockMapV2ToV3Keys, decodeBlockMapV3, filterHeaders, isBlockMapV3, LogLimiter, toBlockMap, urlWithoutQuery } from "builder-util-runtime/internal"
 import {
   AllPublishOptions,
   asArray,
   CancellationToken,
+  CrossOriginHeaderPolicy,
+  CrossOriginHop,
+  DEFAULT_MAX_UPDATE_INFO_SIZE,
+  isLoopbackHostname,
+  isValidMaxUpdateInfoSize,
   newError,
   PublishConfiguration,
   UpdateInfo,
@@ -34,17 +39,18 @@ import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor.js"
 import { GenericProvider } from "./providers/GenericProvider.js"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory.js"
-import { Provider, ProviderPlatform } from "./providers/Provider.js"
+import { acceptHeaderOf, feedBaseUrlOf, isYamlAliasBudgetError, Provider, ProviderPlatform, ProviderRuntimeOptions, YAML_ALIAS_BUDGET_DOCS } from "./providers/Provider.js"
 import type { TypedEmitter } from "tiny-typed-emitter"
 type Session = Electron.Session
 import type { AuthInfo } from "electron"
 import { gunzipSync } from "zlib"
-import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
+import { blockMapSizeLimit, DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
 import { fetchBlockMapV3 } from "./differentialDownloader/blockMapV3Fetcher.js"
 import { nonThrowingAppLogger, nonThrowingLogger, throwIfCancelled } from "./util.js"
 import {
   AutoInstallEvent,
+  CrossOriginHeadersCallback,
   DOWNLOAD_PROGRESS,
   Logger,
   QuitAndInstallOptions,
@@ -59,14 +65,76 @@ import {
 } from "./types.js"
 import type { NonThrowableLogger, VerifyUpdateSupport } from "./index.js"
 
-const require = createRequire(import.meta.url)
+// import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
+const require = createRequire(import.meta.url ?? process.execPath)
 
 // shared rather than per-instance so that `updater.verifyUpdateFile === DEFAULT_VERIFY_UPDATE_FILE` identifies "no custom verifier"
 const DEFAULT_VERIFY_UPDATE_FILE: VerifyUpdateFile = _params => Promise.resolve({ response: "success" })
 
+const LOGIN_EVENT_DOCS = "https://www.electron.build/docs/features/auto-update#event-login"
+
+const CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-headers"
+
+/** `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`, for `subject`: what needs `autoUpdater.crossOriginHeaders`. */
+function crossOriginHeadersNotConfiguredError(subject: string): Error {
+  return newError(
+    `${subject} requires autoUpdater.crossOriginHeaders, a function that gets the names of the request headers about to be sent to another origin than the update feed and returns the ones to send: ` +
+      `set \`autoUpdater.crossOriginHeaders = () => []\` to send none of them. ${CROSS_ORIGIN_HEADERS_DOCS}`,
+    "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED"
+  )
+}
+
+// The headers the updater builds for each request itself: sent to another origin whatever the callback returns (see
+// HttpExecutor.crossOriginHeaders and configureRequestOptions), so leaving them out drops nothing
+const UPDATER_OWN_HEADER_NAMES: ReadonlySet<string> = new Set(["accept", "cache-control", "range", "user-agent"])
+
+/**
+ * The updater's {@link CrossOriginHeaderPolicy}: asks the app's callback, read from `getCallback` at each hop, which of the request headers to
+ * send, and fails the request with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED` without a callback, or with
+ * `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS` when it throws or returns anything but an array of strings. The callback never sees a header
+ * value, and the errors hold neither a value nor what the callback returned. `onDropped` gets the lowercase names of the app's and the
+ * provider's headers the callback left out (never the updater's own), when there are any.
+ */
+export function createCrossOriginHeaderPolicy(
+  getCallback: () => CrossOriginHeadersCallback | null,
+  onDropped: (headerNames: ReadonlyArray<string>, hop: CrossOriginHop) => void = () => undefined
+): CrossOriginHeaderPolicy {
+  return (headers, hop) => {
+    const callback = getCallback()
+    // a plain-JavaScript app can set anything
+    if (typeof callback !== "function") {
+      throw crossOriginHeadersNotConfiguredError(`The request to ${hop.to.origin}, another origin than ${hop.from.origin},`)
+    }
+    const target = `the request from ${hop.from.origin} to ${hop.to.origin}`
+    const headerNames = [...new Set(Object.entries(headers).flatMap(([name, value]) => (value == null ? [] : [name.toLowerCase()])))]
+    let kept: unknown
+    try {
+      // copies: the hop's URLs are the updater's
+      kept = callback(headerNames, { from: new URL(hop.from.href), to: new URL(hop.to.href) })
+    } catch {
+      // never the error's message: it could hold a header value
+      throw newError(`autoUpdater.crossOriginHeaders threw for ${target}, which is not sent. ${CROSS_ORIGIN_HEADERS_DOCS}`, "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS")
+    }
+    if (!Array.isArray(kept) || !kept.every((it: unknown): it is string => typeof it === "string")) {
+      // never the value: a mistaken result could hold a header value
+      throw newError(
+        `autoUpdater.crossOriginHeaders must return an array of header names: got ${Array.isArray(kept) ? "an array with an entry that is not a string" : kept === null ? "null" : typeof kept} for ${target}, which is not sent. ${CROSS_ORIGIN_HEADERS_DOCS}`,
+        "ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS"
+      )
+    }
+    const keptNames = new Set(kept.map(it => it.toLowerCase()))
+    const droppedNames = headerNames.filter(it => !keptNames.has(it) && !UPDATER_OWN_HEADER_NAMES.has(it))
+    if (droppedNames.length !== 0) {
+      onDropped(droppedNames, hop)
+    }
+    return filterHeaders(headers, name => keptNames.has(name.toLowerCase()))
+  }
+}
+
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
-  login: (info: AuthInfo, callback: LoginCallback) => void
+  /** `url` is the URL of the update request that got the authentication challenge (after a redirect, the redirect's target). */
+  login: (info: AuthInfo, callback: LoginCallback, url: string) => void
   "checking-for-update": () => void
   "update-not-available": (info: UpdateInfo) => void
   "update-available": (info: UpdateInfo) => void
@@ -205,6 +273,24 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   allowDowngrade = false
 
   /**
+   * Whether update requests may use plain `http`. Every request of the updater (the update feed, the update
+   * file downloads, blockmaps and every redirect they follow) must use `https`, except to a loopback host (`localhost`, `127.0.0.0/8`,
+   * `::1`): any other request, including an `https` request redirected to `http`, fails with `ERR_UPDATER_INSECURE_FEED`.
+   *
+   * Meant for development and local test servers: set it to `!app.isPackaged` so that it never ships enabled. A packaged app with it set
+   * logs a warning once, the first time it loads update info (an update check, or the validation of an update pending install). Set it to
+   * `true` in a packaged app only for a feed that cannot be served over `https`:
+   * anyone on the network path can then tamper with the update information and files, so only a
+   * [signed update manifest](https://www.electron.build/docs/features/signed-update-manifests) and the code signature of the update
+   * protect it. A server's authentication challenge on a request that is not `https` and not to a loopback
+   * host is then cancelled without emitting `login`, as its authenticity cannot be determined: serve the feed over `https` for the app's
+   * `login` handler to answer it.
+   *
+   * @default false
+   */
+  allowInsecureFeed = false
+
+  /**
    * *Linux only.* Whether to allow installing unverified (unsigned / failing-GPG) `.deb` and `.rpm` packages during auto-update.
    *
    * electron-builder does not sign Linux packages, so this defaults to `true` to preserve working auto-updates: the
@@ -241,8 +327,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * `NsisUpdater` defaults it to `false` for installs made by an `nsis-web` installer built with electron-builder v27+ (`resources/package-type` marker).
    * Set it to `false` explicitly only if you intentionally publish and rely on NSIS web-installer packages and your installs lack that marker.
    *
-   * Set it before the app is `ready` (e.g. right after creating the updater): with `autoInstallEvent: "onNextLaunch"` a pending
-   * web-installer update is checked against it when the app is ready, and rejected (its pending-install marker cleared) while it is `true`.
+   * Set it before the app is `ready` (e.g. right after creating the updater) or synchronously in a `ready` handler: the automatic
+   * install at launch of an update marked for the next launch (by a quit with `autoInstallEvent: "onNextLaunch"`, or by
+   * `quitAndInstall({ waitUntilNextLaunch: true })`) runs right after the app's own `ready` handlers, unless `autoInstallEvent` is
+   * `"manual"`, and rejects a web-installer update (clearing its pending-install marker) while this is `true`.
    *
    * @default true
    */
@@ -322,6 +410,32 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this.allowDowngrade = true
   }
 
+  private _maxUpdateInfoSize: number | null = null
+  // `maxUpdateInfoSize` of the publish configuration the provider was created from (app-update.yml or setFeedURL), checked when used
+  private publishConfigMaxUpdateInfoSize: unknown = undefined
+
+  /**
+   * The largest channel file (`latest*.yml`) read, in bytes. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`.
+   * Release feeds and provider API responses (release listings and lookups) are not limited. A positive integer, or `0` for no
+   * limit; anything else throws `ERR_UPDATER_INVALID_MAX_UPDATE_INFO_SIZE`.
+   *
+   * Overrides `maxUpdateInfoSize` of the publish configuration (`app-update.yml`, or the options given to `setFeedURL`), whose default
+   * is 10 MiB. `null` (the default) uses the publish configuration.
+   */
+  get maxUpdateInfoSize(): number | null {
+    return this._maxUpdateInfoSize
+  }
+
+  set maxUpdateInfoSize(value: number | null) {
+    if (value != null && !isValidMaxUpdateInfoSize(value)) {
+      throw newError(
+        `maxUpdateInfoSize must be a positive integer (bytes) or 0 for no limit, but got: ${typeof value === "number" ? value : typeof value}`,
+        "ERR_UPDATER_INVALID_MAX_UPDATE_INFO_SIZE"
+      )
+    }
+    this._maxUpdateInfoSize = value
+  }
+
   /**
    * The Ed25519 public key(s) (PEM or base64 SPKI) trusted to have signed the update manifest — the
    * install's trust list. A single string or an array of keys; a manifest is accepted when any listed key
@@ -346,6 +460,49 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this.requestHeaders = Object.assign({}, this.requestHeaders, {
       authorization: token,
     })
+  }
+
+  /**
+   * Required: chooses the request headers sent to another origin than the update feed (`Provider.feedBaseUrl`; for private GitHub, the
+   * GitHub API), on each request and redirect there. It gets the lowercase names of the request headers about to be sent (never their
+   * values) and the hop (`from`, the URL the headers are meant for, and `to`, the URL on the other origin), and returns the names of the ones
+   * to send. The feed's own origin gets every header without asking it. A header left out, such as `Authorization` from `addAuthHeader`, a
+   * custom header from `requestHeaders` or `x-user-staging-id`, stays on the original origin. The headers the updater builds for each request
+   * itself (the default `User-Agent`, `Cache-Control`, the `Accept` it sets and `Range`) are sent whatever it returns.
+   *
+   * Without a function, `checkForUpdates`, `checkForUpdatesAndNotify` and `downloadUpdate` reject (and emit `error`) with
+   * `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`, also in an unpackaged run that would skip the check, and so does any request to another origin, such as those of the install at launch of an
+   * update marked for the next launch: set it before the app is `ready`. A throw, or a result that is not an array of strings, fails that
+   * request with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`.
+   *
+   * @example autoUpdater.crossOriginHeaders = () => [] // none of them
+   * @example autoUpdater.crossOriginHeaders = (headerNames, hop) => (hop.to.origin === "https://cdn.example.com" ? headerNames.filter(it => it === "x-tenant") : [])
+   */
+  crossOriginHeaders: CrossOriginHeadersCallback | null = null
+
+  // the origin of the update feed (Provider.feedBaseUrl) of the last update check, null before the first one
+  private feedOrigin: string | null = null
+
+  // the updater's executor, provider requests and downloads ask the app's crossOriginHeaders through it, at each hop
+  // Dropped headers are announced once per origin, names and origins only (never a value): a host or CDN that starts redirecting to a new
+  // origin shows up in the log
+  private readonly crossOriginHeaderPolicy: CrossOriginHeaderPolicy = createCrossOriginHeaderPolicy(
+    () => this.crossOriginHeaders,
+    (headerNames, hop) =>
+      this.limitedLogger(`cross-origin-headers-dropped ${hop.to.origin}`).warn(
+        `autoUpdater.crossOriginHeaders left out ${[...headerNames].sort().join(", ")} for the request from ${hop.from.origin} to ${hop.to.origin}, another origin than the update feed, so they are not sent there. ` +
+          `If that server needs one, keep it for that origin (hop.to.origin) in the callback, or serve the update files from the feed origin. ${CROSS_ORIGIN_HEADERS_DOCS}`
+      )
+  )
+
+  // Unset or not a function: what `subject` starts rejects before any request, and emits `error`
+  private checkCrossOriginHeadersConfigured(subject: string): Error | null {
+    if (typeof this.crossOriginHeaders === "function") {
+      return null
+    }
+    const error = crossOriginHeadersNotConfiguredError(subject)
+    this.dispatchError(error)
+    return error
   }
 
   // per updater instance, so several updaters (and tests) keep their own counts
@@ -521,7 +678,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     if (app == null) {
       this.app = new ElectronAppAdapter()
-      this.httpExecutor = new ElectronHttpExecutor((authInfo, callback) => this.emit("login", authInfo, callback))
+      this.httpExecutor = new ElectronHttpExecutor((authInfo, callback, requestUrl) => this.handleLoginChallenge(authInfo, callback, requestUrl), {
+        crossOriginHeaderPolicy: this.crossOriginHeaderPolicy,
+        isInsecureFeedAllowed: () => this.allowInsecureFeed,
+      })
     } else {
       this.app = app
       this.httpExecutor = null as any
@@ -565,14 +725,21 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     } else {
       provider = createClient(options, this, runtimeOptions)
     }
+    this.publishConfigMaxUpdateInfoSize = typeof options === "string" ? undefined : options.maxUpdateInfoSize
     this.clientPromise = Promise.resolve(provider)
   }
 
   /**
    * Asks the server whether there is an update.
-   * @returns null if the updater is disabled, otherwise info about the latest version
+   * @returns null if the updater is disabled, otherwise info about the latest version. Rejects with `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`
+   * without {@link crossOriginHeaders}, whether or not the updater is disabled.
    */
   checkForUpdates(): Promise<UpdateCheckResult | null> {
+    // before isUpdaterActive: an unpackaged run without the callback reports it too, so a missing one shows up in development
+    const notConfigured = this.checkCrossOriginHeadersConfigured("checkForUpdates")
+    if (notConfigured != null) {
+      return Promise.reject(notConfigured)
+    }
     if (!this.isUpdaterActive()) {
       return Promise.resolve(null)
     }
@@ -729,15 +896,60 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   protected async getUpdateInfoAndProvider(): Promise<UpdateInfoAndProvider> {
     await this.app.whenReady()
+    // allowInsecureFeed is meant for development: a packaged app that ships with it accepts tampered update information over plain http
+    if (this.allowInsecureFeed && this.app.isPackaged) {
+      this.limitedLogger("insecure-feed-packaged").warn(
+        "autoUpdater.allowInsecureFeed is true in a packaged app: its update requests and redirects may use plain http to any host, where anyone on the network path can tamper with them. " +
+          "It is meant for development only: set `autoUpdater.allowInsecureFeed = !app.isPackaged` and serve the production feed over https. " +
+          "https://www.electron.build/docs/features/auto-update#allowinsecurefeed"
+      )
+    }
 
     if (this.clientPromise == null) {
-      this.clientPromise = this.configOnDisk.value.then(it => createClient(it, this, this.createProviderRuntimeOptions()))
+      this.clientPromise = this.configOnDisk.value.then(it => {
+        this.publishConfigMaxUpdateInfoSize = it?.maxUpdateInfoSize
+        return createClient(it, this, this.createProviderRuntimeOptions())
+      })
     }
 
     const client = await this.clientPromise
+    // before the request headers are handed over: only the feed's origin gets every one of them
+    this.feedOrigin = feedBaseUrlOf(client).origin
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({ "x-user-staging-id": stagingUserId }))
-    const info = await client.getLatestVersion()
+    // autoUpdater.maxUpdateInfoSize wins over the publish configuration, so an app can raise the limit even when its config is invalid
+    let maxUpdateInfoSize = this._maxUpdateInfoSize
+    if (maxUpdateInfoSize == null) {
+      const configured = this.publishConfigMaxUpdateInfoSize
+      if (configured == null) {
+        maxUpdateInfoSize = DEFAULT_MAX_UPDATE_INFO_SIZE
+      } else if (isValidMaxUpdateInfoSize(configured)) {
+        maxUpdateInfoSize = configured
+      } else {
+        throw newError(
+          `maxUpdateInfoSize in the publish configuration must be a positive integer (bytes) or 0 for no limit, but got: ${typeof configured === "number" ? configured : typeof configured}`,
+          "ERR_UPDATER_INVALID_MAX_UPDATE_INFO_SIZE"
+        )
+      }
+    }
+    // a custom updateProvider that is not built on this Provider (e.g. one from another copy of electron-updater) has no setMaxUpdateInfoSize
+    if (typeof Reflect.get(client, "setMaxUpdateInfoSize") === "function") {
+      client.setMaxUpdateInfoSize(maxUpdateInfoSize)
+    } else if (maxUpdateInfoSize !== DEFAULT_MAX_UPDATE_INFO_SIZE) {
+      this.limitedLogger("max-update-info-size-not-supported").warn(
+        `The custom update provider ${client.constructor.name} has no setMaxUpdateInfoSize, so maxUpdateInfoSize (${maxUpdateInfoSize} bytes) does not apply to its requests. ` +
+          `Extend Provider from electron-updater to use it.`
+      )
+    }
+    let info: UpdateInfo
+    try {
+      info = await client.getLatestVersion()
+    } catch (e: unknown) {
+      if (isYamlAliasBudgetError(e)) {
+        this.announceYamlAliasBudget()
+      }
+      throw e
+    }
     // recorded on the new result object (never on the parsed manifest, which listeners of update-available also get), so the state
     // travels with exactly the update info it was established for
     const manifestSignatureVerified = await this.verifyManifestSignature(info)
@@ -745,6 +957,20 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       info,
       provider: client,
       manifestSignatureVerified,
+    }
+  }
+
+  // A v27 behaviour change that only shows on installed apps: announced once per updater, without the feed URL (it may carry a token in its query)
+  private announceYamlAliasBudget(): void {
+    try {
+      this.limitedLogger("yaml-alias-budget").warn(
+        "electron-updater 7 (electron-builder v27) rejects an update manifest (latest*.yml) whose YAML aliases (&name / *name) expand past its size limit: " +
+          "this one was rejected with ERR_UPDATER_INVALID_UPDATE_INFO, so this app does not update until the manifest is replaced. " +
+          "Publish latest*.yml without YAML aliases (js-yaml `dump` with `noRefs: true`, as electron-builder writes it) or with the shared values repeated inline. " +
+          YAML_ALIAS_BUDGET_DOCS
+      )
+    } catch (_ignored) {
+      // called while the parse error propagates: logging must not replace it
     }
   }
 
@@ -799,8 +1025,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         ? " files[].blockMapUrl is covered by the signature, like files[].url, so it has to be in latest*.yml before the manifest is signed: " +
           "https://www.electron.build/docs/features/signed-update-manifests#what-is-signed"
         : ""
+      // as is a stagingPercentage set or changed by hand in a signed latest*.yml, which is how staged rollouts of unsigned manifests are run
+      const stagingPercentageHint =
+        info.stagingPercentage == null
+          ? ""
+          : " stagingPercentage is covered by the signature. If it was set or changed after latest*.yml was signed, sign latest*.yml again: " +
+            "https://www.electron.build/docs/features/auto-update#staged-rollouts"
       throw newError(
-        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.${blockMapUrlHint}`,
+        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.${blockMapUrlHint}${stagingPercentageHint}`,
         "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID"
       )
     }
@@ -810,11 +1042,72 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     return true
   }
 
-  private createProviderRuntimeOptions() {
+  /**
+   * Electron's `login` event of the update request to `requestUrl`: emitted as `login`, with the request's URL as its third argument
+   * (Electron's `AuthInfo` names only the challenger's host and port). A challenge on a request whose URL cannot be determined (`null`),
+   * or one emitted without a `login` listener (which logs a warning once), is cancelled: the callback is called once, without credentials, and
+   * so is one whose listener throws. A server's challenge from another origin than the feed logs a warning once when no listener takes `url`.
+   * With `allowInsecureFeed`, a server's challenge on a request that is not `https` and not to a loopback host is cancelled too: nothing shows
+   * that it comes from the server the credentials are meant for.
+   * @internal
+   */
+  protected handleLoginChallenge(authInfo: AuthInfo, callback: LoginCallback, requestUrl: URL | null): void {
+    if (requestUrl != null && !authInfo.isProxy && requestUrl.protocol !== "https:" && !isLoopbackHostname(requestUrl.hostname) && this.allowInsecureFeed) {
+      // host and port only: the realm comes from the server
+      this.limitedLogger("login-challenge-insecure").warn(
+        `With allowInsecureFeed, electron-updater emits the login event for a server's authentication challenge only on an https or loopback request: ` +
+          `the challenge from ${authInfo.host}:${authInfo.port} on a request that is neither https nor loopback was cancelled, as its authenticity cannot be determined. ` +
+          `Serve the update feed and files over https to answer it. https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https`
+      )
+      callback()
+      return
+    }
+    // no credentials: Electron cancels the authentication
+    if (requestUrl == null) {
+      callback()
+      return
+    }
+    // host, port and proxy-or-server only: never the realm, which the challenger chooses
+    const challenger = `the ${authInfo.isProxy ? "proxy" : "server"} ${authInfo.host}:${authInfo.port}`
+    const listeners = this.listeners("login")
+    if (listeners.length === 0) {
+      this.limitedLogger("login-challenge-no-listener").warn(
+        `${challenger} asked for credentials on an update request, and the challenge was cancelled: autoUpdater has no login listener. ` +
+          `Add one that answers it, or serve the updates without authentication. ${LOGIN_EVENT_DOCS}`
+      )
+      callback()
+      return
+    }
+    // a handler without the url parameter cannot tell the feed from another origin
+    if (!authInfo.isProxy && this.feedOrigin != null && requestUrl.origin !== this.feedOrigin && listeners.every(it => it.length < 3)) {
+      this.limitedLogger("login-challenge-other-origin").warn(
+        `${challenger}, on ${requestUrl.origin}, another origin than the update feed (${this.feedOrigin}), asked for credentials, and every login handler answers without the url argument: ` +
+          `such a handler answers a challenge from any server. Take (authInfo, callback, url) and answer only when new URL(url).origin is the origin your credentials are meant for. ${LOGIN_EVENT_DOCS}`
+      )
+    }
+    let isAnswered = false
+    // the arguments as given: Electron cancels on a call without any
+    const answer: LoginCallback = (...credentials) => {
+      if (!isAnswered) {
+        isAnswered = true
+        callback(...credentials)
+      }
+    }
+    try {
+      this.emit("login", authInfo, answer, requestUrl.href)
+    } catch {
+      // a throwing handler must not stall the request; never its error's message, which could hold the credentials
+      this.limitedLogger("login-listener-threw").warn(`A login listener threw for ${challenger}: the challenge was cancelled. ${LOGIN_EVENT_DOCS}`)
+      answer()
+    }
+  }
+
+  private createProviderRuntimeOptions(): ProviderRuntimeOptions {
     return {
       isUseMultipleRangeRequest: true,
       platform: this._testOnlyOptions == null ? (process.platform as ProviderPlatform) : this._testOnlyOptions.platform,
       executor: this.httpExecutor,
+      crossOriginHeaderPolicy: this.crossOriginHeaderPolicy,
     }
   }
 
@@ -854,7 +1147,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   protected onUpdateAvailable(updateInfo: UpdateInfo): void {
     this.log.info(
       `Found version ${updateInfo.version} (url: ${asArray(updateInfo.files)
-        .map(it => it.url)
+        .map(it => urlWithoutQuery(it.url))
         .join(", ")})`
     )
     this.emit("update-available", updateInfo)
@@ -866,6 +1159,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * `packageFile` is the path to the NSIS web installer package and is only set for web installers.
    */
   downloadUpdate(cancellationToken: CancellationToken = new CancellationToken()): Promise<DownloadExecutorResult> {
+    const notConfigured = this.checkCrossOriginHeadersConfigured("downloadUpdate")
+    if (notConfigured != null) {
+      return Promise.reject(notConfigured)
+    }
     const updateInfoAndProvider = this.updateInfoAndProvider
     if (updateInfoAndProvider == null) {
       const error = new Error("Please check update first")
@@ -880,7 +1177,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     this.log.info(
       `Downloading update from ${asArray(updateInfoAndProvider.info.files)
-        .map(it => it.url)
+        .map(it => urlWithoutQuery(it.url))
         .join(", ")}`
     )
     const errorHandler = (e: Error): Error => {
@@ -896,17 +1193,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return e
     }
 
-    const requestHeaders = this.computeRequestHeaders(updateInfoAndProvider.provider)
-    try {
-      // fail before any download rather than in the middle of one
-      AppUpdater.checkFeedBaseUrlDeclared(updateInfoAndProvider.provider, requestHeaders)
-    } catch (e: any) {
-      return Promise.reject(errorHandler(e))
-    }
-
     this.downloadPromise = this.doDownloadUpdate({
       updateInfoAndProvider,
-      requestHeaders,
+      requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
       cancellationToken,
       disableWebInstaller: this.disableWebInstaller,
       disableDifferentialDownload: this.disableDifferentialDownload,
@@ -989,59 +1278,40 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   /**
-   * Headers for a download from `url`: when the provider has a `feedBaseUrl`, the credential-bearing ones are dropped if `url` is on
-   * another origin than `originUrl` (the feed by default). `null` keeps them for every URL.
+   * Headers for a download from `url`: every one on the origin of `originUrl` (the feed, `Provider.feedBaseUrl`, by default); for another
+   * origin, the ones the app's `crossOriginHeaders` keeps and the download's own (see {@link downloadOwnHeaders}).
    */
   protected downloadRequestHeaders(url: URL, downloadUpdateOptions: DownloadUpdateOptions, originUrl?: URL): OutgoingHttpHeaders {
-    const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-    const headers = downloadUpdateOptions.requestHeaders
-    AppUpdater.checkFeedBaseUrlDeclared(provider, headers)
-    const feedBaseUrl = provider.feedBaseUrl
-    if (feedBaseUrl == null) {
-      return headers
+    const feedBaseUrl = feedBaseUrlOf(downloadUpdateOptions.updateInfoAndProvider.provider)
+    if (originUrl == null && HttpExecutor.isCrossOrigin(feedBaseUrl, url)) {
+      this.announceCrossOriginDownload(url, feedBaseUrl)
     }
-    const credentialOrigin = originUrl ?? feedBaseUrl
-    if (HttpExecutor.isCrossOrigin(credentialOrigin, url)) {
-      this.announceCrossOriginDownload(url, credentialOrigin, headers, originUrl == null ? feedBaseUrl : null)
-    }
-    return HttpExecutor.removeCrossOriginSensitiveHeaders(headers, credentialOrigin, url)
+    return HttpExecutor.crossOriginHeaders(
+      downloadUpdateOptions.requestHeaders,
+      this.downloadOwnHeaders(downloadUpdateOptions),
+      { from: originUrl ?? feedBaseUrl, to: url },
+      this.crossOriginHeaderPolicy
+    )
   }
 
-  // Only names are logged (header names, query parameter names, origins), never values.
-  private announceCrossOriginDownload(url: URL, credentialOrigin: URL, headers: OutgoingHttpHeaders, feedBaseUrl: URL | null): void {
-    const docs = "https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
-    const names = HttpExecutor.sensitiveHeaderNames(headers)
-    // v27 behaviour changes a plain-JavaScript app would otherwise not notice: each is announced once per updater
-    if (names.length !== 0) {
-      this.limitedLogger("cross-origin-headers").warn(
-        `electron-updater 7 (electron-builder v27) sends the credential headers from requestHeaders / addAuthHeader only to the update feed's origin (${credentialOrigin.origin}): ` +
-          `${names.join(", ")} not sent to ${url.origin}, which is another origin. ` +
-          `If that server needs them, serve the update files from the feed origin or use pre-signed URLs. ${docs}`
-      )
-    }
-    const feedQueryNames = feedBaseUrl == null ? [] : [...new Set(feedBaseUrl.searchParams.keys())]
+  /**
+   * The headers of a download the updater builds itself (see `ApiRequestOptions.ownHeaders`), sent to another origin whatever the app's
+   * `crossOriginHeaders` returns: the `Accept` that {@link computeRequestHeaders} sets: `*\/*`, or the provider's own.
+   */
+  protected downloadOwnHeaders(downloadUpdateOptions: DownloadUpdateOptions): OutgoingHttpHeaders {
+    const fileExtraDownloadHeaders = downloadUpdateOptions.updateInfoAndProvider.provider.fileExtraDownloadHeaders
+    return fileExtraDownloadHeaders == null ? { accept: "*/*" } : (acceptHeaderOf(fileExtraDownloadHeaders) ?? {})
+  }
+
+  // Only names are logged (query parameter names, origins), never values. The headers left off are announced by
+  // announceDroppedCrossOriginHeaders; the feed query has no option.
+  private announceCrossOriginDownload(url: URL, feedBaseUrl: URL): void {
+    const feedQueryNames = [...new Set(feedBaseUrl.searchParams.keys())]
     if (feedQueryNames.length !== 0) {
       this.limitedLogger("cross-origin-feed-query").warn(
-        `electron-updater 7 (electron-builder v27) adds the feed URL's query string (${feedQueryNames.join(", ")}) only to URLs on the update feed's origin (${feedBaseUrl!.origin}): ` +
+        `electron-updater adds the feed URL's query string (${feedQueryNames.join(", ")}) only to URLs on the update feed's origin (${feedBaseUrl.origin}): ` +
           `not added to the download from ${url.origin}, which keeps its own query string. ` +
-          `If that server needs it, serve the update files from the feed origin or use pre-signed URLs. ${docs}`
-      )
-    }
-  }
-
-  // Credential headers are only sent where the provider says (Provider.feedBaseUrl); a provider that does not say is a configuration error.
-  private static checkFeedBaseUrlDeclared(provider: Provider<any>, headers: OutgoingHttpHeaders): void {
-    if (provider.feedBaseUrl !== undefined) {
-      return
-    }
-    const names = HttpExecutor.sensitiveHeaderNames(headers)
-    if (names.length !== 0) {
-      throw newError(
-        `The custom update provider ${provider.constructor.name} does not declare feedBaseUrl, but its downloads would send the credential headers ${names.join(", ")} ` +
-          `(from requestHeaders, addAuthHeader or fileExtraDownloadHeaders). Override Provider.feedBaseUrl to return the feed URL ` +
-          `(the headers are then only sent to its origin), or null to send the request headers to every origin. ` +
-          `https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin`,
-        "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED"
+          `If that server needs it, serve the update files from the feed origin or use pre-signed URLs. https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin`
       )
     }
   }
@@ -1114,11 +1384,12 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const fileInfo = taskOptions.fileInfo
     if (fileInfo.info.sha512 == null && (fileInfo.info as any).sha2 != null) {
       this.log.warn(
-        "Update artifact is validated with a SHA-256 (sha2) checksum only. SHA-256 update checksums are deprecated; electron-builder v28 will require SHA-512 and reject SHA-256-only update metadata (fail-closed). Regenerate latest*.yml with a current electron-builder and avoid pinning electronUpdaterCompatibility to a legacy (<2.15 / 1.x) range."
+        "Update artifact is validated with a SHA-256 (sha2) checksum only. sha2 is deprecated, and update metadata without sha512 will be rejected (fail-closed): publish sha512, which electron-builder generates by default, by regenerating latest*.yml with a current electron-builder and not pinning electronUpdaterCompatibility to a legacy (<2.15 / 1.x) range."
       )
     }
     const downloadOptions: DownloadOptions = {
       headers: this.downloadRequestHeaders(fileInfo.url, taskOptions.downloadUpdateOptions),
+      ownHeaders: this.downloadOwnHeaders(taskOptions.downloadUpdateOptions),
       cancellationToken: taskOptions.downloadUpdateOptions.cancellationToken,
       sha2: (fileInfo.info as any).sha2,
       sha512: fileInfo.info.sha512,
@@ -1137,7 +1408,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     await fsExtra.mkdir(cacheDir, { recursive: true })
     const updateFileName = getCacheUpdateFileName(taskOptions.fileInfo, taskOptions.fileExtension)
     let updateFile = path.join(cacheDir, updateFileName)
-    const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}${path.extname(packageInfo.path) || ".7z"}`)
+    let packageFile = packageInfo == null ? null : path.join(cacheDir, getCachePackageFileName(version, packageInfo.path))
 
     const pendingBlockMapFile = path.join(cacheDir, "current.blockmap")
     const cachedBlockMapFile = path.join(downloadedUpdateHelper.cacheDir, "current.blockmap")
@@ -1193,6 +1464,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const cachedUpdateFile = await downloadedUpdateHelper.validateDownloadedPath(updateFile, updateInfo, fileInfo)
     if (cachedUpdateFile != null) {
       updateFile = cachedUpdateFile
+      // the package validated together with the cached installer, under the name it was saved with
+      packageFile = downloadedUpdateHelper.packageFile
       // an update downloaded by an earlier session is about to be announced as ready to install without being
       // downloaded again, so the custom verifier has to gate it here too — its only other gate is the sha512 taken
       // from the very update metadata a custom verifier exists to distrust
@@ -1293,18 +1566,25 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         newBlockMapUrl = fileInfo.blockMapUrl
         oldBlockMapUrl = override ? (await getBlockMapFiles())[0] : null
       }
-      this.log.info(`Download block maps (old: "${oldBlockMapUrl ?? "cache only"}", new: ${newBlockMapUrl})`)
+      this.log.info(`Download block maps (old: "${oldBlockMapUrl == null ? "cache only" : urlWithoutQuery(oldBlockMapUrl)}", new: ${urlWithoutQuery(newBlockMapUrl)})`)
 
-      const downloadBlockMap = async (url: URL, originUrl?: URL): Promise<LoadedBlockMap> => {
+      // a v2 map may inflate to, and a v3 map may be, at most this many bytes; the old map is held to the new file's limit too: it has
+      // ample headroom for a release of a different size
+      const blockMapLimit = blockMapSizeLimit(fileInfo.info.size)
+      // a v3 map of the update is rejected before its records are decoded when it describes a file of another size; an old map is held
+      // to the size limit and then matched to the cached installer by isBlockMapOfFile
+      const newFileSize = fileInfo.info.size ?? null
+      const downloadBlockMap = async (url: URL, expectedFileSize: number | null, originUrl?: URL): Promise<LoadedBlockMap> => {
         const data = await this.httpExecutor.downloadToBuffer(url, {
           headers: this.downloadRequestHeaders(url, downloadUpdateOptions, originUrl),
+          ownHeaders: this.downloadOwnHeaders(downloadUpdateOptions),
           cancellationToken: downloadUpdateOptions.cancellationToken,
         })
 
         if (data == null || data.length === 0) {
-          throw new Error(`Blockmap "${url.href}" is empty`)
+          throw new Error(`Blockmap "${urlWithoutQuery(url)}" is empty`)
         }
-        return parseBlockMapData(data, url.href)
+        return parseBlockMapData(data, urlWithoutQuery(url), blockMapLimit, expectedFileSize)
       }
 
       const downloadOptions: DifferentialDownloaderOptions = {
@@ -1330,7 +1610,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         const blockMapFile = path.join(cacheDir, "current.blockmap")
         try {
           if (await fsExtra.pathExists(blockMapFile)) {
-            return parseBlockMapData(await fsExtra.readFile(blockMapFile), blockMapFile)
+            return parseBlockMapData(await fsExtra.readFile(blockMapFile), blockMapFile, blockMapLimit, null)
           }
         } catch (e: any) {
           this.log.warn(`Cannot parse blockmap "${blockMapFile}", error: ${e}`)
@@ -1357,21 +1637,22 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
             url: newBlockMapUrl,
             oldMap: oldBlockMapData.data,
             expectedFileSize: fileInfo.info.size,
+            maxBlockMapSize: blockMapLimit,
             httpExecutor: this.httpExecutor,
             requestHeaders: this.downloadRequestHeaders(newBlockMapUrl, downloadUpdateOptions),
             cancellationToken: downloadUpdateOptions.cancellationToken,
             isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
             logger: this.log,
           })
-          newBlockMapData = parseBlockMapData(fetched.buffer, newBlockMapUrl.href)
+          newBlockMapData = parseBlockMapData(fetched.buffer, urlWithoutQuery(newBlockMapUrl), blockMapLimit, newFileSize)
         } catch (e: unknown) {
           // a host or CDN that mishandles Range requests, or a map that fails verification: a plain GET of the new map still
           // allows a differential update
           throwIfCancelled(e, downloadUpdateOptions.cancellationToken)
-          this.log.warn(`Cannot fetch the changed parts of the block map "${newBlockMapUrl.href}", downloading it whole: ${e instanceof Error ? e.message : String(e)}`)
+          this.log.warn(`Cannot fetch the changed parts of the block map "${urlWithoutQuery(newBlockMapUrl)}", downloading it whole: ${e instanceof Error ? e.message : String(e)}`)
         }
       }
-      newBlockMapData ??= await downloadBlockMap(newBlockMapUrl)
+      newBlockMapData ??= await downloadBlockMap(newBlockMapUrl, newFileSize)
       await saveBlockMapToCacheDir(newBlockMapData, this.downloadedUpdateHelper!.cacheDirForPendingUpdate)
 
       if (oldBlockMapData == null) {
@@ -1389,19 +1670,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
           // download copies the installed installer unchanged and fails the sha512 check. The new blockmap downloaded above is cached
           // with the update, so the next update can be differential.
           this.log.info(
-            `No cached blockmap for the old installer, and the URL of the installed version's blockmap is the update's own ("${newBlockMapUrl}") because the ` +
+            `No cached blockmap for the old installer, and the URL of the installed version's blockmap is the update's own ("${urlWithoutQuery(newBlockMapUrl)}") because the ` +
               "artifact name has no version: downloading the full update (add ${version} to the artifact name, or set previousBlockmapBaseUrlOverride, " +
               "to make the first update after an install differential)"
           )
           return true
         }
-        this.log.info(`No cached blockmap for the old installer, downloading it from "${oldBlockMapUrl}"`)
+        this.log.info(`No cached blockmap for the old installer, downloading it from "${urlWithoutQuery(oldBlockMapUrl)}"`)
         // the old blockmap comes from previousBlockmapBaseUrlOverride when the app sets it, so that origin gets the credentials
-        oldBlockMapData = await downloadBlockMap(oldBlockMapUrl, override ? new URL(override) : undefined)
+        oldBlockMapData = await downloadBlockMap(oldBlockMapUrl, null, override ? new URL(override) : undefined)
         if (!(await isBlockMapOfFile(oldBlockMapData.map, downloadOptions.oldFile))) {
           // e.g. a server that serves another release's blockmap under the derived name: planned against it, the download fails the sha512 check
           this.log.info(
-            `The blockmap downloaded from "${oldBlockMapUrl}" does not describe the cached "${oldInstallerFileName}" (malformed, or its blocks do not end at the file size): downloading the full update`
+            `The blockmap downloaded from "${urlWithoutQuery(oldBlockMapUrl)}" does not describe the cached "${oldInstallerFileName}" (malformed, or its blocks do not end at the file size): downloading the full update`
           )
           return true
         }
@@ -1463,13 +1744,17 @@ interface LoadedBlockMap {
   readonly map: BlockMap
 }
 
-/** Decodes a block map file in either format; the v3 map starts with its magic, anything else is read as gzipped JSON (v2). */
-function parseBlockMapData(data: Buffer, source: string): LoadedBlockMap {
+/**
+ * Decodes a block map file in either format; the v3 map starts with its magic, anything else is read as gzipped JSON (v2), which
+ * may inflate to at most `maxSize` bytes (see `blockMapSizeLimit`). A v3 map is checked (at most `maxSize` bytes, its exact length,
+ * and that it describes a file of `expectedFileSize` bytes when given) before its records are decoded.
+ */
+function parseBlockMapData(data: Buffer, source: string, maxSize: number, expectedFileSize: number | null): LoadedBlockMap {
   try {
     if (isBlockMapV3(data)) {
-      return { format: "v3", data, map: toBlockMap(decodeBlockMapV3(data)) }
+      return { format: "v3", data, map: toBlockMap(decodeBlockMapV3(data, expectedFileSize, maxSize)) }
     }
-    return { format: "v2", data, map: JSON.parse(gunzipSync(data).toString()) }
+    return { format: "v2", data, map: JSON.parse(gunzipSync(data, { maxOutputLength: maxSize }).toString()) }
   } catch (e: any) {
     throw new Error(`Cannot parse blockmap "${source}", error: ${e}`)
   }
@@ -1531,6 +1816,20 @@ export function getCacheUpdateFileName(fileInfo: ResolvedUpdateFileInfo, fileExt
     throw newError(`Invalid update file name: ${JSON.stringify(fileName)}`, "ERR_UPDATER_INVALID_FILE_NAME")
   }
   return fileName
+}
+
+/** @internal */
+export function getCachePackageFileName(version: string, packageUrl: string): string {
+  // the extension is taken from the URL path only: a query (an auth token, a pre-signed URL, Keygen's `?product=`) must not reach the
+  // file name, and characters such as `?` and `:` are not allowed in a Windows file name
+  let pathname: string
+  try {
+    pathname = new URL(packageUrl).pathname
+  } catch {
+    pathname = packageUrl
+  }
+  const extension = path.posix.extname(pathname)
+  return `package-${version}${/^\.[a-z0-9]{1,8}$/i.test(extension) ? extension : ".7z"}`
 }
 
 export interface DownloadUpdateOptions {

@@ -1,6 +1,6 @@
-import { BlockMapDataHolder, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
+import { ApiRequestOptions, BlockMapDataHolder, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
 import { BlockMap } from "builder-util-runtime"
-import { detectSha512Encoding } from "builder-util-runtime/internal"
+import { detectSha512Encoding, urlWithoutQuery } from "builder-util-runtime/internal"
 import fsExtra from "fs-extra"
 import { createWriteStream, WriteStream } from "fs"
 import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
@@ -34,6 +34,20 @@ export interface DifferentialDownloaderOptions {
   onProgress?: (progress: ProgressInfo) => void
 }
 
+/**
+ * The most bytes a compressed (v2 or embedded) block map of a `fileSize`-byte file may inflate to, and the most compressed bytes of
+ * an embedded one that are read. A v2 map costs about 33 bytes of JSON per block, so even the finest chunker for file data (stored
+ * archive members, 8 KiB average) writes about fileSize / 250: the limit leaves ample headroom, while a body crafted to inflate
+ * to gigabytes is rejected once it passes the limit, before it can exhaust the memory of (or block) the main process. 64 MiB
+ * when the size is unknown. A v3 map, about 10 bytes per block, is held to the same limit.
+ * @internal
+ */
+export function blockMapSizeLimit(fileSize: number | null | undefined): number {
+  const max = 64 * 1024 * 1024
+  // a NaN maxOutputLength would mean no limit at all to zlib
+  return typeof fileSize === "number" && fileSize > 0 ? Math.min(max, Math.max(8 * 1024 * 1024, Math.ceil(fileSize / 16))) : max
+}
+
 export abstract class DifferentialDownloader {
   fileMetadataBuffer: Buffer | null = null
 
@@ -56,13 +70,15 @@ export abstract class DifferentialDownloader {
     this.isUseMultipleRangeRequest = options.isUseMultipleRangeRequest === true
   }
 
-  createRequestOptions(): RequestOptions {
-    // requestRange follows a redirect itself, without the credential headers when the target is on another origin
-    const result: RequestOptions & { redirect: "manual" } = {
+  createRequestOptions(): ApiRequestOptions {
+    // requestRange follows a redirect itself, with the headers the executor's cross-origin header policy keeps and its own (Accept, Range)
+    // when the target is on another origin
+    const result: ApiRequestOptions & { redirect: "manual" } = {
       headers: {
         ...this.options.requestHeaders,
         accept: "*/*",
       },
+      ownHeaders: { accept: "*/*" },
       redirect: "manual",
     }
     configureRequestUrl(this.options.newUrl, result)
@@ -108,6 +124,11 @@ export abstract class DifferentialDownloader {
     let downloadSize = 0
     let copySize = 0
     for (const operation of operations) {
+      // Zero-size, negative or fractional blocks or offsets make ranges that cannot be requested or read from the old file: reject the
+      // plan before any I/O, so the update falls back to a full download
+      if (!Number.isSafeInteger(operation.start) || !Number.isSafeInteger(operation.end) || operation.start < 0 || operation.end <= operation.start) {
+        throw new Error(`Invalid ${OperationKind[operation.kind]} range [${operation.start}, ${operation.end}) in the download plan: malformed blockmap`)
+      }
       const length = operation.end - operation.start
       if (operation.kind === OperationKind.DOWNLOAD) {
         downloadSize += length
@@ -243,7 +264,7 @@ export abstract class DifferentialDownloader {
       }
 
       let downloadOperationCount = 0
-      this.logger.info(`Differential download: ${this.options.newUrl}`)
+      this.logger.info(`Differential download: ${urlWithoutQuery(this.options.newUrl)}`)
 
       // once a request is redirected, the remaining ranges are requested from the redirect target
       const target: RangeRequestTarget = { options: this.createRequestOptions() }

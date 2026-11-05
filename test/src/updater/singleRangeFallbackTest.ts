@@ -36,7 +36,7 @@ function namedBlockMap(names: Array<string>) {
   return blockMap(names, new Array<number>(names.length).fill(BLOCK))
 }
 
-type HostBehaviour = "multipart" | "multi-501" | "multi-400" | "multi-200" | "multi-403" | "ignores-ranges" | "wrong-range" | "uppercase-unit"
+type HostBehaviour = "multipart" | "multi-501" | "multi-400" | "multi-200" | "multi-long-content-type" | "multi-403" | "ignores-ranges" | "wrong-range" | "uppercase-unit"
 
 function parseRanges(header: string): Array<[number, number]> {
   return header
@@ -75,6 +75,10 @@ describe("differential download on hosts with limited range support", { concurre
       if (isMulti && behaviour !== "multipart") {
         if (behaviour === "multi-200") {
           sendFull()
+        } else if (behaviour === "multi-long-content-type") {
+          // a long whitespace run without a boundary, within the 16 KB response-header limit of Node's client
+          res.writeHead(206, { "Content-Type": `multipart/x${" ".repeat(12_000)}x` })
+          res.end()
         } else {
           res.writeHead(behaviour === "multi-501" ? 501 : behaviour === "multi-403" ? 403 : 400)
           res.end("Multiple ranges are not supported")
@@ -140,6 +144,7 @@ describe("differential download on hosts with limited range support", { concurre
     ["multi-501", "501 (GitHub release assets)"],
     ["multi-400", "400 (Google Cloud Storage)"],
     ["multi-200", "200 with the whole file (S3)"],
+    ["multi-long-content-type", "206 and a long Content-Type without a boundary"],
   ] as const) {
     test(`a host that answers multi-range requests with ${label} is retried with one range per request`, async ({ tmpDir }) => {
       const { newFile, warnings } = await download(await tmpDir.createTempDir({ prefix: "single-range" }), await startHost(behaviour), true)

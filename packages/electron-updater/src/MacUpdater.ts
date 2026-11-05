@@ -1,7 +1,9 @@
 import { createRequire } from "node:module"
 import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
+import { urlWithoutQuery } from "builder-util-runtime/internal"
 
-const require = createRequire(import.meta.url)
+// import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
+const require = createRequire(import.meta.url ?? process.execPath)
 import fsExtra from "fs-extra"
 import { createReadStream } from "fs"
 import * as path from "path"
@@ -140,7 +142,7 @@ export class MacUpdater extends AppUpdater {
     const downloadedFile = event.downloadedFile
     const updateFileSize = zipFileInfo.info.size ?? (await fsExtra.stat(downloadedFile)).size
 
-    const logContext = `fileToProxy=${zipFileInfo.url.href}`
+    const logContext = `fileToProxy=${urlWithoutQuery(zipFileInfo.url)}`
     this.closeServerIfExists()
     this.log.debug(`Creating proxy server for native Squirrel.Mac (${logContext})`)
     this.server = createServer()
