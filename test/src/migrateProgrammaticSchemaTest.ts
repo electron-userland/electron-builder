@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest"
 import {
   FEED_QUERY_ADVISORY,
   INCLUDE_PDB_CHANGES,
+  INSECURE_FEED_ADVISORY,
   includePdbManualStep,
   MAC_ENTITLEMENTS_ADVISORY,
   migrateConfig,
@@ -801,6 +802,21 @@ describe("migrateProgrammaticSource — nsis-web advisory", () => {
     expectAdvisories(`{ win: { target: "nsis-web", ...base } }`, [], "const base = {}\n")
     expectAdvisories(`{ win: { target: "nsis-web", [key]: "nsis" } }`, [], `const key = "target"\n`)
   })
+})
+
+describe("migrateProgrammaticSource — plain http feed advisory", () => {
+  test.each([
+    `{ publish: { provider: "generic", url: "http://updates.example.com/app" } }`,
+    `{ win: { publish: [{ provider: "s3", bucket: "b", endpoint: "http://minio.lan:9000", accelerate: false }] } }`,
+    `{ publish: { provider: "github", owner: "o", repo: "r", protocol: "http" } }`,
+  ])("%s emits the advisory", body => expectAdvisories(body, [INSECURE_FEED_ADVISORY]))
+
+  test.each([
+    `{ publish: { provider: "generic", url: "https://updates.example.com/app" } }`,
+    `{ publish: { provider: "generic", url: "http://localhost:8080/" } }`,
+    `{ publish: { provider: "generic", url: process.env.FEED_URL } }`,
+    `{ publish: { provider: "s3", bucket: "b", endpoint: "http://minio.lan:9000", accelerate: isProduction } }`,
+  ])("%s emits nothing", body => expectAdvisories(body, [], "const isProduction = true\n"))
 })
 
 describe("migrateProgrammaticSource — updater advisories", () => {
