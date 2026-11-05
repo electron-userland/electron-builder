@@ -1,4 +1,5 @@
 import { CancellationToken, errorToString, GithubOptions, HttpError, newError, UpdateInfo } from "builder-util-runtime"
+import { urlWithoutQuery } from "builder-util-runtime/internal"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import * as path from "path"
 import { AppUpdater } from "../AppUpdater.js"
@@ -22,9 +23,10 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     super(options, "api.github.com", runtimeOptions)
   }
 
-  // the asset URLs come from the GitHub API (api.github.com or the Enterprise host), not from latest*.yml, and need the token
-  get feedBaseUrl(): null {
-    return null
+  // the GitHub API (api.github.com or the Enterprise host): the asset URLs come from it, not from latest*.yml, and need the token. An asset
+  // URL on another origin gets it only when the app's crossOriginHeaders keeps `authorization` there
+  get feedBaseUrl(): URL {
+    return this.baseUrl
   }
 
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
@@ -88,7 +90,10 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
         return version
       }
     } catch (e: any) {
-      throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${errorToString(e)}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
+      throw newError(
+        `Unable to find latest version on GitHub (${urlWithoutQuery(url)}), please ensure a production release exists: ${errorToString(e)}`,
+        "ERR_UPDATER_LATEST_VERSION_NOT_FOUND"
+      )
     }
   }
 

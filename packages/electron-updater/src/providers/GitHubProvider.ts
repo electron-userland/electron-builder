@@ -1,4 +1,5 @@
 import { CancellationToken, errorToString, GithubOptions, githubUrl, HttpError, newError, parseXml, ReleaseNoteInfo, UpdateInfo, XElement } from "builder-util-runtime"
+import { urlWithoutQuery } from "builder-util-runtime/internal"
 import * as semver from "semver"
 import { URL } from "url"
 import { AppUpdater } from "../AppUpdater.js"
@@ -173,7 +174,10 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
       const releaseInfo: GithubReleaseInfo = JSON.parse(rawData)
       return releaseInfo.tag_name
     } catch (e: any) {
-      throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${errorToString(e)}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
+      throw newError(
+        `Unable to find latest version on GitHub (${urlWithoutQuery(url)}), please ensure a production release exists: ${errorToString(e)}`,
+        "ERR_UPDATER_LATEST_VERSION_NOT_FOUND"
+      )
     }
   }
 
