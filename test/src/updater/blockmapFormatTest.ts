@@ -181,6 +181,7 @@ describe("block map format detection", () => {
       isUseMultipleRangeRequest: false,
       platform: "win32",
       executor: {} as any,
+      crossOriginHeaderPolicy: () => ({}),
     })
     const info: UpdateInfo = { version: "1.1.0", files: [{ url: "app-1.1.0.exe", sha512: "x", size: NEW_SIZE }], releaseDate: "2024-01-01T00:00:00.000Z" }
     const downloadOptions: DownloadUpdateOptions = {
