@@ -138,8 +138,8 @@ describe("electron-updater full download stops above the declared size", () => {
   class RecordingExecutor extends FakeElectronHttpExecutor {
     readonly requests: Array<FakeNetRequest> = []
 
-    createRequest(options: http.RequestOptions, callback: (response: any) => void): any {
-      const request = super.createRequest(options, callback)
+    protected createNetRequest(options: http.RequestOptions, callback: (response: any) => void): any {
+      const request = super.createNetRequest(options, callback)
       this.requests.push(request)
       return request
     }
