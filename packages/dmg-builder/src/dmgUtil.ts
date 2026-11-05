@@ -222,7 +222,17 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
 
   if (!isEmptyOrSpaces(settings.background)) {
     const size = await getImageSizeUsingSips(settings.background)
-    settings.window = { position: { x: 400, y: Math.round((1440 - size.height) / 2) }, size, ...settings.window }
+    const window = specification.window
+    settings.window = {
+      position: {
+        x: window?.x ?? 400,
+        y: window?.y ?? Math.round((1440 - size.height) / 2),
+      },
+      size: {
+        width: window?.width ?? size.width,
+        height: window?.height ?? size.height,
+      },
+    }
   }
 
   const workspaceRoot = await packager.getWorkspaceRoot()

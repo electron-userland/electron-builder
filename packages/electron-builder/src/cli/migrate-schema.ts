@@ -14,7 +14,7 @@ import {
   RESOLVED_LEGACY_CONFIG_OPTIONS,
 } from "app-builder-lib/internal"
 import { log, orNullIfFileNotExist } from "builder-util"
-import { isValidPublisherNameDn } from "builder-util-runtime"
+import { asArray, isLoopbackHostname, isValidPublisherNameDn } from "builder-util-runtime"
 import { resolveDefaultKeywordList } from "builder-util/internal"
 import { promises as fs } from "fs"
 import * as path from "path"
@@ -113,13 +113,56 @@ export const FORCE_CODE_SIGNING_ADVISORY =
   "Provide the credentials wherever it is set, opt out explicitly with mac.notarize: false / updateManifest: false, or pass -c.forceCodeSigning=false to builds that cannot sign. " +
   "See https://www.electron.build/docs/migration/v27-build-changes#forcecodesigning-covers-notarization-and-update-manifests"
 
-// Advisory surfaced when a generic publish url carries a query string (typically a token). v27 electron-updater sends the feed
-// query and credential headers only to downloads on the feed's origin.
+// Advisory surfaced when a generic publish url carries a query string (typically a token). Same rule and solution as the build warning
+// (PublishManager's warnAboutGenericFeedQuery): the feed query stays on the feed's origin, and the app's autoUpdater.crossOriginHeaders
+// chooses the request headers sent to another origin.
 export const FEED_QUERY_ADVISORY =
-  "generic publish url with a query string detected. In v27, electron-updater sends the feed url's query string, and the credential headers from requestHeaders / addAuthHeader, " +
-  "only to downloads on the feed's origin (scheme, host and port); a download url in latest*.yml on another origin is requested without them. " +
-  "If those downloads need these credentials, serve the update files from the feed origin or use pre-signed URLs. " +
+  "generic publish url with a query string detected. electron-updater adds the feed url's query string only to requests on the feed's origin (scheme, host and port), " +
+  "such as the channel file and the relative download URLs electron-builder writes: a URL on another origin, such as an absolute download url in latest*.yml, " +
+  "keeps its own query string and is requested without the feed's. The request headers from requestHeaders / addAuthHeader go to every request on the feed's origin, " +
+  "and to a request or redirect to another origin only the ones the app's autoUpdater.crossOriginHeaders keeps for it. " +
+  "If a download on another origin needs the credential, serve the update files from the feed origin (relative files[].url, the default), use pre-signed URLs, " +
+  "or send the credential as a request header (requestHeaders / addAuthHeader) that the app's autoUpdater.crossOriginHeaders keeps for the origin that needs it. " +
   "See https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
+
+// Advisory surfaced for a publish feed that electron-updater requests over plain http to a host that is not loopback. Same rule and
+// solution as the build warning (PublishManager's warnAboutInsecureFeed).
+export const INSECURE_FEED_ADVISORY =
+  'publish feed over plain http to a host that is not loopback detected (a generic or custom url, a github protocol: "http" or an s3 endpoint). ' +
+  "electron-updater rejects every update request over http to a host that is not loopback (localhost, 127.0.0.0/8, ::1) with ERR_UPDATER_INSECURE_FEED, " +
+  "unless the app sets autoUpdater.allowInsecureFeed (meant for dev runs: autoUpdater.allowInsecureFeed = !app.isPackaged). Serve the updates over https. " +
+  "See https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https"
+
+/**
+ * Whether electron-updater requests the feed of the publish entry `entry` over plain http to a host that is not loopback, as the build
+ * warns for it (see PublishManager's warnAboutInsecureFeed): a generic or custom `url`, a github `protocol: "http"` (the `host`, github.com
+ * by default) or an s3 `endpoint` without `accelerate`. A value that is not a string (or, for `accelerate`, not a boolean) is not read.
+ *
+ * @internal exported for migrate-schema-programmatic
+ */
+export function isInsecureFeedEntry(entry: unknown): boolean {
+  if (!isPlainObject(entry)) {
+    return false
+  }
+  let url: unknown
+  if (entry.provider === "generic" || entry.provider === "custom") {
+    url = entry.url
+  } else if (entry.provider === "github") {
+    const host: unknown = entry.host === undefined ? "github.com" : entry.host
+    url = entry.protocol === "http" && typeof host === "string" ? `http://${host}` : null
+  } else if (entry.provider === "s3") {
+    url = entry.accelerate === undefined || entry.accelerate === false ? entry.endpoint : null
+  }
+  if (typeof url !== "string") {
+    return false
+  }
+  try {
+    const feed = new URL(url)
+    return feed.protocol === "http:" && !isLoopbackHostname(feed.hostname)
+  } catch {
+    return false
+  }
+}
 
 /**
  * macOS signing/universal fields that v26 accepted as `null` (meaning "unset") but whose v27 type has no `null`
@@ -620,6 +663,9 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   }
   if (detectGenericFeedQuery(c)) {
     advisories.push(FEED_QUERY_ADVISORY)
+  }
+  if ([c, ...Object.values(c)].some(section => isPlainObject(section) && asArray(section.publish).some(isInsecureFeedEntry))) {
+    advisories.push(INSECURE_FEED_ADVISORY)
   }
   const pdbPatterns = pdbFilesPatterns(c)
   if (pdbPatterns.length > 0) {

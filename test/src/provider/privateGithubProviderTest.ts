@@ -1,3 +1,4 @@
+import { vi } from "vitest"
 import { GithubOptions, HttpError } from "builder-util-runtime"
 import { PrivateGitHubProvider } from "electron-updater/src/providers/PrivateGitHubProvider"
 import type { PrivateGitHubUpdateInfo } from "electron-updater/src/providers/PrivateGitHubProvider"
@@ -10,25 +11,25 @@ const MOCK_REPO = "test-private-repo"
 const STABLE_VERSION = "1.1.0"
 const PRERELEASE_VERSION = "1.2.0-beta.1"
 
-function mockAssets(version: string) {
+function mockAssets(version: string, apiBaseUrl = "https://api.github.com") {
   return [
-    { name: "latest.yml", url: `https://api.github.com/repos/${MOCK_OWNER}/${MOCK_REPO}/releases/assets/1001` },
-    { name: `my-app-Setup-${version}.exe`, url: `https://api.github.com/repos/${MOCK_OWNER}/${MOCK_REPO}/releases/assets/1002` },
-    { name: `my-app-Setup-${version}.exe.blockmap`, url: `https://api.github.com/repos/${MOCK_OWNER}/${MOCK_REPO}/releases/assets/1003` },
+    { name: "latest.yml", url: `${apiBaseUrl}/repos/${MOCK_OWNER}/${MOCK_REPO}/releases/assets/1001` },
+    { name: `my-app-Setup-${version}.exe`, url: `${apiBaseUrl}/repos/${MOCK_OWNER}/${MOCK_REPO}/releases/assets/1002` },
+    { name: `my-app-Setup-${version}.exe.blockmap`, url: `${apiBaseUrl}/repos/${MOCK_OWNER}/${MOCK_REPO}/releases/assets/1003` },
   ]
 }
 
-function mockRelease(version: string, opts: { draft?: boolean; prerelease?: boolean } = {}) {
+function mockRelease(version: string, opts: { draft?: boolean; prerelease?: boolean; apiBaseUrl?: string } = {}) {
   return {
     name: `v${version}`,
     html_url: `https://github.com/${MOCK_OWNER}/${MOCK_REPO}/releases/tag/v${version}`,
     draft: opts.draft ?? false,
     prerelease: opts.prerelease ?? false,
-    assets: mockAssets(version),
+    assets: mockAssets(version, opts.apiBaseUrl),
   }
 }
 
-async function createPrivateUpdater(requestSpy: ReturnType<typeof createMockRequest>, version = "0.0.1") {
+async function createPrivateUpdater(requestSpy: ReturnType<typeof createMockRequest>, version = "0.0.1", host?: string) {
   const updater = await createNsisUpdater(version)
   // Inject per-test mock executor so concurrent tests never share state
   ;(updater as any).httpExecutor = { request: requestSpy }
@@ -38,6 +39,7 @@ async function createPrivateUpdater(requestSpy: ReturnType<typeof createMockRequ
     owner: MOCK_OWNER,
     repo: MOCK_REPO,
     token: MOCK_TOKEN,
+    host,
   })
   return updater
 }
@@ -254,22 +256,52 @@ test("channel file request uses octet-stream accept header with authorization", 
 
 test("enterprise GitHub host - uses /api/v3 prefix in request path", async ({ expect }) => {
   const requestSpy = createMockRequest()
-  const updater = await createNsisUpdater()
-  // Inject per-test mock before setting updateConfigPath (which resets clientPromise)
-  ;(updater as any).httpExecutor = { request: requestSpy }
-  updater.autoDownload = false
-  updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
-    provider: "github",
-    owner: MOCK_OWNER,
-    repo: MOCK_REPO,
-    token: MOCK_TOKEN,
-    host: "github.mycompany.com",
-  })
+  const updater = await createPrivateUpdater(requestSpy, undefined, "github.mycompany.com")
 
-  requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+  requestSpy
+    .mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION, { apiBaseUrl: "https://github.mycompany.com/api/v3" })))
+    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
 
   await updater.checkForUpdates()
 
   const firstCallOptions = requestSpy.mock.calls[0][0]
   expect(firstCallOptions.path).toMatch(/^\/api\/v3\/repos\//)
+})
+
+describe("release assets on another origin than the GitHub API", () => {
+  const ENTERPRISE_HOST = "github.mycompany.com"
+  const ASSET_ORIGIN = "https://assets.mycompany.com"
+
+  test("the channel file asset gets no token when crossOriginHeaders leaves out authorization, and keeps its Accept", async ({ expect }) => {
+    const requestSpy = createMockRequest()
+    const updater = await createPrivateUpdater(requestSpy, undefined, ENTERPRISE_HOST)
+    const crossOriginHeaders = vi.fn(() => [])
+    updater.crossOriginHeaders = crossOriginHeaders
+
+    requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION, { apiBaseUrl: ASSET_ORIGIN }))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+    expect((await updater.checkForUpdates())?.updateInfo.version).toBe(STABLE_VERSION)
+    // the release request on the API gets the token without asking
+    expect(requestSpy.mock.calls[0][0].headers).toMatchObject({ authorization: `token ${MOCK_TOKEN}` })
+    expect(requestSpy.mock.calls[1][0].headers).toEqual({ accept: "application/octet-stream" })
+    expect(crossOriginHeaders).toHaveBeenCalledExactlyOnceWith(expect.arrayContaining(["accept", "authorization"]), {
+      from: new URL(`https://${ENTERPRISE_HOST}/`),
+      to: new URL(`${ASSET_ORIGIN}/repos/${MOCK_OWNER}/${MOCK_REPO}/releases/assets/1001`),
+    })
+  })
+
+  test("the channel file asset gets the token when crossOriginHeaders keeps authorization for that origin", async ({ expect }) => {
+    const requestSpy = createMockRequest()
+    const updater = await createPrivateUpdater(requestSpy, undefined, ENTERPRISE_HOST)
+    updater.crossOriginHeaders = (headerNames, hop) => (hop.to.origin === ASSET_ORIGIN ? headerNames.filter(it => it === "authorization") : [])
+
+    requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION, { apiBaseUrl: ASSET_ORIGIN }))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+    const result = await updater.checkForUpdates()
+    expect(result?.updateInfo.version).toBe(STABLE_VERSION)
+    expect(requestSpy.mock.calls[1][0].headers).toEqual({ accept: "application/octet-stream", authorization: `token ${MOCK_TOKEN}` })
+
+    const provider = getProvider<PrivateGitHubProvider>(updater)
+    expect(provider.resolveFiles(result?.updateInfo as PrivateGitHubUpdateInfo)[0].url.origin).toBe(ASSET_ORIGIN)
+  })
 })
