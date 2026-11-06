@@ -9,8 +9,7 @@ import * as path from "path"
 import { describe, test } from "vitest"
 import { createNsisUpdater, FakeElectronHttpExecutor, FakeNetRequest, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
-// A full download into a file stops once it receives more bytes than the size the update info declares for the file, instead of
-// receiving whatever the server sends before the checksum is compared at the end.
+// A full download into a file stops once it receives more bytes than the size the update info declares for the file.
 
 const sha512 = (data: Buffer) => createHash("sha512").update(data).digest("base64")
 
@@ -125,6 +124,27 @@ describe("HttpExecutor download maxSize", () => {
       }
     )
   })
+
+  // a manifest's `size` is untrusted input: only a number sets a limit, so a value of another type that JavaScript compares as a number
+  // ("1", true, []) does not become a limit of a few bytes
+  test.for([
+    { name: "a numeric string", maxSize: "1" },
+    { name: "true", maxSize: true },
+    { name: "an empty array", maxSize: [] },
+    { name: "NaN", maxSize: Number.NaN },
+  ])("a maxSize that is $name sets no limit", async ({ maxSize }, { expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "download-size-limit" })
+    await fsExtra.ensureDir(dir)
+    const body = Buffer.alloc(MAX_SIZE, 4)
+    await withServer(
+      response => response.end(body),
+      async url => {
+        const destination = path.join(dir, "not-a-number.exe")
+        await new LocalDownloadExecutor().download(url, destination, { sha512: sha512(body), maxSize: maxSize as unknown as number })
+        expect(await fsExtra.readFile(destination)).toEqual(body)
+      }
+    )
+  })
 })
 
 describe("electron-updater full download stops above the declared size", () => {
@@ -145,11 +165,12 @@ describe("electron-updater full download stops above the declared size", () => {
     }
   }
 
-  // the checksums match the files served, so only the declared size can fail the download
-  async function createUpdater(installerSize: number, packageSize?: number) {
+  // the checksums match the files served, so only the declared size can fail the download; an installerSize of undefined leaves the
+  // size out of the manifest
+  async function createUpdater(installerSize: unknown, packageSize?: number) {
     const channelFile = serializeToYaml({
       version: "1.1.0",
-      files: [{ url: INSTALLER_NAME, sha512: sha512(INSTALLER), size: installerSize }],
+      files: [{ url: INSTALLER_NAME, sha512: sha512(INSTALLER), ...(installerSize === undefined ? {} : { size: installerSize }) }],
       releaseDate: "2024-01-01T00:00:00.000Z",
       ...(packageSize == null ? {} : { packages: { [process.arch]: { path: PACKAGE_NAME, sha512: sha512(PACKAGE), size: packageSize } } }),
     })
@@ -167,20 +188,46 @@ describe("electron-updater full download stops above the declared size", () => {
       return body == null ? { statusCode: 404 } : { statusCode: 200, body }
     })
     ;(updater as any).httpExecutor = executor
-    return Object.assign(updater, { requests: executor.requests })
+    return Object.assign(updater, { requests: executor.requests, sent: executor.sent })
   }
+
+  const pendingCacheDir = (updater: Awaited<ReturnType<typeof createUpdater>>): string => (updater as any).downloadedUpdateHelper.cacheDirForPendingUpdate
 
   test("the installer", async ({ expect }) => {
     const updater = await createUpdater(INSTALLER.length - 1)
     await updater.checkForUpdates()
     await expect(updater.downloadUpdate()).rejects.toMatchObject({ code: "ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED" })
     expect(updater.requests.filter(request => request.aborted)).toHaveLength(1)
+    // the partly written temp file is removed with the rest of the pending update
+    expect(await fsExtra.readdir(pendingCacheDir(updater))).toEqual([])
 
     // positive control: the declared size of the file is accepted
     const exact = await createUpdater(INSTALLER.length)
     await exact.checkForUpdates()
     const { updateFile } = await exact.downloadUpdate()
     expect(await fsExtra.readFile(updateFile)).toEqual(INSTALLER)
+  })
+
+  test.for([
+    { name: "without a size", size: undefined },
+    { name: "with a size that is not a number", size: "1" },
+  ])("an installer $name in the manifest downloads without a limit", async ({ size }, { expect }) => {
+    const updater = await createUpdater(size)
+    await updater.checkForUpdates()
+    const { updateFile } = await updater.downloadUpdate()
+    expect(await fsExtra.readFile(updateFile)).toEqual(INSTALLER)
+  })
+
+  test("the full download a failed differential download falls back to", async ({ expect }) => {
+    const updater = await createUpdater(INSTALLER.length - 1)
+    // a differential download is attempted (no blockmap is served, so it fails), and outside test mode its failure falls back to a full
+    // download; the test-only options are needed only to check for the update as on Windows
+    ;(updater as any)._testOnlyOptions = { platform: "win32", isUseDifferentialDownload: true }
+    await updater.checkForUpdates()
+    ;(updater as any)._testOnlyOptions = null
+    await expect(updater.downloadUpdate()).rejects.toMatchObject({ code: "ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED" })
+    expect(updater.sent.map(request => new URL(request.url).pathname)).toEqual(["/updates/latest.yml", `/updates/${INSTALLER_NAME}.blockmap`, `/updates/${INSTALLER_NAME}`])
+    expect(updater.requests.filter(request => request.aborted)).toHaveLength(1)
   })
 
   test("the web package", async ({ expect }) => {

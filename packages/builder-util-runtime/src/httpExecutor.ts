@@ -110,9 +110,9 @@ export interface DownloadOptions {
   readonly sha2?: string | null
   readonly sha512?: string | null
   /**
-   * The largest file, in bytes, a download into a file accepts (set by electron-updater to the `size` of the file in the update info):
-   * once more bytes arrive, the download fails with `ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED` and is aborted. Applies when it is a number of
-   * at least 0.
+   * The most bytes a download accepts (electron-updater sets it to the `size` of the file in the update info for a full download): once
+   * more arrive, the download fails with `ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED` and its request is aborted. Applies only when it is a number
+   * of at least 0: any other value, such as a `size` of another type read from a manifest, sets no limit of its own.
    */
   readonly maxSize?: number | null
 
@@ -789,7 +789,7 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage,
 
   const streams: Array<any> = []
   const maxSize = options.options.maxSize
-  if (maxSize != null && maxSize >= 0) {
+  if (typeof maxSize === "number" && maxSize >= 0) {
     let receivedSize = 0
     const sizeLimit = new Transform({
       transform(chunk: Buffer, _encoding, callback) {
