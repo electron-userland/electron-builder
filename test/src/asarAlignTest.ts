@@ -202,6 +202,30 @@ describe("alignAsarContent", () => {
     await expect(fs.stat(`${file}.aligning`)).rejects.toThrow()
   })
 
+  // The size pre-check passes on an intact archive, so the copy guard is the only thing left to catch a content read that comes back short.
+  // Header reads pass a null position and go through; only the numbered content reads are cut short.
+  test("fails when a content read comes back short after the size check passed", async ({ expect, tmpDir }) => {
+    const tmp = await tmpDir.createTempDir()
+    const file = await packTree(tmp, "short-read", makeTree())
+    const original = await fs.readFile(file)
+    // the same fs-extra copy asarAlign.ts loads (see the write spy above)
+    const fsExtra: typeof import("fs-extra") = createRequire(new URL("../../packages/app-builder-lib/package.json", import.meta.url))("fs-extra")
+    const realRead = fsExtra.read.bind(fsExtra)
+    const read = vi.spyOn(fsExtra, "read").mockImplementation(((fd: number, buffer: Buffer, offset: number, length: number, position: number | null) => {
+      if (position === null) {
+        return realRead(fd, buffer, offset, length, position)
+      }
+      return Promise.resolve({ bytesRead: length - 1, buffer })
+    }) as any)
+    try {
+      await expect(alignAsarContent(file, 512)).rejects.toThrow("Unexpected end of asar content")
+    } finally {
+      read.mockRestore()
+    }
+    expect((await fs.readFile(file)).equals(original), "input must not be replaced").toBe(true)
+    await expect(fs.stat(`${file}.aligning`)).rejects.toThrow()
+  })
+
   // The two controls the differential updater relies on: a byte inside a padding gap belongs to no file,
   // a byte inside a file's content is seen through the rewritten offset of exactly that file.
   test("padding gaps are outside every file; content is read through the new offsets", async ({ expect, tmpDir }) => {
