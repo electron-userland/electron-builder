@@ -22,6 +22,7 @@ import { hashFile } from "../../util/hash.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import { buildLauncherScript, shellQuote } from "./launcherScript.js"
 import { installPrefix, LinuxTargetHelper, quoteDesktopExecPath } from "./LinuxTargetHelper.js"
+import { prepareMetainfoFile } from "./metainfo.js"
 const { copyFile, outputFile, stat } = _fsExtra
 
 interface FpmOptions {
@@ -295,6 +296,17 @@ export default class FpmTarget extends Target {
 
     const desktopFilePath = await this.helper.writeDesktopEntry(this.options, `${quoteDesktopExecPath(launcher.installPath)} %U`)
     args.push(`${desktopFilePath}=/usr/share/applications/${this.helper.getDesktopFileName()}.desktop`)
+
+    if (options.metainfo != null) {
+      const metainfo = await prepareMetainfoFile({
+        projectDir: packager.projectDir,
+        metainfo: options.metainfo,
+        appId: appInfo.id,
+        expectedDesktopId: `${this.helper.getDesktopFileName()}.desktop`,
+        disableValidation: options.disableMetainfoValidation === true,
+      })
+      args.push(`${metainfo.file}=/usr/share/metainfo/${metainfo.installBasename}`)
+    }
 
     if (packager.packagerOptions.effectiveOptionComputed != null && (await packager.packagerOptions.effectiveOptionComputed([args, desktopFilePath]))) {
       return

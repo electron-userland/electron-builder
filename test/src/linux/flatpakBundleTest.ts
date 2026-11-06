@@ -57,6 +57,7 @@ async function setup(tmpDir: TmpDir, overrides: Partial<FlatpakBundleOptions> = 
     artifactPath: path.join(await tmpDir.createTempDir({ prefix: "out" }), "dist", "App.flatpak"),
     tempDir,
     files: [],
+    hasMetainfo: false,
     symlinks: [],
     installOrUpdateRefs: ["runtime", "sdk", "base"],
     flatpakBuilderArgs: [],
@@ -848,6 +849,62 @@ describe("buildFlatpakBundle", { concurrent: false }, () => {
         expect(log.error).not.toHaveBeenCalled()
       })
     }
+  })
+
+  // flatpak-builder before 1.4 composes a staged metainfo file with appstream-compose, which the freedesktop SDK 24.08 and
+  // newer do not ship, so the build fails early instead of with a misleading bwrap error after the refs are installed
+  describe("linux.metainfo and the flatpak-builder version", () => {
+    test("fails before anything is installed with flatpak-builder 1.2.2 on the freedesktop SDK 24.08", async ({ expect, tmpDir }) => {
+      const { options, manifestFile } = await setup(tmpDir, { hasMetainfo: true })
+      mockTools(["--user"], undefined, { ...VERSION_OUTPUT, "flatpak-builder": "flatpak-builder 1.2.2\n" })
+
+      const error = await rejection(buildFlatpakBundle(options))
+
+      expect(error).toBeInstanceOf(InvalidConfigurationError)
+      const message = (error as Error).message
+      expect(message).toContain("linux.metainfo stages share/metainfo/com.example.App.metainfo.xml")
+      expect(message).toContain("flatpak-builder 1.2.2 composes with appstream-compose")
+      expect(message).toContain("Upgrade flatpak-builder to 1.4.0 or newer")
+      expect(message).toContain("flatpak: { metainfo: null }")
+      expect(message).toContain("https://www.electron.build/docs/flatpak#build-requirements")
+      // nothing ran but the version checks: the refs are not even looked up, let alone installed
+      expect(commands(expect, options).every(it => it[1] === "--version")).toBe(true)
+      expect(existsSync(manifestFile)).toBe(false)
+    })
+
+    // a non-freedesktop SDK is not modelled and treated like a current freedesktop SDK
+    test("fails with flatpak-builder 1.2.2 on an SDK that is not the freedesktop SDK", async ({ expect, tmpDir }) => {
+      const { options } = await setup(tmpDir, { hasMetainfo: true, manifest: { ...manifest, sdk: "org.kde.Sdk", "runtime-version": "6.9" } })
+      mockTools(["--user"], undefined, { ...VERSION_OUTPUT, "flatpak-builder": "flatpak-builder 1.2.2\n" })
+
+      expect(await rejection(buildFlatpakBundle(options))).toBeInstanceOf(InvalidConfigurationError)
+    })
+
+    for (const [name, versionOutput, overrides] of [
+      // the freedesktop SDK before 24.08 still ships appstream-compose, so the old flatpak-builder composes fine
+      ["flatpak-builder 1.2.2 on the freedesktop SDK 23.08", "flatpak-builder 1.2.2\n", { manifest: { ...manifest, "runtime-version": "23.08" } }],
+      ["flatpak-builder 1.4.0, which composes with appstreamcli", "flatpak-builder 1.4.0\n", {}],
+      // compared as strings, 1.10.0 is the older one
+      ["flatpak-builder 1.10.0", "flatpak-builder 1.10.0\n", {}],
+    ] as const) {
+      test(`builds with ${name}`, async ({ expect, tmpDir }) => {
+        const { options } = await setup(tmpDir, { hasMetainfo: true, ...overrides })
+        mockTools(["--user"], undefined, { ...VERSION_OUTPUT, "flatpak-builder": versionOutput })
+
+        await buildFlatpakBundle(options)
+
+        expect(commands(expect, options).at(-1)?.[1]).toBe("build-bundle")
+      })
+    }
+
+    test("builds without metainfo with flatpak-builder 1.2.2 on the freedesktop SDK 24.08", async ({ expect, tmpDir }) => {
+      const { options } = await setup(tmpDir)
+      mockTools(["--user"], undefined, { ...VERSION_OUTPUT, "flatpak-builder": "flatpak-builder 1.2.2\n" })
+
+      await buildFlatpakBundle(options)
+
+      expect(commands(expect, options).at(-1)?.[1]).toBe("build-bundle")
+    })
   })
 
   describe("flatpak.modules and the flatpak-builder version", () => {
