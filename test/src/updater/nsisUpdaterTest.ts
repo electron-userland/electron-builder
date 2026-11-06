@@ -680,6 +680,45 @@ test.skip("test downloaded installer", config, async ({ expect }) => {
   }
 })
 
+// With nsis.buildUniversalInstaller: false every arch gets its own installer in the same latest.yml, and the default arch's one has no
+// arch suffix. The order of files[] is not covered by the update manifest signature, so the installer is picked by its name, not its position.
+describe("NsisUpdater — per-arch installers", () => {
+  const cases: Array<{ name: string; arch: string; suffixes: Array<string>; expected: string }> = [
+    { name: "x64 app, arm64 installer listed before the x64 one", arch: "x64", suffixes: ["-arm64", ""], expected: "" },
+    { name: "x64 app, ia32 installer listed before the x64 one", arch: "x64", suffixes: ["-ia32", ""], expected: "" },
+    { name: "arm64 app built with defaultArch arm64, x64 installer listed first", arch: "arm64", suffixes: ["-x64", ""], expected: "" },
+    { name: "arm64 app, arm64 installer listed after the x64 one", arch: "arm64", suffixes: ["", "-arm64"], expected: "-arm64" },
+    { name: "ia32 app, ia32 installer listed after the x64 one", arch: "ia32", suffixes: ["", "-ia32"], expected: "-ia32" },
+  ]
+
+  for (const { name, arch, suffixes, expected } of cases) {
+    test(name, config, async ({ expect }) => {
+      const installers = suffixes.map(suffix => ({ fileName: installerName(`${UPDATE_VERSION}${suffix}`), content: Buffer.from(`test installer payload${suffix}`) }))
+      const sha512 = (data: Buffer) => createHash("sha512").update(data).digest("base64")
+      const updateInfo = {
+        version: UPDATE_VERSION,
+        files: installers.map(it => ({ url: it.fileName, sha512: sha512(it.content), size: it.content.length })),
+        path: installers[0].fileName,
+        sha512: sha512(installers[0].content),
+        releaseDate: RELEASE_DATE,
+      }
+      const { url, close } = await serveUpdate({ "latest.yml": serializeToYaml(updateInfo), ...Object.fromEntries(installers.map(it => [it.fileName, it.content])) })
+      const originalArch = Object.getOwnPropertyDescriptor(process, "arch")!
+      Object.defineProperty(process, "arch", { ...originalArch, value: arch })
+      try {
+        const updater = await createNsisUpdater()
+        updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+        const updateCheckResult = await updater.checkForUpdates()
+        const { updateFile } = (await updateCheckResult!.downloadPromise)!
+        expect(path.basename(updateFile)).toBe(installerName(`${UPDATE_VERSION}${expected}`))
+      } finally {
+        Object.defineProperty(process, "arch", originalArch)
+        await close()
+      }
+    })
+  }
+})
+
 describe("NsisUpdater — disableWebInstaller", () => {
   // disableWebInstaller defaults to true: a web-installer update is rejected with ERR_UPDATER_WEB_INSTALLER_DISABLED
   // (also when it is already cached) unless the app sets it to false; the downloaded package is then passed via --package-file.
