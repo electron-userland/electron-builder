@@ -128,6 +128,8 @@ electron-builder publish -f dist/*.dmg dist/*.zip dist/*.blockmap dist/latest-ma
 
 `electron-builder publish -f` checks an update manifest before it uploads anything: it must be signed, and, when `updateManifest.publicKey` is set, signed by one of those keys. See [Signed update manifests are required](./migration/v27-build-changes.md#signed-update-manifests-are-required).
 
+When it uploads update info (`latest*.yml` or a channel's `.yml`) or a file that update info lists (an installer or package, a macOS zip, an `nsis-web` package or a `.blockmap`), it also warns, without failing the upload: once with the rules electron-updater applies to these files, then for each uploaded file whose `size` or `sha512` differs from what the uploaded update info declares for it (matched by file name), and for update info that uses YAML aliases. A file changed after the build, for example an installer signed again by a release script, needs update info regenerated with it and signed again; see [Full downloads stop at the declared size](./migration/v27-runtime-changes.md#full-downloads-stop-at-the-declared-size) and [Update manifests whose YAML aliases expand too far are rejected](./migration/v27-runtime-changes.md#update-manifest-yaml-aliases-are-limited).
+
 Prepend `npx` to sample commands below if you run them from Terminal and not from `package.json` scripts.
 
 :::note[build for macOS, Windows and Linux]
