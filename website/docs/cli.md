@@ -21,6 +21,8 @@ Commands:
                                   tory
   electron-builder create-update-key        Generate an Ed25519 keypair for signing auto-u
                                   pdate manifests
+  electron-builder sign-update-manifest <files..>  Re-sign edited auto-update manifests (l
+                                  atest*.yml) in place, or verify them
   electron-builder migrate-schema           Migrate build config from v26 to v27 format
   electron-builder verify [dir]             Verify code signatures, notarization and updat
                                   e-manifest signatures of built artifacts
@@ -77,6 +79,21 @@ For other commands please see help using `--help` arg, e.g. `./node_modules/.bin
 :::note[Requirements]
 electron-builder v27 requires **Node.js >=22.12.0**. Upgrading from v26? Review the [v27 breaking changes](./migration/v27-breaking-changes), then follow the [migration walkthrough](./migration/v26-to-v27).
 :::
+
+## `sign-update-manifest`
+
+Re-signs one or more existing `latest*.yml` files in place with the [update signing key](./features/signed-update-manifests.md), so a published manifest can be edited — for example to change `stagingPercentage` — without rebuilding. Like `publish`, it reads the project configuration from the current directory; the keys come from its `updateManifest` settings or the `ELECTRON_BUILDER_UPDATE_SIGN_KEY(_FILE)` environment variables, as in a build.
+
+```bash
+electron-builder sign-update-manifest latest.yml latest-mac.yml                       # keys from the config or the environment
+electron-builder sign-update-manifest latest.yml -c electron-builder.release.yml      # a different config file
+electron-builder sign-update-manifest latest.yml -c.updateManifest.signingKeyFile=k.pem # override one setting
+electron-builder sign-update-manifest latest.yml --verify                             # check against updateManifest.publicKey; nothing is written
+```
+
+`--verify` runs the manifest check of [`verify`](#verify) on the given files only, against `updateManifest.publicKey`, and never loads a signing key; use `verify` for the whole build output.
+
+See [Re-signing a published manifest](./features/signed-update-manifests.md#re-signing-a-published-manifest).
 
 ## `migrate-schema`
 
