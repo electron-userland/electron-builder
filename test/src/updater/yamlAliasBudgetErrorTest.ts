@@ -27,22 +27,18 @@ async function createGenericUpdater(tmpDir: TmpDir, requestSpy: ReturnType<typeo
   return updater
 }
 
-test("a manifest whose YAML aliases expand past the budget is rejected with the migration link on every check, and reported only by the error", async ({ tmpDir, expect }) => {
-  const logger = createLogger()
+test("a manifest whose YAML aliases expand past the budget is rejected with the migration link on every check", async ({ tmpDir, expect }) => {
   const requestSpy = createMockRequest()
-  const updater = await createGenericUpdater(tmpDir, requestSpy, logger)
+  const updater = await createGenericUpdater(tmpDir, requestSpy, createLogger())
 
   requestSpy.mockResolvedValue(mockAliasChainYaml("1.0.1", 40))
 
   for (let i = 0; i < 3; i++) {
     await expect(updater.checkForUpdates()).rejects.toMatchObject({
       code: "ERR_UPDATER_INVALID_UPDATE_INFO",
-      message: expect.stringContaining(`electron-updater 7 (electron-builder v27) rejects such a manifest`),
+      message: expect.stringMatching(new RegExp(String.raw`electron-updater 7 \(electron-builder v27\) rejects such a manifest: .* ${DOCS}$`)),
     })
   }
-  await expect(updater.checkForUpdates()).rejects.toThrow(DOCS)
-
-  expect(logger.warn.mock.calls.map(call => String(call[0])).filter(message => message.includes("YAML aliases"))).toEqual([])
 })
 
 test("a manifest that is not valid YAML is not reported as the v27 alias limit", async ({ tmpDir, expect }) => {

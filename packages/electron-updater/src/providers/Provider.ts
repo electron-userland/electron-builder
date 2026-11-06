@@ -276,14 +276,12 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
   return result
 }
 
-const YAML_ALIAS_BUDGET_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-manifest-yaml-aliases-are-limited"
-
 // location: the channel file URL without its query (describeChannelFileUrl)
 function yamlAliasBudgetError(channelFile: string, location: string, budget: number): Error {
   return newError(
     `Cannot parse update info from ${channelFile} in the latest release artifacts (${location}): YAML aliases expand to more than ${budget} values and string characters. ` +
       `electron-updater 7 (electron-builder v27) rejects such a manifest: publish it without YAML aliases (js-yaml \`dump\` with \`noRefs: true\`, as electron-builder writes it) ` +
-      `or with the shared values repeated inline. ${YAML_ALIAS_BUDGET_DOCS}`,
+      `or with the shared values repeated inline. https://www.electron.build/docs/migration/v27-runtime-changes#update-manifest-yaml-aliases-are-limited`,
     "ERR_UPDATER_INVALID_UPDATE_INFO"
   )
 }
