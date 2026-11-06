@@ -37,19 +37,12 @@ test("an archive longer than its header describes fails the sanity check", async
   await expect(checkFileInArchive(file, "package.json", "Application")).rejects.toThrow(sizeMismatch)
 })
 
-test("an archive shorter than its header describes only logs a warning", async ({ expect, tmpDir }) => {
+test("an archive cut short inside its last file fails the sanity check", async ({ expect, tmpDir }) => {
   const file = await packArchive(await tmpDir.createTempDir())
   const { size } = await fs.stat(file)
   await fs.truncate(file, size - 10)
-  const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
-  try {
-    await expect(checkFileInArchive(file, "package.json", "Application")).resolves.toBeDefined()
-    // read the calls before restoring: mockRestore clears them
-    expect(warn).toHaveBeenCalledTimes(1)
-    expect(warn.mock.calls[0][0]).toMatchObject({ headerBytes: size, archiveBytes: size - 10 })
-  } finally {
-    warn.mockRestore()
-  }
+  // the bytes before the cut extend past the last entry that fits in the file, so they count as trailing bytes
+  await expect(checkFileInArchive(file, "package.json", "Application")).rejects.toThrow(sizeMismatch)
 })
 
 // asarmor's default afterPack patch (createBloatPatch) adds about 100 header entries whose offset sits near MAX_SAFE_INTEGER and whose size is 1 GiB.
@@ -82,6 +75,15 @@ test("a bloat-style header whose entries point past the end of the archive warns
   } finally {
     warn.mockRestore()
   }
+})
+
+test("a bloat-style header with trailing bytes after its last real entry fails the sanity check", async ({ expect, tmpDir }) => {
+  const tmp = await tmpDir.createTempDir()
+  const file = await packArchive(tmp)
+  const bloated = path.join(tmp, "bloated.asar")
+  await writeBloatedArchive(file, bloated)
+  await fs.appendFile(bloated, Buffer.alloc(10))
+  await expect(checkFileInArchive(bloated, "package.json", "Application")).rejects.toThrow(sizeMismatch)
 })
 
 test("alignAsarContent refuses an archive longer than its header describes and leaves it untouched", async ({ expect, tmpDir }) => {

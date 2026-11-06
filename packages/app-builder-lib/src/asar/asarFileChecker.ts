@@ -2,7 +2,7 @@ import * as asar from "@electron/asar"
 import { log } from "builder-util"
 import fs from "fs-extra"
 import { type Node, readAsarHeader } from "./asar.js"
-import { expectedArchiveSize } from "./asarAlign.js"
+import { expectedArchiveSize, expectedArchiveSizeWithin } from "./asarAlign.js"
 
 // Entry types come from the return type of `statFile`.
 type FilesystemEntry = ReturnType<typeof asar.statFile>
@@ -29,10 +29,13 @@ export async function checkFileInArchive(asarFile: string, relativeFile: string,
   // which reads the header through `readArchiveHeaderSync` (https://github.com/electron/asar/blob/fde819a/src/disk.ts#L324-L346). An archive whose bytes
   // drifted from its header therefore still passes the checks above, so compare the archive size with the size the header describes.
   const { header, size: headerSize } = await readAsarHeader(asarFile)
-  const expectedSize = expectedArchiveSize(JSON.parse(header) as Node, headerSize)
+  const parsedHeader = JSON.parse(header) as Node
+  const expectedSize = expectedArchiveSize(parsedHeader, headerSize)
   const actualSize = (await fs.stat(asarFile)).size
-  if (actualSize > expectedSize) {
-    throw error(`is corrupted: the header describes an archive of ${expectedSize} bytes, but it is ${actualSize} bytes`)
+  // Bytes after the last entry that fits in the file are trailing bytes, even when other entries point past the end (bloat).
+  const describedSize = expectedArchiveSizeWithin(parsedHeader, headerSize, actualSize)
+  if (actualSize > describedSize) {
+    throw error(`is corrupted: the header describes an archive of ${describedSize} bytes, but it is ${actualSize} bytes`)
   }
   if (actualSize < expectedSize) {
     // asarmor's default afterPack patch (createBloatPatch) adds header entries that point far past the end of the file on purpose,
