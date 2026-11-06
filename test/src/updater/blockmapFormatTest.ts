@@ -356,15 +356,28 @@ describe("block map format detection", () => {
     expect(await fsExtra.pathExists(path.join(helper.cacheDirForPendingUpdate, "current.blockmap"))).toBe(false)
   })
 
-  test("the error for a map that cannot be parsed names its URL without the query string, which can hold a signature", async ({ tmpDir, expect }) => {
-    const server = await serve(tmpDir, { new: Buffer.from("not a block map") })
-    const { updater } = await setUp(tmpDir, null)
-    captureLog(updater)
+  test.for([
+    {
+      name: "a map that cannot be parsed",
+      cached: null,
+      body: Buffer.from("not a block map"),
+      error: /^Cannot parse blockmap "http:\/\/127\.0\.0\.1:\d+\/app-1\.1\.0\.exe\.blockmap", error:/,
+    },
+    { name: "an empty map", cached: null, body: Buffer.alloc(0), error: /^Blockmap "http:\/\/127\.0\.0\.1:\d+\/app-1\.1\.0\.exe\.blockmap" is empty$/ },
+    {
+      name: "v3 cached, a map that cannot be parsed (the Range fetch fails first)",
+      cached: OLD_V3,
+      body: Buffer.from("not a block map"),
+      error: /^Cannot parse blockmap "http:\/\/127\.0\.0\.1:\d+\/app-1\.1\.0\.exe\.blockmap", error:/,
+    },
+  ])("$name: the error and the log name its URL without the query string, which can hold a signature", async ({ cached, body, error }, { tmpDir, expect }) => {
+    const server = await serve(tmpDir, { new: body })
+    const { updater } = await setUp(tmpDir, cached)
+    const log = captureLog(updater)
 
     // the generic provider adds the feed's query to the file and blockmap URLs on the feed's origin
-    await expect(run(updater, `${server.url}?X-Amz-Signature=secret-signature`, tmpDir)).rejects.toThrow(
-      /^Cannot parse blockmap "http:\/\/127\.0\.0\.1:\d+\/app-1\.1\.0\.exe\.blockmap", error:/
-    )
+    await expect(run(updater, `${server.url}?X-Amz-Signature=secret-signature`, tmpDir)).rejects.toThrow(error)
+    expect(JSON.stringify(log)).not.toContain("secret-signature")
   })
 
   test.for([
