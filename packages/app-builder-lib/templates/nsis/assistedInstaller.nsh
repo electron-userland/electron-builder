@@ -1,4 +1,5 @@
 !include UAC.nsh
+!include WordFunc.nsh
 
 !ifndef INSTALL_MODE_PER_ALL_USERS
   !include multiUserUi.nsh
@@ -110,11 +111,15 @@
 
     # set installation mode to setting from a previous installation
     ReadRegStr $perMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
+    # a double quote is invalid in a path: drop the closing quote that an earlier installer kept from a quoted /D= argument
+    ${WordReplace} $perMachineInstallationFolder '"' "" "+" $perMachineInstallationFolder
     ${if} $perMachineInstallationFolder != ""
       StrCpy $hasPerMachineInstallation "1"
     ${endif}
 
     ReadRegStr $perUserInstallationFolder HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
+    # a double quote is invalid in a path: drop the closing quote that an earlier installer kept from a quoted /D= argument
+    ${WordReplace} $perUserInstallationFolder '"' "" "+" $perUserInstallationFolder
     ${if} $perUserInstallationFolder != ""
       StrCpy $hasPerUserInstallation "1"
     ${endif}
