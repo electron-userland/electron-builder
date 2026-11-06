@@ -34,6 +34,7 @@ async function compileProbe(dir: string, name: string, powerShell: string, nsis?
       "!macro customCheckAppRunning",
       "!macroend",
       "!include allowOnlyOneInstallerInstance.nsh",
+      'LangString appProcessCheckFailed 1033 "Process check failed. Setup will now exit."',
       "Var PowerShellPath",
       `OutFile "${probe}"`,
       "Section",
