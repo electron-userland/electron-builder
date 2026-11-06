@@ -1,11 +1,17 @@
+import { readAsarHeader } from "app-builder-lib/src/asar/asar"
 import { alignAsarContent } from "app-builder-lib/src/asar/asarAlign"
 import { checkFileInArchive } from "app-builder-lib/src/asar/asarFileChecker"
 import { dynamicImport } from "app-builder-lib/src/util/dynamicImport"
+import { log } from "builder-util"
 import * as fs from "fs/promises"
+import { createRequire } from "module"
 import * as path from "path"
+import { vi } from "vitest"
 
 type Asar = { createPackage(src: string, dest: string): Promise<void> }
 const asar = () => dynamicImport<Asar>("@electron/asar")
+// the same chromium-pickle-js asar.ts and asarAlign.ts load, resolved from app-builder-lib
+const chromiumPickleJs = createRequire(new URL("../../packages/app-builder-lib/package.json", import.meta.url))("chromium-pickle-js")
 
 // Packs a small app into `<tmp>/app.asar`. Each test gets its own temp dir: `readFilesystemSync` caches an archive's header by path (https://github.com/electron/asar/blob/fde819a/src/disk.ts#L357-L365).
 async function packArchive(tmp: string): Promise<string> {
@@ -31,11 +37,51 @@ test("an archive longer than its header describes fails the sanity check", async
   await expect(checkFileInArchive(file, "package.json", "Application")).rejects.toThrow(sizeMismatch)
 })
 
-test("an archive shorter than its header describes fails the sanity check", async ({ expect, tmpDir }) => {
+test("an archive shorter than its header describes only logs a warning", async ({ expect, tmpDir }) => {
   const file = await packArchive(await tmpDir.createTempDir())
   const { size } = await fs.stat(file)
   await fs.truncate(file, size - 10)
-  await expect(checkFileInArchive(file, "package.json", "Application")).rejects.toThrow(sizeMismatch)
+  const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+  try {
+    await expect(checkFileInArchive(file, "package.json", "Application")).resolves.toBeDefined()
+    // read the calls before restoring: mockRestore clears them
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0][0]).toMatchObject({ headerBytes: size, archiveBytes: size - 10 })
+  } finally {
+    warn.mockRestore()
+  }
+})
+
+// asarmor's default afterPack patch (createBloatPatch) adds about 100 header entries whose offset sits near MAX_SAFE_INTEGER and whose size is 1 GiB.
+// The archive content stays as it was packed; only the header grows, and its entries point far past the end of the file.
+async function writeBloatedArchive(file: string, bloated: string): Promise<void> {
+  const original = await fs.readFile(file)
+  const { header, size: headerSize } = await readAsarHeader(file)
+  const parsed = JSON.parse(header)
+  for (let i = 0; i < 100; i++) {
+    parsed.files[`bloat${i}`] = { offset: String(Number.MAX_SAFE_INTEGER - 2 ** 30), size: 2 ** 30 }
+  }
+  const headerPickle = chromiumPickleJs.createEmpty()
+  headerPickle.writeString(JSON.stringify(parsed))
+  const headerBuf: Buffer = headerPickle.toBuffer()
+  const sizePickle = chromiumPickleJs.createEmpty()
+  sizePickle.writeUInt32(headerBuf.length)
+  await fs.writeFile(bloated, Buffer.concat([sizePickle.toBuffer(), headerBuf, original.subarray(8 + headerSize)]))
+}
+
+test("a bloat-style header whose entries point past the end of the archive warns and does not throw", async ({ expect, tmpDir }) => {
+  const tmp = await tmpDir.createTempDir()
+  const file = await packArchive(tmp)
+  const bloated = path.join(tmp, "bloated.asar")
+  await writeBloatedArchive(file, bloated)
+  const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+  try {
+    await expect(checkFileInArchive(bloated, "package.json", "Application")).resolves.toBeDefined()
+    // read the calls before restoring: mockRestore clears them
+    expect(warn).toHaveBeenCalledTimes(1)
+  } finally {
+    warn.mockRestore()
+  }
 })
 
 test("alignAsarContent refuses an archive longer than its header describes and leaves it untouched", async ({ expect, tmpDir }) => {

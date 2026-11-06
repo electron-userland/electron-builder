@@ -1,4 +1,5 @@
 import * as asar from "@electron/asar"
+import { log } from "builder-util"
 import fs from "fs-extra"
 import { type Node, readAsarHeader } from "./asar.js"
 import { expectedArchiveSize } from "./asarAlign.js"
@@ -30,8 +31,16 @@ export async function checkFileInArchive(asarFile: string, relativeFile: string,
   const { header, size: headerSize } = await readAsarHeader(asarFile)
   const expectedSize = expectedArchiveSize(JSON.parse(header) as Node, headerSize)
   const actualSize = (await fs.stat(asarFile)).size
-  if (actualSize !== expectedSize) {
+  if (actualSize > expectedSize) {
     throw error(`is corrupted: the header describes an archive of ${expectedSize} bytes, but it is ${actualSize} bytes`)
+  }
+  if (actualSize < expectedSize) {
+    // asarmor's default afterPack patch (createBloatPatch) adds header entries that point far past the end of the file on purpose,
+    // so a header that describes more bytes than the file has only warns
+    log.warn(
+      { file: log.filePath(asarFile), headerBytes: expectedSize, archiveBytes: actualSize },
+      `the header describes an archive of ${expectedSize} bytes, but it is ${actualSize} bytes; continuing`
+    )
   }
   return stat
 }
