@@ -357,6 +357,30 @@ describe("block map format detection", () => {
   })
 
   test.for([
+    {
+      name: "a map that cannot be parsed",
+      cached: null,
+      body: Buffer.from("not a block map"),
+      error: /^Cannot parse blockmap "http:\/\/127\.0\.0\.1:\d+\/app-1\.1\.0\.exe\.blockmap", error:/,
+    },
+    { name: "an empty map", cached: null, body: Buffer.alloc(0), error: /^Blockmap "http:\/\/127\.0\.0\.1:\d+\/app-1\.1\.0\.exe\.blockmap" is empty$/ },
+    {
+      name: "v3 cached, a map that cannot be parsed (the Range fetch fails first)",
+      cached: OLD_V3,
+      body: Buffer.from("not a block map"),
+      error: /^Cannot parse blockmap "http:\/\/127\.0\.0\.1:\d+\/app-1\.1\.0\.exe\.blockmap", error:/,
+    },
+  ])("$name: the error and the log name its URL without the query string, which can hold a signature", async ({ cached, body, error }, { tmpDir, expect }) => {
+    const server = await serve(tmpDir, { new: body })
+    const { updater } = await setUp(tmpDir, cached)
+    const log = captureLog(updater)
+
+    // the generic provider adds the feed's query to the file and blockmap URLs on the feed's origin
+    await expect(run(updater, `${server.url}?X-Amz-Signature=secret-signature`, tmpDir)).rejects.toThrow(error)
+    expect(JSON.stringify(log)).not.toContain("secret-signature")
+  })
+
+  test.for([
     { name: "no cached map", cached: null },
     { name: "v3 cached (the Range fetch rejects the header, then the map is downloaded whole)", cached: OLD_V3 },
   ])("$name: a v3 map of a file of another size is rejected before its records are decoded", async ({ cached }, { tmpDir, expect }) => {
