@@ -1576,16 +1576,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       const newFileSize = fileInfo.info.size ?? null
       const downloadBlockMap = async (url: URL, expectedFileSize: number | null, originUrl?: URL): Promise<LoadedBlockMap> => {
         // a block map as published (gzipped JSON or binary) is never larger than the limit, so the download stops once the bytes it
-        // delivers (after any Content-Encoding is decoded) pass the limit, instead of holding up to 500 MB before parseBlockMapData rejects it
-        const data = await this.httpExecutor.downloadToBuffer(
-          url,
-          {
-            headers: this.downloadRequestHeaders(url, downloadUpdateOptions, originUrl),
-            ownHeaders: this.downloadOwnHeaders(downloadUpdateOptions),
-            cancellationToken: downloadUpdateOptions.cancellationToken,
-          },
-          blockMapLimit
-        )
+        // delivers (after any Content-Encoding is decoded) pass the limit
+        const data = await this.httpExecutor.downloadToBuffer(url, {
+          headers: this.downloadRequestHeaders(url, downloadUpdateOptions, originUrl),
+          ownHeaders: this.downloadOwnHeaders(downloadUpdateOptions),
+          cancellationToken: downloadUpdateOptions.cancellationToken,
+          maxSize: blockMapLimit,
+        })
 
         if (data == null || data.length === 0) {
           throw new Error(`Blockmap "${urlWithoutQuery(url)}" is empty`)
