@@ -77,6 +77,9 @@ export function addSensitiveFieldPattern(pattern: string): void {
   SENSITIVE_FIELD_PATTERNS.push(pattern.toLowerCase().replace(/[-_]/g, ""))
 }
 
+/** The most bytes `downloadToBuffer` holds in memory by default: 500 MB. */
+const MAX_BUFFER_DOWNLOAD_SIZE = 524288000
+
 export interface RequestHeaders extends OutgoingHttpHeaders {
   [key: string]: OutgoingHttpHeader | undefined
 }
@@ -109,6 +112,12 @@ export interface DownloadOptions {
   readonly ownHeaders?: OutgoingHttpHeaders | null
   readonly sha2?: string | null
   readonly sha512?: string | null
+  /**
+   * The most bytes a download accepts (electron-updater sets it to the `size` of the file in the update info for a full download): once
+   * more arrive, the download fails with `ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED` and its request is aborted. Applies only when it is a number
+   * of at least 0: any other value, such as a `size` of another type read from a manifest, sets no limit of its own.
+   */
+  readonly maxSize?: number | null
 
   readonly cancellationToken: CancellationToken
 
@@ -359,7 +368,14 @@ Please double check that your authentication token is correct. Due to security r
   // noinspection JSUnusedLocalSymbols
   abstract createRequest(options: RequestOptions, callback: (response: any) => void): T
 
+  /**
+   * Downloads `url` into memory: at most 500 MB, or `options.maxSize` bytes when that is smaller (see {@link DownloadOptions.maxSize}). A
+   * response past the limit fails the download with `ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED` as soon as it passes it, and its request is
+   * aborted before the rest is received.
+   */
   async downloadToBuffer(url: URL, options: DownloadOptions): Promise<Buffer> {
+    const maxSize = options.maxSize
+    const limit = typeof maxSize === "number" && maxSize >= 0 && maxSize < MAX_BUFFER_DOWNLOAD_SIZE ? maxSize : MAX_BUFFER_DOWNLOAD_SIZE
     return await options.cancellationToken.createPromise<Buffer>((resolve, reject, onCancel) => {
       const responseChunks: Buffer[] = []
       const requestOptions = {
@@ -383,7 +399,7 @@ Please double check that your authentication token is correct. Due to security r
               reject(error)
             }
           },
-          responseHandler: (response, callback) => {
+          responseHandler: (response, callback, abort) => {
             let receivedLength = 0
             let isDone = false
             const finish = (error: Error | null) => {
@@ -398,9 +414,16 @@ Please double check that your authentication token is correct. Due to security r
                 return
               }
               receivedLength += chunk.length
-              if (receivedLength > 524288000) {
-                finish(new Error("Maximum allowed size is 500 MB"))
+              if (receivedLength > limit) {
+                finish(
+                  newError(
+                    `Response from ${urlWithoutQuery(url)} exceeds the maximum allowed size of ${limit === MAX_BUFFER_DOWNLOAD_SIZE ? "500 MB" : `${limit} bytes`}`,
+                    "ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED"
+                  )
+                )
                 response.destroy()
+                // destroying the response of Electron's net only stops reading it: the request goes on until it is aborted
+                abort()
                 return
               }
               responseChunks.push(chunk)
@@ -459,7 +482,7 @@ Please double check that your authentication token is correct. Due to security r
       if (options.responseHandler == null) {
         configurePipes(options, response)
       } else {
-        options.responseHandler(response, options.callback)
+        options.responseHandler(response, options.callback, () => request.abort())
       }
     })
     this.addErrorAndTimeoutHandlers(request, options.callback, requestOptions.timeout)
@@ -625,7 +648,8 @@ Please double check that your authentication token is correct. Due to security r
 }
 
 export interface DownloadCallOptions {
-  responseHandler: ((response: IncomingMessage, callback: (error: Error | null) => void) => void) | null
+  /** `abort` aborts the request of `response`, so that the rest of its body is not received. */
+  responseHandler: ((response: IncomingMessage, callback: (error: Error | null) => void, abort: () => void) => void) | null
   onCancel: (callback: () => void) => void
   callback: (error: Error | null) => void
 
