@@ -16,8 +16,8 @@ export type EmbeddedUpdateConfig = PublishConfiguration & { updateManifestPublic
 
 /**
  * Returns a copy of `info` with every existing signature removed and, when `privateKeyPems` is non-empty,
- * re-signed by exactly those keys the way updateInfoBuilder writes a manifest: one tagged `signatures`
- * entry per key and the legacy single `signature` field repeating the first key's signature.
+ * re-signed by exactly those keys the way updateInfoBuilder writes a manifest: one tagged EBUM1 `signatures`
+ * entry per key, then one EBUM2 entry per key, and the legacy single `signature` field repeating the first key's EBUM1 signature.
  * An empty key list yields an unsigned manifest.
  */
 export function resignManifest(info: UpdateInfo, privateKeyPems: Array<string>): UpdateInfo {
