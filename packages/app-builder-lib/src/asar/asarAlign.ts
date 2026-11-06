@@ -58,6 +58,20 @@ export function expectedArchiveSize(header: Node, headerSize: number): number {
   return 8 + headerSize + files.reduce((end, file) => Math.max(end, file.offset + file.size), 0)
 }
 
+/**
+ * The archive size the header describes when only entries whose content ends inside the file count.
+ * Entries past the end of the file (asarmor's bloat patch) are left out, so bytes after the last entry that fits are trailing bytes.
+ */
+export function expectedArchiveSizeWithin(header: Node, headerSize: number, archiveSize: number): number {
+  const contentStart = 8 + headerSize
+  const files: Array<PackedFile> = []
+  collectPackedFiles(header, files)
+  return files.reduce((end, file) => {
+    const fileEnd = contentStart + file.offset + file.size
+    return fileEnd <= archiveSize ? Math.max(end, fileEnd) : end
+  }, contentStart)
+}
+
 function serializeHeader(headerJson: string): Buffer {
   const headerPickle = chromiumPickleJs.createEmpty()
   headerPickle.writeString(headerJson)
