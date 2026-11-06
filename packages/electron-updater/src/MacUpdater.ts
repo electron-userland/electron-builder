@@ -167,7 +167,7 @@ export class MacUpdater extends AppUpdater {
       const authInfo = Buffer.from(`autoupdater:${pass}`, "ascii")
       const expectedAuthorization = Buffer.from(`Basic ${authInfo.toString("base64")}`, "ascii")
 
-      // insecure random is ok
+      // a fresh path per download; the credentials above, not this path, are what guard the zip
       const fileUrl = `/${randomBytes(64).toString("hex")}.zip`
       server.on("request", (request: IncomingMessage, response: ServerResponse) => {
         const requestUrl = request.url ?? ""
@@ -181,6 +181,14 @@ export class MacUpdater extends AppUpdater {
           response.writeHead(401, "Invalid Authentication Credentials", { "WWW-Authenticate": 'Basic realm="electron-updater"' })
           response.end()
           this.log.debug("Proxy server for native Squirrel.Mac: request without valid credentials rejected")
+          return
+        }
+
+        // Squirrel.Mac only GETs the feed and the zip; any other method (a HEAD would end like a served zip) must not complete the download
+        if (request.method !== "GET") {
+          response.writeHead(405, { Allow: "GET" })
+          response.end()
+          this.log.debug(`Proxy server for native Squirrel.Mac: ${request.method ?? "unknown"} method rejected`)
           return
         }
 
@@ -228,6 +236,13 @@ export class MacUpdater extends AppUpdater {
           "Content-Length": updateFileSize,
         })
         readStream.pipe(response)
+      })
+
+      server.on("error", error => {
+        this.nativeUpdater.removeListener("error", reject)
+        // this server, not this.server: a later download may already have replaced it
+        server.close()
+        reject(newError(`Proxy server for native Squirrel.Mac failed: ${error}`, "ERR_UPDATER_MAC_PROXY_SERVER_FAILED"))
       })
 
       this.log.debug(`Proxy server for native Squirrel.Mac is starting to listen (${logContext})`)
