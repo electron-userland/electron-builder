@@ -358,12 +358,29 @@ With `allowInsecureFeed`, a server's authentication challenge on a request that 
 
 ### `allowUnverifiedLinuxPackages` (defaults to `true`) {#allowunverifiedlinuxpackages}
 
-`AppUpdater.allowUnverifiedLinuxPackages` (default **`true`**) controls GPG signature enforcement when installing `.deb` / `.rpm` auto-updates. Because electron-builder does not sign Linux packages itself, the default is permissive; set it to **`false`** to enforce signature checks where the package manager supports them:
+`AppUpdater.allowUnverifiedLinuxPackages` (default **`true`**) controls GPG signature enforcement when installing `.rpm` auto-updates. Because electron-builder does not sign Linux packages itself, the default is permissive; if you sign your rpm packages, set it to **`false`** to have `dnf`/`yum` and `zypper` verify their signature (a bare `rpm` install cannot enforce it and logs a warning):
 
 ```ts
 import { autoUpdater } from "electron-updater"
 autoUpdater.allowUnverifiedLinuxPackages = false
 ```
+
+It does not verify a `.deb`: `apt` checks no signature on a local `.deb` file (with `false` it only refuses dependencies from unauthenticated repositories), and `dpkg` checks none at all. The updater logs a warning when the flag is `false` for a deb update.
+
+### Linux update authenticity
+
+electron-updater installs what `latest-linux.yml` describes once the download matches its `sha512`. When the app embeds an update manifest public key (`updateManifestPublicKey` in `app-update.yml`, or set at runtime), that key is the trust anchor: a manifest it does not verify is rejected. Without a key (an app built with `updateManifest: false`, or an older build), verification is skipped with a warning and the feed — the first provider in `app-update.yml`, or the URL passed to `setFeedURL` — is the trust anchor; the `sha512` comes from the same feed, so whoever can change the files on the feed can serve an update with a matching checksum. Signed update manifests are required by default at build time, and electron-updater enforces them whenever the app embeds a key. What makes a Linux update authentic is a [signed update manifest](./signed-update-manifests.md), not a package-manager flag:
+
+- **AppImage** has no package signature check at all.
+- **deb** gets no package-level signature check, whatever `allowUnverifiedLinuxPackages` is set to (see above).
+- **rpm** is verified by `dnf`/`yum` and `zypper` only if you sign your packages and set `allowUnverifiedLinuxPackages = false`. Your signing key must then be imported into the rpm keyring on the target system (`rpm --import`), or the update fails to install.
+- **pacman** gets no package-level signature check: `pacman -U` is given no `.sig` file, so under the default `LocalFileSigLevel` nothing is checked. `allowUnverifiedLinuxPackages` has no effect on it.
+
+To add a package-level check of your own for AppImage, deb or pacman updates, verify the downloaded file in [`verifyUpdateFile`](#custom-downloaded-file-verification).
+
+Keep signed update manifests on for Linux apps (don't set `updateManifest: false`), and serve the feed over `https`: electron-updater rejects plain `http` update requests unless [`allowInsecureFeed`](#allowinsecurefeed) is set, and over `http` only a signed manifest protects the update.
+
+Don't pre-authorize the update install. deb, rpm and pacman updates are installed as root through an elevation helper such as `pkexec` or `sudo`, which asks the user to authenticate. A polkit rule or a sudoers `NOPASSWD` entry that skips that prompt for the package manager lets any process running as the user install any package as root, not only electron-updater with your update.
 
 ### `autoUpdater.crossOriginHeaders` {#crossoriginheaders}
 
@@ -524,6 +541,8 @@ A block map may be at most 1/16 of the update's size, no less than 8 MiB and no 
 
 You can use a private repository for updates with electron-updater by setting the `GH_TOKEN` environment variable (on user machine) and `private` option.
 If `GH_TOKEN` is set, electron-updater will use the GitHub API for updates allowing private repositories to work.
+
+Don't put the token in the `publish` configuration. Every option of the provider that becomes the feed is written in plain text to `app-update.yml` inside the packaged app (see [which settings become the auto-update feed](../publish.md#app-update-yml-feed)), where anyone with a copy of the app can read it. Set `private: true` and provide `GH_TOKEN` (or `GITHUB_TOKEN`) on the user's machine, or pass the token with `setFeedURL({ provider: "github", owner, repo, token })`. A token hard-coded in the app's code and passed to `setFeedURL` is as easy to extract as one in `app-update.yml`: a token provided at runtime has to be a per-user secret, such as one your server issues to a signed-in user.
 
 
 :::warning

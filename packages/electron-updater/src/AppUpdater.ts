@@ -291,16 +291,18 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   allowInsecureFeed = false
 
   /**
-   * *Linux only.* Whether to allow installing unverified (unsigned / failing-GPG) `.deb` and `.rpm` packages during auto-update.
+   * *Linux only.* Whether to bypass the package manager's signature/GPG check when installing an `.rpm` auto-update.
+   * It does not verify a `.deb`: apt and dpkg check no signature on a local `.deb` file whatever this is set to.
    *
-   * electron-builder does not sign Linux packages, so this defaults to `true` to preserve working auto-updates: the
-   * package manager's signature/GPG checks are bypassed where a bypass flag exists (`--allow-unauthenticated` for the
-   * apt fallback, `--allow-unsigned-rpm` for zypper, `--nogpgcheck` for dnf/yum), which is the historical behavior.
+   * electron-builder does not sign Linux packages, so this defaults to `true` to preserve working auto-updates:
+   * `--allow-unsigned-rpm` is passed to zypper and `--nogpgcheck` to dnf/yum, and the apt fallback gets
+   * `--allow-unauthenticated`, which only accepts dependencies from unauthenticated repositories.
    *
    * What `false` enforces depends on the package manager used on the target system:
    * - dpkg (the default for `.deb`): no effect — dpkg performs no signature verification (a warning is logged);
    *   enforcing `.deb` signatures requires a debsig-verify/debsigs policy on the target system.
-   * - apt (`.deb` fallback): `--allow-unauthenticated` is omitted.
+   * - apt (`.deb` fallback): `--allow-unauthenticated` is omitted, so dependencies from unauthenticated repositories
+   *   are refused; the local `.deb` itself is still not verified (a warning is logged).
    * - zypper: enforced — unsigned/untrusted packages fail to install.
    * - dnf/yum: enforced via `--setopt=localpkg_gpgcheck=1` (local package files are not GPG-checked by default).
    * - bare rpm (fallback): cannot be enforced via the CLI (a warning is logged); admins must configure
