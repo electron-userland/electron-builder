@@ -438,9 +438,8 @@ test("requireUpdateSigningKeys throws when publishing and no key resolves", asyn
   expect(error!.message).toContain("ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded PEM file)")
   expect(error!.message).toContain("`updateManifest: false`")
   // the error states the requirement and links its migration section
-  expect(error!.message).toContain(
-    "`updateManifest: false`. Publishing requires signed update manifests. See https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required"
-  )
+  expect(error!.message).toMatch(/^auto-update manifests must be signed when publishing, /)
+  expect(error!.message).toContain("`updateManifest: false`. See https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required")
 })
 
 test("requireUpdateSigningKeys only warns when the build is not publishing", async ({ expect }) => {
@@ -451,9 +450,10 @@ test("requireUpdateSigningKeys only warns when the build is not publishing", asy
     expect(warn).toHaveBeenCalledTimes(1)
     // the advisory must say that publishing WILL fail, so it works as a fail-fast preview
     expect(warn.mock.calls[0][1]).toContain("Publishing this configuration will fail")
-    // it states the requirement and links its migration section
-    expect(warn.mock.calls[0][1]).toContain("opt out explicitly with `updateManifest: false`; publishing requires signed update manifests.")
+    // it names the opt-out and links the migration section, not the features page the opted-out warning links
+    expect(warn.mock.calls[0][1]).toContain("opt out explicitly with `updateManifest: false`.")
     expect(warn.mock.calls[0][1]).toContain("See https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required")
+    expect(warn.mock.calls[0][1]).not.toContain("https://www.electron.build/docs/features/signed-update-manifests")
   } finally {
     warn.mockRestore()
   }
@@ -469,6 +469,10 @@ test("requireUpdateSigningKeys warns once per packager for updateManifest: false
     }
     expect(warn).toHaveBeenCalledTimes(1)
     expect(warn.mock.calls[0][1]).toContain("auto-update manifests will be unsigned")
+    // an explicit opt-out is not a migration step: it links the features page, not the migration section
+    expect(warn.mock.calls[0][1]).toContain("Remove `updateManifest: false`")
+    expect(warn.mock.calls[0][1]).toContain("See https://www.electron.build/docs/features/signed-update-manifests")
+    expect(warn.mock.calls[0][1]).not.toContain("v27-build-changes")
     // one-shot is per packager, not per process: a second platform warns on its own line
     expect(await new TestPackager({ updateManifest: false }).requireUpdateSigningKeys(true)).toEqual([])
     expect(warn).toHaveBeenCalledTimes(2)

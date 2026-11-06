@@ -18,9 +18,9 @@ const require = createRequire(import.meta.url ?? process.execPath)
 /** How much of a failed command's stderr goes into the error message, at most: its end, where the error is. */
 const STDERR_MESSAGE_BYTES = 8 * 1024
 
-/** Ends every ERR_UPDATER_WEB_INSTALLER_DISABLED message: the rule and how to opt in. */
+/** Ends every ERR_UPDATER_WEB_INSTALLER_DISABLED message: how to opt in. */
 export const WEB_INSTALLER_DISABLED_HINT =
-  "Web-installer updates are rejected unless autoUpdater.disableWebInstaller is set to false. " +
+  "Set autoUpdater.disableWebInstaller to false to allow web-installer updates. " +
   "See https://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true"
 
 /**

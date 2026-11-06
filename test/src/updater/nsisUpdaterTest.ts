@@ -681,9 +681,9 @@ test.skip("test downloaded installer", config, async ({ expect }) => {
 })
 
 describe("NsisUpdater — disableWebInstaller", () => {
-  // every ERR_UPDATER_WEB_INSTALLER_DISABLED message ends with the rule, how to opt in, and a link to its migration section
+  // every ERR_UPDATER_WEB_INSTALLER_DISABLED message ends with how to opt in and a link to its migration section
   const WEB_INSTALLER_DISABLED_MESSAGE_END =
-    "Web Installers are disabled. Web-installer updates are rejected unless autoUpdater.disableWebInstaller is set to false. " +
+    "Web Installers are disabled. Set autoUpdater.disableWebInstaller to false to allow web-installer updates. " +
     "See https://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true"
   // disableWebInstaller defaults to true: a web-installer update is rejected with ERR_UPDATER_WEB_INSTALLER_DISABLED
   // (also when it is already cached) unless the app sets it to false; the downloaded package is then passed via --package-file.
