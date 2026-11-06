@@ -1419,7 +1419,6 @@ exports[`dmg > window overrides background size 1`] = `
       },
     },
     {
-      "arch": "x64",
       "file": "Window-Size-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
