@@ -81,7 +81,7 @@ export class DebUpdater extends LinuxUpdater {
           "apt",
           "install",
           "-y",
-          ...(allowUnverified ? ["--allow-unauthenticated"] : []), // unsigned .debs only when explicitly opted in
+          ...(allowUnverified ? ["--allow-unauthenticated"] : []), // accepts dependencies from unauthenticated repositories; the local .deb is not verified either way
           "--allow-downgrades", // allow lower version installs
           "--allow-change-held-packages",
           installerPath,
