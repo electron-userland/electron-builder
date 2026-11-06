@@ -43,11 +43,11 @@ No configuration block is required — the environment-variable route is the who
 A publishing build with no resolvable key fails instead — at build start, before anything is packed or uploaded, so none of that build's artifacts are published:
 
 ```
-auto-update manifests must be signed, but no Ed25519 signing key was found for mac. Generate one with
-`electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded PEM file)
-or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey /
+auto-update manifests must be signed when publishing, but no Ed25519 signing key was found for mac. Generate
+one with `electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded
+PEM file) or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey /
 updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out
-explicitly with `updateManifest: false`.
+explicitly with `updateManifest: false`. See https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required
 ```
 
 A build **without** a publish policy only warns, so local builds keep working while your release pipeline is the thing that has to hold the key. With [`forceCodeSigning`](./code-signing/code-signing.md#the-forcecodesigning-option), every build that emits a manifest requires the key, whether or not it publishes — pull-request builds included.
