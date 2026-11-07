@@ -17,6 +17,12 @@ export const BINARY_BLOCK_MAP_MIN_UPDATER = "7.0.0"
  */
 export const BINARY_BLOCK_MAP_MIN_UPDATER_RELEASE = "7.0.0-alpha.13"
 
+/**
+ * The first electron-updater release that rejects update checks and downloads until the app sets `autoUpdater.crossOriginHeaders`:
+ * the releases up to 7.0.0-alpha.13 (npm `next`) have no such property.
+ */
+export const CROSS_ORIGIN_HEADERS_MIN_UPDATER_RELEASE = "7.0.0-alpha.14"
+
 /** Whether the `electronUpdaterCompatibility` range includes only electron-updater versions that read the binary block map. */
 export function isBinaryBlockMapSupported(range: string): boolean {
   // no includePrerelease: it would make ">=7" intersect "<7.0.0" at the 7.0.0-0 prerelease point
