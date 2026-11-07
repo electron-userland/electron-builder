@@ -480,7 +480,7 @@ Please double check that your authentication token is correct. Due to security r
       }
 
       if (options.responseHandler == null) {
-        configurePipes(options, response)
+        configurePipes(options, response, () => request.abort())
       } else {
         options.responseHandler(response, options.callback, () => request.abort())
       }
@@ -800,12 +800,35 @@ export function detectSha512Encoding(sha512: string): BinaryToTextEncoding {
   return "base64"
 }
 
-function configurePipes(options: DownloadCallOptions, response: IncomingMessage) {
+function configurePipes(options: DownloadCallOptions, response: IncomingMessage, abort: () => void) {
   if (!checkSha2(safeGetHeader(response, "X-Checksum-Sha2"), options.options.sha2, options.callback)) {
     return
   }
 
   const streams: Array<any> = []
+  const maxSize = options.options.maxSize
+  if (typeof maxSize === "number" && maxSize >= 0) {
+    let receivedSize = 0
+    const sizeLimit = new Transform({
+      transform(chunk: Buffer, _encoding, callback) {
+        receivedSize += chunk.length
+        if (receivedSize > maxSize) {
+          callback(
+            newError(
+              `The download is larger than the ${maxSize} bytes declared for it (size in the update info): a full download stops once it receives more bytes than that. Publish the update info generated together with the file, so that its size matches. See https://www.electron.build/docs/migration/v27-runtime-changes#full-downloads-stop-at-the-declared-size`,
+              "ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED"
+            )
+          )
+          return
+        }
+        callback(null, chunk)
+      },
+    })
+    // a failing pipe destination only unpipes the response: abort the request, so that the rest of the body is not received (destroying
+    // the response of Electron's net only stops reading it, the request goes on until it is aborted)
+    sizeLimit.on("error", abort)
+    streams.push(sizeLimit)
+  }
   if (options.options.onProgress != null) {
     const contentLength = safeGetHeader(response, "content-length")
     if (contentLength != null) {

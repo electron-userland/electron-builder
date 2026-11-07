@@ -259,6 +259,7 @@ export class NsisUpdater extends BaseUpdater {
                 ownHeaders: this.downloadOwnHeaders(downloadUpdateOptions),
                 cancellationToken: downloadUpdateOptions.cancellationToken,
                 sha512: packageInfo.sha512,
+                maxSize: packageInfo.size,
               })
             } catch (e: any) {
               try {
