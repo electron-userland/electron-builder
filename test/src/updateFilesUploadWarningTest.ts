@@ -7,6 +7,11 @@ import { mkdir, writeFile } from "fs/promises"
 import * as path from "path"
 import { afterEach, beforeEach, vi } from "vitest"
 
+vi.mock("builder-util-runtime", async importOriginal => {
+  const actual = await importOriginal<typeof import("builder-util-runtime")>()
+  return { ...actual, hashFile: vi.fn(actual.hashFile) }
+})
+
 // `electron-builder publish -f` warns about update info and the files it lists before it uploads them
 
 const ANNOUNCEMENT = "uploading update info (latest*.yml or a channel's .yml) or the files it lists"
@@ -186,6 +191,31 @@ describe("warnAboutUpdateFilesBeforeUpload", () => {
         .map(([fields]) => fields.file)
     ).toEqual([log.filePath(broken), log.filePath(path.join(dir, "missing.yml"))])
     expect(mismatches()).toEqual([])
+  })
+
+  test("skips a listed file that can be stat-ed but not read, and checks the next one", async ({ expect, tmpDir }) => {
+    const { dir, installer } = await releaseDir("update-files-upload", tmpDir)
+    const other = await write(path.join(dir, "other.exe"), "other")
+    const latest = await write(
+      path.join(dir, "latest.yml"),
+      updateInfo({
+        version: "1.0.0",
+        files: [
+          { url: "My-Setup-1.0.0.exe", sha512: "AAAA", size: 15 },
+          { url: "other.exe", sha512: "AAAA", size: 5 },
+        ],
+      })
+    )
+    // the installer, hashed first, is removed or unreadable between stat and read
+    vi.mocked(hashFile).mockRejectedValueOnce(Object.assign(new Error(`EACCES: permission denied, open '${installer}'`), { code: "EACCES" }))
+    await expect(run(installer, other, latest)).resolves.toBeUndefined()
+    expect(
+      vi
+        .mocked(hashFile)
+        .mock.calls.slice(-2)
+        .map(([file]) => file)
+    ).toEqual([installer, other])
+    expect(mismatches()).toEqual([{ updateInfo: log.filePath(latest), file: log.filePath(other), mismatched: "sha512" }])
   })
 })
 

@@ -163,7 +163,7 @@ export async function warnAboutUpdateFilesBeforeUpload(uploads: ReadonlyArray<Up
   }
 }
 
-/** The files of `files` (by `url`) and nsis-web `packages` (by `path`) that are also uploaded, matched by name, against their declared size and sha512. */
+/** The files of `files` (by `url`) and nsis-web `packages` (by `path`) that are also uploaded, matched by name, against their declared size and sha512; a file that cannot be read is skipped. */
 async function warnAboutListedFileMismatches(manifest: UploadedUpdateInfo, uploads: ReadonlyArray<Upload>): Promise<void> {
   // a GitHub update info lists the safe artifact name, which can differ from the local file name
   const uploadsByName = new Map<string, string>()
@@ -182,16 +182,20 @@ async function warnAboutListedFileMismatches(manifest: UploadedUpdateInfo, uploa
     const { url, path: packagePath, size, sha512 } = entry as { url?: unknown; path?: unknown; size?: unknown; sha512?: unknown }
     const location = typeof url === "string" ? url : packagePath
     const file = typeof location === "string" ? uploadsByName.get(path.posix.basename(location.split(/[?#]/, 1)[0])) : undefined
-    // a file that cannot be read, or a directory, is reported by its upload
+    // a file that cannot be read (stat or hash), or a directory, is reported by its upload
     const stats = file == null ? null : await stat(file).catch(() => null)
     if (file == null || stats == null || !stats.isFile()) {
+      continue
+    }
+    const actualSha512 = typeof sha512 === "string" ? await hashFile(file).catch(() => null) : undefined
+    if (actualSha512 === null) {
       continue
     }
     const mismatched: Array<string> = []
     if (typeof size === "number" && size !== stats.size) {
       mismatched.push("size")
     }
-    if (typeof sha512 === "string" && sha512 !== (await hashFile(file))) {
+    if (typeof sha512 === "string" && sha512 !== actualSha512) {
       mismatched.push("sha512")
     }
     if (mismatched.length !== 0) {
