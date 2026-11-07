@@ -1,6 +1,8 @@
 import { FilterStats } from "builder-util"
 import { FileMatcher, getFileMatchers, GetFileMatchersOptions } from "app-builder-lib/out/fileMatcher"
+import { createRequire } from "module"
 import * as path from "path"
+import * as semver from "semver"
 
 // ---------------------------------------------------------------------------
 // Stat mocks
@@ -69,6 +71,122 @@ describe("createFilter – build/app/**/* partial directory matching (test-app-b
 
   test("includes package.json", ({ expect }) => {
     expect(filter("/app/package.json", fileStat())).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// minimatch 10 and 11 (GHSA-g3hv-75wg-m249)
+// ---------------------------------------------------------------------------
+
+/**
+ * GHSA-g3hv-75wg-m249 is only patched in minimatch 11.0.1+, whose dependency tree declares a
+ * Node 20 engine floor. v26 keeps resolving minimatch 10.x, but app-builder-lib's range also admits
+ * 11.x so consumers can override to the patched line. FileMatcher must behave the same on both.
+ */
+
+/**
+ * Loads a separate copy of app-builder-lib's fileMatcher module whose `require("minimatch")` returns
+ * `minimatchPackage` instead of app-builder-lib's own dependency, as a consumer override would.
+ */
+function loadFileMatcherWithMinimatch(minimatchPackage: string): typeof FileMatcher {
+  const fileMatcherPath = require.resolve("app-builder-lib/out/fileMatcher")
+  const ownMinimatchPath = createRequire(fileMatcherPath).resolve("minimatch")
+  const replacementPath = require.resolve(minimatchPackage)
+  require(replacementPath)
+
+  const saved = { [fileMatcherPath]: require.cache[fileMatcherPath], [ownMinimatchPath]: require.cache[ownMinimatchPath] }
+  delete require.cache[fileMatcherPath]
+  require.cache[ownMinimatchPath] = require.cache[replacementPath]
+  try {
+    return require(fileMatcherPath).FileMatcher
+  } finally {
+    for (const [file, module] of Object.entries(saved)) {
+      if (module == null) {
+        delete require.cache[file]
+      } else {
+        require.cache[file] = module
+      }
+    }
+  }
+}
+
+const appBuilderLibMinimatchRange: string = require("app-builder-lib/package.json").dependencies.minimatch
+const resolvedMinimatchVersion: string = require("app-builder-lib/node_modules/minimatch/package.json").version
+const minimatch11Version: string = require("minimatch-11/package.json").version
+
+describe("minimatch versions accepted by app-builder-lib", () => {
+  test("the declared range admits the resolved minimatch and minimatch 11", ({ expect }) => {
+    expect(semver.satisfies(resolvedMinimatchVersion, appBuilderLibMinimatchRange)).toBe(true)
+    expect(semver.major(minimatch11Version)).toBe(11)
+    expect(semver.satisfies(minimatch11Version, appBuilderLibMinimatchRange)).toBe(true)
+  })
+
+  test("the override loader really swaps minimatch", ({ expect }) => {
+    const parsed: Array<unknown> = []
+    new (loadFileMatcherWithMinimatch("minimatch-11"))("/app", "/out", noMacro, ["**/*"]).computeParsedPatterns(parsed as any)
+    expect(parsed[0]).toBeInstanceOf(require("minimatch-11").Minimatch)
+    expect(parsed[0]).not.toBeInstanceOf(require("app-builder-lib/node_modules/minimatch").Minimatch)
+  })
+})
+
+describe.each([
+  { name: `minimatch ${resolvedMinimatchVersion} (resolved)`, Matcher: FileMatcher },
+  { name: `minimatch ${minimatch11Version} (override)`, Matcher: loadFileMatcherWithMinimatch("minimatch-11") },
+])("FileMatcher glob semantics – $name", ({ Matcher }) => {
+  test("brace alternatives match each alternative and nothing else", ({ expect }) => {
+    const filter = new Matcher("/app", "/out", noMacro, ["dist/{main,preload}.js", "icon.{png,ico}"]).createFilter()
+    expect(filter("/app/dist/main.js", fileStat())).toBe(true)
+    expect(filter("/app/dist/preload.js", fileStat())).toBe(true)
+    expect(filter("/app/dist/renderer.js", fileStat())).toBe(false)
+    expect(filter("/app/icon.ico", fileStat())).toBe(true)
+    expect(filter("/app/icon.icns", fileStat())).toBe(false)
+  })
+
+  test("a brace pattern without a dot counts as magic and is not expanded as a bare directory", ({ expect }) => {
+    const filter = new Matcher("/app", "/out", noMacro, ["{lib,assets}"]).createFilter()
+    expect(filter("/app/lib", dirStat())).toBe(true)
+    expect(filter("/app/lib/index.js", fileStat())).toBe(false)
+  })
+
+  test("a bare directory name is expanded to its contents", ({ expect }) => {
+    const filter = new Matcher("/app", "/out", noMacro, ["lib"]).createFilter()
+    expect(filter("/app/lib", dirStat())).toBe(true)
+    expect(filter("/app/lib/nested/index.js", fileStat())).toBe(true)
+    expect(filter("/app/other.js", fileStat())).toBe(false)
+  })
+
+  test("negated brace extensions exclude files at any depth, including dotfiles", ({ expect }) => {
+    const filter = new Matcher("/app", "/out", noMacro, ["**/*", "!**/*.{map,d.ts}"]).createFilter()
+    expect(filter("/app/dist/index.js", fileStat())).toBe(true)
+    expect(filter("/app/dist/index.js.map", fileStat())).toBe(false)
+    expect(filter("/app/types/index.d.ts", fileStat())).toBe(false)
+    expect(filter("/app/.config/settings.json", fileStat())).toBe(true)
+  })
+
+  test("extglob exclusions exclude only the listed alternatives", ({ expect }) => {
+    const filter = new Matcher("/app", "/out", noMacro, ["**/*", "!node_modules/@(electron-download|electron)/**/*"]).createFilter()
+    expect(filter("/app/node_modules/electron/index.js", fileStat())).toBe(false)
+    expect(filter("/app/node_modules/electron-download/index.js", fileStat())).toBe(false)
+    expect(filter("/app/node_modules/electron-log/index.js", fileStat())).toBe(true)
+  })
+
+  test("a directory partially matching a ** pattern is walked", ({ expect }) => {
+    const filter = new Matcher("/app", "/out", noMacro, ["!build{,/**/*}", "build/app/**/*.js"]).createFilter()
+    expect(filter("/app/build", dirStat())).toBe(true)
+    expect(filter("/app/build/app", dirStat())).toBe(true)
+    expect(filter("/app/build/app/main.js", fileStat())).toBe(true)
+    expect(filter("/app/build/other.js", fileStat())).toBe(false)
+  })
+
+  test("excludePatterns drop matching files but never directories", ({ expect }) => {
+    const matcher = new Matcher("/app", "/out", noMacro, ["**/*"])
+    const excludes: Array<any> = []
+    new Matcher("/app", "/out", noMacro, ["**/*.log"]).computeParsedPatterns(excludes)
+    matcher.excludePatterns = excludes
+    const filter = matcher.createFilter()
+    expect(filter("/app/logs", dirStat())).toBe(true)
+    expect(filter("/app/logs/out.log", fileStat())).toBe(false)
+    expect(filter("/app/logs/out.txt", fileStat())).toBe(true)
   })
 })
 
