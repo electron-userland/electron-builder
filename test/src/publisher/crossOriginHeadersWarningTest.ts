@@ -1,7 +1,9 @@
 import { Arch, Platform } from "app-builder-lib"
-import { warnIfCrossOriginHeadersNotMentioned } from "app-builder-lib/src/publish/crossOriginHeadersCheck"
+import { findCrossOriginHeadersMention, warnIfCrossOriginHeadersNotMentioned } from "app-builder-lib/src/publish/crossOriginHeadersCheck"
 import { PublishManager } from "app-builder-lib/src/publish/PublishManager"
 import { dynamicImport } from "app-builder-lib/src/util/dynamicImport"
+import { mayRequireCrossOriginHeaders } from "app-builder-lib/src/util/electronUpdaterCompatibility"
+import { findAppElectronUpdater } from "app-builder-lib/src/util/packageMetadata"
 import { log, TmpDir } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { outputFile, outputJson, pathExists, rename, symlink, writeFile } from "fs-extra"
@@ -76,17 +78,12 @@ function spyWarnings() {
   return () => warn.mock.calls.filter(([, message]) => typeof message === "string" && message.includes("no mention of crossOriginHeaders in the app's files"))
 }
 
-async function warnings(project: Awaited<ReturnType<typeof createProject>>, resourcesDir: string) {
-  const crossOriginWarnings = spyWarnings()
-  await warnIfCrossOriginHeadersNotMentioned(project, resourcesDir)
-  return crossOriginWarnings().length
-}
+const noMention = { "main.js": 'require("electron-updater").autoUpdater.checkForUpdates()\n' }
 
-describe("the scan of the packed app", () => {
-  test("warns when no app file mentions crossOriginHeaders, naming the error, the fix and the migration guide", async ({ expect, tmpDir }) => {
+describe("the warning", () => {
+  test("names the error, the fix and the migration guide", async ({ expect, tmpDir }) => {
     const crossOriginWarnings = spyWarnings()
-    const resourcesDir = await createAppDir(tmpDir, { "main.js": 'const { autoUpdater } = require("electron-updater")\nautoUpdater.checkForUpdatesAndNotify()\n' })
-    await warnIfCrossOriginHeadersNotMentioned(await createProject(tmpDir), resourcesDir)
+    await warnIfCrossOriginHeadersNotMentioned(await createProject(tmpDir), await createAppDir(tmpDir, noMention))
 
     expect(crossOriginWarnings()).toHaveLength(1)
     const [fields, message] = crossOriginWarnings()[0] as unknown as [Record<string, string>, string]
@@ -98,90 +95,115 @@ describe("the scan of the packed app", () => {
     expect(`${message} ${fields.solution}`.replace(docs, "")).not.toMatch(/electron-updater \d|electron-builder \d|\bv\d\d|\b(now|no longer)\b/i)
   })
 
+  test("only for an app whose electron-updater may require the property", async ({ expect, tmpDir }) => {
+    const crossOriginWarnings = spyWarnings()
+    const resourcesDir = await createAppDir(tmpDir, noMention)
+    await warnIfCrossOriginHeadersNotMentioned(await createProject(tmpDir, { installed: null, devDependencies: { electron: "^30.0.0" } }), resourcesDir)
+    await warnIfCrossOriginHeadersNotMentioned(await createProject(tmpDir, { installed: "6.8.11" }), resourcesDir)
+    expect(crossOriginWarnings()).toHaveLength(0)
+    await warnIfCrossOriginHeadersNotMentioned(await createProject(tmpDir, { installed: "7.0.0-alpha.14" }), resourcesDir)
+    expect(crossOriginWarnings()).toHaveLength(1)
+  })
+
+  test("after the warning, a later build in the process reads neither the project nor the app", async ({ expect, tmpDir }) => {
+    spyWarnings()
+    await warnIfCrossOriginHeadersNotMentioned(await createProject(tmpDir), await createAppDir(tmpDir, noMention))
+    const unreadable = {
+      get metadata(): any {
+        throw new Error("the project was read")
+      },
+      devMetadata: null,
+      projectDir: "/nonexistent",
+    }
+    await expect(warnIfCrossOriginHeadersNotMentioned(unreadable, "/nonexistent")).resolves.toBeUndefined()
+  })
+
+  test("an app.asar that cannot be read does not fail the build", async ({ expect, tmpDir }) => {
+    const corrupt = path.join(await tmpDir.getTempDir({ prefix: "cross-origin-headers-corrupt" }), "resources")
+    await outputFile(path.join(corrupt, "app.asar"), "not an asar archive")
+    await expect(warnIfCrossOriginHeadersNotMentioned(await createProject(tmpDir), corrupt)).resolves.toBeUndefined()
+  })
+})
+
+describe("the scan of the packed app", () => {
   test.for([
     ["an assignment", "main.js", assignment],
     ["a minified assignment", "dist/main.cjs", 'e.crossOriginHeaders=()=>[],e.checkForUpdates();var s="a/b"'],
     ["an ES module", "main.mjs", 'import { autoUpdater } from "electron-updater"\nautoUpdater.crossOriginHeaders = function () { return [] }'],
-  ])("no warning for %s", async ([, file, code], { expect, tmpDir }) => {
-    const resourcesDir = await createAppDir(tmpDir, { "package.json": "{}", [file]: code })
-    expect(await warnings(await createProject(tmpDir), resourcesDir)).toBe(0)
+    // an app that bundles electron-updater is not checked: its code mentions the property
+    ["a bundled electron-updater", "dist/main.js", "class AppUpdater {\n  constructor() {\n    this.crossOriginHeaders = null;\n  }\n}\n"],
+  ])("finds %s in the app directory", async ([, file, code], { expect, tmpDir }) => {
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "package.json": "{}", [file]: code }))).toBe(true)
   })
 
-  test("no warning when the only mention is a bundled electron-updater (an app that bundles it is not checked)", async ({ expect, tmpDir }) => {
-    const bundledElectronUpdater = "class AppUpdater {\n  constructor() {\n    this.crossOriginHeaders = null;\n  }\n}\n"
-    const resourcesDir = await createAppDir(tmpDir, { "dist/main.js": bundledElectronUpdater })
-    expect(await warnings(await createProject(tmpDir), resourcesDir)).toBe(0)
+  test("finds no mention in an app directory without one, inside node_modules or in a file over the size limit", async ({ expect, tmpDir }) => {
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, noMention))).toBe(false)
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "main.js": "", "node_modules/updater-wrapper/index.js": assignment }))).toBe(false)
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "main.js": "", "dist/data.js": assignment + " ".repeat(20 * 1024 * 1024) }))).toBe(false)
+    // under the limit, the same file counts
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "main.js": "", "dist/data.js": assignment + " ".repeat(1024) }))).toBe(true)
   })
 
-  test("a mention inside node_modules or in a file over the size limit is not counted", async ({ expect, tmpDir }) => {
-    const project = await createProject(tmpDir)
-    expect(await warnings(project, await createAppDir(tmpDir, { "main.js": "", "node_modules/updater-wrapper/index.js": assignment }))).toBe(1)
-    expect(await warnings(project, await createAppDir(tmpDir, { "main.js": "", "dist/data.js": assignment + " ".repeat(20 * 1024 * 1024) }))).toBe(1)
-  })
-
-  test("a symlink in the app directory is not followed", async ({ expect, tmpDir }) => {
+  test("does not follow a symlink in the app directory", async ({ expect, tmpDir }) => {
     const outside = await tmpDir.getTempDir({ prefix: "cross-origin-headers-outside" })
     await outputFile(path.join(outside, "main.js"), assignment)
     const resourcesDir = await createAppDir(tmpDir, { "package.json": "{}" })
     await symlink(path.join(outside, "main.js"), path.join(resourcesDir, "app", "main.js"))
-    expect(await warnings(await createProject(tmpDir), resourcesDir)).toBe(1)
+    expect(await findCrossOriginHeadersMention(resourcesDir)).toBe(false)
   })
 
-  test("reads app.asar, its unpacked files, but not its node_modules or files over the size limit", async ({ expect, tmpDir }) => {
-    const project = await createProject(tmpDir)
-    expect(await warnings(project, await createAsar(tmpDir, { "dist/main.js": assignment }))).toBe(0)
-    expect(await warnings(project, await createAsar(tmpDir, { "main.js": "", "unpacked/main.js": assignment }, "**/unpacked/**"))).toBe(0)
-    expect(await warnings(project, await createAsar(tmpDir, { "main.js": "", "node_modules/wrapper/index.js": assignment }))).toBe(1)
-    expect(await warnings(project, await createAsar(tmpDir, { "main.js": "", "dist/data.js": assignment + " ".repeat(20 * 1024 * 1024) }))).toBe(1)
+  test("reads app.asar and its unpacked files, but not its node_modules or files over the size limit", async ({ expect, tmpDir }) => {
+    expect(await findCrossOriginHeadersMention(await createAsar(tmpDir, { "dist/main.js": assignment }))).toBe(true)
+    expect(await findCrossOriginHeadersMention(await createAsar(tmpDir, { "main.js": "", "unpacked/main.js": assignment }, "**/unpacked/**"))).toBe(true)
+    expect(await findCrossOriginHeadersMention(await createAsar(tmpDir, noMention))).toBe(false)
+    expect(await findCrossOriginHeadersMention(await createAsar(tmpDir, { "main.js": "", "node_modules/wrapper/index.js": assignment }))).toBe(false)
+    expect(await findCrossOriginHeadersMention(await createAsar(tmpDir, { "main.js": "", "dist/data.js": assignment + " ".repeat(20 * 1024 * 1024) }))).toBe(false)
   })
 
-  test("an unpacked file of app.asar that is a symlink is not followed", async ({ expect, tmpDir }) => {
+  test("does not follow an unpacked file of app.asar that is a symlink", async ({ expect, tmpDir }) => {
     const outside = await tmpDir.getTempDir({ prefix: "cross-origin-headers-outside" })
     await outputFile(path.join(outside, "main.js"), assignment)
     const resourcesDir = await createAsar(tmpDir, { "main.js": "", "unpacked/main.js": "// placeholder\n" }, "**/unpacked/**")
     const unpacked = path.join(resourcesDir, "app.asar.unpacked", "unpacked", "main.js")
     await symlink(path.join(outside, "main.js"), `${unpacked}.link`)
     await rename(`${unpacked}.link`, unpacked)
-    expect(await warnings(await createProject(tmpDir), resourcesDir)).toBe(1)
+    expect(await findCrossOriginHeadersMention(resourcesDir)).toBe(false)
   })
 
-  test("no warning when the resources hold no app to scan, or app.asar cannot be read (the build never fails on it)", async ({ expect, tmpDir }) => {
-    const project = await createProject(tmpDir)
-    const empty = path.join(await tmpDir.getTempDir({ prefix: "cross-origin-headers-empty" }), "resources")
-    expect(await warnings(project, empty)).toBe(0)
+  test("null when the resources hold no app to scan; rejects when app.asar cannot be read", async ({ expect, tmpDir }) => {
+    expect(await findCrossOriginHeadersMention(path.join(await tmpDir.getTempDir({ prefix: "cross-origin-headers-empty" }), "resources"))).toBeNull()
 
     const corrupt = path.join(await tmpDir.getTempDir({ prefix: "cross-origin-headers-corrupt" }), "resources")
     await outputFile(path.join(corrupt, "app.asar"), "not an asar archive")
-    expect(await warnings(project, corrupt)).toBe(0)
+    await expect(findCrossOriginHeadersMention(corrupt)).rejects.toThrow()
   })
 })
 
 describe("which apps are checked", () => {
-  const noMention = { "main.js": 'require("electron-updater").autoUpdater.checkForUpdates()\n' }
+  async function mayRequire(tmpDir: TmpDir, options: ProjectOptions) {
+    const { metadata, devMetadata, projectDir } = await createProject(tmpDir, options)
+    const updater = findAppElectronUpdater(metadata, devMetadata, projectDir)
+    return updater == null ? null : mayRequireCrossOriginHeaders(updater)
+  }
 
-  test("electron-updater in the app's dependencies is checked too", async ({ expect, tmpDir }) => {
-    const project = await createProject(tmpDir, { dependencies: { "electron-updater": "^7.0.0" }, devDependencies: {} })
-    expect(await warnings(project, await createAppDir(tmpDir, noMention))).toBe(1)
+  test("an electron-updater in the app's dependencies or devDependencies; not an app without one", async ({ expect, tmpDir }) => {
+    expect(await mayRequire(tmpDir, {})).toBe(true)
+    expect(await mayRequire(tmpDir, { dependencies: { "electron-updater": "^7.0.0" }, devDependencies: {} })).toBe(true)
+    expect(await mayRequire(tmpDir, { installed: null, devDependencies: { electron: "^30.0.0" } })).toBeNull()
   })
 
-  test("no warning for an app without electron-updater", async ({ expect, tmpDir }) => {
-    const project = await createProject(tmpDir, { installed: null, devDependencies: { electron: "^30.0.0" } })
-    expect(await warnings(project, await createAppDir(tmpDir, noMention))).toBe(0)
-  })
-
-  test("no warning for an electron-updater that predates the property", async ({ expect, tmpDir }) => {
-    const resourcesDir = await createAppDir(tmpDir, noMention)
-    expect(await warnings(await createProject(tmpDir, { installed: "6.8.11" }), resourcesDir)).toBe(0)
-    expect(await warnings(await createProject(tmpDir, { installed: "7.0.0-alpha.13" }), resourcesDir)).toBe(0)
+  test("not an electron-updater that predates the property", async ({ expect, tmpDir }) => {
+    expect(await mayRequire(tmpDir, { installed: "6.8.11" })).toBe(false)
+    expect(await mayRequire(tmpDir, { installed: "7.0.0-alpha.13" })).toBe(false)
+    expect(await mayRequire(tmpDir, { installed: "7.0.0-alpha.14" })).toBe(true)
     // not installed: the declared range decides
-    expect(await warnings(await createProject(tmpDir, { installed: null, devDependencies: { "electron-updater": "^6.8.0" } }), resourcesDir)).toBe(0)
-    expect(await warnings(await createProject(tmpDir, { installed: "7.0.0-alpha.14" }), resourcesDir)).toBe(1)
+    expect(await mayRequire(tmpDir, { installed: null, devDependencies: { "electron-updater": "^6.8.0" } })).toBe(false)
+    expect(await mayRequire(tmpDir, { installed: null, devDependencies: { "electron-updater": ">=6.8.0" } })).toBe(true)
   })
 
   test("an electron-updater whose version cannot be read may require it", async ({ expect, tmpDir }) => {
-    const resourcesDir = await createAppDir(tmpDir, noMention)
-    expect(await warnings(await createProject(tmpDir, { installed: null, devDependencies: { "electron-updater": "catalog:" } }), resourcesDir)).toBe(1)
-    expect(await warnings(await createProject(tmpDir, { installed: null, devDependencies: { "electron-updater": "latest" } }), resourcesDir)).toBe(1)
+    expect(await mayRequire(tmpDir, { installed: null, devDependencies: { "electron-updater": "catalog:" } })).toBe(true)
+    expect(await mayRequire(tmpDir, { installed: null, devDependencies: { "electron-updater": "latest" } })).toBe(true)
   })
 })
 
@@ -216,21 +238,32 @@ describe("during the build", () => {
     }
   }
 
-  async function pack(tmpDir: TmpDir, afterPack: (event: any) => Promise<void>, packager: any, arch: Arch) {
-    const appOutDir = path.dirname(await createAppDir(tmpDir, { "main.js": "autoUpdater.checkForUpdates()\n" }))
+  async function pack(tmpDir: TmpDir, afterPack: (event: any) => Promise<void>, packager: any, arch: Arch, mainJs = "autoUpdater.checkForUpdates()\n") {
+    const appOutDir = path.dirname(await createAppDir(tmpDir, { "main.js": mainJs }))
     await writeFile(path.join(appOutDir, "resources", "app", "package.json"), "{}")
     await afterPack({ packager, electronPlatformName: "linux", arch, appOutDir, outDir: appOutDir, targets: [{ name: "AppImage", options: null, writesUpdateInfo: true }] })
     return pathExists(path.join(appOutDir, "resources", "app-update.yml"))
   }
 
-  test("warns once for a build that writes app-update.yml, however many archs and platforms it packs", async ({ expect, tmpDir }) => {
+  test("warns once per process, however many builds and archs it packs", async ({ expect, tmpDir }) => {
+    const crossOriginWarnings = spyWarnings()
+    const packager = makePlatformPackager({ provider: "generic", url: "https://example.com/updates" })
+    for (let build = 0; build < 2; build++) {
+      const afterPack = createManager(await createProject(tmpDir))
+      for (const arch of [Arch.x64, Arch.arm64, Arch.armv7l]) {
+        expect(await pack(tmpDir, afterPack, packager, arch)).toBe(true)
+      }
+    }
+    expect(crossOriginWarnings()).toHaveLength(1)
+  })
+
+  test("scans only the first pack of a build: every arch ships the same app code", async ({ expect, tmpDir }) => {
     const crossOriginWarnings = spyWarnings()
     const afterPack = createManager(await createProject(tmpDir))
     const packager = makePlatformPackager({ provider: "generic", url: "https://example.com/updates" })
-    for (const arch of [Arch.x64, Arch.arm64, Arch.armv7l]) {
-      expect(await pack(tmpDir, afterPack, packager, arch)).toBe(true)
-    }
-    expect(crossOriginWarnings()).toHaveLength(1)
+    expect(await pack(tmpDir, afterPack, packager, Arch.x64, assignment)).toBe(true)
+    expect(await pack(tmpDir, afterPack, packager, Arch.arm64)).toBe(true)
+    expect(crossOriginWarnings()).toHaveLength(0)
   })
 
   test("no warning for a build that writes no app-update.yml", async ({ expect, tmpDir }) => {

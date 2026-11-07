@@ -2,10 +2,9 @@ import { log } from "builder-util"
 import type { Stats } from "fs"
 import { lstat, readdir, readFile } from "fs/promises"
 import * as path from "path"
-import * as semver from "semver"
 import { Node, readAsar } from "../asar/asar.js"
 import type { Packager } from "../packager.js"
-import { CROSS_ORIGIN_HEADERS_MIN_UPDATER_RELEASE } from "../util/electronUpdaterCompatibility.js"
+import { mayRequireCrossOriginHeaders } from "../util/electronUpdaterCompatibility.js"
 import { findAppElectronUpdater } from "../util/packageMetadata.js"
 
 const PROPERTY = "crossOriginHeaders"
@@ -18,7 +17,8 @@ const MAX_SCANNED_FILE_SIZE = 20 * 1024 * 1024
  * (`ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`), which a developer who never runs the updater before a release does not see. The
  * updater cannot recover an app shipped that way, so the build warns when no file of the packed app (app.asar, its unpacked files, or
  * the app directory; not `node_modules`) contains the string `crossOriginHeaders`. Only for an app that ships an electron-updater that
- * may require it (see {@link CROSS_ORIGIN_HEADERS_MIN_UPDATER_RELEASE}). It never fails the build.
+ * may require it (see {@link mayRequireCrossOriginHeaders}), and once per process: after the warning, later builds skip the scan. It
+ * never fails the build.
  *
  * Accepted trade-off: an app that bundles electron-updater into its own JavaScript contains the string anyway, so the check stays quiet
  * for bundled apps; it only catches apps that never mention the property.
@@ -26,13 +26,12 @@ const MAX_SCANNED_FILE_SIZE = 20 * 1024 * 1024
  * @internal exported for tests
  */
 export async function warnIfCrossOriginHeadersNotMentioned(packager: Pick<Packager, "metadata" | "devMetadata" | "projectDir">, resourcesDir: string): Promise<void> {
-  const updater = findAppElectronUpdater(packager.metadata, packager.devMetadata, packager.projectDir)
-  if (updater == null) {
+  const warning = log.once("cross-origin-headers-not-mentioned")
+  if (warning.isExhausted) {
     return
   }
-  // an installed version or a declared range; one that cannot be read (`catalog:`, a dist-tag) may require it
-  const range = updater.isUnresolvable ? null : semver.validRange(updater.version, { includePrerelease: true })
-  if (range != null && semver.gtr(CROSS_ORIGIN_HEADERS_MIN_UPDATER_RELEASE, range, { includePrerelease: true })) {
+  const updater = findAppElectronUpdater(packager.metadata, packager.devMetadata, packager.projectDir)
+  if (updater == null || !mayRequireCrossOriginHeaders(updater)) {
     return
   }
   try {
@@ -43,7 +42,7 @@ export async function warnIfCrossOriginHeadersNotMentioned(packager: Pick<Packag
     log.debug({ resourcesDir, error: e?.message ?? String(e) }, "cannot check whether the app sets autoUpdater.crossOriginHeaders")
     return
   }
-  log.warn(
+  warning.warn(
     {
       solution:
         "set autoUpdater.crossOriginHeaders to a function before the app checks for updates, e.g. autoUpdater.crossOriginHeaders = () => [] " +
@@ -59,9 +58,11 @@ export async function warnIfCrossOriginHeadersNotMentioned(packager: Pick<Packag
 /**
  * Whether a file of the app in `resourcesDir`, outside `node_modules`, contains `crossOriginHeaders`, or null when the resources hold
  * neither app.asar nor an app directory. The packed tree comes from the project, which is not trusted: only regular files are read,
- * never a symlink, and no file larger than {@link MAX_SCANNED_FILE_SIZE}.
+ * never a symlink, and no file larger than {@link MAX_SCANNED_FILE_SIZE}. Rejects when app.asar cannot be read.
+ *
+ * @internal exported for tests
  */
-async function findCrossOriginHeadersMention(resourcesDir: string): Promise<boolean | null> {
+export async function findCrossOriginHeadersMention(resourcesDir: string): Promise<boolean | null> {
   const lstatOrNull = (file: string) => lstat(file).catch(() => null)
   const isReadable = (stat: Stats | null) => stat != null && stat.isFile() && stat.size <= MAX_SCANNED_FILE_SIZE
 

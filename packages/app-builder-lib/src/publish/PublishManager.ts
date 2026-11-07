@@ -208,7 +208,10 @@ export class PublishManager implements PublishContext {
 
   private readonly updateFileWriteTask: Array<UpdateInfoFileTask> = []
 
-  /** Scans the first packed app that ships app-update.yml; every pack of the build ships the same app code. */
+  /**
+   * Scans the first packed app of this build that ships app-update.yml, not one per arch: every pack of the build ships the same app
+   * code. The warning itself is once per process.
+   */
   private crossOriginHeadersCheck: Promise<void> | null = null
 
   constructor(
