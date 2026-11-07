@@ -65,7 +65,7 @@ import { PlatformPackager } from "../platformPackager.js"
 import { missingUpdatePublisherNameError, validatePublisherNameFormat } from "../codeSign/win/publisherName.js"
 import { WinPackager } from "../winPackager.js"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
-import { warnIfNoCrossOriginHeadersAssignment } from "./crossOriginHeadersCheck.js"
+import { warnIfCrossOriginHeadersNotMentioned } from "./crossOriginHeadersCheck.js"
 import { resolveModule } from "../util/resolve.js"
 import { parseUrl } from "../util/pathManager.js"
 import { isPublishForPullRequest } from "../util/flags.js"
@@ -269,7 +269,7 @@ export class PublishManager implements PublishContext {
       if (publishConfig != null) {
         const resourcesDir = packager.getResourcesDir(event.appOutDir)
         await writeAppUpdateYaml(resourcesDir, publishConfig, event.appOutDir)
-        this.crossOriginHeadersCheck ??= warnIfNoCrossOriginHeadersAssignment(this.packager, resourcesDir)
+        this.crossOriginHeadersCheck ??= warnIfCrossOriginHeadersNotMentioned(this.packager, resourcesDir)
         await this.crossOriginHeadersCheck
       }
     })

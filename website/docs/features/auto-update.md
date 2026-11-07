@@ -386,7 +386,7 @@ Don't pre-authorize the update install. deb, rpm and pacman updates are installe
 
 `autoUpdater.crossOriginHeaders` decides the request headers sent on each request and redirect to another origin than the update feed: a redirect to another origin (such as a feed that redirects to a CDN), a download or channel file (`latest*.yml`) on another origin, the blockmaps and differential range requests of such a download and their redirects, and a private GitHub release asset or GitLab release link on another origin. It is required: set it before the first check, and before the app is `ready` when an update can be installed at [the next launch](#install-on-next-launch-windowslinux).
 
-A build that writes `app-update.yml` for an app that ships `electron-updater` warns when it finds no assignment to `crossOriginHeaders` in the app's own `.js`, `.mjs` and `.cjs` files (in `app.asar` or the app directory, not in `node_modules`). The check is a heuristic: it does not see an assignment through bracket notation or `Object.assign`, or one made in a dependency, so in that case check for updates once from a packaged build to confirm.
+A build that writes `app-update.yml` for an app that ships `electron-updater` warns when no file of the app (in `app.asar` or the app directory, not in `node_modules`) contains the string `crossOriginHeaders`. An app that bundles `electron-updater` into its own JavaScript contains that string anyway, so the build stays quiet for it; the check only catches an app that never mentions the property. If a dependency sets it for the app, check for updates once from a packaged build to confirm.
 
 ```typescript
 crossOriginHeaders: CrossOriginHeadersCallback | null // null by default
