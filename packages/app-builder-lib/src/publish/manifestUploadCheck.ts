@@ -1,17 +1,13 @@
 import { InvalidConfigurationError, log } from "builder-util"
-import { collectManifestSignatures, hashFile, normalizePublicKeyList, UpdateInfo } from "builder-util-runtime"
-import { readFile, stat } from "fs/promises"
-import { EventType, load, State } from "js-yaml"
+import { collectManifestSignatures, normalizePublicKeyList, UpdateInfo } from "builder-util-runtime"
+import { readFile } from "fs/promises"
 import * as path from "path"
 import type { Configuration } from "../configuration.js"
 import type { UpdateManifestSigningOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { BUILD_CHANGES_URL, RUNTIME_CHANGES_URL } from "../util/config/legacyOptions.js"
-import { updateManifestPlatform, verifyUpdateManifestContent } from "./updateManifestVerifier.js"
+import { compareListedFiles, mayBeUpdateInfo, readUpdateInfo, updateManifestPlatform, verifyUpdateManifestContent } from "./updateManifestVerifier.js"
 
 const DOCS = `${BUILD_CHANGES_URL}#signed-update-manifests-are-required`
-
-// Files with a manifest-like name that are not update manifests
-const NOT_MANIFESTS = new Set(["app-update.yml", "dev-app-update.yml", "builder-debug.yml", "builder-effective-config.yaml"])
 
 // The files electron-updater downloads that update info lists: installers and packages, macOS zips, nsis-web packages and block maps
 const UPDATE_FILE_EXTENSIONS = new Set([".exe", ".zip", ".7z", ".AppImage", ".deb", ".rpm", ".pacman", ".blockmap"])
@@ -29,11 +25,11 @@ const UPDATE_FILES_RULES =
   "  - update info is written without YAML aliases (&name / *name), which are rejected once they expand past electron-updater's limit\n" +
   "  - the update info, the files and their .blockmap files are served over https, and each .blockmap comes from the same build as its file " +
   "(otherwise the update is downloaded in full)\n" +
-  "Run `electron-builder verify` on the output before publishing it to check the signatures, sha512 and size. " +
+  "Run `electron-builder verify` on the output before publishing it to check the signatures, the sha512 and size of each listed file " +
+  "(nsis-web packages included) and YAML aliases. " +
   `See ${SIZE_DOCS}, ${DOCS}, ${ALIAS_DOCS} and ${RUNTIME_CHANGES_URL}#update-requests-require-https`
 
 type Upload = { readonly file: string; readonly safeArtifactName?: string | null }
-type UploadedUpdateInfo = { readonly file: string; readonly files: Array<unknown>; readonly packages: unknown }
 
 type ManifestPlatform = ReturnType<typeof updateManifestPlatform>
 
@@ -52,18 +48,19 @@ function platformValue<K extends "updateManifest" | "forceCodeSigning">(config: 
  * no signing key is loaded. Any other file, including a `.yml` that is not an update manifest, is not checked.
  */
 export async function checkUpdateManifestBeforeUpload(file: string, config: Configuration): Promise<void> {
-  if (!/\.ya?ml$/.test(file) || NOT_MANIFESTS.has(path.basename(file))) {
+  if (!mayBeUpdateInfo(file)) {
     return
   }
   const content = await readFile(file, "utf8")
-  let info: unknown
+  let info: UpdateInfo
   try {
-    info = load(content)
+    const updateInfo = readUpdateInfo(content)
+    if (updateInfo == null) {
+      return
+    }
+    info = updateInfo.info
   } catch {
     // not YAML: not an update manifest
-    return
-  }
-  if (info == null || typeof info !== "object" || !("version" in info) || !("files" in info) || !Array.isArray(info.files)) {
     return
   }
 
@@ -74,8 +71,8 @@ export async function checkUpdateManifestBeforeUpload(file: string, config: Conf
   }
   const fields = { file: log.filePath(file) }
   // the `signatures` list and the legacy `signature` field, as electron-updater reads them; a `signatures` that is not a list holds none
-  const { signatures } = info as { signatures?: unknown }
-  const manifestInfo = (Array.isArray(signatures) ? info : { ...info, signatures: undefined }) as UpdateInfo
+  const signatures: unknown = info.signatures
+  const manifestInfo = Array.isArray(signatures) ? info : { ...info, signatures: undefined }
   if (collectManifestSignatures(manifestInfo).length === 0) {
     throw new InvalidConfigurationError(
       `${log.filePath(file)} is an unsigned update manifest, and electron-builder publishes only signed ones: installs that embed a public key reject it ` +
@@ -119,33 +116,28 @@ export async function checkUpdateManifestBeforeUpload(file: string, config: Conf
  * warns, since these are heuristics: a file it cannot read or parse, and a listed file that is not uploaded, are skipped.
  */
 export async function warnAboutUpdateFilesBeforeUpload(uploads: ReadonlyArray<Upload>): Promise<void> {
-  const manifests: Array<UploadedUpdateInfo> = []
+  const manifests: Array<{ readonly file: string; readonly info: UpdateInfo }> = []
   let hasUpdateFiles = false
   for (const { file } of uploads) {
     if (UPDATE_FILE_EXTENSIONS.has(path.extname(file))) {
       hasUpdateFiles = true
       continue
     }
-    if (!/\.ya?ml$/.test(file) || NOT_MANIFESTS.has(path.basename(file))) {
+    if (!mayBeUpdateInfo(file)) {
       continue
     }
-    // an alias is the only node that closes with a value but no kind (as electron-updater's parseUpdateInfo counts them)
-    let hasAliases = false
-    const listener = (eventType: EventType, state: State) => {
-      hasAliases ||= eventType === "close" && state.kind === null && state.result != null
-    }
-    let info: unknown
+    let updateInfo: ReturnType<typeof readUpdateInfo>
     try {
-      info = load(await readFile(file, "utf8"), { listener })
+      updateInfo = readUpdateInfo(await readFile(file, "utf8"))
     } catch (e: any) {
       log.warn({ file: log.filePath(file), reason: e?.message ?? String(e) }, "cannot read this .yml: if it is update info, electron-updater rejects it")
       continue
     }
-    if (info == null || typeof info !== "object" || !("version" in info) || !("files" in info) || !Array.isArray(info.files)) {
+    if (updateInfo == null) {
       continue
     }
-    manifests.push({ file, files: info.files, packages: "packages" in info ? info.packages : undefined })
-    if (hasAliases) {
+    manifests.push({ file, info: updateInfo.info })
+    if (updateInfo.hasAliases) {
       log.warn(
         { file: log.filePath(file) },
         "update info uses YAML aliases, which electron-builder never writes: electron-updater rejects update info whose aliases expand past its limit " +
@@ -158,14 +150,8 @@ export async function warnAboutUpdateFilesBeforeUpload(uploads: ReadonlyArray<Up
     return
   }
   log.once("update-files-upload").warn(UPDATE_FILES_RULES)
-  for (const manifest of manifests) {
-    await warnAboutListedFileMismatches(manifest, uploads)
-  }
-}
 
-/** The files of `files` (by `url`) and nsis-web `packages` (by `path`) that are also uploaded, matched by name, against their declared size and sha512; a file that cannot be read is skipped. */
-async function warnAboutListedFileMismatches(manifest: UploadedUpdateInfo, uploads: ReadonlyArray<Upload>): Promise<void> {
-  // a GitHub update info lists the safe artifact name, which can differ from the local file name
+  // matched by name only: a GitHub update info lists the safe artifact name, which can differ from the local file name
   const uploadsByName = new Map<string, string>()
   for (const { file, safeArtifactName } of uploads) {
     uploadsByName.set(path.basename(file), file)
@@ -173,38 +159,18 @@ async function warnAboutListedFileMismatches(manifest: UploadedUpdateInfo, uploa
       uploadsByName.set(safeArtifactName, file)
     }
   }
-  const { files, packages } = manifest
-  const entries = packages != null && typeof packages === "object" ? [...files, ...Object.values(packages)] : files
-  for (const entry of entries) {
-    if (entry == null || typeof entry !== "object") {
-      continue
-    }
-    const { url, path: packagePath, size, sha512 } = entry as { url?: unknown; path?: unknown; size?: unknown; sha512?: unknown }
-    const location = typeof url === "string" ? url : packagePath
-    const file = typeof location === "string" ? uploadsByName.get(path.posix.basename(location.split(/[?#]/, 1)[0])) : undefined
-    // a file that cannot be read (stat or hash), or a directory, is reported by its upload
-    const stats = file == null ? null : await stat(file).catch(() => null)
-    if (file == null || stats == null || !stats.isFile()) {
-      continue
-    }
-    const actualSha512 = typeof sha512 === "string" ? await hashFile(file).catch(() => null) : undefined
-    if (actualSha512 === null) {
-      continue
-    }
-    const mismatched: Array<string> = []
-    if (typeof size === "number" && size !== stats.size) {
-      mismatched.push("size")
-    }
-    if (typeof sha512 === "string" && sha512 !== actualSha512) {
-      mismatched.push("sha512")
-    }
-    if (mismatched.length !== 0) {
-      log.warn(
-        { updateInfo: log.filePath(manifest.file), file: log.filePath(file), mismatched: mismatched.join(", ") },
-        "the uploaded file does not match its update info: electron-updater stops a full download once it receives more bytes than the declared size " +
-          "and rejects a file whose sha512 differs. Publish the update info generated together with this file: when a release step changed the file " +
-          `after the build (for example signed it again), regenerate its size and sha512 together and sign the update info again. See ${SIZE_DOCS}`
-      )
+  const hashes = new Map<string, Promise<string | null>>()
+  for (const manifest of manifests) {
+    // a listed file that is not uploaded, or cannot be read, is not found: its upload reports it
+    for (const { comparison } of await compareListedFiles(manifest.info, uploadsByName, hashes)) {
+      if (comparison.status === "mismatch") {
+        log.warn(
+          { updateInfo: log.filePath(manifest.file), file: log.filePath(comparison.file), mismatched: comparison.mismatched.join(", ") },
+          "the uploaded file does not match its update info: electron-updater stops a full download once it receives more bytes than the declared size " +
+            "and rejects a file whose sha512 differs. Publish the update info generated together with this file: when a release step changed the file " +
+            `after the build (for example signed it again), regenerate its size and sha512 together and sign the update info again. See ${SIZE_DOCS}`
+        )
+      }
     }
   }
 }
