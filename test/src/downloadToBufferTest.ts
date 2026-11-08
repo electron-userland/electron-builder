@@ -9,12 +9,15 @@ class BufferExecutor extends HttpExecutor<any> {
     headers: {},
     destroy: vi.fn(),
   })
+  readonly requests: Array<{ abort: ReturnType<typeof vi.fn> }> = []
 
   createRequest(_options: unknown, callback: (response: any) => void) {
-    return Object.assign(new EventEmitter(), {
+    const request = Object.assign(new EventEmitter(), {
       abort: vi.fn(),
       end: () => callback(this.response),
     })
+    this.requests.push(request)
+    return request
   }
 }
 
@@ -28,8 +31,12 @@ test("stops reading a buffer download after the size limit", async () => {
   executor.response.emit("data", Buffer.from("ignored"))
   executor.response.emit("end")
 
-  await expect(download).rejects.toThrow("Maximum allowed size is 500 MB")
+  await expect(download).rejects.toMatchObject({
+    code: "ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED",
+    message: "Response from https://example.com/update exceeds the maximum allowed size of 500 MB",
+  })
   expect(executor.response.destroy).toHaveBeenCalledOnce()
+  expect(executor.requests[0].abort).toHaveBeenCalledOnce()
 })
 
 test("rejects a failed download with an HttpError that leaves the query out of its message", async () => {
@@ -151,4 +158,90 @@ describe("API request size limit (maxResponseSize)", () => {
     await expect(result).resolves.toHaveLength(2 * chunk.length)
     expect(executor.requests[0].abort).not.toHaveBeenCalled()
   })
+})
+
+test("stops a buffer download once it passes a smaller maxSize, and aborts its request", async () => {
+  const executor = new BufferExecutor()
+  const download = executor.downloadToBuffer(new URL("https://example.com/update.blockmap?X-Amz-Signature=secret"), {
+    cancellationToken: new CancellationToken(),
+    maxSize: 10,
+  })
+
+  executor.response.emit("data", Buffer.alloc(6))
+  executor.response.emit("data", Buffer.alloc(5))
+  executor.response.emit("data", Buffer.from("ignored"))
+  executor.response.emit("end")
+
+  await expect(download).rejects.toMatchObject({
+    code: "ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED",
+    message: "Response from https://example.com/update.blockmap exceeds the maximum allowed size of 10 bytes",
+  })
+  expect(executor.response.destroy).toHaveBeenCalledOnce()
+  // destroying the response of Electron's net does not end its request: only abort() does
+  expect(executor.requests[0].abort).toHaveBeenCalledOnce()
+})
+
+test("accepts a buffer download of exactly maxSize bytes", async () => {
+  const executor = new BufferExecutor()
+  const download = executor.downloadToBuffer(new URL("https://example.com/update.blockmap"), { cancellationToken: new CancellationToken(), maxSize: 10 })
+
+  executor.response.emit("data", Buffer.alloc(6, 1))
+  executor.response.emit("data", Buffer.alloc(4, 2))
+  executor.response.emit("end")
+
+  await expect(download).resolves.toEqual(Buffer.concat([Buffer.alloc(6, 1), Buffer.alloc(4, 2)]))
+  expect(executor.response.destroy).not.toHaveBeenCalled()
+  expect(executor.requests[0].abort).not.toHaveBeenCalled()
+})
+
+test("a maxSize of 0 accepts only an empty response", async () => {
+  const empty = new BufferExecutor()
+  const emptyDownload = empty.downloadToBuffer(new URL("https://example.com/update.blockmap"), { cancellationToken: new CancellationToken(), maxSize: 0 })
+  empty.response.emit("end")
+  await expect(emptyDownload).resolves.toEqual(Buffer.alloc(0))
+
+  const executor = new BufferExecutor()
+  const download = executor.downloadToBuffer(new URL("https://example.com/update.blockmap"), { cancellationToken: new CancellationToken(), maxSize: 0 })
+  executor.response.emit("data", Buffer.alloc(1))
+  await expect(download).rejects.toMatchObject({ code: "ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED" })
+  expect(executor.requests[0].abort).toHaveBeenCalledOnce()
+})
+
+// only a number of at least 0 is a limit (see DownloadOptions.maxSize), and none is above 500 MB
+test.for([
+  { name: "NaN", maxSize: Number.NaN },
+  { name: "negative", maxSize: -1 },
+  { name: "numeric string", maxSize: "10" },
+  { name: "larger than 500 MB", maxSize: 2 * 524288000 },
+])("a $name maxSize keeps the 500 MB limit", async ({ maxSize }) => {
+  const executor = new BufferExecutor()
+  const download = executor.downloadToBuffer(new URL("https://example.com/update"), { cancellationToken: new CancellationToken(), maxSize: maxSize as unknown as number })
+
+  executor.response.emit("data", Buffer.alloc(11))
+  executor.response.emit("data", { length: 524288000 - 11 })
+  executor.response.emit("data", { length: 1 })
+  executor.response.emit("end")
+
+  await expect(download).rejects.toThrow("exceeds the maximum allowed size of 500 MB")
+  expect(executor.response.destroy).toHaveBeenCalledOnce()
+})
+
+test("keeps maxSize on a redirect", async () => {
+  const redirect = Object.assign(new EventEmitter(), { statusCode: 302, statusMessage: "Found", headers: { location: "https://cdn.example.com/update.blockmap" }, resume: vi.fn() })
+  const response = Object.assign(new EventEmitter(), { statusCode: 200, statusMessage: "OK", headers: {}, destroy: vi.fn() })
+  const requests: Array<{ hostname: string | null | undefined; abort: ReturnType<typeof vi.fn> }> = []
+  const executor = new (class extends HttpExecutor<any> {
+    createRequest(options: { hostname?: string | null }, callback: (response: any) => void) {
+      const request = Object.assign(new EventEmitter(), { abort: vi.fn(), end: () => callback(requests.length === 1 ? redirect : response) })
+      requests.push({ hostname: options.hostname, abort: request.abort })
+      return request
+    }
+  })()
+  const download = executor.downloadToBuffer(new URL("https://example.com/update.blockmap"), { cancellationToken: new CancellationToken(), maxSize: 10 })
+
+  response.emit("data", Buffer.alloc(11))
+
+  await expect(download).rejects.toMatchObject({ code: "ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED" })
+  expect(requests.map(it => it.hostname)).toEqual(["example.com", "cdn.example.com"])
+  expect(requests[1].abort).toHaveBeenCalledOnce()
 })

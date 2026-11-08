@@ -39,7 +39,7 @@ import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor.js"
 import { GenericProvider } from "./providers/GenericProvider.js"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory.js"
-import { acceptHeaderOf, feedBaseUrlOf, isYamlAliasBudgetError, Provider, ProviderPlatform, ProviderRuntimeOptions, YAML_ALIAS_BUDGET_DOCS } from "./providers/Provider.js"
+import { acceptHeaderOf, feedBaseUrlOf, Provider, ProviderPlatform, ProviderRuntimeOptions } from "./providers/Provider.js"
 import type { TypedEmitter } from "tiny-typed-emitter"
 type Session = Electron.Session
 import type { AuthInfo } from "electron"
@@ -291,16 +291,18 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   allowInsecureFeed = false
 
   /**
-   * *Linux only.* Whether to allow installing unverified (unsigned / failing-GPG) `.deb` and `.rpm` packages during auto-update.
+   * *Linux only.* Whether to bypass the package manager's signature/GPG check when installing an `.rpm` auto-update.
+   * It does not verify a `.deb`: apt and dpkg check no signature on a local `.deb` file whatever this is set to.
    *
-   * electron-builder does not sign Linux packages, so this defaults to `true` to preserve working auto-updates: the
-   * package manager's signature/GPG checks are bypassed where a bypass flag exists (`--allow-unauthenticated` for the
-   * apt fallback, `--allow-unsigned-rpm` for zypper, `--nogpgcheck` for dnf/yum), which is the historical behavior.
+   * electron-builder does not sign Linux packages, so this defaults to `true` to preserve working auto-updates:
+   * `--allow-unsigned-rpm` is passed to zypper and `--nogpgcheck` to dnf/yum, and the apt fallback gets
+   * `--allow-unauthenticated`, which only accepts dependencies from unauthenticated repositories.
    *
    * What `false` enforces depends on the package manager used on the target system:
    * - dpkg (the default for `.deb`): no effect — dpkg performs no signature verification (a warning is logged);
    *   enforcing `.deb` signatures requires a debsig-verify/debsigs policy on the target system.
-   * - apt (`.deb` fallback): `--allow-unauthenticated` is omitted.
+   * - apt (`.deb` fallback): `--allow-unauthenticated` is omitted, so dependencies from unauthenticated repositories
+   *   are refused; the local `.deb` itself is still not verified (a warning is logged).
    * - zypper: enforced — unsigned/untrusted packages fail to install.
    * - dnf/yum: enforced via `--setopt=localpkg_gpgcheck=1` (local package files are not GPG-checked by default).
    * - bare rpm (fallback): cannot be enforced via the CLI (a warning is logged); admins must configure
@@ -941,15 +943,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
           `Extend Provider from electron-updater to use it.`
       )
     }
-    let info: UpdateInfo
-    try {
-      info = await client.getLatestVersion()
-    } catch (e: unknown) {
-      if (isYamlAliasBudgetError(e)) {
-        this.announceYamlAliasBudget()
-      }
-      throw e
-    }
+    const info = await client.getLatestVersion()
     // recorded on the new result object (never on the parsed manifest, which listeners of update-available also get), so the state
     // travels with exactly the update info it was established for
     const manifestSignatureVerified = await this.verifyManifestSignature(info)
@@ -957,20 +951,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       info,
       provider: client,
       manifestSignatureVerified,
-    }
-  }
-
-  // A v27 behaviour change that only shows on installed apps: announced once per updater, without the feed URL (it may carry a token in its query)
-  private announceYamlAliasBudget(): void {
-    try {
-      this.limitedLogger("yaml-alias-budget").warn(
-        "electron-updater 7 (electron-builder v27) rejects an update manifest (latest*.yml) whose YAML aliases (&name / *name) expand past its size limit: " +
-          "this one was rejected with ERR_UPDATER_INVALID_UPDATE_INFO, so this app does not update until the manifest is replaced. " +
-          "Publish latest*.yml without YAML aliases (js-yaml `dump` with `noRefs: true`, as electron-builder writes it) or with the shared values repeated inline. " +
-          YAML_ALIAS_BUDGET_DOCS
-      )
-    } catch (_ignored) {
-      // called while the parse error propagates: logging must not replace it
     }
   }
 
@@ -1393,6 +1373,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       cancellationToken: taskOptions.downloadUpdateOptions.cancellationToken,
       sha2: (fileInfo.info as any).sha2,
       sha512: fileInfo.info.sha512,
+      maxSize: fileInfo.info.size,
     }
 
     if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
@@ -1576,10 +1557,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       // to the size limit and then matched to the cached installer by isBlockMapOfFile
       const newFileSize = fileInfo.info.size ?? null
       const downloadBlockMap = async (url: URL, expectedFileSize: number | null, originUrl?: URL): Promise<LoadedBlockMap> => {
+        // a block map as published (gzipped JSON or binary) is never larger than the limit, so the download stops once the bytes it
+        // delivers (after any Content-Encoding is decoded) pass the limit
         const data = await this.httpExecutor.downloadToBuffer(url, {
           headers: this.downloadRequestHeaders(url, downloadUpdateOptions, originUrl),
           ownHeaders: this.downloadOwnHeaders(downloadUpdateOptions),
           cancellationToken: downloadUpdateOptions.cancellationToken,
+          maxSize: blockMapLimit,
         })
 
         if (data == null || data.length === 0) {
