@@ -25,6 +25,8 @@ function createManager(publish: "always" | "never" = "always") {
   const packager = {
     projectDir: __dirname,
     config: {},
+    // no electron-updater: the app-update.yml hook does not scan the app for autoUpdater.crossOriginHeaders
+    metadata: {},
     onTargetsCreated: (handler: (plan: any) => Promise<void>) => {
       onTargetsCreated = handler
     },
