@@ -47,9 +47,9 @@ export type ListedFileComparison =
 
 /**
  * Compares each file update info lists with a local file by the size and sha512 it declares, which electron-updater checks a download
- * against: the file of the same name in `filesByName` (the base name of the url or path, without a query), or else any of
+ * against: the file of the same name in `filesByName` (the base name of the url or path, without a query), or, when there is none, any of
  * `hashCandidates` with the declared size and sha512, since a GitHub update info lists the safe artifact name, which can differ from the
- * local file name. A file that is not a regular file or cannot be read is not found. Hashes are memoized in `hashes`, by file.
+ * local file name. A file found by its name is never replaced by a hash candidate. A file that is not a regular file or cannot be read is not found. Hashes are memoized in `hashes`, by file.
  */
 export async function compareListedFiles(
   info: UpdateInfo,
@@ -98,7 +98,9 @@ export async function compareListedFiles(
       }
       comparison = mismatched.length === 0 ? { status: "matches", file: named } : { status: "mismatch", file: named, mismatched }
     }
-    if (comparison.status !== "matches" && entry.sha512 != null) {
+    // only for a file no local file is named as: a file found by its name keeps its result, so a byte-identical copy of the file as
+    // built (an unsigned copy, a backup) cannot stand in for the changed file the manifest lists
+    if (comparison.status === "not found" && entry.sha512 != null) {
       for (const candidate of hashCandidates) {
         const candidateStats = await stat(candidate).catch(() => null)
         if (candidateStats?.isFile() === true && (entry.size == null || candidateStats.size === entry.size) && (await sha512Of(candidate)) === entry.sha512) {

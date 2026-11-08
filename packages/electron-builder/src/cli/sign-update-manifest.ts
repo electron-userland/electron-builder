@@ -381,7 +381,8 @@ async function regularFilesIn(dirs: ReadonlyArray<string>): Promise<Array<string
  * download stops past the declared size, and a file whose sha512 differs is rejected), so that a manifest is never signed for files it does
  * not describe. Listed files are looked for as `electron-builder verify` looks for them (compareListedFilesInOutput): in the manifest's
  * folder, its target folder and `outDir`, by name or by GitHub safe name. Rehashed files are only read. A listed file that is not found
- * (a manifest edited away from the build output) is not checked. With `rehash`, every `files` entry must be found and takes its sha512 and size from the file, as the build
+ * is refused when those folders hold other files of the release, and is left unchecked (with a warning) only when they hold none, as for a
+ * manifest edited away from the build output. With `rehash`, every `files` entry must be found and takes its sha512 and size from the file, as the build
  * computes them, along with the deprecated top-level `sha512` (and Windows `sha2`) when `path` names it; an nsis-web `packages` entry
  * declares the size of the block map embedded in its package, which cannot be recomputed here, so it must still match.
  */
@@ -396,9 +397,38 @@ async function checkListedFiles(info: UpdateInfo, manifestFile: string, outDir: 
   const compared = await compareListedFilesInOutput(info, manifestFile, outDir, localFiles, hashes)
   const updated: Record<string, any> = { ...info, files: [...fileEntries] }
   const rehashed: Array<string> = []
+  const unchecked: Array<string> = []
+  const folders = listedFileFolders(manifestFile, outDir).join(" or ")
+  // A listed file that is not found is only left unchecked when the searched folders hold none of the release's files (an edit such as
+  // stagingPercentage, signed away from the build output). When they hold another listed file, or a file of the same type, it was renamed
+  // (a GitHub name the build generated for a productName GitHub does not allow) or removed, and could be a changed file signed unchecked.
+  const anyFound = compared.some(it => it.comparison.status !== "not found")
+  const releaseFiles = localFiles.filter(it => !/\.(ya?ml|blockmap)$/.test(it))
+  const holdsReleaseFiles = (location: string | null) => {
+    const extension = location == null ? "" : path.posix.extname(location.split(/[?#]/, 1)[0])
+    return anyFound || (extension !== "" && releaseFiles.some(it => path.extname(it) === extension))
+  }
 
   for (const [index, { entry, comparison }] of compared.entries()) {
     const name = entry.location ?? `#${index + 1}`
+    if (comparison.status === "not found") {
+      if (rehash && entry.field === "files") {
+        throw new InvalidConfigurationError(
+          `Cannot sign ${manifestFile} with --rehash: the listed file ${name} is not a regular file in ${folders}, so its sha512 and size cannot be taken from it. ` +
+            `Put the files the manifest lists there under their listed names (the build output folder, directories.output, is searched when the manifest is inside it), or sign without --rehash. See ${RESIGN_DOCS}`
+        )
+      }
+      if (holdsReleaseFiles(entry.location)) {
+        throw new InvalidConfigurationError(
+          `Cannot sign ${manifestFile}: no file in ${folders} is named as its ${entry.field} entry ${name} or has its sha512 and size, although they hold other files of the release, so it cannot be checked. ` +
+            "Put the file there under the listed name. A GitHub manifest can list a name the build generated, for a productName with characters GitHub does not allow: " +
+            "give the local file that listed name, the name it is uploaded under. " +
+            `See ${RESIGN_DOCS}`
+        )
+      }
+      unchecked.push(name)
+      continue
+    }
     if (!rehash || entry.field !== "files") {
       if (comparison.status === "mismatch") {
         const remedy =
@@ -411,12 +441,6 @@ async function checkListedFiles(info: UpdateInfo, manifestFile: string, outDir: 
         )
       }
       continue
-    }
-    if (comparison.status === "not found") {
-      throw new InvalidConfigurationError(
-        `Cannot sign ${manifestFile} with --rehash: the listed file ${name} is not a regular file in ${listedFileFolders(manifestFile, outDir).join(" or ")}, so its sha512 and size cannot be taken from it. ` +
-          `Put the files the manifest lists there (the build output folder, directories.output, is searched when the manifest is inside it), or sign without --rehash. See ${RESIGN_DOCS}`
-      )
     }
     if (comparison.status === "matches") {
       continue
@@ -439,6 +463,12 @@ async function checkListedFiles(info: UpdateInfo, manifestFile: string, outDir: 
         "the file changed after its .blockmap was written: differential updates to this release fall back to a full download until the block map is generated from this file"
       )
     }
+  }
+  if (unchecked.length > 0) {
+    log.warn(
+      { file: log.filePath(manifestFile), unchecked },
+      `the files the manifest lists are not in ${folders}, so their sha512 and size were not checked: upload the manifest only with the files it was built for`
+    )
   }
   return { info: updated as UpdateInfo, rehashed }
 }

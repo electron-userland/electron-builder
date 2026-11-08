@@ -821,6 +821,61 @@ for (const layout of [
   })
 }
 
+test("a listed file found by its name is checked as it is, even with an unchanged copy of the original next to it", async ({ expect, tmpDir }) => {
+  captureOutput()
+  const { dir, config, outDir, artifact, file } = await createDistOutput(tmpDir, "App-Setup-1.0.0.exe", "latest.yml", "App-Setup-1.0.0.exe")
+  // a copy of the installer as built stays in the output, and the installer itself is signed again
+  await fsp.copyFile(artifact, path.join(outDir, "App-Setup-1.0.0-unsigned.exe"))
+  await fsp.writeFile(artifact, "installer as built, signed again after the build")
+
+  const error = await rejection(run(dir, [file]))
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  expect(error!.message).toContain(`Cannot sign ${file}: App-Setup-1.0.0.exe does not match its files entry (size, sha512)`)
+  // electron-builder verify agrees: the listed file changed
+  const before = (await verifyBuildOutput({ outDir, config })).filter(it => it.file === file && it.check === "update manifest file")
+  expect(before.map(it => it.status)).toEqual(["failed"])
+
+  expect(await run(dir, [file, "--rehash"])).toMatchObject([{ rehashed: ["App-Setup-1.0.0.exe"] }])
+  expect(((await readManifest(file)) as WindowsUpdateInfo).files[0].sha512).toBe(await hashFile(artifact))
+})
+
+test("a listed file that is not found is refused while the output holds other files of the release, and left unchecked only without any", async ({ expect, tmpDir }) => {
+  captureOutput()
+  // a productName GitHub does not allow even with dashes: the manifest lists a name the build generated (generateGitHubInstallerName)
+  const { dir, outDir, artifact, file } = await createDistOutput(tmpDir, "My App (Beta) Setup 1.0.0.exe", "latest.yml", "my-app-Setup-1.0.0.exe")
+  // as built it is found by its sha512 and size
+  expect(await run(dir, [file])).toMatchObject([{ rehashed: [] }])
+
+  // changed after the build, nothing matches it any more: a file of the same type in the output means it cannot be signed unchecked
+  await fsp.writeFile(artifact, "installer as built, signed again after the build")
+  const before = await fsp.readFile(file, "utf8")
+  const error = await rejection(run(dir, [file]))
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  expect(error!.message).toContain(
+    `Cannot sign ${file}: no file in ${outDir} is named as its files entry my-app-Setup-1.0.0.exe or has its sha512 and size, although they hold other files of the release`
+  )
+  const rehashError = await rejection(run(dir, [file, "--rehash"]))
+  expect(rehashError!.message).toContain(`the listed file my-app-Setup-1.0.0.exe is not a regular file in ${outDir},`)
+  expect(await fsp.readFile(file, "utf8")).toBe(before)
+
+  // given the listed name, the name GitHub uploads it under, it is checked and can be rehashed
+  const listed = path.join(outDir, "my-app-Setup-1.0.0.exe")
+  await fsp.rename(artifact, listed)
+  expect(await rejection(run(dir, [file]))).toBeInstanceOf(InvalidConfigurationError)
+  expect(await run(dir, [file, "--rehash"])).toMatchObject([{ rehashed: ["my-app-Setup-1.0.0.exe"] }])
+
+  // another listed file that is found also means the release's files are there
+  await editManifest(file, info => info.files.push({ url: "my-app-1.0.0.zip", sha512, size: 10 }))
+  const missingZip = await rejection(run(dir, [file]))
+  expect(missingZip!.message).toContain(`no file in ${outDir} is named as its files entry my-app-1.0.0.zip`)
+
+  // with none of the release's files there (a stagingPercentage edit signed away from the build output), it is signed unchecked
+  await fsp.rm(listed)
+  await editManifest(file, info => (info.stagingPercentage = 10))
+  expect(await run(dir, [file])).toEqual([{ file, version: "1.0.0", keyIds: [currentId], rehashed: [] }])
+  expect(verifyManifestSignatures(await readManifest(file), [current.publicKeyPem])).toEqual({ ok: true, keyId: currentId })
+})
+
 test("a manifest outside the build output folder is checked against the files next to it only", async ({ expect, tmpDir }) => {
   captureOutput()
   const { dir, artifact, file } = await createDistOutput(tmpDir, "App-Setup-1.0.0.exe", "latest.yml", "App-Setup-1.0.0.exe")
