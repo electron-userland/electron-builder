@@ -123,6 +123,9 @@ asar:
 **401/403 or a failed download after the update host or CDN changed its redirects**
 : A redirect to a new origin gets only the headers [`autoUpdater.crossOriginHeaders`](./features/auto-update.md#crossoriginheaders) keeps for it. Log the hops the callback receives, allow specific headers only for trusted origins (`hop.to.origin`), and test against a staging feed before rollout. See [When the update host changes its redirects](./features/auto-update.md#cross-origin-host-changes).
 
+**`ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED`: "The download is larger than the … bytes declared for it"**
+: The server sent more bytes than the `size` that `latest*.yml` declares for the file, so electron-updater stopped the download. As with a checksum mismatch, the artifact and the `.yml` were not generated together, or the file was changed after the `.yml` was written. Publish the `.yml` generated with the file. See [Full downloads stop at the declared size](./migration/v27-runtime-changes.md#full-downloads-stop-at-the-declared-size).
+
 **Delta updates (AppImage / NSIS-Web) fail**
 : For AppImage delta updates, electron-builder embeds a blockmap directly in the AppImage binary — no separate file needs to be published. If delta updates aren't working, verify the AppImage was built with electron-builder and that a publish provider is configured. For NSIS differential packages, `nsis.differentialPackage` must not be `false` (any other value — `true`, `"compressed"`, `"store-asar"`, or unset — builds a differential-aware package; `"store-asar"` additionally stores `resources/app.asar` uncompressed so app-code deltas stay proportional to what changed).
 
