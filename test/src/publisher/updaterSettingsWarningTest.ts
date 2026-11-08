@@ -241,9 +241,9 @@ describe("during the build", () => {
     return (event: any) => onAfterPack(event)
   }
 
-  function makePlatformPackager(publish: any) {
+  function makePlatformPackager(publish: any, platform = Platform.LINUX) {
     return {
-      platform: Platform.LINUX,
+      platform,
       platformOptions: {},
       config: publish === undefined ? {} : { publish },
       appInfo: { version: "1.0.0", updaterCacheDirName: "test-app", channel: null },
@@ -267,7 +267,14 @@ describe("during the build", () => {
   ) {
     const appOutDir = path.dirname(await createAppDir(tmpDir, { "main.js": mainJs }))
     await writeFile(path.join(appOutDir, "resources", "app", "package.json"), "{}")
-    await afterPack({ packager, electronPlatformName: "linux", arch, appOutDir, outDir: appOutDir, targets: targets.map(it => ({ ...it, writesUpdateInfo: true })) })
+    await afterPack({
+      packager,
+      electronPlatformName: packager.platform.nodeName,
+      arch,
+      appOutDir,
+      outDir: appOutDir,
+      targets: targets.map(it => ({ ...it, writesUpdateInfo: true })),
+    })
     return pathExists(path.join(appOutDir, "resources", "app-update.yml"))
   }
 
@@ -283,7 +290,7 @@ describe("during the build", () => {
     expect(crossOriginWarnings()).toHaveLength(1)
   })
 
-  test("scans only the first pack of a build: every arch ships the same app code", async ({ expect, tmpDir }) => {
+  test("scans only the first pack of a platform: every arch ships the same app code", async ({ expect, tmpDir }) => {
     const crossOriginWarnings = spyWarnings()
     const afterPack = createManager(await createProject(tmpDir))
     const packager = makePlatformPackager({ provider: "generic", url: "https://example.com/updates" })
@@ -316,6 +323,18 @@ describe("during the build", () => {
     const afterPack = createManager(project)
     expect(await pack(tmpDir, afterPack, packager, Arch.x64, disallowed)).toBe(true)
     expect(await pack(tmpDir, afterPack, packager, Arch.arm64, disallowed, [{ name: "rpm", options: null }])).toBe(true)
+    expect(linuxPackagesWarnings()).toHaveLength(1)
+  })
+
+  test("scans each platform's own files: an rpm pack does not reuse the scan of the build's mac pack", async ({ expect, tmpDir }) => {
+    const linuxPackagesWarnings = spyLinuxPackagesWarnings()
+    const publish = { provider: "generic", url: "https://example.com/updates" }
+    const afterPack = createManager(await createProject(tmpDir))
+    // only the Linux files (e.g. linux.files) set it
+    expect(await pack(tmpDir, afterPack, makePlatformPackager(publish, Platform.MAC), Arch.arm64, assignment, [{ name: "zip", options: null }])).toBe(true)
+    expect(linuxPackagesWarnings()).toHaveLength(0)
+    const disallowed = assignment + "autoUpdater.allowUnverifiedLinuxPackages = false\n"
+    expect(await pack(tmpDir, afterPack, makePlatformPackager(publish), Arch.x64, disallowed, [{ name: "rpm", options: null }])).toBe(true)
     expect(linuxPackagesWarnings()).toHaveLength(1)
   })
 })

@@ -209,10 +209,10 @@ export class PublishManager implements PublishContext {
   private readonly updateFileWriteTask: Array<UpdateInfoFileTask> = []
 
   /**
-   * The scan of the first packed app of this build that ships app-update.yml and needs one, not one per arch or platform: every pack of
-   * the build ships the same app code. The warnings themselves are once per process.
+   * The scan of the first packed app of each platform of this build that ships app-update.yml and needs one, not one per arch: the archs
+   * of a platform ship the same app code, but platforms may not (platform-level `files`). The warnings themselves are once per process.
    */
-  private updaterSettingsScan: Promise<UpdaterSettingsMentions | null> | null = null
+  private readonly updaterSettingsScans = new Map<Platform, Promise<UpdaterSettingsMentions | null>>()
 
   constructor(
     private readonly packager: Packager,
@@ -272,7 +272,14 @@ export class PublishManager implements PublishContext {
       if (publishConfig != null) {
         const resourcesDir = packager.getResourcesDir(event.appOutDir)
         await writeAppUpdateYaml(resourcesDir, publishConfig, event.appOutDir)
-        await warnAboutUpdaterSettings(this.packager, manifestTargetNames.includes("rpm"), () => (this.updaterSettingsScan ??= findUpdaterSettingsMentions(resourcesDir)))
+        await warnAboutUpdaterSettings(this.packager, manifestTargetNames.includes("rpm"), () => {
+          let scan = this.updaterSettingsScans.get(packager.platform)
+          if (scan == null) {
+            scan = findUpdaterSettingsMentions(resourcesDir)
+            this.updaterSettingsScans.set(packager.platform, scan)
+          }
+          return scan
+        })
       }
     })
 
