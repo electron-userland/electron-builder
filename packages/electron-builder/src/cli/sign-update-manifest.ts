@@ -1,9 +1,16 @@
 import type { Configuration } from "app-builder-lib"
-import { checkUpdateSigningKeysTrusted, getConfig, normalizeExplicitPublicKeys, verifyUpdateManifestContent } from "app-builder-lib/internal"
-import { InvalidConfigurationError, loadUpdateSigningKeys, log, parsePrivateKey, parseUpdateManifestYaml, resignUpdateManifestYaml } from "builder-util"
-import { normalizePublicKeyList, parsePublicKey } from "builder-util-runtime"
+import {
+  checkUpdateSigningKeysTrusted,
+  compareListedFiles,
+  getConfig,
+  normalizeExplicitPublicKeys,
+  updateManifestPlatform,
+  verifyUpdateManifestContent,
+} from "app-builder-lib/internal"
+import { InvalidConfigurationError, loadUpdateSigningKeys, log, parsePrivateKey, parseUpdateManifestYaml, resignUpdateManifest } from "builder-util"
+import { hashFile, normalizePublicKeyList, parsePublicKey, UpdateInfo } from "builder-util-runtime"
 import chalk from "chalk"
-import { readFile, writeFile } from "fs/promises"
+import { readdir, readFile, stat, writeFile } from "fs/promises"
 import * as path from "path"
 import type { Argv } from "yargs"
 import { normalizeOptions } from "../builder.js"
@@ -35,6 +42,12 @@ export function configureSignUpdateManifestCommand(yargs: Argv) {
       description:
         "Only verify the existing signatures against the trust list in updateManifest.publicKey, as electron-builder verify does; nothing is written and no signing key is loaded",
     })
+    .option("rehash", {
+      type: "boolean",
+      description:
+        "Before signing, take the sha512 and size of every listed file from the file of the same name next to the manifest, for files a release step changed after the build (for example signed them again)",
+    })
+    .conflicts("rehash", "verify")
 }
 
 export interface SignUpdateManifestOptions {
@@ -44,6 +57,11 @@ export interface SignUpdateManifestOptions {
   readonly config?: string | Configuration | Array<string | Configuration> | null
   /** Check the existing signatures against `updateManifest.publicKey` instead of re-signing; nothing is written and no signing key is loaded. */
   readonly verify?: boolean
+  /**
+   * Before signing, take the sha512 and size of every `files` entry from the file of the same name next to the manifest, which must
+   * then hold every listed file. Without it, a listed file next to the manifest that does not match its entry fails the command.
+   */
+  readonly rehash?: boolean
   /** The project directory the configuration is loaded from; the current directory, like `publish`. */
   readonly projectDir?: string
 }
@@ -54,6 +72,7 @@ export function signUpdateManifestOptionsFromArgs(args: Record<string, unknown>)
     files: (args.files as Array<string> | undefined) ?? [],
     config: args.config as SignUpdateManifestOptions["config"],
     verify: args.verify as boolean | undefined,
+    rehash: args.rehash as boolean | undefined,
   }
 }
 
@@ -61,6 +80,8 @@ export interface SignedUpdateManifest {
   readonly file: string
   readonly version: string
   readonly keyIds: Array<string>
+  /** The listed files whose sha512 and size `rehash` took from the file next to the manifest, by url. */
+  readonly rehashed: Array<string>
 }
 
 export interface VerifiedUpdateManifest {
@@ -79,7 +100,7 @@ export interface VerifiedUpdateManifest {
   readonly reason?: string
 }
 
-type ManifestPlatform = "mac" | "win" | "linux"
+type ManifestPlatform = ReturnType<typeof updateManifestPlatform>
 const MANIFEST_PLATFORMS: ReadonlyArray<ManifestPlatform> = ["mac", "win", "linux"]
 
 /** A deep copy of an `updateManifest` value from the command line, which later configuration merging cannot change. */
@@ -90,10 +111,12 @@ function snapshotOf(value: unknown): unknown {
 /** `Platform.name` of each manifest platform, as the build names it in its messages. */
 const BUILD_PLATFORM_NAMES: Record<ManifestPlatform, string> = { mac: "mac", win: "windows", linux: "linux" }
 
+const RESIGN_DOCS = "https://www.electron.build/docs/features/signed-update-manifests#re-signing-a-published-manifest"
+
 const KEY_SOURCES_HINT =
   "Set updateManifest.signingKeyFile (or updateManifest.signingKey) in the electron-builder configuration, override it with -c.updateManifest.signingKeyFile=<path>, " +
   "or set ELECTRON_BUILDER_UPDATE_SIGN_KEY (the PEM file, base64-encoded on one line) or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path to the PEM file) — the same key(s) the build signs with. " +
-  "See https://www.electron.build/features/signed-update-manifests#re-signing-a-published-manifest"
+  `See ${RESIGN_DOCS}`
 
 /**
  * Backs `electron-builder sign-update-manifest`: re-signs existing `latest*.yml` files in place with the update signing
@@ -113,7 +136,7 @@ export async function signUpdateManifest(options: SignUpdateManifestOptions): Pr
   const projectDir = path.resolve(options.projectDir ?? process.cwd())
   const config = await loadProjectConfig(projectDir, options.config)
   const settings = new ManifestSigningSettings(config, projectDir, commandLine)
-  return options.verify === true ? verifyUpdateManifests(files, settings) : resignUpdateManifests(files, settings)
+  return options.verify === true ? verifyUpdateManifests(files, settings) : resignUpdateManifests(files, settings, options.rehash === true)
 }
 
 /**
@@ -201,18 +224,6 @@ class CommandLineOverrides {
   }
 }
 
-/** The platform whose build writes a manifest of this name: `<channel>-mac.yml`, `<channel>-linux[-<arch>].yml`, else Windows (`<channel>.yml`). */
-function manifestPlatform(file: string): ManifestPlatform {
-  const name = path.basename(file).toLowerCase()
-  if (/-mac\.ya?ml$/.test(name)) {
-    return "mac"
-  }
-  if (/-linux(-[a-z0-9_]+)?\.ya?ml$/.test(name)) {
-    return "linux"
-  }
-  return "win"
-}
-
 /** Per-platform signing keys and trust list, resolved from `<platform>.updateManifest ?? updateManifest` like PlatformPackager.updateManifestOptions. */
 class ManifestSigningSettings {
   private readonly signingKeys = new Map<ManifestPlatform, Array<string>>()
@@ -288,22 +299,95 @@ class ManifestSigningSettings {
   }
 }
 
-async function resignUpdateManifests(files: Array<string>, settings: ManifestSigningSettings): Promise<Array<SignedUpdateManifest>> {
+async function resignUpdateManifests(files: Array<string>, settings: ManifestSigningSettings, rehash: boolean): Promise<Array<SignedUpdateManifest>> {
   // sign every file before writing any, so a manifest that cannot be signed leaves all of them untouched
-  const signed: Array<{ file: string; result: ReturnType<typeof resignUpdateManifestYaml> }> = []
+  const signed: Array<{ file: string; result: ReturnType<typeof resignUpdateManifest>; rehashed: Array<string> }> = []
   for (const file of files) {
-    const keys = settings.requireSigningKeys(manifestPlatform(file), file)
-    signed.push({ file, result: resignUpdateManifestYaml(await readFile(file, "utf8"), keys, file) })
+    const keys = settings.requireSigningKeys(updateManifestPlatform(file), file)
+    const { info, rehashed } = await checkListedFiles(parseUpdateManifestYaml(await readFile(file, "utf8"), file), file, rehash)
+    signed.push({ file, result: resignUpdateManifest(info, keys, file), rehashed })
   }
   for (const { file, result } of signed) {
     await writeFile(file, result.content)
   }
 
-  return signed.map(({ file, result }) => {
+  return signed.map(({ file, result, rehashed }) => {
     const keyIds = result.signatures.map(it => it.keyId)
-    log.info({ file, version: result.info.version, keyIds }, "update manifest signed")
-    return { file, version: result.info.version, keyIds }
+    log.info({ file, version: result.info.version, keyIds, ...(rehashed.length > 0 ? { rehashed } : {}) }, "update manifest signed")
+    return { file, version: result.info.version, keyIds, rehashed }
   })
+}
+
+/** The regular files of a folder by name; a symlink is not followed, and a folder that cannot be read has none. */
+async function regularFilesIn(dir: string): Promise<Map<string, string>> {
+  const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
+  return new Map(entries.filter(it => it.isFile()).map(it => [it.name, path.join(dir, it.name)]))
+}
+
+/**
+ * Checks the files `info` lists against the files of the same name next to `manifestFile`, by the size and sha512 electron-updater checks
+ * a download against (its full download stops past the declared size, and a file whose sha512 differs is rejected), so that a manifest is
+ * never signed for files it does not describe. A listed file that is not next to the manifest (a manifest edited away from the build
+ * output) is not checked. With `rehash`, every `files` entry must be there and takes its sha512 and size from the file, as the build
+ * computes them, along with the deprecated top-level `sha512` (and Windows `sha2`) when `path` names it; an nsis-web `packages` entry
+ * declares the size of the block map embedded in its package, which cannot be recomputed here, so it must still match.
+ */
+async function checkListedFiles(info: UpdateInfo, manifestFile: string, rehash: boolean): Promise<{ info: UpdateInfo; rehashed: Array<string> }> {
+  // the manifest is not trusted to have the declared shape: validateSignedManifestShape reports a missing or malformed list when it is signed
+  const fileEntries: unknown = info.files
+  if (!Array.isArray(fileEntries)) {
+    return { info, rehashed: [] }
+  }
+  const filesByName = await regularFilesIn(path.dirname(manifestFile))
+  const hashes = new Map<string, Promise<string | null>>()
+  const compared = await compareListedFiles(info, filesByName, hashes)
+  const updated: Record<string, any> = { ...info, files: [...fileEntries] }
+  const rehashed: Array<string> = []
+
+  for (const [index, { entry, comparison }] of compared.entries()) {
+    const name = entry.location ?? `#${index + 1}`
+    if (!rehash || entry.field !== "files") {
+      if (comparison.status === "mismatch") {
+        const remedy =
+          entry.field === "files"
+            ? "When a release step changed the file after the build (for example signed it again), pass --rehash to take its sha512 and size from the file; otherwise restore the file the manifest was built with."
+            : "An nsis-web package declares the size of the block map embedded in it, which cannot be recomputed here: rebuild the package and its manifest."
+        throw new InvalidConfigurationError(
+          `Cannot sign ${manifestFile}: ${path.basename(comparison.file)} next to it does not match its ${entry.field} entry (${comparison.mismatched.join(", ")}). ` +
+            `electron-updater stops a full download past the declared size and rejects a file whose sha512 differs, so installs would reject this update. ${remedy} See ${RESIGN_DOCS}`
+        )
+      }
+      continue
+    }
+    if (comparison.status === "not found") {
+      throw new InvalidConfigurationError(
+        `Cannot sign ${manifestFile} with --rehash: the listed file ${name} is not a regular file next to it, so its sha512 and size cannot be taken from it. ` +
+          `Put the files the manifest lists next to it, or sign without --rehash. See ${RESIGN_DOCS}`
+      )
+    }
+    if (comparison.status === "matches") {
+      continue
+    }
+    const file = comparison.file
+    // memoized by compareListedFiles for an entry that declares a sha512
+    const sha512 = (await hashes.get(file)) ?? (await hashFile(file))
+    const { size } = await stat(file)
+    updated.files[index] = { ...(fileEntries[index] as Record<string, unknown>), sha512, size }
+    if (updated.path === entry.location && typeof updated.sha512 === "string") {
+      updated.sha512 = sha512
+      if (typeof updated.sha2 === "string") {
+        updated.sha2 = await hashFile(file, "sha256", "hex")
+      }
+    }
+    rehashed.push(name)
+    if (filesByName.has(`${path.basename(file)}.blockmap`)) {
+      log.warn(
+        { file: log.filePath(file) },
+        "the file changed after its .blockmap was written: differential updates to this release fall back to a full download until the block map is generated from this file"
+      )
+    }
+  }
+  return { info: updated as UpdateInfo, rehashed }
 }
 
 function readVersion(content: string, file: string): string | null {
@@ -323,7 +407,7 @@ function readVersion(content: string, file: string): string | null {
 async function verifyUpdateManifests(files: Array<string>, settings: ManifestSigningSettings): Promise<Array<VerifiedUpdateManifest>> {
   const results: Array<VerifiedUpdateManifest> = []
   for (const file of files) {
-    const policy = settings.verificationPolicy(manifestPlatform(file), file)
+    const policy = settings.verificationPolicy(updateManifestPlatform(file), file)
     const content = await readFile(file, "utf8")
     const version = readVersion(content, file)
     if (policy.optedOut) {

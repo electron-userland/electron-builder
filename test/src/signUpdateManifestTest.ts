@@ -1,7 +1,7 @@
 import * as fsp from "fs/promises"
 import * as path from "path"
-import { createUpdateManifestSignatures, generateUpdateSigningKeypair, InvalidConfigurationError, log, serializeToYaml } from "builder-util"
-import { canonicalizeForSigning, computeUpdateManifestKeyId, UpdateInfo, verifyManifestSignatures, WindowsUpdateInfo } from "builder-util-runtime"
+import { createUpdateManifestSignatures, generateUpdateSigningKeypair, InvalidConfigurationError, log, serializeToYaml, TmpDir } from "builder-util"
+import { canonicalizeForSigning, computeUpdateManifestKeyId, hashFile, UpdateInfo, verifyManifestSignatures, WindowsUpdateInfo } from "builder-util-runtime"
 import { verifyBuildOutput } from "app-builder-lib/internal"
 import { createYargs } from "electron-builder/src/builder"
 import {
@@ -161,7 +161,7 @@ test("re-signs an edited manifest with the env key so the runtime verifier accep
   expect(verifyError).toBeInstanceOf(InvalidConfigurationError)
   expect(verifyError!.message).toContain("1 of 1 update manifest(s) failed signature verification")
 
-  expect(await run(dir, [file])).toEqual([{ file, version: "1.2.3", keyIds: [currentId] }])
+  expect(await run(dir, [file])).toEqual([{ file, version: "1.2.3", keyIds: [currentId], rehashed: [] }])
   const resigned = await readManifest(file)
   expect(verifyManifestSignatures(resigned, [current.publicKeyPem])).toEqual({ ok: true, keyId: currentId })
   expect(resigned.stagingPercentage).toBe(25)
@@ -288,8 +288,8 @@ test("signs several manifests with the configured key files, and writes none whe
   expect(await fsp.readFile(win, "utf8")).toBe(winBefore)
 
   expect(await run(dir, [win, mac])).toEqual([
-    { file: win, version: "3.1.0", keyIds: [currentId, nextId] },
-    { file: mac, version: "3.1.0", keyIds: [currentId, nextId] },
+    { file: win, version: "3.1.0", keyIds: [currentId, nextId], rehashed: [] },
+    { file: mac, version: "3.1.0", keyIds: [currentId, nextId], rehashed: [] },
   ])
   for (const file of [win, mac]) {
     const info = await readManifest(file)
@@ -337,9 +337,9 @@ test("each manifest uses its platform's updateManifest settings, like the build"
   }
 
   expect(await run(dir, [win, mac, linux])).toEqual([
-    { file: win, version: "7.0.0", keyIds: [currentId] },
-    { file: mac, version: "7.0.0", keyIds: [nextId] },
-    { file: linux, version: "7.0.0", keyIds: [currentId] },
+    { file: win, version: "7.0.0", keyIds: [currentId], rehashed: [] },
+    { file: mac, version: "7.0.0", keyIds: [nextId], rehashed: [] },
+    { file: linux, version: "7.0.0", keyIds: [currentId], rehashed: [] },
   ])
   expect(await run(dir, [win, mac, linux, "--verify"])).toMatchObject([{ keyId: currentId }, { keyId: nextId }, { keyId: currentId }])
 })
@@ -478,7 +478,7 @@ test("--verify allows a cutover release signed outside the trust list only with 
   const file = path.join(dir, "latest.yml")
   await fsp.writeFile(file, serializeToYaml({ ...manifest("9.0.0", "App-Setup-9.0.0.exe"), stagingPercentage: 10 }))
   // re-signing it with the old key needs the same cutover allowance its build needed
-  expect(await run(dir, [file, "-c.updateManifest.allowSigningKeyOutsideTrustList=true"])).toEqual([{ file, version: "9.0.0", keyIds: [currentId] }])
+  expect(await run(dir, [file, "-c.updateManifest.allowSigningKeyOutsideTrustList=true"])).toEqual([{ file, version: "9.0.0", keyIds: [currentId], rehashed: [] }])
 
   const error = await rejection(run(dir, [file, "--verify"]))
   expect(error).toBeInstanceOf(InvalidConfigurationError)
@@ -583,10 +583,10 @@ test("re-signing refuses a signing key outside updateManifest.publicKey exactly 
   expect(winError!.message).toContain(`for windows. `)
 
   // a deliberate cutover release: allowed (the build only warns, once per process)
-  expect(await run(dir, [file, "-c.updateManifest.allowSigningKeyOutsideTrustList=true"])).toEqual([{ file, version: "10.0.0", keyIds: [currentId] }])
+  expect(await run(dir, [file, "-c.updateManifest.allowSigningKeyOutsideTrustList=true"])).toEqual([{ file, version: "10.0.0", keyIds: [currentId], rehashed: [] }])
 
   // a trusted signing key (one of the listed keys is enough, as in the build)
-  expect(await run(dir, [file, trust(next.publicKeyPem, current.publicKeyPem)])).toEqual([{ file, version: "10.0.0", keyIds: [currentId] }])
+  expect(await run(dir, [file, trust(next.publicKeyPem, current.publicKeyPem)])).toEqual([{ file, version: "10.0.0", keyIds: [currentId], rehashed: [] }])
 
   // no updateManifest.publicKey: the build derives the trust list from the signing keys, so there is nothing to refuse
   await fsp.writeFile(path.join(dir, "electron-builder.yml"), serializeToYaml({ updateManifest: { signingKeyFile: "keys/current.pem" } }))
@@ -694,4 +694,109 @@ test("--verify with a config file and repeated -c.updateManifest.publicKey flags
     expect(error).toBeInstanceOf(InvalidConfigurationError)
     expect(error!.message).toBe(`1 of 1 update manifest(s) failed signature verification: ${signedByConfiguredKey} (no trusted key validates any of its signatures)`)
   }
+})
+
+/** A project whose config signs with `current` and trusts it, with `App-Setup-1.0.0.exe` and a manifest built for it, signed. */
+async function createReleaseOutput(tmpDir: TmpDir) {
+  const dir = await tmpDir.getTempDir({ prefix: "sign-update-manifest" })
+  const config = { updateManifest: { signingKeyFile: "keys/update.pem", publicKey: current.publicKeyPem } }
+  await createProject(dir, config)
+  await writeKey(dir, "update.pem", current.privateKeyPem)
+  const installer = path.join(dir, "App-Setup-1.0.0.exe")
+  await fsp.writeFile(installer, "installer as built")
+  const built = await hashFile(installer)
+  const info: WindowsUpdateInfo = {
+    version: "1.0.0",
+    files: [{ url: "App-Setup-1.0.0.exe", sha512: built, size: (await fsp.stat(installer)).size }],
+    path: "App-Setup-1.0.0.exe",
+    sha512: built,
+    sha2: await hashFile(installer, "sha256", "hex"),
+    releaseDate: "2026-10-01T12:00:00.000Z",
+  }
+  const file = path.join(dir, "latest.yml")
+  await writeSigned(file, info, [current.privateKeyPem])
+  return { dir, config, installer, file }
+}
+
+test("re-signing refuses a manifest that does not describe a listed file next to it, and --rehash takes its sha512 and size from the file", async ({ expect, tmpDir }) => {
+  captureOutput()
+  const { dir, config, installer, file } = await createReleaseOutput(tmpDir)
+  // a matching file is signed as it is
+  expect(await run(dir, [file])).toEqual([{ file, version: "1.0.0", keyIds: [currentId], rehashed: [] }])
+
+  // a release step signs the installer again after the build: its bytes and size change
+  await fsp.writeFile(installer, "installer as built, signed again after the build")
+  const before = await fsp.readFile(file, "utf8")
+  const error = await rejection(run(dir, [file]))
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  expect(error!.message).toContain("App-Setup-1.0.0.exe next to it does not match its files entry (size, sha512)")
+  expect(error!.message).toContain("--rehash")
+  expect(await fsp.readFile(file, "utf8")).toBe(before)
+
+  expect(await run(dir, [file, "--rehash"])).toEqual([{ file, version: "1.0.0", keyIds: [currentId], rehashed: ["App-Setup-1.0.0.exe"] }])
+  const resigned = (await readManifest(file)) as WindowsUpdateInfo
+  const sha512 = await hashFile(installer)
+  expect(resigned.files).toEqual([{ url: "App-Setup-1.0.0.exe", sha512, size: (await fsp.stat(installer)).size }])
+  // the deprecated top-level descriptor of the same file follows it
+  expect(resigned.sha512).toBe(sha512)
+  expect(resigned.sha2).toBe(await hashFile(installer, "sha256", "hex"))
+  expect(resigned.releaseDate).toBe("2026-10-01T12:00:00.000Z")
+  expect(verifyManifestSignatures(resigned, [current.publicKeyPem])).toEqual({ ok: true, keyId: currentId })
+
+  // electron-builder verify accepts the output: the signature, and the sha512 and size of the listed file
+  const results = (await verifyBuildOutput({ outDir: dir, config })).filter(it => it.file === file || it.check === "update manifest file")
+  expect(results.map(it => [it.check, it.status])).toEqual([
+    ["update manifest signature", "verified"],
+    ["update manifest file", "verified"],
+  ])
+})
+
+test("--rehash needs every listed file as a regular file next to the manifest, and never changes an nsis-web package entry", async ({ expect, tmpDir }) => {
+  captureOutput()
+  const { dir, installer, file } = await createReleaseOutput(tmpDir)
+  const before = await fsp.readFile(file, "utf8")
+  await fsp.rm(installer)
+  // without --rehash, a manifest edited away from the files it lists is signed
+  await expect(run(dir, [file])).resolves.toMatchObject([{ rehashed: [] }])
+
+  const missing = await rejection(run(dir, [file, "--rehash"]))
+  expect(missing).toBeInstanceOf(InvalidConfigurationError)
+  expect(missing!.message).toContain("the listed file App-Setup-1.0.0.exe is not a regular file next to it")
+
+  // a symlink next to the manifest is not followed
+  if (process.platform !== "win32") {
+    const elsewhere = await tmpDir.getTempDir({ prefix: "elsewhere" })
+    await fsp.mkdir(elsewhere, { recursive: true })
+    await fsp.writeFile(path.join(elsewhere, "App-Setup-1.0.0.exe"), "some other file")
+    await fsp.symlink(path.join(elsewhere, "App-Setup-1.0.0.exe"), installer)
+    expect(await rejection(run(dir, [file, "--rehash"]))).toBeInstanceOf(InvalidConfigurationError)
+    await fsp.rm(installer)
+  }
+
+  // an nsis-web package declares the size of its embedded block map: a package that changed is refused, also with --rehash
+  await fsp.writeFile(file, before)
+  await fsp.writeFile(installer, "installer as built")
+  await fsp.writeFile(path.join(dir, "app-1.0.0-x64.nsis.7z"), "package changed after the build")
+  await editManifest(file, info => {
+    info.packages = { x64: { path: "app-1.0.0-x64.nsis.7z", sha512, size: 31, blockMapSize: 10 } }
+  })
+  for (const args of [[file], [file, "--rehash"]]) {
+    const error = await rejection(run(dir, args))
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error!.message).toContain("app-1.0.0-x64.nsis.7z next to it does not match its packages entry (sha512)")
+  }
+
+  // a manifest without a files list is refused by the shape check, with or without --rehash
+  await editManifest(file, info => {
+    delete info.files
+    delete info.packages
+  })
+  for (const args of [[file], [file, "--rehash"]]) {
+    const error = await rejection(run(dir, args))
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error!.message).toContain(`Cannot sign ${file}:`)
+  }
+
+  // --rehash signs, so it cannot be combined with --verify
+  expect(() => parseCli([file, "--rehash", "--verify"])).toThrow(/mutually exclusive/)
 })

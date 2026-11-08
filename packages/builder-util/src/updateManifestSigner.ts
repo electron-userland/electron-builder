@@ -237,18 +237,18 @@ export function parseUpdateManifestYaml(content: string, file: string): UpdateIn
 }
 
 /**
- * Re-signs the text of an existing `latest*.yml` (backing the `sign-update-manifest` CLI command): drops its
+ * Re-signs an existing `latest*.yml`, parsed with {@link parseUpdateManifestYaml} (backing the `sign-update-manifest` CLI command): drops its
  * `signature`/`signatures` fields, checks the shape the updater requires of a signed manifest
  * ({@link validateSignedManifestShape}), signs it with every key, and serializes it the way a build writes it —
  * every other field kept as parsed and in its order, `signature` (first key) and `signatures` (one entry per key) last.
  * Throws an InvalidConfigurationError naming `file` when the manifest cannot be signed; never includes key material.
  */
-export function resignUpdateManifestYaml(
-  content: string,
+export function resignUpdateManifest(
+  manifest: UpdateInfo,
   privateKeys: Array<string | KeyObject>,
   file: string
 ): { content: string; info: UpdateInfo; signatures: Array<UpdateManifestSignature> } {
-  const fields: Record<string, unknown> = { ...parseUpdateManifestYaml(content, file) }
+  const fields: Record<string, unknown> = { ...manifest }
   delete fields.signature
   delete fields.signatures
   const unsigned = fields as unknown as UpdateInfo

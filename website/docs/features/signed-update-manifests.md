@@ -217,6 +217,79 @@ npx electron-builder sign-update-manifest latest.yml --verify "-c.updateManifest
 
 Upload the re-signed file to the update feed afterwards; the command does not publish.
 
+### After a file changed {#re-signing-after-a-file-changed}
+
+The signature covers each listed file's `sha512` and `size`, and electron-updater checks a download against both: a full download stops once it receives more bytes than the declared size, and a file whose `sha512` differs is rejected. A release step that changes an artifact after the build — signing a Linux package with its distribution's tools, or signing a Windows installer again — therefore needs a manifest that describes the changed file, signed again. `sign-update-manifest` checks every listed file it finds next to the manifest (by the file name in its `url`, regular files only, never through a symlink) and refuses to sign a manifest whose `sha512` or `size` does not match the file. Pass `--rehash` to take the `sha512` and `size` of every `files` entry from the file instead; every listed file then has to be next to the manifest. Then check the whole output:
+
+```sh
+npx electron-builder sign-update-manifest dist/latest-linux.yml --rehash
+npx electron-builder verify dist
+```
+
+`--rehash` also updates the deprecated top-level `sha512` (and Windows `sha2`) that the build writes for old electron-updater versions. It does not write block maps: a file with a `.blockmap` next to it is downloaded in full by installs updating to this release until the block map is generated from the changed file (a warning names it). An nsis-web `packages` entry declares the size of the block map embedded in its package, which is not recomputed, so a package that changed after the build has to be rebuilt.
+
+### Without electron-builder {#re-signing-without-electron-builder}
+
+A release step that has no electron-builder project at hand can do the same with a short Node.js script, using `builder-util-runtime` (the version that comes with the electron-builder that built the release) and `js-yaml`. It takes the `sha512` and `size` of every listed file from the file next to the manifest, checks the manifest the way the updater does, and signs it with the key file(s) named in `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`, the variable the build reads; it never looks for a key anywhere else. Make any other edit, such as `stagingPercentage`, in the file before running it:
+
+```js
+// resign-update-manifest.mjs — usage: ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=update-private-key.pem node resign-update-manifest.mjs dist/latest.yml
+import { createHash, createPrivateKey, sign } from "node:crypto"
+import { createReadStream, lstatSync, readFileSync, writeFileSync } from "node:fs"
+import { basename, delimiter, dirname, join } from "node:path"
+import { canonicalizeForSigning, createManifestSignatureEntry, validateSignedManifestShape } from "builder-util-runtime"
+import { dump, load } from "js-yaml"
+
+// every key the release was signed with, in the same order: PEM files separated by ":" (";" on Windows), one key per file
+const keyFiles = (process.env.ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE ?? "").split(delimiter).map(it => it.trim()).filter(it => it.length > 0)
+const [file] = process.argv.slice(2)
+if (file == null || keyFiles.length === 0) {
+  throw new Error("usage: ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=update-private-key.pem node resign-update-manifest.mjs dist/latest.yml")
+}
+
+async function digest(path, algorithm, encoding) {
+  const hash = createHash(algorithm)
+  for await (const chunk of createReadStream(path)) {
+    hash.update(chunk)
+  }
+  return hash.digest(encoding)
+}
+
+const info = load(readFileSync(file, "utf8"))
+delete info.signature
+delete info.signatures
+// every listed file, from the file of the same name next to the manifest (never through a symlink)
+for (const entry of info.files ?? []) {
+  const local = join(dirname(file), basename(String(entry.url).split(/[?#]/)[0]))
+  const stats = lstatSync(local)
+  if (!stats.isFile()) {
+    throw new Error(`${local} is not a regular file`)
+  }
+  entry.sha512 = await digest(local, "sha512", "base64")
+  entry.size = stats.size
+  // the deprecated top-level descriptor, when the build wrote one for this file
+  if (info.path === entry.url && info.sha512 != null) {
+    info.sha512 = entry.sha512
+    if (info.sha2 != null) {
+      info.sha2 = await digest(local, "sha256", "hex")
+    }
+  }
+}
+const problem = validateSignedManifestShape(info)
+if (problem != null) {
+  throw new Error(`${file} cannot be signed: ${problem}`)
+}
+
+const payload = Buffer.from(canonicalizeForSigning(info), "utf8")
+const keys = keyFiles.map(keyFile => createPrivateKey(readFileSync(keyFile)))
+const signatures = keys.map(key => createManifestSignatureEntry(key, sign(null, payload, key).toString("base64")))
+info.signature = signatures[0].signature
+info.signatures = signatures
+writeFileSync(file, dump(info, { lineWidth: -1, noRefs: true }))
+```
+
+Before uploading, run [`electron-builder verify`](../cli.md#verify) on the output from the project directory (`npx electron-builder verify dist`): it checks the new signature against the trust list and the `sha512` and `size` of every listed file against the artifacts. The script leaves nsis-web `packages` entries and block maps as they are, as `--rehash` does.
+
 ## Verification behavior in electron-updater
 
 When at least one public key is configured (embedded or set at runtime), verification is enforced on every update check, for every provider. The manifest is accepted when **any trusted key validates any of its signatures** (`signatures` entries tagged with that key's id are tried first, then the untagged legacy `signature`):

@@ -467,31 +467,9 @@ To set or change the percentage of a signed release, sign `latest.yml` again wit
 npx electron-builder sign-update-manifest dist/latest.yml
 ```
 
-Where electron-builder cannot run, a short Node.js script does the same with `canonicalizeForSigning` from `builder-util-runtime` (the version that comes with the electron-builder that built the release) and `js-yaml`:
+Where electron-builder cannot run, the script in [Re-signing without electron-builder](./signed-update-manifests.md#re-signing-without-electron-builder) signs it with the same key(s); it takes the `sha512` and `size` of every listed file from the release's files, so run it where they are next to `latest.yml`.
 
-```js
-// set-staging-percentage.mjs — usage: node set-staging-percentage.mjs dist/latest.yml 10
-import { readFileSync, writeFileSync } from "node:fs"
-import { createPrivateKey, sign } from "node:crypto"
-import { canonicalizeForSigning, createManifestSignatureEntry } from "builder-util-runtime"
-import { dump, load } from "js-yaml"
-
-const [file, value = ""] = process.argv.slice(2)
-const percentage = value.trim() === "" ? NaN : Number(value)
-if (!Number.isFinite(percentage) || percentage < 0 || percentage > 100) {
-  throw new Error(`stagingPercentage must be a number from 0 to 100, got "${value}"`)
-}
-const info = load(readFileSync(file, "utf8"))
-info.stagingPercentage = percentage
-const payload = Buffer.from(canonicalizeForSigning(info), "utf8")
-// every key the release was signed with, in the same order (one PEM file per key)
-const keys = ["update-private-key.pem"].map(keyFile => createPrivateKey(readFileSync(keyFile)))
-info.signatures = keys.map(key => createManifestSignatureEntry(key, sign(null, payload, key).toString("base64")))
-info.signature = info.signatures[0].signature
-writeFileSync(file, dump(info, { lineWidth: -1 }))
-```
-
-Then upload the signed `latest.yml`. While the build output is still at hand, [`electron-builder verify`](../cli.md#verify) checks it against the key the packaged app embeds.
+Then upload the signed `latest.yml`. While the build output is still at hand, [`electron-builder verify`](../cli.md#verify) checks it against the key the packaged app embeds, and the files it lists against the artifacts.
 
 If you want to pull a staged release because it hasn't gone well, you **must** increment the version number higher than your broken release.
 Because some of your users will be on the broken 1.0.1, releasing a new 1.0.1 would result in them staying on a broken version.
