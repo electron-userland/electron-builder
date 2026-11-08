@@ -65,6 +65,7 @@ import { PlatformPackager } from "../platformPackager.js"
 import { missingUpdatePublisherNameError, validatePublisherNameFormat } from "../codeSign/win/publisherName.js"
 import { WinPackager } from "../winPackager.js"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
+import { warnIfCrossOriginHeadersNotMentioned } from "./crossOriginHeadersCheck.js"
 import { resolveModule } from "../util/resolve.js"
 import { parseUrl } from "../util/pathManager.js"
 import { isPublishForPullRequest } from "../util/flags.js"
@@ -207,6 +208,12 @@ export class PublishManager implements PublishContext {
 
   private readonly updateFileWriteTask: Array<UpdateInfoFileTask> = []
 
+  /**
+   * Scans the first packed app of this build that ships app-update.yml, not one per arch: every pack of the build ships the same app
+   * code. The warning itself is once per process.
+   */
+  private crossOriginHeadersCheck: Promise<void> | null = null
+
   constructor(
     private readonly packager: Packager,
     private readonly publishOptions: PublishOptions,
@@ -263,7 +270,10 @@ export class PublishManager implements PublishContext {
       }
       const publishConfig = await createAppUpdateConfiguration(packager, publishConfigs, this.isPublish, false)
       if (publishConfig != null) {
-        await writeAppUpdateYaml(packager.getResourcesDir(event.appOutDir), publishConfig, event.appOutDir)
+        const resourcesDir = packager.getResourcesDir(event.appOutDir)
+        await writeAppUpdateYaml(resourcesDir, publishConfig, event.appOutDir)
+        this.crossOriginHeadersCheck ??= warnIfCrossOriginHeadersNotMentioned(this.packager, resourcesDir)
+        await this.crossOriginHeadersCheck
       }
     })
 
