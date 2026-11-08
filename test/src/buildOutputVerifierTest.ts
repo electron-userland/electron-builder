@@ -49,8 +49,8 @@ async function writeArtifact(dir: string, name: string, url = name, content = `t
 }
 
 /** Writes a manifest the way updateInfoBuilder does, signed by `signWith` (unsigned when empty). */
-async function writeManifest(file: string, files: Array<any>, signWith: Array<string> = [keyA.privateKeyPem]): Promise<void> {
-  const info: any = { version: "1.0.0", files, releaseDate: "2026-10-24T00:00:00.000Z" }
+async function writeManifest(file: string, files: Array<any>, signWith: Array<string> = [keyA.privateKeyPem], extra: Record<string, any> = {}): Promise<void> {
+  const info: any = { version: "1.0.0", files, releaseDate: "2026-10-24T00:00:00.000Z", ...extra }
   let manifest = info
   if (signWith.length > 0) {
     const signatures = createUpdateManifestSignatures(info, signWith.map(parsePrivateKey))
@@ -250,6 +250,18 @@ describe("manifests of a target with its own folder", () => {
     expect(nested.map(it => it.status)).toEqual(["failed"])
   })
 
+  test("a changed file is named from the target folder, not by a file of the same name in the output folder", async ({ expect, tmpDir }) => {
+    const outDir = await tmpDir.createTempDir()
+    const nsisWeb = path.join(outDir, "nsis-web")
+    const installer = await writeArtifact(nsisWeb, "Setup.exe")
+    await writeArtifact(outDir, "Setup.exe", "Setup.exe", "another installer")
+    await writeManifest(path.join(nsisWeb, "latest.yml"), [{ ...installer, sha512: "bWlzc2luZw==" }])
+    const results = await run(outDir)
+    expect(results.find(it => it.check === "update manifest file")?.message).toBe(
+      `${path.join("nsis-web", "Setup.exe")} was changed after the manifest was written: its sha512 differs from what Setup.exe declares`
+    )
+  })
+
   test.skipIf(process.platform === "win32")("a symlink to a folder outside the output is not followed", async ({ expect, tmpDir }) => {
     const outDir = await tmpDir.createTempDir()
     const { nsisWeb } = await writeNsisWebOutput(outDir)
@@ -278,8 +290,69 @@ describe("update manifest files", () => {
     await writeManifest(path.join(outDir, "latest-linux.yml"), [await writeArtifact(outDir, "My-1.0.0.AppImage"), { url: "My-1.0.0.deb", sha512: "bWlzc2luZw==", size: 7 }])
     await writeFile(path.join(outDir, "My-1.0.0.AppImage"), "the artifact My-1.0.0.AppImagE")
     const results = await run(outDir)
-    expect(resultsOf(results, "update manifest file")).toEqual(["failed", "failed"])
-    expect(results.find(it => it.check === "update manifest file")?.message).toContain("it is missing, or it was changed after the manifest was written")
+    expect(results.filter(it => it.check === "update manifest file").map(it => [it.status, it.message])).toEqual([
+      ["failed", "My-1.0.0.AppImage was changed after the manifest was written: its sha512 differs from what My-1.0.0.AppImage declares"],
+      ["failed", "no artifact matches the sha512 and size of My-1.0.0.deb: it is missing, or it was changed after the manifest was written"],
+    ])
+  })
+
+  test("a file of the same name with the declared sha512 but another size shows that the manifest's size is stale", async ({ expect, tmpDir }) => {
+    const outDir = await tmpDir.createTempDir()
+    await writeLinuxApp(outDir, [keyA.publicKeyPem])
+    const appImage = await writeArtifact(outDir, "My-1.0.0.AppImage")
+    const deb = await writeArtifact(outDir, "My-1.0.0.deb")
+    await writeManifest(path.join(outDir, "latest-linux.yml"), [
+      { ...appImage, size: appImage.size + 1 },
+      { ...deb, size: deb.size + 1, sha512: "bWlzc2luZw==" },
+    ])
+    const results = await run(outDir)
+    expect(results.filter(it => it.check === "update manifest file").map(it => [it.status, it.message])).toEqual([
+      ["failed", expect.stringMatching(/^My-1\.0\.0\.AppImage has the sha512 My-1\.0\.0\.AppImage declares, but not its size: the manifest's size is stale/)],
+      ["failed", "My-1.0.0.deb was changed after the manifest was written: its size and sha512 differ from what My-1.0.0.deb declares"],
+    ])
+  })
+
+  test("include the nsis-web packages, matched by their sha512 and size", async ({ expect, tmpDir }) => {
+    const outDir = await tmpDir.createTempDir()
+    const nsisWeb = path.join(outDir, "nsis-web")
+    const installer = await writeArtifact(nsisWeb, "My Web Setup 1.0.0.exe", "My-Web-Setup-1.0.0.exe")
+    const x64 = await writeArtifact(nsisWeb, "my-1.0.0-x64.nsis.7z")
+    const arm64 = await writeArtifact(nsisWeb, "my-1.0.0-arm64.nsis.7z")
+    const packages = {
+      x64: { path: x64.url, sha512: x64.sha512, size: x64.size },
+      arm64: { path: arm64.url, sha512: arm64.sha512, size: arm64.size + 1 },
+      ia32: { path: "gone.nsis.7z" },
+    }
+    // unsigned: a signer refuses a package without sha512, which the file checks report on their own
+    await writeManifest(path.join(nsisWeb, "latest.yml"), [installer], [], { packages })
+    const results = await run(outDir)
+    expect(results.filter(it => it.check === "update manifest file").map(it => [it.status, it.message])).toEqual([
+      ["verified", `My-Web-Setup-1.0.0.exe matches ${path.join("nsis-web", "My Web Setup 1.0.0.exe")}`],
+      ["verified", `my-1.0.0-x64.nsis.7z matches ${path.join("nsis-web", "my-1.0.0-x64.nsis.7z")}`],
+      ["failed", expect.stringContaining("has the sha512 my-1.0.0-arm64.nsis.7z declares, but not its size")],
+      ["failed", "packages entry gone.nsis.7z has no sha512"],
+    ])
+  })
+})
+
+describe("update manifest YAML", () => {
+  test("a manifest with YAML aliases fails, as does a .yml that is not valid YAML, without quoting its content", async ({ expect, tmpDir }) => {
+    const outDir = await tmpDir.createTempDir()
+    const { sha512, size } = await writeArtifact(outDir, "My-1.0.0.AppImage")
+    await write(
+      path.join(outDir, "latest-linux.yml"),
+      `version: 1.0.0\nreleaseNotes: &notes "notes"\nreleaseName: *notes\nfiles:\n  - url: My-1.0.0.AppImage\n    sha512: ${sha512}\n    size: ${size}\n`
+    )
+    await write(path.join(outDir, "beta-linux.yml"), "version: 1.0.0\nfiles: [secret-content\n")
+    // no aliases: an "&" or "*" inside a string is not one
+    await writeManifest(path.join(outDir, "latest-mac.yml"), [{ url: "x.zip", sha512, size }], [keyA.privateKeyPem], { releaseNotes: "a & b *c*" })
+    const results = (await run(outDir)).filter(it => it.check === "update manifest YAML")
+    expect(results.map(it => [path.basename(it.file), it.status])).toEqual([
+      ["beta-linux.yml", "failed"],
+      ["latest-linux.yml", "failed"],
+    ])
+    expect(results[0].message).not.toContain("secret-content")
+    expect(results[1].message).toContain("uses YAML aliases")
   })
 })
 

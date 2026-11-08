@@ -35,6 +35,8 @@ function createAfterPack(publish: "always" | "never" = "never") {
   const packager = {
     projectDir: __dirname,
     config: {},
+    // no electron-updater: the app-update.yml hook does not scan the app for autoUpdater.crossOriginHeaders
+    metadata: {},
     onTargetsCreated: () => {
       // ignore
     },

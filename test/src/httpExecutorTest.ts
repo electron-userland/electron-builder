@@ -1378,6 +1378,8 @@ describe("urlWithoutQuery", () => {
     ["https://user:secret@feed.example.com:8443/updates/latest.yml?token=secret", "https://feed.example.com:8443/updates/latest.yml"],
     ["app-1.1.0.exe?sig=secret", "app-1.1.0.exe"],
     ["/updates/app.exe?token=secret", "/updates/app.exe"],
+    ["app Setup 1.0.0.exe#token=secret", "app Setup 1.0.0.exe"],
+    ["app.exe", "app.exe"],
   ])("%s is named %s", (url, expected) => {
     expect(urlWithoutQuery(url)).toBe(expected)
     if (url.includes("://")) {
