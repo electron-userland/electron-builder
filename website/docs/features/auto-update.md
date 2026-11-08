@@ -322,6 +322,8 @@ The update manifest (`latest*.yml`) itself **is** cryptographically signed and v
 
 A channel file (`latest*.yml`) larger than 10 MiB fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`: it is read into memory and parsed before the manifest signature is verified. Release feeds and provider API responses (such as the GitHub releases feed or a list of releases) are not limited, since their size grows with the release history. To allow larger channel files, set `maxUpdateInfoSize` (in bytes) in the `publish` configuration, which electron-builder writes into `app-update.yml` so installed apps use it, or `autoUpdater.maxUpdateInfoSize` in the app, which overrides it. Both take a positive integer, or `0` for no limit.
 
+A full download of an update file (installer, zip, Linux package or web package) stops with `ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED` as soon as it receives more bytes than the `size` the manifest declares for that file. A file without a numeric `size` in the manifest is not limited. electron-builder writes the `size` of the files it generates, except for an NSIS installer built with `nsis.differentialPackage: false` and the `nsis-web` installer itself (its package has a `size`).
+
 Changing a signing key or certificate that installs in the field already trust requires a transition release — see [Key Rotation](./key-rotation.md).
 
 The downloaded update waits in the updater's `pending` cache directory, which the user can write to, until it is installed. Right before the installer or package is started (on quit, by `quitAndInstall()`, `install()` / `installAsync()`, or the install on next launch), NSIS, AppImage, deb, rpm and pacman updaters hash it again and compare it with the SHA-512 of the update info it was verified against, which is kept in memory and never read back from that directory. For an NSIS web installer, the web package is checked as well. NSIS also verifies the installer's signature again before `quitAndInstall()`, `installAsync()` or the install on next launch start it. The install on quit and the synchronous `install()` cannot wait for that check, so they rely on the hash, which ties the installer to the file whose signature was verified in this session. An installer cached by an earlier launch therefore has its signature verified again before it is reused. If a check fails, the update is not installed. The updater removes it, so the next update check downloads it again, and emits an `error`: `ERR_UPDATER_UPDATE_FILE_CHANGED` when the file changed, `ERR_UPDATER_INVALID_SIGNATURE` when the signature is rejected.
@@ -364,16 +366,35 @@ With `allowInsecureFeed`, a server's authentication challenge on a request that 
 
 ### `allowUnverifiedLinuxPackages` (defaults to `true`) {#allowunverifiedlinuxpackages}
 
-`AppUpdater.allowUnverifiedLinuxPackages` (default **`true`**) controls GPG signature enforcement when installing `.deb` / `.rpm` auto-updates. Because electron-builder does not sign Linux packages itself, the default is permissive; set it to **`false`** to enforce signature checks where the package manager supports them:
+`AppUpdater.allowUnverifiedLinuxPackages` (default **`true`**) controls GPG signature enforcement when installing `.rpm` auto-updates. Because electron-builder does not sign Linux packages itself, the default is permissive; if you sign your rpm packages, set it to **`false`** to have `dnf`/`yum` and `zypper` verify their signature (a bare `rpm` install cannot enforce it and logs a warning):
 
 ```ts
 import { autoUpdater } from "electron-updater"
 autoUpdater.allowUnverifiedLinuxPackages = false
 ```
 
+It does not verify a `.deb`: `apt` checks no signature on a local `.deb` file (with `false` it only refuses dependencies from unauthenticated repositories), and `dpkg` checks none at all. The updater logs a warning when the flag is `false` for a deb update.
+
+### Linux update authenticity
+
+electron-updater installs what `latest-linux.yml` describes once the download matches its `sha512`. When the app embeds an update manifest public key (`updateManifestPublicKey` in `app-update.yml`, or set at runtime), that key is the trust anchor: a manifest it does not verify is rejected. Without a key (an app built with `updateManifest: false`, or an older build), verification is skipped with a warning and the feed — the first provider in `app-update.yml`, or the URL passed to `setFeedURL` — is the trust anchor; the `sha512` comes from the same feed, so whoever can change the files on the feed can serve an update with a matching checksum. Signed update manifests are required by default at build time, and electron-updater enforces them whenever the app embeds a key. What makes a Linux update authentic is a [signed update manifest](./signed-update-manifests.md), not a package-manager flag:
+
+- **AppImage** has no package signature check at all.
+- **deb** gets no package-level signature check, whatever `allowUnverifiedLinuxPackages` is set to (see above).
+- **rpm** is verified by `dnf`/`yum` and `zypper` only if you sign your packages and set `allowUnverifiedLinuxPackages = false`. Your signing key must then be imported into the rpm keyring on the target system (`rpm --import`), or the update fails to install.
+- **pacman** gets no package-level signature check: `pacman -U` is given no `.sig` file, so under the default `LocalFileSigLevel` nothing is checked. `allowUnverifiedLinuxPackages` has no effect on it.
+
+To add a package-level check of your own for AppImage, deb or pacman updates, verify the downloaded file in [`verifyUpdateFile`](#custom-downloaded-file-verification).
+
+Keep signed update manifests on for Linux apps (don't set `updateManifest: false`), and serve the feed over `https`: electron-updater rejects plain `http` update requests unless [`allowInsecureFeed`](#allowinsecurefeed) is set, and over `http` only a signed manifest protects the update.
+
+Don't pre-authorize the update install. deb, rpm and pacman updates are installed as root through an elevation helper such as `pkexec` or `sudo`, which asks the user to authenticate. A polkit rule or a sudoers `NOPASSWD` entry that skips that prompt for the package manager lets any process running as the user install any package as root, not only electron-updater with your update.
+
 ### `autoUpdater.crossOriginHeaders` {#crossoriginheaders}
 
 `autoUpdater.crossOriginHeaders` decides the request headers sent on each request and redirect to another origin than the update feed: a redirect to another origin (such as a feed that redirects to a CDN), a download or channel file (`latest*.yml`) on another origin, the blockmaps and differential range requests of such a download and their redirects, and a private GitHub release asset or GitLab release link on another origin. It is required: set it before the first check, and before the app is `ready` when an update can be installed at [the next launch](#install-on-next-launch-windowslinux).
+
+A build that writes `app-update.yml` for an app that ships `electron-updater` warns when no file of the app (in `app.asar` or the app directory, not in `node_modules`) contains the string `crossOriginHeaders`. An app that bundles `electron-updater` into its own JavaScript contains that string anyway, so the build stays quiet for it; the check only catches an app that never mentions the property. If a dependency sets it for the app, check for updates once from a packaged build to confirm.
 
 ```typescript
 crossOriginHeaders: CrossOriginHeadersCallback | null // null by default
@@ -524,12 +545,14 @@ How this compares with per-version delta packages (Squirrel, Velopack): those fr
 
 electron-updater also downloads through small gaps between changed ranges (copy gaps below 8 KiB are fetched rather than copied, saving one request per gap on hosts such as GitHub or S3 that serve a single range per request) and never puts more than 200 ranges into one `multipart/byteranges` request (Apache's default `MaxRanges`).
 
-A block map may be at most 1/16 of the update's size, no less than 8 MiB and no more than 64 MiB (64 MiB when the update's size is not known); a `"v2"` map, or one embedded in an artifact, is measured unzipped. With a larger map, or a `"v3"` map that describes a file of another size than the update, the update is downloaded in full.
+A block map may be at most 1/16 of the update's size, no less than 8 MiB and no more than 64 MiB (64 MiB when the update's size is not known); a `"v2"` map, or one embedded in an artifact, is measured unzipped, and a block map's download stops as soon as it passes the limit. With a larger map, or a `"v3"` map that describes a file of another size than the update, the update is downloaded in full.
 
 ## Private GitHub Update Repo
 
 You can use a private repository for updates with electron-updater by setting the `GH_TOKEN` environment variable (on user machine) and `private` option.
 If `GH_TOKEN` is set, electron-updater will use the GitHub API for updates allowing private repositories to work.
+
+Don't put the token in the `publish` configuration. Every option of the provider that becomes the feed is written in plain text to `app-update.yml` inside the packaged app (see [which settings become the auto-update feed](../publish.md#app-update-yml-feed)), where anyone with a copy of the app can read it. Set `private: true` and provide `GH_TOKEN` (or `GITHUB_TOKEN`) on the user's machine, or pass the token with `setFeedURL({ provider: "github", owner, repo, token })`. A token hard-coded in the app's code and passed to `setFeedURL` is as easy to extract as one in `app-update.yml`: a token provided at runtime has to be a per-user secret, such as one your server issues to a signed-in user.
 
 
 :::warning

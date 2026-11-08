@@ -18,6 +18,11 @@ const require = createRequire(import.meta.url ?? process.execPath)
 /** How much of a failed command's stderr goes into the error message, at most: its end, where the error is. */
 const STDERR_MESSAGE_BYTES = 8 * 1024
 
+/** Ends every ERR_UPDATER_WEB_INSTALLER_DISABLED message: how to opt in. */
+export const WEB_INSTALLER_DISABLED_HINT =
+  "Set autoUpdater.disableWebInstaller to false to allow web-installer updates. " +
+  "See https://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true"
+
 /**
  * The command line a shell runs for `cmd` and `args`. Given `shell: true` and an argv array, Node joins them with spaces
  * and warns (DEP0190) that nothing is escaped; passing the joined line itself runs exactly the same command, without the
@@ -552,7 +557,9 @@ export abstract class BaseUpdater extends AppUpdater {
 
     if (fileInfo.packageInfo != null && this.disableWebInstaller) {
       await downloadedUpdateHelper.clearPendingInstallMarker(this.log)
-      this.dispatchError(newError(`Unable to install pending update ${latestInfo.version}. Web Installers are disabled`, "ERR_UPDATER_WEB_INSTALLER_DISABLED"))
+      this.dispatchError(
+        newError(`Unable to install pending update ${latestInfo.version}. Web Installers are disabled. ${WEB_INSTALLER_DISABLED_HINT}`, "ERR_UPDATER_WEB_INSTALLER_DISABLED")
+      )
       return false
     }
 
