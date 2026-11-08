@@ -12,7 +12,7 @@ import { InvalidConfigurationError, isPathWithin, loadUpdateSigningKeys, log, pa
 import { hashFile, normalizePublicKeyList, parsePublicKey, UpdateInfo } from "builder-util-runtime"
 import chalk from "chalk"
 import { constants as fsConstants } from "fs"
-import { lstat, open, readdir, readFile, stat } from "fs/promises"
+import { lstat, open, readdir, readFile, stat, writeFile } from "fs/promises"
 import * as path from "path"
 import type { Argv } from "yargs"
 import { normalizeOptions } from "../builder.js"
@@ -354,11 +354,17 @@ async function requireRegularFile(file: string): Promise<void> {
 }
 
 /**
- * Overwrites a manifest checked by {@link requireRegularFile}. Opened without following a symlink (O_NOFOLLOW, where the platform has it),
- * so a manifest replaced by a symlink after the check fails to open (ELOOP) rather than overwriting the link's target.
+ * Overwrites a manifest checked by {@link requireRegularFile}. Outside Windows it is opened with O_NOFOLLOW, so a manifest replaced by a
+ * symlink after the check fails to open (ELOOP) rather than overwriting the link's target. On Windows, where Node has no O_NOFOLLOW and
+ * an open of the manifest with numeric flags failed with EINVAL in CI (which flag libuv rejected there was not established), it is written
+ * like any other file, after the same lstat check.
  */
 async function writeManifestInPlace(file: string, content: string): Promise<void> {
-  const handle = await open(file, fsConstants.O_WRONLY | fsConstants.O_TRUNC | (fsConstants.O_NOFOLLOW ?? 0))
+  if (process.platform === "win32") {
+    await writeFile(file, content)
+    return
+  }
+  const handle = await open(file, fsConstants.O_WRONLY | fsConstants.O_TRUNC | fsConstants.O_NOFOLLOW)
   try {
     await handle.writeFile(content)
   } finally {
