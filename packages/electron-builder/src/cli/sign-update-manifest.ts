@@ -1,16 +1,18 @@
 import type { Configuration } from "app-builder-lib"
 import {
   checkUpdateSigningKeysTrusted,
-  compareListedFiles,
+  compareListedFilesInOutput,
   getConfig,
+  listedFileFolders,
   normalizeExplicitPublicKeys,
   updateManifestPlatform,
   verifyUpdateManifestContent,
 } from "app-builder-lib/internal"
-import { InvalidConfigurationError, loadUpdateSigningKeys, log, parsePrivateKey, parseUpdateManifestYaml, resignUpdateManifest } from "builder-util"
+import { InvalidConfigurationError, isPathWithin, loadUpdateSigningKeys, log, parsePrivateKey, parseUpdateManifestYaml, resignUpdateManifest } from "builder-util"
 import { hashFile, normalizePublicKeyList, parsePublicKey, UpdateInfo } from "builder-util-runtime"
 import chalk from "chalk"
-import { readdir, readFile, stat, writeFile } from "fs/promises"
+import { constants as fsConstants } from "fs"
+import { lstat, open, readdir, readFile, stat } from "fs/promises"
 import * as path from "path"
 import type { Argv } from "yargs"
 import { normalizeOptions } from "../builder.js"
@@ -45,7 +47,7 @@ export function configureSignUpdateManifestCommand(yargs: Argv) {
     .option("rehash", {
       type: "boolean",
       description:
-        "Before signing, take the sha512 and size of every listed file from the file of the same name next to the manifest, for files a release step changed after the build (for example signed them again)",
+        "Before signing, take the sha512 and size of every listed file from the local file (next to the manifest or in the build output folder, as electron-builder verify finds it), for files a release step changed after the build (for example signed them again)",
     })
     .conflicts("rehash", "verify")
 }
@@ -58,8 +60,9 @@ export interface SignUpdateManifestOptions {
   /** Check the existing signatures against `updateManifest.publicKey` instead of re-signing; nothing is written and no signing key is loaded. */
   readonly verify?: boolean
   /**
-   * Before signing, take the sha512 and size of every `files` entry from the file of the same name next to the manifest, which must
-   * then hold every listed file. Without it, a listed file next to the manifest that does not match its entry fails the command.
+   * Before signing, take the sha512 and size of every `files` entry from the local file, found next to the manifest or in the build output
+   * folder as `electron-builder verify` finds it, which must then hold every listed file. Without it, a listed file found there that does
+   * not match its entry fails the command.
    */
   readonly rehash?: boolean
   /** The project directory the configuration is loaded from; the current directory, like `publish`. */
@@ -80,7 +83,7 @@ export interface SignedUpdateManifest {
   readonly file: string
   readonly version: string
   readonly keyIds: Array<string>
-  /** The listed files whose sha512 and size `rehash` took from the file next to the manifest, by url. */
+  /** The listed files whose sha512 and size `rehash` took from the local file, by url. */
   readonly rehashed: Array<string>
 }
 
@@ -234,6 +237,24 @@ class ManifestSigningSettings {
     private readonly commandLine: CommandLineOverrides
   ) {}
 
+  /**
+   * The build output folder the files `manifestFile` lists are looked for in, as `electron-builder verify` looks for them:
+   * `directories.output` (`dist` by default) when the manifest is inside it, so the artifacts of a further provider's
+   * `dist/<provider>/latest.yml` are found in `dist/`; otherwise (a manifest copied elsewhere, or an output folder named with a macro,
+   * which is not expanded here) the manifest's own folder.
+   */
+  outputFolder(manifestFile: string): string {
+    // getConfig sets the default
+    const output = this.config.directories?.output
+    if (typeof output === "string") {
+      const outDir = path.resolve(this.projectDir, output)
+      if (isPathWithin(outDir, path.dirname(manifestFile))) {
+        return outDir
+      }
+    }
+    return path.dirname(manifestFile)
+  }
+
   private options(platform: ManifestPlatform): { value: Configuration["updateManifest"]; field: string } {
     const platformValue = (this.config as any)[platform]?.updateManifest
     return platformValue != null ? { value: platformValue, field: `${platform}.updateManifest` } : { value: this.config.updateManifest ?? null, field: "updateManifest" }
@@ -304,11 +325,12 @@ async function resignUpdateManifests(files: Array<string>, settings: ManifestSig
   const signed: Array<{ file: string; result: ReturnType<typeof resignUpdateManifest>; rehashed: Array<string> }> = []
   for (const file of files) {
     const keys = settings.requireSigningKeys(updateManifestPlatform(file), file)
-    const { info, rehashed } = await checkListedFiles(parseUpdateManifestYaml(await readFile(file, "utf8"), file), file, rehash)
+    await requireRegularFile(file)
+    const { info, rehashed } = await checkListedFiles(parseUpdateManifestYaml(await readFile(file, "utf8"), file), file, settings.outputFolder(file), rehash)
     signed.push({ file, result: resignUpdateManifest(info, keys, file), rehashed })
   }
   for (const { file, result } of signed) {
-    await writeFile(file, result.content)
+    await writeManifestInPlace(file, result.content)
   }
 
   return signed.map(({ file, result, rehashed }) => {
@@ -318,29 +340,60 @@ async function resignUpdateManifests(files: Array<string>, settings: ManifestSig
   })
 }
 
-/** The regular files of a folder by name; a symlink is not followed, and a folder that cannot be read has none. */
-async function regularFilesIn(dir: string): Promise<Map<string, string>> {
-  const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
-  return new Map(entries.filter(it => it.isFile()).map(it => [it.name, path.join(dir, it.name)]))
+/**
+ * Refuses a manifest that is not a regular file, before anything is signed: it is rewritten in place, so a symlink (not followed here)
+ * would have its target overwritten — a target that may be outside the project, for a manifest in a copied or downloaded tree.
+ */
+async function requireRegularFile(file: string): Promise<void> {
+  const stats = await lstat(file)
+  if (!stats.isFile()) {
+    throw new InvalidConfigurationError(
+      `Cannot sign ${file}: ${stats.isSymbolicLink() ? "it is a symlink, and the manifest is rewritten in place, which would overwrite the link's target. Sign the file itself" : "it is not a regular file"}.`
+    )
+  }
 }
 
 /**
- * Checks the files `info` lists against the files of the same name next to `manifestFile`, by the size and sha512 electron-updater checks
- * a download against (its full download stops past the declared size, and a file whose sha512 differs is rejected), so that a manifest is
- * never signed for files it does not describe. A listed file that is not next to the manifest (a manifest edited away from the build
- * output) is not checked. With `rehash`, every `files` entry must be there and takes its sha512 and size from the file, as the build
+ * Overwrites a manifest checked by {@link requireRegularFile}. Opened without following a symlink (O_NOFOLLOW, where the platform has it),
+ * so a manifest replaced by a symlink after the check fails to open (ELOOP) rather than overwriting the link's target.
+ */
+async function writeManifestInPlace(file: string, content: string): Promise<void> {
+  const handle = await open(file, fsConstants.O_WRONLY | fsConstants.O_TRUNC | (fsConstants.O_NOFOLLOW ?? 0))
+  try {
+    await handle.writeFile(content)
+  } finally {
+    await handle.close()
+  }
+}
+
+/** The regular files of the folders, in order; a symlink is not followed, and a folder that cannot be read has none. */
+async function regularFilesIn(dirs: ReadonlyArray<string>): Promise<Array<string>> {
+  const files: Array<string> = []
+  for (const dir of dirs) {
+    const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
+    files.push(...entries.filter(it => it.isFile()).map(it => path.join(dir, it.name)))
+  }
+  return files
+}
+
+/**
+ * Checks the files `info` lists against the local files, by the size and sha512 electron-updater checks a download against (its full
+ * download stops past the declared size, and a file whose sha512 differs is rejected), so that a manifest is never signed for files it does
+ * not describe. Listed files are looked for as `electron-builder verify` looks for them (compareListedFilesInOutput): in the manifest's
+ * folder, its target folder and `outDir`, by name or by GitHub safe name. Rehashed files are only read. A listed file that is not found
+ * (a manifest edited away from the build output) is not checked. With `rehash`, every `files` entry must be found and takes its sha512 and size from the file, as the build
  * computes them, along with the deprecated top-level `sha512` (and Windows `sha2`) when `path` names it; an nsis-web `packages` entry
  * declares the size of the block map embedded in its package, which cannot be recomputed here, so it must still match.
  */
-async function checkListedFiles(info: UpdateInfo, manifestFile: string, rehash: boolean): Promise<{ info: UpdateInfo; rehashed: Array<string> }> {
+async function checkListedFiles(info: UpdateInfo, manifestFile: string, outDir: string, rehash: boolean): Promise<{ info: UpdateInfo; rehashed: Array<string> }> {
   // the manifest is not trusted to have the declared shape: validateSignedManifestShape reports a missing or malformed list when it is signed
   const fileEntries: unknown = info.files
   if (!Array.isArray(fileEntries)) {
     return { info, rehashed: [] }
   }
-  const filesByName = await regularFilesIn(path.dirname(manifestFile))
+  const localFiles = await regularFilesIn(listedFileFolders(manifestFile, outDir))
   const hashes = new Map<string, Promise<string | null>>()
-  const compared = await compareListedFiles(info, filesByName, hashes)
+  const compared = await compareListedFilesInOutput(info, manifestFile, outDir, localFiles, hashes)
   const updated: Record<string, any> = { ...info, files: [...fileEntries] }
   const rehashed: Array<string> = []
 
@@ -353,7 +406,7 @@ async function checkListedFiles(info: UpdateInfo, manifestFile: string, rehash: 
             ? "When a release step changed the file after the build (for example signed it again), pass --rehash to take its sha512 and size from the file; otherwise restore the file the manifest was built with."
             : "An nsis-web package declares the size of the block map embedded in it, which cannot be recomputed here: rebuild the package and its manifest."
         throw new InvalidConfigurationError(
-          `Cannot sign ${manifestFile}: ${path.basename(comparison.file)} next to it does not match its ${entry.field} entry (${comparison.mismatched.join(", ")}). ` +
+          `Cannot sign ${manifestFile}: ${path.relative(path.dirname(manifestFile), comparison.file)} does not match its ${entry.field} entry (${comparison.mismatched.join(", ")}). ` +
             `electron-updater stops a full download past the declared size and rejects a file whose sha512 differs, so installs would reject this update. ${remedy} See ${RESIGN_DOCS}`
         )
       }
@@ -361,8 +414,8 @@ async function checkListedFiles(info: UpdateInfo, manifestFile: string, rehash: 
     }
     if (comparison.status === "not found") {
       throw new InvalidConfigurationError(
-        `Cannot sign ${manifestFile} with --rehash: the listed file ${name} is not a regular file next to it, so its sha512 and size cannot be taken from it. ` +
-          `Put the files the manifest lists next to it, or sign without --rehash. See ${RESIGN_DOCS}`
+        `Cannot sign ${manifestFile} with --rehash: the listed file ${name} is not a regular file in ${listedFileFolders(manifestFile, outDir).join(" or ")}, so its sha512 and size cannot be taken from it. ` +
+          `Put the files the manifest lists there (the build output folder, directories.output, is searched when the manifest is inside it), or sign without --rehash. See ${RESIGN_DOCS}`
       )
     }
     if (comparison.status === "matches") {
@@ -380,7 +433,7 @@ async function checkListedFiles(info: UpdateInfo, manifestFile: string, rehash: 
       }
     }
     rehashed.push(name)
-    if (filesByName.has(`${path.basename(file)}.blockmap`)) {
+    if (localFiles.includes(`${file}.blockmap`)) {
       log.warn(
         { file: log.filePath(file) },
         "the file changed after its .blockmap was written: differential updates to this release fall back to a full download until the block map is generated from this file"

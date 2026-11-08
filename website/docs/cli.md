@@ -89,10 +89,10 @@ electron-builder sign-update-manifest latest.yml latest-mac.yml                 
 electron-builder sign-update-manifest latest.yml -c electron-builder.release.yml      # a different config file
 electron-builder sign-update-manifest latest.yml -c.updateManifest.signingKeyFile=k.pem # override one setting
 electron-builder sign-update-manifest latest.yml --verify                             # check against updateManifest.publicKey; nothing is written
-electron-builder sign-update-manifest dist/latest-linux.yml --rehash                  # take sha512 and size from the files next to it, then sign
+electron-builder sign-update-manifest dist/latest-linux.yml --rehash                  # take sha512 and size from the listed files, then sign
 ```
 
-A listed file next to the manifest whose `sha512` or `size` does not match its entry makes the command fail; `--rehash` takes both from the file, for an artifact a release step changed after the build. See [Re-signing after a file changed](./features/signed-update-manifests.md#re-signing-after-a-file-changed).
+A listed file whose `sha512` or `size` does not match its entry makes the command fail (files are looked for next to the manifest and in the build output folder, as `verify` looks for them); `--rehash` takes both from the file, for an artifact a release step changed after the build. See [Re-signing after a file changed](./features/signed-update-manifests.md#re-signing-after-a-file-changed).
 
 `--verify` runs the manifest check of [`verify`](#verify) on the given files only, against `updateManifest.publicKey`, and never loads a signing key; use `verify` for the whole build output.
 

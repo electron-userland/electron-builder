@@ -113,6 +113,47 @@ export async function compareListedFiles(
 }
 
 /**
+ * The folders the files listed by `manifestFile` are looked for in, closest first, as the build writes them: the manifest's own folder,
+ * the folder of its target (`<outDir>/nsis-web/`, also for a further provider's `<outDir>/nsis-web/<provider>/latest.yml`), and the
+ * output folder (the artifacts of a further provider's `<outDir>/<provider>/latest.yml`).
+ */
+export function listedFileFolders(manifestFile: string, outDir: string): Array<string> {
+  const parts = path.relative(outDir, manifestFile).split(path.sep)
+  const targetDir = parts.length > 1 ? path.join(outDir, parts[0]) : outDir
+  return [...new Set([path.dirname(manifestFile), targetDir, outDir])]
+}
+
+/**
+ * {@link compareListedFiles} for a manifest in a build output folder: each listed file is the file of its name in the
+ * {@link listedFileFolders} (the closest wins), else the file whose GitHub safe name it is (spaces replaced by `-`, as
+ * computeSafeArtifactNameIfNeeded makes it), else any of them with the declared size and sha512. `files` are the regular files to consider;
+ * those outside the listed-file folders, manifests and block maps are ignored.
+ */
+export function compareListedFilesInOutput(
+  info: UpdateInfo,
+  manifestFile: string,
+  outDir: string,
+  files: ReadonlyArray<string>,
+  hashes: Map<string, Promise<string | null>>
+): ReturnType<typeof compareListedFiles> {
+  const dirs = listedFileFolders(manifestFile, outDir)
+  const candidates = files.filter(it => dirs.includes(path.dirname(it)) && !/\.(ya?ml|blockmap)$/.test(it))
+  // a file of the same name tells which value is stale; the closest one wins, and an exact name wins over a safe name
+  const candidatesByName = new Map<string, string>()
+  for (const nameOf of [(name: string) => name, (name: string) => name.replace(/ /g, "-")]) {
+    for (const dir of dirs) {
+      for (const candidate of candidates) {
+        const name = nameOf(path.basename(candidate))
+        if (path.dirname(candidate) === dir && !candidatesByName.has(name)) {
+          candidatesByName.set(name, candidate)
+        }
+      }
+    }
+  }
+  return compareListedFiles(info, candidatesByName, hashes, candidates)
+}
+
+/**
  * The platform of an update manifest, by its file name: `latest-mac.yml`, `beta-linux-arm64.yml`, or `latest.yml` (Windows). What
  * `/-mac\.ya?ml$/` and then `/-linux(-[^.]+)?\.ya?ml$/` match, parsed in linear time: the second pattern backtracks polynomially on
  * a name with many `-linux` (the name comes from the output folder or the command line).

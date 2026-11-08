@@ -729,7 +729,7 @@ test("re-signing refuses a manifest that does not describe a listed file next to
   const before = await fsp.readFile(file, "utf8")
   const error = await rejection(run(dir, [file]))
   expect(error).toBeInstanceOf(InvalidConfigurationError)
-  expect(error!.message).toContain("App-Setup-1.0.0.exe next to it does not match its files entry (size, sha512)")
+  expect(error!.message).toContain(`Cannot sign ${file}: App-Setup-1.0.0.exe does not match its files entry (size, sha512)`)
   expect(error!.message).toContain("--rehash")
   expect(await fsp.readFile(file, "utf8")).toBe(before)
 
@@ -751,6 +751,130 @@ test("re-signing refuses a manifest that does not describe a listed file next to
   ])
 })
 
+/**
+ * A project with the default output folder (`dist`) holding `artifactName` as built, and `manifest` (relative to `dist`) listing it as `url`,
+ * signed: the layouts the build writes for a GitHub safe name and for a further publish provider.
+ */
+async function createDistOutput(tmpDir: TmpDir, artifactName: string, manifest: string, url: string) {
+  const dir = await tmpDir.getTempDir({ prefix: "sign-update-manifest" })
+  const config = { updateManifest: { signingKeyFile: "keys/update.pem", publicKey: current.publicKeyPem } }
+  await createProject(dir, config)
+  await writeKey(dir, "update.pem", current.privateKeyPem)
+  const outDir = path.join(dir, "dist")
+  const file = path.join(outDir, manifest)
+  await fsp.mkdir(path.dirname(file), { recursive: true })
+  const artifact = path.join(outDir, artifactName)
+  await fsp.writeFile(artifact, "installer as built")
+  const built = await hashFile(artifact)
+  const info: WindowsUpdateInfo = {
+    version: "1.0.0",
+    files: [{ url, sha512: built, size: (await fsp.stat(artifact)).size }],
+    path: url,
+    sha512: built,
+    releaseDate: "2026-10-01T12:00:00.000Z",
+  }
+  await writeSigned(file, info, [current.privateKeyPem])
+  return { dir, config, outDir, artifact, file }
+}
+
+for (const layout of [
+  // GitHub lists the safe artifact name (spaces replaced by "-", computeSafeArtifactNameIfNeeded), the file keeps its own name
+  { title: "a GitHub safe name", artifactName: "My App Setup 1.0.0.exe", manifest: "latest.yml", url: "My-App-Setup-1.0.0.exe", shown: "My App Setup 1.0.0.exe" },
+  // a further publish provider's manifest is written to dist/<provider>/, its artifacts stay in dist/
+  {
+    title: "a further provider's manifest in dist/<provider>/",
+    artifactName: "App-Setup-1.0.0.exe",
+    manifest: "s3/latest.yml",
+    url: "App-Setup-1.0.0.exe",
+    shown: path.join("..", "App-Setup-1.0.0.exe"),
+  },
+]) {
+  test(`listed files are found as electron-builder verify finds them: ${layout.title}`, async ({ expect, tmpDir }) => {
+    captureOutput()
+    const { dir, config, outDir, artifact, file } = await createDistOutput(tmpDir, layout.artifactName, layout.manifest, layout.url)
+    // the file as built matches, so it is signed as it is, also with --rehash
+    expect(await run(dir, [file])).toEqual([{ file, version: "1.0.0", keyIds: [currentId], rehashed: [] }])
+    expect(await run(dir, [file, "--rehash"])).toEqual([{ file, version: "1.0.0", keyIds: [currentId], rehashed: [] }])
+
+    // changed after the build: found under its local name, so the mismatch is refused rather than signed
+    await fsp.writeFile(artifact, "installer as built, signed again after the build")
+    const before = await fsp.readFile(file, "utf8")
+    const error = await rejection(run(dir, [file]))
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error!.message).toContain(`Cannot sign ${file}: ${layout.shown} does not match its files entry (size, sha512)`)
+    expect(await fsp.readFile(file, "utf8")).toBe(before)
+
+    // ...and --rehash takes the sha512 and size from that file, keeping the listed url
+    expect(await run(dir, [file, "--rehash"])).toEqual([{ file, version: "1.0.0", keyIds: [currentId], rehashed: [layout.url] }])
+    const resigned = (await readManifest(file)) as WindowsUpdateInfo
+    const sha512 = await hashFile(artifact)
+    expect(resigned.files).toEqual([{ url: layout.url, sha512, size: (await fsp.stat(artifact)).size }])
+    expect(resigned.sha512).toBe(sha512)
+    expect(await fsp.readFile(artifact, "utf8")).toBe("installer as built, signed again after the build")
+
+    // electron-builder verify agrees on the re-signed output
+    const results = (await verifyBuildOutput({ outDir, config })).filter(it => it.file === file)
+    expect(results.map(it => [it.check, it.status])).toEqual([
+      ["update manifest signature", "verified"],
+      ["update manifest file", "verified"],
+    ])
+  })
+}
+
+test("a manifest outside the build output folder is checked against the files next to it only", async ({ expect, tmpDir }) => {
+  captureOutput()
+  const { dir, artifact, file } = await createDistOutput(tmpDir, "App-Setup-1.0.0.exe", "latest.yml", "App-Setup-1.0.0.exe")
+  await fsp.writeFile(artifact, "installer as built, signed again after the build")
+  const copied = path.join(dir, "release", "latest.yml")
+  await fsp.mkdir(path.dirname(copied), { recursive: true })
+  await fsp.copyFile(file, copied)
+  // dist/ is not searched for a manifest outside it, so the changed artifact is not found: signed as it is, and --rehash needs the file
+  expect(await run(dir, [copied])).toMatchObject([{ rehashed: [] }])
+  const missing = await rejection(run(dir, [copied, "--rehash"]))
+  expect(missing!.message).toContain(`the listed file App-Setup-1.0.0.exe is not a regular file in ${path.dirname(copied)},`)
+})
+
+test("re-signing refuses a manifest that is a symlink or not a file, writing nothing, and never writes a listed file", async ({ expect, tmpDir }) => {
+  captureOutput()
+  const { dir, installer, file } = await createReleaseOutput(tmpDir)
+  const target = path.join(await tmpDir.getTempDir({ prefix: "symlink-target" }), "latest.yml")
+  await fsp.mkdir(path.dirname(target), { recursive: true })
+  await fsp.copyFile(file, target)
+  await editManifest(target, info => (info.stagingPercentage = 10))
+  const targetBefore = await fsp.readFile(target, "utf8")
+  const fileBefore = await fsp.readFile(file, "utf8")
+
+  if (process.platform !== "win32") {
+    const link = path.join(dir, "beta.yml")
+    await fsp.symlink(target, link)
+    for (const args of [
+      [file, link],
+      [link, "--rehash"],
+    ]) {
+      const error = await rejection(run(dir, args))
+      expect(error).toBeInstanceOf(InvalidConfigurationError)
+      expect(error!.message).toBe(`Cannot sign ${link}: it is a symlink, and the manifest is rewritten in place, which would overwrite the link's target. Sign the file itself.`)
+    }
+    expect(await fsp.readFile(target, "utf8")).toBe(targetBefore)
+    // every manifest is checked before any is written
+    expect(await fsp.readFile(file, "utf8")).toBe(fileBefore)
+  }
+
+  const folder = path.join(dir, "folder.yml")
+  await fsp.mkdir(folder)
+  const error = await rejection(run(dir, [folder]))
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  expect(error!.message).toBe(`Cannot sign ${folder}: it is not a regular file.`)
+
+  // a rehashed file is only read
+  const installerBefore = await fsp.stat(installer)
+  await fsp.appendFile(installer, ", signed again")
+  const changed = await fsp.readFile(installer, "utf8")
+  await run(dir, [file, "--rehash"])
+  expect(await fsp.readFile(installer, "utf8")).toBe(changed)
+  expect((await fsp.stat(installer)).ino).toBe(installerBefore.ino)
+})
+
 test("--rehash needs every listed file as a regular file next to the manifest, and never changes an nsis-web package entry", async ({ expect, tmpDir }) => {
   captureOutput()
   const { dir, installer, file } = await createReleaseOutput(tmpDir)
@@ -761,7 +885,7 @@ test("--rehash needs every listed file as a regular file next to the manifest, a
 
   const missing = await rejection(run(dir, [file, "--rehash"]))
   expect(missing).toBeInstanceOf(InvalidConfigurationError)
-  expect(missing!.message).toContain("the listed file App-Setup-1.0.0.exe is not a regular file next to it")
+  expect(missing!.message).toContain(`the listed file App-Setup-1.0.0.exe is not a regular file in ${dir},`)
 
   // a symlink next to the manifest is not followed
   if (process.platform !== "win32") {
@@ -783,7 +907,7 @@ test("--rehash needs every listed file as a regular file next to the manifest, a
   for (const args of [[file], [file, "--rehash"]]) {
     const error = await rejection(run(dir, args))
     expect(error).toBeInstanceOf(InvalidConfigurationError)
-    expect(error!.message).toContain("app-1.0.0-x64.nsis.7z next to it does not match its packages entry (sha512)")
+    expect(error!.message).toContain("app-1.0.0-x64.nsis.7z does not match its packages entry (sha512)")
   }
 
   // a manifest without a files list is refused by the shape check, with or without --rehash
