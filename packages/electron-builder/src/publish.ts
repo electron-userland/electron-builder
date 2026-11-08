@@ -2,7 +2,7 @@
 
 import { fileURLToPath } from "node:url"
 import { AppInfo, CancellationToken, Packager, PackagerOptions, PublishManager, PublishOptions, UploadTask, checkBuildRequestOptions } from "app-builder-lib"
-import { Publish, checkUpdateManifestBeforeUpload, computeSafeArtifactNameIfNeeded, getConfig } from "app-builder-lib/internal"
+import { Publish, checkUpdateManifestBeforeUpload, computeSafeArtifactNameIfNeeded, getConfig, warnAboutUpdateFilesBeforeUpload } from "app-builder-lib/internal"
 import { Executables, InvalidConfigurationError, archFromString, log, printErrorAndExit } from "builder-util"
 import type { PublishPolicy } from "electron-publish"
 import chalk from "chalk"
@@ -101,6 +101,8 @@ export async function publishPackageWithTasks(
   packager: Packager = new Packager(options, cancellationToken)
 ) {
   await packager.validateConfig()
+  // only warns, before the checks that can fail the command, so that its warnings are shown either way
+  await warnAboutUpdateFilesBeforeUpload(uploadTasks)
   // every update manifest is checked before anything is uploaded, as a build checks it before writing it; outside the upload's
   // error handling, so that a manifest that fails the check fails the command
   for (const { file } of uploadTasks) {
