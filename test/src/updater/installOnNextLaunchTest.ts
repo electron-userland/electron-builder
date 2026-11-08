@@ -295,7 +295,11 @@ describe("install on next launch", { concurrent: false }, () => {
       const download = (updater as any).executeDownload({
         fileExtension: "deb",
         fileInfo,
-        downloadUpdateOptions: { updateInfoAndProvider: { info: updateInfo, provider: { feedBaseUrl: null } }, cancellationToken: new CancellationToken(), requestHeaders: {} },
+        downloadUpdateOptions: {
+          updateInfoAndProvider: { info: updateInfo, provider: { feedBaseUrl: new URL("https://example.com/") } },
+          cancellationToken: new CancellationToken(),
+          requestHeaders: {},
+        },
         task: () => Promise.reject(new Error("the cached update must not be downloaded again")),
       })
       await isVerifying
@@ -649,7 +653,14 @@ describe("install on next launch", { concurrent: false }, () => {
       expect(updater.disableWebInstaller).toBe(true)
 
       await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
-      expect(errors).toEqual([expect.objectContaining({ code: "ERR_UPDATER_WEB_INSTALLER_DISABLED" })])
+      expect(errors).toEqual([
+        expect.objectContaining({
+          code: "ERR_UPDATER_WEB_INSTALLER_DISABLED",
+          message:
+            "Unable to install pending update 1.0.1. Web Installers are disabled. Set autoUpdater.disableWebInstaller to false to allow web-installer updates. " +
+            "See https://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true",
+        }),
+      ])
       expect(doInstall).not.toHaveBeenCalled()
       expect(await helper.getPendingInstallInfo()).toBeNull()
     })

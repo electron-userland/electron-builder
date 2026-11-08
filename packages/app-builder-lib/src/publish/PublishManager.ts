@@ -22,12 +22,14 @@ import {
   githubTagPrefix,
   githubUrl,
   GitlabOptions,
+  isLoopbackHostname,
   isValidMaxUpdateInfoSize,
   KeygenOptions,
   normalizePublicKeyList,
   Nullish,
   PublishConfiguration,
   PublishProvider,
+  S3Options,
   SnapStoreOptions,
 } from "builder-util-runtime"
 import type { KeyObject } from "crypto"
@@ -63,6 +65,7 @@ import { PlatformPackager } from "../platformPackager.js"
 import { missingUpdatePublisherNameError, validatePublisherNameFormat } from "../codeSign/win/publisherName.js"
 import { WinPackager } from "../winPackager.js"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
+import { warnIfCrossOriginHeadersNotMentioned } from "./crossOriginHeadersCheck.js"
 import { resolveModule } from "../util/resolve.js"
 import { parseUrl } from "../util/pathManager.js"
 import { isPublishForPullRequest } from "../util/flags.js"
@@ -87,10 +90,11 @@ function checkOptions(publishPolicy: any) {
 }
 
 /**
- * electron-updater 7 adds the query string of a generic feed url (typically a token), like the credential headers, only to
- * downloads on the feed's origin. An app whose latest*.yml points downloads at another origin that relies on that query gets
- * 401/403 at update time, inside a shipped app, with nothing at build time saying why — `migrate-schema` prints the same advisory,
- * but cannot be relied on to have been run. Only the query parameter names are logged, never the url or the values.
+ * electron-updater adds the query string of a generic feed url (typically a token) only to requests on the feed's origin, and sends
+ * another origin only the request headers the app's `autoUpdater.crossOriginHeaders` keeps. An app whose latest*.yml points downloads at
+ * another origin that relies on that query gets 401/403 at update time, inside a shipped app, with nothing at build time saying why —
+ * `migrate-schema` prints a similar advisory, but cannot be relied on to have been run. Only the query parameter names are logged,
+ * never the url or the values.
  *
  * @internal exported for tests
  */
@@ -105,13 +109,63 @@ export function warnAboutGenericFeedQuery(publishConfig: PublishConfiguration): 
   log.once(`generic-feed-query:${url!.slice(0, queryStart)}`).warn(
     {
       queryParameters: queryParameters.length === 0 ? "(none)" : queryParameters.join(", "),
-      solution: "serve the update files from the feed origin (relative files[].url, the default) or use pre-signed URLs",
+      solution:
+        "serve the update files from the feed origin (relative files[].url, the default), use pre-signed URLs, or send the credential as a request header " +
+        "(requestHeaders / addAuthHeader) that the app's autoUpdater.crossOriginHeaders keeps for the origin that needs it",
     },
-    "the generic publish url has a query string. electron-updater 7 (electron-builder v27) adds it, and sends the credential headers from requestHeaders / addAuthHeader, " +
-      "only to downloads on the feed's origin (scheme, host and port): a download url in latest*.yml on another origin is requested without them. " +
-      "Nothing changes for the relative URLs electron-builder writes. " +
+    "the generic publish url has a query string. electron-updater adds the feed url's query string only to requests on the feed's origin (scheme, host and port), " +
+      "such as the channel file and the relative download URLs electron-builder writes: a URL on another origin, such as an absolute download url in latest*.yml, " +
+      "keeps its own query string and is requested without the feed's. The request headers from requestHeaders / addAuthHeader go to every request on the feed's origin, " +
+      "and to a request or redirect to another origin only the ones the app's autoUpdater.crossOriginHeaders keeps for it. " +
       "See https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
   )
+}
+
+/**
+ * electron-updater rejects an update request over plain http to a host that is not loopback (`ERR_UPDATER_INSECURE_FEED`) unless
+ * the app sets `allowInsecureFeed`: a feed in app-update.yml that uses http (a generic or custom `url`, a github `protocol: "http"`,
+ * an s3 `endpoint`) fails every update check of the shipped app. The build succeeds (the app may opt in); only the feed origin
+ * is logged, never its path, query or user info.
+ *
+ * @internal exported for tests
+ */
+export function warnAboutInsecureFeed(publishConfig: PublishConfiguration): void {
+  let url: unknown
+  if (publishConfig.provider === "generic" || publishConfig.provider === "custom") {
+    url = (publishConfig as GenericServerOptions).url
+  } else if (publishConfig.provider === "github") {
+    // electron-updater requests the release feed and the GitHub API with this protocol
+    const options = publishConfig as GithubOptions
+    url = options.protocol === "http" ? githubUrl(options) : null
+  } else if (publishConfig.provider === "s3") {
+    // electron-updater reads the bucket through the endpoint, unless accelerate selects the (https) accelerated endpoint
+    const options = publishConfig as S3Options
+    url = options.accelerate === true ? null : options.endpoint
+  } else {
+    return
+  }
+  if (typeof url !== "string") {
+    return
+  }
+  let feed: URL
+  try {
+    feed = new URL(url)
+  } catch {
+    return
+  }
+  if (feed.protocol !== "http:" || isLoopbackHostname(feed.hostname)) {
+    return
+  }
+  const origin = `${feed.protocol}//${feed.host}`
+  // once per feed origin per process — app-update.yml is written for every pack
+  log
+    .once(`insecure-feed:${origin}`)
+    .warn(
+      { feed: origin, solution: "serve the updates over https; for a test server, set autoUpdater.allowInsecureFeed = !app.isPackaged in the app (dev runs only)" },
+      "the update feed written to app-update.yml uses plain http. electron-updater rejects every update request over http to a host " +
+        "that is not loopback (localhost, 127.0.0.0/8, ::1) with ERR_UPDATER_INSECURE_FEED, unless the app sets autoUpdater.allowInsecureFeed (meant for dev runs: autoUpdater.allowInsecureFeed = !app.isPackaged). " +
+        "See https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https"
+    )
 }
 
 /**
@@ -153,6 +207,12 @@ export class PublishManager implements PublishContext {
   readonly progress = (process.stdout as TtyWriteStream).isTTY ? new MultiProgress() : null
 
   private readonly updateFileWriteTask: Array<UpdateInfoFileTask> = []
+
+  /**
+   * Scans the first packed app of this build that ships app-update.yml, not one per arch: every pack of the build ships the same app
+   * code. The warning itself is once per process.
+   */
+  private crossOriginHeadersCheck: Promise<void> | null = null
 
   constructor(
     private readonly packager: Packager,
@@ -210,7 +270,10 @@ export class PublishManager implements PublishContext {
       }
       const publishConfig = await createAppUpdateConfiguration(packager, publishConfigs, this.isPublish, false)
       if (publishConfig != null) {
-        await writeAppUpdateYaml(packager.getResourcesDir(event.appOutDir), publishConfig, event.appOutDir)
+        const resourcesDir = packager.getResourcesDir(event.appOutDir)
+        await writeAppUpdateYaml(resourcesDir, publishConfig, event.appOutDir)
+        this.crossOriginHeadersCheck ??= warnIfCrossOriginHeadersNotMentioned(this.packager, resourcesDir)
+        await this.crossOriginHeadersCheck
       }
     })
 
@@ -559,6 +622,7 @@ async function createAppUpdateConfiguration(
     updaterCacheDirName: packager.appInfo.updaterCacheDirName,
   }
   warnAboutGenericFeedQuery(publishConfig)
+  warnAboutInsecureFeed(publishConfig)
 
   // electron-updater fails every update check of an installed app whose app-update.yml has an invalid limit
   const maxUpdateInfoSize: unknown = publishConfig.maxUpdateInfoSize

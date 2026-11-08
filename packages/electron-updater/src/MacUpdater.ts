@@ -1,5 +1,6 @@
 import { createRequire } from "node:module"
 import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
+import { urlWithoutQuery } from "builder-util-runtime/internal"
 
 // import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
 const require = createRequire(import.meta.url ?? process.execPath)
@@ -14,7 +15,7 @@ import { UpdateDownloadedEvent } from "./types.js"
 import { findFile } from "./providers/Provider.js"
 type AutoUpdater = Electron.AutoUpdater
 import { execFileSync } from "child_process"
-import { randomBytes } from "crypto"
+import { randomBytes, timingSafeEqual } from "crypto"
 
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
@@ -141,12 +142,13 @@ export class MacUpdater extends AppUpdater {
     const downloadedFile = event.downloadedFile
     const updateFileSize = zipFileInfo.info.size ?? (await fsExtra.stat(downloadedFile)).size
 
-    const logContext = `fileToProxy=${zipFileInfo.url.href}`
+    const logContext = `fileToProxy=${urlWithoutQuery(zipFileInfo.url)}`
     this.closeServerIfExists()
     this.log.debug(`Creating proxy server for native Squirrel.Mac (${logContext})`)
-    this.server = createServer()
+    const server = createServer()
+    this.server = server
     this.log.debug(`Proxy server for native Squirrel.Mac is created (${logContext})`)
-    this.server.on("close", () => {
+    server.on("close", () => {
       this.log.info(`Proxy server for native Squirrel.Mac is closed (${logContext})`)
     })
 
@@ -160,37 +162,41 @@ export class MacUpdater extends AppUpdater {
     }
 
     return await new Promise<void>((resolve, reject) => {
-      const pass = randomBytes(64).toString("base64").replace(/\//g, "_").replace(/\+/g, "-")
+      // hex, so the password can sit unencoded in the userinfo of the zip URL handed to Squirrel.Mac below
+      const pass = randomBytes(64).toString("hex")
       const authInfo = Buffer.from(`autoupdater:${pass}`, "ascii")
+      const expectedAuthorization = Buffer.from(`Basic ${authInfo.toString("base64")}`, "ascii")
 
-      // insecure random is ok
+      // a fresh path per download; the credentials above, not this path, are what guard the zip
       const fileUrl = `/${randomBytes(64).toString("hex")}.zip`
-      this.server!.on("request", (request: IncomingMessage, response: ServerResponse) => {
-        const requestUrl = request.url!
-        this.log.info(`${requestUrl} requested`)
+      server.on("request", (request: IncomingMessage, response: ServerResponse) => {
+        const requestUrl = request.url ?? ""
+        this.log.debug(`Proxy server for native Squirrel.Mac: ${requestUrl} requested`)
+
+        // every route requires the credentials. Squirrel.Mac sends the setFeedURL headers only with the feed request:
+        // it requests the zip without them, then answers this challenge with the credentials in the zip URL
+        const authorization = Buffer.from(request.headers.authorization ?? "", "utf8")
+        // timingSafeEqual throws on a length mismatch; the expected length is not secret
+        if (authorization.length !== expectedAuthorization.length || !timingSafeEqual(authorization, expectedAuthorization)) {
+          response.writeHead(401, "Invalid Authentication Credentials", { "WWW-Authenticate": 'Basic realm="electron-updater"' })
+          response.end()
+          this.log.debug("Proxy server for native Squirrel.Mac: request without valid credentials rejected")
+          return
+        }
+
+        // Squirrel.Mac only GETs the feed and the zip; any other method (a HEAD would end like a served zip) must not complete the download
+        if (request.method !== "GET") {
+          response.writeHead(405, { Allow: "GET" })
+          response.end()
+          this.log.debug(`Proxy server for native Squirrel.Mac: ${request.method ?? "unknown"} method rejected`)
+          return
+        }
+
         if (requestUrl === "/") {
-          // check for basic auth header
-          if (!request.headers.authorization || request.headers.authorization.indexOf("Basic ") === -1) {
-            response.statusCode = 401
-            response.statusMessage = "Invalid Authentication Credentials"
-            response.end()
-            this.log.warn("No authenthication info")
-            return
-          }
-
-          // verify auth credentials
-          const base64Credentials = request.headers.authorization.split(" ")[1]
-          const credentials = Buffer.from(base64Credentials, "base64").toString("ascii")
-          const [username, password] = credentials.split(":")
-          if (username !== "autoupdater" || password !== pass) {
-            response.statusCode = 401
-            response.statusMessage = "Invalid Authentication Credentials"
-            response.end()
-            this.log.warn("Invalid authenthication credentials")
-            return
-          }
-
-          const data = Buffer.from(`{ "url": "${getServerUrl(this.server!)}${fileUrl}" }`)
+          const zipUrl = new URL(fileUrl, getServerUrl(server))
+          zipUrl.username = "autoupdater"
+          zipUrl.password = pass
+          const data = Buffer.from(JSON.stringify({ url: zipUrl.href }))
           response.writeHead(200, { "Content-Type": "application/json", "Content-Length": data.length })
           response.end(data)
           return
@@ -203,7 +209,7 @@ export class MacUpdater extends AppUpdater {
           return
         }
 
-        this.log.info(`${fileUrl} requested by Squirrel.Mac, pipe ${downloadedFile}`)
+        this.log.debug(`Proxy server for native Squirrel.Mac: serving ${downloadedFile}`)
 
         let errorOccurred = false
         response.on("finish", () => {
@@ -232,12 +238,19 @@ export class MacUpdater extends AppUpdater {
         readStream.pipe(response)
       })
 
+      server.on("error", error => {
+        this.nativeUpdater.removeListener("error", reject)
+        // this server, not this.server: a later download may already have replaced it
+        server.close()
+        reject(newError(`Proxy server for native Squirrel.Mac failed: ${error}`, "ERR_UPDATER_MAC_PROXY_SERVER_FAILED"))
+      })
+
       this.log.debug(`Proxy server for native Squirrel.Mac is starting to listen (${logContext})`)
 
-      this.server!.listen(0, "127.0.0.1", () => {
-        this.log.debug(`Proxy server for native Squirrel.Mac is listening (address=${getServerUrl(this.server!)}, ${logContext})`)
+      server.listen(0, "127.0.0.1", () => {
+        this.log.debug(`Proxy server for native Squirrel.Mac is listening (address=${getServerUrl(server)}, ${logContext})`)
         this.nativeUpdater.setFeedURL({
-          url: getServerUrl(this.server!),
+          url: getServerUrl(server),
           headers: {
             "Cache-Control": "no-cache",
             Authorization: `Basic ${authInfo.toString("base64")}`,

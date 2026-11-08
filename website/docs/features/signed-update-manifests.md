@@ -43,11 +43,11 @@ No configuration block is required — the environment-variable route is the who
 A publishing build with no resolvable key fails instead — at build start, before anything is packed or uploaded, so none of that build's artifacts are published:
 
 ```
-auto-update manifests must be signed, but no Ed25519 signing key was found for mac. Generate one with
-`electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded PEM file)
-or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey /
+auto-update manifests must be signed when publishing, but no Ed25519 signing key was found for mac. Generate
+one with `electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded
+PEM file) or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey /
 updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out
-explicitly with `updateManifest: false`.
+explicitly with `updateManifest: false`. See https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required
 ```
 
 A build **without** a publish policy only warns, so local builds keep working while your release pipeline is the thing that has to hold the key. With [`forceCodeSigning`](./code-signing/code-signing.md#the-forcecodesigning-option), every build that emits a manifest requires the key, whether or not it publishes — pull-request builds included.
@@ -247,4 +247,4 @@ Better still, embed the *next* key before you need it: set `updateManifest.publi
 
 ## Related: Linux package signature enforcement
 
-Manifest signing protects the update *metadata*. Separately, `AppUpdater.allowUnverifiedLinuxPackages` (default `true`) controls whether the OS package manager's own GPG/signature checks are bypassed when installing `.deb` / `.rpm` auto-updates. If you sign your Linux packages, set it to `false` to enforce them — see [Auto Update](./auto-update.md#allowunverifiedlinuxpackages-new) and [Security & Hardening](./security.md#update-security-electron-updater).
+On Linux, the manifest signature is what makes an update authentic. electron-updater checks the downloaded file against the manifest's `sha512`, and no package-level signature check backs that up by default: an AppImage has none, and a `.deb` has none whatever `allowUnverifiedLinuxPackages` is set to, because `apt` verifies no signature on a local `.deb` file. Only for `.rpm` updates does `AppUpdater.allowUnverifiedLinuxPackages` (default `true`) control the package manager's own signature check: if you sign your rpm packages, set it to `false` to have `dnf`/`yum` and `zypper` enforce it. Don't set `updateManifest: false` for Linux apps. See [Linux update authenticity](./auto-update.md#linux-update-authenticity) and [Security & Hardening](./security.md#update-security-electron-updater).
