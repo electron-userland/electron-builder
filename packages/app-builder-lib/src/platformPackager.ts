@@ -35,6 +35,7 @@ import type { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
 import { AppInfo } from "./appInfo.js"
 import { isSignResultSigned, SigningResult } from "./codeSign/signResult.js"
 import { FORCE_CODE_SIGNING_DOCS, forceCodeSigningOverrideHint } from "./codeSign/forceCodeSigning.js"
+import { BUILD_CHANGES_URL } from "./util/config/legacyOptions.js"
 import { checkFileInArchive } from "./asar/asarFileChecker.js"
 import { AsarPackager } from "./asar/asarUtil.js"
 import { AsarIntegrity, computeData } from "./asar/integrity.js"
@@ -206,14 +207,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const forced = !required && this.forceCodeSigning
     if (!optedOut && (required || forced)) {
       throw new InvalidConfigurationError(
-        `auto-update manifests must be signed${forced ? " because forceCodeSigning is enabled (also for builds that do not publish, including pull-request builds)" : ""}, ` +
+        `auto-update manifests must be signed ${forced ? "because forceCodeSigning is enabled (also for builds that do not publish, including pull-request builds)" : "when publishing"}, ` +
           `but no Ed25519 signing key was found for ${this.platform.name}. ` +
           "Generate one with `electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded PEM file) " +
           "or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey / " +
-          "updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out explicitly with " +
+          "updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out explicitly with `updateManifest: false`" +
           (forced
-            ? `\`updateManifest: false\`, or pass ${forceCodeSigningOverrideHint(this)} to build without forceCodeSigning. See ${FORCE_CODE_SIGNING_DOCS}`
-            : "`updateManifest: false`. See https://www.electron.build/features/signed-update-manifests")
+            ? `, or pass ${forceCodeSigningOverrideHint(this)} to build without forceCodeSigning. See ${FORCE_CODE_SIGNING_DOCS}`
+            : `. See ${BUILD_CHANGES_URL}#signed-update-manifests-are-required`)
       )
     }
 
@@ -225,11 +226,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
           : "no Ed25519 signing key is configured",
       },
       "auto-update manifests will be unsigned: anyone who can overwrite latest*.yml on your update server can point installs at an arbitrary payload. " +
-        (optedOut
-          ? "Remove `updateManifest: false` and provide a key with `electron-builder create-update-key` to enable signing. "
-          : "Publishing this configuration will fail (and so will a build with forceCodeSigning) until you provide a key with `electron-builder create-update-key`, or opt out explicitly with `updateManifest: false`. ") +
         "Note that installs which already embed a public key reject unsigned manifests (ERR_UPDATER_MANIFEST_NOT_SIGNED). " +
-        "See https://www.electron.build/features/signed-update-manifests"
+        (optedOut
+          ? "Remove `updateManifest: false` and provide a key with `electron-builder create-update-key` to enable signing. " +
+            "See https://www.electron.build/docs/features/signed-update-manifests"
+          : "Publishing this configuration will fail (and so will a build with forceCodeSigning) until you provide a key with `electron-builder create-update-key`, " +
+            `or opt out explicitly with \`updateManifest: false\`. See ${BUILD_CHANGES_URL}#signed-update-manifests-are-required`)
     )
     return keys
   }
