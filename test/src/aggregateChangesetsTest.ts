@@ -459,7 +459,7 @@ describe("aggregate-changesets", () => {
     }
   })
 
-  describe("the changelog generator retries a GitHub lookup that failed with a FetchError", () => {
+  describe("the changelog generator retries a GitHub lookup that failed transiently", () => {
     const requireGenerator = createRequire(path.join(REPO_ROOT, ".changeset/changelog.cjs"))
     const requireChangelogClean = createRequire(fs.realpathSync(requireGenerator.resolve("changesets-changelog-clean")))
     const requireGithubInfo = createRequire(fs.realpathSync(requireChangelogClean.resolve("@changesets/get-github-info")))
@@ -497,10 +497,24 @@ describe("aggregate-changesets", () => {
       expect(getInfo).toHaveBeenCalledTimes(2)
     })
 
+    test("recovers when GitHub answered with a transient GraphQL error", async ({ expect }) => {
+      const getInfo = setup()
+      // what get-github-info throws when the GraphQL JSON has `errors`
+      const errors = [{ message: "Something went wrong while executing your query. This may be the result of a timeout, or it could be a GitHub bug." }]
+      getInfo.mockRejectedValueOnce(new Error(`An error occurred when fetching data from GitHub\n${JSON.stringify(errors, null, 2)}`)).mockResolvedValueOnce(info)
+      const result = releaseLine("f")
+      await vi.advanceTimersByTimeAsync(10_000)
+      await expect(result).resolves.toBe(line)
+      expect(getInfo).toHaveBeenCalledTimes(2)
+    })
+
     test("rethrows any other error at once", async ({ expect }) => {
       const getInfo = setup()
-      getInfo.mockRejectedValueOnce(new Error("An error occurred when fetching data from GitHub"))
-      await expect(releaseLine("b")).rejects.toThrow("An error occurred when fetching data from GitHub")
+      // what get-github-info throws when the GraphQL JSON has no `data`
+      getInfo.mockRejectedValueOnce(
+        new Error(`An error occurred when fetching data from GitHub\n${JSON.stringify({ message: "Bad credentials", documentation_url: "https://docs.github.com/graphql" })}`)
+      )
+      await expect(releaseLine("b")).rejects.toThrow("Bad credentials")
       expect(getInfo).toHaveBeenCalledTimes(1)
       expect(vi.getTimerCount()).toBe(0)
     })
