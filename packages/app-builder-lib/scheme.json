@@ -8752,7 +8752,7 @@
           ]
         },
         "name": {
-          "description": "The space name.",
+          "description": "The space name: 3-63 letters, digits and dashes, starting with a letter or digit.",
           "type": "string"
         },
         "path": {
@@ -8787,7 +8787,7 @@
           ]
         },
         "region": {
-          "description": "The DigitalOcean region slug (e.g. `nyc3`): three lowercase letters followed by one or two digits.",
+          "description": "The DigitalOcean region slug (e.g. `nyc3`): three letters followed by one or two digits.",
           "type": "string"
         },
         "requestHeaders": {

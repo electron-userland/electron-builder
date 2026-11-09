@@ -3,8 +3,12 @@ import { SpacesOptions } from "builder-util-runtime"
 import { PublishContext } from "../index.js"
 import { BaseS3Publisher, S3UploadConfig } from "./baseS3Publisher.js"
 
-// DigitalOcean region slugs (nyc3, ams3, fra1, ...). The region becomes the endpoint host, so nothing else may get through.
-const SPACES_REGION_PATTERN = /^[a-z]{3}[0-9]{1,2}$/
+// Name and region become the host (`<name>.<region>.digitaloceanspaces.com`), so nothing that can change the host may get through.
+// Case-insensitive because hostnames are, so a value such as "NYC3" keeps working.
+// DigitalOcean region slugs (nyc3, ams3, fra1, ...).
+const SPACES_REGION_PATTERN = /^[a-z]{3}[0-9]{1,2}$/i
+// DigitalOcean bucket names: 3-63 letters, digits and dashes, starting with a letter or digit.
+const SPACES_NAME_PATTERN = /^[a-z0-9][a-z0-9-]{2,62}$/i
 
 export class SpacesPublisher extends BaseS3Publisher {
   readonly providerName = "spaces"
@@ -23,7 +27,7 @@ export class SpacesPublisher extends BaseS3Publisher {
     if (options.region == null) {
       throw new InvalidConfigurationError(`Please specify "region" for "spaces" publish provider (see https://www.electron.build/docs/publish#spaces)`)
     }
-    SpacesPublisher.checkRegion(options.region)
+    SpacesPublisher.checkHost(options.name, options.region)
 
     if (options.channel == null && channelFromAppVersion != null) {
       options.channel = channelFromAppVersion
@@ -31,7 +35,12 @@ export class SpacesPublisher extends BaseS3Publisher {
     return Promise.resolve()
   }
 
-  private static checkRegion(region: string) {
+  private static checkHost(name: string, region: string) {
+    if (!SPACES_NAME_PATTERN.test(name)) {
+      throw new InvalidConfigurationError(
+        `Invalid "name" ${JSON.stringify(name)} for "spaces" publish provider: expected a DigitalOcean Spaces bucket name of 3-63 letters, digits and dashes, starting with a letter or digit (see https://www.electron.build/docs/publish#spaces)`
+      )
+    }
     if (!SPACES_REGION_PATTERN.test(region)) {
       throw new InvalidConfigurationError(
         `Invalid "region" ${JSON.stringify(region)} for "spaces" publish provider: expected a DigitalOcean region slug such as "nyc3" (see https://www.electron.build/docs/publish#spaces)`
@@ -44,7 +53,7 @@ export class SpacesPublisher extends BaseS3Publisher {
   }
 
   public getS3UploadConfig(): S3UploadConfig {
-    SpacesPublisher.checkRegion(this.info.region)
+    SpacesPublisher.checkHost(this.info.name, this.info.region)
     const accessKey = process.env.DO_KEY_ID
     const secretKey = process.env.DO_SECRET_KEY
     if (isEmptyOrSpaces(accessKey)) {

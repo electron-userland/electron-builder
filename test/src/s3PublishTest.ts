@@ -241,10 +241,11 @@ describe("SpacesPublisher — getS3UploadConfig", { concurrent: false }, () => {
   })
 })
 
-// ─── SpacesPublisher — region validation ─────────────────────────────────────
+// ─── SpacesPublisher — name and region validation ────────────────────────────
 
-describe("SpacesPublisher — region validation", { concurrent: false }, () => {
-  const invalidRegions = ["evil.example.com/", "attacker.example#", "nyc3.evil.example", "user@host", "NYC3", "nyc3 ", "nyc", "nyc123", ""]
+describe("SpacesPublisher — name and region validation", { concurrent: false }, () => {
+  const invalidRegions = ["evil.example.com/", "attacker.example#", "nyc3.evil.example", "user@host", "nyc3 ", "nyc", "nyc123", ""]
+  const invalidNames = ["evil.example.com/", "evil.example.com#", "evil.example.com?", "user@evil.example.com", "my.space", "my space", "-space", "ab", "a".repeat(64), ""]
 
   beforeEach(() => {
     vi.stubEnv("DO_KEY_ID", "do-test-key")
@@ -255,9 +256,14 @@ describe("SpacesPublisher — region validation", { concurrent: false }, () => {
     vi.unstubAllEnvs()
   })
 
-  it.each(["nyc3", "ams3", "sfo2", "sgp1", "fra1", "syd1"])("accepts DigitalOcean region %s", async region => {
+  it.each(["nyc3", "ams3", "sfo2", "sgp1", "fra1", "syd1", "NYC3"])("accepts DigitalOcean region %s", async region => {
     await expect(SpacesPublisher.checkAndResolveOptions({ provider: "spaces", name: "my-space", region }, null, true)).resolves.toBeUndefined()
     expect(makeSpacesPublisher({ region }).getS3UploadConfig().endpoint).toBe(`https://${region}.digitaloceanspaces.com`)
+  })
+
+  it.each(["my-space", "abc", "1space", "My-Space", "a".repeat(63)])("accepts Spaces name %s", async name => {
+    await expect(SpacesPublisher.checkAndResolveOptions({ provider: "spaces", name, region: "nyc3" }, null, true)).resolves.toBeUndefined()
+    expect(makeSpacesPublisher({ name }).getS3UploadConfig().endpoint).toBe("https://nyc3.digitaloceanspaces.com")
   })
 
   it.each(invalidRegions)("checkAndResolveOptions rejects region %j", region => {
@@ -267,6 +273,15 @@ describe("SpacesPublisher — region validation", { concurrent: false }, () => {
   it.each(invalidRegions)("getS3UploadConfig rejects region %j before building an endpoint", region => {
     expect(() => makeSpacesPublisher({ region }).getS3UploadConfig()).toThrow(InvalidConfigurationError)
     expect(() => makeSpacesPublisher({ region }).getS3UploadConfig()).toThrow(/region slug such as "nyc3".*https:\/\/www\.electron\.build\/docs\/publish#spaces/)
+  })
+
+  it.each(invalidNames)("checkAndResolveOptions rejects name %j", name => {
+    expect(() => SpacesPublisher.checkAndResolveOptions({ provider: "spaces", name, region: "nyc3" }, null, true)).toThrow(/Invalid "name"/)
+  })
+
+  it.each(invalidNames)("getS3UploadConfig rejects name %j before building an endpoint", name => {
+    expect(() => makeSpacesPublisher({ name }).getS3UploadConfig()).toThrow(InvalidConfigurationError)
+    expect(() => makeSpacesPublisher({ name }).getS3UploadConfig()).toThrow(/Invalid "name".*https:\/\/www\.electron\.build\/docs\/publish#spaces/)
   })
 })
 

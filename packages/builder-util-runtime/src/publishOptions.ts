@@ -583,12 +583,12 @@ export interface SpacesOptions extends BaseS3Options {
   readonly provider: "spaces"
 
   /**
-   * The space name.
+   * The space name: 3-63 letters, digits and dashes, starting with a letter or digit.
    */
   readonly name: string
 
   /**
-   * The DigitalOcean region slug (e.g. `nyc3`): three lowercase letters followed by one or two digits.
+   * The DigitalOcean region slug (e.g. `nyc3`): three letters followed by one or two digits.
    */
   readonly region: string
 }
