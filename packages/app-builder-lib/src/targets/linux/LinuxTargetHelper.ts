@@ -160,7 +160,9 @@ export class LinuxTargetHelper {
   }
 
   private async computeMimeTypeFiles(): Promise<string | null> {
-    const xml = generateMimeTypeXml(this.packager.fileAssociations, this.packager.appInfo.productName)
+    // no fallback comment: these packages install the file machine-wide, so a standard type such as text/markdown without a description
+    // must not be relabelled "<productName> document" for every app
+    const xml = generateMimeTypeXml(this.packager.fileAssociations, null)
     if (xml == null) {
       return null
     }

@@ -54,9 +54,10 @@ export async function copyIcons(options: AppImageBuilderOptions): Promise<void> 
 
 /**
  * The shared-mime-info XML that declares the MIME types of the file associations that have one, or null when none has. The comment is
- * the file association's description, or "<productName> document" without one. Every value is XML-escaped, and an extension with characters other than `A-Za-z0-9_-` is skipped with a warning.
+ * the file association's description, or `defaultComment` without one (no comment when that is null). Every value is XML-escaped, and an
+ * extension other than dot-separated runs of `A-Za-z0-9_-` (such as `foo` or `tar.gz`) is skipped with a warning.
  */
-export function generateMimeTypeXml(fileAssociations: ReadonlyArray<FileAssociation>, productName: string): string | null {
+export function generateMimeTypeXml(fileAssociations: ReadonlyArray<FileAssociation>, defaultComment: string | null): string | null {
   const mimeTypeParts: string[] = []
 
   for (const fileAssociation of fileAssociations) {
@@ -66,14 +67,17 @@ export function generateMimeTypeXml(fileAssociations: ReadonlyArray<FileAssociat
 
     // XML-escape to prevent injection
     mimeTypeParts.push(`<mime-type type="${escapeForXml(fileAssociation.mimeType)}">`)
-    mimeTypeParts.push(`  <comment>${escapeForXml(fileAssociation.description || `${productName} document`)}</comment>`)
+    const comment = fileAssociation.description || defaultComment
+    if (comment) {
+      mimeTypeParts.push(`  <comment>${escapeForXml(comment)}</comment>`)
+    }
 
     // Handle extension(s)
     const extensions = Array.isArray(fileAssociation.ext) ? fileAssociation.ext : [fileAssociation.ext]
 
     for (const ext of extensions) {
       // Validate extension doesn't contain dangerous characters
-      if (!/^[a-zA-Z0-9_-]+$/.test(ext)) {
+      if (!/^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)*$/.test(ext)) {
         log.warn({ extension: ext }, `file extension contains unexpected characters and will be skipped`)
         continue
       }
@@ -98,7 +102,7 @@ export async function copyMimeTypes(
 ): Promise<string | null> {
   const { fileAssociations, productName, executableName } = options
 
-  const xmlContent = generateMimeTypeXml(fileAssociations ?? [], productName)
+  const xmlContent = generateMimeTypeXml(fileAssociations ?? [], `${productName} document`)
   if (xmlContent == null) {
     return null
   }

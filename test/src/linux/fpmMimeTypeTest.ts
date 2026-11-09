@@ -37,7 +37,6 @@ test("the values of file associations are XML-escaped", async ({ expect, tmpDir 
       '  <generic-icon name="x-office-document"/>',
       "</mime-type>",
       '<mime-type type="application/x-baz">',
-      "  <comment>Test &amp; &lt;App&gt; document</comment>",
       '  <glob pattern="*.baz"/>',
       '  <generic-icon name="x-office-document"/>',
       "</mime-type>",
@@ -50,6 +49,18 @@ test("an extension with characters outside A-Za-z0-9_- gets no glob", async ({ e
   const xml = await mimeTypeFile(tmpDir, [{ ext: ["ok", 'x"/><glob pattern="*'], mimeType: "application/x-foo" }])
   expect(xml).toContain('  <glob pattern="*.ok"/>\n  <generic-icon')
   expect(xml?.match(/<glob /g)).toHaveLength(1)
+})
+
+test("a multi-dot extension keeps its glob, but not a leading, trailing or doubled dot", async ({ expect, tmpDir }) => {
+  const xml = await mimeTypeFile(tmpDir, [{ ext: ["tar.gz", "d.ts", ".foo", "foo.", "a..b", "../x"], mimeType: "application/x-foo" }])
+  expect(xml).toContain('  <glob pattern="*.tar.gz"/>\n  <glob pattern="*.d.ts"/>\n  <generic-icon')
+  expect(xml?.match(/<glob /g)).toHaveLength(2)
+})
+
+// the file is installed machine-wide, so a standard type without a description must keep the system's comment
+test("no comment is written without a description", async ({ expect, tmpDir }) => {
+  const xml = await mimeTypeFile(tmpDir, [{ ext: "md", mimeType: "text/markdown" }])
+  expect(xml).not.toContain("<comment>")
 })
 
 test("no MIME type file is written without a custom MIME type", async ({ expect, tmpDir }) => {
