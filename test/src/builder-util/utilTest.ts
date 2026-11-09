@@ -1,7 +1,16 @@
 import { expandDefaultKeyword, parseValidEnvVarUrl, resolveDefaultKeywordList } from "builder-util/internal"
 import { resolveEnvShellValue, validateShellEmbeddable } from "builder-util/src/envUtil"
-import { removePassword, removePasswordFromArgs, filterSensitiveEnv, spawnAndWrite, spawnAndWriteWithOutput, ExecError, getPlatformIconFileName } from "builder-util"
-import { afterEach, expect, vi } from "vitest"
+import { exec, removePassword, removePasswordFromArgs, filterSensitiveEnv, spawnAndWrite, spawnAndWriteWithOutput, ExecError, getPlatformIconFileName } from "builder-util"
+import { execFile, ExecFileException } from "child_process"
+import * as path from "path"
+import { inspect } from "util"
+import { afterEach, beforeEach, expect, vi } from "vitest"
+
+// Every process below really runs; a test replaces a single launch to fail it the way the OS does
+vi.mock("child_process", async importOriginal => {
+  const actual = await importOriginal<typeof import("child_process")>()
+  return { ...actual, execFile: vi.fn(actual.execFile) }
+})
 
 const testValue = "secretValue"
 const testQuoted = "secret with spaces"
@@ -407,6 +416,112 @@ describe("resolveEnvShellValue", () => {
     expect(resolveEnvShellValue(VAR)).toBe("C:\\some\\path")
   })
 })
+
+// ─── exec ───────────────────────────────────────────────────────────────────
+
+describe("exec failure", () => {
+  // a value with spaces, so a redaction that only sees the joined command line would leak its tail
+  const secret = "s3cret token value"
+  const secretParts = ["s3cret", "token value", "hunter2"]
+  // `--` ends node's own options, so the flags reach the script as its arguments
+  const failingArgs = ["-e", "process.stderr.write('boom'); process.exit(3)", "--", "--token", secret, "--password", "hunter2"]
+
+  beforeEach(() => {
+    vi.mocked(execFile).mockClear()
+  })
+
+  async function execFailure(file: string, args?: Array<string>): Promise<ExecError> {
+    const error = await exec(file, args).then(
+      () => null,
+      (e: unknown) => e
+    )
+    expect(error).toBeInstanceOf(ExecError)
+    return error as ExecError
+  }
+
+  function causeOf(error: ExecError): Error & Record<string, unknown> {
+    expect(error.cause).toBeInstanceOf(Error)
+    return error.cause as Error & Record<string, unknown>
+  }
+
+  function expectNoSecret(error: ExecError) {
+    const cause = causeOf(error)
+    for (const text of [inspect(error, { depth: null }), error.message, error.stack, cause.message, cause.stack, cause.cmd]) {
+      for (const part of secretParts) {
+        expect(String(text)).not.toContain(part)
+      }
+    }
+  }
+
+  test("keeps secret arguments out of the error and its cause when the process exits non-zero", async ({ expect }) => {
+    const error = await execFailure(process.execPath, failingArgs)
+    expectNoSecret(error)
+    expect(error.message).toContain("boom")
+    const cause = causeOf(error)
+    expect(Object.keys(cause).sort()).toEqual(["cmd", "code", "killed"])
+    expect(cause.code).toBe(3)
+    expect(cause.cmd).toMatch(/--token [a-f0-9]{32} \(redacted fingerprint\) --password [a-f0-9]{32} \(redacted fingerprint\)$/)
+    expect(cause.stack).toContain("Command failed:")
+  })
+
+  test("keeps secret arguments out of the error and its cause when the process cannot start, and does not retry", async ({ expect, tmpDir }) => {
+    const missing = path.join(await tmpDir.getTempDir({ prefix: "exec-failure" }), "missing-tool")
+    const error = await execFailure(missing, ["--token", secret, "--password", "hunter2"])
+    expectNoSecret(error)
+    const cause = causeOf(error)
+    // no `spawnargs`: Node puts the raw arguments there
+    expect(Object.keys(cause).sort()).toEqual(["cmd", "code", "errno", "path", "syscall"])
+    expect(cause).toMatchObject({ code: "ENOENT", syscall: `spawn ${missing}`, path: missing })
+    expect(vi.mocked(execFile)).toHaveBeenCalledTimes(1)
+  })
+
+  test("keeps the cause when there are no arguments", async ({ expect, tmpDir }) => {
+    const missing = path.join(await tmpDir.getTempDir({ prefix: "exec-failure" }), "missing-tool")
+    const cause = causeOf(await execFailure(missing))
+    expect(cause).toMatchObject({ code: "ENOENT", cmd: missing })
+  })
+
+  test("retries a launch that the OS refused with a transient code", async ({ expect }) => {
+    vi.mocked(execFile).mockImplementationOnce(((
+      file: string,
+      args: Array<string>,
+      _options: unknown,
+      callback: (error: ExecFileException, stdout: string, stderr: string) => void
+    ) => {
+      // the shape Node reports for a launch that failed (e.g. the executable is still locked by AV)
+      const error = Object.assign(new Error(`spawn ${file} EBUSY`), {
+        errno: -16,
+        code: "EBUSY",
+        syscall: `spawn ${file}`,
+        path: file,
+        spawnargs: args,
+        cmd: `${file} ${args.join(" ")}`,
+      })
+      process.nextTick(() => callback(error, "", ""))
+      return {}
+    }) as unknown as typeof execFile)
+    await expect(exec(process.execPath, ["-e", "process.stdout.write('ran')", "--", "--token", secret])).resolves.toBe("ran")
+    expect(vi.mocked(execFile)).toHaveBeenCalledTimes(2)
+  })
+
+  test("rejects with an ExecError when the reported error has no stack or command line", async ({ expect }) => {
+    vi.mocked(execFile).mockImplementationOnce(((
+      _file: string,
+      _args: Array<string>,
+      _options: unknown,
+      callback: (error: ExecFileException, stdout: string, stderr: string) => void
+    ) => {
+      const error: ExecFileException = Object.assign(new Error("Command failed"), { code: 1 })
+      delete error.stack
+      process.nextTick(() => callback(error, "", ""))
+      return {}
+    }) as unknown as typeof execFile)
+    const cause = causeOf(await execFailure(process.execPath, ["--token", secret]))
+    expect(cause.message).toBe("Command failed")
+    expect(Object.keys(cause)).toEqual(["code"])
+  })
+})
+
 // ─── spawnAndWriteWithOutput ────────────────────────────────────────────────
 
 // the child exits without reading stdin, so writing a large payload reliably fails with EPIPE;
