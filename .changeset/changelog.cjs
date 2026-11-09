@@ -4,10 +4,36 @@
 // prettier used to do this (.editorconfig: indent_style = space).
 const { default: changelogFunctions } = require("changesets-changelog-clean")
 
+// @changesets/get-github-info reads GitHub's GraphQL API; a 5xx answered with an HTML page fails as a FetchError
+// (type invalid-json) and fails the whole Release run. Retry those, behind one backoff shared by every failed call: the
+// retries resume in the same tick, so get-github-info batches them into one GraphQL request again (its DataLoader drops
+// the keys of a failed batch from its cache, so a retry fetches them again)
+let backoff
+function wait(ms) {
+  backoff ??= new Promise(resolve =>
+    setTimeout(() => {
+      backoff = undefined
+      resolve()
+    }, ms)
+  )
+  return backoff
+}
+async function withRetry(fn, attempts = 4) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fn()
+    } catch (e) {
+      if (attempt >= attempts || e?.name !== "FetchError") throw e
+      console.warn(`GitHub API request failed (${String(e.message).split("\n")[0]}), retry ${attempt}/${attempts - 1}`)
+      await wait(10_000 * attempt)
+    }
+  }
+}
+
 module.exports = {
   ...changelogFunctions,
   getReleaseLine: async (...args) =>
-    (await changelogFunctions.getReleaseLine(...args))
+    (await withRetry(() => changelogFunctions.getReleaseLine(...args)))
       // the first line ends with `_[`#123`](…/pull/123) [`abc1234`](…/commit/…) [@user](…)_`: drop ` [@user](…)`
       .replace(/^([^\n]*) \[@[^\]\s]+\]\([^)\s]+\)_(?=\n|$)/, "$1_")
       .replace(/^\t/gm, "  ")

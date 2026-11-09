@@ -3,7 +3,7 @@ import * as fs from "node:fs"
 import { createRequire } from "node:module"
 import * as path from "node:path"
 import { TmpDir } from "temp-file"
-import { vi } from "vitest"
+import { afterEach, vi } from "vitest"
 
 // scripts/aggregate-changesets.mjs on throwaway git repos versioned by the real changesets CLI (and its pnpm patches),
 // with an offline changelog generator instead of changesets-changelog-clean (which looks up PRs on GitHub)
@@ -457,5 +457,75 @@ describe("aggregate-changesets", () => {
     } finally {
       getInfo.mockRestore()
     }
+  })
+
+  describe("the changelog generator retries a GitHub lookup that failed with a FetchError", () => {
+    const requireGenerator = createRequire(path.join(REPO_ROOT, ".changeset/changelog.cjs"))
+    const requireChangelogClean = createRequire(fs.realpathSync(requireGenerator.resolve("changesets-changelog-clean")))
+    const requireGithubInfo = createRequire(fs.realpathSync(requireChangelogClean.resolve("@changesets/get-github-info")))
+    const generator = requireGenerator("./changelog.cjs")
+    const githubInfo = requireChangelogClean("@changesets/get-github-info")
+    // what get-github-info throws when api.github.com/graphql answers with an HTML error page
+    const { FetchError } = requireGithubInfo("node-fetch")
+    const htmlResponse = () =>
+      new FetchError(`invalid json response body at https://api.github.com/graphql reason: Unexpected token '<', "<!DOCTYPE "... is not valid JSON`, "invalid-json")
+
+    const commit = "abcdef0123456789abcdef0123456789abcdef01"
+    const info = { user: "alice", pull: 11, links: { commit: "", pull: "[#11](https://github.com/owner/repo/pull/11)", user: "[@alice](https://github.com/alice)" } }
+    const line = `- Fix: a fix _[\`#11\`](https://github.com/owner/repo/pull/11) [\`abcdef0\`](https://github.com/owner/repo/commit/${commit})_`
+    const releaseLine = (id: string): Promise<string> => generator.getReleaseLine({ id, summary: "fix: a fix", releases: [], commit }, "patch", { repo: "owner/repo" })
+
+    const setup = () => {
+      vi.useFakeTimers()
+      vi.spyOn(console, "warn").mockImplementation(() => undefined)
+      return vi.spyOn(githubInfo, "getInfo")
+    }
+
+    afterEach(() => {
+      vi.useRealTimers()
+      vi.restoreAllMocks()
+    })
+
+    test("recovers when a retry succeeds", async ({ expect }) => {
+      const getInfo = setup()
+      getInfo.mockRejectedValueOnce(htmlResponse()).mockResolvedValueOnce(info)
+      const result = releaseLine("a")
+      await vi.advanceTimersByTimeAsync(9_999)
+      expect(getInfo).toHaveBeenCalledTimes(1)
+      await vi.advanceTimersByTimeAsync(1)
+      await expect(result).resolves.toBe(line)
+      expect(getInfo).toHaveBeenCalledTimes(2)
+    })
+
+    test("rethrows any other error at once", async ({ expect }) => {
+      const getInfo = setup()
+      getInfo.mockRejectedValueOnce(new Error("An error occurred when fetching data from GitHub"))
+      await expect(releaseLine("b")).rejects.toThrow("An error occurred when fetching data from GitHub")
+      expect(getInfo).toHaveBeenCalledTimes(1)
+      expect(vi.getTimerCount()).toBe(0)
+    })
+
+    test("gives up after 3 retries", async ({ expect }) => {
+      const getInfo = setup()
+      getInfo.mockRejectedValue(htmlResponse())
+      const result = expect(releaseLine("c")).rejects.toThrow("invalid json response body")
+      // backoffs of 10, 20 and 30 seconds
+      await vi.advanceTimersByTimeAsync(60_000)
+      await result
+      expect(getInfo).toHaveBeenCalledTimes(4)
+      expect(vi.getTimerCount()).toBe(0)
+    })
+
+    test("concurrent failures wait on one backoff and retry together", async ({ expect }) => {
+      const getInfo = setup()
+      getInfo.mockRejectedValueOnce(htmlResponse()).mockRejectedValueOnce(htmlResponse()).mockResolvedValue(info)
+      const results = Promise.all([releaseLine("d"), releaseLine("e")])
+      await vi.advanceTimersByTimeAsync(0)
+      expect(getInfo).toHaveBeenCalledTimes(2)
+      expect(vi.getTimerCount()).toBe(1)
+      await vi.advanceTimersByTimeAsync(10_000)
+      expect(getInfo).toHaveBeenCalledTimes(4)
+      await expect(results).resolves.toEqual([line, line])
+    })
   })
 })
