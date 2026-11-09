@@ -65,7 +65,7 @@ import { PlatformPackager } from "../platformPackager.js"
 import { missingUpdatePublisherNameError, validatePublisherNameFormat } from "../codeSign/win/publisherName.js"
 import { WinPackager } from "../winPackager.js"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
-import { warnIfCrossOriginHeadersNotMentioned } from "./crossOriginHeadersCheck.js"
+import { findUpdaterSettingsMentions, UpdaterSettingsMentions, warnAboutUpdaterSettings } from "./updaterSettingsCheck.js"
 import { resolveModule } from "../util/resolve.js"
 import { parseUrl } from "../util/pathManager.js"
 import { isPublishForPullRequest } from "../util/flags.js"
@@ -209,10 +209,10 @@ export class PublishManager implements PublishContext {
   private readonly updateFileWriteTask: Array<UpdateInfoFileTask> = []
 
   /**
-   * Scans the first packed app of this build that ships app-update.yml, not one per arch: every pack of the build ships the same app
-   * code. The warning itself is once per process.
+   * The scan of the first packed app of each platform of this build that ships app-update.yml and needs one, not one per arch: the archs
+   * of a platform ship the same app code, but platforms may not (platform-level `files`). The warnings themselves are once per process.
    */
-  private crossOriginHeadersCheck: Promise<void> | null = null
+  private readonly updaterSettingsScans = new Map<Platform, Promise<UpdaterSettingsMentions | null>>()
 
   constructor(
     private readonly packager: Packager,
@@ -264,7 +264,7 @@ export class PublishManager implements PublishContext {
       // otherwise) only applies when a target emits a manifest - the same per-target resolution as the build-start
       // preflight. A snap-, flatpak- or mas-only pack has none (Linux and mas are not filtered above), nor has an
       // installer whose target-level `publish` is `null` or waived.
-      const { publishConfigs, emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, event.targets, event.arch, this.isPublish)
+      const { publishConfigs, emitsManifest, manifestTargetNames } = await resolvePackAppUpdatePublishConfigs(packager, event.targets, event.arch, this.isPublish)
       if (emitsManifest) {
         await packager.requireUpdateSigningKeys(this.isPublish)
       }
@@ -272,8 +272,14 @@ export class PublishManager implements PublishContext {
       if (publishConfig != null) {
         const resourcesDir = packager.getResourcesDir(event.appOutDir)
         await writeAppUpdateYaml(resourcesDir, publishConfig, event.appOutDir)
-        this.crossOriginHeadersCheck ??= warnIfCrossOriginHeadersNotMentioned(this.packager, resourcesDir)
-        await this.crossOriginHeadersCheck
+        await warnAboutUpdaterSettings(this.packager, manifestTargetNames.includes("rpm"), () => {
+          let scan = this.updaterSettingsScans.get(packager.platform)
+          if (scan == null) {
+            scan = findUpdaterSettingsMentions(resourcesDir)
+            this.updaterSettingsScans.set(packager.platform, scan)
+          }
+          return scan
+        })
       }
     })
 
@@ -501,14 +507,15 @@ export async function getPackAppUpdatePublishConfiguration(
  * - with none (a snap-only pack, or `nsis.publish: null`), it comes from the platform/root settings, as before -
  *   including the GitHub fallback from repository info when no level configures `publish` at all.
  *
- * `emitsManifest` tells whether any target of the pack emits one, i.e. whether the signing requirement applies.
+ * `emitsManifest` tells whether any target of the pack emits one, i.e. whether the signing requirement applies, and `manifestTargetNames`
+ * which targets do.
  */
 async function resolvePackAppUpdatePublishConfigs(
   packager: PlatformPackager<any>,
   targets: ReadonlyArray<Target>,
   arch: Arch,
   isPublish: boolean
-): Promise<{ publishConfigs: Array<PublishConfiguration> | null; emitsManifest: boolean }> {
+): Promise<{ publishConfigs: Array<PublishConfiguration> | null; emitsManifest: boolean; manifestTargetNames: Array<string> }> {
   const writers: Array<{ target: Target; publishConfigs: Array<PublishConfiguration> }> = []
   for (const target of targets) {
     const publishConfigs = await getTargetManifestPublishConfigs(packager, target, arch, isPublish)
@@ -517,7 +524,7 @@ async function resolvePackAppUpdatePublishConfigs(
     }
   }
   if (writers.length === 0) {
-    return { publishConfigs: await getPlatformUpdateInfoPublishConfigs(packager, arch, isPublish), emitsManifest: false }
+    return { publishConfigs: await getPlatformUpdateInfoPublishConfigs(packager, arch, isPublish), emitsManifest: false, manifestTargetNames: [] }
   }
 
   const embedded = appUpdateFeedIdentity(writers[0].publishConfigs[0])
@@ -525,9 +532,9 @@ async function resolvePackAppUpdatePublishConfigs(
     reportConflictingAppUpdateFeeds(packager, writers, arch, isPublish)
     // not publishing: no app-update.yml, the same package the error would have prevented - picking one of the feeds
     // would silently ship installs that poll a feed without their manifest
-    return { publishConfigs: null, emitsManifest: true }
+    return { publishConfigs: null, emitsManifest: true, manifestTargetNames: writers.map(it => it.target.name) }
   }
-  return { publishConfigs: writers[0].publishConfigs, emitsManifest: true }
+  return { publishConfigs: writers[0].publishConfigs, emitsManifest: true, manifestTargetNames: writers.map(it => it.target.name) }
 }
 
 /**
