@@ -1,3 +1,4 @@
+import { execFileSync } from "child_process"
 import { describe } from "vitest"
 import { assertTemplateSnapCompressionSupported, buildCommandShContent, shellQuote } from "app-builder-lib/src/targets/linux/snap/coreLegacy"
 import { InvalidConfigurationError } from "builder-util"
@@ -59,18 +60,52 @@ describe("snapCoreLegacy helpers", { concurrent: false }, () => {
       expect(content).toMatch(/^#!\/bin\/bash/)
     })
 
-    test("LD_LIBRARY_PATH adds the caller's value only when it is set, so an unset one leaves no empty entry", ({ expect }) => {
+    const snapLibDirs = "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu"
+    const ldLibraryPathPreamble = `export LD_LIBRARY_PATH="\${SNAP_LIBRARY_PATH:+$SNAP_LIBRARY_PATH:}${snapLibDirs}\${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:${snapLibDirs}"`
+
+    test("LD_LIBRARY_PATH adds SNAP_LIBRARY_PATH and the caller's value only when they are set, so neither leaves an empty entry", ({ expect }) => {
       const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], libraryArchTriplet: "x86_64-linux-gnu" })
-      const snapLibDirs = "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu"
-      expect(content).toContain(`\nexport LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:${snapLibDirs}\${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:${snapLibDirs}"\n`)
+      expect(content).toContain(`\n${ldLibraryPathPreamble}\n`)
+      expect(content).not.toContain("$SNAP_LIBRARY_PATH:$SNAP")
       expect(content).not.toContain(":$LD_LIBRARY_PATH:")
       // set before the desktop scripts and the app start
       expect(content.indexOf("export LD_LIBRARY_PATH=")).toBeLessThan(content.indexOf("exec "))
     })
 
-    test("LD_LIBRARY_PATH is left alone without an arch triplet", ({ expect }) => {
+    const expansionCases: Array<[string, Record<string, string>, string]> = [
+      ["both set", { SNAP_LIBRARY_PATH: "/gl", LD_LIBRARY_PATH: "/caller" }, "/gl:{dirs}:/caller:{dirs}"],
+      ["both unset", {}, "{dirs}:{dirs}"],
+      ["both empty", { SNAP_LIBRARY_PATH: "", LD_LIBRARY_PATH: "" }, "{dirs}:{dirs}"],
+      ["SNAP_LIBRARY_PATH unset, caller set", { LD_LIBRARY_PATH: "/caller" }, "{dirs}:/caller:{dirs}"],
+    ]
+    for (const [label, env, expected] of expansionCases) {
+      test.ifNotWindows(`LD_LIBRARY_PATH expands without empty entries in bash: ${label}`, ({ expect }) => {
+        const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], libraryArchTriplet: "x86_64-linux-gnu" })
+        const exportLine = content.split("\n").find(line => line.startsWith("export LD_LIBRARY_PATH="))
+        expect(exportLine).toBeDefined()
+        const result = execFileSync("bash", ["-c", `${exportLine}\nprintf %s "$LD_LIBRARY_PATH"`], {
+          env: { PATH: process.env.PATH, SNAP: "/snap/myapp/1", ...env },
+          encoding: "utf8",
+        })
+        const dirs = "/snap/myapp/1/lib:/snap/myapp/1/usr/lib:/snap/myapp/1/lib/x86_64-linux-gnu:/snap/myapp/1/usr/lib/x86_64-linux-gnu"
+        expect(result).toBe(expected.replaceAll("{dirs}", dirs))
+        expect(result.split(":")).not.toContain("")
+      })
+    }
+
+    test("no-template legacy build: full command.sh sets LD_LIBRARY_PATH and launches app/<executable>", ({ expect }) => {
+      const content = buildCommandShContent({ isTemplate: false, executableName: "myapp", extraAppArgs: ["--no-sandbox"], libraryArchTriplet: "x86_64-linux-gnu" })
+      expect(content).toBe(
+        "#!/bin/bash -e\n" +
+          `${ldLibraryPathPreamble}\n` +
+          `exec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/app/myapp" '--no-sandbox' "$@"\n`
+      )
+    })
+
+    test("classic confinement (no arch triplet): full command.sh has no LD_LIBRARY_PATH preamble", ({ expect }) => {
+      // createDescriptor leaves the triplet null for classic confinement and for a user-configured LD_LIBRARY_PATH
       const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], libraryArchTriplet: null })
-      expect(content).not.toContain("LD_LIBRARY_PATH")
+      expect(content).toBe(`#!/bin/bash -e\nexec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/myapp" "$@"\n`)
     })
 
     test("executableName with shell-safe chars is accepted", ({ expect }) => {

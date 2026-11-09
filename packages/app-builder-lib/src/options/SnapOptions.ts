@@ -86,9 +86,17 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
   readonly confinement?: "devmode" | "strict" | "classic" | null
 
   /**
-   * Environment variables injected into the snap's runtime environment.
-   * Merged with the electron-builder default `{ TMPDIR: "$XDG_RUNTIME_DIR" }`.
-   * User-supplied values take precedence.
+   * Environment variables injected into the snap's runtime environment (the app's `environment` in the snap YAML).
+   * Merged over the electron-builder defaults `PATH` (the snap's `bin`/`sbin` directories, then `$PATH`) and
+   * `SNAP_DESKTOP_RUNTIME` (`$SNAP/gnome-platform`); user-supplied values take precedence.
+   * `DISABLE_WAYLAND=1` is always added when native Wayland is disabled (see `allowNativeWayland`).
+   *
+   * `LD_LIBRARY_PATH` is not set here by default: the snap's `command.sh` launcher sets it to the snap's library
+   * directories, adding `$SNAP_LIBRARY_PATH` and the caller's `LD_LIBRARY_PATH` only when they are set.
+   * Setting `LD_LIBRARY_PATH` here replaces that default library path: the launcher leaves it untouched and the value
+   * is used as-is, so include every directory the app needs.
+   *
+   * Ignored with `confinement: "classic"`, where no environment is written and the launcher does not set `LD_LIBRARY_PATH`.
    */
   readonly environment?: { [key: string]: string } | null
 

@@ -508,12 +508,12 @@ export function buildCommandShContent(opts: { isTemplate: boolean; executableNam
   validateShellEmbeddable(executableName, "executableName")
   const appPrefix = isTemplate ? "" : "app/"
   // snapd expands an unset `$LD_LIBRARY_PATH` in the snap.yaml `environment` to "" and has no `${VAR:+...}` form,
-  // which leaves an empty entry that makes the dynamic linker search the current directory. The shell adds the
-  // caller's LD_LIBRARY_PATH only when it is set.
+  // which leaves an empty entry that makes the dynamic linker search the current directory. The shell adds
+  // SNAP_LIBRARY_PATH and the caller's LD_LIBRARY_PATH only when they are set and non-empty.
   let preamble: string | undefined
   if (libraryArchTriplet != null) {
     const snapLibDirs = `$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/${libraryArchTriplet}:$SNAP/usr/lib/${libraryArchTriplet}`
-    preamble = `export LD_LIBRARY_PATH="$SNAP_LIBRARY_PATH:${snapLibDirs}\${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:${snapLibDirs}"`
+    preamble = `export LD_LIBRARY_PATH="\${SNAP_LIBRARY_PATH:+$SNAP_LIBRARY_PATH:}${snapLibDirs}\${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:${snapLibDirs}"`
   }
   return buildLauncherScript({
     shebang: "#!/bin/bash -e",

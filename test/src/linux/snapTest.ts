@@ -70,21 +70,31 @@ test.ifNotWindows("default stagePackages", async ({ expect }) => {
 })
 
 test.ifNotWindows("classic confinement", ({ expect }) =>
-  app(expect, {
-    targets: snapTarget,
-    config: {
-      extraMetadata: {
-        name: "cl-co-app",
-      },
-      productName: "Snap Electron App (classic confinement)",
-      snapcraft: {
-        base: "core20",
-        core20: {
-          confinement: "classic",
+  app(
+    expect,
+    {
+      targets: snapTarget,
+      config: {
+        extraMetadata: {
+          name: "cl-co-app",
+        },
+        productName: "Snap Electron App (classic confinement)",
+        snapcraft: {
+          base: "core20",
+          core20: {
+            confinement: "classic",
+          },
         },
       },
     },
-  })
+    {
+      packed: async context => {
+        // classic snaps run unconfined: the launcher leaves LD_LIBRARY_PATH alone
+        const commandSh = await readFile(path.join(context.outDir, "__snap-amd64", "command.sh"), "utf8")
+        expect(commandSh).not.toContain("LD_LIBRARY_PATH")
+      },
+    }
+  )
 )
 
 test.ifNotWindows("buildPackages", async ({ expect }) => {
