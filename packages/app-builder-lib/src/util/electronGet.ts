@@ -148,16 +148,22 @@ async function mkdirInsideRealDir(target: string, dir: string, realDir: string, 
       continue
     }
     const next = path.join(current, part)
+    let existed = false
     try {
       await fs.mkdir(next)
     } catch (e: any) {
       if (e.code !== "EEXIST") {
         throw e
       }
+      existed = true
     }
     current = await fs.realpath(next)
     if (!isSafeExtractPath(current, realDir)) {
       throw new Error(`Symlinked path escapes extraction dir: ${entryPath}`)
+    }
+    // an earlier file entry (or a symlink to one) at this path cannot hold a directory
+    if (existed && !(await fs.stat(current)).isDirectory()) {
+      throw new Error(`Zip entry needs a directory where a file already exists: ${entryPath}`)
     }
   }
   return current
@@ -235,7 +241,13 @@ async function extractZipStreaming(file: string, dir: string): Promise<void> {
         if (!(await isLinkTargetInside(realParent, target, realDir, false))) {
           throw new Error(`Symlink target escapes extraction dir: ${target}`)
         }
-        await fs.symlink(target, path.join(realParent, path.basename(destPath)))
+        await fs.symlink(target, path.join(realParent, path.basename(destPath))).catch((e: any) => {
+          // fs.symlink never replaces an existing path, so a symlink entry at a path an earlier entry holds is refused by name
+          if (e.code === "EEXIST") {
+            throw new Error(`Zip symlink entry would replace an existing file, directory or symlink: ${entry.path}`)
+          }
+          throw e
+        })
         symlinks.push({ realParent, target })
       } else if (entry.type === "Directory") {
         await mkdirInsideRealDir(destPath, dir, realDir, entry.path)

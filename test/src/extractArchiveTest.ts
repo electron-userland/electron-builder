@@ -206,6 +206,23 @@ describe("extractArchive ZIP security guards", () => {
     expect(await fs.readFile(path.join(root, "out", "dup.txt"), "utf-8")).toBe("second")
   })
 
+  test.skipIf(process.platform === "win32").for<[string, ZipEntrySpec]>([
+    ["a symlink", symlinkEntry("dup", "first")],
+    ["a file", { name: "dup", content: Buffer.from("first") }],
+    ["a directory", { name: "dup/", mode: 0o40755 }],
+  ])("refuses a symlink entry at a path that %s from an earlier entry holds", async ([, earlier], { expect, tmpDir }) => {
+    const { promise } = await extractChained(tmpDir, [earlier, symlinkEntry("dup", "second")])
+    await expect(promise).rejects.toThrow("Zip symlink entry would replace an existing file, directory or symlink: dup")
+  })
+
+  test.for<[string, ZipEntrySpec, string]>([
+    ["a directory entry", { name: "dup/", mode: 0o40755 }, "dup/"],
+    ["a file entry below it", { name: "dup/inner.txt", content: Buffer.from("second") }, "dup/inner.txt"],
+  ])("refuses %s at a path an earlier file entry holds", async ([, later, entryPath], { expect, tmpDir }) => {
+    const { promise } = await extractChained(tmpDir, [{ name: "dup", content: Buffer.from("first") }, later])
+    await expect(promise).rejects.toThrow(`Zip entry needs a directory where a file already exists: ${entryPath}`)
+  })
+
   test.skipIf(process.platform === "win32")(
     "blocks a symlink target that leaves the extraction dir through an in-tree link after a missing component",
     async ({ expect, tmpDir }) => {
