@@ -68,13 +68,19 @@ describe("NSIS script path quoting", () => {
 
   test("localized license page rejects an unsafe license file before rewriting it", async ({ expect, tmpDir }) => {
     const resources = path.join(await tmpDir.getTempDir({ prefix: "nsis-quote-license-localized" }), 'build"res')
-    await fs.mkdir(resources, { recursive: true })
     const license = path.join(resources, "license_en.txt")
-    await fs.writeFile(license, "terms")
+    // the license path comes from resourceList, so the rejection needs no file on disk; Windows cannot create a name with `"`,
+    // so only the other platforms also check that the existing file is not rewritten with a BOM
+    const onDisk = process.platform !== "win32"
+    if (onDisk) {
+      await fs.mkdir(resources, { recursive: true })
+      await fs.writeFile(license, "terms")
+    }
     const packager = createPackager(resources, { resourceList: Promise.resolve(["license_en.txt"]) })
     await expect(computeLicensePage(packager, {}, new NsisScriptGenerator(), ["en_US", "de_DE"])).rejects.toThrow(unsafe)
-    // no BOM was added to the file
-    expect(await fs.readFile(license, "utf8")).toBe("terms")
+    if (onDisk) {
+      expect(await fs.readFile(license, "utf8")).toBe("terms")
+    }
   })
 
   test("OutFile rejects an unsafe installer path", async ({ expect, tmpDir }) => {
@@ -98,7 +104,9 @@ describe("NSIS script path quoting", () => {
     await expect(createTarget(packager, dir).computeFinalScript("", true, new Map())).rejects.toThrow(unsafe)
   })
 
-  test("pre-compressed file copy rejects an unsafe file name", async ({ expect, tmpDir }) => {
+  // the path comes from walking the app output on disk, and Windows file names cannot contain `"`, a line break or NUL;
+  // NsisScriptGenerator.file, which this copy goes through, is covered on every platform in nsisScriptGeneratorTest
+  test.ifNotWindows("pre-compressed file copy rejects an unsafe file name", async ({ expect, tmpDir }) => {
     const appOutDir = await tmpDir.getTempDir({ prefix: "nsis-quote-precompressed" })
     await fs.mkdir(path.join(appOutDir, "resources"), { recursive: true })
     await fs.writeFile(path.join(appOutDir, "resources", 'clip".mp4'), "video")
