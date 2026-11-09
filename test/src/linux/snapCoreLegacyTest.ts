@@ -103,9 +103,64 @@ describe("snapCoreLegacy helpers", { concurrent: false }, () => {
     })
 
     test("classic confinement (no arch triplet): full command.sh has no LD_LIBRARY_PATH preamble", ({ expect }) => {
-      // createDescriptor leaves the triplet null for classic confinement and for a user-configured LD_LIBRARY_PATH
-      const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], libraryArchTriplet: null })
+      // createDescriptor sets neither the triplet nor dropEmptyLibraryPathEntries for classic confinement
+      const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], libraryArchTriplet: null, dropEmptyLibraryPathEntries: false })
       expect(content).toBe(`#!/bin/bash -e\nexec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/myapp" "$@"\n`)
+    })
+
+    test("configured LD_LIBRARY_PATH: full command.sh drops its empty entries before launching the app", ({ expect }) => {
+      const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], dropEmptyLibraryPathEntries: true })
+      expect(content).toBe(
+        "#!/bin/bash -e\n" +
+          '_ld_library_path=":$LD_LIBRARY_PATH:"\n' +
+          'while [[ $_ld_library_path == *::* ]]; do _ld_library_path="${_ld_library_path//::/:}"; done\n' +
+          '_ld_library_path="${_ld_library_path#:}"\n' +
+          '_ld_library_path="${_ld_library_path%:}"\n' +
+          'if [[ -n $_ld_library_path ]]; then export LD_LIBRARY_PATH="$_ld_library_path"; else unset LD_LIBRARY_PATH; fi\n' +
+          "unset _ld_library_path\n" +
+          `exec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/myapp" "$@"\n`
+      )
+    })
+
+    // snapd expands the configured snap.yaml value before command.sh runs; each case is that expanded value.
+    // `$SNAP/custom:$LD_LIBRARY_PATH` expands to "/snap/myapp/1/custom:/caller" with the caller's value set,
+    // and to "/snap/myapp/1/custom:" with it unset or empty.
+    const configuredCases: Array<[string, string | undefined, string | undefined]> = [
+      ["caller's value set", "/snap/myapp/1/custom:/caller", "/snap/myapp/1/custom:/caller"],
+      ["caller's value unset or empty (trailing empty entry)", "/snap/myapp/1/custom:", "/snap/myapp/1/custom"],
+      ["leading empty entry", ":/snap/myapp/1/custom", "/snap/myapp/1/custom"],
+      ["empty entries in the middle", "/a::/b:::/c", "/a:/b:/c"],
+      ["only empty entries", ":::", undefined],
+      ["empty value", "", undefined],
+      ["unset", undefined, undefined],
+      ["entries with spaces and glob characters are kept as-is", "/a b:*:/c?", "/a b:*:/c?"],
+    ]
+    for (const [label, expanded, expected] of configuredCases) {
+      test.ifNotWindows(`configured LD_LIBRARY_PATH keeps no empty entries in bash: ${label}`, ({ expect }) => {
+        const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], dropEmptyLibraryPathEntries: true })
+        const preamble = content.slice(content.indexOf("\n") + 1, content.indexOf("\nexec "))
+        const env: Record<string, string | undefined> = { PATH: process.env.PATH }
+        if (expanded !== undefined) {
+          env.LD_LIBRARY_PATH = expanded
+        }
+        const result = execFileSync("bash", ["-e", "-c", `${preamble}\nprintf %s "\${LD_LIBRARY_PATH-<unset>}"`], { env, encoding: "utf8" })
+        expect(result).toBe(expected ?? "<unset>")
+        if (expected !== undefined) {
+          expect(result.split(":")).not.toContain("")
+        }
+      })
+    }
+
+    test("the default LD_LIBRARY_PATH takes precedence over dropping empty entries", ({ expect }) => {
+      const content = buildCommandShContent({
+        isTemplate: true,
+        executableName: "myapp",
+        extraAppArgs: [],
+        libraryArchTriplet: "x86_64-linux-gnu",
+        dropEmptyLibraryPathEntries: true,
+      })
+      expect(content).toContain(`\n${ldLibraryPathPreamble}\n`)
+      expect(content).not.toContain("_ld_library_path")
     })
 
     test("executableName with shell-safe chars is accepted", ({ expect }) => {

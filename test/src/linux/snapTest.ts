@@ -448,7 +448,7 @@ test.ifNotWindows("template app sets LD_LIBRARY_PATH in command.sh, not in snap.
   )
 )
 
-test.ifNotWindows("template app keeps a configured LD_LIBRARY_PATH as is", ({ expect }) =>
+test.ifNotWindows("template app keeps a configured LD_LIBRARY_PATH in snap.yaml and drops its empty entries in command.sh", ({ expect }) =>
   app(
     expect,
     {
@@ -456,14 +456,16 @@ test.ifNotWindows("template app keeps a configured LD_LIBRARY_PATH as is", ({ ex
       config: {
         extraMetadata: { name: "sep" },
         productName: "Sep",
-        snapcraft: { base: "core20", core20: { useTemplateApp: true, environment: { LD_LIBRARY_PATH: "$SNAP/custom" } } },
+        snapcraft: { base: "core20", core20: { useTemplateApp: true, environment: { LD_LIBRARY_PATH: "$SNAP/custom:$LD_LIBRARY_PATH" } } },
       },
     },
     {
       packed: async context => {
+        // snapd expands an unset `$LD_LIBRARY_PATH` here to an empty entry; command.sh drops it instead of adding the default
         const { commandSh, environment } = await readTemplateSnapStage(context.outDir)
-        expect(environment.LD_LIBRARY_PATH).toBe("$SNAP/custom")
-        expect(commandSh).not.toContain("LD_LIBRARY_PATH")
+        expect(environment.LD_LIBRARY_PATH).toBe("$SNAP/custom:$LD_LIBRARY_PATH")
+        expect(commandSh).toContain('_ld_library_path=":$LD_LIBRARY_PATH:"')
+        expect(commandSh).not.toContain("SNAP_LIBRARY_PATH")
       },
     }
   )

@@ -54,6 +54,8 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
   private isUseTemplateApp = false
   // Arch triplet whose library dirs command.sh puts on LD_LIBRARY_PATH; null when the launcher leaves LD_LIBRARY_PATH alone.
   private launcherLibraryArchTriplet: string | null = null
+  // Whether command.sh drops the empty entries of a user-configured LD_LIBRARY_PATH.
+  private launcherDropsEmptyLibraryPathEntries = false
 
   defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
@@ -162,6 +164,8 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
       // LD_LIBRARY_PATH is set by command.sh rather than here, unless the user configures it: see buildCommandShContent.
       if (options.environment?.LD_LIBRARY_PATH == null) {
         this.launcherLibraryArchTriplet = this.archNameToTriplet(arch)
+      } else {
+        this.launcherDropsEmptyLibraryPathEntries = true
       }
       const environment: Record<string, string> = {
         PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -395,7 +399,13 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
 
     // command.sh — template builds write to stage root; no-template writes to scripts/
     const commandWrapperPath = isTemplate ? path.join(stageDir, "command.sh") : path.join(scriptDir, "command.sh")
-    const commandContent = buildCommandShContent({ isTemplate, executableName: this.packager.executableName, extraAppArgs, libraryArchTriplet: this.launcherLibraryArchTriplet })
+    const commandContent = buildCommandShContent({
+      isTemplate,
+      executableName: this.packager.executableName,
+      extraAppArgs,
+      libraryArchTriplet: this.launcherLibraryArchTriplet,
+      dropEmptyLibraryPathEntries: this.launcherDropsEmptyLibraryPathEntries,
+    })
     await writeFile(commandWrapperPath, commandContent, { mode: 0o755 })
     await chmod(commandWrapperPath, 0o755)
   }
@@ -503,8 +513,14 @@ export function assertTemplateSnapCompressionSupported(appimageToolset: ToolsetC
   }
 }
 
-export function buildCommandShContent(opts: { isTemplate: boolean; executableName: string; extraAppArgs: string[]; libraryArchTriplet?: string | null }): string {
-  const { isTemplate, executableName, extraAppArgs, libraryArchTriplet } = opts
+export function buildCommandShContent(opts: {
+  isTemplate: boolean
+  executableName: string
+  extraAppArgs: string[]
+  libraryArchTriplet?: string | null
+  dropEmptyLibraryPathEntries?: boolean
+}): string {
+  const { isTemplate, executableName, extraAppArgs, libraryArchTriplet, dropEmptyLibraryPathEntries } = opts
   validateShellEmbeddable(executableName, "executableName")
   const appPrefix = isTemplate ? "" : "app/"
   // snapd expands an unset `$LD_LIBRARY_PATH` in the snap.yaml `environment` to "" and has no `${VAR:+...}` form,
@@ -514,6 +530,17 @@ export function buildCommandShContent(opts: { isTemplate: boolean; executableNam
   if (libraryArchTriplet != null) {
     const snapLibDirs = `$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/${libraryArchTriplet}:$SNAP/usr/lib/${libraryArchTriplet}`
     preamble = `export LD_LIBRARY_PATH="\${SNAP_LIBRARY_PATH:+$SNAP_LIBRARY_PATH:}${snapLibDirs}\${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:${snapLibDirs}"`
+  } else if (dropEmptyLibraryPathEntries === true) {
+    // A user-configured LD_LIBRARY_PATH stays in snap.yaml, so the same empty entries can come from snapd's expansion
+    // (e.g. `$SNAP/lib:$LD_LIBRARY_PATH` with the caller's value unset) or from the value itself. Drop them all.
+    preamble = [
+      '_ld_library_path=":$LD_LIBRARY_PATH:"',
+      'while [[ $_ld_library_path == *::* ]]; do _ld_library_path="${_ld_library_path//::/:}"; done',
+      '_ld_library_path="${_ld_library_path#:}"',
+      '_ld_library_path="${_ld_library_path%:}"',
+      'if [[ -n $_ld_library_path ]]; then export LD_LIBRARY_PATH="$_ld_library_path"; else unset LD_LIBRARY_PATH; fi',
+      "unset _ld_library_path",
+    ].join("\n")
   }
   return buildLauncherScript({
     shebang: "#!/bin/bash -e",
