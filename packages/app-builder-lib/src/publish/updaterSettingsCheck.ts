@@ -93,7 +93,8 @@ export async function warnAboutUpdaterSettings(
         solution:
           "sign the .rpm files separately after the build (for example with rpm --addsign), then regenerate the sha512 and size of each signed file " +
           "in the Linux update manifest (latest-linux*.yml) and sign the manifest again: signing changes the files, so electron-updater rejects " +
-          "a download that does not match the manifest written by the build. Run electron-builder verify to check the result",
+          "a download that does not match the manifest written by the build. electron-builder sign-update-manifest --rehash does both for a manifest " +
+          "(see https://www.electron.build/docs/features/signed-update-manifests#re-signing-after-a-file-changed); then run electron-builder verify to check the result",
       },
       "the app sets autoUpdater.allowUnverifiedLinuxPackages = false, so electron-updater installs an .rpm update only when dnf/yum or zypper " +
         "verifies its GPG signature against a key in the rpm keyring of the target system. electron-builder does not sign Linux packages, " +

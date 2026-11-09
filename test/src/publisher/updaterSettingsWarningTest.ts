@@ -426,6 +426,8 @@ describe("allowUnverifiedLinuxPackages = false", () => {
     expect(message).toContain("electron-builder does not sign Linux packages")
     expect(fields.solution).toContain("sign the .rpm files separately after the build")
     expect(fields.solution).toContain("regenerate the sha512 and size of each signed file in the Linux update manifest (latest-linux*.yml) and sign the manifest again")
+    expect(fields.solution).toContain("electron-builder sign-update-manifest --rehash")
+    expect(fields.solution).toContain("https://www.electron.build/docs/features/signed-update-manifests#re-signing-after-a-file-changed")
     expect(fields.solution).toContain("electron-builder verify")
     expect(message.endsWith(` See ${linuxDocs}`)).toBe(true)
     expect(`${message} ${fields.solution}`.replace(linuxDocs, "")).not.toMatch(/electron-updater \d|electron-builder \d|\bv\d\d|\b(now|no longer)\b/i)
