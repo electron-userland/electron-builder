@@ -520,6 +520,31 @@ describe("exec failure", () => {
     expect(cause.message).toBe("Command failed")
     expect(Object.keys(cause)).toEqual(["code"])
   })
+
+  test("a raw error with own __proto__, constructor or prototype keys does not change any prototype", async ({ expect }) => {
+    vi.mocked(execFile).mockImplementationOnce(((
+      _file: string,
+      _args: Array<string>,
+      _options: unknown,
+      callback: (error: ExecFileException, stdout: string, stderr: string) => void
+    ) => {
+      const error: ExecFileException = new Error("Command failed")
+      // own enumerable data properties, as JSON.parse creates them; an assignment would hit the `__proto__` setter
+      for (const [key, value] of Object.entries(JSON.parse('{"__proto__": {"polluted": "yes"}, "constructor": "c", "prototype": "p", "code": 1}'))) {
+        Object.defineProperty(error, key, { value, enumerable: true, configurable: true, writable: true })
+      }
+      expect(Object.prototype.hasOwnProperty.call(error, "__proto__")).toBe(true)
+      process.nextTick(() => callback(error, "", ""))
+      return {}
+    }) as unknown as typeof execFile)
+    const cause = causeOf(await execFailure(process.execPath, ["--token", secret]))
+    expect(Object.getPrototypeOf(cause)).toBe(Error.prototype)
+    expect(Object.keys(cause)).toEqual(["code"])
+    expect(cause.code).toBe(1)
+    expect(cause.polluted).toBeUndefined()
+    expect(Object.prototype.hasOwnProperty.call(cause, "__proto__")).toBe(false)
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined()
+  })
 })
 
 // ─── spawnAndWriteWithOutput ────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import { hashSensitiveValue, isSensitiveFieldName, isValidKey, Nullish, retry, safeStringifyJson } from "builder-util-runtime"
+import { deepAssign, hashSensitiveValue, isSensitiveFieldName, isValidKey, Nullish, retry, safeStringifyJson } from "builder-util-runtime"
 import chalk from "chalk"
 import { ChildProcess, execFile, ExecFileException, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
@@ -213,12 +213,8 @@ function redactedExecCause(error: ExecFileException, file: string, args: Array<s
     killed: error.killed,
     cmd: error.cmd == null ? undefined : redact(error.cmd),
   }
-  for (const [key, value] of Object.entries(kept)) {
-    if (value != null) {
-      Object.assign(cause, { [key]: value })
-    }
-  }
-  return cause
+  // deepAssign, not Object.assign: it never assigns `__proto__`, `constructor` or `prototype`
+  return deepAssign(cause, Object.fromEntries(Object.entries(kept).filter(([, value]) => value != null)))
 }
 
 export function exec(file: string, args?: Array<string> | null, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
