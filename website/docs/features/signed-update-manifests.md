@@ -183,13 +183,112 @@ Before any manifest is written, each one is read back the way electron-updater p
 
 ## What is signed
 
-Every signature covers the integrity-critical fields of the manifest: `version`, `stagingPercentage`, `minimumSystemVersion` (its absence is signed too, so an OS-version gate cannot be added or removed after signing), `allowCatalogSignature` when it is `true` (written for `win.allowCatalogSignature`; a manifest without it, or with `false`, is signed exactly as before), every file entry's `url`, `sha512`, and `size` (and its `blockMapUrl` when present), and — for the NSIS web installer — every `packages` entry's `path`, `sha512`, `size`, `blockMapSize`, and `isAdminRightsRequired` (all in a canonical, order-independent form). Cosmetic fields — `releaseName`, `releaseNotes`, and `releaseDate` — are not covered, so they remain editable after publishing without invalidating the signature. A covered field is not: setting or changing `stagingPercentage` for a [staged rollout](./auto-update.md#staged-rollouts), for example, means signing the manifest again. The `signature`/`signatures` fields themselves (including `keyId`) are not part of the signed payload, so signatures can be added or removed without invalidating the others.
+Every signature covers the integrity-critical fields of the manifest: `version`, `stagingPercentage`, `minimumSystemVersion` (its absence is signed too, so an OS-version gate cannot be added or removed after signing), `allowCatalogSignature` when it is `true` (written for `win.allowCatalogSignature`; a manifest without it, or with `false`, is signed exactly as before), every file entry's `url`, `sha512`, and `size` (and its `blockMapUrl` when present), and — for the NSIS web installer — every `packages` entry's `path`, `sha512`, `size`, `blockMapSize`, and `isAdminRightsRequired` (all in a canonical, order-independent form). Cosmetic fields — `releaseName`, `releaseNotes`, and `releaseDate` — are not covered, so they remain editable after publishing without invalidating the signature. A covered field is not: setting or changing `stagingPercentage` for a [staged rollout](./auto-update.md#staged-rollouts), for example, means signing the manifest again. To change a covered field after publishing, edit the file and [re-sign it](#re-signing-a-published-manifest). The `signature`/`signatures` fields themselves (including `keyId`) are not part of the signed payload, so signatures can be added or removed without invalidating the others.
 
 `files[].isAdminRightsRequired` is intentionally not signed either. It only decides how electron-updater launches the already hash-verified installer (directly, or through `elevate.exe`), so tampering with it cannot change what gets installed — at worst it causes an unexpected UAC prompt — while leaving it unsigned lets you correct a misconfigured value in `latest.yml` after publishing without re-signing.
 
 The canonical form is injective: every string value is JSON-quoted (so a value can never contain an unescaped newline or tab and cannot impersonate another record), numbers are written bare, and an absent optional field is encoded differently from an empty one. Two manifests therefore produce the same signed bytes only if every covered field is identical.
 
 A signed manifest must also have the shape the signature is meant to protect. Before trying any key, the updater rejects a manifest whose `files` list is empty or missing, whose `version`, `files[].url`/`sha512`, `minimumSystemVersion` or `packages` entries are not plain strings/numbers, whose `allowCatalogSignature` is not a boolean, or whose signed string fields contain control characters, with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID` naming the problem. In particular, the deprecated top-level `path`/`sha512` fields (an unsigned mirror of `files[0]`) are never used to download a verified update. electron-builder applies the same checks when signing, so a build cannot produce a signed manifest that its updaters would refuse.
+
+## Re-signing a published manifest {#re-signing-a-published-manifest}
+
+Cosmetic fields can be edited in a published `latest*.yml` as they are, but changing a signed field — raising `stagingPercentage` during a staged rollout, adding a `minimumSystemVersion`, pointing a file `url` at a different host — invalidates its signatures, and every install that embeds a public key then refuses the update with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`. Rather than rebuilding, edit the file and sign it again from the project directory. Like `electron-builder publish`, the command reads the project's electron-builder configuration (`-c` / `--config` picks a different file), and it takes the key(s) from the same place the build does: `updateManifest.signingKey` / `updateManifest.signingKeyFile` (the platform's own `mac.updateManifest` / `win.updateManifest` / `linux.updateManifest` first), then `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`. There is no flag that takes key material.
+
+```sh
+# keys from the configuration or the environment, exactly as in a build
+npx electron-builder sign-update-manifest dist/latest.yml dist/latest-mac.yml dist/latest-linux.yml
+
+# a different config file, or an inline override of a single setting (relative key files resolve against the project directory)
+npx electron-builder sign-update-manifest latest.yml -c electron-builder.release.yml
+npx electron-builder sign-update-manifest latest.yml -c.updateManifest.signingKeyFile=keys/update-key.pem
+```
+
+The platform of each manifest follows from its name, as the build writes it: `<channel>-mac.yml` is macOS, `<channel>-linux.yml` and `<channel>-linux-<arch>.yml` are Linux, and `<channel>.yml` is Windows. Each file is parsed the way electron-updater parses it, its existing `signature`/`signatures` fields are dropped, and it is checked against the same shape rules the updater applies (a manifest the updater would reject is never signed). Like a publishing build, it refuses signing keys of which none is in an explicit `updateManifest.publicKey`, unless `updateManifest.allowSigningKeyOutsideTrustList` marks a cutover release (without a `publicKey`, the trust list is derived from the signing keys, so there is nothing to refuse). It is then signed by every configured key (several keys dual-sign, as in a build) and written back in place in the format a build writes: every other field keeps its value and position, and `signature` plus `signatures` come last. YAML comments are not preserved. A manifest that is not a regular file is refused, a symlink included: it would overwrite the link's target. When several files are given, all of them are signed before any is written, so one invalid manifest leaves every file untouched. Without a key, or with `updateManifest: false`, the command fails with an error naming the key sources; errors name the configuration field or environment variable a key came from, and key material itself is never printed.
+
+To check an edited file without writing anything, pass `--verify`. It runs the same manifest check as [`electron-builder verify`](../cli.md#verify), with the trust list it uses when no packaged app is at hand: the public keys in `updateManifest.publicKey` (the platform's own block first). Like `verify`, it uses public keys only and never loads a signing key, so it fails with an error naming `updateManifest.publicKey` when that is not set, also when the build derives its trust list from the signing keys. A manifest that `updateManifest: false` opts out of is skipped, and so is one that no trusted key validates when `updateManifest.allowSigningKeyOutsideTrustList` marks a cutover release — unless the trust list was given on the command line, which is always checked exactly as given: every `-c.<platform>.updateManifest.publicKey=...` for that platform's manifests, otherwise every `-c.updateManifest.publicKey=...` (also when the configuration has a platform block), never merged with the configured keys; any other manifest that is unsigned or not signed by a trusted key makes the command exit non-zero, naming the file:
+
+```sh
+npx electron-builder sign-update-manifest latest.yml --verify
+npx electron-builder sign-update-manifest latest.yml --verify "-c.updateManifest.publicKey=$(cat update-public-key.pem)"
+```
+
+`sign-update-manifest --verify` is the per-file check after an edit; [`electron-builder verify`](../cli.md#verify) is the whole-output check of a build, which also checks each manifest against the trust list the packaged apps embed and every file it lists against the artifacts.
+
+Upload the re-signed file to the update feed afterwards; the command does not publish.
+
+### After a file changed {#re-signing-after-a-file-changed}
+
+The signature covers each listed file's `sha512` and `size`, and electron-updater checks a download against both: a full download stops once it receives more bytes than the declared size, and a file whose `sha512` differs is rejected. A release step that changes an artifact after the build — signing a Linux package with its distribution's tools, or signing a Windows installer again — therefore needs a manifest that describes the changed file, signed again. `sign-update-manifest` checks every listed file it finds and refuses to sign a manifest whose `sha512` or `size` does not match the file. It looks for them as [`electron-builder verify`](../cli.md#verify) does: next to the manifest, then — for a manifest inside the build output folder (`directories.output`, `dist` by default) — in its target folder and the output folder itself, where a further publish provider's `dist/<provider>/latest.yml` finds its artifacts. A file is found by the file name in its `url`, or by the GitHub-safe form of a local name (spaces replaced by `-`: a GitHub manifest lists `My App Setup 1.0.0.exe` as `My-App-Setup-1.0.0.exe`), regular files only, never through a symlink. A file found by its name is checked as it is: an unchanged copy of the original artifact elsewhere in those folders does not stand in for it. A listed file that is not found at all is refused when the folders hold other files of the release (another listed file, or a file with the same extension), since it cannot be checked — a GitHub manifest can list a name the build generated for a `productName` with characters GitHub does not allow, and the local file then has to be given that listed name, the name it is uploaded under. When they hold none of them, as when an edit such as `stagingPercentage` is signed away from the build output, the manifest is signed with a warning that the files were not checked. Pass `--rehash` to take the `sha512` and `size` of every `files` entry from the file instead; every listed file then has to be found. Then check the whole output:
+
+```sh
+npx electron-builder sign-update-manifest dist/latest-linux.yml --rehash
+npx electron-builder verify dist
+```
+
+`--rehash` also updates the deprecated top-level `sha512` (and Windows `sha2`) that the build writes for old electron-updater versions. It does not write block maps: a file with a `.blockmap` next to it is downloaded in full by installs updating to this release until the block map is generated from the changed file (a warning names it). An nsis-web `packages` entry declares the size of the block map embedded in its package, which is not recomputed, so a package that changed after the build has to be rebuilt.
+
+### Without electron-builder {#re-signing-without-electron-builder}
+
+A release step that has no electron-builder project at hand can do the same with a short Node.js script, using `builder-util-runtime` (the version that comes with the electron-builder that built the release) and `js-yaml`. It takes the `sha512` and `size` of every listed file from the file next to the manifest, checks the manifest the way the updater does, and signs it with the key file(s) named in `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`, the variable the build reads; it never looks for a key anywhere else. Make any other edit, such as `stagingPercentage`, in the file before running it:
+
+```js
+// resign-update-manifest.mjs — usage: ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=update-private-key.pem node resign-update-manifest.mjs dist/latest.yml
+import { createHash, createPrivateKey, sign } from "node:crypto"
+import { createReadStream, lstatSync, readFileSync, writeFileSync } from "node:fs"
+import { basename, delimiter, dirname, join } from "node:path"
+import { canonicalizeForSigning, createManifestSignatureEntry, validateSignedManifestShape } from "builder-util-runtime"
+import { dump, load } from "js-yaml"
+
+// every key the release was signed with, in the same order: PEM files separated by ":" (";" on Windows), one key per file
+const keyFiles = (process.env.ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE ?? "").split(delimiter).map(it => it.trim()).filter(it => it.length > 0)
+const [file] = process.argv.slice(2)
+if (file == null || keyFiles.length === 0) {
+  throw new Error("usage: ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=update-private-key.pem node resign-update-manifest.mjs dist/latest.yml")
+}
+
+async function digest(path, algorithm, encoding) {
+  const hash = createHash(algorithm)
+  for await (const chunk of createReadStream(path)) {
+    hash.update(chunk)
+  }
+  return hash.digest(encoding)
+}
+
+const info = load(readFileSync(file, "utf8"))
+delete info.signature
+delete info.signatures
+// every listed file, from the file of the same name next to the manifest (never through a symlink)
+for (const entry of info.files ?? []) {
+  const local = join(dirname(file), basename(String(entry.url).split(/[?#]/)[0]))
+  const stats = lstatSync(local)
+  if (!stats.isFile()) {
+    throw new Error(`${local} is not a regular file`)
+  }
+  entry.sha512 = await digest(local, "sha512", "base64")
+  entry.size = stats.size
+  // the deprecated top-level descriptor, when the build wrote one for this file
+  if (info.path === entry.url && info.sha512 != null) {
+    info.sha512 = entry.sha512
+    if (info.sha2 != null) {
+      info.sha2 = await digest(local, "sha256", "hex")
+    }
+  }
+}
+const problem = validateSignedManifestShape(info)
+if (problem != null) {
+  throw new Error(`${file} cannot be signed: ${problem}`)
+}
+
+const payload = Buffer.from(canonicalizeForSigning(info), "utf8")
+const keys = keyFiles.map(keyFile => createPrivateKey(readFileSync(keyFile)))
+const signatures = keys.map(key => createManifestSignatureEntry(key, sign(null, payload, key).toString("base64")))
+info.signature = signatures[0].signature
+info.signatures = signatures
+writeFileSync(file, dump(info, { lineWidth: -1, noRefs: true }))
+```
+
+Before uploading, run [`electron-builder verify`](../cli.md#verify) on the output from the project directory (`npx electron-builder verify dist`): it checks the new signature against the trust list and the `sha512` and `size` of every listed file against the artifacts. The script leaves nsis-web `packages` entries and block maps as they are, as `--rehash` does.
 
 ## Verification behavior in electron-updater
 
