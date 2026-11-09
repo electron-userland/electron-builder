@@ -6,7 +6,7 @@ vi.mock("builder-util", async () => {
   const actual = await vi.importActual<typeof import("builder-util")>("builder-util")
   return { ...actual, exec: vi.fn().mockResolvedValue("") }
 })
-import { exec, Executables, InvalidConfigurationError } from "builder-util"
+import { exec, ExecError, Executables, InvalidConfigurationError } from "builder-util"
 import {
   buildAdditionalFilesXml,
   convertVersion,
@@ -367,10 +367,33 @@ describe("createWindowsInstaller", () => {
       const calls = invocations()
       expect(calls.map(it => path.basename(it.exe))).toEqual(["nuget.exe", "SyncReleases.exe", useMono ? "Squirrel-Mono.exe" : "Squirrel.exe"])
       expect(calls[1].exe).toBe(path.join(vendorDir, "SyncReleases.exe"))
-      expect(calls[1].args).toEqual(["-u", "https://github.com/some-user/some-project", "-r", outDir, "-t", "secret-token"])
+      expect(calls[1].args).toEqual(["-u", "https://github.com/some-user/some-project", "-r", outDir, "--token", "secret-token"])
     })
 
-    test("omits -t when no token is set", async () => {
+    // the stand-in Mono is a shell script
+    test.skipIf(process.platform === "win32")("keeps the token out of the error when SyncReleases fails", async () => {
+      setPlatform("linux")
+      try {
+        // fails the way a real tool does that echoes its command line before exiting non-zero
+        await writeFile(monoPath, '#!/bin/sh\necho "$@" >&2\nexit 1\n')
+        const actual = await vi.importActual<typeof import("builder-util")>("builder-util")
+        vi.mocked(exec).mockImplementation((file, args, options) =>
+          args != null && path.basename(args[0]) === "SyncReleases.exe" ? actual.exec(file, args, options) : Promise.resolve("")
+        )
+        const error = await createWindowsInstaller(baseOptions({ remoteReleases: "https://github.com/some-user/some-project", remoteToken: "secret-token" })).then(
+          () => null,
+          (e: unknown) => e
+        )
+        expect(error).toBeInstanceOf(ExecError)
+        expect((error as ExecError).message).toContain("SyncReleases.exe")
+        expect((error as ExecError).message).not.toContain("secret-token")
+      } finally {
+        vi.mocked(exec).mockReset().mockResolvedValue("")
+        setPlatform(originalPlatform)
+      }
+    })
+
+    test("omits the token when none is set", async () => {
       await fakeReleasifyOutput(["Setup.exe"])
       await createWindowsInstaller(baseOptions({ remoteReleases: "https://github.com/some-user/some-project" }))
       expect(findInvocation("SyncReleases.exe")!.args).toEqual(["-u", "https://github.com/some-user/some-project", "-r", outDir])

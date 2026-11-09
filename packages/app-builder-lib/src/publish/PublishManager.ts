@@ -59,13 +59,13 @@ import { AppInfo } from "../appInfo.js"
 import { Configuration } from "../configuration.js"
 import { Platform, Target, TargetSpecificOptions } from "../core.js"
 import { ArtifactCreated, PlannedTargets } from "../packagerApi.js"
-import { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
+import { PlatformSpecificBuildOptions, UpdateManifestSigningOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { Packager } from "../packager.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { missingUpdatePublisherNameError, validatePublisherNameFormat } from "../codeSign/win/publisherName.js"
 import { WinPackager } from "../winPackager.js"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
-import { warnIfCrossOriginHeadersNotMentioned } from "./crossOriginHeadersCheck.js"
+import { findUpdaterSettingsMentions, UpdaterSettingsMentions, warnAboutUpdaterSettings } from "./updaterSettingsCheck.js"
 import { resolveModule } from "../util/resolve.js"
 import { parseUrl } from "../util/pathManager.js"
 import { isPublishForPullRequest } from "../util/flags.js"
@@ -209,10 +209,10 @@ export class PublishManager implements PublishContext {
   private readonly updateFileWriteTask: Array<UpdateInfoFileTask> = []
 
   /**
-   * Scans the first packed app of this build that ships app-update.yml, not one per arch: every pack of the build ships the same app
-   * code. The warning itself is once per process.
+   * The scan of the first packed app of each platform of this build that ships app-update.yml and needs one, not one per arch: the archs
+   * of a platform ship the same app code, but platforms may not (platform-level `files`). The warnings themselves are once per process.
    */
-  private crossOriginHeadersCheck: Promise<void> | null = null
+  private readonly updaterSettingsScans = new Map<Platform, Promise<UpdaterSettingsMentions | null>>()
 
   constructor(
     private readonly packager: Packager,
@@ -264,7 +264,7 @@ export class PublishManager implements PublishContext {
       // otherwise) only applies when a target emits a manifest - the same per-target resolution as the build-start
       // preflight. A snap-, flatpak- or mas-only pack has none (Linux and mas are not filtered above), nor has an
       // installer whose target-level `publish` is `null` or waived.
-      const { publishConfigs, emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, event.targets, event.arch, this.isPublish)
+      const { publishConfigs, emitsManifest, manifestTargetNames } = await resolvePackAppUpdatePublishConfigs(packager, event.targets, event.arch, this.isPublish)
       if (emitsManifest) {
         await packager.requireUpdateSigningKeys(this.isPublish)
       }
@@ -272,8 +272,14 @@ export class PublishManager implements PublishContext {
       if (publishConfig != null) {
         const resourcesDir = packager.getResourcesDir(event.appOutDir)
         await writeAppUpdateYaml(resourcesDir, publishConfig, event.appOutDir)
-        this.crossOriginHeadersCheck ??= warnIfCrossOriginHeadersNotMentioned(this.packager, resourcesDir)
-        await this.crossOriginHeadersCheck
+        await warnAboutUpdaterSettings(this.packager, manifestTargetNames.includes("rpm"), () => {
+          let scan = this.updaterSettingsScans.get(packager.platform)
+          if (scan == null) {
+            scan = findUpdaterSettingsMentions(resourcesDir)
+            this.updaterSettingsScans.set(packager.platform, scan)
+          }
+          return scan
+        })
       }
     })
 
@@ -501,14 +507,15 @@ export async function getPackAppUpdatePublishConfiguration(
  * - with none (a snap-only pack, or `nsis.publish: null`), it comes from the platform/root settings, as before -
  *   including the GitHub fallback from repository info when no level configures `publish` at all.
  *
- * `emitsManifest` tells whether any target of the pack emits one, i.e. whether the signing requirement applies.
+ * `emitsManifest` tells whether any target of the pack emits one, i.e. whether the signing requirement applies, and `manifestTargetNames`
+ * which targets do.
  */
 async function resolvePackAppUpdatePublishConfigs(
   packager: PlatformPackager<any>,
   targets: ReadonlyArray<Target>,
   arch: Arch,
   isPublish: boolean
-): Promise<{ publishConfigs: Array<PublishConfiguration> | null; emitsManifest: boolean }> {
+): Promise<{ publishConfigs: Array<PublishConfiguration> | null; emitsManifest: boolean; manifestTargetNames: Array<string> }> {
   const writers: Array<{ target: Target; publishConfigs: Array<PublishConfiguration> }> = []
   for (const target of targets) {
     const publishConfigs = await getTargetManifestPublishConfigs(packager, target, arch, isPublish)
@@ -517,7 +524,7 @@ async function resolvePackAppUpdatePublishConfigs(
     }
   }
   if (writers.length === 0) {
-    return { publishConfigs: await getPlatformUpdateInfoPublishConfigs(packager, arch, isPublish), emitsManifest: false }
+    return { publishConfigs: await getPlatformUpdateInfoPublishConfigs(packager, arch, isPublish), emitsManifest: false, manifestTargetNames: [] }
   }
 
   const embedded = appUpdateFeedIdentity(writers[0].publishConfigs[0])
@@ -525,9 +532,9 @@ async function resolvePackAppUpdatePublishConfigs(
     reportConflictingAppUpdateFeeds(packager, writers, arch, isPublish)
     // not publishing: no app-update.yml, the same package the error would have prevented - picking one of the feeds
     // would silently ship installs that poll a feed without their manifest
-    return { publishConfigs: null, emitsManifest: true }
+    return { publishConfigs: null, emitsManifest: true, manifestTargetNames: writers.map(it => it.target.name) }
   }
-  return { publishConfigs: writers[0].publishConfigs, emitsManifest: true }
+  return { publishConfigs: writers[0].publishConfigs, emitsManifest: true, manifestTargetNames: writers.map(it => it.target.name) }
 }
 
 /**
@@ -706,6 +713,21 @@ async function applyUpdateCodeSignatureVerification(winPackager: WinPackager, pu
  * ever reported, never key material.
  */
 function checkSigningKeysTrusted(packager: PlatformPackager<any>, signingKeys: ReadonlyArray<KeyObject>, explicitKeys: ReadonlyArray<string>, fail: boolean): void {
+  checkUpdateSigningKeysTrusted(packager.platform.name, packager.updateManifestOptions, signingKeys, explicitKeys, fail)
+}
+
+/**
+ * {@link checkSigningKeysTrusted} for a platform's resolved `updateManifest` options (`<platform>.updateManifest ?? updateManifest`)
+ * rather than a packager, so a step outside the build (the `sign-update-manifest` CLI) refuses exactly what the build refuses.
+ * @internal
+ */
+export function checkUpdateSigningKeysTrusted(
+  platformName: string,
+  updateManifestConfig: UpdateManifestSigningOptions | false | null,
+  signingKeys: ReadonlyArray<KeyObject>,
+  explicitKeys: ReadonlyArray<string>,
+  fail: boolean
+): void {
   if (signingKeys.length === 0 || explicitKeys.length === 0) {
     return
   }
@@ -715,11 +737,10 @@ function checkSigningKeysTrusted(packager: PlatformPackager<any>, signingKeys: R
     return
   }
 
-  const updateManifestConfig = packager.updateManifestOptions
   const allowed = updateManifestConfig !== false && updateManifestConfig?.allowSigningKeyOutsideTrustList === true
   if (fail && !allowed) {
     throw new InvalidConfigurationError(
-      `none of the update-manifest signing keys (key id(s) ${signingIds.join(", ")}) is in updateManifest.publicKey (key id(s) ${trustedIds.join(", ")}) for ${packager.platform.name}. ` +
+      `none of the update-manifest signing keys (key id(s) ${signingIds.join(", ")}) is in updateManifest.publicKey (key id(s) ${trustedIds.join(", ")}) for ${platformName}. ` +
         "The app built here embeds only the listed keys, so its installs will reject manifests signed with the signing key(s) above: every later release would have to be signed by a key in updateManifest.publicKey. " +
         "Add the signing key's public key to updateManifest.publicKey, or sign with a key that is listed. " +
         "For a deliberate cutover release that hands installs over to a listed key, set updateManifest.allowSigningKeyOutsideTrustList: true. " +
@@ -729,7 +750,7 @@ function checkSigningKeysTrusted(packager: PlatformPackager<any>, signingKeys: R
   log
     .once("update-manifest-signing-key-outside-trust-list")
     .warn(
-      { platform: packager.platform.name, signingKeyIds: signingIds, trustedKeyIds: trustedIds },
+      { platform: platformName, signingKeyIds: signingIds, trustedKeyIds: trustedIds },
       "none of the update-manifest signing keys is in updateManifest.publicKey: installs of this release will not be able to verify manifests signed with the current key(s). " +
         (allowed
           ? "Allowed by updateManifest.allowSigningKeyOutsideTrustList for a deliberate cutover release; every later release must be signed by a key in updateManifest.publicKey."
@@ -743,8 +764,9 @@ const SIGNING_KEY_OUTSIDE_TRUST_LIST_DOCS = "https://www.electron.build/docs/mig
 /**
  * Normalizes the configured `updateManifest.publicKey` (string, multi-PEM string, or array) into distinct,
  * validated Ed25519 public keys, preserving order. Duplicates and non-Ed25519 keys are configuration errors.
+ * @internal
  */
-function normalizeExplicitPublicKeys(value: string | Array<string> | null | undefined): Array<string> {
+export function normalizeExplicitPublicKeys(value: string | Array<string> | null | undefined): Array<string> {
   const keys = normalizePublicKeyList(value)
   const seen = new Map<string, number>()
   keys.forEach((key, index) => {

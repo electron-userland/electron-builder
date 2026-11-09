@@ -21,13 +21,14 @@ const INSTALL_DIR_NAME = "TestApp"
 interface ProjectOptions {
   readonly schema: WixSchema
   readonly msi?: Configuration["msi"]
+  readonly fileAssociations?: Configuration["fileAssociations"]
   // relative paths (with "/") of the files in the app dir; defaults to the main executable and two subdirectories
   readonly files?: Array<string>
   // runs as the msiProjectCreated hook, with the project file
   readonly msiProjectCreated?: (projectFile: string) => Promise<void>
 }
 
-async function createTarget(tmpDir: TmpDir, { schema, msi, files, msiProjectCreated }: ProjectOptions) {
+async function createTarget(tmpDir: TmpDir, { schema, msi, fileAssociations, files, msiProjectCreated }: ProjectOptions) {
   const projectDir = await tmpDir.getTempDir({ prefix: "eb-msi-project-test" })
   const buildResourcesDir = path.join(projectDir, "build")
   await mkdir(buildResourcesDir, { recursive: true })
@@ -38,7 +39,7 @@ async function createTarget(tmpDir: TmpDir, { schema, msi, files, msiProjectCrea
     await writeFile(filePath, file)
   }
 
-  const config: Configuration = { appId: "org.electron-builder.testMsi", productName: PRODUCT_NAME, msi }
+  const config: Configuration = { appId: "org.electron-builder.testMsi", productName: PRODUCT_NAME, msi, fileAssociations }
   const fakePackagerInfo = {
     config,
     metadata: { name: "TestApp", version: "1.1.0", description: "Test Application", author: { name: "Foo Bar", email: "foo@example.com" } },
@@ -193,6 +194,30 @@ describe("MSI project (.wxs)", () => {
       `<Directory Id="APPLICATIONFOLDER" Name="${INSTALL_DIR_NAME}"/>`,
     ])
     expect(project).not.toContain("<DirectoryRef")
+  })
+
+  describe("configuration and app-tree text is XML-escaped", () => {
+    test("a subdirectory name in the legacy inline directory syntax", async ({ expect, tmpDir }) => {
+      // app-tree file names are not trusted input; `'` and `&` are valid in file names on every OS
+      const project = await renderProject(tmpDir, { schema: "v4-preview", files: [`${PRODUCT_NAME}.exe`, "a'b&c/x.txt"] })
+      expect(XMLValidator.validate(project)).toBe(true)
+      expect(project).toContain(`<Directory Id="${directoryId("a'b&c")}" Name="APPLICATIONFOLDER:\\a&apos;b&amp;c\\"/>`)
+    })
+
+    test("menuCategory in the legacy inline directory syntax", async ({ expect, tmpDir }) => {
+      // getEffectiveOptions drops the characters a file name can't have (`"`, `<`, `>`), but keeps `&` and `'`
+      const project = await renderProject(tmpDir, { schema: "v4-preview", msi: { menuCategory: "R&D's Tools" } })
+      expect(XMLValidator.validate(project)).toBe(true)
+      expect(project).toContain(`<Directory Id="AppProgramMenuDir" Name="ProgramMenuFolder:\\R&amp;D&apos;s Tools\\"/>`)
+    })
+
+    for (const schema of ["v3", "v4-preview"] as const) {
+      test(`a file association description (${schema})`, async ({ expect, tmpDir }) => {
+        const project = await renderProject(tmpDir, { schema, fileAssociations: [{ ext: "foo", description: `Foo "file" <&>` }] })
+        expect(XMLValidator.validate(project)).toBe(true)
+        expect(project).toContain(`Description="Foo &quot;file&quot; &lt;&amp;&gt;"`)
+      })
+    }
   })
 
   describe("assisted installer (oneClick: false)", () => {
