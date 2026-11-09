@@ -519,6 +519,16 @@ describe("aggregate-changesets", () => {
       expect(vi.getTimerCount()).toBe(0)
     })
 
+    test("rethrows a transient-sounding error that get-github-info did not throw for a GraphQL reply", async ({ expect }) => {
+      const getInfo = setup()
+      getInfo.mockRejectedValueOnce(new Error("request timed out"))
+      const result = expect(releaseLine("g")).rejects.toThrow("request timed out")
+      await vi.advanceTimersByTimeAsync(0)
+      expect(getInfo).toHaveBeenCalledTimes(1)
+      expect(vi.getTimerCount()).toBe(0)
+      await result
+    })
+
     test("gives up after 3 retries", async ({ expect }) => {
       const getInfo = setup()
       getInfo.mockRejectedValue(htmlResponse())
