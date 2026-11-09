@@ -193,8 +193,65 @@ describe("extractArchive ZIP security guards", () => {
       symlinkEntry("x", "."),
       { name: "./link", content: Buffer.from("outside") },
     ])
-    await expect(promise).rejects.toMatchObject({ code: "EEXIST" })
+    await expect(promise).rejects.toThrow("Zip entry would replace an existing symlink or directory: ./link")
     await expect(fs.access(path.join(root, "escaped.txt"))).rejects.toMatchObject({ code: "ENOENT" })
+  })
+
+  test("keeps the last copy of a file listed twice", async ({ expect, tmpDir }) => {
+    const { root, promise } = await extractChained(tmpDir, [
+      { name: "dup.txt", content: Buffer.from("first") },
+      { name: "dup.txt", content: Buffer.from("second") },
+    ])
+    await promise
+    expect(await fs.readFile(path.join(root, "out", "dup.txt"), "utf-8")).toBe("second")
+  })
+
+  test.skipIf(process.platform === "win32")(
+    "blocks a symlink target that leaves the extraction dir through an in-tree link after a missing component",
+    async ({ expect, tmpDir }) => {
+      // "m" is missing, so "m/.." is the link's dir; "a/b/c/L" really is the extraction dir, so the final ".." is its parent
+      const { promise } = await extractChained(tmpDir, [{ name: "a/b/c/", mode: 0o40755 }, symlinkEntry("a/b/c/L", "../../.."), symlinkEntry("X", "m/../a/b/c/L/..")])
+      await expect(promise).rejects.toThrow("Symlink target escapes extraction dir: m/../a/b/c/L/..")
+    }
+  )
+
+  test.skipIf(process.platform === "win32")("extracts a link that walks through another in-tree link listed before its target dir", async ({ expect, tmpDir }) => {
+    // when "Helpers" is created "Versions/Current" still dangles; the finished tree resolves it inside
+    const { root, promise } = await extractChained(tmpDir, [
+      symlinkEntry("Versions/Current", "A"),
+      symlinkEntry("Helpers", "Versions/Current/Helpers"),
+      { name: "Versions/A/Helpers/tool", content: Buffer.from("in tree") },
+    ])
+    await promise
+    expect(await fs.readFile(path.join(root, "out", "Helpers", "tool"), "utf-8")).toBe("in tree")
+  })
+
+  describe("with win32 path semantics", () => {
+    const originalPlatform = Object.getOwnPropertyDescriptor(process, "platform")
+    afterEach(() => {
+      if (originalPlatform != null) {
+        Object.defineProperty(process, "platform", originalPlatform)
+      }
+    })
+    // the archive is written first, so only the extraction runs with process.platform stubbed
+    async function extractAsWin32(tmpDir: TmpDir, entries: ZipEntrySpec[]) {
+      const root = await tmpDir.getTempDir({ prefix: "zip-win32-symlinks" })
+      await fs.mkdir(root, { recursive: true })
+      const zipPath = path.join(root, "win32.zip")
+      await fs.writeFile(zipPath, buildZip(entries))
+      Object.defineProperty(process, "platform", { value: "win32", configurable: true })
+      return extractArchive(zipPath, path.join(root, "out"))
+    }
+
+    test("blocks a drive-relative symlink target", async ({ expect, tmpDir }) => {
+      // not absolute, but Windows resolves it against drive C's current directory instead of the link's dir
+      await expect(extractAsWin32(tmpDir, [symlinkEntry("link", "C:..\\..\\Users\\Public")])).rejects.toThrow("Absolute symlink target blocked: C:..\\..\\Users\\Public")
+    })
+
+    test("splits a symlink target on backslashes", async ({ expect, tmpDir }) => {
+      // walked as a single component the target would stay inside; split on backslashes it is the parent dir
+      await expect(extractAsWin32(tmpDir, [symlinkEntry("link", "a\\..\\..")])).rejects.toThrow("Symlink target escapes extraction dir: a\\..\\..")
+    })
   })
 
   test.skipIf(process.platform === "win32")("extracts in-tree symlinks and files written through them", async ({ expect, tmpDir }) => {
