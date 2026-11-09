@@ -96,9 +96,18 @@ export function createUpdateManifestSignatures(info: UpdateInfo, privateKeys: Ar
  * installs would refuse.
  */
 export function serializeSignedUpdateManifest(info: UpdateInfo, privateKeys: Array<string | KeyObject>): string {
+  return signAndSerializeUpdateManifest(info, privateKeys).content
+}
+
+/** {@link serializeSignedUpdateManifest}, also returning the signed manifest and its `signatures` entries. */
+function signAndSerializeUpdateManifest(
+  info: UpdateInfo,
+  privateKeys: Array<string | KeyObject>
+): { content: string; info: UpdateInfo; signatures: Array<UpdateManifestSignature> } {
   const unsigned = withoutSignatures(info)
   const signatures = createUpdateManifestSignatures(unsigned, privateKeys)
-  const yaml = serializeToYaml({ ...unsigned, signature: signatures[0].signature, signatures }, false, true)
+  const signed: UpdateInfo = { ...unsigned, signature: signatures[0].signature, signatures }
+  const yaml = serializeToYaml(signed, false, true)
 
   const published = load(yaml)
   const ebum2 = canonicalizeForSigningV2(published)
@@ -109,7 +118,7 @@ export function serializeSignedUpdateManifest(info: UpdateInfo, privateKeys: Arr
   if (typeof published !== "object" || published == null || canonicalizeForSigning(published as UpdateInfo) !== canonicalizeForSigning(unsigned)) {
     throw new Error(`Update manifest for version ${info.version} does not read back as it was signed (EBUM1)`)
   }
-  return yaml
+  return { content: yaml, info: signed, signatures }
 }
 
 /** Accepts an Ed25519 private key as a PEM string (PKCS#8) and returns a normalized KeyObject. */
@@ -207,22 +216,40 @@ export function loadUpdateSigningKeys(config?: UpdateSigningKeySources | null, b
     pems = configKeys.flatMap(splitPemBlocks)
   } else if (configFiles.length > 0) {
     source = "updateManifest.signingKeyFile"
-    pems = configFiles.flatMap(file => splitPemBlocks(readFileSync(baseDir == null ? file : path.resolve(baseDir, file), "utf8")))
+    pems = configFiles.flatMap((file, index) => splitPemBlocks(readKeyFile(baseDir == null ? file : path.resolve(baseDir, file), source, index, configFiles.length)))
   } else if (envKey != null && envKey.trim().length > 0) {
     source = "ELECTRON_BUILDER_UPDATE_SIGN_KEY"
     // decoded only here, after both config sources were passed over, so a stale value never breaks a build keyed from the config
     pems = decodeSigningKeyEnv(envKey)
   } else if (envFile != null && envFile.trim().length > 0) {
     source = "ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE"
-    pems = envFile
+    const envFiles = envFile
       .split(path.delimiter)
       .map(it => it.trim())
       .filter(it => it.length > 0)
-      .flatMap(file => splitPemBlocks(readFileSync(file, "utf8")))
+    pems = envFiles.flatMap((file, index) => splitPemBlocks(readKeyFile(file, source, index, envFiles.length)))
   } else {
     return []
   }
   return validateSigningKeys(pems, source)
+}
+
+/**
+ * Reads a signing key file. An unreadable file is an InvalidConfigurationError naming only `source` (and the entry's position when
+ * there are several) and the error code — never the configured value: a secret put where its path belongs (the base64 value in
+ * ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE, a PEM in `signingKeyFile`) would otherwise land in the CI log, and no check on the value's
+ * shape can tell every encoding of a key apart from a path.
+ */
+function readKeyFile(file: string, source: string, index: number, count: number): string {
+  try {
+    return readFileSync(file, "utf8")
+  } catch (e: any) {
+    const reason = typeof e?.code === "string" ? e.code : "unreadable"
+    const which = count > 1 ? ` #${index + 1}` : ""
+    throw new InvalidConfigurationError(
+      `Update manifest signing key file${which} from ${source} cannot be read (${reason}); check that it points to a readable PEM file (the value is not shown)`
+    )
+  }
 }
 
 function validateSigningKeys(pems: Array<string>, source: string): Array<string> {
@@ -260,5 +287,52 @@ export function generateUpdateSigningKeypair(): { publicKeyPem: string; privateK
   return {
     publicKeyPem: publicKey.export({ type: "spki", format: "pem" }).toString().trim(),
     privateKeyPem: privateKey.export({ type: "pkcs8", format: "pem" }).toString().trim(),
+  }
+}
+
+/**
+ * Parses the text of a `latest*.yml` the way electron-updater does (js-yaml `load`, default schema), so a manifest is
+ * re-signed or verified over exactly the values the updater will see. Throws an InvalidConfigurationError naming
+ * `file` when the text is not YAML or not a mapping.
+ */
+export function parseUpdateManifestYaml(content: string, file: string): UpdateInfo {
+  let parsed: unknown
+  try {
+    parsed = load(content)
+  } catch (e: any) {
+    throw new InvalidConfigurationError(`${file} is not valid YAML: ${e.message || e}`)
+  }
+  if (parsed == null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new InvalidConfigurationError(`${file} is not an update manifest: expected a YAML mapping with version and files`)
+  }
+  return parsed as UpdateInfo
+}
+
+/**
+ * Re-signs an existing `latest*.yml`, parsed with {@link parseUpdateManifestYaml} (backing the `sign-update-manifest` CLI command): drops its
+ * `signature`/`signatures` fields, checks the shape the updater requires of a signed manifest
+ * ({@link validateSignedManifestShape}), and signs and serializes it as a build does ({@link serializeSignedUpdateManifest}) —
+ * every other field kept as parsed and in its order, `signature` (the first key's `EBUM1` signature) and `signatures` (an `EBUM1`
+ * entry per key, then an `EBUM2` entry per key) last, and the result read back to check it verifies as signed.
+ * Throws an InvalidConfigurationError naming `file` when the manifest cannot be signed; never includes key material.
+ */
+export function resignUpdateManifest(
+  manifest: UpdateInfo,
+  privateKeys: Array<string | KeyObject>,
+  file: string
+): { content: string; info: UpdateInfo; signatures: Array<UpdateManifestSignature> } {
+  const fields: Record<string, unknown> = { ...manifest }
+  delete fields.signature
+  delete fields.signatures
+  const unsigned = fields as unknown as UpdateInfo
+  const shapeProblem = validateSignedManifestShape(unsigned)
+  if (shapeProblem != null) {
+    throw new InvalidConfigurationError(`Cannot sign ${file}: ${shapeProblem} (the updater would reject it)`)
+  }
+  try {
+    return signAndSerializeUpdateManifest(unsigned, privateKeys)
+  } catch (e: any) {
+    // e.g. a value EBUM2 cannot sign, such as an unquoted timestamp: the message names its path, never a key
+    throw new InvalidConfigurationError(`Cannot sign ${file}: ${e.message || e}`)
   }
 }

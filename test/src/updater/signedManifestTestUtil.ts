@@ -1,5 +1,6 @@
 import { createUpdateManifestSignatures, serializeToYaml } from "builder-util"
-import { PublishConfiguration, UpdateInfo } from "builder-util-runtime"
+import { canonicalizeForSigning, computeUpdateManifestKeyId, parsePublicKey, PublishConfiguration, UpdateInfo, validateSignedManifestShape } from "builder-util-runtime"
+import { KeyObject, verify as cryptoVerify } from "crypto"
 import { outputFile, readdir, readFile, stat } from "fs-extra"
 import { load } from "js-yaml"
 import path from "path"
@@ -114,4 +115,52 @@ export async function readEmbeddedUpdateConfig(distDir: string): Promise<Embedde
     throw new Error(`No app-update.yml found in the packaged app below ${distDir}`)
   }
   return load(await readFile(file, "utf8")) as EmbeddedUpdateConfig
+}
+
+/**
+ * The verifier of electron-updater 7.0.0-alpha.8 to alpha.13 (builder-util-runtime 10.0.0-alpha.8 to alpha.13), reproduced from the
+ * published `dist/updateManifestSignature.js` (the collect/verify code is identical in all of them): it knows no `format`, collects every
+ * entry with a non-empty `signature`, and tries each against the EBUM1 payload. Its EBUM1 canonicalizer and shape check are the current
+ * `canonicalizeForSigning` and `validateSignedManifestShape` (whose wire format is pinned in updateManifestSignatureTest), as shipped in
+ * alpha.12 and alpha.13; alpha.8 to alpha.11 lack only the `allowCatalogSignature:true` line, which no manifest here carries.
+ */
+export function alpha11VerifyManifestSignatures(info: UpdateInfo, publicKeys: Array<string>): { ok: boolean; keyId?: string; reason?: string } {
+  const candidates: Array<{ keyId?: string; signature: string }> = []
+  for (const entry of info.signatures ?? []) {
+    if (entry != null && typeof entry.signature === "string" && entry.signature.length > 0) {
+      candidates.push({ keyId: typeof entry.keyId === "string" && entry.keyId.length > 0 ? entry.keyId : undefined, signature: entry.signature })
+    }
+  }
+  if (typeof info.signature === "string" && info.signature.length > 0 && !candidates.some(it => it.signature === info.signature)) {
+    candidates.push({ signature: info.signature })
+  }
+  if (candidates.length === 0 || publicKeys.length === 0) {
+    return { ok: false }
+  }
+  const shapeProblem = validateSignedManifestShape(info)
+  if (shapeProblem != null) {
+    return { ok: false, reason: shapeProblem }
+  }
+  const data = Buffer.from(canonicalizeForSigning(info), "utf8")
+  const seen = new Set<string>()
+  for (const publicKey of publicKeys) {
+    const key: KeyObject = parsePublicKey(publicKey)
+    const keyId = computeUpdateManifestKeyId(key)
+    if (seen.has(keyId)) {
+      continue
+    }
+    seen.add(keyId)
+    for (const candidate of [...candidates.filter(it => it.keyId === keyId), ...candidates.filter(it => it.keyId == null)]) {
+      let ok = false
+      try {
+        ok = cryptoVerify(null, data, key, Buffer.from(candidate.signature, "base64"))
+      } catch {
+        ok = false
+      }
+      if (ok) {
+        return { ok: true, keyId }
+      }
+    }
+  }
+  return { ok: false }
 }

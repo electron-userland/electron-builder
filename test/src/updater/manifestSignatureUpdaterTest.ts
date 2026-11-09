@@ -298,7 +298,7 @@ describe("AppUpdater.verifyManifestSignature: blockMapUrl", () => {
 // staging value of this user id (bytes 12..15 of the UUID / 0xffffffff) is ≈0.878: inside a 90% rollout, outside a 10% one
 const STAGING_USER_ID = "12a70172-80f8-5cc4-8131-28f5e0edd2a1"
 
-/** The script of the Staged Rollouts docs: sets stagingPercentage in latest*.yml and signs it again with the release's key(s). */
+/** A manual re-sign, as the re-signing script of the Signed Update Manifests docs does: sets stagingPercentage in latest*.yml and signs it again with the release's key(s). */
 function setStagingPercentageAndSign(yml: string, stagingPercentage: number, privateKeyPems: Array<string>): string {
   const info = load(yml) as any
   info.stagingPercentage = stagingPercentage

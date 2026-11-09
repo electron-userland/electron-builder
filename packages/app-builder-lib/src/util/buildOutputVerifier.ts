@@ -13,8 +13,7 @@ import {
 } from "../codeSign/win/authenticodeSignature.js"
 import type { Configuration } from "../configuration.js"
 import { shouldSignWindowsFile } from "../options/winOptions.js"
-import { updateManifestPlatform, verifyUpdateManifestContent } from "../publish/updateManifestVerifier.js"
-import { hashFile } from "./hash.js"
+import { compareListedFilesInOutput, mayBeUpdateInfo, readUpdateInfo, updateManifestPlatform, verifyUpdateManifestContent } from "../publish/updateManifestVerifier.js"
 
 /**
  * - `verified` — the check passed
@@ -73,13 +72,12 @@ interface Manifest {
   readonly info: UpdateInfo
 }
 
-const NOT_MANIFESTS = new Set(["app-update.yml", "builder-debug.yml", "builder-effective-config.yaml"])
-
 /**
  * Verifies the built artifacts in an output directory, the checks `forceCodeSigning` makes during a build plus what can
  * only be seen afterwards:
  * - every update manifest (`latest*.yml`, found by its shape) is signed by a key in the trust list (`updateManifestPublicKey`)
- *   of every packaged app of its platform, and each file it lists matches an artifact (sha512 and size);
+ *   of every packaged app of its platform, uses no YAML aliases, and each file it lists (nsis-web `packages` included) matches an
+ *   artifact (sha512 and size); a `.yml` that is not valid YAML fails;
  * - macOS (on macOS only): every `.app` has a valid code signature and, outside the Mac App Store, a stapled notarization
  *   ticket; a `.pkg` is signed (and notarized); a DMG with `dmg.sign: true` is signed;
  * - Windows: every installer, package and app executable carries a valid Authenticode signature (whose hash only Windows
@@ -102,28 +100,35 @@ export async function verifyBuildOutput(options: VerifyBuildOutputOptions): Prom
   }
 
   const manifests: Array<Manifest> = []
-  for (const file of files.filter(it => /\.ya?ml$/.test(it) && !NOT_MANIFESTS.has(path.basename(it)))) {
-    const manifest = await readManifest(file)
-    if (manifest != null) {
-      manifests.push(manifest)
+  for (const file of files.filter(mayBeUpdateInfo)) {
+    const content = await readFile(file, "utf8")
+    let updateInfo: ReturnType<typeof readUpdateInfo>
+    try {
+      updateInfo = readUpdateInfo(content)
+    } catch (e: any) {
+      // the reason only: the message of a YAML error quotes the content
+      const message = `not valid YAML (${e.reason ?? "cannot be parsed"}): if it is update info, electron-updater rejects it`
+      results.push({ status: "failed", check: "update manifest YAML", file, message })
+      continue
     }
+    if (updateInfo == null) {
+      continue
+    }
+    if (updateInfo.hasAliases) {
+      const message =
+        "uses YAML aliases, which electron-builder never writes and electron-updater rejects once they expand past its limit (ERR_UPDATER_INVALID_UPDATE_INFO): regenerate it without aliases"
+      results.push({ status: "failed", check: "update manifest YAML", file, message })
+    }
+    manifests.push({ file, platform: updateManifestPlatform(file), content, info: updateInfo.info })
   }
 
-  const hashes = new Map<string, Promise<string>>()
-  const sha512Of = (file: string) => {
-    let hash = hashes.get(file)
-    if (hash == null) {
-      hash = hashFile(file)
-      hashes.set(file, hash)
-    }
-    return hash
-  }
+  const hashes = new Map<string, Promise<string | null>>()
   // the local files the Windows manifests point electron-updater at: their signer must match the embedded publisherName
   const windowsUpdateInstallers = new Set<string>()
 
   for (const manifest of manifests) {
     results.push(...verifyManifestSignature(manifest, apps, options))
-    for (const { result, artifact } of await verifyManifestFiles(manifest, files, outDir, sha512Of)) {
+    for (const { result, artifact } of await verifyManifestFiles(manifest, files, outDir, hashes)) {
       results.push(result)
       if (artifact != null && manifest.platform === "win") {
         windowsUpdateInstallers.add(artifact)
@@ -251,20 +256,6 @@ async function readApp(platform: PlatformKey, appPath: string, isMas: boolean, m
   }
 }
 
-async function readManifest(file: string): Promise<Manifest | null> {
-  const content = await readFile(file, "utf8")
-  let info: any
-  try {
-    info = load(content)
-  } catch {
-    return null
-  }
-  if (info == null || typeof info !== "object" || typeof info.version !== "string" || !Array.isArray(info.files)) {
-    return null
-  }
-  return { file, platform: updateManifestPlatform(file), content, info }
-}
-
 /** A platform-level value wins over the root one, as in the build (`PlatformPackager.updateManifestOptions`). */
 function platformOption(config: Configuration, platform: PlatformKey, key: string): any {
   return (config as any)[platform]?.[key] ?? (config as any)[key]
@@ -330,44 +321,28 @@ async function verifyManifestFiles(
   manifest: Manifest,
   files: Array<string>,
   outDir: string,
-  sha512Of: (file: string) => Promise<string>
+  hashes: Map<string, Promise<string | null>>
 ): Promise<Array<{ result: VerificationResult; artifact: string | null }>> {
   const check = "update manifest file"
-  // the artifacts of a target with its own folder (nsis-web/) are there, also for the manifest of a further provider (nsis-web/<provider>/)
-  const parts = path.relative(outDir, manifest.file).split(path.sep)
-  const targetDir = parts.length > 1 ? path.join(outDir, parts[0]) : outDir
-  const dirs = new Set([path.dirname(manifest.file), targetDir, outDir])
-  const candidates = files.filter(it => dirs.has(path.dirname(it)) && !/\.(ya?ml|blockmap)$/.test(it))
   const verified: Array<{ result: VerificationResult; artifact: string | null }> = []
-  for (const entry of manifest.info.files as Array<any>) {
-    const name = typeof entry?.url === "string" ? entry.url : "(no url)"
-    if (typeof entry?.sha512 !== "string") {
-      verified.push({ result: { status: "failed", check, file: manifest.file, message: `files entry ${name} has no sha512` }, artifact: null })
-      continue
+  // also matched by safe name and by hash, not only by name: a GitHub manifest lists the safe artifact name, which can differ from the local file name
+  for (const { entry, comparison } of await compareListedFilesInOutput(manifest.info, manifest.file, outDir, files, hashes)) {
+    const name = entry.location ?? (entry.field === "files" ? "(no url)" : "(no path)")
+    const failed = (message: string) => verified.push({ result: { status: "failed", check, file: manifest.file, message }, artifact: null })
+    if (entry.sha512 == null) {
+      failed(`${entry.field} entry ${name} has no sha512`)
+    } else if (comparison.status === "matches") {
+      verified.push({ result: { status: "verified", check, file: manifest.file, message: `${name} matches ${path.relative(outDir, comparison.file)}` }, artifact: comparison.file })
+    } else if (comparison.status === "not found") {
+      failed(`no artifact matches the sha512${entry.size == null ? "" : " and size"} of ${name}: it is missing, or it was changed after the manifest was written`)
+    } else if (comparison.mismatched.includes("sha512")) {
+      const differ = comparison.mismatched.length === 1 ? "its sha512 differs" : "its size and sha512 differ"
+      failed(`${path.relative(outDir, comparison.file)} was changed after the manifest was written: ${differ} from what ${name} declares`)
+    } else {
+      failed(
+        `${path.relative(outDir, comparison.file)} has the sha512 ${name} declares, but not its size: the manifest's size is stale, and electron-updater stops a full download at the declared size. Regenerate the manifest and sign it again`
+      )
     }
-    // matched by hash, not by name: a GitHub manifest lists the safe artifact name, which can differ from the local file name
-    let artifact: string | null = null
-    for (const candidate of candidates) {
-      if (typeof entry.size === "number" && (await stat(candidate)).size !== entry.size) {
-        continue
-      }
-      if ((await sha512Of(candidate)) === entry.sha512) {
-        artifact = candidate
-        break
-      }
-    }
-    verified.push({
-      result:
-        artifact == null
-          ? {
-              status: "failed",
-              check,
-              file: manifest.file,
-              message: `no artifact matches the sha512${typeof entry.size === "number" ? " and size" : ""} of ${name}: it is missing, or it was changed after the manifest was written`,
-            }
-          : { status: "verified", check, file: manifest.file, message: `${name} matches ${path.relative(outDir, artifact)}` },
-      artifact,
-    })
   }
   return verified
 }
