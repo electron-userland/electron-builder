@@ -175,7 +175,9 @@ export class PkgTarget extends Target {
     let distInfo = await readFile(distInfoFile, "utf-8")
 
     if (options.mustClose != null && options.mustClose.length !== 0) {
-      const startContent = `    <pkg-ref id="${escapeForXml(this.packager.appInfo.id)}">\n        <must-close>\n`
+      // productbuild names the component's pkg-ref after the app's CFBundleIdentifier (the filtered app id), so must-close
+      // has to attach to that id; the raw app id matches no package when filtering changes it (e.g. `_`, spaces, `&`)
+      const startContent = `    <pkg-ref id="${escapeForXml(this.packager.appInfo.macBundleIdentifier)}">\n        <must-close>\n`
       const endContent = "        </must-close>\n    </pkg-ref>\n</installer-gui-script>"
       let mustCloseContent = ""
       options.mustClose.forEach(appId => {
