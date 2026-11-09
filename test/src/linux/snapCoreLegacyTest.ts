@@ -61,13 +61,28 @@ describe("snapCoreLegacy helpers", { concurrent: false }, () => {
     })
 
     const snapLibDirs = "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu"
-    const ldLibraryPathPreamble = `export LD_LIBRARY_PATH="\${SNAP_LIBRARY_PATH:+$SNAP_LIBRARY_PATH:}${snapLibDirs}\${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:${snapLibDirs}"`
+    // The command.sh lines both LD_LIBRARY_PATH branches share to drop empty entries from `_ld_library_path` and export it.
+    const exportWithoutEmptyEntries =
+      'while [[ $_ld_library_path == *::* ]]; do _ld_library_path="${_ld_library_path//::/:}"; done\n' +
+      '_ld_library_path="${_ld_library_path#:}"\n' +
+      '_ld_library_path="${_ld_library_path%:}"\n' +
+      'if [[ -n $_ld_library_path ]]; then export LD_LIBRARY_PATH="$_ld_library_path"; else unset LD_LIBRARY_PATH; fi\n' +
+      "unset _ld_library_path"
+    const ldLibraryPathPreamble = `_ld_library_path=":$SNAP_LIBRARY_PATH:${snapLibDirs}:$LD_LIBRARY_PATH:${snapLibDirs}:"\n${exportWithoutEmptyEntries}`
 
-    test("LD_LIBRARY_PATH adds SNAP_LIBRARY_PATH and the caller's value only when they are set, so neither leaves an empty entry", ({ expect }) => {
+    // Runs the command.sh preamble (everything between the shebang and `exec`) in `bash -e` after `snapdExpansion`, and
+    // prints LD_LIBRARY_PATH and the configured carrier afterwards ("<unset>" when unset).
+    function runPreamble(opts: { libraryArchTriplet?: string; useConfiguredLibraryPath?: boolean }, snapdExpansion: string, env: Record<string, string>) {
+      const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], ...opts })
+      const preamble = content.slice(content.indexOf("\n") + 1, content.indexOf("\nexec "))
+      const script = `${snapdExpansion}\n${preamble}\nprintf '%s\\n%s' "\${LD_LIBRARY_PATH-<unset>}" "\${ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH-<unset>}"`
+      const [ldLibraryPath, carrier] = execFileSync("bash", ["-e", "-c", script], { env: { PATH: process.env.PATH, SNAP: "/snap/myapp/1", ...env }, encoding: "utf8" }).split("\n")
+      return { ldLibraryPath, carrier }
+    }
+
+    test("default LD_LIBRARY_PATH: command.sh builds it from SNAP_LIBRARY_PATH, the snap's dirs and the caller's value before the app starts", ({ expect }) => {
       const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], libraryArchTriplet: "x86_64-linux-gnu" })
       expect(content).toContain(`\n${ldLibraryPathPreamble}\n`)
-      expect(content).not.toContain("$SNAP_LIBRARY_PATH:$SNAP")
-      expect(content).not.toContain(":$LD_LIBRARY_PATH:")
       // set before the desktop scripts and the app start
       expect(content.indexOf("export LD_LIBRARY_PATH=")).toBeLessThan(content.indexOf("exec "))
     })
@@ -77,19 +92,19 @@ describe("snapCoreLegacy helpers", { concurrent: false }, () => {
       ["both unset", {}, "{dirs}:{dirs}"],
       ["both empty", { SNAP_LIBRARY_PATH: "", LD_LIBRARY_PATH: "" }, "{dirs}:{dirs}"],
       ["SNAP_LIBRARY_PATH unset, caller set", { LD_LIBRARY_PATH: "/caller" }, "{dirs}:/caller:{dirs}"],
+      ["SNAP_LIBRARY_PATH set, caller unset", { SNAP_LIBRARY_PATH: "/gl" }, "/gl:{dirs}:{dirs}"],
+      ["caller value with a leading colon", { LD_LIBRARY_PATH: ":/opt/x/lib" }, "{dirs}:/opt/x/lib:{dirs}"],
+      ["caller value with a trailing colon", { LD_LIBRARY_PATH: "/opt/x/lib:" }, "{dirs}:/opt/x/lib:{dirs}"],
+      ["caller value with a doubled colon", { LD_LIBRARY_PATH: "/a::/b" }, "{dirs}:/a:/b:{dirs}"],
+      ["caller value of only colons", { LD_LIBRARY_PATH: "::" }, "{dirs}:{dirs}"],
+      ["SNAP_LIBRARY_PATH with a trailing colon", { SNAP_LIBRARY_PATH: "/gl:", LD_LIBRARY_PATH: "/caller" }, "/gl:{dirs}:/caller:{dirs}"],
     ]
     for (const [label, env, expected] of expansionCases) {
-      test.ifNotWindows(`LD_LIBRARY_PATH expands without empty entries in bash: ${label}`, ({ expect }) => {
-        const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], libraryArchTriplet: "x86_64-linux-gnu" })
-        const exportLine = content.split("\n").find(line => line.startsWith("export LD_LIBRARY_PATH="))
-        expect(exportLine).toBeDefined()
-        const result = execFileSync("bash", ["-c", `${exportLine}\nprintf %s "$LD_LIBRARY_PATH"`], {
-          env: { PATH: process.env.PATH, SNAP: "/snap/myapp/1", ...env },
-          encoding: "utf8",
-        })
+      test.ifNotWindows(`default LD_LIBRARY_PATH expands without empty entries in bash: ${label}`, ({ expect }) => {
+        const { ldLibraryPath } = runPreamble({ libraryArchTriplet: "x86_64-linux-gnu" }, "", env)
         const dirs = "/snap/myapp/1/lib:/snap/myapp/1/usr/lib:/snap/myapp/1/lib/x86_64-linux-gnu:/snap/myapp/1/usr/lib/x86_64-linux-gnu"
-        expect(result).toBe(expected.replaceAll("{dirs}", dirs))
-        expect(result.split(":")).not.toContain("")
+        expect(ldLibraryPath).toBe(expected.replaceAll("{dirs}", dirs))
+        expect(ldLibraryPath.split(":")).not.toContain("")
       })
     }
 
@@ -97,7 +112,12 @@ describe("snapCoreLegacy helpers", { concurrent: false }, () => {
       const content = buildCommandShContent({ isTemplate: false, executableName: "myapp", extraAppArgs: ["--no-sandbox"], libraryArchTriplet: "x86_64-linux-gnu" })
       expect(content).toBe(
         "#!/bin/bash -e\n" +
-          `${ldLibraryPathPreamble}\n` +
+          '_ld_library_path=":$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:"\n' +
+          'while [[ $_ld_library_path == *::* ]]; do _ld_library_path="${_ld_library_path//::/:}"; done\n' +
+          '_ld_library_path="${_ld_library_path#:}"\n' +
+          '_ld_library_path="${_ld_library_path%:}"\n' +
+          'if [[ -n $_ld_library_path ]]; then export LD_LIBRARY_PATH="$_ld_library_path"; else unset LD_LIBRARY_PATH; fi\n' +
+          "unset _ld_library_path\n" +
           `exec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/app/myapp" '--no-sandbox' "$@"\n`
       )
     })
@@ -114,23 +134,14 @@ describe("snapCoreLegacy helpers", { concurrent: false }, () => {
         "#!/bin/bash -e\n" +
           '_ld_library_path=":$ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH:"\n' +
           "unset ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH\n" +
-          'while [[ $_ld_library_path == *::* ]]; do _ld_library_path="${_ld_library_path//::/:}"; done\n' +
-          '_ld_library_path="${_ld_library_path#:}"\n' +
-          '_ld_library_path="${_ld_library_path%:}"\n' +
-          'if [[ -n $_ld_library_path ]]; then export LD_LIBRARY_PATH="$_ld_library_path"; else unset LD_LIBRARY_PATH; fi\n' +
-          "unset _ld_library_path\n" +
+          `${exportWithoutEmptyEntries}\n` +
           `exec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/myapp" "$@"\n`
       )
     })
 
-    // Runs the command.sh preamble after `snapdExpansion`, which stands in for snapd expanding the snap.yaml carrier
-    // (plain `$VAR` expansion, an unset variable becomes ""), and prints LD_LIBRARY_PATH and the carrier afterwards.
-    function runConfiguredPreamble(snapdExpansion: string, env: Record<string, string>): { ldLibraryPath: string; carrier: string } {
-      const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], useConfiguredLibraryPath: true })
-      const preamble = content.slice(content.indexOf("\n") + 1, content.indexOf("\nexec "))
-      const script = `${snapdExpansion}\n${preamble}\nprintf '%s\\n%s' "\${LD_LIBRARY_PATH-<unset>}" "\${ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH-<unset>}"`
-      const [ldLibraryPath, carrier] = execFileSync("bash", ["-e", "-c", script], { env: { PATH: process.env.PATH, SNAP: "/snap/myapp/1", ...env }, encoding: "utf8" }).split("\n")
-      return { ldLibraryPath, carrier }
+    // `snapdExpansion` stands in for snapd expanding the snap.yaml carrier (plain `$VAR` expansion, an unset variable becomes "").
+    function runConfiguredPreamble(snapdExpansion: string, env: Record<string, string>) {
+      return runPreamble({ useConfiguredLibraryPath: true }, snapdExpansion, env)
     }
 
     const callerCases: Array<[string, Record<string, string>, string]> = [

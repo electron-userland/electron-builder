@@ -524,6 +524,18 @@ export function assertTemplateSnapCompressionSupported(appimageToolset: ToolsetC
  */
 export const CONFIGURED_LD_LIBRARY_PATH_VAR = "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH"
 
+/**
+ * command.sh lines that take `_ld_library_path` (the library path wrapped in colons), drop its empty entries, which the
+ * dynamic linker treats as the current directory, and export the rest as `LD_LIBRARY_PATH`, or unset it if none remain.
+ */
+const EXPORT_LD_LIBRARY_PATH_WITHOUT_EMPTY_ENTRIES = [
+  'while [[ $_ld_library_path == *::* ]]; do _ld_library_path="${_ld_library_path//::/:}"; done',
+  '_ld_library_path="${_ld_library_path#:}"',
+  '_ld_library_path="${_ld_library_path%:}"',
+  'if [[ -n $_ld_library_path ]]; then export LD_LIBRARY_PATH="$_ld_library_path"; else unset LD_LIBRARY_PATH; fi',
+  "unset _ld_library_path",
+]
+
 export function buildCommandShContent(opts: {
   isTemplate: boolean
   executableName: string
@@ -535,25 +547,18 @@ export function buildCommandShContent(opts: {
   validateShellEmbeddable(executableName, "executableName")
   const appPrefix = isTemplate ? "" : "app/"
   // snapd expands an unset `$LD_LIBRARY_PATH` in the snap.yaml `environment` to "" and has no `${VAR:+...}` form,
-  // which leaves an empty entry that makes the dynamic linker search the current directory. The shell adds
-  // SNAP_LIBRARY_PATH and the caller's LD_LIBRARY_PATH only when they are set and non-empty.
+  // which leaves an empty entry that makes the dynamic linker search the current directory. The shell builds the
+  // library path instead and drops every empty entry, whether from an unset SNAP_LIBRARY_PATH or LD_LIBRARY_PATH or
+  // from stray colons in the caller's LD_LIBRARY_PATH (e.g. `:/opt/x/lib`).
   let preamble: string | undefined
   if (libraryArchTriplet != null) {
     const snapLibDirs = `$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/${libraryArchTriplet}:$SNAP/usr/lib/${libraryArchTriplet}`
-    preamble = `export LD_LIBRARY_PATH="\${SNAP_LIBRARY_PATH:+$SNAP_LIBRARY_PATH:}${snapLibDirs}\${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:${snapLibDirs}"`
+    preamble = [`_ld_library_path=":$SNAP_LIBRARY_PATH:${snapLibDirs}:$LD_LIBRARY_PATH:${snapLibDirs}:"`, ...EXPORT_LD_LIBRARY_PATH_WITHOUT_EMPTY_ENTRIES].join("\n")
   } else if (useConfiguredLibraryPath === true) {
     // A user-configured LD_LIBRARY_PATH reaches the launcher as CONFIGURED_LD_LIBRARY_PATH_VAR, already expanded by
     // snapd, so it may hold the same empty entries (e.g. `$SNAP/lib:$LD_LIBRARY_PATH` with the caller's value unset)
     // or empty entries of its own. The shell drops them all before it exports the value as LD_LIBRARY_PATH.
-    preamble = [
-      `_ld_library_path=":$${CONFIGURED_LD_LIBRARY_PATH_VAR}:"`,
-      `unset ${CONFIGURED_LD_LIBRARY_PATH_VAR}`,
-      'while [[ $_ld_library_path == *::* ]]; do _ld_library_path="${_ld_library_path//::/:}"; done',
-      '_ld_library_path="${_ld_library_path#:}"',
-      '_ld_library_path="${_ld_library_path%:}"',
-      'if [[ -n $_ld_library_path ]]; then export LD_LIBRARY_PATH="$_ld_library_path"; else unset LD_LIBRARY_PATH; fi',
-      "unset _ld_library_path",
-    ].join("\n")
+    preamble = [`_ld_library_path=":$${CONFIGURED_LD_LIBRARY_PATH_VAR}:"`, `unset ${CONFIGURED_LD_LIBRARY_PATH_VAR}`, ...EXPORT_LD_LIBRARY_PATH_WITHOUT_EMPTY_ENTRIES].join("\n")
   }
   return buildLauncherScript({
     shebang: "#!/bin/bash -e",
