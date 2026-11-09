@@ -9702,7 +9702,7 @@
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"
@@ -9743,7 +9743,7 @@
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"
@@ -9807,7 +9807,7 @@
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"
@@ -9848,7 +9848,7 @@
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"
@@ -9925,7 +9925,7 @@
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"
@@ -9966,7 +9966,7 @@
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"

@@ -511,9 +511,9 @@ describe("PKCS#11 timestamp flags", () => {
   })
 })
 
-// ─── ELECTRON_BUILDER_OFFLINE accepts the same values as every other boolean flag ─
+// ─── ELECTRON_BUILDER_OFFLINE: only true and 1 skip the timestamp ─────────────
 
-describe("ELECTRON_BUILDER_OFFLINE=1 skips timestamping in every sign manager", () => {
+describe("ELECTRON_BUILDER_OFFLINE: true and 1 skip timestamping in every sign manager, other values keep it", () => {
   const pkcs11Options = {
     sign: {
       type: "pkcs11" as const,
@@ -550,11 +550,21 @@ describe("ELECTRON_BUILDER_OFFLINE=1 skips timestamping in every sign manager", 
     }
   })
 
-  test("a value that is not true, 1 or empty keeps timestamping on", () => {
-    vi.stubEnv("ELECTRON_BUILDER_OFFLINE", "false")
-    const args = makeHsmManager("1.1.0").computeSignToolArgs(makeTaskConfig({ options: hsmOptions, hash: "sha256" }), true)
-    expect(args).toContain("/tr")
-    expect(args).toContain("/td")
+  test('a value padded with whitespace, " true ", skips timestamping', () => {
+    vi.stubEnv("ELECTRON_BUILDER_OFFLINE", " true ")
+    const args = makeManager("1.1.0").computeSignToolArgs(makeTaskConfig({ hash: "sha256" }), true)
+    for (const flag of timestampFlags) {
+      expect(args).not.toContain(flag)
+    }
+  })
+
+  // An empty value (e.g. a CI template mapping an unset variable) must not silently drop the timestamp from release signatures.
+  test.each(["", "  ", "false", "0"])("ELECTRON_BUILDER_OFFLINE=%j keeps timestamping on in every sign manager", value => {
+    vi.stubEnv("ELECTRON_BUILDER_OFFLINE", value)
+    expect(makeManager("1.1.0").computeSignToolArgs(makeTaskConfig({ hash: "sha256" }), true)).toEqual(expect.arrayContaining(["/tr", "/td"]))
+    expect(makeManager("1.1.0").computeSignToolArgs(makeTaskConfig({ hash: "sha256" }), false)).toContain("-t")
+    expect(makeHsmManager("1.1.0").computeSignToolArgs(makeTaskConfig({ options: hsmOptions, hash: "sha256" }), true)).toEqual(expect.arrayContaining(["/tr", "/td"]))
+    expect(makePkcs11Manager().computeSignToolArgs(makeTaskConfig({ options: pkcs11Options, hash: "sha256" }), false)).toContain("-ts")
   })
 })
 
