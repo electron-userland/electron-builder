@@ -13,7 +13,7 @@ import {
 } from "../codeSign/win/authenticodeSignature.js"
 import type { Configuration } from "../configuration.js"
 import { shouldSignWindowsFile } from "../options/winOptions.js"
-import { compareListedFiles, mayBeUpdateInfo, readUpdateInfo, updateManifestPlatform, verifyUpdateManifestContent } from "../publish/updateManifestVerifier.js"
+import { compareListedFilesInOutput, mayBeUpdateInfo, readUpdateInfo, updateManifestPlatform, verifyUpdateManifestContent } from "../publish/updateManifestVerifier.js"
 
 /**
  * - `verified` — the check passed
@@ -324,24 +324,9 @@ async function verifyManifestFiles(
   hashes: Map<string, Promise<string | null>>
 ): Promise<Array<{ result: VerificationResult; artifact: string | null }>> {
   const check = "update manifest file"
-  // the artifacts of a target with its own folder (nsis-web/) are there, also for the manifest of a further provider (nsis-web/<provider>/)
-  const parts = path.relative(outDir, manifest.file).split(path.sep)
-  const targetDir = parts.length > 1 ? path.join(outDir, parts[0]) : outDir
-  const dirs = [path.dirname(manifest.file), targetDir, outDir]
-  const candidates = files.filter(it => dirs.includes(path.dirname(it)) && !/\.(ya?ml|blockmap)$/.test(it))
-  // a file of the same name tells which value is stale; the closest one wins
-  const candidatesByName = new Map<string, string>()
-  for (const dir of dirs) {
-    for (const candidate of candidates) {
-      if (path.dirname(candidate) === dir && !candidatesByName.has(path.basename(candidate))) {
-        candidatesByName.set(path.basename(candidate), candidate)
-      }
-    }
-  }
-
   const verified: Array<{ result: VerificationResult; artifact: string | null }> = []
-  // also matched by hash, not only by name: a GitHub manifest lists the safe artifact name, which can differ from the local file name
-  for (const { entry, comparison } of await compareListedFiles(manifest.info, candidatesByName, hashes, candidates)) {
+  // also matched by safe name and by hash, not only by name: a GitHub manifest lists the safe artifact name, which can differ from the local file name
+  for (const { entry, comparison } of await compareListedFilesInOutput(manifest.info, manifest.file, outDir, files, hashes)) {
     const name = entry.location ?? (entry.field === "files" ? "(no url)" : "(no path)")
     const failed = (message: string) => verified.push({ result: { status: "failed", check, file: manifest.file, message }, artifact: null })
     if (entry.sha512 == null) {
