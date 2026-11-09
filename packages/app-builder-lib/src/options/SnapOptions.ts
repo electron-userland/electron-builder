@@ -94,8 +94,9 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
    * `LD_LIBRARY_PATH` is not set here by default: the snap's `command.sh` launcher sets it to the snap's library
    * directories, adding `$SNAP_LIBRARY_PATH` and the caller's `LD_LIBRARY_PATH` only when they are set.
    * Setting `LD_LIBRARY_PATH` here replaces that default library path, so include every directory the app needs.
-   * The launcher drops the value's empty entries, such as the one a `$LD_LIBRARY_PATH` reference leaves when the
-   * caller's value is unset, because the dynamic linker searches the current directory for an empty entry.
+   * The value goes into the snap YAML as `ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH` (snapd expands it as usual), and the
+   * launcher exports it as `LD_LIBRARY_PATH` without empty entries, such as the one a `$LD_LIBRARY_PATH` reference leaves
+   * when the caller's value is unset, because the dynamic linker searches the current directory for an empty entry.
    *
    * Ignored with `confinement: "classic"`, where no environment is written and the launcher does not set `LD_LIBRARY_PATH`.
    */

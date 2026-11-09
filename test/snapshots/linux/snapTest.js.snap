@@ -2205,7 +2205,7 @@ exports[`snap 1`] = `
 }
 `;
 
-exports[`template app keeps a configured LD_LIBRARY_PATH as is 1`] = `
+exports[`template app moves a configured LD_LIBRARY_PATH into command.sh without empty entries 1`] = `
 {
   "linux": [
     {

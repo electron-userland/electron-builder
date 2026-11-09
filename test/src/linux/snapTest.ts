@@ -448,7 +448,7 @@ test.ifNotWindows("template app sets LD_LIBRARY_PATH in command.sh, not in snap.
   )
 )
 
-test.ifNotWindows("template app keeps a configured LD_LIBRARY_PATH in snap.yaml and drops its empty entries in command.sh", ({ expect }) =>
+test.ifNotWindows("template app moves a configured LD_LIBRARY_PATH into command.sh without empty entries", ({ expect }) =>
   app(
     expect,
     {
@@ -461,11 +461,13 @@ test.ifNotWindows("template app keeps a configured LD_LIBRARY_PATH in snap.yaml 
     },
     {
       packed: async context => {
-        // snapd expands an unset `$LD_LIBRARY_PATH` here to an empty entry; command.sh drops it instead of adding the default
+        // snapd expands an unset `$LD_LIBRARY_PATH` here to an empty entry, and `/bin/bash` starts with the snap.yaml
+        // environment, so the value travels in a carrier variable and command.sh exports it without empty entries
         const { commandSh, environment } = await readTemplateSnapStage(context.outDir)
-        expect(environment.LD_LIBRARY_PATH).toBe("$SNAP/custom:$LD_LIBRARY_PATH")
-        expect(commandSh).toContain('_ld_library_path=":$LD_LIBRARY_PATH:"')
-        expect(commandSh).not.toContain("SNAP_LIBRARY_PATH")
+        expect(environment.LD_LIBRARY_PATH).toBeUndefined()
+        expect(environment.ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH).toBe("$SNAP/custom:$LD_LIBRARY_PATH")
+        expect(commandSh).toContain('_ld_library_path=":$ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH:"')
+        expect(commandSh).not.toContain("SNAP_LIBRARY_PATH:+")
       },
     }
   )

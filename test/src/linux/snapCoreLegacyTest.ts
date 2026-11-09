@@ -103,16 +103,17 @@ describe("snapCoreLegacy helpers", { concurrent: false }, () => {
     })
 
     test("classic confinement (no arch triplet): full command.sh has no LD_LIBRARY_PATH preamble", ({ expect }) => {
-      // createDescriptor sets neither the triplet nor dropEmptyLibraryPathEntries for classic confinement
-      const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], libraryArchTriplet: null, dropEmptyLibraryPathEntries: false })
+      // createDescriptor sets neither the triplet nor useConfiguredLibraryPath for classic confinement
+      const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], libraryArchTriplet: null, useConfiguredLibraryPath: false })
       expect(content).toBe(`#!/bin/bash -e\nexec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/myapp" "$@"\n`)
     })
 
-    test("configured LD_LIBRARY_PATH: full command.sh drops its empty entries before launching the app", ({ expect }) => {
-      const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], dropEmptyLibraryPathEntries: true })
+    test("configured LD_LIBRARY_PATH: full command.sh exports it from the snap.yaml carrier without empty entries", ({ expect }) => {
+      const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], useConfiguredLibraryPath: true })
       expect(content).toBe(
         "#!/bin/bash -e\n" +
-          '_ld_library_path=":$LD_LIBRARY_PATH:"\n' +
+          '_ld_library_path=":$ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH:"\n' +
+          "unset ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH\n" +
           'while [[ $_ld_library_path == *::* ]]; do _ld_library_path="${_ld_library_path//::/:}"; done\n' +
           '_ld_library_path="${_ld_library_path#:}"\n' +
           '_ld_library_path="${_ld_library_path%:}"\n' +
@@ -122,45 +123,60 @@ describe("snapCoreLegacy helpers", { concurrent: false }, () => {
       )
     })
 
-    // snapd expands the configured snap.yaml value before command.sh runs; each case is that expanded value.
-    // `$SNAP/custom:$LD_LIBRARY_PATH` expands to "/snap/myapp/1/custom:/caller" with the caller's value set,
-    // and to "/snap/myapp/1/custom:" with it unset or empty.
-    const configuredCases: Array<[string, string | undefined, string | undefined]> = [
-      ["caller's value set", "/snap/myapp/1/custom:/caller", "/snap/myapp/1/custom:/caller"],
-      ["caller's value unset or empty (trailing empty entry)", "/snap/myapp/1/custom:", "/snap/myapp/1/custom"],
-      ["leading empty entry", ":/snap/myapp/1/custom", "/snap/myapp/1/custom"],
-      ["empty entries in the middle", "/a::/b:::/c", "/a:/b:/c"],
-      ["only empty entries", ":::", undefined],
-      ["empty value", "", undefined],
-      ["unset", undefined, undefined],
-      ["entries with spaces and glob characters are kept as-is", "/a b:*:/c?", "/a b:*:/c?"],
+    // Runs the command.sh preamble after `snapdExpansion`, which stands in for snapd expanding the snap.yaml carrier
+    // (plain `$VAR` expansion, an unset variable becomes ""), and prints LD_LIBRARY_PATH and the carrier afterwards.
+    function runConfiguredPreamble(snapdExpansion: string, env: Record<string, string>): { ldLibraryPath: string; carrier: string } {
+      const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], useConfiguredLibraryPath: true })
+      const preamble = content.slice(content.indexOf("\n") + 1, content.indexOf("\nexec "))
+      const script = `${snapdExpansion}\n${preamble}\nprintf '%s\\n%s' "\${LD_LIBRARY_PATH-<unset>}" "\${ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH-<unset>}"`
+      const [ldLibraryPath, carrier] = execFileSync("bash", ["-e", "-c", script], { env: { PATH: process.env.PATH, SNAP: "/snap/myapp/1", ...env }, encoding: "utf8" }).split("\n")
+      return { ldLibraryPath, carrier }
+    }
+
+    const callerCases: Array<[string, Record<string, string>, string]> = [
+      ["set", { LD_LIBRARY_PATH: "/caller" }, "/snap/myapp/1/custom:/caller"],
+      ["unset", {}, "/snap/myapp/1/custom"],
+      ["empty", { LD_LIBRARY_PATH: "" }, "/snap/myapp/1/custom"],
     ]
-    for (const [label, expanded, expected] of configuredCases) {
-      test.ifNotWindows(`configured LD_LIBRARY_PATH keeps no empty entries in bash: ${label}`, ({ expect }) => {
-        const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], dropEmptyLibraryPathEntries: true })
-        const preamble = content.slice(content.indexOf("\n") + 1, content.indexOf("\nexec "))
-        const env: Record<string, string | undefined> = { PATH: process.env.PATH }
-        if (expanded !== undefined) {
-          env.LD_LIBRARY_PATH = expanded
-        }
-        const result = execFileSync("bash", ["-e", "-c", `${preamble}\nprintf %s "\${LD_LIBRARY_PATH-<unset>}"`], { env, encoding: "utf8" })
-        expect(result).toBe(expected ?? "<unset>")
-        if (expected !== undefined) {
-          expect(result.split(":")).not.toContain("")
-        }
+    for (const reference of ["$LD_LIBRARY_PATH", "${LD_LIBRARY_PATH}"]) {
+      for (const [label, env, expected] of callerCases) {
+        test.ifNotWindows(`configured "$SNAP/custom:${reference}" with the caller's value ${label} expands without empty entries in bash`, ({ expect }) => {
+          const { ldLibraryPath, carrier } = runConfiguredPreamble(`export ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH="$SNAP/custom:${reference}"`, env)
+          expect(ldLibraryPath).toBe(expected)
+          expect(ldLibraryPath.split(":")).not.toContain("")
+          expect(carrier).toBe("<unset>")
+        })
+      }
+    }
+
+    const expandedCases: Array<[string, string, string]> = [
+      ["leading empty entry", ":/a", "/a"],
+      ["empty entries in the middle", "/a::/b:::/c", "/a:/b:/c"],
+      ["entries with spaces and glob characters are kept as-is", "/a b:*:/c?", "/a b:*:/c?"],
+      ["only empty entries", ":::", "<unset>"],
+      ["empty value", "", "<unset>"],
+    ]
+    for (const [label, expanded, expected] of expandedCases) {
+      test.ifNotWindows(`configured LD_LIBRARY_PATH replaces the caller's value without empty entries in bash: ${label}`, ({ expect }) => {
+        const { ldLibraryPath } = runConfiguredPreamble("", { LD_LIBRARY_PATH: "/caller", ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH: expanded })
+        expect(ldLibraryPath).toBe(expected)
       })
     }
 
-    test("the default LD_LIBRARY_PATH takes precedence over dropping empty entries", ({ expect }) => {
+    test.ifNotWindows("configured LD_LIBRARY_PATH: a missing carrier leaves LD_LIBRARY_PATH unset in bash", ({ expect }) => {
+      expect(runConfiguredPreamble("", { LD_LIBRARY_PATH: "/caller" }).ldLibraryPath).toBe("<unset>")
+    })
+
+    test("the default LD_LIBRARY_PATH takes precedence over a configured one", ({ expect }) => {
       const content = buildCommandShContent({
         isTemplate: true,
         executableName: "myapp",
         extraAppArgs: [],
         libraryArchTriplet: "x86_64-linux-gnu",
-        dropEmptyLibraryPathEntries: true,
+        useConfiguredLibraryPath: true,
       })
       expect(content).toContain(`\n${ldLibraryPathPreamble}\n`)
-      expect(content).not.toContain("_ld_library_path")
+      expect(content).not.toContain("ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH")
     })
 
     test("executableName with shell-safe chars is accepted", ({ expect }) => {

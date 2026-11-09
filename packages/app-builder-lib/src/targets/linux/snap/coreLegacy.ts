@@ -54,8 +54,8 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
   private isUseTemplateApp = false
   // Arch triplet whose library dirs command.sh puts on LD_LIBRARY_PATH; null when the launcher leaves LD_LIBRARY_PATH alone.
   private launcherLibraryArchTriplet: string | null = null
-  // Whether command.sh drops the empty entries of a user-configured LD_LIBRARY_PATH.
-  private launcherDropsEmptyLibraryPathEntries = false
+  // Whether command.sh sets LD_LIBRARY_PATH from the user-configured value in CONFIGURED_LD_LIBRARY_PATH_VAR.
+  private launcherUsesConfiguredLibraryPath = false
 
   defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
@@ -161,16 +161,20 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
       delete appDescriptor.plugs
       delete snap.plugs
     } else {
-      // LD_LIBRARY_PATH is set by command.sh rather than here, unless the user configures it: see buildCommandShContent.
-      if (options.environment?.LD_LIBRARY_PATH == null) {
-        this.launcherLibraryArchTriplet = this.archNameToTriplet(arch)
-      } else {
-        this.launcherDropsEmptyLibraryPathEntries = true
-      }
+      // LD_LIBRARY_PATH is set by command.sh, never here, so snapd cannot leave it with an empty entry: see buildCommandShContent.
       const environment: Record<string, string> = {
         PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         SNAP_DESKTOP_RUNTIME: "$SNAP/gnome-platform",
         ...options.environment,
+      }
+      const configuredLibraryPath = environment.LD_LIBRARY_PATH
+      if (configuredLibraryPath == null) {
+        this.launcherLibraryArchTriplet = this.archNameToTriplet(arch)
+      } else {
+        // Keep snapd's expansion of the configured value, but out of LD_LIBRARY_PATH until command.sh drops its empty entries.
+        delete environment.LD_LIBRARY_PATH
+        environment[CONFIGURED_LD_LIBRARY_PATH_VAR] = configuredLibraryPath
+        this.launcherUsesConfiguredLibraryPath = true
       }
       const allow = options.allowNativeWayland
       const isOldElectron = !this.helper.isElectronVersionGreaterOrEqualThan("38.0.0", "7.0.0")
@@ -404,7 +408,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
       executableName: this.packager.executableName,
       extraAppArgs,
       libraryArchTriplet: this.launcherLibraryArchTriplet,
-      dropEmptyLibraryPathEntries: this.launcherDropsEmptyLibraryPathEntries,
+      useConfiguredLibraryPath: this.launcherUsesConfiguredLibraryPath,
     })
     await writeFile(commandWrapperPath, commandContent, { mode: 0o755 })
     await chmod(commandWrapperPath, 0o755)
@@ -513,14 +517,21 @@ export function assertTemplateSnapCompressionSupported(appimageToolset: ToolsetC
   }
 }
 
+/**
+ * snap.yaml `environment` variable that carries a user-configured `LD_LIBRARY_PATH` to `command.sh`, which exports it
+ * as `LD_LIBRARY_PATH` without empty entries. `/bin/bash` itself starts with the snap.yaml environment, so the raw
+ * value never sits in `LD_LIBRARY_PATH` there.
+ */
+export const CONFIGURED_LD_LIBRARY_PATH_VAR = "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH"
+
 export function buildCommandShContent(opts: {
   isTemplate: boolean
   executableName: string
   extraAppArgs: string[]
   libraryArchTriplet?: string | null
-  dropEmptyLibraryPathEntries?: boolean
+  useConfiguredLibraryPath?: boolean
 }): string {
-  const { isTemplate, executableName, extraAppArgs, libraryArchTriplet, dropEmptyLibraryPathEntries } = opts
+  const { isTemplate, executableName, extraAppArgs, libraryArchTriplet, useConfiguredLibraryPath } = opts
   validateShellEmbeddable(executableName, "executableName")
   const appPrefix = isTemplate ? "" : "app/"
   // snapd expands an unset `$LD_LIBRARY_PATH` in the snap.yaml `environment` to "" and has no `${VAR:+...}` form,
@@ -530,11 +541,13 @@ export function buildCommandShContent(opts: {
   if (libraryArchTriplet != null) {
     const snapLibDirs = `$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/${libraryArchTriplet}:$SNAP/usr/lib/${libraryArchTriplet}`
     preamble = `export LD_LIBRARY_PATH="\${SNAP_LIBRARY_PATH:+$SNAP_LIBRARY_PATH:}${snapLibDirs}\${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:${snapLibDirs}"`
-  } else if (dropEmptyLibraryPathEntries === true) {
-    // A user-configured LD_LIBRARY_PATH stays in snap.yaml, so the same empty entries can come from snapd's expansion
-    // (e.g. `$SNAP/lib:$LD_LIBRARY_PATH` with the caller's value unset) or from the value itself. Drop them all.
+  } else if (useConfiguredLibraryPath === true) {
+    // A user-configured LD_LIBRARY_PATH reaches the launcher as CONFIGURED_LD_LIBRARY_PATH_VAR, already expanded by
+    // snapd, so it may hold the same empty entries (e.g. `$SNAP/lib:$LD_LIBRARY_PATH` with the caller's value unset)
+    // or empty entries of its own. The shell drops them all before it exports the value as LD_LIBRARY_PATH.
     preamble = [
-      '_ld_library_path=":$LD_LIBRARY_PATH:"',
+      `_ld_library_path=":$${CONFIGURED_LD_LIBRARY_PATH_VAR}:"`,
+      `unset ${CONFIGURED_LD_LIBRARY_PATH_VAR}`,
       'while [[ $_ld_library_path == *::* ]]; do _ld_library_path="${_ld_library_path//::/:}"; done',
       '_ld_library_path="${_ld_library_path#:}"',
       '_ld_library_path="${_ld_library_path%:}"',
