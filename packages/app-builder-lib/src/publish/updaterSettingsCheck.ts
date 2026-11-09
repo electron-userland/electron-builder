@@ -1,8 +1,8 @@
-import { log } from "builder-util"
+import { Filter, log, statOrNull, walk, WalkSource } from "builder-util"
 import type { Stats } from "fs"
-import { lstat, readdir, readFile } from "fs/promises"
+import { lstat, readFile } from "fs/promises"
 import * as path from "path"
-import { Node, readAsar } from "../asar/asar.js"
+import { readAsar } from "../asar/asar.js"
 import type { Packager } from "../packager.js"
 import { mayRequireCrossOriginHeaders, maySupportAllowUnverifiedLinuxPackages } from "../util/electronUpdaterCompatibility.js"
 import { findAppElectronUpdater } from "../util/packageMetadata.js"
@@ -112,58 +112,60 @@ export async function warnAboutUpdaterSettings(
  * @internal exported for tests
  */
 export async function findUpdaterSettingsMentions(resourcesDir: string): Promise<UpdaterSettingsMentions | null> {
-  const lstatOrNull = (file: string) => lstat(file).catch(() => null)
-  const isReadable = (stat: Stats | null) => stat != null && stat.isFile() && stat.size <= MAX_SCANNED_FILE_SIZE
   const mentions: UpdaterSettingsMentions = { crossOriginHeaders: false, disallowsUnverifiedLinuxPackages: false }
-  /** Records what `content` mentions; true once every setting is found, so the scan can stop. */
-  const record = (content: Buffer): boolean => {
-    mentions.crossOriginHeaders ||= content.includes(CROSS_ORIGIN_HEADERS)
-    mentions.disallowsUnverifiedLinuxPackages ||= DISALLOWS_UNVERIFIED_LINUX_PACKAGES.some(it => content.includes(it))
-    return mentions.crossOriginHeaders && mentions.disallowsUnverifiedLinuxPackages
-  }
+  const isFound = () => mentions.crossOriginHeaders && mentions.disallowsUnverifiedLinuxPackages
+  // once every setting is found, nothing more is read
+  const filter: Filter = (file, stat) => !isFound() && (stat.isDirectory() ? path.basename(file) !== "node_modules" : stat.isFile() && stat.size <= MAX_SCANNED_FILE_SIZE)
+  const scan = (dir: string, read: (file: string) => Promise<Buffer>, source?: WalkSource) =>
+    walk(
+      dir,
+      filter,
+      {
+        consume: async (file, stat) => {
+          if (stat.isDirectory()) {
+            return
+          }
+          const content = await read(file)
+          mentions.crossOriginHeaders ||= content.includes(CROSS_ORIGIN_HEADERS)
+          mentions.disallowsUnverifiedLinuxPackages ||= DISALLOWS_UNVERIFIED_LINUX_PACKAGES.some(it => content.includes(it))
+        },
+      },
+      source
+    )
 
   const asarFile = path.join(resourcesDir, "app.asar")
-  if ((await lstatOrNull(asarFile))?.isFile()) {
+  if ((await statOrNull(asarFile))?.isFile()) {
     const asar = await readAsar(asarFile)
-    const search = async (dir: Node, dirPath: string): Promise<boolean> => {
-      for (const [name, node] of Object.entries(dir.files ?? {})) {
-        const file = path.join(dirPath, name)
-        if (node.files != null) {
-          if (name !== "node_modules" && (await search(node, file))) {
-            return true
-          }
-          continue
-        }
-        // a link has no size, so it is not read; an unpacked file is read from app.asar.unpacked
-        if (node.size == null || node.size > MAX_SCANNED_FILE_SIZE || (node.unpacked === true && !isReadable(await lstatOrNull(path.join(`${asarFile}.unpacked`, file))))) {
-          continue
-        }
-        if (record(await asar.readFile(file))) {
-          return true
-        }
-      }
-      return false
+    const nodeOf = (file: string) => {
+      const relative = path.relative(asarFile, file)
+      return { relative, node: relative === "" ? asar.header : asar.getNode(relative) }
     }
-    await search(asar.header, "")
+    // an unpacked file is read from app.asar.unpacked, so it has the stats of that file; a link of app.asar has no size and is not a file
+    const asarSource: WalkSource = {
+      readdir: dir => Promise.resolve(Object.keys(nodeOf(dir).node?.files ?? {})),
+      lstat: async file => {
+        const { relative, node } = nodeOf(file)
+        const isFile = node?.files == null && node?.link == null
+        const unpacked = isFile && node?.unpacked === true ? await lstat(path.join(`${asarFile}.unpacked`, relative)).catch(() => null) : null
+        return (
+          unpacked ??
+          ({
+            isDirectory: () => node?.files != null,
+            isFile: () => isFile && node?.unpacked !== true && node?.size != null,
+            isSymbolicLink: () => node?.link != null,
+            size: node?.size ?? 0,
+          } as Stats)
+        )
+      },
+    }
+    await scan(asarFile, file => asar.readFile(path.relative(asarFile, file)), asarSource)
     return mentions
   }
 
   const appDir = path.join(resourcesDir, "app")
-  if (!(await lstatOrNull(appDir))?.isDirectory()) {
+  if (!(await statOrNull(appDir))?.isDirectory()) {
     return null
   }
-  const pending = [appDir]
-  for (let dir = pending.pop(); dir != null; dir = pending.pop()) {
-    for (const entry of await readdir(dir, { withFileTypes: true })) {
-      const file = path.join(dir, entry.name)
-      if (entry.isDirectory()) {
-        if (entry.name !== "node_modules") {
-          pending.push(file)
-        }
-      } else if (isReadable(await lstatOrNull(file)) && record(await readFile(file))) {
-        return mentions
-      }
-    }
-  }
+  await scan(appDir, file => readFile(file))
   return mentions
 }

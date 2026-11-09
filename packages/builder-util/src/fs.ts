@@ -66,10 +66,23 @@ export interface FileConsumer {
   isIncludeDir?: boolean
 }
 
+/** Where {@link walk} reads the tree from: the file system by default, or another tree with the same shape, such as the files of an asar archive. */
+export interface WalkSource {
+  /** The names of the entries of `dir`; empty when `dir` does not exist. */
+  readdir(dir: string): Promise<Array<string>>
+  /** The stats of `file`, not following a symlink. */
+  lstat(file: string): Promise<Stats>
+}
+
+const fileSystemWalkSource: WalkSource = {
+  readdir: dir => orIfFileNotExist(readdir(dir), []),
+  lstat,
+}
+
 /**
  * Returns list of file paths (system-dependent file separator)
  */
-export async function walk(initialDirPath: string, filter?: Filter | null, consumer?: FileConsumer): Promise<Array<string>> {
+export async function walk(initialDirPath: string, filter?: Filter | null, consumer?: FileConsumer, source: WalkSource = fileSystemWalkSource): Promise<Array<string>> {
   let result: Array<string> = []
   const queue: Array<string> = [initialDirPath]
   let addDirToResult = false
@@ -84,7 +97,7 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
       }
     }
 
-    const childNames = await orIfFileNotExist(readdir(dirPath), [])
+    const childNames = await source.readdir(dirPath)
     childNames.sort()
 
     let nodeModuleContent: Array<string> | null = null
@@ -97,7 +110,7 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
       }
 
       const filePath = dirPath + path.sep + name
-      return lstat(filePath).then(stat => {
+      return source.lstat(filePath).then(stat => {
         if (filter != null && !filter(filePath, stat)) {
           return null
         }

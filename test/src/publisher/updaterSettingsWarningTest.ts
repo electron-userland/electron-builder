@@ -6,7 +6,7 @@ import { mayRequireCrossOriginHeaders, maySupportAllowUnverifiedLinuxPackages } 
 import { findAppElectronUpdater } from "app-builder-lib/src/util/packageMetadata"
 import { log, TmpDir } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { outputFile, outputJson, pathExists, rename, symlink, writeFile } from "fs-extra"
+import { outputFile, outputJson, pathExists, rename, rm, symlink, writeFile } from "fs-extra"
 import Module from "node:module"
 import * as path from "path"
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
@@ -187,6 +187,12 @@ describe("the scan of the packed app", () => {
     await symlink(path.join(outside, "main.js"), `${unpacked}.link`)
     await rename(`${unpacked}.link`, unpacked)
     expect(await findCrossOriginHeadersMention(resourcesDir)).toBe(false)
+  })
+
+  test("skips an unpacked file of app.asar that is missing from app.asar.unpacked", async ({ expect, tmpDir }) => {
+    const resourcesDir = await createAsar(tmpDir, { "main.js": assignment, "unpacked/data.js": "" }, "**/unpacked/**")
+    await rm(path.join(resourcesDir, "app.asar.unpacked", "unpacked", "data.js"))
+    expect(await findCrossOriginHeadersMention(resourcesDir)).toBe(true)
   })
 
   test("null when the resources hold no app to scan; rejects when app.asar cannot be read", async ({ expect, tmpDir }) => {
