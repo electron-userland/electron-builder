@@ -16,6 +16,10 @@ restore_ownership() {
         chown -R "$HOST_OWNER" "/project/$dir"
       fi
     done
+    # the corepack home that run-tests.sh mounts from the host, should a download above have written to it
+    if [ -d /root/.cache/node/corepack ]; then
+      chown -R "$HOST_OWNER" /root/.cache/node/corepack
+    fi
   fi
 }
 # On every exit, also when a step below fails and `set -e` ends the script: the reports of failed tests are the ones
@@ -25,6 +29,18 @@ trap restore_ownership EXIT
 npm i -g corepack bun
 
 corepack enable
+# Corepack downloads pnpm via Node's bundled undici, which can crash with an uncatchable `assert(!this.paused)`
+# (nodejs/undici#5360). run-tests.sh mounts the runner's corepack home, so pnpm is usually there already and this makes
+# no request; when it is not, retry the download like .github/actions/pnpm does on the runner.
+for i in 1 2 3; do
+  COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack install && break
+  if [ "$i" -eq 3 ]; then
+    echo "corepack install failed after 3 attempts" >&2
+    exit 1
+  fi
+  echo "corepack install failed (attempt $i/3), retrying in 15s…" >&2
+  sleep 15
+done
 
 # node-modules-docker is mounted from the host and may have been installed on a
 # different platform (e.g. macOS). --force makes pnpm re-evaluate and install

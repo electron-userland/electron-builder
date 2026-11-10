@@ -24,8 +24,7 @@ class StallingDownloadExecutor extends HttpExecutor<http.ClientRequest> {
     })
   }
 
-  downloadWithTimeout(url: URL, destination: string, timeout: number): Promise<string> {
-    const cancellationToken = new CancellationToken()
+  downloadWithTimeout(url: URL, destination: string, timeout: number, cancellationToken = new CancellationToken()): Promise<string> {
     return cancellationToken.createPromise<string>((resolve, reject, onCancel) => {
       const requestOptions: http.RequestOptions = { timeout }
       configureRequestUrl(url, requestOptions)
@@ -67,13 +66,15 @@ async function waitFor(condition: () => Promise<boolean>, what: string): Promise
   }
 }
 
-async function withStallingServer(task: (url: URL) => Promise<void>): Promise<void> {
+// sends the start of the body, then stalls forever
+function sendStartOfBody(response: http.ServerResponse): void {
+  response.writeHead(200, { "Content-Length": BODY_LENGTH, "Content-Type": "application/octet-stream" })
+  response.write(Buffer.alloc(SENT_BEFORE_STALL, 1))
+}
+
+async function withStallingServer(task: (url: URL) => Promise<void>, onRequest: (response: http.ServerResponse) => void = sendStartOfBody): Promise<void> {
   const sockets = new Set<Socket>()
-  // sends the start of the body, then stalls forever
-  const server = http.createServer((_request, response) => {
-    response.writeHead(200, { "Content-Length": BODY_LENGTH, "Content-Type": "application/octet-stream" })
-    response.write(Buffer.alloc(SENT_BEFORE_STALL, 1))
-  })
+  const server = http.createServer((_request, response) => onRequest(response))
   server.on("connection", socket => {
     sockets.add(socket)
     socket.on("close", () => sockets.delete(socket))
@@ -134,5 +135,109 @@ describe.runIf(process.platform === "linux")("download destination is closed whe
       received.response?.destroy()
       await waitFor(async () => !(await isFileOpen(destination)), "the destination to be closed")
     })
+  })
+})
+
+// The server side of a request. The server never ends a response, so only the client closing the connection closes it.
+class ServedRequest {
+  isClosed = false
+
+  constructor(readonly response: http.ServerResponse) {
+    response.on("close", () => {
+      this.isClosed = true
+    })
+  }
+}
+
+describe("cancelling a download aborts its request", () => {
+  test("a cancel mid-body closes the connection", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "download-cancel" })
+    await fsExtra.ensureDir(dir)
+    const destination = path.join(dir, "mid-body.exe")
+    const served: Array<ServedRequest> = []
+    await withStallingServer(
+      async url => {
+        const cancellationToken = new CancellationToken()
+        const download = new StallingDownloadExecutor(null).downloadWithTimeout(url, destination, 0, cancellationToken)
+        await waitForPartialFile(destination)
+
+        cancellationToken.cancel()
+        await expect(download).rejects.toThrow("cancelled")
+        await waitFor(async () => served[0].isClosed, "the client to close the connection")
+      },
+      response => {
+        served.push(new ServedRequest(response))
+        sendStartOfBody(response)
+      }
+    )
+  })
+
+  test("a cancel after a redirect closes the connection of the redirect's request", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "download-cancel" })
+    await fsExtra.ensureDir(dir)
+    const destination = path.join(dir, "redirected.exe")
+    const served: Array<ServedRequest> = []
+    await withStallingServer(
+      async url => {
+        const cancellationToken = new CancellationToken()
+        const download = new StallingDownloadExecutor(null).downloadWithTimeout(url, destination, 0, cancellationToken)
+        await waitForPartialFile(destination)
+
+        cancellationToken.cancel()
+        await expect(download).rejects.toThrow("cancelled")
+        await waitFor(async () => served[0].isClosed, "the client to close the connection")
+      },
+      response => {
+        if (response.req.url === "/update.exe") {
+          response.writeHead(302, { Location: "/redirected.exe" })
+          response.end()
+          return
+        }
+        served.push(new ServedRequest(response))
+        sendStartOfBody(response)
+      }
+    )
+  })
+
+  test("a response sent after a cancel does not create the destination", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "download-cancel" })
+    await fsExtra.ensureDir(dir)
+    const destination = path.join(dir, "before-response.exe")
+    const served: Array<ServedRequest> = []
+    // holds the response until the download is cancelled
+    await withStallingServer(
+      async url => {
+        const cancellationToken = new CancellationToken()
+        const download = new StallingDownloadExecutor(null).downloadWithTimeout(url, destination, 0, cancellationToken)
+        await waitFor(async () => served.length === 1, "the request to reach the server")
+
+        cancellationToken.cancel()
+        await expect(download).rejects.toThrow("cancelled")
+        sendStartOfBody(served[0].response)
+        // once the connection is closed, no response can reach the download
+        await waitFor(async () => served[0].isClosed, "the client to close the connection")
+        expect(fsExtra.existsSync(destination)).toBe(false)
+      },
+      response => served.push(new ServedRequest(response))
+    )
+  })
+
+  test("a cancelled buffer download (a blockmap) closes the connection", async ({ expect }) => {
+    const served: Array<ServedRequest> = []
+    await withStallingServer(
+      async url => {
+        const cancellationToken = new CancellationToken()
+        const download = new StallingDownloadExecutor(null).downloadToBuffer(url, { cancellationToken })
+        await waitFor(async () => served.length === 1, "the request to reach the server")
+
+        cancellationToken.cancel()
+        await expect(download).rejects.toThrow("cancelled")
+        await waitFor(async () => served[0].isClosed, "the client to close the connection")
+      },
+      response => {
+        served.push(new ServedRequest(response))
+        sendStartOfBody(response)
+      }
+    )
   })
 })

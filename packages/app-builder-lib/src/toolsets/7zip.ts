@@ -5,7 +5,7 @@ import { downloadBuilderToolset } from "../util/electronGet.js"
 import { resolveToolsetVersion } from "./version.js"
 
 // Newest 7-Zip bundle — selected when the config is unset / null / "latest".
-const SEVEN_ZIP_LATEST = "1.0.1"
+const SEVEN_ZIP_LATEST = "1.1.0"
 
 const sevenZipChecksums = {
   // shipped the 32-bit 7za.exe for every Windows arch — 1.75 GiB memory cap, no LZMA2 multithreading on x64/arm64 (electron-builder-binaries#222)
@@ -29,6 +29,17 @@ const sevenZipChecksums = {
     "7zip-win-ia32.tar.gz": "2beef271bd1b3eb42021acfb24f47d268d03139e794f41628b89e728fa58bed6",
     "7zip-win-x64.tar.gz": "db50b64348d9560b875a00bd7e02f02b5f7f4b54ff5efa5908c38858c89c9f33",
     "7zip-linux-x64.tar.gz": "c6c2d744f5e71f100e7631786bca78b6f1738734454e8dd4bf6078d4895765f7",
+  },
+  // 7-Zip 26.05 (was 24.09) — upstream security fixes incl. CVE-2025-11001 / CVE-2025-11002, CVE-2025-55188, CVE-2026-14266
+  "1.1.0": {
+    "7zip-linux-ia32.tar.gz": "cd5d5255fc2f5a65f8d248f42ed5cbe5f9f6f701a12a26f40631740ef400794f",
+    "7zip-darwin-arm64.tar.gz": "4d04c3a7c4c10b4b70cf25ab4e5ed6be7a141e98aefc536a87174ddb0bc3c050",
+    "7zip-darwin-x86_64.tar.gz": "4d04c3a7c4c10b4b70cf25ab4e5ed6be7a141e98aefc536a87174ddb0bc3c050",
+    "7zip-linux-arm64.tar.gz": "6250e76fe2c0af4247cc9ad41f6f9365ae95deae23a2592f42ba005cc20d8939",
+    "7zip-win-arm64.tar.gz": "25aabfe776ffcd7dc172479beb06dd0505fd0b4e89451ceedb99efbd255ef829",
+    "7zip-win-ia32.tar.gz": "020186756c2b370c7f840fb90a78e0b2e556fdcd6d356bc4f412021bd78cda5d",
+    "7zip-win-x64.tar.gz": "032e591acc4c0eb3f2e1fc05ff3ec867e57f63369c74d13c0c73f973cae5fd6a",
+    "7zip-linux-x64.tar.gz": "98ac470cf076f19241b5ee259e135de0adc3c3b8076c41682d6468c2a9990845",
   },
 } as const
 

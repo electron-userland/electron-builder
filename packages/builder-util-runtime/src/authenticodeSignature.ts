@@ -9,7 +9,10 @@ import { parseDn } from "./rfc2253Parser.js"
 // The in-box Windows PowerShell 5.1, by absolute path: a bare "powershell.exe" is searched for in the current directory before
 // PATH (libuv's search_path), so a powershell.exe planted next to a document the app was opened with could report any file as
 // validly signed. A 32-bit process is redirected to the 32-bit Windows PowerShell in SysWOW64, as it is for the bare name.
-/** The in-box Windows PowerShell 5.1 of this machine by absolute path: `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`. */
+/**
+ * The in-box Windows PowerShell 5.1 of this machine by absolute path: `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`.
+ * For code that runs on the end user's machine (electron-updater); electron-builder takes PowerShell from `toolsets.executables`.
+ */
 export function windowsPowerShellPath(): string {
   // process.env is case-insensitive on Windows
   const systemRoot = process.env.SystemRoot || process.env.windir
@@ -20,7 +23,12 @@ export function windowsPowerShellPath(): string {
   return path.win32.join(systemRoot, "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
 }
 
-export function preparePowerShellExec(command: string, timeout?: number, extraEnv: Record<string, string> = {}) {
+/**
+ * execFile arguments that run `command` in Windows PowerShell: the absolute path of `powershell.exe`, its arguments and its options.
+ * The path is `powershell` when it is given (electron-builder passes the one of `toolsets.executables`), else {@link windowsPowerShellPath},
+ * which is only computed then.
+ */
+export function preparePowerShellExec(command: string, timeout?: number, extraEnv: Record<string, string> = {}, powershell?: string) {
   // $PSHOME is a PS automatic variable pointing to the trusted PS installation directory.
   // Every module the commands use is imported by its full path (Security: Get-AuthenticodeSignature,
   // Utility: ConvertTo-Json), so no module is looked up in a user-writable PSModulePath entry — which
@@ -63,7 +71,7 @@ export function preparePowerShellExec(command: string, timeout?: number, extraEn
     // check), where powershell.exe would otherwise share the terminal's console
     windowsHide: true,
   }
-  return [windowsPowerShellPath(), args, options] as const
+  return [powershell ?? windowsPowerShellPath(), args, options] as const
 }
 
 // The file to verify is passed in an environment variable rather than in the script, so no character of its path can ever be
@@ -84,9 +92,12 @@ const AUTHENTICODE_SIGNATURE_COMMAND =
   `catch { Write-Error -Message (ConvertTo-AsciiEscaped ($_ | Out-String)); exit 1 }; ` +
   `ConvertTo-AsciiEscaped $json`
 
-/** execFile arguments that print the `Get-AuthenticodeSignature` result of `file` as JSON (see {@link parseAuthenticodeSignatureOutput}). */
-export function prepareAuthenticodeSignatureExec(file: string, timeout: number) {
-  return preparePowerShellExec(AUTHENTICODE_SIGNATURE_COMMAND, timeout, { [AUTHENTICODE_FILE_ENV]: file })
+/**
+ * execFile arguments that print the `Get-AuthenticodeSignature` result of `file` as JSON (see {@link parseAuthenticodeSignatureOutput}),
+ * run by `powershell` when it is given, else by {@link windowsPowerShellPath} (see {@link preparePowerShellExec}).
+ */
+export function prepareAuthenticodeSignatureExec(file: string, timeout: number, powershell?: string) {
+  return preparePowerShellExec(AUTHENTICODE_SIGNATURE_COMMAND, timeout, { [AUTHENTICODE_FILE_ENV]: file }, powershell)
 }
 
 /**

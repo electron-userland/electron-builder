@@ -4,6 +4,8 @@ import * as path from "path"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
 import { ToolsetConfig } from "app-builder-lib/internal"
+import { isNsisLoggingSupported } from "app-builder-lib/src/toolsets/nsis"
+import { latestToolsetVersion, WIN_CODE_SIGN_VERSIONS } from "../../vitest-scripts/runtime-tests/generate-toolset-versions"
 
 const nsisTarget = Platform.WINDOWS.createTarget("nsis", Arch.x64)
 
@@ -132,19 +134,26 @@ export function registerAssistedInstallerTests(toolsets: ToolsetConfig): void {
     )
   })
 
-  // Needs a log-enabled NSIS bundle (makensis and stubs compiled with NSIS_CONFIG_LOG=yes), which no pinned toolsets.nsis version is:
-  // nsis@1.2.1 ships the stock NSIS, and nsis@2.0.x log-enables only the Windows makensis and stubs, not the Linux / macOS makensis.
-  // Point the file:// url at such a bundle directory to run it.
-  test.skip("debug logging enabled", ({ expect }) =>
+  // Needs a log-enabled NSIS (makensis and stubs compiled with NSIS_CONFIG_LOG=yes): nsis@2.0.4 (the default) downloads its -log bundle for
+  // it, the older pinned bundles (0.0.0, 1.2.1) have none — for those, assertInstallerDebugLoggingSupported fails the build (legacyConfigGuardTest).
+  // Built once, with the newest winCodeSign: the signing toolset takes no part in the LogSet compile.
+  test.ifEnv(isNsisLoggingSupported(toolsets.nsis) && toolsets.winCodeSign === latestToolsetVersion(WIN_CODE_SIGN_VERSIONS))("debug logging enabled", ({ expect }) =>
     app(expect, {
       targets: nsisTarget,
       config: {
-        toolsets: { ...toolsets, nsis: { url: "file:///path/to/log-enabled-nsis-bundle" } },
+        toolsets,
         nsis: {
           installerDebugLogging: true,
         },
       },
-    }))
+      effectiveOptionComputed: async it => {
+        const defines = it[0]
+        // the installer and uninstaller scripts call `LogSet on` when this is defined, which makensis rejects unless log-enabled
+        expect(defines).toHaveProperty("ENABLE_LOGGING_ELECTRON_BUILDER", null)
+        return Promise.resolve(false)
+      },
+    })
+  )
 
   test("assisted, only perMachine", ({ expect }) =>
     app(expect, {

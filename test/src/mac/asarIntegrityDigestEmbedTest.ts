@@ -10,9 +10,10 @@ import { MacPackager } from "app-builder-lib"
 import { ASAR_INTEGRITY_DIGEST_SENTINEL, embedAsarIntegrityDigest } from "app-builder-lib/src/electron/mac/asarIntegrityDigest"
 import { AsarOptions } from "app-builder-lib/src/options/PlatformSpecificBuildOptions"
 import { PlistObject, savePlistFile } from "app-builder-lib/src/util/mac/plist"
-import { exec, InvalidConfigurationError, log } from "builder-util"
+import { exec, Executables, InvalidConfigurationError, log } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
+import { pathToFileURL } from "url"
 
 const SENTINEL = Buffer.from(ASAR_INTEGRITY_DIGEST_SENTINEL)
 const INTEGRITY = { "Resources/app.asar": { algorithm: "SHA256", hash: "697f2a6b9d6432470fe072c343c1714768b5fc304bd6f5fa7a4810821785f854" } }
@@ -92,6 +93,8 @@ describe("MacPackager.doAddAsarIntegrityDigest", () => {
     vi.mocked(exec).mockClear()
     log.resetLimits(AFTER_PACK_WARNING_KEY)
     setPlatform("darwin")
+    // the default location on macOS, which exists on macOS only (see codesignExecutableTest for toolsets.executables)
+    vi.spyOn(Executables, "resolve").mockImplementation(name => `/usr/bin/${name}`)
   })
 
   afterEach(() => {
@@ -105,6 +108,22 @@ describe("MacPackager.doAddAsarIntegrityDigest", () => {
 
     expect(await readSlot(app.binaryPath)).toEqual({ used: 1, version: 1, digest: DIGEST })
     expect(vi.mocked(exec).mock.calls).toEqual([resign(app.frameworkPath)])
+  })
+
+  test.skipIf(process.platform === "win32")("signs the framework with toolsets.executables.codesign, and a missing one is a configuration error", async ({ expect, tmpDir }) => {
+    vi.mocked(Executables.resolve).mockRestore()
+    const codesign = path.join(await tmpDir.createTempDir(), "codesign")
+    await fs.writeFile(codesign, "#!/bin/sh\n", { mode: 0o755 })
+    await fs.chmod(codesign, 0o755)
+    const app = await createApp(tmpDir)
+    await Executables.run({ codesign: pathToFileURL(codesign).href }, () => addDigest(app.appOutDir))
+    expect(vi.mocked(exec).mock.calls.map(call => call[0])).toEqual([codesign])
+
+    vi.mocked(exec).mockClear()
+    const missing = pathToFileURL(path.join(path.dirname(codesign), "missing")).href
+    const other = await createApp(tmpDir)
+    await expect(Executables.run({ codesign: missing }, () => addDigest(other.appOutDir))).rejects.toThrow("toolsets.executables.codesign")
+    expect(exec).not.toHaveBeenCalled()
   })
 
   test("applies to Electron 41 prereleases", async ({ expect, tmpDir }) => {

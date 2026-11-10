@@ -18,17 +18,22 @@ describe.ifMac("macos keychain", { concurrent: false }, () => {
   })
 })
 
+// Fingerprints are keyed per process, so snapshots show where one stands, not its value
+const withoutFingerprints = (text: string) => text.replace(/[a-f0-9]{32} \(redacted fingerprint\)/g, "<fingerprint>")
+
 // TODO: fix me
 test.skip("remove password from log", ({ expect }) => {
-  expect(removePassword("seq -P foo -B")).toMatchSnapshot()
-  expect(removePassword("pass:foo")).toMatchSnapshot()
+  expect(withoutFingerprints(removePassword("seq -P foo -B"))).toMatchSnapshot()
+  expect(withoutFingerprints(removePassword("pass:foo"))).toMatchSnapshot()
   // noinspection SpellCheckingInspection
-  expect(removePassword("/usr/bin/productbuild -P wefwef")).toMatchSnapshot()
-  expect(removePassword(" /p foo")).toMatchSnapshot()
-  expect(removePassword('ConvertTo-SecureString -String "test"')).toMatchSnapshot()
+  expect(withoutFingerprints(removePassword("/usr/bin/productbuild -P wefwef"))).toMatchSnapshot()
+  expect(withoutFingerprints(removePassword(" /p foo"))).toMatchSnapshot()
+  expect(withoutFingerprints(removePassword('ConvertTo-SecureString -String "test"'))).toMatchSnapshot()
   expect(
-    removePassword(
-      '(Get-PfxData "C:\\Users\\develar\\AppData\\Local\\Temp\\electron-builder-yBY8D2\\0-1.p12" -Password (ConvertTo-SecureString -String "test" -Force -AsPlainText)).EndEntityCertificates.Subject'
+    withoutFingerprints(
+      removePassword(
+        '(Get-PfxData "C:\\Users\\develar\\AppData\\Local\\Temp\\electron-builder-yBY8D2\\0-1.p12" -Password (ConvertTo-SecureString -String "test" -Force -AsPlainText)).EndEntityCertificates.Subject'
+      )
     )
   ).toMatchSnapshot()
 })

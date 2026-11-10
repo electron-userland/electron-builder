@@ -15,11 +15,14 @@ vi.mock("electron-publish/src/s3/awsCredentials", async importOriginal => ({
 import * as https from "https"
 import { Arch, InvalidConfigurationError } from "builder-util"
 import { CancellationToken, S3Options, SpacesOptions } from "builder-util-runtime"
+import { BLOCK_MAP_V3_MAGIC } from "builder-util-runtime/internal"
 import { PublishContext, UploadTask } from "electron-publish"
 import { resolveS3Credentials } from "electron-publish/src/s3/awsCredentials"
 import { S3Publisher } from "electron-publish/internal"
 import { SpacesPublisher } from "electron-publish/internal"
 import { getS3ContentType } from "electron-publish/src/s3/s3UploadHelper"
+import fsExtra from "fs-extra"
+import { gzipSync } from "zlib"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -91,6 +94,16 @@ describe("getS3ContentType — mirrors Go binary getContentType()", () => {
     ["file.unknownxyz", "application/octet-stream"],
   ])("%s → %s", (filename, expected) => {
     expect(getS3ContentType(filename)).toBe(expected)
+  })
+
+  it("a binary block map is application/octet-stream, a gzipped JSON one application/gzip", async ({ tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "s3-content-type" })
+    const binary = path.join(dir, "binary.exe.blockmap")
+    const json = path.join(dir, "json.exe.blockmap")
+    await fsExtra.outputFile(binary, Buffer.concat([Buffer.from(BLOCK_MAP_V3_MAGIC, "latin1"), Buffer.alloc(60)]))
+    await fsExtra.outputFile(json, gzipSync(Buffer.from('{"version":"2","files":[]}')))
+    expect(getS3ContentType(binary)).toBe("application/octet-stream")
+    expect(getS3ContentType(json)).toBe("application/gzip")
   })
 })
 
@@ -214,7 +227,7 @@ describe("SpacesPublisher — getS3UploadConfig", { concurrent: false }, () => {
 
   it("throws with DO_KEY_ID mention when DO_KEY_ID is missing", () => {
     delete process.env.DO_KEY_ID
-    expect(() => makeSpacesPublisher().getS3UploadConfig()).toThrow(/DO_KEY_ID/)
+    expect(() => makeSpacesPublisher().getS3UploadConfig()).toThrow(/DO_KEY_ID.*https:\/\/www\.electron\.build\/docs\/publish#spaces/)
   })
 
   it("throws with DO_SECRET_KEY mention when DO_SECRET_KEY is missing", () => {
@@ -225,6 +238,50 @@ describe("SpacesPublisher — getS3UploadConfig", { concurrent: false }, () => {
   it("throws when DO_KEY_ID is an empty string", () => {
     process.env.DO_KEY_ID = ""
     expect(() => makeSpacesPublisher().getS3UploadConfig()).toThrow(/DO_KEY_ID/)
+  })
+})
+
+// ─── SpacesPublisher — name and region validation ────────────────────────────
+
+describe("SpacesPublisher — name and region validation", { concurrent: false }, () => {
+  const invalidRegions = ["evil.example.com/", "attacker.example#", "nyc3.evil.example", "user@host", "nyc3 ", "nyc", "nyc123", ""]
+  const invalidNames = ["evil.example.com/", "evil.example.com#", "evil.example.com?", "user@evil.example.com", "my.space", "my space", "-space", "ab", "a".repeat(64), ""]
+
+  beforeEach(() => {
+    vi.stubEnv("DO_KEY_ID", "do-test-key")
+    vi.stubEnv("DO_SECRET_KEY", "do-test-secret")
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it.each(["nyc3", "ams3", "sfo2", "sgp1", "fra1", "syd1", "NYC3"])("accepts DigitalOcean region %s", async region => {
+    await expect(SpacesPublisher.checkAndResolveOptions({ provider: "spaces", name: "my-space", region }, null, true)).resolves.toBeUndefined()
+    expect(makeSpacesPublisher({ region }).getS3UploadConfig().endpoint).toBe(`https://${region}.digitaloceanspaces.com`)
+  })
+
+  it.each(["my-space", "abc", "1space", "My-Space", "a".repeat(63)])("accepts Spaces name %s", async name => {
+    await expect(SpacesPublisher.checkAndResolveOptions({ provider: "spaces", name, region: "nyc3" }, null, true)).resolves.toBeUndefined()
+    expect(makeSpacesPublisher({ name }).getS3UploadConfig().endpoint).toBe("https://nyc3.digitaloceanspaces.com")
+  })
+
+  it.each(invalidRegions)("checkAndResolveOptions rejects region %j", region => {
+    expect(() => SpacesPublisher.checkAndResolveOptions({ provider: "spaces", name: "my-space", region }, null, true)).toThrow(InvalidConfigurationError)
+  })
+
+  it.each(invalidRegions)("getS3UploadConfig rejects region %j before building an endpoint", region => {
+    expect(() => makeSpacesPublisher({ region }).getS3UploadConfig()).toThrow(InvalidConfigurationError)
+    expect(() => makeSpacesPublisher({ region }).getS3UploadConfig()).toThrow(/region slug such as "nyc3".*https:\/\/www\.electron\.build\/docs\/publish#spaces/)
+  })
+
+  it.each(invalidNames)("checkAndResolveOptions rejects name %j", name => {
+    expect(() => SpacesPublisher.checkAndResolveOptions({ provider: "spaces", name, region: "nyc3" }, null, true)).toThrow(/Invalid "name"/)
+  })
+
+  it.each(invalidNames)("getS3UploadConfig rejects name %j before building an endpoint", name => {
+    expect(() => makeSpacesPublisher({ name }).getS3UploadConfig()).toThrow(InvalidConfigurationError)
+    expect(() => makeSpacesPublisher({ name }).getS3UploadConfig()).toThrow(/Invalid "name".*https:\/\/www\.electron\.build\/docs\/publish#spaces/)
   })
 })
 

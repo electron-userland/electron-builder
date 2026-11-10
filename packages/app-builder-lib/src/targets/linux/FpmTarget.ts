@@ -1,17 +1,4 @@
-import {
-  Arch,
-  asArray,
-  exec,
-  getArchSuffix,
-  InvalidConfigurationError,
-  log,
-  prepareFixedNameWrite,
-  stripSensitiveEnvVars,
-  TmpDir,
-  toLinuxArchString,
-  unlinkIfExists,
-  use,
-} from "builder-util"
+import { Arch, asArray, exec, InvalidConfigurationError, log, prepareFixedNameWrite, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
 import { expandDefaultKeyword } from "builder-util/internal"
 import { Nullish } from "builder-util-runtime"
 
@@ -23,15 +10,15 @@ import { smarten } from "../../appInfo.js"
 import { Target } from "../../core.js"
 import * as errorMessages from "../../errorMessages.js"
 import { LinuxPackager } from "../../linuxPackager.js"
+import { waitForPackWork } from "../../platformPackager.js"
 import { DebOptions, LinuxTargetSpecificOptions } from "../../options/linuxOptions.js"
 import { ArtifactCreated } from "../../packagerApi.js"
 import { getPackAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../publish/PublishManager.js"
 import { getFpmPath } from "../../toolsets/fpm.js"
-import { getLinuxToolsPath } from "../../toolsets/linuxToolsMac.js"
+import { getArchiveToolsetBinDir } from "../../toolsets/archive.js"
 import { computeEnv } from "../../util/bundledTool.js"
 import { isFpmDebug } from "../../util/flags.js"
 import { hashFile } from "../../util/hash.js"
-import { isMacOsSierra } from "../../util/mac/macosVersion.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import { buildLauncherScript, shellQuote } from "./launcherScript.js"
 import { installPrefix, LinuxTargetHelper, quoteDesktopExecPath } from "./LinuxTargetHelper.js"
@@ -182,8 +169,8 @@ export default class FpmTarget extends Target {
     if (packager.packagerOptions.prepackaged != null) {
       await mkdir(this.outDir, { recursive: true })
     }
-    const linuxDistType = packager.packagerOptions.prepackaged || path.join(this.outDir, `linux${getArchSuffix(arch)}-unpacked`)
-    const resourceDir = packager.getResourcesDir(linuxDistType)
+    // the app dir fpm packages (below), so these files land in it even with a `linux.defaultArch` set
+    const resourceDir = packager.getResourcesDir(appOutDir)
 
     const publishConfig = this.supportsAutoUpdate(target)
       ? await getPackAppUpdatePublishConfiguration(
@@ -193,12 +180,14 @@ export default class FpmTarget extends Target {
           false /* in any case validation will be done on publish step */
         )
       : null
+    // app-update.yml, package-type and apparmor-profile are written into the app dir, which the zip/7z/tar.* of this pack may still be archiving
+    await waitForPackWork(packager, appOutDir, arch)
     if (publishConfig != null) {
       log.info({ resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}`)
-      await writeAppUpdateYaml(resourceDir, publishConfig, linuxDistType)
+      await writeAppUpdateYaml(resourceDir, publishConfig, appOutDir)
       // Extra file needed for auto-updater to detect installation method
       const packageTypeFile = path.join(resourceDir, "package-type")
-      await prepareFixedNameWrite(linuxDistType, packageTypeFile, "package type file")
+      await prepareFixedNameWrite(appOutDir, packageTypeFile, "package type file")
       await outputFile(packageTypeFile, target)
     }
 
@@ -207,7 +196,7 @@ export default class FpmTarget extends Target {
     // Install AppArmor support for ubuntu 24+
     // https://github.com/electron-userland/electron-builder/issues/8635
     const appArmorFile = path.join(resourceDir, "apparmor-profile")
-    await prepareFixedNameWrite(linuxDistType, appArmorFile, "AppArmor profile")
+    await prepareFixedNameWrite(appOutDir, appArmorFile, "AppArmor profile")
     await copyFile(scripts.appArmor, appArmorFile)
 
     const appInfo = packager.appInfo
@@ -340,16 +329,6 @@ export default class FpmTarget extends Target {
       env.XZ_DEFAULTS = "-T0"
     }
 
-    // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)
-    // so, for now, brew install rpm is still required.
-    if (target !== "rpm" && (await isMacOsSierra())) {
-      const linuxToolsPath = await getLinuxToolsPath(packager.config.toolsets?.linuxToolsMac, packager.buildResourcesDir)
-      Object.assign(env, {
-        PATH: computeEnv(process.env.PATH, [path.join(linuxToolsPath, "bin")]),
-        DYLD_LIBRARY_PATH: computeEnv(process.env.DYLD_LIBRARY_PATH, [path.join(linuxToolsPath, "lib")]),
-      })
-    }
-
     await this.executeFpm(target, fpmConfiguration, env)
 
     let info: ArtifactCreated = {
@@ -411,23 +390,15 @@ export default class FpmTarget extends Target {
 
     const fpmPath = await getFpmPath(this.packager.config.toolsets?.fpm, this.packager.buildResourcesDir)
 
-    await exec(fpmPath, fpmArgs, { env }).catch(e => {
-      if (e.message.includes("Need executable 'rpmbuild' to convert dir to rpm")) {
-        const hint = "to build rpm, executable rpmbuild is required, please install rpm package on your system. "
-        if (process.platform === "darwin") {
-          log.error(null, hint + "(brew install rpm)")
-        } else {
-          log.error(null, hint + "(sudo apt-get install rpm)")
-        }
-      }
-      if (e.message.includes("xz: not found")) {
-        const hint = "to build rpm, executable xz is required, please install xz package on your system. "
-        if (process.platform === "darwin") {
-          log.error(null, hint + "(brew install xz)")
-        } else {
-          log.error(null, hint + "(sudo apt-get install xz-utils)")
-        }
-      }
+    // fpm runs rpmbuild, xz, tar and ar from PATH: the archive toolset's go first
+    const execEnv = { ...env }
+    const archiveBinDir =
+      process.platform === "linux" || process.platform === "darwin" ? await getArchiveToolsetBinDir(this.packager.config.toolsets?.archive, this.packager.buildResourcesDir) : null
+    if (archiveBinDir != null) {
+      execEnv.PATH = computeEnv(env.PATH, [archiveBinDir])
+    }
+
+    await exec(fpmPath, fpmArgs, { env: execEnv }).catch(e => {
       if (e.message.includes("error: File not found")) {
         log.error(
           { fpmArgs, ...fpmConfiguration },
@@ -498,7 +469,21 @@ export default class FpmTarget extends Target {
   private configureTargetSpecificOptions(target: string, compression: string): string[] {
     switch (target) {
       case "rpm":
-        return ["--rpm-os", "linux", "--rpm-compression", compression === "xz" ? "xzmt" : compression]
+        return [
+          "--rpm-os",
+          "linux",
+          "--rpm-compression",
+          compression === "xz" ? "xzmt" : compression,
+          // rpm 4.x adds a /usr/lib/.build-id/<xx>/<hash> link for every ELF file it packages, so two apps
+          // shipping the same Electron binaries conflict on install; rpm 6 emits none for fpm specs.
+          // Disable them so every host rpm produces the same package (#10471).
+          "--rpm-rpmbuild-define",
+          "_build_id_links none",
+          // upstream rpm 6 defaults to the v6 package format, which rpm 4 reads only with limitations:
+          // pin v4 so the output does not depend on the host rpm (older rpm ignores the unknown macro).
+          "--rpm-rpmbuild-define",
+          "_rpmformat 4",
+        ]
       case "deb":
         return ["--deb-compression", compression]
       case "pacman":

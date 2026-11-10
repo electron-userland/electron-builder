@@ -5,6 +5,8 @@ import * as path from "path"
 import { describe, expect, test } from "vitest"
 import {
   FEED_QUERY_ADVISORY,
+  FORCE_CODE_SIGNING_ADVISORY,
+  INSECURE_FEED_ADVISORY,
   INCLUDE_PDB_CHANGES,
   includePdbManualStep,
   MAC_ENTITLEMENTS_ADVISORY,
@@ -993,8 +995,10 @@ describe("migrateConfig — updater advisories", () => {
     ["NSIS_PER_MACHINE_UPDATE_ADVISORY", NSIS_PER_MACHINE_UPDATE_ADVISORY, "v27-runtime-changes", "nsis-per-machine-builds-set-isadminrightsrequired"],
     ["WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY", WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY, "v27-build-changes", "windows-publishername-is-validated-against-the-signing-certificate"],
     ["FEED_QUERY_ADVISORY", FEED_QUERY_ADVISORY, "v27-runtime-changes", "update-credentials-stay-on-the-feeds-origin"],
+    ["INSECURE_FEED_ADVISORY", INSECURE_FEED_ADVISORY, "v27-runtime-changes", "update-requests-require-https"],
     ["WIN_PUBLISHER_NAME_DN_ADVISORY", WIN_PUBLISHER_NAME_DN_ADVISORY, "v27-build-changes", "windows-publishername-must-be-a-distinguished-name"],
     ["WIN_MISSING_PUBLISHER_NAME_ADVISORY", WIN_MISSING_PUBLISHER_NAME_ADVISORY, "v27-build-changes", "missing-publishername-fails-update-verification"],
+    ["FORCE_CODE_SIGNING_ADVISORY", FORCE_CODE_SIGNING_ADVISORY, "v27-build-changes", "forcecodesigning-covers-notarization-and-update-manifests"],
   ])("%s links its v27 breaking-changes section", (_name, advisory, page, anchor) => {
     expect(advisory.endsWith(` See https://www.electron.build/docs/migration/${page}#${anchor}`)).toBe(true)
     const doc = readFileSync(path.join(import.meta.dirname, `../../website/docs/migration/${page}.md`), "utf8")
@@ -1025,6 +1029,24 @@ describe("migrateConfig — updater advisories", () => {
     })
     expect(result.advisories).toEqual([NSIS_WEB_ADVISORY, MAC_ENTITLEMENTS_ADVISORY, NSIS_PER_MACHINE_UPDATE_ADVISORY, WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY, FEED_QUERY_ADVISORY])
     expect(result.modified).toBe(false)
+  })
+
+  describe("forceCodeSigning", () => {
+    test.each<[string, Record<string, any>]>([
+      ["root forceCodeSigning", { forceCodeSigning: true }],
+      ["win.forceCodeSigning", { win: { forceCodeSigning: true } }],
+      ["mac.forceCodeSigning", { mac: { forceCodeSigning: true } }],
+    ])("%s: true emits the advisory without changing the config", (_name, input) => {
+      const result = migrateConfig(input)
+      // a mac section also gets the default-entitlements advisory
+      expect(result.advisories).toContain(FORCE_CODE_SIGNING_ADVISORY)
+      expect(result.modified).toBe(false)
+      expect(result.migrated).toEqual(input)
+    })
+
+    test("forceCodeSigning: false emits nothing", () => {
+      expect(advisoriesOf({ forceCodeSigning: false, linux: { forceCodeSigning: false } })).toEqual([])
+    })
   })
 
   describe("per-machine NSIS", () => {
@@ -1199,6 +1221,14 @@ describe("migrateConfig — updater advisories", () => {
       expect(result.migrated).toEqual(input)
     })
 
+    test("states the feed-origin rule and the autoUpdater.crossOriginHeaders solution of the build warning, without version labels", () => {
+      expect(FEED_QUERY_ADVISORY).toContain("electron-updater adds the feed url's query string only to requests on the feed's origin")
+      expect(FEED_QUERY_ADVISORY).toContain("to a request or redirect to another origin only the ones the app's autoUpdater.crossOriginHeaders keeps for it")
+      expect(FEED_QUERY_ADVISORY).toContain("that the app's autoUpdater.crossOriginHeaders keeps for the origin that needs it")
+      const docs = "https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
+      expect(FEED_QUERY_ADVISORY.replace(docs, "")).not.toMatch(/electron-updater \d|electron-builder \d|\bv\d\d|\b(now|no longer)\b/i)
+    })
+
     test("a generic url without a query, string entries and other providers emit nothing", () => {
       expect(advisoriesOf({ publish: { provider: "generic", url: "https://updates.example.com/app" } })).toEqual([])
       expect(advisoriesOf({ publish: { provider: "generic" } })).toEqual([])
@@ -1213,6 +1243,58 @@ describe("migrateConfig — updater advisories", () => {
         })
       ).toEqual([])
     })
+  })
+})
+
+describe("migrateConfig — plain http feed advisory", () => {
+  const advisoriesOf = (config: Record<string, any>) => migrateConfig(config).advisories
+
+  test.each<[string, Record<string, any>]>([
+    ["a generic url", { publish: { provider: "generic", url: "http://updates.example.com/app" } }],
+    [
+      "a custom url in a platform publish array",
+      {
+        win: {
+          publish: [
+            { provider: "github", owner: "o", repo: "r" },
+            { provider: "custom", url: "http://10.0.0.5:8080/" },
+          ],
+        },
+      },
+    ],
+    ["a github protocol: http", { publish: { provider: "github", owner: "o", repo: "r", protocol: "http", host: "github.example.com" } }],
+    ["an s3 http endpoint", { mac: { publish: { provider: "s3", bucket: "b", endpoint: "http://minio.lan:9000" } } }],
+  ])("%s emits the advisory without changing the config", (_name, input) => {
+    const result = migrateConfig(input)
+    expect(result.advisories.filter(it => it === INSECURE_FEED_ADVISORY)).toEqual([INSECURE_FEED_ADVISORY])
+    expect(result.modified).toBe(false)
+    expect(result.migrated).toEqual(input)
+  })
+
+  test("names the error, the dev-only setting and the build warning's rule", () => {
+    expect(INSECURE_FEED_ADVISORY).toContain("ERR_UPDATER_INSECURE_FEED")
+    expect(INSECURE_FEED_ADVISORY).toContain("autoUpdater.allowInsecureFeed = !app.isPackaged")
+    expect(INSECURE_FEED_ADVISORY).toContain("rejects every update request over http to a host that is not loopback (localhost, 127.0.0.0/8, ::1)")
+  })
+
+  test("https, loopback http, an accelerated s3 bucket and values it cannot read emit nothing", () => {
+    expect(
+      advisoriesOf({
+        publish: [
+          { provider: "generic", url: "https://updates.example.com/app" },
+          { provider: "generic", url: "http://localhost:8080/" },
+          { provider: "custom", url: "http://127.0.0.1/" },
+          { provider: "generic", url: "http://[::1]:9000/" },
+          { provider: "s3", bucket: "b", endpoint: "http://minio.lan:9000", accelerate: true },
+          { provider: "s3", bucket: "b", endpoint: "http://localhost:9000" },
+          { provider: "github", owner: "o", repo: "r" },
+          { provider: "github", owner: "o", repo: "r", protocol: "http", host: "localhost" },
+          { provider: "bitbucket", owner: "o", slug: "s" },
+          { provider: "generic", url: "not a url" },
+          { provider: "generic", url: 42 },
+        ],
+      })
+    ).toEqual([])
   })
 })
 

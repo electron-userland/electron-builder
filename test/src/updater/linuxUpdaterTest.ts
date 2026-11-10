@@ -106,7 +106,7 @@ describe("LinuxUpdater.detectPackageManager", { concurrent: false }, () => {
 
   function makeUpdater(availableCommands: string[]) {
     const instance: any = Object.create(RpmUpdater.prototype)
-    instance._logger = { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} }
+    instance.logger = { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} }
     instance.hasCommand = (cmd: string) => availableCommands.includes(cmd)
     return instance
   }
@@ -135,7 +135,7 @@ describe("LinuxUpdater.detectPackageManager", { concurrent: false }, () => {
   test("env-var with unsafe shell characters is rejected with a warning", () => {
     const warns: string[] = []
     const instance: any = Object.create(RpmUpdater.prototype)
-    instance._logger = { info: () => {}, warn: (m: string) => warns.push(m), error: () => {}, debug: () => {} }
+    instance.logger = { info: () => {}, warn: (m: string) => warns.push(m), error: () => {}, debug: () => {} }
     instance.hasCommand = (cmd: string) => cmd === "zypper"
     process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = "rm -rf"
     const result = instance.detectPackageManager(["zypper", "dnf"])
@@ -157,7 +157,7 @@ describe("LinuxUpdater.detectPackageManager", { concurrent: false }, () => {
   test("falls back to pms[0] and warns when no PM is available and no env-var", () => {
     const warns: string[] = []
     const instance: any = Object.create(DebUpdater.prototype)
-    instance._logger = { info: () => {}, warn: (m: string) => warns.push(m), error: () => {}, debug: () => {} }
+    instance.logger = { info: () => {}, warn: (m: string) => warns.push(m), error: () => {}, debug: () => {} }
     instance.hasCommand = () => false
     const result = instance.detectPackageManager(["apt", "dpkg"])
     expect(result).toBe("apt")

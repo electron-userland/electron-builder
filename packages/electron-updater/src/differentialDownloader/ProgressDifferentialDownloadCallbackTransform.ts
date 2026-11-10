@@ -1,5 +1,5 @@
 import { Transform } from "stream"
-import { CancellationToken } from "builder-util-runtime"
+import { CancellationError, CancellationToken } from "builder-util-runtime"
 
 enum OperationKind {
   COPY,
@@ -39,7 +39,7 @@ export class ProgressDifferentialDownloadCallbackTransform extends Transform {
 
   _transform(chunk: any, encoding: string, callback: any) {
     if (this.cancellationToken.cancelled) {
-      callback(new Error("cancelled"), null)
+      callback(new CancellationError(), null)
       return
     }
 
@@ -100,7 +100,7 @@ export class ProgressDifferentialDownloadCallbackTransform extends Transform {
   // Called when we are 100% done with the connection/download
   _flush(callback: any): void {
     if (this.cancellationToken.cancelled) {
-      callback(new Error("cancelled"))
+      callback(new CancellationError())
       return
     }
 

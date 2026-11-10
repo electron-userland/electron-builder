@@ -45,6 +45,15 @@ export interface PublishConfiguration {
   readonly updaterCacheDirName?: string | null
 
   /**
+   * The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything
+   * verifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses
+   * (release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`
+   * overrides it at runtime. A positive integer, or `0` for no limit.
+   * @default 10485760
+   */
+  readonly maxUpdateInfoSize?: number | null
+
+  /**
    * Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update
    * manifest before downloading — the install's trust list. A manifest is accepted when any listed key
    * validates one of its signatures. Embedded into `app-update.yml` at build time when update manifest
@@ -132,7 +141,7 @@ export interface GithubOptions extends PublishConfiguration {
   readonly host?: string | null
 
   /**
-   * The protocol. GitHub Publisher supports only `https`.
+   * The protocol. GitHub Publisher supports only `https`. electron-updater rejects an `http` feed to a host that is not loopback unless the app sets `autoUpdater.allowInsecureFeed` (meant for dev runs: `autoUpdater.allowInsecureFeed = !app.isPackaged`).
    * @default https
    */
   readonly protocol?: "https" | "http" | null
@@ -160,6 +169,14 @@ export interface GithubOptions extends PublishConfiguration {
    * @default draft
    */
   releaseType?: "draft" | "prerelease" | "release" | null
+}
+
+/** The default {@link PublishConfiguration.maxUpdateInfoSize}: 10 MiB. */
+export const DEFAULT_MAX_UPDATE_INFO_SIZE = 10 * 1024 * 1024
+
+/** Whether `value` is a valid {@link PublishConfiguration.maxUpdateInfoSize}: a positive integer, or `0` for no limit. */
+export function isValidMaxUpdateInfoSize(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0
 }
 
 /** @private */
@@ -566,12 +583,12 @@ export interface SpacesOptions extends BaseS3Options {
   readonly provider: "spaces"
 
   /**
-   * The space name.
+   * The space name: 3-63 letters, digits and dashes, starting with a letter or digit.
    */
   readonly name: string
 
   /**
-   * The region (e.g. `nyc3`).
+   * The DigitalOcean region slug (e.g. `nyc3`): three letters followed by one or two digits.
    */
   readonly region: string
 }

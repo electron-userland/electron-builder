@@ -1,4 +1,4 @@
-import type { VmManager } from "app-builder-lib/internal"
+import type { ParallelsVmManager, VmManager } from "app-builder-lib/internal"
 import { ChildProcess, execSync, spawn, StdioOptions } from "child_process"
 import { createHash, randomUUID } from "crypto"
 import * as fs from "fs"
@@ -8,6 +8,7 @@ import * as http from "http"
 import * as net from "net"
 import os, { homedir } from "os"
 import path from "path"
+import { retry } from "builder-util"
 
 /**
  * Returns the macOS host's IP address on the Parallels virtual network.
@@ -237,7 +238,20 @@ export async function launchAndWaitForQuit({
     }
 
     case "win32": {
-      child = spawnApp(appPath)
+      // Windows refuses to start an executable that another process still holds open: spawn() throws EBUSY (a sharing
+      // violation). That happens right after an installer wrote the app, while e.g. an antivirus scan of the new file or the
+      // installer's teardown still has it open, so the launch is retried for a while instead of failing the test on it.
+      child = await retry(async () => spawnApp(appPath), {
+        retries: 30,
+        interval: 1000,
+        shouldRetry: (e: any) => {
+          const isBusy = e?.code === "EBUSY"
+          if (isBusy) {
+            console.log(`${appPath} is busy (spawn EBUSY), retrying the launch in 1s`)
+          }
+          return isBusy
+        },
+      })
       break
     }
 
@@ -482,8 +496,9 @@ export interface VmSnapOptions {
  * Delivers a locally-built .snap to a Parallels Ubuntu VM via HTTP, installs it
  * with --dangerous (unsigned), launches it under Xvfb with SNAP_LAUNCH_TEST=1,
  * verifies the app emits ELECTRON_READY:<version>, then uninstalls the snap.
+ * Takes a ParallelsVmManager: the script runs in the guest via `prlctl exec … bash -c`, never in a host shell.
  */
-export async function deliverAndInstallSnapInVm(vm: VmManager, snapPath: string, opts: VmSnapOptions): Promise<{ version: string }> {
+export async function deliverAndInstallSnapInVm(vm: ParallelsVmManager, snapPath: string, opts: VmSnapOptions): Promise<{ version: string }> {
   const hostIp = getParallelsHostIP()
   if (!hostIp) {
     throw new Error("Cannot find Parallels host IP — is Parallels Desktop running?")

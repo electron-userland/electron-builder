@@ -388,16 +388,22 @@ ${body}
   })
 
   describe("handleNullIdentity", () => {
-    function makeHelper(forceCodeSigning: boolean): MacTargetHelper {
-      return new MacTargetHelper({ forceCodeSigning } as any)
+    // forceCodeSigning of each flavor, as MacPackager.forceCodeSigningFor reports it
+    function makeHelper(forced: Partial<Record<PlatformType, boolean>>): MacTargetHelper {
+      return new MacTargetHelper({ forceCodeSigningFor: (platformType: PlatformType) => forced[platformType] ?? false } as any)
     }
 
     test("throws when forceCodeSigning is true", () => {
-      expect(() => makeHelper(true).handleNullIdentity()).toThrow("identity explicitly is set to null")
+      expect(() => makeHelper({ mac: true }).handleNullIdentity("mac")).toThrow("identity explicitly is set to null")
     })
 
     test(`returns "skipped:disabled" when forceCodeSigning is false`, () => {
-      expect(makeHelper(false).handleNullIdentity()).toBe("skipped:disabled")
+      expect(makeHelper({ mac: false }).handleNullIdentity("mac")).toBe("skipped:disabled")
+    })
+
+    test("reads the forceCodeSigning of the flavor being signed", () => {
+      expect(() => makeHelper({ mas: true }).handleNullIdentity("mas")).toThrow("identity explicitly is set to null")
+      expect(makeHelper({ mas: true }).handleNullIdentity("mac")).toBe("skipped:disabled")
     })
   })
 

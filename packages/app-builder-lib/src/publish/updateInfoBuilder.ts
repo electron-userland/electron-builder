@@ -1,6 +1,7 @@
 import asyncPool from "tiny-async-pool"
-import { Arch, createUpdateManifestSignatures, log, safeStringifyJson, serializeToYaml } from "builder-util"
-import { deepAssign, GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import { Arch, createUpdateManifestSignatures, derivePublicKeyPem, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import { computeUpdateManifestKeyId, deepAssign, GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import type { KeyObject } from "crypto"
 import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -10,8 +11,10 @@ import { ReleaseInfo } from "../options/PlatformSpecificBuildOptions.js"
 import { Packager } from "../packager.js"
 import { ArtifactCreated } from "../packagerApi.js"
 import { PlatformPackager } from "../platformPackager.js"
+import { DEFAULT_ELECTRON_UPDATER_COMPATIBILITY, resolveElectronUpdaterCompatibility } from "../util/electronUpdaterCompatibility.js"
 import { hashFile } from "../util/hash.js"
 import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager.js"
+import { verifyUpdateManifestContent } from "./updateManifestVerifier.js"
 
 async function getReleaseInfo(packager: PlatformPackager<any>) {
   const releaseInfo: ReleaseInfo = { ...(packager.platformOptions.releaseInfo || packager.config.releaseInfo) }
@@ -122,9 +125,9 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
   const createdFiles = new Set<string>()
   const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
   const tasks: Array<UpdateInfoFileTask> = []
-  const electronUpdaterCompatibility = packager.platformOptions.electronUpdaterCompatibility || packager.config.electronUpdaterCompatibility || ">=2.16"
+  const electronUpdaterCompatibility = resolveElectronUpdaterCompatibility(packager.platformOptions, packager.config)
   // electron-updater < 2.16.0 predates the files[] array and reads the top-level path/sha512 (and Windows sha2) fields instead
-  // (do not pass includePrerelease — it would make the default ">=2.16" intersect "<2.16.0" at the 2.16.0-0 prerelease point)
+  // (do not pass includePrerelease — it would make a ">=2.16" range intersect "<2.16.0" at the 2.16.0-0 prerelease point)
   const needsLegacyPathSha512 = semver.intersects(electronUpdaterCompatibility, "<2.16.0")
   // electron-updater < 2.0.0 on macOS reads the legacy <channel>-mac.json instead of <channel>-mac.yml
   const needsLegacyMacJsonCompatibility = semver.intersects(electronUpdaterCompatibility, "<2.0.0")
@@ -250,7 +253,8 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
   const updateChannelFileToInfo = new Map<string, UpdateInfoFileTask>()
   for (const task of updateInfoFileTasks) {
     // https://github.com/electron-userland/electron-builder/pull/2994
-    const key = `${task.file}@${safeStringifyJson(task.publishConfiguration, new Set(["releaseType"]))}`
+    // every sensitive value is fingerprinted, so configs that differ in one get different keys
+    const key = `${task.file}@${safeStringifyJson(task.publishConfiguration, new Set(["releaseType"]), Number.POSITIVE_INFINITY)}`
     const existingTask = updateChannelFileToInfo.get(key)
     if (existingTask == null) {
       updateChannelFileToInfo.set(key, task)
@@ -264,18 +268,11 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
 
   const tasks = Array.from(updateChannelFileToInfo.values())
 
-  // Resolve (and, when publishing, enforce) the signing keys before writing anything, so a missing key fails the
-  // build instead of leaving some manifests written and others not. MemoLazy and the one-shot warning make the
-  // per-task calls below free after this. Tasks with `publishAutoUpdate: false` are skipped for the same reason
-  // the loop skips them: they emit no manifest.
+  // Phase 1: resolve (and enforce) the signing keys, sign, serialize and read back every manifest before anything is
+  // written, so a missing key or a manifest that does not verify fails the build instead of leaving some manifests
+  // written - and uploaded - and others not.
+  const manifests: Array<{ task: UpdateInfoFileTask; fileContent: Buffer }> = []
   for (const task of tasks) {
-    if (task.publishConfiguration.publishAutoUpdate !== false) {
-      await task.packager.requireUpdateSigningKeys(isPublish)
-    }
-  }
-
-  const concurrency = 4
-  await asyncPool<UpdateInfoFileTask, void>(concurrency, tasks, async task => {
     const publishConfig = task.publishConfiguration
     if (publishConfig.publishAutoUpdate === false) {
       log.debug(
@@ -285,7 +282,7 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
         },
         "auto update metadata file not published"
       )
-      return
+      continue
     }
 
     if (task.info.releaseDate == null) {
@@ -302,7 +299,7 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
     const signingKeys = await task.packager.requireUpdateSigningKeys(isPublish)
     let info: UpdateInfo = task.info
     // empty only when signing is opted out of with `updateManifest: false`, or on a build without a publish
-    // policy that has no key configured - both of which have already warned
+    // policy or forceCodeSigning that has no key configured - both of which have already warned
     if (signingKeys.length > 0) {
       const signatures = createUpdateManifestSignatures(task.info, signingKeys)
       info = { ...task.info, signature: signatures[0].signature, signatures }
@@ -314,6 +311,13 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
     }
 
     const fileContent = Buffer.from(serializeToYaml(info, false, true))
+    verifySerializedManifest(task.file, fileContent, signingKeys)
+    manifests.push({ task, fileContent })
+  }
+
+  // Phase 2: write and emit (which schedules the upload of) exactly the bytes that were verified
+  const concurrency = 4
+  await asyncPool(concurrency, manifests, async ({ task, fileContent }) => {
     await fsExtra.outputFile(task.file, fileContent)
     await packager.emitArtifactCreated({
       file: task.file,
@@ -321,9 +325,33 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
       arch: null,
       packager: task.packager,
       target: null,
-      publishConfig,
+      publishConfig: task.publishConfiguration,
     })
   })
+}
+
+/**
+ * Reads a signed manifest back from the bytes about to be written, the way electron-updater parses it, and checks that
+ * every signing key verifies it. It is checked against the signing keys' own public keys, not `updateManifest.publicKey`,
+ * so a deliberate `allowSigningKeyOutsideTrustList` cutover keeps working. A failure means serialization changed what
+ * was signed, which is a bug: every install would reject the manifest.
+ */
+function verifySerializedManifest(file: string, fileContent: Buffer, signingKeys: ReadonlyArray<KeyObject>): void {
+  if (signingKeys.length === 0) {
+    return
+  }
+  const content = fileContent.toString("utf8")
+  for (const key of signingKeys) {
+    const publicKey = derivePublicKeyPem(key)
+    const result = verifyUpdateManifestContent(content, [publicKey])
+    if (!result.ok) {
+      throw new Error(
+        `Internal error: ${log.filePath(file)} does not verify with update-manifest signing key ${computeUpdateManifestKeyId(publicKey)} after serialization (${result.reason}). ` +
+          "No update manifest was written or uploaded (installers of a publishing build may already be uploaded). " +
+          "Please report it at https://github.com/electron-userland/electron-builder/issues"
+      )
+    }
+  }
 }
 
 // backward compatibility - write json file
@@ -370,13 +398,14 @@ function warnAboutLegacyUpdaterCompatibility(electronUpdaterCompatibility: strin
     return
   }
   // once per process — createUpdateInfoTasks runs per artifact
-  log
-    .once("legacy-updater-compatibility")
-    .warn(
-      { electronUpdaterCompatibility, solution: 'drop the pin (the default is ">=2.16") unless you still ship apps embedding electron-updater 1.x-2.15' },
-      "electronUpdaterCompatibility includes electron-updater versions below 2.16.0, so the deprecated top-level path/sha512 descriptor is still written to latest*.yml " +
-        "(and, on Windows, the legacy SHA-256 sha2 checksum). Metadata validated only by sha2 is deprecated and v28 will reject it. " +
-        "Every electron-updater since 2.16.0 reads files[] and ignores these fields. " +
-        "See https://www.electron.build/docs/migration/v27-build-changes#latestyml-drops-legacy-top-level-pathsha512"
-    )
+  log.once("legacy-updater-compatibility").warn(
+    {
+      electronUpdaterCompatibility,
+      solution: `drop the pin (the default is "${DEFAULT_ELECTRON_UPDATER_COMPATIBILITY}") unless you still ship apps embedding electron-updater 1.x-2.15`,
+    },
+    "electronUpdaterCompatibility includes electron-updater versions below 2.16.0, so the deprecated top-level path/sha512 descriptor is still written to latest*.yml " +
+      "(and, on Windows, the legacy SHA-256 sha2 checksum). Metadata validated only by sha2 is deprecated and v28 will reject it. " +
+      "Every electron-updater since 2.16.0 reads files[] and ignores these fields. " +
+      "See https://www.electron.build/docs/migration/v27-build-changes#latestyml-drops-legacy-top-level-pathsha512"
+  )
 }

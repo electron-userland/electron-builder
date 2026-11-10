@@ -28,15 +28,20 @@ Before notarizing, you need:
 
 ```yaml
 mac:
-  notarize: true
   sign:
     hardenedRuntime: true
     entitlements: build/entitlements.mac.plist
     entitlementsInherit: build/entitlements.mac.inherit.plist
 ```
 
+electron-builder notarizes the app whenever notarization credentials are set (see below); without them it skips notarization with a warning. Set `mac.notarize: true` to make notarization required, so that a build without credentials fails ([at build start](./migration/v27-build-changes.md#mac-notarize-true-requires-credentials)) instead, or `mac.notarize: false` to never notarize.
+
 :::note[v27]
 `notarize` stays on `mac`, but the signing options (`hardenedRuntime`, `entitlements`, `entitlementsInherit`) moved under `mac.sign` in v27. See [macOS signing](./migration/v27-config-changes.md#macos-signing-macsign).
+:::
+
+:::tip[Fail the build when notarization is skipped]
+Without credentials, electron-builder skips notarization with a warning. With [`forceCodeSigning: true`](./features/code-signing/code-signing.md#the-forcecodesigning-option), missing credentials fail the build at build start instead (unless `mac.notarize: false`), and the stapled ticket is checked with `stapler validate` (the `stapler` of the selected Xcode, or [`toolsets.executables.stapler`](./toolsets.md#executables)) after notarizing. The credentials must then be set when the build starts.
 :::
 
 ### Authentication — Option A: Apple ID
@@ -167,7 +172,7 @@ jobs:
 
 After notarization, Apple returns a "ticket" that confirms your app was approved. electron-builder automatically **staples** this ticket to the app bundle — meaning the notarization check can succeed even without an internet connection.
 
-Stapling is performed automatically when `notarize: true`. You don't need to configure anything extra.
+Stapling is performed automatically whenever electron-builder notarizes. You don't need to configure anything extra.
 
 ## Testing Notarization
 
@@ -188,6 +193,8 @@ xcrun stapler validate dist/mac/MyApp.app
 # Check code signature
 codesign --verify --deep --strict --verbose=2 dist/mac/MyApp.app
 ```
+
+[`electron-builder verify`](./cli.md#verify) runs the code signature and stapled ticket checks on every app in the output directory, together with the update-manifest checks, and exits with code 1 when one fails.
 
 ## Troubleshooting
 

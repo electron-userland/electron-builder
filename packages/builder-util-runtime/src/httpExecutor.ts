@@ -1,9 +1,9 @@
-import { BinaryToTextEncoding, createHash, Hash } from "crypto"
+import { BinaryToTextEncoding, createHash, Hash, randomBytes, scryptSync } from "crypto"
 import { sleep } from "./retry.js"
 import _debug from "debug"
 import { createWriteStream } from "fs"
 import { IncomingMessage, OutgoingHttpHeader, OutgoingHttpHeaders, RequestOptions } from "http"
-import { Socket } from "net"
+import { isIPv4, Socket } from "net"
 import { Transform } from "stream"
 import { URL } from "url"
 import { Nullish } from "./index.js"
@@ -20,9 +20,45 @@ const debug = _debug("electron-builder")
 // Shared by both registries so lookup is always separator-agnostic.
 const normalizeName = (name: string): string => name.toLowerCase().replace(/[-_]/g, "")
 
-// HTTP header names (normalised) stripped on cross-origin redirects.
-// Stored normalised; lookup normalises the incoming key with normalizeName().
+// HTTP header names (normalised) that an HttpExecutor without a cross-origin header policy of its own (electron-builder's publishers)
+// leaves off a redirect to another origin. Stored normalised; lookup normalises the incoming key with normalizeName().
 const SENSITIVE_REDIRECT_HEADERS = new Set(["authorization", "proxyauthorization", "privatetoken", "xapikey", "xauthtoken", "xaccesstoken", "xgitlabtoken", "cookie", "xcsrftoken"])
+
+/** A request, or a redirect, from one origin to another (see {@link HttpExecutor.isCrossOrigin}). */
+export interface CrossOriginHop {
+  /** The URL the request's headers are meant for: the update feed, or the URL that redirected. */
+  readonly from: URL
+  /** The URL on the other origin. */
+  readonly to: URL
+}
+
+/**
+ * Chooses the request headers a hop to another origin sends: gets the headers the request is about to send (a copy) and returns the ones
+ * to send. A throw fails the request. Afterwards the request's own headers ({@link ApiRequestOptions.ownHeaders}) that it left out, and the
+ * default `User-Agent` and `Cache-Control` of {@link configureRequestOptions}, are added back.
+ */
+export type CrossOriginHeaderPolicy = (headers: OutgoingHttpHeaders, hop: CrossOriginHop) => OutgoingHttpHeaders
+
+// the policy of an HttpExecutor without its own (electron-builder's publishers): every header but the credential-bearing ones
+const dropSensitiveHeaders: CrossOriginHeaderPolicy = headers => filterHeaders(headers, name => !SENSITIVE_REDIRECT_HEADERS.has(normalizeName(name)))
+
+/**
+ * A copy of the headers of `headers` that `keep` accepts. Built with {@link deepAssign}, which never assigns `__proto__`, `constructor` or
+ * `prototype`: a header name, from a server, the app or a provider, cannot reach an object's prototype. Every header object built from
+ * another one by name goes through here.
+ */
+export function filterHeaders(headers: OutgoingHttpHeaders, keep: (name: string, value: OutgoingHttpHeaders[string]) => boolean): OutgoingHttpHeaders {
+  return deepAssign<OutgoingHttpHeaders>({}, Object.fromEntries(Object.entries(headers).filter(([name, value]) => keep(name, value))))
+}
+
+/**
+ * Register an additional HTTP header to strip on cross-origin redirects by an HttpExecutor without a cross-origin header policy of its own,
+ * such as electron-builder's publishers. Intended for custom publishers (e.g. GenericPublisher with a non-standard auth header).
+ * electron-updater does not use this list: the app chooses the headers sent to another origin with `autoUpdater.crossOriginHeaders`.
+ */
+export function addSensitiveRedirectHeader(header: string): void {
+  SENSITIVE_REDIRECT_HEADERS.add(normalizeName(header))
+}
 
 // Substrings: a field name containing any of these (after normalization) is redacted.
 const SENSITIVE_FIELD_PATTERNS: string[] = ["token", "password", "secret", "authorization", "credential", "apikey", "passphrase", "auth"] as const
@@ -33,14 +69,6 @@ const SENSITIVE_FIELD_PATTERNS: string[] = ["token", "password", "secret", "auth
 const SENSITIVE_FIELD_SUFFIXES: string[] = ["key"] as const
 
 /**
- * Register an additional HTTP header to strip on cross-origin redirects.
- * Intended for custom publishers (e.g. GenericPublisher with a non-standard auth header).
- */
-export function addSensitiveRedirectHeader(header: string): void {
-  SENSITIVE_REDIRECT_HEADERS.add(normalizeName(header))
-}
-
-/**
  * Register an additional substring pattern used by {@link safeStringifyJson} to
  * identify sensitive field names. Input is normalized (lowercased, separators stripped).
  * Intended for custom publishers that store credentials under non-standard field names.
@@ -49,14 +77,47 @@ export function addSensitiveFieldPattern(pattern: string): void {
   SENSITIVE_FIELD_PATTERNS.push(pattern.toLowerCase().replace(/[-_]/g, ""))
 }
 
+/** The most bytes `downloadToBuffer` holds in memory by default: 500 MB. */
+const MAX_BUFFER_DOWNLOAD_SIZE = 524288000
+
 export interface RequestHeaders extends OutgoingHttpHeaders {
   [key: string]: OutgoingHttpHeader | undefined
 }
 
+/** The options of an API request, see {@link HttpExecutor.request}. */
+export interface ApiRequestOptions extends RequestOptions {
+  /**
+   * The largest body, in bytes, read into memory (set by electron-updater for update info, which is parsed before it is verified):
+   * a larger response fails the request with `ERR_HTTP_RESPONSE_TOO_LARGE` and aborts it. Applies when it is a finite number of at
+   * least 0, and is kept on redirects, whose options are copied from these.
+   */
+  maxResponseSize?: number
+
+  /**
+   * The headers of `headers` the request's sender builds for this request itself, such as `Accept` or `Range`: a hop to another origin adds
+   * back the ones its {@link CrossOriginHeaderPolicy} left out, so the policy decides only the other headers. Kept on redirects.
+   */
+  ownHeaders?: OutgoingHttpHeaders | null
+
+  /**
+   * Set by {@link HttpExecutor.prepareRedirectUrlOptions} on a redirect's options when a URL of the redirect chain so far is not on a loopback
+   * host (see {@link isLoopbackHostname}): electron-updater rejects a redirect from such a host to a loopback one.
+   */
+  redirectedFromNonLoopback?: boolean
+}
+
 export interface DownloadOptions {
   readonly headers?: OutgoingHttpHeaders | null
+  /** The request's own headers, part of `headers` too: see {@link ApiRequestOptions.ownHeaders}. */
+  readonly ownHeaders?: OutgoingHttpHeaders | null
   readonly sha2?: string | null
   readonly sha512?: string | null
+  /**
+   * The most bytes a download accepts (electron-updater sets it to the `size` of the file in the update info for a full download): once
+   * more arrive, the download fails with `ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED` and its request is aborted. Applies only when it is a number
+   * of at least 0: any other value, such as a `size` of another type read from a manifest, sets no limit of its own.
+   */
+  readonly maxSize?: number | null
 
   readonly cancellationToken: CancellationToken
 
@@ -119,7 +180,13 @@ interface Request {
 export abstract class HttpExecutor<T extends Request> {
   protected readonly maxRedirects = 10
 
-  request(options: RequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any } | null): Promise<string | null> {
+  /**
+   * @param crossOriginHeaderPolicy chooses the headers each redirect to another origin sends on; the default leaves out the credential-bearing
+   * ones (see {@link addSensitiveRedirectHeader}).
+   */
+  constructor(readonly crossOriginHeaderPolicy: CrossOriginHeaderPolicy = dropSensitiveHeaders) {}
+
+  request(options: ApiRequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any } | null): Promise<string | null> {
     configureRequestOptions(options)
     const json = data == null ? undefined : JSON.stringify(data)
     const encodedData = json ? Buffer.from(json) : undefined
@@ -142,7 +209,7 @@ export abstract class HttpExecutor<T extends Request> {
   }
 
   doApiRequest(
-    options: RequestOptions,
+    options: ApiRequestOptions,
     cancellationToken: CancellationToken,
     requestProcessor: (request: T, reject: (error: Error) => void) => void,
     redirectCount = 0
@@ -155,7 +222,7 @@ export abstract class HttpExecutor<T extends Request> {
     return cancellationToken.createPromise<string>((resolve, reject, onCancel) => {
       const request = this.createRequest(options, (response: any) => {
         try {
-          this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
+          this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor, () => request.abort())
         } catch (e: any) {
           reject(e)
         }
@@ -171,9 +238,16 @@ export abstract class HttpExecutor<T extends Request> {
     })
   }
 
+  /**
+   * Follows the redirects of `request` when it reports them as events instead of 3xx responses (Electron's `net` with
+   * `redirect: "manual"`, see ElectronHttpExecutor): the request is aborted and `handler` gets the options for the redirect
+   * target from {@link HttpExecutor.prepareRedirectUrlOptions} (with {@link HttpExecutor.crossOriginHeaderPolicy}), or `reject` gets the too-many-redirects error when
+   * `redirectCount`, the number of redirects already followed, has reached the limit. Node.js requests answer a redirect
+   * with a 3xx response, so this does nothing here.
+   */
   // noinspection JSUnusedLocalSymbols
   // eslint-disable-next-line
-  protected addRedirectHandlers(request: any, options: RequestOptions, reject: (error: Error) => void, redirectCount: number, handler: (options: RequestOptions) => void) {
+  addRedirectHandlers(request: any, options: ApiRequestOptions, reject: (error: Error) => void, redirectCount: number, handler: (options: ApiRequestOptions) => void) {
     // not required for NodeJS
   }
 
@@ -187,12 +261,13 @@ export abstract class HttpExecutor<T extends Request> {
 
   private handleResponse(
     response: IncomingMessage,
-    options: RequestOptions,
+    options: ApiRequestOptions,
     cancellationToken: CancellationToken,
     resolve: (data?: any) => void,
     reject: (error: Error) => void,
     redirectCount: number,
-    requestProcessor: (request: T, reject: (error: Error) => void) => void
+    requestProcessor: (request: T, reject: (error: Error) => void) => void,
+    abort: () => void
   ) {
     if (debug.enabled) {
       const { headers: _headers, auth: _auth, ...safeOptions } = options as any
@@ -205,7 +280,7 @@ export abstract class HttpExecutor<T extends Request> {
       reject(
         createHttpError(
           response,
-          `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${options.path}
+          `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${urlWithoutQuery(options.path ?? "")}
 
 Please double check that your authentication token is correct. Due to security reasons, actual status maybe not reported, but 404.
 `
@@ -227,7 +302,7 @@ Please double check that your authentication token is correct. Due to security r
         return
       }
 
-      this.doApiRequest(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount + 1)
+      this.doApiRequest(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options, this.crossOriginHeaderPolicy), cancellationToken, requestProcessor, redirectCount + 1)
         .then(resolve)
         .catch(reject)
       return
@@ -235,10 +310,38 @@ Please double check that your authentication token is correct. Due to security r
 
     response.setEncoding("utf8")
 
+    const limit = options.maxResponseSize
+    const maxResponseSize = limit != null && Number.isFinite(limit) && limit >= 0 ? limit : null
     let data = ""
+    let size = 0
+    let isTooLarge = false
     response.on("error", reject)
-    response.on("data", (chunk: string) => (data += chunk))
+    response.on("data", (chunk: string) => {
+      if (isTooLarge) {
+        return
+      }
+      if (maxResponseSize != null) {
+        size += Buffer.byteLength(chunk)
+        if (size > maxResponseSize) {
+          isTooLarge = true
+          data = ""
+          reject(
+            newError(
+              // the path without its query, which can carry credentials
+              `Response from ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${(options.path ?? "").replace(/[?#].*$/s, "")} exceeds the maximum allowed size of ${maxResponseSize} bytes`,
+              "ERR_HTTP_RESPONSE_TOO_LARGE"
+            )
+          )
+          abort()
+          return
+        }
+      }
+      data += chunk
+    })
     response.on("end", () => {
+      if (isTooLarge) {
+        return
+      }
       try {
         if (response.statusCode != null && response.statusCode >= 400) {
           const contentType = safeGetHeader(response, "content-type")
@@ -246,7 +349,7 @@ Please double check that your authentication token is correct. Due to security r
           reject(
             createHttpError(
               response,
-              `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${options.path}
+              `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${urlWithoutQuery(options.path ?? "")}
 
           Data:
           ${isJson ? safeStringifyJson(JSON.parse(data)) : data}
@@ -265,11 +368,19 @@ Please double check that your authentication token is correct. Due to security r
   // noinspection JSUnusedLocalSymbols
   abstract createRequest(options: RequestOptions, callback: (response: any) => void): T
 
+  /**
+   * Downloads `url` into memory: at most 500 MB, or `options.maxSize` bytes when that is smaller (see {@link DownloadOptions.maxSize}). A
+   * response past the limit fails the download with `ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED` as soon as it passes it, and its request is
+   * aborted before the rest is received.
+   */
   async downloadToBuffer(url: URL, options: DownloadOptions): Promise<Buffer> {
+    const maxSize = options.maxSize
+    const limit = typeof maxSize === "number" && maxSize >= 0 && maxSize < MAX_BUFFER_DOWNLOAD_SIZE ? maxSize : MAX_BUFFER_DOWNLOAD_SIZE
     return await options.cancellationToken.createPromise<Buffer>((resolve, reject, onCancel) => {
       const responseChunks: Buffer[] = []
       const requestOptions = {
         headers: options.headers || undefined,
+        ownHeaders: options.ownHeaders,
         // because PrivateGitHubProvider requires HttpExecutor.prepareRedirectUrlOptions logic, so, we need to redirect manually
         redirect: "manual",
       }
@@ -288,7 +399,7 @@ Please double check that your authentication token is correct. Due to security r
               reject(error)
             }
           },
-          responseHandler: (response, callback) => {
+          responseHandler: (response, callback, abort) => {
             let receivedLength = 0
             let isDone = false
             const finish = (error: Error | null) => {
@@ -303,9 +414,16 @@ Please double check that your authentication token is correct. Due to security r
                 return
               }
               receivedLength += chunk.length
-              if (receivedLength > 524288000) {
-                finish(new Error("Maximum allowed size is 500 MB"))
+              if (receivedLength > limit) {
+                finish(
+                  newError(
+                    `Response from ${urlWithoutQuery(url)} exceeds the maximum allowed size of ${limit === MAX_BUFFER_DOWNLOAD_SIZE ? "500 MB" : `${limit} bytes`}`,
+                    "ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED"
+                  )
+                )
                 response.destroy()
+                // destroying the response of Electron's net only stops reading it: the request goes on until it is aborted
+                abort()
                 return
               }
               responseChunks.push(chunk)
@@ -320,14 +438,15 @@ Please double check that your authentication token is correct. Due to security r
     })
   }
 
-  protected doDownload(requestOptions: RequestOptions, options: DownloadCallOptions, redirectCount: number) {
+  protected doDownload(requestOptions: ApiRequestOptions, options: DownloadCallOptions, redirectCount: number) {
     const request = this.createRequest(requestOptions, (response: IncomingMessage) => {
-      if (response.statusCode! >= 400) {
-        options.callback(
-          new Error(
-            `Cannot download "${requestOptions.protocol || "https:"}//${requestOptions.hostname}${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`
-          )
-        )
+      const code = response.statusCode ?? 0
+      if (code >= 400) {
+        // the body is not used: drain it, so the response ends and releases its socket (see the redirect below)
+        response.resume()
+        // the path without its query, which can carry credentials (e.g. a signed release asset link)
+        const url = `${requestOptions.protocol || "https:"}//${requestOptions.hostname}${urlWithoutQuery(requestOptions.path ?? "")}`
+        options.callback(new HttpError(code, `Cannot download "${url}", status ${code}: ${response.statusMessage}`))
         return
       }
 
@@ -335,27 +454,44 @@ Please double check that your authentication token is correct. Due to security r
       // response stream is in progress. Stop waiting and reject so consumer can catch the error.
       response.on("error", options.callback)
 
-      // this code not relevant for Electron (redirect event instead handled)
-      const redirectUrl = safeGetHeader(response, "location")
+      // Node.js reports a redirect as a 3xx response, Electron's net reports 301/302/303/307/308 as "redirect" events (see
+      // addRedirectHandlers) and any other 3xx as a response: a Location on a response that is not 3xx is ignored
+      const redirectUrl = code >= 300 && code < 400 ? safeGetHeader(response, "location") : null
       if (redirectUrl != null) {
-        if (redirectCount < this.maxRedirects) {
-          this.doDownload(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions), options, redirectCount + 1)
-        } else {
+        // the body of the redirect is not used: drain it, so the response ends and releases its socket, whose timeout would otherwise
+        // call back a second time
+        response.resume()
+        if (redirectCount >= this.maxRedirects) {
           options.callback(this.createMaxRedirectError())
+          return
+        }
+        // a response listener: a throw (from preparing the options, or from sending the new request) would escape as an uncaught
+        // exception and the download would never settle
+        try {
+          const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions, this.crossOriginHeaderPolicy)
+          if (redirectOptions.protocol !== "http:" && redirectOptions.protocol !== "https:") {
+            throw new Error(`Cannot follow the redirect to the "${redirectOptions.protocol ?? ""}" protocol`)
+          }
+          this.doDownload(redirectOptions, options, redirectCount + 1)
+        } catch (e: unknown) {
+          options.callback(e instanceof Error ? e : new Error(`Cannot follow the redirect: ${String(e)}`))
         }
         return
       }
 
       if (options.responseHandler == null) {
-        configurePipes(options, response)
+        configurePipes(options, response, () => request.abort())
       } else {
-        options.responseHandler(response, options.callback)
+        options.responseHandler(response, options.callback, () => request.abort())
       }
     })
     this.addErrorAndTimeoutHandlers(request, options.callback, requestOptions.timeout)
     this.addRedirectHandlers(request, requestOptions, options.callback, redirectCount, requestOptions => {
       this.doDownload(requestOptions, options, redirectCount + 1)
     })
+    // a cancel aborts the request in flight, or its response would go on downloading into the destination. The promise keeps one cancel
+    // handler: a redirect's new request replaces this one, which the redirect has already ended
+    options.onCancel(() => request.abort())
     request.end()
   }
 
@@ -365,59 +501,79 @@ Please double check that your authentication token is correct. Due to security r
 
   private addTimeOutHandler(request: any, callback: (error: Error) => void, timeout: number) {
     request.on("socket", (socket: Socket) => {
-      socket.setTimeout(timeout, () => {
+      const onTimeout = () => {
         request.abort()
         callback(new Error("Request timed out"))
-      })
+      }
+      socket.setTimeout(timeout, onTimeout)
+      // a keep-alive agent keeps the socket after the request and sets its own idle timeout on it: that timeout is not this request's
+      request.once("close", () => socket.removeListener("timeout", onTimeout))
     })
   }
 
-  static prepareRedirectUrlOptions(redirectUrl: string, options: RequestOptions): RequestOptions {
-    const newOptions = configureRequestOptionsFromUrl(redirectUrl, { ...options })
-    const headers = newOptions.headers
-    if (headers == null) {
-      return newOptions
-    }
-
+  /**
+   * Options for the request to `redirectUrl`, redirected from `options`. When the target is on another origin, the headers are the ones
+   * `crossOriginHeaderPolicy` chooses with the request's own headers added back (see {@link HttpExecutor.crossOriginHeaders}), and the `auth`
+   * option, which Node.js sends as an `Authorization` header for the original origin, is dropped. The default `User-Agent` and
+   * `Cache-Control` are set after that (see {@link configureRequestOptions}).
+   */
+  static prepareRedirectUrlOptions(redirectUrl: string, options: ApiRequestOptions, crossOriginHeaderPolicy: CrossOriginHeaderPolicy = dropSensitiveHeaders): ApiRequestOptions {
     const originalUrl = HttpExecutor.reconstructOriginalUrl(options)
     const parsedRedirectUrl = parseUrl(redirectUrl, options)
+    const newOptions: ApiRequestOptions = { ...options }
+    // net.request connects to `host` when it is set (where ElectronHttpExecutor moves a `Host` header), else to the hostname
+    let hostname = originalUrl.hostname
+    try {
+      hostname = options.host ? new URL(`http://${options.host}`).hostname : hostname
+    } catch {
+      // a host that does not parse is not loopback
+      hostname = String(options.host)
+    }
+    if (options.redirectedFromNonLoopback === true || !isLoopbackHostname(hostname)) {
+      newOptions.redirectedFromNonLoopback = true
+    }
+    // the target is hostname and port: Electron's net prefers `host` (where ElectronHttpExecutor moves a `Host` header) over them
+    delete newOptions.host
 
     if (HttpExecutor.isCrossOriginRedirect(originalUrl, parsedRedirectUrl)) {
-      if (debug.enabled) {
-        debug(`Cross-origin redirect (${originalUrl.host} → ${parsedRedirectUrl.host}): stripping sensitive headers`)
+      if (newOptions.auth != null && debug.enabled) {
+        // the origins only: never the credentials
+        debug(`Cross-origin redirect (${originalUrl.origin} → ${parsedRedirectUrl.origin}): dropping the request's auth option`)
       }
-      for (const key of Object.keys(headers)) {
-        if (SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key))) {
-          delete (headers as Record<string, unknown>)[key]
-        }
-      }
+      // Node's `auth` option becomes a Basic Authorization header on the request, so it is a credential for the original origin: it is
+      // never sent on to another origin, whatever the headers are
+      delete newOptions.auth
+      newOptions.headers = HttpExecutor.crossOriginHeaders(options.headers ?? {}, options.ownHeaders, { from: originalUrl, to: parsedRedirectUrl }, crossOriginHeaderPolicy)
     }
-    return newOptions
+    // after the policy: the default User-Agent and Cache-Control are the executor's own
+    return configureRequestOptionsFromUrl(redirectUrl, newOptions)
   }
 
   /**
-   * `headers` without the credential-bearing ones stripped on cross-origin redirects (see {@link addSensitiveRedirectHeader})
-   * when `targetUrl` is on another origin than `originUrl` (same rule as a redirect), else `headers` itself. Never mutates `headers`.
+   * The headers to send to `hop.to` for a request whose headers are meant for `hop.from`: `headers` itself when `to` is on the same origin
+   * (see {@link HttpExecutor.isCrossOrigin}), without calling `crossOriginHeaderPolicy`; else the ones `crossOriginHeaderPolicy` returns,
+   * and the request's `ownHeaders` it left out. A `Host` header is never sent to another origin: it is removed before the policy is asked, and
+   * from what it returns, since Electron's `net` connects to a `Host` header's value instead of `hop.to`. Never mutates `headers`; what
+   * `crossOriginHeaderPolicy` throws fails the request. The headers are copied with {@link filterHeaders}.
    */
-  static removeCrossOriginSensitiveHeaders(headers: OutgoingHttpHeaders, originUrl: URL, targetUrl: URL): OutgoingHttpHeaders {
-    if (!HttpExecutor.isCrossOriginRedirect(originUrl, targetUrl)) {
+  static crossOriginHeaders(
+    headers: OutgoingHttpHeaders,
+    ownHeaders: OutgoingHttpHeaders | null | undefined,
+    hop: CrossOriginHop,
+    crossOriginHeaderPolicy: CrossOriginHeaderPolicy
+  ): OutgoingHttpHeaders {
+    if (!HttpExecutor.isCrossOriginRedirect(hop.from, hop.to)) {
       return headers
     }
+    const isNotHost = (name: string) => name.toLowerCase() !== "host"
+    const sent = filterHeaders(crossOriginHeaderPolicy(filterHeaders(headers, isNotHost), hop), isNotHost)
+    const sentNames = new Set(Object.keys(sent).map(it => it.toLowerCase()))
+    const result = { ...sent, ...filterHeaders(ownHeaders ?? {}, (name, value) => value != null && !sentNames.has(name.toLowerCase())) }
     if (debug.enabled) {
-      debug(`Cross-origin request (${originUrl.host} → ${targetUrl.host}): stripping sensitive headers`)
-    }
-    const result = deepAssign<OutgoingHttpHeaders>({}, headers)
-    for (const key of Object.keys(result)) {
-      if (SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key))) {
-        delete result[key]
-      }
+      // names only: a value could be a credential
+      debug(`Cross-origin request (${hop.from.host} → ${hop.to.host}): sending the headers ${Object.keys(result).join(", ")}`)
     }
     return result
-  }
-
-  /** The names in `headers` of the credential-bearing headers stripped on cross-origin redirects (see {@link addSensitiveRedirectHeader}). */
-  static sensitiveHeaderNames(headers: OutgoingHttpHeaders): Array<string> {
-    return Object.keys(headers).filter(key => headers[key] != null && SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key)))
   }
 
   private static reconstructOriginalUrl(options: RequestOptions): URL {
@@ -492,13 +648,30 @@ Please double check that your authentication token is correct. Due to security r
 }
 
 export interface DownloadCallOptions {
-  responseHandler: ((response: IncomingMessage, callback: (error: Error | null) => void) => void) | null
+  /** `abort` aborts the request of `response`, so that the rest of its body is not received. */
+  responseHandler: ((response: IncomingMessage, callback: (error: Error | null) => void, abort: () => void) => void) | null
   onCancel: (callback: () => void) => void
   callback: (error: Error | null) => void
 
   options: DownloadOptions
 
   destination: string | null
+}
+
+/**
+ * `url` as logs and error messages name it: without its query and fragment, which can carry a credential (such as the signature of a
+ * pre-signed URL or a feed token), nor its user info. A relative URL or a request path (such as a `files[].url` of `latest*.yml`) keeps its
+ * path.
+ */
+export function urlWithoutQuery(url: URL | string): string {
+  let parsed: URL
+  try {
+    parsed = typeof url === "string" ? new URL(url) : url
+  } catch {
+    // relative: a path
+    return String(url).replace(/[?#].*$/s, "")
+  }
+  return `${parsed.protocol}//${parsed.host}${parsed.pathname}`
 }
 
 function parseUrl(url: string, options: RequestOptions): URL {
@@ -627,12 +800,35 @@ export function detectSha512Encoding(sha512: string): BinaryToTextEncoding {
   return "base64"
 }
 
-function configurePipes(options: DownloadCallOptions, response: IncomingMessage) {
+function configurePipes(options: DownloadCallOptions, response: IncomingMessage, abort: () => void) {
   if (!checkSha2(safeGetHeader(response, "X-Checksum-Sha2"), options.options.sha2, options.callback)) {
     return
   }
 
   const streams: Array<any> = []
+  const maxSize = options.options.maxSize
+  if (typeof maxSize === "number" && maxSize >= 0) {
+    let receivedSize = 0
+    const sizeLimit = new Transform({
+      transform(chunk: Buffer, _encoding, callback) {
+        receivedSize += chunk.length
+        if (receivedSize > maxSize) {
+          callback(
+            newError(
+              `The download is larger than the ${maxSize} bytes declared for it (size in the update info): a full download stops once it receives more bytes than that. Publish the update info generated together with the file, so that its size matches. See https://www.electron.build/docs/migration/v27-runtime-changes#full-downloads-stop-at-the-declared-size`,
+              "ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED"
+            )
+          )
+          return
+        }
+        callback(null, chunk)
+      },
+    })
+    // a failing pipe destination only unpipes the response: abort the request, so that the rest of the body is not received (destroying
+    // the response of Electron's net only stops reading it, the request goes on until it is aborted)
+    sizeLimit.on("error", abort)
+    streams.push(sizeLimit)
+  }
   if (options.options.onProgress != null) {
     const contentLength = safeGetHeader(response, "content-length")
     if (contentLength != null) {
@@ -710,21 +906,65 @@ export function configureRequestOptions(options: RequestOptions, token?: string 
   return options
 }
 
+/**
+ * Whether `hostname` (a URL hostname: an IPv6 address may be in brackets) names the loopback interface: `localhost`, an address
+ * in `127.0.0.0/8` or `::1`. A plain `http` update feed on such a host never leaves the machine.
+ */
+export function isLoopbackHostname(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^\[(.*)\]$/, "$1")
+  return host === "localhost" || host === "::1" || (isIPv4(host) && host.startsWith("127."))
+}
+
 export function isSensitiveFieldName(name: string): boolean {
   const normalized = normalizeName(name)
   return SENSITIVE_FIELD_PATTERNS.some(p => normalized.includes(p)) || SENSITIVE_FIELD_SUFFIXES.some(s => normalized.endsWith(s))
 }
 
+// The key of the fingerprints of this process, created on first use and never logged
+let fingerprintKey: Buffer | null = null
+
+/** What a sensitive value is logged as when its fingerprint cannot be computed. */
+export const REDACTED_VALUE = "<redacted>"
+
+// The data given to safeStringifyJson can come from a server (an error response body or its headers), with any number of sensitive
+// values: each fingerprint takes a few milliseconds of synchronous work, so one call computes at most this many
+const MAX_FINGERPRINTS_PER_CALL = 16
+
+/**
+ * Stands in for a secret (a password, token or key) in logs and error messages: a fingerprint that is the same for the same
+ * value within this process, so log lines can be compared, but that cannot be checked against guesses offline, since it is
+ * keyed with a random secret of this process. Derived with scrypt at a low cost: it runs whenever a secret is logged, and
+ * {@link safeStringifyJson} computes at most 16 fingerprints per call by default, logging the other values
+ * as {@link REDACTED_VALUE}. Never throws: it returns {@link REDACTED_VALUE} when the fingerprint cannot be computed.
+ */
 export function hashSensitiveValue(value: string): string {
-  return `${createHash("sha256").update(value).digest("hex")} (sha256 hash)`
+  try {
+    if (fingerprintKey == null) {
+      fingerprintKey = randomBytes(32)
+    }
+    const fingerprint = scryptSync(String(value), fingerprintKey, 16, { N: 1024, r: 8, p: 1 }).toString("hex")
+    return `${fingerprint} (redacted fingerprint)`
+  } catch {
+    return REDACTED_VALUE
+  }
 }
 
-export function safeStringifyJson(data: any, skippedNames?: Set<string>): string {
+/**
+ * The JSON of `data` with the values of sensitive fields (and of `skippedNames`) replaced: a string by its fingerprint (see
+ * {@link hashSensitiveValue}), anything else by a placeholder. At most `maxFingerprints` (by default 16) values are fingerprinted, the other
+ * sensitive strings are written as {@link REDACTED_VALUE}: a caller that uses the result as an identity key passes
+ * `Number.POSITIVE_INFINITY`, so data that differ in any sensitive value give different keys.
+ */
+export function safeStringifyJson(data: any, skippedNames?: Set<string>, maxFingerprints: number = MAX_FINGERPRINTS_PER_CALL): string {
+  let fingerprintCount = 0
   return JSON.stringify(
     data,
     (name, value) => {
       if (isSensitiveFieldName(name) || (skippedNames != null && skippedNames.has(name))) {
-        return typeof value === "string" ? hashSensitiveValue(value) : "<stripped sensitive data>"
+        if (typeof value !== "string") {
+          return "<stripped sensitive data>"
+        }
+        return fingerprintCount++ < maxFingerprints ? hashSensitiveValue(value) : REDACTED_VALUE
       }
       return value
     },

@@ -9,6 +9,7 @@ import { DifferentialDownloaderOptions } from "./differentialDownloader/Differen
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
 import { findFile, Provider } from "./providers/Provider.js"
 import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo, DownloadExecutorResult } from "./types.js"
+import { throwIfCancelled } from "./util.js"
 
 export class AppImageUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: any) {
@@ -18,9 +19,9 @@ export class AppImageUpdater extends BaseUpdater {
   public isUpdaterActive(): boolean {
     if (process.env["APPIMAGE"] == null && !this.forceDevUpdateConfig) {
       if (process.env["SNAP"] == null) {
-        this._logger.warn("APPIMAGE env is not defined, current application is not an AppImage")
+        this.log.warn("APPIMAGE env is not defined, current application is not an AppImage")
       } else {
-        this._logger.info("SNAP env is defined, updater is disabled")
+        this.log.info("SNAP env is defined, updater is disabled")
       }
       return false
     }
@@ -61,7 +62,7 @@ export class AppImageUpdater extends BaseUpdater {
       const downloadOptions: DifferentialDownloaderOptions = {
         newUrl: fileInfo.url,
         oldFile,
-        logger: this._logger,
+        logger: this.log,
         newFile: updateFile,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
         requestHeaders: this.downloadRequestHeaders(fileInfo.url, downloadUpdateOptions),
@@ -69,12 +70,14 @@ export class AppImageUpdater extends BaseUpdater {
       }
 
       if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
-        downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+        downloadOptions.onProgress = it => this.emitDownloadProgress(it)
       }
 
       await new FileWithEmbeddedBlockMapDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download()
       return false
     } catch (e: any) {
+      // a user cancellation is not a differential failure: no fallback to a full download
+      throwIfCancelled(e, downloadUpdateOptions.cancellationToken)
       this.logDifferentialDownloadFallback(e)
       // during test (developer machine mac) we must throw error
       return process.platform === "linux"
@@ -152,7 +155,7 @@ export class AppImageUpdater extends BaseUpdater {
     try {
       rmSync(file, { force: true })
     } catch (e: any) {
-      this._logger.warn(`Cannot remove ${file} after install: ${e.message || e}`)
+      this.log.warn(`Cannot remove ${file} after install: ${e.message || e}`)
     }
   }
 }

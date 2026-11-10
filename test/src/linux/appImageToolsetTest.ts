@@ -30,13 +30,48 @@ describe("getAppImageTools", () => {
     ["latest", "latest"],
     ["undefined", undefined],
     ["null", null],
-  ])("%s resolves to the newest bundle (1.1.0)", async (_label, toolset) => {
+  ])("%s resolves to the newest bundle (1.2.1)", async (_label, toolset) => {
     await getAppImageTools(toolset as any, Arch.x64, tmpDir)
     expect(downloadBuilderToolset).toHaveBeenCalledTimes(1)
     expect(downloadBuilderToolset).toHaveBeenCalledWith({
-      releaseName: "appimage@1.1.0",
+      releaseName: "appimage@1.2.1",
       filenameWithExt: "appimage-tools-runtime-20251108.tar.gz",
-      checksums: appimageChecksums["1.1.0"],
+      checksums: appimageChecksums["1.2.1"],
+      githubOrgRepo: GITHUB_ORG_REPO,
+    })
+  })
+
+  // 1.2.1 is the license-corrected re-release of 1.2.0 (same asset name, new contents). 1.2.0 shipped
+  // as the default in the v27.0.0-alpha.14 prerelease and was withdrawn because its bundle lacked
+  // license files, so it is replaced rather than kept as a pin; every earlier pin keeps its own release
+  // and checksum.
+  test("1.2.1 replaces 1.2.0 alongside the earlier pins, which keep their checksums", () => {
+    expect(Object.keys(appimageChecksums)).toEqual(["0.0.0", "1.0.3", "1.1.0", "1.2.1"])
+    expect(appimageChecksums["1.2.1"]).toEqual({
+      "appimage-tools-runtime-20251108.tar.gz": "2e43e1f7ea58a38822d060f1f437f1201fae7d293ae3b45167a9eea41d440353",
+    })
+    expect(appimageChecksums["1.1.0"]).toEqual({
+      "appimage-tools-runtime-20251108.tar.gz": "098182ab8d3bb93db8a23691671f665ff92316249ace850aec63b9d010ec7fe0",
+    })
+    expect(appimageChecksums["1.0.3"]).toEqual({
+      "appimage-tools-runtime-20251108.tar.gz": "84021a78ee214ae6fd33a2d62a92ba25542dd10bc86bf117a9b2d0bba44e7665",
+    })
+  })
+
+  test("the flagged 1.2.0 bundle can no longer be pinned", async () => {
+    const promise = getAppImageTools("1.2.0" as any, Arch.x64, tmpDir)
+    await expect(promise).rejects.toBeInstanceOf(InvalidConfigurationError)
+    await expect(promise).rejects.toThrow('Unknown toolsets.appimage version "1.2.0"')
+    expect(downloadBuilderToolset).not.toHaveBeenCalled()
+  })
+
+  test.each(["1.0.3", "1.1.0"])('an explicit "%s" pin still resolves to that release, not the new default', async version => {
+    await getAppImageTools(version as any, Arch.x64, tmpDir)
+    expect(downloadBuilderToolset).toHaveBeenCalledTimes(1)
+    expect(downloadBuilderToolset).toHaveBeenCalledWith({
+      releaseName: `appimage@${version}`,
+      filenameWithExt: "appimage-tools-runtime-20251108.tar.gz",
+      checksums: (appimageChecksums as any)[version],
       githubOrgRepo: GITHUB_ORG_REPO,
     })
   })

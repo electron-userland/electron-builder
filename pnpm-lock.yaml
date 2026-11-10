@@ -322,9 +322,6 @@ importers:
       source-map-support:
         specifier: ^0.5.19
         version: 0.5.21
-      stat-mode:
-        specifier: ^1.0.0
-        version: 1.0.0
       temp-file:
         specifier: ^3.4.0
         version: 3.4.0
@@ -350,6 +347,9 @@ importers:
 
   packages/builder-util-runtime:
     dependencies:
+      '@noble/hashes':
+        specifier: ^2.2.0
+        version: 2.2.0
       debug:
         specifier: ^4.3.4
         version: 4.4.3
@@ -520,7 +520,7 @@ importers:
         specifier: ^11.3.4
         version: 11.3.5
       js-yaml:
-        specifier: ^4.1.0
+        specifier: ^4.3.2
         version: 4.3.2
       lazy-val:
         specifier: ^1.0.5
@@ -528,9 +528,6 @@ importers:
       lodash.escaperegexp:
         specifier: ^4.1.2
         version: 4.1.2
-      lodash.isequal:
-        specifier: ^4.5.0
-        version: 4.5.0
       semver:
         specifier: ~7.7.3
         version: 7.7.3
@@ -547,15 +544,12 @@ importers:
       '@types/lodash.escaperegexp':
         specifier: 4.1.6
         version: 4.1.6
-      '@types/lodash.isequal':
-        specifier: 4.5.5
-        version: 4.5.5
       '@types/semver':
         specifier: 7.7.1
         version: 7.7.1
       electron:
-        specifier: 42.11.14
-        version: 42.11.14
+        specifier: 42.11.16
+        version: 42.11.16
 
   test:
     devDependencies:
@@ -673,9 +667,6 @@ importers:
       semver:
         specifier: 7.7.2
         version: 7.7.2
-      stat-mode:
-        specifier: ^1.0.0
-        version: 1.0.0
       tar:
         specifier: ^7.5.7
         version: 7.5.21
@@ -4207,9 +4198,6 @@ packages:
   '@types/lodash.escaperegexp@4.1.6':
     resolution: {integrity: sha512-uENiqxLlqh6RzeE1cC6Z2gHqakToN9vKlTVCFkSVjAfeMeh2fY0916tHwJHeeKs28qB/hGYvKuampGYH5QDVCw==}
 
-  '@types/lodash.isequal@4.5.5':
-    resolution: {integrity: sha512-4IKbinG7MGP131wRfceK6W4E/Qt3qssEFLF30LnJbjYiSfHGGRU/Io8YxXrZX109ir+iDETC8hw8QsDijukUVg==}
-
   '@types/lodash@4.17.16':
     resolution: {integrity: sha512-HX7Em5NYQAXKW+1T+FiuG27NGwzJfCX3s1GjOa7ujxZa52kjJLOr4FUxT+giF6Tgxv1e+/czV/iTtBw27WTU9g==}
 
@@ -5455,8 +5443,8 @@ packages:
   electron-to-chromium@1.5.459:
     resolution: {integrity: sha512-4SC9HHSFjO/liAhifpdOL5hG9b4BP7/5G3y3UPZVO8trlAXr1CaUEEJL0gWK3kOcYcZrOA5rkwG45Gra/lTIgg==}
 
-  electron@42.11.14:
-    resolution: {integrity: sha512-EHX0gpd/mV58ah08NOLCp5QbwoCWwAz+hlkdjHRX55lzoVJncUWJcy/gpIErE6T6HdViMaNAiO98f1IBtdvvaA==}
+  electron@42.11.16:
+    resolution: {integrity: sha512-CHCEsZbWm9zspEnYsro+g8FFllh0e82A1Jtofi/XqPs/XqlrpDPdLP0OhzfhG/IkxNXQ8iHEoYms+wVepZNzZA==}
     engines: {node: '>= 22.12.0'}
     hasBin: true
 
@@ -6584,10 +6572,6 @@ packages:
 
   lodash.escaperegexp@4.1.2:
     resolution: {integrity: sha512-TM9YBvyC84ZxE3rgfefxUWiQKLilstD6k7PTGt6wfbtXF8ixIJLOL3VYyV/z+ZiPLsVxAsKAFVwWlWeb2Y8Yyw==}
-
-  lodash.isequal@4.5.0:
-    resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
-    deprecated: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
 
   lodash.memoize@4.1.2:
     resolution: {integrity: sha512-t7j+NzmgnQzTAYXcsHYLgimltOV1MXHtlOWf6GjL9Kj8GK5FInw5JotxvbOs+IvV1/Dzo04/fCGfLVs7aXb4Ag==}
@@ -8366,10 +8350,6 @@ packages:
   stack-utils@2.0.6:
     resolution: {integrity: sha512-XlkWvfIm6RmsWtNJx+uqtKLS8eqFbxUg0ZzLXqY0caEy9l7hruX8IpiDnjsLavoBgqCCR71TqWO8MaXYheJ3RQ==}
     engines: {node: '>=10'}
-
-  stat-mode@1.0.0:
-    resolution: {integrity: sha512-jH9EhtKIjuXZ2cWxmXS8ZP80XyC3iasQxMDV8jzhNJpfDb7VbQLVW4Wvsxz9QZvzV+G4YoSfBUVKDOyxLzi/sg==}
-    engines: {node: '>= 6'}
 
   statuses@1.5.0:
     resolution: {integrity: sha512-OpZ3zP+jT1PI7I8nemJX4AKmAX070ZkYPVWV/AaKTJl+tXCTGyVdC1a4SL8RUQYEwk/f34ZX8UTykN68FwrqAA==}
@@ -13989,10 +13969,6 @@ snapshots:
     dependencies:
       '@types/lodash': 4.17.16
 
-  '@types/lodash.isequal@4.5.5':
-    dependencies:
-      '@types/lodash': 4.17.16
-
   '@types/lodash@4.17.16': {}
 
   '@types/mdast@4.0.4':
@@ -15342,7 +15318,7 @@ snapshots:
 
   electron-to-chromium@1.5.459: {}
 
-  electron@42.11.14:
+  electron@42.11.16:
     dependencies:
       '@electron-internal/extract-zip': 1.0.5
       '@electron/get': 5.1.0
@@ -16566,8 +16542,6 @@ snapshots:
   lodash.debounce@4.0.8: {}
 
   lodash.escaperegexp@4.1.2: {}
-
-  lodash.isequal@4.5.0: {}
 
   lodash.memoize@4.1.2: {}
 
@@ -18835,8 +18809,6 @@ snapshots:
   stack-utils@2.0.6:
     dependencies:
       escape-string-regexp: 2.0.0
-
-  stat-mode@1.0.0: {}
 
   statuses@1.5.0: {}
 

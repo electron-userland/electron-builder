@@ -1,4 +1,5 @@
-import { GitlabOptions, GitlabReleaseInfo, HttpError } from "builder-util-runtime"
+import { type CrossOriginHop, GitlabOptions, GitlabReleaseInfo, HttpError } from "builder-util-runtime"
+import { vi } from "vitest"
 import { GitLabProvider } from "electron-updater/internal"
 import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil.js"
 import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
@@ -184,6 +185,29 @@ test("token is not forwarded to an off-host direct_asset_url", async ({ expect }
   expect(secondCallHeaders["authorization"]).toBeUndefined()
 })
 
+// the app decides with autoUpdater.crossOriginHeaders: a direct_asset_url on its own asset host gets the token when the app keeps it there
+test("the token goes to an off-host direct_asset_url only when crossOriginHeaders keeps it for that origin", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy, "0.0.1", { token: "glpat-abc123" })
+  const crossOriginHeaders = vi.fn((headerNames: string[], hop: CrossOriginHop) =>
+    hop.to.origin === "https://assets.example" ? headerNames.filter(it => it === "private-token") : []
+  )
+  updater.crossOriginHeaders = crossOriginHeaders
+
+  const release = mockGitlabRelease(STABLE_VERSION)
+  release.assets.links.find(l => l.name === "latest.yml")!.direct_asset_url = "https://assets.example/uploads/latest.yml"
+
+  requestSpy.mockResolvedValueOnce(JSON.stringify(release)).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+  await updater.checkForUpdates()
+
+  expect(crossOriginHeaders).toHaveBeenCalledExactlyOnceWith(expect.arrayContaining(["private-token"]), {
+    from: new URL("https://gitlab.com/api/v4/"),
+    to: new URL("https://assets.example/uploads/latest.yml"),
+  })
+  expect((requestSpy.mock.calls[1][0].headers as Record<string, string>)["PRIVATE-TOKEN"]).toBe("glpat-abc123")
+})
+
 // SECURITY: an http:// downgrade of direct_asset_url (even on the same host) must NOT receive the token
 test("token is not forwarded when direct_asset_url downgrades to http", async ({ expect }) => {
   const requestSpy = createMockRequest()
@@ -199,6 +223,41 @@ test("token is not forwarded when direct_asset_url downgrades to http", async ({
   const secondCallHeaders = (requestSpy.mock.calls[1][0].headers as Record<string, string>) ?? {}
   expect(secondCallHeaders["PRIVATE-TOKEN"]).toBeUndefined()
   expect(secondCallHeaders["authorization"]).toBeUndefined()
+})
+
+// SECURITY: the app's credential headers (requestHeaders / addAuthHeader) follow the feed-origin rule on the channel-file request too
+test("app credential headers are not forwarded to an off-host direct_asset_url", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy)
+  updater.addAuthHeader("Bearer app-token")
+
+  const release = mockGitlabRelease(STABLE_VERSION)
+  release.assets.links.find(l => l.name === "latest.yml")!.direct_asset_url = "https://attacker.example/collect/latest.yml"
+
+  requestSpy.mockResolvedValueOnce(JSON.stringify(release)).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+  await updater.checkForUpdates()
+
+  // API request (on the feed origin) still carries the app's credentials
+  expect((requestSpy.mock.calls[0][0].headers as Record<string, string>)["authorization"]).toBe("Bearer app-token")
+
+  // channel-file request goes to the other host WITHOUT them
+  expect(requestSpy.mock.calls[1][0].hostname).toBe("attacker.example")
+  const secondCallHeaders = (requestSpy.mock.calls[1][0].headers as Record<string, string>) ?? {}
+  expect(secondCallHeaders["authorization"]).toBeUndefined()
+})
+
+test("app credential headers are kept on a published (same-origin) direct_asset_url", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy)
+  updater.addAuthHeader("Bearer app-token")
+
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+  await updater.checkForUpdates()
+
+  expect(requestSpy.mock.calls[1][0].hostname).toBe("gitlab.com")
+  expect((requestSpy.mock.calls[1][0].headers as Record<string, string>)["authorization"]).toBe("Bearer app-token")
 })
 
 // Bearer token sent as authorization header when token starts with "Bearer"

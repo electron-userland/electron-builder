@@ -6,18 +6,20 @@ vi.mock("builder-util", async () => {
   const actual = await vi.importActual<typeof import("builder-util")>("builder-util")
   return { ...actual, exec: vi.fn().mockResolvedValue("") }
 })
-import { exec, Executables, InvalidConfigurationError } from "builder-util"
+import { exec, ExecError, Executables, InvalidConfigurationError } from "builder-util"
 import {
   buildAdditionalFilesXml,
   convertVersion,
+  copySquirrelExe,
   createWindowsInstaller,
   escapeXml,
   InstallerOptions,
   renderNuspecTemplate,
 } from "electron-builder-squirrel-windows/src/windowsInstaller"
-import { access, chmod, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "fs/promises"
+import { chmod, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
+import { inspect } from "util"
 
 describe("convertVersion", () => {
   test.each([
@@ -148,6 +150,20 @@ async function writeExecutable(file: string) {
   return file
 }
 
+describe("copySquirrelExe", () => {
+  test("puts Squirrel.exe next to the app so the nuspec can pick it up", async ({ tmpDir }) => {
+    const root = await tmpDir.createTempDir()
+    const vendorDir = path.join(root, "vendor")
+    const appDir = path.join(root, "app")
+    await Promise.all([vendorDir, appDir].map(dir => mkdir(dir)))
+    await writeFile(path.join(vendorDir, "Squirrel.exe"), "Squirrel.exe")
+
+    await copySquirrelExe(appDir, vendorDir)
+
+    expect(await readFile(path.join(appDir, "Squirrel.exe"), "utf8")).toBe("Squirrel.exe")
+  })
+})
+
 describe("createWindowsInstaller", () => {
   let tmpDir: string
   let vendorDir: string
@@ -245,9 +261,6 @@ describe("createWindowsInstaller", () => {
     await fakeReleasifyOutput(["Setup.exe"])
     const options = baseOptions()
     await createWindowsInstaller(options)
-
-    // Squirrel.exe must be next to the app so the nuspec can pick it up
-    expect(await readFile(path.join(appDir, "Squirrel.exe"), "utf8")).toBe("Squirrel.exe")
 
     const calls = invocations()
     expect(calls).toHaveLength(2)
@@ -355,10 +368,36 @@ describe("createWindowsInstaller", () => {
       const calls = invocations()
       expect(calls.map(it => path.basename(it.exe))).toEqual(["nuget.exe", "SyncReleases.exe", useMono ? "Squirrel-Mono.exe" : "Squirrel.exe"])
       expect(calls[1].exe).toBe(path.join(vendorDir, "SyncReleases.exe"))
-      expect(calls[1].args).toEqual(["-u", "https://github.com/some-user/some-project", "-r", outDir, "-t", "secret-token"])
+      expect(calls[1].args).toEqual(["-u", "https://github.com/some-user/some-project", "-r", outDir, "--token", "secret-token"])
     })
 
-    test("omits -t when no token is set", async () => {
+    // the stand-in Mono is a shell script
+    test.skipIf(process.platform === "win32")("keeps the token out of the error when SyncReleases fails", async () => {
+      setPlatform("linux")
+      try {
+        // fails the way a real tool does that echoes its command line before exiting non-zero
+        await writeFile(monoPath, '#!/bin/sh\necho "$@" >&2\nexit 1\n')
+        const actual = await vi.importActual<typeof import("builder-util")>("builder-util")
+        vi.mocked(exec).mockImplementation((file, args, options) =>
+          args != null && path.basename(args[0]) === "SyncReleases.exe" ? actual.exec(file, args, options) : Promise.resolve("")
+        )
+        const error = await createWindowsInstaller(baseOptions({ remoteReleases: "https://github.com/some-user/some-project", remoteToken: "secret-token" })).then(
+          () => null,
+          (e: unknown) => e
+        )
+        expect(error).toBeInstanceOf(ExecError)
+        expect((error as ExecError).message).toContain("SyncReleases.exe")
+        expect((error as ExecError).message).not.toContain("secret-token")
+        // an API caller that logs the error also prints its cause, which holds the command line
+        expect((error as ExecError).cause).toBeInstanceOf(Error)
+        expect(inspect(error, { depth: null })).not.toContain("secret-token")
+      } finally {
+        vi.mocked(exec).mockReset().mockResolvedValue("")
+        setPlatform(originalPlatform)
+      }
+    })
+
+    test("omits the token when none is set", async () => {
       await fakeReleasifyOutput(["Setup.exe"])
       await createWindowsInstaller(baseOptions({ remoteReleases: "https://github.com/some-user/some-project" }))
       expect(findInvocation("SyncReleases.exe")!.args).toEqual(["-u", "https://github.com/some-user/some-project", "-r", outDir])
@@ -446,7 +485,6 @@ describe("createWindowsInstaller", () => {
       const nuspec = await readNuspec("TestApp")
       expect(nuspec).toContain(`<file src="vk_swiftshader_icd.json" target="lib${sep}net45" />`)
       expect(nuspec).not.toContain("swiftshader\\**")
-      await access(path.join(appDir, "Squirrel.exe"))
     })
   })
 })

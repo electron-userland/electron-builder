@@ -22,7 +22,7 @@ export const REMOVED_ENV_VARS: ReadonlyArray<RemovedEnvVar> = [
   // Toolset path/dir overrides — the `resolveEnvToolsetPath` mechanism was removed; supply a ToolsetCustom object instead.
   { name: "APPIMAGE_TOOLS_PATH", remediation: `set \`toolsets.appimage: { url: "file:///path/to/dir" }\` instead.` },
   { name: "MKSQUASHFS_PATH", remediation: `the mksquashfs binary now ships with the appimage toolset — set \`toolsets.appimage: { url: "file:///path/to/dir" }\` to override it.` },
-  { name: "LINUX_TOOLS_MAC_PATH", remediation: `set \`toolsets.linuxToolsMac: { url: "file:///path/to/dir" }\` instead.` },
+  { name: "LINUX_TOOLS_MAC_PATH", remediation: `set \`toolsets.archive: { url: "file:///path/to/dir" }\` instead.` },
   { name: "CUSTOM_FPM_PATH", remediation: `set \`toolsets.fpm: { url: "file:///path/to/dir" }\` instead.` },
   { name: "ELECTRON_BUILDER_NSIS_DIR", remediation: `set \`toolsets.nsis: { url: "file:///path/to/dir" }\` instead.` },
   { name: "ELECTRON_BUILDER_NSIS_RESOURCES_DIR", remediation: `set \`toolsets.nsis: { url: "file:///path/to/dir" }\` instead.` },

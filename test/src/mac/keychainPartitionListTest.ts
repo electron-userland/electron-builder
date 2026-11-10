@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from "vitest"
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 // All `/usr/bin/security` invocations are intercepted so the temporary-keychain setup can be asserted
 // deterministically on any platform — no real keychain, certificate, or Apple tooling required.
@@ -8,7 +8,7 @@ vi.mock("builder-util", async () => {
 })
 
 import { createKeychain } from "app-builder-lib/internal"
-import { exec } from "builder-util"
+import { exec, Executables } from "builder-util"
 import { outputFile } from "fs-extra"
 import { rm } from "node:fs/promises"
 import * as os from "node:os"
@@ -24,6 +24,12 @@ beforeAll(() => {
 
 beforeEach(() => {
   vi.mocked(exec).mockClear()
+  // codesign and productbuild exist on macOS only; stand-in locations, as if set in toolsets.executables
+  vi.spyOn(Executables, "resolve").mockImplementation(name => `/opt/tools/${name}`)
+})
+
+afterEach(() => {
+  vi.mocked(Executables.resolve).mockRestore()
 })
 
 afterAll(async () => {
@@ -74,6 +80,18 @@ describe("createKeychain security command wiring", { concurrent: false }, () => 
     // ...while `set-key-partition-list -k` needs the keychain's unlock password (same value used by
     // create-keychain/unlock-keychain), otherwise SecKeychainUnlock rejects it and the build fails.
     expect(flagValue(partitionCall!, "-k")).toBe(keychainPasswordFromCalls())
+  })
+
+  test("the imported keys trust the codesign and productbuild electron-builder starts, and /usr/bin/codesign for @electron/osx-sign", async ({ tmpDir }) => {
+    const cscLink = await createDummyCert(tmpDir, "app")
+    await createKeychain({ tmpDir, cscLink, cscKeyPassword, currentDir: process.cwd() })
+
+    const importCall = securityCalls().find(args => args[0] === "import")
+    expect(importCall).toBeDefined()
+    const trusted = (importCall ?? []).flatMap((arg, index, args) => (arg === "-T" ? [args[index + 1]] : []))
+    expect(trusted).toEqual(["/usr/bin/codesign", "/opt/tools/codesign", "/opt/tools/productbuild"])
+    expect(Executables.resolve).toHaveBeenCalledWith("codesign")
+    expect(Executables.resolve).toHaveBeenCalledWith("productbuild")
   })
 
   test("every imported certificate gets its partition list set with the keychain password", async ({ tmpDir }) => {

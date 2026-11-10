@@ -170,7 +170,7 @@ test("Bitbucket auth - missing token throws InvalidConfigurationError", ({ expec
           owner: "test-owner",
           slug: "test-repo",
         })
-    ).toThrow(/Bitbucket token is not set/)
+    ).toThrow(/Bitbucket token is not set.*https:\/\/www\.electron\.build\/docs\/publish#bitbucket/)
   })
 })
 

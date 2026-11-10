@@ -1,5 +1,48 @@
 # electron-publish
 
+## 27.0.0-alpha.14
+### Patch Changes
+
+- Feat: binary, range-fetchable `.blockmap` format, chosen from `electronUpdaterCompatibility` (default raised to `>=7`). The block map published next to NSIS installers and macOS update zips is read by the electron-updater already installed in the users' apps, so its format follows the declared range: a range of electron-updater 7 and later (the new default) writes the binary map, a range that includes earlier versions writes the gzipped JSON map, with a once-per-build warning. The new `blockmap` option, `"v2" | "v3" | "latest"`, overrides the choice: `"v2"` is the JSON map (format version 2), `"v3"` the binary map (failing the build when the range includes electron-updater before 7), `"latest"` the newest format the range allows. The build also fails when the app's own electron-updater dependency is outside `electronUpdaterCompatibility`, e.g. electron-updater 6 with the default `>=7`: upgrade it, or set `electronUpdaterCompatibility: ">=6"` to keep the JSON map. _[`#10312`](https://github.com/electron-userland/electron-builder/pull/10312) [`c983462`](https://github.com/electron-userland/electron-builder/commit/c98346245aed022560e58bc7d435a6f9d04f5a78)_
+
+  The binary map is uncompressed with fixed-size tables (header, content-defined super-groups of groups, content-defined groups of blocks, 10-byte per-block records, with 8-byte hashes at every level). electron-updater fetches the header and super-group table with one `Range` request, matches super-groups against its cached previous map, fetches only the group entries of the super-groups that changed, matches those groups and fetches only the records of the groups that changed, verifies every hash, then runs the existing block-level plan and download pipeline. If that range fetch fails, it downloads the new map with a plain GET and stays differential. Because the map cost grows with the change rather than with the installer, the stored `app.asar` region (`nsis.differentialPackage: "store-asar"`, ideally with `asar.contentAlignment`) uses 512 B / 1 KiB / 2 KiB blocks and a block boundary at every packed file, and the 7z header of a differential-aware package is stored as is (`-mhc=off`) and chunked into its own small blocks, so a changed CRC no longer re-downloads the trailing block of the package (5–30 KB on every update). Builds that write the JSON map keep packages and block maps byte-for-byte as before. electron-updater tells the formats apart by the file's first bytes, so there is no extra artifact and `latest.yml` is unchanged. Installs still on electron-updater 6 download the first release with a binary map in full once; the update brings an updater that reads it. A format change between two releases costs the same one-time full download, logged once at `info`. Block maps embedded in an artifact (AppImage, NSIS web installer packages) stay JSON. A binary `.blockmap` is uploaded to S3 as `application/octet-stream`.
+
+  electron-updater additionally downloads through COPY gaps smaller than 8 KiB between two changed ranges on single-range hosts such as GitHub and S3 (one request per range there makes re-downloading a few KiB cheaper than an extra request), only up to 256 B on hosts that serve `multipart/byteranges`, and caps `multipart/byteranges` requests at 200 ranges (Apache's `MaxRanges` default; larger `Range` headers exceed common 8 KB header limits).
+- Fix: point the docs links in Bitbucket, Keygen, R2, Spaces and Squirrel.Windows configuration errors at existing sections _[`#10462`](https://github.com/electron-userland/electron-builder/pull/10462) [`4152802`](https://github.com/electron-userland/electron-builder/commit/41528020456f5483bad2ed8d640e9e53c5193ed4)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`c983462`](https://github.com/electron-userland/electron-builder/commit/c98346245aed022560e58bc7d435a6f9d04f5a78)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.13`
+- `builder-util@27.0.0-alpha.14`
+
+</details>
+
+## 27.0.0-alpha.13
+### Patch Changes
+
+- Fix: secrets in logs and error messages (passwords, tokens and keys in redacted command lines, environments and request options) are shown as a fingerprint keyed with a random secret of the process, derived with scrypt: the same value has the same fingerprint within a run, but a fingerprint cannot be checked against guessed values offline. A value whose fingerprint cannot be computed is shown as `<redacted>`. _[`#10441`](https://github.com/electron-userland/electron-builder/pull/10441) [`955cd00`](https://github.com/electron-userland/electron-builder/commit/955cd00bd32f4dff0fd5f120b5c7bdad92ea1d7f)_
+- Docs: split the v27 breaking-changes page into config, build, runtime and developer pages, point the migration links in build and updater messages at the page each change moved to, and add links to the v27 messages that had none _[`#10421`](https://github.com/electron-userland/electron-builder/pull/10421) [`b5e144d`](https://github.com/electron-userland/electron-builder/commit/b5e144dfeea1e0e8eaa13aec151457227ee4d7d5)_
+- Electron-builder starts the host programs it uses only from an absolute path, never by looking up a name on `PATH`: PowerShell, Wine, Mono (Squirrel.Windows on macOS and Linux), `prlctl`, `productbuild`, `pkgbuild`, `codesign`, `hdiutil`, `tiffutil`, `sips`, `actool`, `zip`, `notarytool` (passed to `@electron/notarize` as `notarytoolPath`, located with `/usr/bin/xcrun` by default), `lzip`, `snapcraft`, `flatpak` and `flatpak-builder`. Each comes from its default install locations or from the new `toolsets.executables` map, whose entries are `file://` URIs, or lists of them, that replace the defaults for that program. Child processes started without an explicit environment get no credential variables on Windows either, and `snapcraft upload` gets the store credentials but no other secret. The NSIS installer starts `tasklist` and `taskkill` from `$SYSDIR` (and passes the force flag in per-machine mode), the AppImage launcher runs the dialog tool it checked by its absolute path, and electron-updater on macOS starts `/usr/sbin/sysctl` and `/usr/bin/uname`. _[`#10430`](https://github.com/electron-userland/electron-builder/pull/10430) [`b98e1f2`](https://github.com/electron-userland/electron-builder/commit/b98e1f2910edaa14b554e603d3ff509c8b04ccf2)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`ed05bd0`](https://github.com/electron-userland/electron-builder/commit/ed05bd0f734dd3b898b9c43c81abd56c08d242ef) [`6393d7a`](https://github.com/electron-userland/electron-builder/commit/6393d7ae75d15da5147691b135c5bcc7aa520f35) [`5028cb3`](https://github.com/electron-userland/electron-builder/commit/5028cb37a21b8bdd6d9447e858eacfb8e3834004) [`2d97c85`](https://github.com/electron-userland/electron-builder/commit/2d97c85e3e3e63aade6497923d3012ce0569e414) [`955cd00`](https://github.com/electron-userland/electron-builder/commit/955cd00bd32f4dff0fd5f120b5c7bdad92ea1d7f) [`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14) [`2d97c85`](https://github.com/electron-userland/electron-builder/commit/2d97c85e3e3e63aade6497923d3012ce0569e414) [`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14) [`ed05bd0`](https://github.com/electron-userland/electron-builder/commit/ed05bd0f734dd3b898b9c43c81abd56c08d242ef) [`ed05bd0`](https://github.com/electron-userland/electron-builder/commit/ed05bd0f734dd3b898b9c43c81abd56c08d242ef) [`046f936`](https://github.com/electron-userland/electron-builder/commit/046f9365cf923a22dc1504297702b3625ed473fb) [`8366dc6`](https://github.com/electron-userland/electron-builder/commit/8366dc690ba5bc453c45f6ebbb8f8ad3561521df) [`b98e1f2`](https://github.com/electron-userland/electron-builder/commit/b98e1f2910edaa14b554e603d3ff509c8b04ccf2) [`a7f005c`](https://github.com/electron-userland/electron-builder/commit/a7f005ce837df409cc7cf9049e3eff74a2d5a503)
+
+</small>
+
+- `builder-util@27.0.0-alpha.13`
+- `builder-util-runtime@10.0.0-alpha.12`
+
+</details>
+
 ## 27.0.0-alpha.12
 ### Major Changes
 

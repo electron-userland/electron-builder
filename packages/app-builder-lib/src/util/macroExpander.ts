@@ -15,7 +15,7 @@ export function expandMacro(pattern: string, arch: string | Nullish, appInfo: Ap
       .replace("/${arch}", "")
   }
 
-  return pattern.replace(/\${([_a-zA-Z./*+]+)}/g, (match, p1): string => {
+  return pattern.replace(/\${([_a-zA-Z0-9./*+]+)}/g, (match, p1): string => {
     switch (p1) {
       case "productName":
         return isProductNameSanitized ? appInfo.sanitizedProductName : appInfo.productName

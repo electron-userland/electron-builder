@@ -42,13 +42,13 @@ jobs:
     outputs:
       force-docker-build: ${{ steps.changes.outputs.docker == 'true' || steps.changes.outputs.workflow == 'true' }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Determine if Dockerfiles changed
-        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: changes
         with:
           filters: |
@@ -82,7 +82,7 @@ jobs:
       # in-job plan matches the matrix (resolving "latest" per job can pick a different cache).
       smart-cache-source: ${{ steps.pretest.outputs.smart-cache-source }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -152,7 +152,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 2
           persist-credentials: false
@@ -171,7 +171,7 @@ jobs:
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}
@@ -218,7 +218,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -270,7 +270,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -346,7 +346,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -369,7 +369,7 @@ jobs:
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}
@@ -427,7 +427,7 @@ jobs:
       matrix:
         core: [core18, core20, core22, core24]
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -518,7 +518,7 @@ jobs:
         org.freedesktop.Sdk//25.08
         org.electronjs.Electron2.BaseApp//25.08
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -536,7 +536,7 @@ jobs:
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}
@@ -592,40 +592,88 @@ jobs:
           name: flatpak
 
   test-e2e:
-    name: Test e2e Auto Updater Linux
+    name: Test e2e Auto Updater Linux (${{ matrix.test_config.id }})
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
+        # One job per entry. Without test_files a job runs every Linux e2e suite (the default TEST_FILES in
+        # test/src/updater/test-specific-platforms.sh). Every package manager runs every update case, but the rpm
+        # cases are too long for one job (4-7 min each, almost all of it rpm builds), so each rpm package manager is
+        # split into an "update" and a "signing" job. blackboxInstallTest installs with a fixed command per distro and
+        # ignores PACKAGE_MANAGER_TO_TEST, so it runs once per image (rpm-install, debian-apt, archlinux-pacman,
+        # appimage-install) instead of in every package-manager job.
         test_config:
-          - stem: archlinux
+          - id: archlinux-pacman
+            stem: archlinux
             env:
               PACKAGE_MANAGER_TO_TEST: pacman
-          - stem: rpm
-            env:
-              PACKAGE_MANAGER_TO_TEST: dnf
-          - stem: rpm
-            env:
-              PACKAGE_MANAGER_TO_TEST: zypper
-          - stem: rpm
-            env:
-              PACKAGE_MANAGER_TO_TEST: yum
-          - stem: rpm
-            env:
-              PACKAGE_MANAGER_TO_TEST: rpm
-          - stem: debian
+          - id: debian-apt
+            stem: debian
             env:
               PACKAGE_MANAGER_TO_TEST: apt
-          - stem: debian
+          - id: debian-dpkg
+            stem: debian
+            test_files: blackboxUpdateTest,linuxUpdaterTest,blackboxUpdateLinuxNextLaunch,blackboxUpdateLinuxSignedManifest,blackboxUpdateLinuxKeyRotation
             env:
               PACKAGE_MANAGER_TO_TEST: dpkg
-          - stem: appimage
+          - id: rpm-zypper-update
+            stem: rpm
+            test_files: blackboxUpdateTest,linuxUpdaterTest,blackboxUpdateLinuxNextLaunch
+            env:
+              PACKAGE_MANAGER_TO_TEST: zypper
+          - id: rpm-zypper-signing
+            stem: rpm
+            test_files: blackboxUpdateLinuxSignedManifest,blackboxUpdateLinuxKeyRotation
+            env:
+              PACKAGE_MANAGER_TO_TEST: zypper
+          - id: rpm-dnf-update
+            stem: rpm
+            test_files: blackboxUpdateTest,linuxUpdaterTest,blackboxUpdateLinuxNextLaunch
+            env:
+              PACKAGE_MANAGER_TO_TEST: dnf
+          - id: rpm-dnf-signing
+            stem: rpm
+            test_files: blackboxUpdateLinuxSignedManifest,blackboxUpdateLinuxKeyRotation
+            env:
+              PACKAGE_MANAGER_TO_TEST: dnf
+          - id: rpm-yum-update
+            stem: rpm
+            test_files: blackboxUpdateTest,linuxUpdaterTest,blackboxUpdateLinuxNextLaunch
+            env:
+              PACKAGE_MANAGER_TO_TEST: yum
+          - id: rpm-yum-signing
+            stem: rpm
+            test_files: blackboxUpdateLinuxSignedManifest,blackboxUpdateLinuxKeyRotation
+            env:
+              PACKAGE_MANAGER_TO_TEST: yum
+          - id: rpm-rpm-update
+            stem: rpm
+            test_files: blackboxUpdateTest,linuxUpdaterTest,blackboxUpdateLinuxNextLaunch
+            env:
+              PACKAGE_MANAGER_TO_TEST: rpm
+          - id: rpm-rpm-signing
+            stem: rpm
+            test_files: blackboxUpdateLinuxSignedManifest,blackboxUpdateLinuxKeyRotation
+            env:
+              PACKAGE_MANAGER_TO_TEST: rpm
+          - id: rpm-install
+            stem: rpm
+            test_files: blackboxInstallTest
+          - id: appimage-install
+            stem: appimage
+            test_files: blackboxInstallTest
+            env:
+              RUN_APP_IMAGE_TEST: true
+          - id: appimage-update
+            stem: appimage
+            test_files: blackboxLinux__appimage
             env:
               RUN_APP_IMAGE_TEST: true
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -646,6 +694,8 @@ jobs:
         run: ./test/src/updater/test-specific-platforms.sh "$TEST_STEM" run
         env:
           TEST_STEM: ${{ matrix.test_config.stem }}
+          # empty → the script's default (every Linux e2e suite)
+          TEST_FILES: ${{ matrix.test_config.test_files || '' }}
           ADDITIONAL_DOCKER_ARGS: >-
             -e PACKAGE_MANAGER_TO_TEST=${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST || '' }}
             -e RUN_APP_IMAGE_TEST=${{ matrix.test_config.env.RUN_APP_IMAGE_TEST || false }}
@@ -656,7 +706,7 @@ jobs:
         if: always()
         uses: $/.github/actions/upload-test-artifacts
         with:
-          name: e2e-${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST || matrix.test_config.stem }}
+          name: e2e-${{ matrix.test_config.id }}
 
   # -------------------------
   # Merge Smart Cache Artifacts
@@ -669,14 +719,14 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - uses: $/.github/actions/pnpm
 
       - name: Download all smart cache artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: vitest-smart-cache-*
           path: smart-cache-artifacts
@@ -691,7 +741,7 @@ jobs:
 
       - name: Download all test report artifacts
         if: always()
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: vitest-report-*
           path: report-artifacts
@@ -728,7 +778,7 @@ jobs:
 
       - name: Upload combined test report
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: vitest-combined-report
           path: |
@@ -765,7 +815,7 @@ jobs:
           fi
 
       - name: Upload vitest smart cache artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: vitest-smart-cache-${{ env.VITEST_CACHE_REF }}

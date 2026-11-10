@@ -1,4 +1,4 @@
-import { Arch, debug, exec, Executables, statOrNull, use } from "builder-util"
+import { Arch, debug, escapeForXml, exec, Executables, statOrNull, use } from "builder-util"
 import { deepAssign, Nullish } from "builder-util-runtime"
 import { readdirSync } from "fs"
 import { readFile, unlink, writeFile } from "fs/promises"
@@ -105,6 +105,8 @@ export class PkgTarget extends Target {
       cwd: appOutDir,
     })
     await Promise.all([unlink(innerPackageFile), unlink(distInfoFile)])
+    // under forceCodeSigning, identity is never null here (see above)
+    await packager.helper.verifyInstallerPackage(artifactPath)
     await packager.helper.notarizeIfProvided(artifactPath)
     await packager.emitArtifactBuildCompleted({
       file: artifactPath,
@@ -173,13 +175,16 @@ export class PkgTarget extends Target {
     let distInfo = await readFile(distInfoFile, "utf-8")
 
     if (options.mustClose != null && options.mustClose.length !== 0) {
-      const startContent = `    <pkg-ref id="${this.packager.appInfo.id}">\n        <must-close>\n`
+      // productbuild names the component's pkg-ref after the app's CFBundleIdentifier (the filtered app id), so must-close
+      // has to attach to that id; the raw app id matches no package when filtering changes it (e.g. `_`, spaces, `&`)
+      const startContent = `    <pkg-ref id="${escapeForXml(this.packager.appInfo.macBundleIdentifier)}">\n        <must-close>\n`
       const endContent = "        </must-close>\n    </pkg-ref>\n</installer-gui-script>"
       let mustCloseContent = ""
       options.mustClose.forEach(appId => {
-        mustCloseContent += `            <app id="${appId}"/>\n`
+        mustCloseContent += `            <app id="${escapeForXml(appId)}"/>\n`
       })
-      distInfo = distInfo.replace("</installer-gui-script>", `${startContent}${mustCloseContent}${endContent}`)
+      // a function replacer, so `$` patterns in the inserted text are not expanded
+      distInfo = distInfo.replace("</installer-gui-script>", () => `${startContent}${mustCloseContent}${endContent}`)
     }
 
     // Must run before the insertion index is computed below: rewriting <options> changes the string length, and every
@@ -195,28 +200,29 @@ export class PkgTarget extends Target {
     if (options.background != null) {
       const background = await this.packager.getResource(options.background.file)
       if (background != null) {
+        const file = escapeForXml(background)
         const alignment = options.background.alignment || "center"
         // noinspection SpellCheckingInspection
         const scaling = options.background.scaling || "tofit"
-        distInfo = distInfo.substring(0, insertIndex) + `    <background file="${background}" alignment="${alignment}" scaling="${scaling}"/>\n` + distInfo.substring(insertIndex)
+        distInfo = distInfo.substring(0, insertIndex) + `    <background file="${file}" alignment="${alignment}" scaling="${scaling}"/>\n` + distInfo.substring(insertIndex)
         distInfo =
-          distInfo.substring(0, insertIndex) + `    <background-darkAqua file="${background}" alignment="${alignment}" scaling="${scaling}"/>\n` + distInfo.substring(insertIndex)
+          distInfo.substring(0, insertIndex) + `    <background-darkAqua file="${file}" alignment="${alignment}" scaling="${scaling}"/>\n` + distInfo.substring(insertIndex)
       }
     }
 
     const welcome = await this.packager.getResource(options.welcome)
     if (welcome != null) {
-      distInfo = distInfo.substring(0, insertIndex) + `    <welcome file="${welcome}"/>\n` + distInfo.substring(insertIndex)
+      distInfo = distInfo.substring(0, insertIndex) + `    <welcome file="${escapeForXml(welcome)}"/>\n` + distInfo.substring(insertIndex)
     }
 
     const license = await getNotLocalizedLicenseFile(options.license, this.packager)
     if (license != null) {
-      distInfo = distInfo.substring(0, insertIndex) + `    <license file="${license}"/>\n` + distInfo.substring(insertIndex)
+      distInfo = distInfo.substring(0, insertIndex) + `    <license file="${escapeForXml(license)}"/>\n` + distInfo.substring(insertIndex)
     }
 
     const conclusion = await this.packager.getResource(options.conclusion)
     if (conclusion != null) {
-      distInfo = distInfo.substring(0, insertIndex) + `    <conclusion file="${conclusion}"/>\n` + distInfo.substring(insertIndex)
+      distInfo = distInfo.substring(0, insertIndex) + `    <conclusion file="${escapeForXml(conclusion)}"/>\n` + distInfo.substring(insertIndex)
     }
 
     debug(distInfo)

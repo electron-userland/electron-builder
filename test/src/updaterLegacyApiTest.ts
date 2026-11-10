@@ -13,7 +13,7 @@ function createLogger() {
 /** Minimal stand-in exercising the accessor and normalizer without booting a real updater. */
 class FakeUpdater {
   autoInstallEvent: "manual" | "onQuit" | "onNextLaunch" = "onQuit"
-  _logger = createLogger()
+  logger = createLogger()
 
   get autoInstallOnAppQuit(): boolean {
     return this.autoInstallEvent === "onQuit"
@@ -21,7 +21,7 @@ class FakeUpdater {
 
   set autoInstallOnAppQuit(value: boolean) {
     const mapped = value ? "onQuit" : "manual"
-    this._logger.warn(`autoInstallOnAppQuit was removed in electron-updater 7 (electron-builder v27) — use autoInstallEvent instead. Mapping ${value} to "${mapped}".`)
+    this.logger.warn(`autoInstallOnAppQuit was removed in electron-updater 7 (electron-builder v27) — use autoInstallEvent instead. Mapping ${value} to "${mapped}".`)
     this.autoInstallEvent = mapped as any
   }
 }
@@ -33,7 +33,7 @@ describe("autoInstallOnAppQuit shim", () => {
     // Without the shim this assignment is a no-op and the app installs on quit anyway —
     // the exact opposite of what the caller asked for.
     expect(updater.autoInstallEvent).toBe("manual")
-    expect(updater._logger.warn).toHaveBeenCalledWith(expect.stringContaining("autoInstallEvent"))
+    expect(updater.logger.warn).toHaveBeenCalledWith(expect.stringContaining("autoInstallEvent"))
   })
 
   test("setting true maps to 'onQuit'", () => {

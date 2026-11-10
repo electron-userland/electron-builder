@@ -220,7 +220,7 @@ The app bundle is signed using the platform-native toolchain:
 | Windows | `signtool.exe` | EXE and DLL files |
 | Linux | _(no signing in this phase)_ | — |
 
-Notarization (macOS) runs here when `mac.notarize: true` is set.
+Notarization (macOS) runs here when notarization credentials are set (and `mac.notarize` is not `false`); with `mac.notarize: true` missing credentials fail the build.
 
 #### 🪝 `afterSign`
 
@@ -237,7 +237,7 @@ afterSign: async ({ outDir, appOutDir, packager, electronPlatformName, arch, tar
 ```
 
 :::tip[Built-in notarization]
-Use `mac.notarize: true` for standard notarization — electron-builder handles it automatically. Only reach for `afterSign` when you need a custom notarization flow. See [Notarization](/docs/features/code-signing/notarization).
+Standard notarization needs no hook — electron-builder notarizes automatically when the credentials are set (`mac.notarize: true` makes them required). Only reach for `afterSign` when you need a custom notarization flow. See [Notarization](/docs/features/code-signing/notarization).
 :::
 
 For a fully custom signing implementation (replacing the built-in signer):
@@ -252,6 +252,8 @@ win:
     sign: ./scripts/custom-sign.js
     publisherName: "CN=My Company, O=My Company, C=US"
 ```
+
+On macOS, a custom `mac.sign` signer is called even when no identity is found in the keychain (a remote or HSM signer needs none): `configuration.identity` is then not set, and the build logs that it calls the signer without an identity. A Mac App Store app is the exception: its installer needs a keychain identity, so without one the signer is not called and the build warns (with `forceCodeSigning` it is called, and the missing installer identity fails the build).
 
 On Windows, electron-builder cannot read the certificate a custom hook signs with, so set `win.sign.publisherName` to that certificate's subject — it is written to `app-update.yml` for update signature verification, and a build that writes `app-update.yml` fails without it. Copy it from a binary the hook already signed, as shown in [How do you delegate code signing?](../win.md#how-do-you-delegate-code-signing); every component you list must match exactly.
 

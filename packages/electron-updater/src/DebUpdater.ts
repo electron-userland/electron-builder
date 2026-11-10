@@ -1,10 +1,11 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter.js"
 import { DownloadUpdateOptions } from "./AppUpdater.js"
-import { InstallOptions } from "./BaseUpdater.js"
 import { findFile } from "./providers/Provider.js"
 import { DOWNLOAD_PROGRESS, Logger, DownloadExecutorResult } from "./types.js"
-import { LinuxUpdater } from "./LinuxUpdater.js"
+import { InstallPlan, isSupportedPackageManager, LinuxUpdater, runInstallPlan } from "./LinuxUpdater.js"
+
+const DEB_PACKAGE_MANAGERS = ["dpkg", "apt"] as const
 
 export class DebUpdater extends LinuxUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
@@ -21,35 +22,22 @@ export class DebUpdater extends LinuxUpdater {
       downloadUpdateOptions,
       task: async (updateFile, downloadOptions) => {
         if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
-          downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+          downloadOptions.onProgress = it => this.emitDownloadProgress(it)
         }
         await this.httpExecutor.download(fileInfo.url, updateFile, downloadOptions)
       },
     })
   }
 
-  protected doInstall(options: InstallOptions): boolean {
-    const installerPath = this.installerPath
-    if (installerPath == null) {
-      this.dispatchError(new Error("No update filepath provided, can't quit and install"))
-      return false
-    }
+  protected resolveInstallPlan(installerPath: string): InstallPlan {
     if (!this.hasCommand("dpkg") && !this.hasCommand("apt")) {
-      this.dispatchError(new Error("Neither dpkg nor apt command found. Cannot install .deb package."))
-      return false
+      throw new Error("Neither dpkg nor apt command found. Cannot install .deb package.")
     }
-    const priorityList = ["dpkg", "apt"]
-    const packageManager = this.detectPackageManager(priorityList)
-    try {
-      DebUpdater.installWithCommandRunner(packageManager as any, installerPath, this.runCommandWithSudoIfNeeded.bind(this), this._logger, this.allowUnverifiedLinuxPackages)
-    } catch (error: any) {
-      this.dispatchError(error)
-      return false
+    const packageManager = this.detectPackageManager([...DEB_PACKAGE_MANAGERS])
+    if (!isSupportedPackageManager(packageManager, DEB_PACKAGE_MANAGERS)) {
+      throw new Error(`Package manager ${packageManager} not supported`)
     }
-    if (options.isForceRunAfter) {
-      this.app.relaunch()
-    }
-    return true
+    return DebUpdater.planInstall(packageManager, installerPath, this.log, this.allowUnverifiedLinuxPackages)
   }
 
   static installWithCommandRunner(
@@ -59,40 +47,47 @@ export class DebUpdater extends LinuxUpdater {
     logger: Logger,
     allowUnverified = true
   ) {
+    runInstallPlan(DebUpdater.planInstall(packageManager, installerPath, logger, allowUnverified), commandRunner, logger)
+  }
+
+  static planInstall(packageManager: "dpkg" | "apt", installerPath: string, logger: Logger, allowUnverified = true): InstallPlan {
     if (packageManager === "dpkg") {
       if (!allowUnverified) {
         logger.warn(
           "allowUnverifiedLinuxPackages=false has no effect when installing with dpkg: dpkg performs no signature verification. Enforcing .deb signature verification requires a debsig-verify/debsigs policy on the target system."
         )
       }
-      try {
-        // Primary: Install .deb directly with dpkg (dpkg performs no signature verification regardless of allowUnverified)
-        commandRunner(["dpkg", "-i", installerPath])
-      } catch (error: any) {
-        // Handle missing dependencies via apt-get
-        logger.warn(error.message ?? error)
-        logger.warn("dpkg installation failed, trying to fix broken dependencies with apt-get")
-        commandRunner(["apt-get", "install", "-f", "-y"])
+      // dpkg performs no signature verification regardless of allowUnverified, and cannot resolve
+      // dependencies: apt-get repairs them when the install fails because of a missing one
+      return {
+        execCommand: ["dpkg", "-i", installerPath],
+        recoveryMessage: "dpkg installation failed, trying to fix broken dependencies with apt-get",
+        recoveryChain: [{ execCommand: ["apt-get", "install", "-f", "-y"] }],
       }
-    } else if (packageManager === "apt") {
+    }
+    if (packageManager === "apt") {
+      // apt checks no signature on a local .deb file: --allow-unauthenticated only affects dependencies it fetches from repositories
       if (allowUnverified) {
         logger.info(
-          "Installing a local .deb with apt; package signature verification is bypassed (allowUnverifiedLinuxPackages defaults to true since electron-builder does not sign Linux packages). Set it to false to enforce verification if you sign your packages."
+          "Installing a local .deb with apt; apt verifies no signature on a local .deb file, and dependencies from unauthenticated repositories are accepted (allowUnverifiedLinuxPackages=true). The package is checked only against the sha512 in the update manifest."
         )
       } else {
-        logger.info("Installing a local .deb with apt with package signature verification enforced (allowUnverifiedLinuxPackages=false).")
+        logger.warn(
+          "allowUnverifiedLinuxPackages=false does not verify the .deb itself when installing with apt: apt verifies no signature on a local .deb file and only refuses dependencies from unauthenticated repositories. Enforcing .deb signature verification requires a debsig-verify/debsigs policy on the target system."
+        )
       }
-      commandRunner([
-        "apt",
-        "install",
-        "-y",
-        ...(allowUnverified ? ["--allow-unauthenticated"] : []), // unsigned .debs only when explicitly opted in
-        "--allow-downgrades", // allow lower version installs
-        "--allow-change-held-packages",
-        installerPath,
-      ])
-    } else {
-      throw new Error(`Package manager ${packageManager} not supported`)
+      return {
+        execCommand: [
+          "apt",
+          "install",
+          "-y",
+          ...(allowUnverified ? ["--allow-unauthenticated"] : []), // accepts dependencies from unauthenticated repositories; the local .deb is not verified either way
+          "--allow-downgrades", // allow lower version installs
+          "--allow-change-held-packages",
+          installerPath,
+        ],
+      }
     }
+    throw new Error(`Package manager ${packageManager} not supported`)
   }
 }

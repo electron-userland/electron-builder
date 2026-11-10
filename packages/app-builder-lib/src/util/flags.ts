@@ -80,7 +80,7 @@ const REMOVED_ENV_VARS: Record<string, RemovedEnvVar> = {
   },
   LINUX_TOOLS_MAC_PATH: {
     controlled: "the linux-tools-mac bundle (ar, lzip, gtar) used when building Linux targets on macOS",
-    replacement: 'toolsets.linuxToolsMac: { url: "file:///path/to/linux-tools-mac-dir" }',
+    replacement: 'toolsets.archive: { url: "file:///path/to/archive-dir" }',
   },
   CUSTOM_FPM_PATH: {
     controlled: "the FPM executable",

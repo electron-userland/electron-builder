@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <style>
+  html,body{margin:0;background:#fff}
+  svg{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;font-size:15px;fill:#1f2937}
+  .t{font-size:22px;font-weight:700}.h{font-size:17px;font-weight:700}.s{font-size:13px;fill:#4b5563}
+  .m{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px}.lbl{font-size:13px;fill:#374151}.num{font-weight:700}
+</style>
+  <rect width="1600" height="900" fill="#ffffff"/>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/></marker>
+    <marker id="arrr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
+  </defs>
+  <text x="40" y="44" class="t">electron-updater with blockmap: "v3" — what goes over the wire for a one-line change</text>
+  <text x="40" y="70" class="s">Everything to the right of "reconstruct" is the existing differential pipeline, unchanged. Any failure before it falls back to a full download, as today.</text>
+
+  <!-- lanes -->
+  <rect x="40" y="96" width="330" height="560" rx="8" fill="#f9fafb" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="205" y="122" text-anchor="middle" class="lbl" font-weight="700">on the user's machine</text>
+  <rect x="1230" y="96" width="330" height="560" rx="8" fill="#f9fafb" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="1395" y="122" text-anchor="middle" class="lbl" font-weight="700">update server (static files, HTTP Range)</text>
+
+  <!-- local items -->
+  <rect x="60" y="140" width="290" height="44" rx="6" fill="#fff" stroke="#6b7280"/><text x="205" y="158" text-anchor="middle" class="lbl">previous installer.exe (cached)</text><text x="205" y="176" text-anchor="middle" class="s" style="font-size:12px">source of every COPY</text>
+  <rect x="60" y="196" width="290" height="44" rx="6" fill="#fff" stroke="#6b7280"/><text x="205" y="214" text-anchor="middle" class="lbl">current.blockmap (cached previous map, v3)</text><text x="205" y="232" text-anchor="middle" class="s" style="font-size:12px">group hashes + records of the previous release</text>
+  <!-- server items -->
+  <rect x="1250" y="140" width="290" height="44" rx="6" fill="#fff" stroke="#6b7280"/><text x="1395" y="158" text-anchor="middle" class="lbl">latest.yml — unchanged</text><text x="1395" y="176" text-anchor="middle" class="s" style="font-size:12px">the map URL is derived from the file URL</text>
+  <rect x="1250" y="196" width="290" height="44" rx="6" fill="#fff" stroke="#6b7280"/><text x="1395" y="214" text-anchor="middle" class="lbl">new installer.exe.blockmap (v3)</text><text x="1395" y="232" text-anchor="middle" class="s" style="font-size:12px">header · group table · records</text>
+  <rect x="1250" y="252" width="290" height="44" rx="6" fill="#fff" stroke="#6b7280"/><text x="1395" y="270" text-anchor="middle" class="lbl">new installer.exe</text><text x="1395" y="288" text-anchor="middle" class="s" style="font-size:12px">source of every DOWNLOAD range</text>
+
+  <!-- steps in the middle -->
+  <g>
+    <rect x="420" y="140" width="760" height="56" rx="8" fill="#f1f6fc" stroke="#1565c0" stroke-width="1.5"/>
+    <text x="436" y="163" class="lbl"><tspan class="num">1 · Range-GET the header + super-group table</tspan>  (size estimated from the cached map; 2–64 KiB, one request)</text>
+    <text x="436" y="184" class="s">32 MB asar / 38 super-groups of 741 groups → <tspan class="num">2.0 KB</tspan> (the 2 KiB floor; the super table is 0.6 KB)</text>
+    <path d="M1250,214 H1225 V168 H1182" fill="none" stroke="#1565c0" stroke-width="2" marker-end="url(#arr)"/>
+
+    <rect x="420" y="212" width="760" height="56" rx="8" fill="#f1f6fc" stroke="#1565c0" stroke-width="1.5"/>
+    <text x="436" y="235" class="lbl"><tspan class="num">2 · Match super-groups, then groups</tspan> against the cached map by (hash, counts)</text>
+    <text x="436" y="256" class="s">matched → copied from the local map, zero bytes on the wire · unmatched → fetch 1.0 KB of entries (4 super-groups)</text>
+    <path d="M350,218 H380 V240 H418" fill="none" stroke="#6b7280" stroke-width="2" marker-end="url(#arr)"/>
+
+    <rect x="420" y="284" width="760" height="56" rx="8" fill="#f1f6fc" stroke="#1565c0" stroke-width="1.5"/>
+    <text x="436" y="307" class="lbl"><tspan class="num">3 · Range-GET only the changed groups' records</tspan>  (adjacent groups coalesced; ≤ 200 ranges per multipart request)</text>
+    <text x="436" y="328" class="s">4 changed groups → <tspan class="num">1.8 KB</tspan> in 4 requests on GitHub/S3-class hosts (one request per range), 1 request elsewhere</text>
+    <path d="M1250,226 H1212 V312 H1182" fill="none" stroke="#1565c0" stroke-width="2" marker-end="url(#arr)"/>
+
+    <rect x="420" y="356" width="760" height="56" rx="8" fill="#ecfdf5" stroke="#16a34a" stroke-width="1.5"/>
+    <text x="436" y="379" class="lbl"><tspan class="num">4 · Reconstruct + verify</tspan>  header + supers + groups + records → every hash, length and count re-checked</text>
+    <text x="436" y="400" class="s">saved as pending/current.blockmap → the cache after a successful install · then <tspan class="m">toBlockMap()</tspan> → the v2 shape</text>
+
+    <rect x="420" y="428" width="760" height="56" rx="8" fill="#f3f4f6" stroke="#6b7280" stroke-width="1.5"/>
+    <text x="436" y="451" class="lbl"><tspan class="num">5 · computeOperations(old, new)</tspan> — existing planner + host-aware gap coalescing</text>
+    <text x="436" y="472" class="s">single-range hosts: gaps &lt; 8 KiB downloaded through (a range costs ~1–1.5 KB + 1 RTT); multipart hosts: &lt; 256 B</text>
+
+    <rect x="420" y="500" width="760" height="56" rx="8" fill="#f3f4f6" stroke="#6b7280" stroke-width="1.5"/>
+    <text x="436" y="523" class="lbl"><tspan class="num">6 · Download changed data ranges, copy the rest</tspan> — existing DifferentialDownloader, unchanged</text>
+    <text x="436" y="544" class="s">one-line change: <tspan class="num">2.4 KB</tspan> in 4 ranges (7z header = its own 442 B block) · final sha512 = integrity check</text>
+    <path d="M1250,274 H1200 V528 H1182" fill="none" stroke="#6b7280" stroke-width="2" marker-end="url(#arr)"/>
+    <path d="M350,162 H392 V528 H418" fill="none" stroke="#6b7280" stroke-width="2" marker-end="url(#arr)"/>
+
+    <!-- fallback -->
+    <rect x="420" y="580" width="760" height="60" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5"/>
+    <text x="436" y="603" class="lbl" fill="#991b1b"><tspan class="num">Any failure in 1–4 → full download, as today</tspan></text>
+    <text x="436" y="624" class="s">HTTP ≥ 400 · 416 · short body · multipart mismatch · parse/verification error · maps in different formats (once)</text>
+    <path d="M420,384 H406 V610 H418" fill="none" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#arrr)"/>
+  </g>
+
+  <!-- totals -->
+  <text x="40" y="700" class="h">Measured total on the wire (32 MB asar, 3,001 files; map + data + 120 B per request)</text>
+  <g>
+    <rect x="40" y="716" width="1520" height="28" fill="#f3f4f6" stroke="#d1d5db"/>
+    <g class="lbl" font-weight="700"><text x="56" y="735">variant</text><text x="560" y="735" text-anchor="end">v2 today (best)</text><text x="860" y="735" text-anchor="end">v3, asar 512 B–2 KiB</text><text x="1200" y="735" text-anchor="end">v3 + 512 B asar alignment</text></g>
+    <g class="lbl"><text x="56" y="765">one line changed, same length</text><text x="560" y="765" text-anchor="end">96 KB</text><text x="860" y="765" text-anchor="end" class="num" fill="#1258a8">9.1 KB</text><text x="1200" y="765" text-anchor="end" class="num" fill="#1258a8">8.6 KB</text></g>
+    <g class="lbl"><text x="56" y="791">one line changed, +7 bytes</text><text x="560" y="791" text-anchor="end">409 KB</text><text x="860" y="791" text-anchor="end">330 KB</text><text x="1200" y="791" text-anchor="end" class="num" fill="#1258a8">9.6 KB</text></g>
+    <g class="lbl"><text x="56" y="817">+600 B edit · new 2 KB file</text><text x="560" y="817" text-anchor="end">408–440 KB</text><text x="860" y="817" text-anchor="end">331–356 KB</text><text x="1200" y="817" text-anchor="end">333–357 KB</text></g>
+    <text x="1220" y="765" class="s" style="font-size:12px">map 4.9 KB + data 2.4 KB</text>
+    <text x="1220" y="791" class="s" style="font-size:12px">header stable (alignment), edit in its own blocks</text>
+    <text x="1220" y="817" class="s" style="font-size:12px">floor = asar JSON header (offsets shift)</text>
+  </g>
+  <text x="40" y="860" class="s">No cached map (fresh install, or a v2 cache): the new map and then the old one are downloaded whole (~10 B/block), then compared. Velopack's zstd deltas: 3.6–11 KB on the same edits; the gap is block granularity plus the map.</text>
+</svg>

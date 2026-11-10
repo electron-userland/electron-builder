@@ -3,11 +3,14 @@ import { downloadBuilderToolset, getCustomToolsetPath, resolveToolsetVersion } f
 import { InvalidConfigurationError } from "builder-util"
 
 // Newest squirrel.windows bundle — selected when `toolsets.squirrel` is unset / null / "latest".
-const SQUIRREL_LATEST = "1.1.1"
+const SQUIRREL_LATEST = "1.2.1"
 
 export const squirrelWindowsChecksums = {
   "1.1.1": {
     "squirrel.windows-2.0.1-patched.zip": "77cc2c451639c3b0bd68fde67111f726a236e6750d15f521c79e606fd7119e72",
+  },
+  "1.2.1": {
+    "squirrel.windows-2.0.1-patched.zip": "ff65e7383b20cc9224cc5e96b725b21115f0e99400943507e3aef79f64da2020",
   },
 } as const
 

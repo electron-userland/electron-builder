@@ -1,5 +1,6 @@
 import { SignOptions as MacSignOptions } from "@electron/osx-sign/dist/esm/types.js"
 import { Identity, DoPackOptions } from "app-builder-lib/internal"
+import { AuthenticodeSignerInfo } from "app-builder-lib/src/codeSign/win/authenticodeSignature"
 import { WinPackager, getArchSuffix, MacPackager } from "app-builder-lib"
 import { AsyncTaskManager } from "builder-util"
 import { DmgTarget } from "dmg-builder"
@@ -11,6 +12,12 @@ export class CheckingWinPackager extends WinPackager {
 
   constructor(info: Packager) {
     super(info)
+  }
+
+  // the custom sign hooks these tests use sign nothing: report every file signed, so that forceCodeSigning's read-back
+  // of signed files (which would rightly reject them) leaves the behavior under test alone
+  protected readAuthenticodeSignature(): Promise<AuthenticodeSignerInfo> {
+    return Promise.resolve({ type: "signed", subject: "CN=Test", status: 0 })
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {

@@ -1,7 +1,8 @@
-import { DataSplitter, PartListDataTask } from "electron-updater/src/differentialDownloader/DataSplitter"
+import { CancellationToken } from "builder-util-runtime"
+import { copyData, DataSplitter, PartListDataTask } from "electron-updater/src/differentialDownloader/DataSplitter"
 import { Operation, OperationKind } from "electron-updater/src/differentialDownloader/downloadPlanBuilder"
 import { executeTasksUsingMultipleRangeRequests } from "electron-updater/src/differentialDownloader/multipleRangeDownloader"
-import { closeSync, openSync, writeFileSync } from "fs"
+import fs, { closeSync, openSync, writeFileSync } from "fs"
 import { createServer, IncomingMessage, request as httpRequest, RequestOptions, Server, ServerResponse } from "http"
 import { AddressInfo } from "net"
 import * as path from "path"
@@ -151,6 +152,56 @@ describe("differential multipart download", () => {
     })
   }
 
+  // A copy runs after a part or a request ended, by which time a failure or a cancel may have destroyed the output and the
+  // downloader may be closing the old file: the copy must not start reading it.
+  test("a copy into a destroyed output stream does not read the old file and fails", async ({ expect, tmpDir }) => {
+    const oldFileFd = await openOldFile(tmpDir, oldFile)
+    const createReadStreamSpy = vi.spyOn(fs, "createReadStream")
+    const readSpy = vi.spyOn(fs, "read")
+    try {
+      const { out } = collector()
+      out.destroy()
+      const outcomes: Array<string> = []
+      copyData(
+        { kind: OperationKind.COPY, start: 0, end: 1024 },
+        out,
+        oldFileFd,
+        error => outcomes.push(`rejected: ${error.message}`),
+        () => outcomes.push("resolved")
+      )
+      // a read started anyway would have been issued by now
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      expect(outcomes).toEqual(["rejected: Cannot copy data: the output stream is destroyed"])
+      expect(createReadStreamSpy.mock.calls.filter(args => (args[1] as any)?.fd === oldFileFd)).toEqual([])
+      expect(readSpy.mock.calls.filter(args => args[0] === oldFileFd)).toEqual([])
+    } finally {
+      createReadStreamSpy.mockRestore()
+      readSpy.mockRestore()
+      closeSync(oldFileFd)
+    }
+  })
+
+  // A copy usually starts in the `end` listener of a response or of the previous copy, where a synchronous throw is an uncaught
+  // exception that also leaves the download pending: a range the old file cannot be read with rejects the copy.
+  test("a copy of an empty range rejects without throwing", async ({ expect, tmpDir }) => {
+    const oldFileFd = await openOldFile(tmpDir, oldFile)
+    try {
+      const { out } = collector()
+      const outcomes: Array<string> = []
+      copyData(
+        { kind: OperationKind.COPY, start: 1024, end: 1024 },
+        out,
+        oldFileFd,
+        error => outcomes.push(`rejected: ${(error as NodeJS.ErrnoException).code}`),
+        () => outcomes.push("resolved")
+      )
+      expect(outcomes).toEqual(["rejected: ERR_OUT_OF_RANGE"])
+    } finally {
+      closeSync(oldFileFd)
+    }
+  })
+
   describe("multiple batches", () => {
     let server: Server | null = null
 
@@ -167,7 +218,7 @@ describe("differential multipart download", () => {
     test("a finished batch does not fail a slower next batch", async ({ expect, tmpDir }) => {
       vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] })
 
-      // > 1000 operations => two range requests
+      // > 1000 operations and > 200 DOWNLOAD ranges => several range requests (MAX_RANGES_PER_REQUEST batches)
       const tasks = makeTasks(1200, 1200 * 6)
       const bigNewFile = patternBuffer(1200 * 6, 3)
       const bigOldFile = patternBuffer(1200 * 6, 4)
@@ -205,18 +256,21 @@ describe("differential multipart download", () => {
 
       const differentialDownloader: any = {
         fileMetadataBuffer: null,
-        options: { onProgress: undefined },
+        options: { onProgress: undefined, cancellationToken: new CancellationToken() },
         createRequestOptions: (): RequestOptions => ({ hostname: "127.0.0.1", port, path: "/new.bin", method: "GET", headers: {} }),
+        createRangeRequest: (options: RequestOptions, callback: (response: IncomingMessage) => void) => httpRequest(options, callback),
         httpExecutor: {
           createRequest: (options: RequestOptions, callback: (response: IncomingMessage) => void) => httpRequest(options, callback),
           addErrorAndTimeoutHandlers: (request: any, reject: (error: Error) => void) => request.on("error", reject),
+          // node:http answers a redirect with a 3xx response
+          addRedirectHandlers: () => {},
         },
       }
 
       const bigOldFileFd = await openOldFile(tmpDir, bigOldFile)
       try {
         const { out, data } = collector()
-        let failure: Error | null = null
+        let failure: unknown = null
         const finished = new Promise<void>(resolve => out.on("finish", resolve))
         executeTasksUsingMultipleRangeRequests(differentialDownloader, tasks, out, bigOldFileFd, error => {
           failure = error
@@ -232,6 +286,14 @@ describe("differential multipart download", () => {
         expect(failure).toBeNull()
 
         respond(1)
+        // answer every later batch as it arrives until the download finishes
+        for (let next = 2; ; next++) {
+          const outcome = await Promise.race([finished.then(() => "finished" as const), waitForRequest(next + 1).then(() => "request" as const)])
+          if (outcome === "finished") {
+            break
+          }
+          respond(next)
+        }
         await finished
         expect(failure).toBeNull()
         expect(data().equals(expectedOutput(tasks, bigOldFile, bigNewFile))).toBe(true)

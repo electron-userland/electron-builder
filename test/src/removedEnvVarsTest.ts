@@ -8,7 +8,7 @@ import { describe, expect, test, vi } from "vitest"
 /** Every variable v26 honored and v27 ignores, with the `toolsets` (or other) replacement it must name. */
 const REMOVED: Array<[name: string, expectedInMessage: string]> = [
   ["APPIMAGE_TOOLS_PATH", "toolsets.appimage"],
-  ["LINUX_TOOLS_MAC_PATH", "toolsets.linuxToolsMac"],
+  ["LINUX_TOOLS_MAC_PATH", "toolsets.archive"],
   ["CUSTOM_FPM_PATH", "toolsets.fpm"],
   ["USE_SYSTEM_FPM", "toolsets.fpm"],
   ["ELECTRON_BUILDER_NSIS_DIR", "toolsets.nsis"],

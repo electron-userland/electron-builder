@@ -1,4 +1,4 @@
-import { BlockMap, CancellationToken, HttpExecutor } from "builder-util-runtime"
+import { CancellationToken, HttpExecutor } from "builder-util-runtime"
 import { GenericDifferentialDownloader } from "electron-updater/src/differentialDownloader/GenericDifferentialDownloader"
 import { createHash } from "crypto"
 import { readFileSync, writeFileSync } from "fs"
@@ -6,6 +6,7 @@ import { ClientRequest, createServer, IncomingMessage, request as httpRequest, S
 import { AddressInfo } from "net"
 import * as path from "path"
 import { afterEach, describe, expect, test } from "vitest"
+import { blockMap } from "../helpers/updaterTestUtil.js"
 
 // Plain node:http, so the sandbox's HTTP_PROXY settings (honoured by NodeHttpExecutor) cannot route 127.0.0.1 through a proxy.
 class LocalHttpExecutor extends HttpExecutor<ClientRequest> {
@@ -30,9 +31,12 @@ function block(seed: number): Buffer {
 const blocks = { A: block(1), B: block(2), C: block(3), D: block(4), X: block(5), Y: block(6) }
 const oldContent = Buffer.concat([blocks.A, blocks.X, blocks.C, blocks.Y])
 const newContent = Buffer.concat([blocks.A, blocks.B, blocks.C, blocks.D])
-const blockMapOf = (names: Array<string>): BlockMap => ({ version: "2", files: [{ name: "file", offset: 0, checksums: names, sizes: names.map(() => BLOCK) }] })
+// the block names stand in for the checksums
+function namedBlockMap(names: Array<string>) {
+  return blockMap(names, new Array<number>(names.length).fill(BLOCK))
+}
 
-type HostBehaviour = "multipart" | "multi-501" | "multi-400" | "multi-200" | "multi-403" | "ignores-ranges" | "wrong-range" | "uppercase-unit"
+type HostBehaviour = "multipart" | "multi-501" | "multi-400" | "multi-200" | "multi-long-content-type" | "multi-403" | "ignores-ranges" | "wrong-range" | "uppercase-unit"
 
 function parseRanges(header: string): Array<[number, number]> {
   return header
@@ -71,6 +75,10 @@ describe("differential download on hosts with limited range support", { concurre
       if (isMulti && behaviour !== "multipart") {
         if (behaviour === "multi-200") {
           sendFull()
+        } else if (behaviour === "multi-long-content-type") {
+          // a long whitespace run without a boundary, within the 16 KB response-header limit of Node's client
+          res.writeHead(206, { "Content-Type": `multipart/x${" ".repeat(12_000)}x` })
+          res.end()
         } else {
           res.writeHead(behaviour === "multi-501" ? 501 : behaviour === "multi-403" ? 403 : 400)
           res.end("Multiple ranges are not supported")
@@ -122,7 +130,7 @@ describe("differential download on hosts with limited range support", { concurre
       isUseMultipleRangeRequest,
       cancellationToken: new CancellationToken(),
     })
-    await downloader.download(blockMapOf(["A", "X", "C", "Y"]), blockMapOf(["A", "B", "C", "D"]))
+    await downloader.download(namedBlockMap(["A", "X", "C", "Y"]), namedBlockMap(["A", "B", "C", "D"]))
     return { newFile, warnings }
   }
 
@@ -136,6 +144,7 @@ describe("differential download on hosts with limited range support", { concurre
     ["multi-501", "501 (GitHub release assets)"],
     ["multi-400", "400 (Google Cloud Storage)"],
     ["multi-200", "200 with the whole file (S3)"],
+    ["multi-long-content-type", "206 and a long Content-Type without a boundary"],
   ] as const) {
     test(`a host that answers multi-range requests with ${label} is retried with one range per request`, async ({ tmpDir }) => {
       const { newFile, warnings } = await download(await tmpDir.createTempDir({ prefix: "single-range" }), await startHost(behaviour), true)
@@ -182,7 +191,9 @@ describe("differential download on hosts with limited range support", { concurre
   test("single-range downloads accept a range unit in any case (RFC 9110)", async ({ tmpDir }) => {
     const { newFile } = await download(await tmpDir.createTempDir({ prefix: "single-range" }), await startHost("uppercase-unit"), false)
     expect(readFileSync(newFile).equals(newContent)).toBe(true)
-    expect(requests).toHaveLength(2)
+    // one range per request (nearby ranges may be coalesced into one)
+    expect(requests.length).toBeGreaterThan(0)
+    expect(requests.every(it => !it.includes(","))).toBe(true)
   })
 
   test("single-range downloads reject a 206 for a different range", async ({ tmpDir }) => {

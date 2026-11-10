@@ -10,7 +10,9 @@ import { createSelfSignedCert } from "./create-self-signed-cert.js"
 import { createUpdateKey } from "./create-update-key.js"
 import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps.js"
 import { configureMigrateSchemaCommand, migrateSchema } from "./migrate-schema.js"
+import { configureSignUpdateManifestCommand, SIGN_UPDATE_MANIFEST_COMMAND, signUpdateManifest, signUpdateManifestOptionsFromArgs } from "./sign-update-manifest.js"
 import { start } from "./start.js"
+import { configureVerifyCommand, verify } from "./verify.js"
 
 // tslint:disable:no-unused-expression
 void createYargs()
@@ -56,7 +58,14 @@ void createYargs()
       }),
     wrap(argv => createUpdateKey(argv.out))
   )
+  .command(
+    SIGN_UPDATE_MANIFEST_COMMAND,
+    "Re-sign edited auto-update manifests (latest*.yml) in place, or verify them",
+    configureSignUpdateManifestCommand,
+    wrap(argv => signUpdateManifest(signUpdateManifestOptionsFromArgs(argv)))
+  )
   .command("migrate-schema", "Migrate build config from v26 to v27 format", configureMigrateSchemaCommand, wrap(migrateSchema))
+  .command("verify [dir]", "Verify code signatures, notarization and update-manifest signatures of built artifacts", configureVerifyCommand, wrap(verify))
   .help()
   .epilog(`See ${chalk.underline("https://electron.build")} for more documentation.`)
   .strict()

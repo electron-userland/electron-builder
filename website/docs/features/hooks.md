@@ -136,7 +136,7 @@ afterSign: async (context) => {
 ```
 
 :::tip[Notarization]
-electron-builder has built-in notarization support via `mac.notarize: true`. Only use `afterSign` for notarization if you need a custom notarization workflow. See [Notarization](/docs/features/code-signing/notarization).
+electron-builder has built-in notarization support: it notarizes whenever notarization credentials are set (`mac.notarize: true` makes them required). Only use `afterSign` for notarization if you need a custom notarization workflow. See [Notarization](/docs/features/code-signing/notarization).
 :::
 
 ### `artifactBuildStarted`

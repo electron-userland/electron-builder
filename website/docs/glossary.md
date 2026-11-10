@@ -110,7 +110,7 @@ Quick reference for terms used throughout the electron-builder documentation.
 ## N
 
 **Notarization**
-: Apple's service that scans your app for malware and issues a cryptographic ticket confirming the scan. Required for distributing apps outside the Mac App Store on macOS 10.15+. electron-builder handles notarization automatically when `mac.notarize: true`. See [Notarization](notarization.md).
+: Apple's service that scans your app for malware and issues a cryptographic ticket confirming the scan. Required for distributing apps outside the Mac App Store on macOS 10.15+. electron-builder notarizes automatically when notarization credentials are set (`mac.notarize: true` makes them required). See [Notarization](notarization.md).
 
 **NSIS (Nullsoft Scriptable Install System)**
 : The Windows installer framework used by electron-builder's `nsis` and `nsis-web` targets. Produces highly customizable `.exe` installers. The default Windows target. See [NSIS](nsis.md).

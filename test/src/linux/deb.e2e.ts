@@ -1,6 +1,6 @@
 import { Arch, Platform } from "electron-builder"
 import * as fs from "fs/promises"
-import { app, execShell, getArExecutable, getTarExecutable, resolveDebMember } from "../helpers/packTester"
+import { app, extractDebMember, resolveDebMember } from "../helpers/packTester"
 
 const defaultDebTarget = Platform.LINUX.createTarget("deb", Arch.x64)
 
@@ -76,11 +76,7 @@ describe.heavy.ifNotWindows("deb", () => {
         packed: async context => {
           const debPath = `${context.outDir}/TestApp_1.1.0_amd64.deb`
           const { member: controlMember, tarArgs: controlArgs } = await resolveDebMember(debPath, "control.tar.")
-          const postinst = (
-            await execShell(`'${await getArExecutable()}' p '${debPath}' ${controlMember} | '${await getTarExecutable()}' -x ${controlArgs} --to-stdout ./postinst`, {
-              maxBuffer: 10 * 1024 * 1024,
-            })
-          ).stdout
+          const postinst = await extractDebMember(debPath, controlMember, ["-x", ...controlArgs, "--to-stdout", "./postinst"])
           expect(postinst.trim()).toMatchSnapshot()
         },
       }
@@ -104,11 +100,7 @@ describe.heavy.ifNotWindows("deb", () => {
         packed: async context => {
           const debPath = `${context.outDir}/TestApp_1.1.0_amd64.deb`
           const { member: controlMember, tarArgs: controlArgs } = await resolveDebMember(debPath, "control.tar.")
-          const postrm = (
-            await execShell(`'${await getArExecutable()}' p '${debPath}' ${controlMember} | '${await getTarExecutable()}' -x ${controlArgs} --to-stdout ./postrm`, {
-              maxBuffer: 10 * 1024 * 1024,
-            })
-          ).stdout
+          const postrm = await extractDebMember(debPath, controlMember, ["-x", ...controlArgs, "--to-stdout", "./postrm"])
           expect(postrm.trim()).toMatchSnapshot()
           // The path passed to --remove must be the registered alternative binary (/opt/…),
           // not the generic symlink (/usr/bin/…).
@@ -137,14 +129,7 @@ describe.heavy.ifNotWindows("deb", () => {
         packed: async context => {
           const debPath = `${context.outDir}/TestApp_1.1.0_amd64.deb`
           const { member: dataMember, tarArgs: dataArgs } = await resolveDebMember(debPath, "data.tar.")
-          const mime = (
-            await execShell(
-              `'${await getArExecutable()}' p '${debPath}' ${dataMember} | '${await getTarExecutable()}' -x ${dataArgs} --to-stdout './usr/share/mime/packages/testapp.xml'`,
-              {
-                maxBuffer: 10 * 1024 * 1024,
-              }
-            )
-          ).stdout
+          const mime = await extractDebMember(debPath, dataMember, ["-x", ...dataArgs, "--to-stdout", "./usr/share/mime/packages/testapp.xml"])
           expect(mime.trim()).toMatchSnapshot()
         },
       }

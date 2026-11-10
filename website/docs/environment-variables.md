@@ -220,7 +220,7 @@ The environment variables that pointed electron-builder at custom build-tool bun
 | `USE_SYSTEM_OSSLSIGNCODE` | Forced host `osslsigncode`. |
 | `USE_SYSTEM_FPM` | Forced host-installed `fpm`. |
 | `APPIMAGE_TOOLS_PATH` | AppImage build tools (`mksquashfs`, runtime). |
-| `LINUX_TOOLS_MAC_PATH` | Linux-tools-mac bundle (`ar`, `lzip`, `gtar`). |
+| `LINUX_TOOLS_MAC_PATH` | Linux-tools-mac bundle (`ar`, `lzip`, `gtar`). Replaced by `toolsets.archive`. |
 | `CUSTOM_FPM_PATH` | FPM executable. |
 | `ELECTRON_BUILDER_NSIS_DIR` | NSIS compiler bundle directory. |
 | `ELECTRON_BUILDER_NSIS_RESOURCES_DIR` | NSIS resources/plugins directory. |

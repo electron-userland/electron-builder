@@ -20,7 +20,7 @@ DEBUG=electron-builder electron-builder build
 : Renew the certificate in Apple Developer portal, re-export it, and update your CI secrets.
 
 **Build produces unsigned output without an error**
-: `CSC_LINK` isn't set, so electron-builder silently skips signing. Set `forceCodeSigning: true` to turn this into a build failure so you catch it early.
+: `CSC_LINK` isn't set, so electron-builder silently skips signing. Set `forceCodeSigning: true` to turn this — and skipped notarization or update-manifest signing — into a build failure so you catch it early, and run [`electron-builder verify`](./cli.md#verify) to check a build's output.
 
 **"Keychain not unlocked" / codesign hangs**
 : Verify `CSC_LINK` and `CSC_KEY_PASSWORD` are set correctly — electron-builder creates a temporary keychain and runs all required setup commands, including `set-key-partition-list`, automatically. If using a manually managed keychain (via `CSC_KEYCHAIN`), ensure you run `security set-key-partition-list -S apple-tool:,apple: -s -k <password> <keychain>` after importing.
@@ -118,7 +118,13 @@ asar:
 : electron-builder generates `latest.yml` (Windows), `latest-mac.yml` (macOS), or `latest-linux.yml` only when publishing. Ensure you ran `--publish always` (or `--publish onTagOrDraft`) when building the release.
 
 **"sha512 checksum mismatch"**
-: The downloaded update file is corrupt or the wrong file is being served. Verify that the artifact and the `.yml` metadata file were generated together in the same build and not mixed from different builds. As of electron-builder 27, the manifest `sha512` should be base64-encoded — a 128-hex-character "expected" value in the error message is the tell that a hand-rolled manifest still uses hex, which is accepted but deprecated in v27 and will be removed in v28; convert it with `sha512sum file.ext | cut -d' ' -f1 | xxd -r -p | base64 -w0`.
+: The downloaded update file is corrupt or the wrong file is being served. Verify that the artifact and the `.yml` metadata file were generated together in the same build and not mixed from different builds. The manifest `sha512` should be base64-encoded — a 128-hex-character "expected" value in the error message is the tell that a hand-rolled manifest uses hex, which is accepted but deprecated, and is planned to be removed in v28; convert it with `sha512sum file.ext | cut -d' ' -f1 | xxd -r -p | base64 -w0`.
+
+**401/403 or a failed download after the update host or CDN changed its redirects**
+: A redirect to a new origin gets only the headers [`autoUpdater.crossOriginHeaders`](./features/auto-update.md#crossoriginheaders) keeps for it. Log the hops the callback receives, allow specific headers only for trusted origins (`hop.to.origin`), and test against a staging feed before rollout. See [When the update host changes its redirects](./features/auto-update.md#cross-origin-host-changes).
+
+**`ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED`: "The download is larger than the … bytes declared for it"**
+: The server sent more bytes than the `size` that `latest*.yml` declares for the file, so electron-updater stopped the download. As with a checksum mismatch, the artifact and the `.yml` were not generated together, or the file was changed after the `.yml` was written. Publish the `.yml` generated with the file. See [Full downloads stop at the declared size](./migration/v27-runtime-changes.md#full-downloads-stop-at-the-declared-size).
 
 **Delta updates (AppImage / NSIS-Web) fail**
 : For AppImage delta updates, electron-builder embeds a blockmap directly in the AppImage binary — no separate file needs to be published. If delta updates aren't working, verify the AppImage was built with electron-builder and that a publish provider is configured. For NSIS differential packages, `nsis.differentialPackage` must not be `false` (any other value — `true`, `"compressed"`, `"store-asar"`, or unset — builds a differential-aware package; `"store-asar"` additionally stores `resources/app.asar` uncompressed so app-code deltas stay proportional to what changed).
@@ -194,20 +200,20 @@ flatpak:
 See [Building in unprivileged containers](flatpak.md#building-in-unprivileged-containers) for what the two arguments do and what such a container cannot build, [Building Flatpak Bundles in CI and Containers](tutorials/flatpak-in-ci-and-containers.md) for an image to build in, and [Flatpak → Troubleshooting](flatpak.md#troubleshooting) for other Flatpak errors.
 
 **Snap confinement issues: permission denied at runtime**
-: The snap is trying to access something not declared in its interface plugs. Run `snap run --shell myapp` to get a shell inside the snap, then test access. Add the appropriate plug to `snap.plugs` in your config.
+: The snap is trying to access something not declared in its interface plugs. Run `snap run --shell myapp` to get a shell inside the snap, then test access. Add the appropriate plug to `snapcraft.<base>.plugs` in your config (for example `snapcraft.core24.plugs`), see [Snap → Plugs](snap.md#plugs).
 
 ---
 
 ## macOS-Specific
 
 **DMG window layout doesn't look right**
-: DMG window positions are set by the macOS system and can behave unexpectedly if the dimensions in `dmg.window.size` don't match the `contents` positions. Ensure icon positions fit within the window bounds with some padding. Test by opening the built DMG manually.
+: DMG window positions are set by the macOS system and can behave unexpectedly if `dmg.window.width` and `dmg.window.height` don't match the `contents` positions. Ensure icon positions fit within the window bounds with some padding. Test by opening the built DMG manually.
 
 **"App is damaged and can't be opened"**
 : Usually means the app was downloaded without Gatekeeper quarantine being cleared, and notarization failed or wasn't performed. Run `xattr -dr com.apple.quarantine /path/to/app` temporarily during testing. Ensure notarization succeeds before distributing.
 
 **PKG installer fails: "The package … is not compatible with this version of macOS"**
-: Check `pkg.minVersion` matches your actual minimum supported macOS version.
+: The `.pkg` takes its minimum macOS version from `mac.minimumSystemVersion`. Check it matches your actual minimum supported macOS version.
 
 **App exits at launch with "Failed to get integrity for validatable asar archive"**
 : With the `enableEmbeddedAsarIntegrityValidation` fuse, Electron looks up the archive in the `ElectronAsarIntegrity` entries of `Info.plist`, and with Electron 41+ first checks those entries against the digest electron-builder embedded into the Electron Framework after the `afterPack` hook. This message means it found no valid entry: `Info.plist` was changed after the digest was embedded, or it has no entry for the archive (as with `asar.disableIntegrity: true`). Change `Info.plist` in `afterPack` at the latest, or set `mac.asarIntegrityDigest: false` if it has to change later. A modified `app.asar` whose hash was not updated fails with "Integrity check failed for asar archive" instead: electron-builder computes the hashes before `afterPack`, so changing `app.asar` in `afterPack` or later also means updating its hash in `Info.plist`.

@@ -183,9 +183,20 @@ jobs:
 forceCodeSigning: true
 ```
 
-When `true`, the build **fails** if no valid signing identity can be found. Use this in CI to catch misconfigured secrets early rather than shipping an unsigned build.
+When `true`, the build **fails** whenever a signing step could not run, and checks what the signing steps produced. Use this in release pipelines to catch misconfigured secrets early rather than shipping an unsigned, unnotarized build, or one with unsigned update manifests.
 
 Without this option, electron-builder proceeds without signing if no credentials are provided — which can result in silently unsigned production builds.
+
+What it enforces:
+
+- **Code signing** — the build fails when no valid signing identity or certificate is found. On macOS signing needs a macOS host, and a pull-request build (where electron-builder skips signing unless `CSC_FOR_PULL_REQUEST=true`) fails too: pass `-c.forceCodeSigning=false` to builds that cannot sign. A prepackaged app, which electron-builder does not sign, must already be signed.
+- **Notarization (macOS)** — the notarization credentials must be set when the build starts, or it fails before anything is packed. After notarizing, `stapler validate` checks the stapled ticket. See [Notarization](notarization.md).
+- **Update manifests** — `latest*.yml` must be signed, also by a build that does not publish (on Linux this is the only effect). See [Signed Update Manifests](../signed-update-manifests.md).
+- **Verification** — every Windows file reported as signed is read back and must carry a valid Authenticode signature; the output of a custom `mac.sign` signer must pass `codesign --verify --deep --strict`; signed `pkg` installers must pass `pkgutil --check-signature`; a DMG with `dmg.sign: true` must be signed. Any valid signature counts, including ad-hoc and self-signed ones. These tools (`codesign`, `stapler`, `pkgutil`, and Windows PowerShell for `Get-AuthenticodeSignature`) are started by absolute path, from [`toolsets.executables`](../../toolsets.md#executables) or their default locations, never from `PATH`.
+
+Explicit opt-outs are honored, with a warning: `mac.notarize: false`, `updateManifest: false`, `win.signExts` exclusions and a custom `nsis.script`. `win.sign: false` and `mac.sign: null` contradict `forceCodeSigning` and fail the build.
+
+A platform-level value (`mac.forceCodeSigning`, `win.forceCodeSigning`, `linux.forceCodeSigning`) overrides the root one. Mac App Store targets cascade `mac` → `mas` → `masDev` like every other option, so `mas.forceCodeSigning` and `masDev.forceCodeSigning` apply to the `mas` / `mas-dev` targets only (for example `mas.forceCodeSigning: false` with `mac.forceCodeSigning: true` signs the MAS app without enforcing it). To check a finished build — for example artifacts downloaded from CI — run [`electron-builder verify`](../../cli.md#verify).
 
 ## Platform-Specific Guides
 
@@ -215,4 +226,4 @@ Without this option, electron-builder proceeds without signing if no credentials
 : Some signing tools require elevated permissions. Run from an elevated prompt or check CI runner permissions.
 
 **Build fails silently with unsigned output**
-: Set `forceCodeSigning: true` to convert missing signing credentials from a silent warning into a build failure.
+: Set `forceCodeSigning: true` to convert missing signing credentials — and skipped notarization or update-manifest signing — from a warning into a build failure, and run [`electron-builder verify`](../../cli.md#verify) to check a build's output.

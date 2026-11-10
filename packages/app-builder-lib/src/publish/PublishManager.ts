@@ -22,11 +22,14 @@ import {
   githubTagPrefix,
   githubUrl,
   GitlabOptions,
+  isLoopbackHostname,
+  isValidMaxUpdateInfoSize,
   KeygenOptions,
   normalizePublicKeyList,
   Nullish,
   PublishConfiguration,
   PublishProvider,
+  S3Options,
   SnapStoreOptions,
 } from "builder-util-runtime"
 import type { KeyObject } from "crypto"
@@ -56,12 +59,13 @@ import { AppInfo } from "../appInfo.js"
 import { Configuration } from "../configuration.js"
 import { Platform, Target, TargetSpecificOptions } from "../core.js"
 import { ArtifactCreated, PlannedTargets } from "../packagerApi.js"
-import { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
+import { PlatformSpecificBuildOptions, UpdateManifestSigningOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { Packager } from "../packager.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { missingUpdatePublisherNameError, validatePublisherNameFormat } from "../codeSign/win/publisherName.js"
 import { WinPackager } from "../winPackager.js"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
+import { findUpdaterSettingsMentions, UpdaterSettingsMentions, warnAboutUpdaterSettings } from "./updaterSettingsCheck.js"
 import { resolveModule } from "../util/resolve.js"
 import { parseUrl } from "../util/pathManager.js"
 import { isPublishForPullRequest } from "../util/flags.js"
@@ -86,10 +90,11 @@ function checkOptions(publishPolicy: any) {
 }
 
 /**
- * electron-updater 7 adds the query string of a generic feed url (typically a token), like the credential headers, only to
- * downloads on the feed's origin. An app whose latest*.yml points downloads at another origin that relies on that query gets
- * 401/403 at update time, inside a shipped app, with nothing at build time saying why — `migrate-schema` prints the same advisory,
- * but cannot be relied on to have been run. Only the query parameter names are logged, never the url or the values.
+ * electron-updater adds the query string of a generic feed url (typically a token) only to requests on the feed's origin, and sends
+ * another origin only the request headers the app's `autoUpdater.crossOriginHeaders` keeps. An app whose latest*.yml points downloads at
+ * another origin that relies on that query gets 401/403 at update time, inside a shipped app, with nothing at build time saying why —
+ * `migrate-schema` prints a similar advisory, but cannot be relied on to have been run. Only the query parameter names are logged,
+ * never the url or the values.
  *
  * @internal exported for tests
  */
@@ -104,13 +109,63 @@ export function warnAboutGenericFeedQuery(publishConfig: PublishConfiguration): 
   log.once(`generic-feed-query:${url!.slice(0, queryStart)}`).warn(
     {
       queryParameters: queryParameters.length === 0 ? "(none)" : queryParameters.join(", "),
-      solution: "serve the update files from the feed origin (relative files[].url, the default) or use pre-signed URLs",
+      solution:
+        "serve the update files from the feed origin (relative files[].url, the default), use pre-signed URLs, or send the credential as a request header " +
+        "(requestHeaders / addAuthHeader) that the app's autoUpdater.crossOriginHeaders keeps for the origin that needs it",
     },
-    "the generic publish url has a query string. electron-updater 7 (electron-builder v27) adds it, and sends the credential headers from requestHeaders / addAuthHeader, " +
-      "only to downloads on the feed's origin (scheme, host and port): a download url in latest*.yml on another origin is requested without them. " +
-      "Nothing changes for the relative URLs electron-builder writes. " +
+    "the generic publish url has a query string. electron-updater adds the feed url's query string only to requests on the feed's origin (scheme, host and port), " +
+      "such as the channel file and the relative download URLs electron-builder writes: a URL on another origin, such as an absolute download url in latest*.yml, " +
+      "keeps its own query string and is requested without the feed's. The request headers from requestHeaders / addAuthHeader go to every request on the feed's origin, " +
+      "and to a request or redirect to another origin only the ones the app's autoUpdater.crossOriginHeaders keeps for it. " +
       "See https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
   )
+}
+
+/**
+ * electron-updater rejects an update request over plain http to a host that is not loopback (`ERR_UPDATER_INSECURE_FEED`) unless
+ * the app sets `allowInsecureFeed`: a feed in app-update.yml that uses http (a generic or custom `url`, a github `protocol: "http"`,
+ * an s3 `endpoint`) fails every update check of the shipped app. The build succeeds (the app may opt in); only the feed origin
+ * is logged, never its path, query or user info.
+ *
+ * @internal exported for tests
+ */
+export function warnAboutInsecureFeed(publishConfig: PublishConfiguration): void {
+  let url: unknown
+  if (publishConfig.provider === "generic" || publishConfig.provider === "custom") {
+    url = (publishConfig as GenericServerOptions).url
+  } else if (publishConfig.provider === "github") {
+    // electron-updater requests the release feed and the GitHub API with this protocol
+    const options = publishConfig as GithubOptions
+    url = options.protocol === "http" ? githubUrl(options) : null
+  } else if (publishConfig.provider === "s3") {
+    // electron-updater reads the bucket through the endpoint, unless accelerate selects the (https) accelerated endpoint
+    const options = publishConfig as S3Options
+    url = options.accelerate === true ? null : options.endpoint
+  } else {
+    return
+  }
+  if (typeof url !== "string") {
+    return
+  }
+  let feed: URL
+  try {
+    feed = new URL(url)
+  } catch {
+    return
+  }
+  if (feed.protocol !== "http:" || isLoopbackHostname(feed.hostname)) {
+    return
+  }
+  const origin = `${feed.protocol}//${feed.host}`
+  // once per feed origin per process — app-update.yml is written for every pack
+  log
+    .once(`insecure-feed:${origin}`)
+    .warn(
+      { feed: origin, solution: "serve the updates over https; for a test server, set autoUpdater.allowInsecureFeed = !app.isPackaged in the app (dev runs only)" },
+      "the update feed written to app-update.yml uses plain http. electron-updater rejects every update request over http to a host " +
+        "that is not loopback (localhost, 127.0.0.0/8, ::1) with ERR_UPDATER_INSECURE_FEED, unless the app sets autoUpdater.allowInsecureFeed (meant for dev runs: autoUpdater.allowInsecureFeed = !app.isPackaged). " +
+        "See https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https"
+    )
 }
 
 /**
@@ -152,6 +207,12 @@ export class PublishManager implements PublishContext {
   readonly progress = (process.stdout as TtyWriteStream).isTTY ? new MultiProgress() : null
 
   private readonly updateFileWriteTask: Array<UpdateInfoFileTask> = []
+
+  /**
+   * The scan of the first packed app of each platform of this build that ships app-update.yml and needs one, not one per arch: the archs
+   * of a platform ship the same app code, but platforms may not (platform-level `files`). The warnings themselves are once per process.
+   */
+  private readonly updaterSettingsScans = new Map<Platform, Promise<UpdaterSettingsMentions | null>>()
 
   constructor(
     private readonly packager: Packager,
@@ -203,13 +264,22 @@ export class PublishManager implements PublishContext {
       // otherwise) only applies when a target emits a manifest - the same per-target resolution as the build-start
       // preflight. A snap-, flatpak- or mas-only pack has none (Linux and mas are not filtered above), nor has an
       // installer whose target-level `publish` is `null` or waived.
-      const { publishConfigs, emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, event.targets, event.arch, this.isPublish)
+      const { publishConfigs, emitsManifest, manifestTargetNames } = await resolvePackAppUpdatePublishConfigs(packager, event.targets, event.arch, this.isPublish)
       if (emitsManifest) {
         await packager.requireUpdateSigningKeys(this.isPublish)
       }
       const publishConfig = await createAppUpdateConfiguration(packager, publishConfigs, this.isPublish, false)
       if (publishConfig != null) {
-        await writeAppUpdateYaml(packager.getResourcesDir(event.appOutDir), publishConfig, event.appOutDir)
+        const resourcesDir = packager.getResourcesDir(event.appOutDir)
+        await writeAppUpdateYaml(resourcesDir, publishConfig, event.appOutDir)
+        await warnAboutUpdaterSettings(this.packager, manifestTargetNames.includes("rpm"), () => {
+          let scan = this.updaterSettingsScans.get(packager.platform)
+          if (scan == null) {
+            scan = findUpdaterSettingsMentions(resourcesDir)
+            this.updaterSettingsScans.set(packager.platform, scan)
+          }
+          return scan
+        })
       }
     })
 
@@ -234,19 +304,23 @@ export class PublishManager implements PublishContext {
    * none, `publishAutoUpdate: false` on every provider waives it - which stays in place for targets that do not
    * declare `writesUpdateInfo`. Each planned platform x arch is one pack, so targets of a pack that disagree about the
    * app-update.yml feed fail here too, before anything is packed (also for a prepackaged app, which has no afterPack).
+   *
+   * A build that does not publish (no publish policy, `never`, or a pull-request build) is checked only for the
+   * platforms with `forceCodeSigning`, which requires signed manifests either way (see requireUpdateSigningKeys).
    */
   private async requireSigningKeysForPlannedTargets(plan: ReadonlyArray<PlannedTargets>): Promise<void> {
-    if (!this.isPublish) {
-      return
-    }
     for (const { packager, arch, targets } of plan) {
+      if (!this.isPublish && !packager.forceCodeSigning) {
+        continue
+      }
       // resolving publish configs is async: a build cancelled meanwhile stops instead of failing on a missing key
       if (this.cancellationToken.cancelled) {
         return
       }
-      const { emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, targets, arch, true)
+      const { emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, targets, arch, this.isPublish)
       if (emitsManifest && !this.cancellationToken.cancelled) {
-        const signingKeys = await packager.requireUpdateSigningKeys(true)
+        // requireUpdateSigningKeys enforces forceCodeSigning itself
+        const signingKeys = await packager.requireUpdateSigningKeys(this.isPublish)
         const updateManifestConfig = packager.updateManifestOptions
         if (updateManifestConfig !== false) {
           checkSigningKeysTrusted(packager, signingKeys, normalizeExplicitPublicKeys(updateManifestConfig?.publicKey), true)
@@ -342,8 +416,8 @@ export class PublishManager implements PublishContext {
   }
 
   private getOrCreatePublisher(publishConfig: PublishConfiguration, appInfo: AppInfo): Promise<Publisher | null> {
-    // to not include token into cache key
-    const providerCacheKey = safeStringifyJson(publishConfig)
+    // to not include token into cache key; every sensitive value is fingerprinted, so configs that differ in one get different keys
+    const providerCacheKey = safeStringifyJson(publishConfig, undefined, Number.POSITIVE_INFINITY)
     let publisher = this.nameToPublisher.get(providerCacheKey)
     if (publisher == null) {
       publisher = createPublisher(this, appInfo.version, publishConfig, this.publishOptions, this.packager).then(it => {
@@ -433,14 +507,15 @@ export async function getPackAppUpdatePublishConfiguration(
  * - with none (a snap-only pack, or `nsis.publish: null`), it comes from the platform/root settings, as before -
  *   including the GitHub fallback from repository info when no level configures `publish` at all.
  *
- * `emitsManifest` tells whether any target of the pack emits one, i.e. whether the signing requirement applies.
+ * `emitsManifest` tells whether any target of the pack emits one, i.e. whether the signing requirement applies, and `manifestTargetNames`
+ * which targets do.
  */
 async function resolvePackAppUpdatePublishConfigs(
   packager: PlatformPackager<any>,
   targets: ReadonlyArray<Target>,
   arch: Arch,
   isPublish: boolean
-): Promise<{ publishConfigs: Array<PublishConfiguration> | null; emitsManifest: boolean }> {
+): Promise<{ publishConfigs: Array<PublishConfiguration> | null; emitsManifest: boolean; manifestTargetNames: Array<string> }> {
   const writers: Array<{ target: Target; publishConfigs: Array<PublishConfiguration> }> = []
   for (const target of targets) {
     const publishConfigs = await getTargetManifestPublishConfigs(packager, target, arch, isPublish)
@@ -449,7 +524,7 @@ async function resolvePackAppUpdatePublishConfigs(
     }
   }
   if (writers.length === 0) {
-    return { publishConfigs: await getPlatformUpdateInfoPublishConfigs(packager, arch, isPublish), emitsManifest: false }
+    return { publishConfigs: await getPlatformUpdateInfoPublishConfigs(packager, arch, isPublish), emitsManifest: false, manifestTargetNames: [] }
   }
 
   const embedded = appUpdateFeedIdentity(writers[0].publishConfigs[0])
@@ -457,9 +532,9 @@ async function resolvePackAppUpdatePublishConfigs(
     reportConflictingAppUpdateFeeds(packager, writers, arch, isPublish)
     // not publishing: no app-update.yml, the same package the error would have prevented - picking one of the feeds
     // would silently ship installs that poll a feed without their manifest
-    return { publishConfigs: null, emitsManifest: true }
+    return { publishConfigs: null, emitsManifest: true, manifestTargetNames: writers.map(it => it.target.name) }
   }
-  return { publishConfigs: writers[0].publishConfigs, emitsManifest: true }
+  return { publishConfigs: writers[0].publishConfigs, emitsManifest: true, manifestTargetNames: writers.map(it => it.target.name) }
 }
 
 /**
@@ -554,6 +629,15 @@ async function createAppUpdateConfiguration(
     updaterCacheDirName: packager.appInfo.updaterCacheDirName,
   }
   warnAboutGenericFeedQuery(publishConfig)
+  warnAboutInsecureFeed(publishConfig)
+
+  // electron-updater fails every update check of an installed app whose app-update.yml has an invalid limit
+  const maxUpdateInfoSize: unknown = publishConfig.maxUpdateInfoSize
+  if (maxUpdateInfoSize != null && !isValidMaxUpdateInfoSize(maxUpdateInfoSize)) {
+    throw new InvalidConfigurationError(
+      `publish.maxUpdateInfoSize must be a positive integer (bytes) or 0 for no limit, but got: ${typeof maxUpdateInfoSize === "string" ? JSON.stringify(maxUpdateInfoSize) : typeof maxUpdateInfoSize === "number" ? maxUpdateInfoSize : typeof maxUpdateInfoSize}`
+    )
+  }
 
   // like updateManifestPublicKey: the opt-out marker is only ever assigned below, from win.verifyUpdateCodeSignature
   if (publishConfig.verifyUpdateCodeSignature !== undefined) {
@@ -629,6 +713,21 @@ async function applyUpdateCodeSignatureVerification(winPackager: WinPackager, pu
  * ever reported, never key material.
  */
 function checkSigningKeysTrusted(packager: PlatformPackager<any>, signingKeys: ReadonlyArray<KeyObject>, explicitKeys: ReadonlyArray<string>, fail: boolean): void {
+  checkUpdateSigningKeysTrusted(packager.platform.name, packager.updateManifestOptions, signingKeys, explicitKeys, fail)
+}
+
+/**
+ * {@link checkSigningKeysTrusted} for a platform's resolved `updateManifest` options (`<platform>.updateManifest ?? updateManifest`)
+ * rather than a packager, so a step outside the build (the `sign-update-manifest` CLI) refuses exactly what the build refuses.
+ * @internal
+ */
+export function checkUpdateSigningKeysTrusted(
+  platformName: string,
+  updateManifestConfig: UpdateManifestSigningOptions | false | null,
+  signingKeys: ReadonlyArray<KeyObject>,
+  explicitKeys: ReadonlyArray<string>,
+  fail: boolean
+): void {
   if (signingKeys.length === 0 || explicitKeys.length === 0) {
     return
   }
@@ -638,11 +737,10 @@ function checkSigningKeysTrusted(packager: PlatformPackager<any>, signingKeys: R
     return
   }
 
-  const updateManifestConfig = packager.updateManifestOptions
   const allowed = updateManifestConfig !== false && updateManifestConfig?.allowSigningKeyOutsideTrustList === true
   if (fail && !allowed) {
     throw new InvalidConfigurationError(
-      `none of the update-manifest signing keys (key id(s) ${signingIds.join(", ")}) is in updateManifest.publicKey (key id(s) ${trustedIds.join(", ")}) for ${packager.platform.name}. ` +
+      `none of the update-manifest signing keys (key id(s) ${signingIds.join(", ")}) is in updateManifest.publicKey (key id(s) ${trustedIds.join(", ")}) for ${platformName}. ` +
         "The app built here embeds only the listed keys, so its installs will reject manifests signed with the signing key(s) above: every later release would have to be signed by a key in updateManifest.publicKey. " +
         "Add the signing key's public key to updateManifest.publicKey, or sign with a key that is listed. " +
         "For a deliberate cutover release that hands installs over to a listed key, set updateManifest.allowSigningKeyOutsideTrustList: true. " +
@@ -652,7 +750,7 @@ function checkSigningKeysTrusted(packager: PlatformPackager<any>, signingKeys: R
   log
     .once("update-manifest-signing-key-outside-trust-list")
     .warn(
-      { platform: packager.platform.name, signingKeyIds: signingIds, trustedKeyIds: trustedIds },
+      { platform: platformName, signingKeyIds: signingIds, trustedKeyIds: trustedIds },
       "none of the update-manifest signing keys is in updateManifest.publicKey: installs of this release will not be able to verify manifests signed with the current key(s). " +
         (allowed
           ? "Allowed by updateManifest.allowSigningKeyOutsideTrustList for a deliberate cutover release; every later release must be signed by a key in updateManifest.publicKey."
@@ -666,8 +764,9 @@ const SIGNING_KEY_OUTSIDE_TRUST_LIST_DOCS = "https://www.electron.build/docs/mig
 /**
  * Normalizes the configured `updateManifest.publicKey` (string, multi-PEM string, or array) into distinct,
  * validated Ed25519 public keys, preserving order. Duplicates and non-Ed25519 keys are configuration errors.
+ * @internal
  */
-function normalizeExplicitPublicKeys(value: string | Array<string> | null | undefined): Array<string> {
+export function normalizeExplicitPublicKeys(value: string | Array<string> | null | undefined): Array<string> {
   const keys = normalizePublicKeyList(value)
   const seen = new Map<string, number>()
   keys.forEach((key, index) => {
@@ -761,11 +860,9 @@ export async function createPublisher(
   options: PublishOptions,
   packager: Packager
 ): Promise<Publisher | null> {
-  if (debug.enabled) {
-    debug(`Create publisher: ${safeStringifyJson(publishConfig)}`)
-  }
-
   const provider = publishConfig.provider
+  debug(`Create publisher: ${provider}`)
+
   switch (provider) {
     case "github": {
       const releaseBody = await resolveReleaseBody(packager)

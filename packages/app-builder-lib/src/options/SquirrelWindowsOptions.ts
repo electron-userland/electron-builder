@@ -22,6 +22,9 @@ export interface SquirrelWindowsOptions extends TargetSpecificOptions {
 
   /**
    * Whether to create an MSI installer. Defaults to `false` (MSI is not created).
+   *
+   * Squirrel.Windows builds the MSI around Setup.exe before electron-builder signs Setup.exe, so the installer inside the MSI is
+   * unsigned: the build warns, and fails with `forceCodeSigning`. For a signed MSI use the `msi` target instead.
    */
   readonly msi?: boolean
 

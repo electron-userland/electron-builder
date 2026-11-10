@@ -38,7 +38,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
 
     expect(result.response).toBe("failure")
     const message = result.response === "failure" ? result.message : ""
-    expect(message).toContain("electron-updater 7 (electron-builder v27) rejects the update: app-update.yml has no publisherName")
+    expect(message).toContain("The update is rejected: app-update.yml has no publisherName")
     expect(message).toContain("win.sign.publisherName")
     expect(message).toContain("win.verifyUpdateCodeSignature: false")
     expect(message.endsWith(MISSING_DOCS)).toBe(true)

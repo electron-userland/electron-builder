@@ -1,13 +1,14 @@
 import * as path from "path"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
-import { CancellationError, CancellationToken } from "builder-util-runtime"
+import { CancellationToken } from "electron-updater"
 import { AppImageUpdater, DebUpdater, type VerifyUpdateFile } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import type { InstallOptions } from "electron-updater/src/BaseUpdater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
 import type { DownloadExecutorTask } from "electron-updater/src/AppUpdater"
 import { outputFile, pathExists, readFile, stat } from "fs-extra"
-import { createVerifyUpdateFileMock, expectVerifyUpdateFileFailure } from "../helpers/updaterTestUtil.js"
+import { createVerifyUpdateFileMock, expectVerifyUpdateFileFailure, makeLogger } from "../helpers/updaterTestUtil.js"
+import { CancellationError } from "builder-util-runtime"
 
 const stubApp: AppAdapter = {
   name: "TestApp",
@@ -225,7 +226,7 @@ type SetupOptions = {
  * own closure (so a `done` mock passed in here would never be called on any path).
  */
 function setupAppImageDownload({ cacheDir, verifyUpdateFile, cancellationToken = new CancellationToken(), afterVerification }: SetupOptions) {
-  const helper = new DownloadedUpdateHelper(cacheDir)
+  const helper = new DownloadedUpdateHelper(cacheDir, makeLogger())
   const updater = new AppImageUpdater(null, stubApp)
   updater.logger = null
   // @ts-expect-error accessing a protected property
@@ -244,8 +245,8 @@ function setupAppImageDownload({ cacheDir, verifyUpdateFile, cancellationToken =
     downloadUpdateOptions: {
       updateInfoAndProvider: {
         info: { version: "2.0.0", files: [], path: "", sha512: "", releaseDate: "" },
-        // @ts-expect-error the provider only supplies the feed origin for the download headers, so a stub without one is enough
-        provider: { feedBaseUrl: null },
+        // @ts-expect-error the provider only supplies the feed origin for the download headers: the download is on it, so a stub is enough
+        provider: { feedBaseUrl: new URL("https://example.com/") },
       },
       requestHeaders: {},
       cancellationToken,

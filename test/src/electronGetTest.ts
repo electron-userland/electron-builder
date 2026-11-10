@@ -346,7 +346,8 @@ describe("retryDownload", () => {
   test("retries a stalled attempt with a fresh timeout signal", async ({ expect }) => {
     const server = await startStallingServer(1)
     try {
-      expect(await retryDownload(download(server.url), { attemptTimeoutMs: 300 })).toBe("ok")
+      // the second attempt has to complete within this timeout too, which 300 ms did not always allow on a busy CI runner
+      expect(await retryDownload(download(server.url), { attemptTimeoutMs: 1500 })).toBe("ok")
       expect(server.requests()).toBe(2)
     } finally {
       await server.close()

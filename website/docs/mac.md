@@ -58,8 +58,8 @@ mac:
 **Universal binary options:**
 
 - `mergeASARs` — merge x64 and arm64 ASAR archives into a single universal ASAR (`true` by default). Disable only if you have architecture-specific native modules that cannot be fat-binary merged.
-- `singleArchFiles` — glob pattern for files that are single-arch and should NOT be merged (e.g., pre-built native binaries distributed only for one arch).
-- `x64ArchFiles` — glob pattern for files that are x64-only. These are kept as x64 in the universal binary rather than being fat-binary merged.
+- `singleArchFiles` — glob pattern for files that may exist in only one of the two per-arch ASAR archives (e.g., pre-built native binaries distributed only for one arch). Matching files in `app.asar.unpacked` are copied as-is instead of being merged with `lipo`.
+- `x64ArchFiles` — glob pattern for single-arch Mach-O files that are identical in the x64 and arm64 builds (e.g., the same x64 binary shipped in both). These are copied as-is instead of being merged with `lipo`; any other such file fails the build. Binaries that are already universal in both builds need no pattern.
 
 In v27 these options live under `mac.universal` (a pass-through to [`@electron/universal`](https://github.com/electron/universal)) and only take effect when the target arch is `universal`:
 

@@ -39,28 +39,39 @@ describe("getSquirrelToolsetPath", () => {
     expect(downloadBuilderToolset).not.toHaveBeenCalled()
   })
 
-  const pinnedDescriptor = {
-    releaseName: "squirrel.windows@1.1.1",
+  const descriptorFor = (version: keyof typeof squirrelWindowsChecksums) => ({
+    releaseName: `squirrel.windows@${version}`,
     filenameWithExt: "squirrel.windows-2.0.1-patched.zip",
-    checksums: squirrelWindowsChecksums["1.1.1"],
-  }
+    checksums: squirrelWindowsChecksums[version],
+  })
 
-  test('pinned "1.1.1" downloads the maintained bundle with its checksum', async () => {
-    const result = await getSquirrelToolsetPath("1.1.1", tmpDir)
+  test.each(["1.1.1", "1.2.1"] as const)('pinned "%s" downloads that maintained bundle with its checksum', async version => {
+    const result = await getSquirrelToolsetPath(version, tmpDir)
     expect(result).toBe("/fake/squirrel-toolset")
     expect(downloadBuilderToolset).toHaveBeenCalledTimes(1)
-    expect(downloadBuilderToolset).toHaveBeenCalledWith(pinnedDescriptor)
-    expect(pinnedDescriptor.checksums["squirrel.windows-2.0.1-patched.zip"]).toMatch(/^[0-9a-f]{64}$/)
+    expect(downloadBuilderToolset).toHaveBeenCalledWith(descriptorFor(version))
+    expect(squirrelWindowsChecksums[version]["squirrel.windows-2.0.1-patched.zip"]).toMatch(/^[0-9a-f]{64}$/)
   })
 
   test.each([
     ["latest", "latest"],
     ["undefined", undefined],
     ["null", null],
-  ])("%s resolves to the newest bundle (1.1.1)", async (_label, toolset) => {
+  ])("%s resolves to the newest bundle (1.2.1)", async (_label, toolset) => {
     await getSquirrelToolsetPath(toolset as any, tmpDir)
     expect(downloadBuilderToolset).toHaveBeenCalledTimes(1)
-    expect(downloadBuilderToolset).toHaveBeenCalledWith(pinnedDescriptor)
+    expect(downloadBuilderToolset).toHaveBeenCalledWith(descriptorFor("1.2.1"))
+  })
+
+  // Making 1.2.1 the default must stay additive: the earlier pin keeps its own release and checksum.
+  test("1.2.1 is added alongside the earlier pin, which keeps its checksum", () => {
+    expect(Object.keys(squirrelWindowsChecksums)).toEqual(["1.1.1", "1.2.1"])
+    expect(squirrelWindowsChecksums["1.2.1"]).toEqual({
+      "squirrel.windows-2.0.1-patched.zip": "ff65e7383b20cc9224cc5e96b725b21115f0e99400943507e3aef79f64da2020",
+    })
+    expect(squirrelWindowsChecksums["1.1.1"]).toEqual({
+      "squirrel.windows-2.0.1-patched.zip": "77cc2c451639c3b0bd68fde67111f726a236e6750d15f521c79e606fd7119e72",
+    })
   })
 
   test("an unknown pinned version is rejected before any download", async () => {
@@ -68,7 +79,16 @@ describe("getSquirrelToolsetPath", () => {
     // unknown version (only reachable through a programmatic / unvalidated config) must fail fast.
     const promise = getSquirrelToolsetPath("9.9.9" as any, tmpDir)
     await expect(promise).rejects.toBeInstanceOf(InvalidConfigurationError)
-    await expect(promise).rejects.toThrow(/Unknown toolsets\.squirrel version "9\.9\.9"\. Known versions: 1\.1\.1 \(or "latest"\)/)
+    await expect(promise).rejects.toThrow(/Unknown toolsets\.squirrel version "9\.9\.9"\. Known versions: 1\.1\.1, 1\.2\.1 \(or "latest"\)/)
+    expect(downloadBuilderToolset).not.toHaveBeenCalled()
+  })
+
+  // squirrel.windows@1.2.0 was withdrawn (its bundle lacked required license files) in favour of 1.2.1,
+  // so pinning it must fail instead of downloading the flagged release.
+  test('the withdrawn "1.2.0" pin is rejected before any download', async () => {
+    const promise = getSquirrelToolsetPath("1.2.0" as any, tmpDir)
+    await expect(promise).rejects.toBeInstanceOf(InvalidConfigurationError)
+    await expect(promise).rejects.toThrow(/Unknown toolsets\.squirrel version "1\.2\.0"/)
     expect(downloadBuilderToolset).not.toHaveBeenCalled()
   })
 

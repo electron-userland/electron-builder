@@ -10,6 +10,10 @@ These options are also applicable for the [Web installer](#web-installer), use t
 
 Unicode enabled by default. Large strings are supported (maximum string length of 8192 bytes instead of the default of 1024 bytes).
 
+:::note[File paths written into the generated script]
+electron-builder writes file paths into the generated NSIS script inside double quotes: the output installer, the portable installer icon, file association icons, license files, custom `include` scripts, plugin and include directories, and the pre-compressed files it copies. If one of these paths contains a double quote (`"`), a line break or a NUL character, the build fails and names the path. Rename the file or directory.
+:::
+
 ## 32 bit + 64 bit
 
 If you build both ia32 and x64 arch (`--x64 --ia32`), you will always get one installer. The appropriate arch will be installed automatically.
@@ -40,7 +44,7 @@ A local package (passed via `--package-file`, or found next to the installer) is
 
 A mismatch, a `--package-file` package that cannot be copied, or a package that cannot be downloaded (also a download cancelled in the progress window) aborts the installation (exit code `2`); a package next to the installer that doesn't match or cannot be copied is ignored and the package is downloaded instead. When a download fails, an interactive run first offers to retry, and a silent run (`/S`) aborts right away. The installer copies, verifies and, if needed, downloads the package before it removes an installed version, so an installation aborted for one of these reasons leaves that version in place. Because the download can take a while, a run that isn't an update (`--updated`) then checks again whether the app is running, with the same prompt as at the start (Cancel aborts with exit code `2`), before the installed version is removed; a custom `customCheckAppRunning` macro is not run a second time. Set `nsisWeb.allowUnverifiedAppPackage: true` (default `false`) to skip the `--package-file` and versioned-download checksum checks (a package next to the installer is still checked) only if you intentionally use one web installer with packages of other builds (e.g. a version-independent installer with `--package-file`).
 
-For auto-update, electron-updater installs web-installer updates only when `disableWebInstaller` is `false`; installs made by an `nsis-web` installer built with electron-builder v27+ default to `false` automatically — see [Auto Update](./features/auto-update.md#disablewebinstaller-now-defaults-to-true). Don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./features/signed-update-manifests.md) cover the web package's path, SHA-512 and size.
+For auto-update, electron-updater installs web-installer updates only when `disableWebInstaller` is `false`; installs made by an `nsis-web` installer (which carries a `resources/package-type` marker) default to `false` automatically — see [Auto Update](./features/auto-update.md#disablewebinstaller). Don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./features/signed-update-manifests.md) cover the web package's path, SHA-512 and size.
 
 ## Custom NSIS script
 

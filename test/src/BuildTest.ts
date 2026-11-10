@@ -95,7 +95,6 @@ test("merge configurations", ({ expect }) => {
     },
   ])
 
-  // console.log("data: " + JSON.stringify(result, null, 2))
   expect(result).toMatchObject({
     directories: {
       output: "dist",
@@ -486,6 +485,7 @@ test.ifNotWindows("posix smart unpack", ({ expect }) =>
       },
     },
     {
+      storeDepsLockfileSnapshot: true,
       projectDirCreated: projectDir => {
         process.env.npm_config_user_agent = "npm"
         return packageJson(it => {

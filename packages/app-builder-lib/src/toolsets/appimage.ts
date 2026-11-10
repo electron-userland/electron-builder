@@ -6,7 +6,7 @@ import { getCustomToolsetPath } from "./custom.js"
 import { resolveToolsetVersion } from "./version.js"
 
 // Newest AppImage bundle — selected when the config is unset / null / "latest".
-const APPIMAGE_LATEST = "1.1.0"
+const APPIMAGE_LATEST = "1.2.1"
 
 export const appimageChecksums = {
   "0.0.0": {
@@ -17,6 +17,9 @@ export const appimageChecksums = {
   },
   "1.1.0": {
     "appimage-tools-runtime-20251108.tar.gz": "098182ab8d3bb93db8a23691671f665ff92316249ace850aec63b9d010ec7fe0",
+  },
+  "1.2.1": {
+    "appimage-tools-runtime-20251108.tar.gz": "2e43e1f7ea58a38822d060f1f437f1201fae7d293ae3b45167a9eea41d440353",
   },
 } as const
 

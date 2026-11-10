@@ -9,7 +9,7 @@ import { getCustomToolsetPath } from "./custom.js"
 import { resolveToolsetVersion } from "./version.js"
 
 // Newest win-codesign bundle — selected when the config is unset / null / "latest".
-export const WIN_CODESIGN_LATEST = "1.3.1"
+export const WIN_CODESIGN_LATEST = "1.3.3"
 
 function getLegacyWinCodeSignBin(): Promise<string> {
   return downloadBuilderToolset({
@@ -89,6 +89,19 @@ export const wincodesignChecksums = {
     "win-codesign-windows-arm64.zip": "9daee4e5359371d8566639be70251abebe6ddbed82054e2ecd1812bd0d879291",
     "win-codesign-windows-x64.zip": "830167112badff1bd5bf4759e0bac4d9f45a96c0cbb9b8e72e1f70187758516a",
     "windows-kits-bundle-10_0_26100_0.zip": "6a8a6211f02c0cd09118710e4a48ee411bd3cb2dbb8bd25cbd5f9e4afd9f556d",
+  },
+  "1.3.3": {
+    "ats-bundle-1_0_95.zip": "5695927ad1411f38e57fe1739475272192a6939f59c1e0525abc87b21f278035",
+    "dotnet-runtime-win-x64-8_0_33.zip": "2e26d49416b0a4bd29f3f11f36aa971439b5e741ff40513fb1bc738a7bf3fd89",
+    "rcedit-windows-2_0_0.zip": "99a37b6b54d0500b0ab9ca134b08a35faf8dfe4668b379c0091212815412504b",
+    "win-codesign-darwin-arm64.zip": "94dd0ecf145103fc9039e3b73ee8eb40a71a9a637203657d55415e9f4f48b9a3",
+    "win-codesign-darwin-x86_64.zip": "1b2f9300712e372ad2360c8cdd6cfaad9eabdc61cc95b26e68ea36be90ecc65f",
+    "win-codesign-linux-amd64.zip": "5b55fa4853df581ec1ebc53f98c0e41d642a58a876a45fe35c86246ee964a534",
+    "win-codesign-linux-arm64.zip": "a2e08d4a691429c92c3582d9d6d05fec67758e6e7c206e638f5d46d7a0c5c588",
+    "win-codesign-linux-i386.zip": "1bb4fa33ebd18c58cdb6a9f96b08664337584529a8e8182071780b1fc0caebb5",
+    "win-codesign-windows-arm64.zip": "49cb977a1f70c8bd5922db363ebc0736903f9574ab101ec39d943de45752baa7",
+    "win-codesign-windows-x64.zip": "dcbb852ca7186be81ae374b2980f2df03655f208cce3a5ec95d064127de6a105",
+    "windows-kits-bundle-10_0_26100_0.zip": "cf272921858dd134e997f4a372d413563e4375b2c4fceda06e7716fedb9e8bc7",
   },
 } as const
 
@@ -225,16 +238,32 @@ export async function getAtsBundleDir(winCodeSign: string): Promise<string> {
   })
 }
 
+const DOTNET_RUNTIME_ASSET_PREFIX = "dotnet-runtime-win-x64-"
+
+/**
+ * File name of the .NET runtime asset in a win-codesign release (>= 1.3.0), or `undefined` when that version ships none.
+ * The name carries the runtime version and changes between releases (1.3.0 / 1.3.1 ship `8_0_28`, 1.3.3 ships `8_0_33`),
+ * so it is looked up in that version's checksums instead of being hard-coded.
+ */
+export function getDotnetRuntimeAssetName(winCodeSign: string): string | undefined {
+  const version = winCodeSign === "latest" ? WIN_CODESIGN_LATEST : winCodeSign
+  if (!Object.prototype.hasOwnProperty.call(wincodesignChecksums, version)) {
+    return undefined
+  }
+  const files = (wincodesignChecksums as Record<string, Record<string, string>>)[version]
+  return Object.keys(files).find(it => it.startsWith(DOTNET_RUNTIME_ASSET_PREFIX))
+}
+
 export async function getDotnetRuntimeDir(winCodeSign: string): Promise<string> {
   const version = winCodeSign === "latest" ? WIN_CODESIGN_LATEST : winCodeSign
-  const checksum = (wincodesignChecksums as Record<string, Record<string, string>>)[version]?.["dotnet-runtime-win-x64-8_0_28.zip"]
-  if (!checksum) {
+  const file = getDotnetRuntimeAssetName(version)
+  if (file == null) {
     throw new Error(`winCodeSign version "${version}" does not include a .NET runtime bundle (requires >= 1.3.0)`)
   }
   return downloadBuilderToolset({
     releaseName: `win-codesign@${version}`,
-    filenameWithExt: "dotnet-runtime-win-x64-8_0_28.zip",
-    checksums: { "dotnet-runtime-win-x64-8_0_28.zip": checksum },
+    filenameWithExt: file,
+    checksums: { [file]: (wincodesignChecksums as Record<string, Record<string, string>>)[version][file] },
   })
 }
 

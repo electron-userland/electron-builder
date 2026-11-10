@@ -1,6 +1,7 @@
 import _aws4 from "aws4"
 const { sign } = _aws4
 import { InvalidConfigurationError } from "builder-util"
+import { BLOCK_MAP_V3_MAGIC } from "builder-util-runtime/internal"
 import * as fs from "fs"
 import * as http from "http"
 import * as https from "https"
@@ -231,10 +232,30 @@ export function deleteS3Object(params: S3DeleteObjectParams): Promise<void> {
  */
 export function getS3ContentType(file: string): string {
   const ext = path.extname(file).toLowerCase()
+  if (ext === ".blockmap") {
+    // the gzipped JSON map, or the binary map, which starts with its magic
+    return startsWithBinaryBlockMapMagic(file) ? "application/octet-stream" : "application/gzip"
+  }
   const overrides: Record<string, string> = {
     ".appimage": "application/vnd.appimage",
-    ".blockmap": "application/gzip",
     ".snap": "application/vnd.snap",
   }
   return overrides[ext] ?? mime.getType(file) ?? "application/octet-stream"
+}
+
+const BINARY_BLOCK_MAP_MAGIC = Buffer.from(BLOCK_MAP_V3_MAGIC, "latin1")
+
+function startsWithBinaryBlockMapMagic(file: string): boolean {
+  let fd: number
+  try {
+    fd = fs.openSync(file, "r")
+  } catch (_ignored) {
+    return false
+  }
+  try {
+    const head = Buffer.alloc(BINARY_BLOCK_MAP_MAGIC.length)
+    return fs.readSync(fd, head, 0, head.length, 0) === head.length && head.equals(BINARY_BLOCK_MAP_MAGIC)
+  } finally {
+    fs.closeSync(fd)
+  }
 }

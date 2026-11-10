@@ -11,7 +11,7 @@ const validMetadata = { name: "test-app", version: "1.0.0", description: "d", au
 
 function runCheckMetadata(devMetadata: any): string | null {
   try {
-    checkMetadata(validMetadata, devMetadata, "/app/package.json", "/dev/package.json", "/project")
+    checkMetadata(validMetadata, devMetadata, "/app/package.json", "/dev/package.json", "/project", [])
     return null
   } catch (e: any) {
     return e.message

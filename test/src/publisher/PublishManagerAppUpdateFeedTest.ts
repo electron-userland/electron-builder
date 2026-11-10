@@ -40,6 +40,8 @@ function createManagerHooks(publish: "always" | "never" = "always") {
   const packager = {
     projectDir: __dirname,
     config: {},
+    // no electron-updater: the app-update.yml hook does not scan the app for autoUpdater.crossOriginHeaders
+    metadata: {},
     onTargetsCreated: (handler: (plan: any) => Promise<void>) => {
       onTargetsCreated = handler
     },
@@ -383,7 +385,7 @@ test("prepackaged multi-arch: each arch's targets look up their own pack, althou
   }
 })
 
-test("an app-update.yml generic feed with a query string announces the v27 feed-origin rule, by parameter name only", async ({ expect, tmpDir }) => {
+test("an app-update.yml generic feed with a query string announces the feed-origin rule, by parameter name only", async ({ expect, tmpDir }) => {
   log.resetLimits()
   const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
   try {
@@ -391,7 +393,7 @@ test("an app-update.yml generic feed with a query string announces the v27 feed-
     const appUpdate = await afterPackAppUpdate(tmpDir, makePackager({ platformPublish: feed }), [target("nsis")])
 
     expect(appUpdate).toMatchObject(feed)
-    const notices = warn.mock.calls.filter(it => String(it[1]).includes("update-credentials-stay-on-the-feeds-origin"))
+    const notices = warn.mock.calls.filter(it => String(it[1]).includes("the generic publish url has a query string"))
     expect(notices).toHaveLength(1)
     expect(notices[0][0]).toMatchObject({ queryParameters: "token" })
     expect(JSON.stringify(notices)).not.toContain("feed-secret-value")

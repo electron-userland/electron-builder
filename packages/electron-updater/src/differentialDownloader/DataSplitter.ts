@@ -1,7 +1,7 @@
 import { newError } from "builder-util-runtime"
 import { Logger } from "../types.js"
-import { createReadStream } from "fs"
-import { Writable } from "stream"
+import fs from "fs"
+import { Readable, Writable } from "stream"
 import { Operation, OperationKind } from "./downloadPlanBuilder.js"
 import { ProgressInfo } from "./ProgressDifferentialDownloadCallbackTransform.js"
 
@@ -46,13 +46,43 @@ export interface PartListDataTask {
   readonly end: number
 }
 
+// The old file is shared by every copy and closed by the downloader, so a copy is given a `close` that leaves it open.
+function keepOldFileOpen(_fd: number, callback: (error: NodeJS.ErrnoException | null) => void): void {
+  callback(null)
+}
+
+// the copies that have not closed yet, by the descriptor of the old file they read
+const copiesInProgress = new Map<number, Set<Readable>>()
+
 export function copyData(task: Operation, out: Writable, oldFileFd: number, reject: (error: Error) => void, resolve: () => void): void {
-  const readStream = createReadStream("", {
-    fd: oldFileFd,
-    autoClose: false,
-    start: task.start,
-    // end is inclusive
-    end: task.end - 1,
+  // the download stopped (and may have closed the old file): do not read it again
+  if (out.destroyed) {
+    reject(new Error("Cannot copy data: the output stream is destroyed"))
+    return
+  }
+  let readStream: fs.ReadStream
+  try {
+    readStream = fs.createReadStream("", {
+      fd: oldFileFd,
+      fs: { read: fs.read, close: keepOldFileOpen },
+      start: task.start,
+      // end is inclusive
+      end: task.end - 1,
+    })
+  } catch (e: unknown) {
+    // an invalid range throws synchronously, usually inside the `end` listener of a response or of the previous copy, where it
+    // would be an uncaught exception that leaves the download pending
+    reject(e instanceof Error ? e : new Error(String(e)))
+    return
+  }
+  const copies = copiesInProgress.get(oldFileFd) ?? new Set<Readable>()
+  copies.add(readStream)
+  copiesInProgress.set(oldFileFd, copies)
+  readStream.once("close", () => {
+    copies.delete(readStream)
+    if (copies.size === 0) {
+      copiesInProgress.delete(oldFileFd)
+    }
   })
   const onOutError = (err: Error): void => reject(err)
   readStream.on("error", reject)
@@ -62,6 +92,56 @@ export function copyData(task: Operation, out: Writable, oldFileFd: number, reje
   })
   out.once("error", onOutError)
   readStream.pipe(out, { end: false })
+}
+
+/**
+ * Stops the copies that read the old file and resolves once they closed, so that its descriptor can be closed: a read in
+ * progress is waited for, as a destroyed stream emits `close` only after it.
+ * @internal
+ */
+export async function stopCopies(oldFileFd: number): Promise<void> {
+  const copies = Array.from(copiesInProgress.get(oldFileFd) ?? [])
+  await Promise.all(
+    copies.map(
+      readStream =>
+        new Promise<void>(resolve => {
+          readStream.once("close", () => resolve())
+          readStream.destroy()
+        })
+    )
+  )
+}
+
+/**
+ * Returns the `boundary` parameter of a `multipart/*` Content-Type, or null when the type is not multipart or names no valid
+ * boundary (1 to 70 characters, RFC 2046). Type and parameter names compare case-insensitively; the boundary may be quoted.
+ * Parsed without a regular expression over the whole value: one with a lazy subtype followed by optional whitespace backtracks
+ * quadratically on a long whitespace run, and a response header can be as long as the HTTP stack accepts (about 256 KB in
+ * Electron).
+ */
+export function parseMultipartBoundary(contentType: string | null | undefined): string | null {
+  if (contentType == null) {
+    return null
+  }
+  const [mediaType, ...parameters] = contentType.split(";")
+  const type = mediaType.trim().toLowerCase()
+  if (!type.startsWith("multipart/") || type.length === "multipart/".length) {
+    return null
+  }
+  for (const parameter of parameters) {
+    const separator = parameter.indexOf("=")
+    if (separator === -1 || parameter.substring(0, separator).trim().toLowerCase() !== "boundary") {
+      continue
+    }
+    const value = parameter.substring(separator + 1).trim()
+    const isQuoted = value.length > 2 && value.startsWith('"') && value.endsWith('"')
+    const boundary = isQuoted ? value.substring(1, value.length - 1) : value
+    if (boundary.length === 0 || boundary.length > 70 || (isQuoted ? boundary.includes('"') : /[\s"]/.test(boundary))) {
+      return null
+    }
+    return boundary
+  }
+  return null
 }
 
 export class DataSplitter extends Writable {

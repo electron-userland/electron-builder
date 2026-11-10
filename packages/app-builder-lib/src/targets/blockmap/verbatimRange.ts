@@ -82,6 +82,18 @@ export async function findVerbatimRange(haystackFile: string, needleFile: string
   return findPreparedVerbatimRange(haystackFile, await prepareVerbatimNeedle(needleFile), startOffset)
 }
 
+/**
+ * A needle made of in-memory bytes (e.g. the 32-byte signature header of a 7z archive), for
+ * `findPreparedVerbatimRange`; `label` only names the needle in messages.
+ * @throws when `bytes` is empty.
+ */
+export function prepareVerbatimNeedleFromBuffer(bytes: Buffer, label: string): VerbatimNeedle {
+  if (bytes.length === 0) {
+    throw new Error(`Cannot locate empty bytes (${label}) inside another file`)
+  }
+  return { file: label, size: bytes.length, hash: createHash("sha256").update(bytes).digest("hex"), probe: bytes.subarray(0, Math.min(PROBE_SIZE, bytes.length)) }
+}
+
 /** `findVerbatimRange` for a needle prepared with `prepareVerbatimNeedle`. */
 export async function findPreparedVerbatimRange(haystackFile: string, needle: VerbatimNeedle, startOffset = 0): Promise<VerbatimRange | null> {
   if (!Number.isSafeInteger(startOffset) || startOffset < 0) {

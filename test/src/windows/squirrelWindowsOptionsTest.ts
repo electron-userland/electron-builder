@@ -315,7 +315,7 @@ describe("SquirrelWindowsTarget.computeEffectiveDistOptions", () => {
       const setupFile = packager.expandArtifactNamePattern(target.options, "exe", Arch.x64, "${productName} Setup ${version}.${ext}")
       const promise = target.computeEffectiveDistOptions(path.join(target.outDir, "win-unpacked"), path.join(target.outDir, "squirrel-windows"), setupFile)
       await expect(promise).rejects.toThrow(InvalidConfigurationError)
-      await expect(promise).rejects.toThrow(/squirrelWindows\.iconUrl is not specified/)
+      await expect(promise).rejects.toThrow(/squirrelWindows\.iconUrl is not specified.*https:\/\/www\.electron\.build\/docs\/squirrel-windows#iconurl/)
       expect(prepareSignedVendorDirectory).not.toHaveBeenCalled()
     })
   })

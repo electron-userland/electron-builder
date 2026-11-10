@@ -3,7 +3,7 @@ import { AllPublishOptions, newError, PackageFileInfo, CURRENT_APP_INSTALLER_FIL
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter.js"
 import { DownloadUpdateOptions, UpdateInfoAndProvider } from "./AppUpdater.js"
-import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
+import { BaseUpdater, InstallOptions, WEB_INSTALLER_DISABLED_HINT } from "./BaseUpdater.js"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
@@ -11,6 +11,7 @@ import { DOWNLOAD_PROGRESS, DownloadExecutorResult, verificationFailureMessage }
 import type { VerifyUpdateCodeSignature, VerifyUpdateFileAuthenticodeSignature, VerifyUpdateFileResult } from "./types.js"
 import { findFile, Provider } from "./providers/Provider.js"
 import fsExtra from "fs-extra"
+import { throwIfCancelled } from "./util.js"
 import {
   isUpdateCodeSignatureVerificationDisabled,
   missingPublisherNameMessage,
@@ -21,7 +22,8 @@ import {
 } from "./windowsExecutableCodeSignatureVerifier.js"
 import { URL } from "url"
 
-const require = createRequire(import.meta.url)
+// import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
+const require = createRequire(import.meta.url ?? process.execPath)
 
 export class NsisUpdater extends BaseUpdater {
   /**
@@ -72,13 +74,13 @@ export class NsisUpdater extends BaseUpdater {
         if (dirName == null) {
           return
         }
-        downloadedUpdateHelper = new DownloadedUpdateHelper(path.join(this.app.baseCachePath, dirName))
+        downloadedUpdateHelper = new DownloadedUpdateHelper(path.join(this.app.baseCachePath, dirName), this.log)
       }
-      await downloadedUpdateHelper.removeInstalledWebPackage(this.currentVersion.version, this._logger)
-    } catch (e: any) {
+      await downloadedUpdateHelper.removeInstalledWebPackage(this.currentVersion.version)
+    } catch (e: unknown) {
       // best effort: no readable app-update.yml (e.g. forceDevUpdateConfig without dev-app-update.yml) means no cache to clean, and an
       // unusable config is reported by the update check itself
-      this._logger.debug?.(`Cannot look for the web installer package of an installed update: ${e.message || e}`)
+      this.log.debug(`Cannot look for the web installer package of an installed update: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
@@ -119,8 +121,8 @@ export class NsisUpdater extends BaseUpdater {
       this.limitedLogger("publisher-name-not-dn").warn(note)
     }
     // read when the verification runs, for this update only
-    const options = resolveCatalogSignatureOptions(this.allowCatalogSignature, update, this._logger)
-    return verifySignature(publisherNames, unescapedTempUpdateFile, this._logger, options)
+    const options = resolveCatalogSignatureOptions(this.allowCatalogSignature, update, this.log)
+    return verifySignature(publisherNames, unescapedTempUpdateFile, this.log, options)
   }
 
   protected _verifyUpdateFileAuthenticodeSignature: VerifyUpdateFileAuthenticodeSignature = this._defaultVerifyUpdateFileAuthenticodeSignature
@@ -201,7 +203,10 @@ export class NsisUpdater extends BaseUpdater {
     if (fileInfo.packageInfo != null) {
       if (webInstallerDisabled) {
         return Promise.reject(
-          newError(`Unable to download new version ${downloadUpdateOptions.updateInfoAndProvider.info.version}. Web Installers are disabled`, "ERR_UPDATER_WEB_INSTALLER_DISABLED")
+          newError(
+            `Unable to download new version ${downloadUpdateOptions.updateInfoAndProvider.info.version}. Web Installers are disabled. ${WEB_INSTALLER_DISABLED_HINT}`,
+            "ERR_UPDATER_WEB_INSTALLER_DISABLED"
+          )
         )
       }
       if (fileInfo.packageInfo.sha512 == null) {
@@ -217,12 +222,12 @@ export class NsisUpdater extends BaseUpdater {
         const isWebInstaller = packageInfo != null && packageFile != null
         if (!isWebInstaller && !webInstallerDisabled) {
           if (webInstallerEnabledByApp) {
-            this._logger.warn(
+            this.log.warn(
               "disableWebInstaller is explicitly set to false, but a full installer (not a web installer) was downloaded. As of v27 web installers are opt-in (disabled by default); remove the override unless you intentionally publish NSIS web-installer packages."
             )
           } else {
             // the nsis-web default (package-type marker) needs no change by the app, but the full installer writes the `nsis` marker
-            this._logger.info(
+            this.log.info(
               "A full installer (not a web installer) was downloaded for an install made by an nsis-web installer. After it is installed, web-installer updates need disableWebInstaller = false."
             )
           }
@@ -251,8 +256,10 @@ export class NsisUpdater extends BaseUpdater {
               const packageUrl = new URL(packageInfo.path)
               await this.httpExecutor.download(packageUrl, packageFile, {
                 headers: this.downloadRequestHeaders(packageUrl, downloadUpdateOptions),
+                ownHeaders: this.downloadOwnHeaders(downloadUpdateOptions),
                 cancellationToken: downloadUpdateOptions.cancellationToken,
                 sha512: packageInfo.sha512,
+                maxSize: packageInfo.size,
               })
             } catch (e: any) {
               try {
@@ -342,7 +349,7 @@ export class NsisUpdater extends BaseUpdater {
     if (packagePath != null) {
       // the policy may have changed since the download; never run the web installer when web installers are disabled
       if (this.disableWebInstaller) {
-        this.dispatchError(newError("Unable to install the downloaded update. Web Installers are disabled", "ERR_UPDATER_WEB_INSTALLER_DISABLED"))
+        this.dispatchError(newError(`Unable to install the downloaded update. Web Installers are disabled. ${WEB_INSTALLER_DISABLED_HINT}`, "ERR_UPDATER_WEB_INSTALLER_DISABLED"))
         return false
       }
       // only = form is supported
@@ -360,7 +367,7 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     if (options.isAdminRightsRequired) {
-      this._logger.info("isAdminRightsRequired is set to true, run installer using elevate.exe")
+      this.log.info("isAdminRightsRequired is set to true, run installer using elevate.exe")
       callUsingElevation()
       return true
     }
@@ -369,7 +376,7 @@ export class NsisUpdater extends BaseUpdater {
       // https://github.com/electron-userland/electron-builder/issues/1129
       // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
       const errorCode = (e as NodeJS.ErrnoException).code
-      this._logger.info(
+      this.log.info(
         `Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using elevate if EACCES, and will try to use electron.shell.openItem if ENOENT`
       )
       if (errorCode === "UNKNOWN" || errorCode === "EACCES") {
@@ -400,7 +407,7 @@ export class NsisUpdater extends BaseUpdater {
       const downloadOptions: DifferentialDownloaderOptions = {
         newUrl,
         oldFile: path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_APP_PACKAGE_FILE_NAME),
-        logger: this._logger,
+        logger: this.log,
         newFile: packagePath,
         requestHeaders: this.downloadRequestHeaders(newUrl, downloadUpdateOptions),
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
@@ -408,11 +415,13 @@ export class NsisUpdater extends BaseUpdater {
       }
 
       if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
-        downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+        downloadOptions.onProgress = it => this.emitDownloadProgress(it)
       }
 
       await new FileWithEmbeddedBlockMapDifferentialDownloader(packageInfo, this.httpExecutor, downloadOptions).download()
     } catch (e: any) {
+      // a user cancellation is not a differential failure: no fallback to a full download
+      throwIfCancelled(e, downloadUpdateOptions.cancellationToken)
       this.logDifferentialDownloadFallback(e)
       // during test (developer machine mac or linux) we must throw error
       return process.platform === "win32"

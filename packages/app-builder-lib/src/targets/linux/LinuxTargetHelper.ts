@@ -12,6 +12,7 @@ import { SnapCore24 } from "./snap/core24.js"
 import { SnapCoreCustom } from "./snap/coreCustom.js"
 import { SnapCoreLegacy } from "./snap/coreLegacy.js"
 import { IconInfo } from "../../util/iconConverter.js"
+import { generateMimeTypeXml } from "./appimage/appLauncher.js"
 import _fsExtra from "fs-extra"
 const { outputFile } = _fsExtra
 
@@ -159,29 +160,15 @@ export class LinuxTargetHelper {
   }
 
   private async computeMimeTypeFiles(): Promise<string | null> {
-    const items: Array<string> = []
-    for (const fileAssociation of this.packager.fileAssociations) {
-      if (!fileAssociation.mimeType) {
-        continue
-      }
-
-      const data = `<mime-type type="${fileAssociation.mimeType}">
-  <glob pattern="*.${fileAssociation.ext}"/>
-    ${fileAssociation.description ? `<comment>${fileAssociation.description}</comment>` : ""}
-  <icon name="x-office-document" />
-</mime-type>`
-      items.push(data)
-    }
-
-    if (items.length === 0) {
+    // no fallback comment: these packages install the file machine-wide, so a standard type such as text/markdown without a description
+    // must not be relabelled "<productName> document" for every app
+    const xml = generateMimeTypeXml(this.packager.fileAssociations, null)
+    if (xml == null) {
       return null
     }
 
     const file = await this.packager.getTempFile(".xml")
-    await outputFile(
-      file,
-      '<?xml version="1.0" encoding="utf-8"?>\n<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">\n' + items.join("\n") + "\n</mime-info>"
-    )
+    await outputFile(file, xml)
     return file
   }
 

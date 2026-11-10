@@ -1,6 +1,15 @@
 import { DmgOptions, MacPackager, Target } from "app-builder-lib"
-import { createBlockmap, findIdentity, isSignAllowed } from "app-builder-lib/internal"
-import { Arch, exec, Executables, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
+import {
+  createBlockmap,
+  findIdentity,
+  forceCodeSigningError,
+  forceCodeSigningOverrideHint,
+  isSignAllowed,
+  macSigningUnavailableError,
+  VERIFICATION_FAILED_ERROR_CODE,
+  verifyMacCodeSignature,
+} from "app-builder-lib/internal"
+import { Arch, exec, Executables, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import { release as getOsRelease } from "os"
 import * as path from "path"
@@ -113,18 +122,34 @@ export class DmgTarget extends Target {
   }
 
   private async signDmg(artifactPath: string) {
+    const packager = this.packager
+    // with dmg.sign: true, forceCodeSigning turns every silent skip below into an error and verifies the signature
+    const forceCodeSigning = packager.forceCodeSigning
+    const cannotSign = (reason: string) =>
+      forceCodeSigningError(`forceCodeSigning is enabled and dmg.sign is true, but the DMG ${log.filePath(artifactPath)} cannot be signed: ${reason}.`)
+    if (forceCodeSigning) {
+      const unavailable = macSigningUnavailableError(`the DMG ${log.filePath(artifactPath)}`, forceCodeSigningOverrideHint(packager))
+      if (unavailable != null) {
+        throw unavailable
+      }
+    }
     if (!isSignAllowed(false)) {
       return
     }
 
-    const packager = this.packager
     const signConfig = packager.platformOptions.sign
     // explicitly disabled if `sign` (or its identity) is set to null — macPackager already handles this, so just return
     if (signConfig === null) {
+      if (forceCodeSigning) {
+        throw cannotSign("mac.sign is null")
+      }
       return
     }
     const qualifier = typeof signConfig === "object" ? signConfig.identity : undefined
     if (qualifier === null) {
+      if (forceCodeSigning) {
+        throw cannotSign("mac.sign.identity is null")
+      }
       return
     }
 
@@ -134,6 +159,9 @@ export class DmgTarget extends Target {
     if (identity == null) {
       identity = await findIdentity("Mac Developer", qualifier, keychainFile)
       if (identity == null) {
+        if (forceCodeSigning) {
+          throw cannotSign(`no "${certificateType}" or "Mac Developer" identity was found`)
+        }
         return
       }
     }
@@ -143,8 +171,18 @@ export class DmgTarget extends Target {
       args.push("--keychain", keychainFile)
     }
     args.push(artifactPath)
-    // by absolute path, the program the keychain lets use the signing key (security import -T /usr/bin/codesign)
+    // by absolute path, a program the keychain lets use the signing key (security import -T, see keychainTrustedApplications)
     await exec(Executables.resolve("codesign"), args)
+
+    if (forceCodeSigning) {
+      const problem = await verifyMacCodeSignature(artifactPath, { deep: false })
+      if (problem != null) {
+        throw forceCodeSigningError(
+          `forceCodeSigning is enabled, but the signed DMG ${log.filePath(artifactPath)} does not verify (codesign --verify: ${problem}).`,
+          VERIFICATION_FAILED_ERROR_CODE
+        )
+      }
+    }
   }
 
   computeVolumeName(arch: Arch, custom?: string | null): string {

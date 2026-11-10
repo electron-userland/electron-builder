@@ -242,6 +242,19 @@ test("emitArtifactCreated is called once per unique yml file", async ({ expect }
   })
 })
 
+test("tasks whose publish configs differ only in a sensitive value after many others are not merged", async ({ expect, tmpDir }) => {
+  const dir = await tmpDir.getTempDir({ prefix: "updateinfo-cache-key" })
+  const config = (last: string) => ({ ...basePublishConfig, ...Object.fromEntries(Array.from({ length: 16 }, (_, i) => [`token${i}`, "same"])), lastSecret: last })
+  const mockPackager = makePackager()
+  const tasks = [
+    { ...makeTask(dir, "App-1.0.0.exe", "sha-a", null), publishConfiguration: config("a") as any },
+    { ...makeTask(dir, "App-1.0.0.exe", "sha-b", null), publishConfiguration: config("b") as any },
+  ]
+  await writeUpdateInfoFiles(tasks, mockPackager as any)
+  expect(mockPackager.emitArtifactCreated).toHaveBeenCalledTimes(2)
+  expect(tasks.map(it => it.info.files.length)).toEqual([1, 1])
+})
+
 // ── A1: update manifest signing ──────────────────────────────────────────────
 
 test("manifest is signed when the packager yields a signing key, and the signature verifies", async ({ expect }) => {
@@ -424,6 +437,9 @@ test("requireUpdateSigningKeys throws when publishing and no key resolves", asyn
   expect(error!.message).toContain("electron-builder create-update-key")
   expect(error!.message).toContain("ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded PEM file)")
   expect(error!.message).toContain("`updateManifest: false`")
+  // the error states the requirement and links its migration section
+  expect(error!.message).toMatch(/^auto-update manifests must be signed when publishing, /)
+  expect(error!.message).toContain("`updateManifest: false`. See https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required")
 })
 
 test("requireUpdateSigningKeys only warns when the build is not publishing", async ({ expect }) => {
@@ -434,6 +450,10 @@ test("requireUpdateSigningKeys only warns when the build is not publishing", asy
     expect(warn).toHaveBeenCalledTimes(1)
     // the advisory must say that publishing WILL fail, so it works as a fail-fast preview
     expect(warn.mock.calls[0][1]).toContain("Publishing this configuration will fail")
+    // it names the opt-out and links the migration section, not the features page the opted-out warning links
+    expect(warn.mock.calls[0][1]).toContain("opt out explicitly with `updateManifest: false`.")
+    expect(warn.mock.calls[0][1]).toContain("See https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required")
+    expect(warn.mock.calls[0][1]).not.toContain("https://www.electron.build/docs/features/signed-update-manifests")
   } finally {
     warn.mockRestore()
   }
@@ -449,6 +469,10 @@ test("requireUpdateSigningKeys warns once per packager for updateManifest: false
     }
     expect(warn).toHaveBeenCalledTimes(1)
     expect(warn.mock.calls[0][1]).toContain("auto-update manifests will be unsigned")
+    // an explicit opt-out is not a migration step: it links the features page, not the migration section
+    expect(warn.mock.calls[0][1]).toContain("Remove `updateManifest: false`")
+    expect(warn.mock.calls[0][1]).toContain("See https://www.electron.build/docs/features/signed-update-manifests")
+    expect(warn.mock.calls[0][1]).not.toContain("v27-build-changes")
     // one-shot is per packager, not per process: a second platform warns on its own line
     expect(await new TestPackager({ updateManifest: false }).requireUpdateSigningKeys(true)).toEqual([])
     expect(warn).toHaveBeenCalledTimes(2)
@@ -487,6 +511,47 @@ test("a platform-level updateManifest: null is not an opt-out - it falls back to
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
   const packager = new TestPackager({ updateManifest: { signingKey: privateKeyPem }, linux: { updateManifest: null } })
   expect(publicKeysOf(await packager.requireUpdateSigningKeys(true))).toEqual([publicKeyPem])
+})
+
+test("requireUpdateSigningKeys enforces the key under forceCodeSigning even when the build is not publishing", async ({ expect }) => {
+  stubSigningEnv({})
+  const error = await new TestPackager({ forceCodeSigning: true }).requireUpdateSigningKeys(false).then(
+    () => null,
+    (e: Error) => e
+  )
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  // says why a build that does not publish fails, how to fix it, and how to turn forceCodeSigning off
+  expect(error!.message).toContain("because forceCodeSigning is enabled")
+  expect(error!.message).toContain("electron-builder create-update-key")
+  expect(error!.message).toContain("`updateManifest: false`")
+  expect(error!.message).toContain("-c.forceCodeSigning=false")
+  expect(error!.message).toContain("https://www.electron.build/docs/migration/v27-build-changes#forcecodesigning-covers-notarization-and-update-manifests")
+})
+
+test("a platform-level forceCodeSigning enforces the key for that platform only, and names the platform override", async ({ expect }) => {
+  stubSigningEnv({})
+  await expect(new TestPackager({ linux: { forceCodeSigning: true } }).requireUpdateSigningKeys(false)).rejects.toThrow("-c.linux.forceCodeSigning=false")
+  const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+  try {
+    // a platform-level false wins over a root true
+    expect(await new TestPackager({ forceCodeSigning: true, linux: { forceCodeSigning: false } }).requireUpdateSigningKeys(false)).toEqual([])
+    expect(warn).toHaveBeenCalledTimes(1)
+  } finally {
+    warn.mockRestore()
+  }
+})
+
+test("updateManifest: false stays an honored opt-out under forceCodeSigning, with a warning", async ({ expect }) => {
+  stubSigningEnv({})
+  const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+  try {
+    expect(await new TestPackager({ forceCodeSigning: true, updateManifest: false }).requireUpdateSigningKeys(false)).toEqual([])
+    expect(await new TestPackager({ forceCodeSigning: true, updateManifest: false }).requireUpdateSigningKeys(true)).toEqual([])
+    expect(warn).toHaveBeenCalledTimes(2)
+    expect(warn.mock.calls[0][0]).toMatchObject({ reason: expect.stringContaining("forceCodeSigning does not cover update manifests while updateManifest is false") })
+  } finally {
+    warn.mockRestore()
+  }
 })
 
 test("a publicKey-only block does not satisfy the requirement", async ({ expect }) => {

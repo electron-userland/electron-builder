@@ -56,7 +56,7 @@ win:
 
 ### Which settings become the auto-update feed (`app-update.yml`) {#app-update-yml-feed}
 
-The auto-update feed an installed app polls is the **first** provider written to `app-update.yml` inside the packaged app. One packaged app (for example `win-unpacked`, `linux-unpacked` or the `.app` bundle) holds a single `app-update.yml`, shared by every target built from it. It is resolved like this:
+The auto-update feed an installed app polls is the **first** provider written to `app-update.yml` inside the packaged app. One packaged app (for example `win-unpacked`, `linux-unpacked` or the `.app` bundle) holds a single `app-update.yml`, shared by every target built from it. Every option of that provider except `awsCredentials` is written to it in plain text, so never put a token in the `publish` configuration: use `private: true` with a `GH_TOKEN` provided at runtime, or a per-user token passed to `setFeedURL` — a token hard-coded in the app's code is just as easy to extract (see [Private GitHub Update Repo](./features/auto-update.md#private-github-update-repo)). The feed is resolved like this:
 
 1. The targets of that app that write update info — NSIS/NSIS web installer, AppX with `electronUpdaterAware`, macOS dmg/zip, AppImage, deb/rpm/pacman — each resolve their own `publish`: the target-level value (e.g. `nsis.publish`) first, then the platform level (`win.publish`), then the top level.
 2. If one or more of them emit a manifest under those settings, their first provider that receives the manifest becomes the feed — a provider with `publishAutoUpdate: false` gets no `latest*.yml`, so it is skipped (with `publish: [{ provider: "s3", …, publishAutoUpdate: false }, "github"]` the feed is GitHub). They must agree: two such targets whose first providers differ (for example `nsis.publish` pointing at S3 while an AppX inherits `win.publish: github`, or `dmg.publish` differing from `zip.publish`) would leave some installs polling a feed that never receives their manifest. A publishing build then fails at build start with an `InvalidConfigurationError`; a build without a publish policy logs a warning that publishing will fail, and writes no `app-update.yml` for that app. Configure `publish` once at the platform level, or give the targets the same first provider (later providers may differ). Only what decides the feed is compared — the provider and options such as `url`, `bucket`, `region`, `path`, `owner`, `repo` or `channel`; options that only affect the upload (`publishAutoUpdate`, `timeout`, and for S3-compatible providers `acl`, `storageClass`, `encryption`) may differ.
@@ -76,7 +76,7 @@ installed NSIS apps poll the S3 bucket and embed the update-manifest trust key. 
 
 You can also configure publishing using CLI arguments, for example, to force publishing snap not to Snap Store, but to GitHub: `-c.snap.publish=github`
 
-A [custom](https://github.com/electron-userland/electron-builder/issues/3261) publish provider can be used if needed.
+A [custom](#custom-publisher) publish provider can be used if needed.
 
 :::tip[Macros]
 In all publish options [File Macros](./file-patterns.md#file-macros) are supported.
@@ -242,6 +242,41 @@ Auto-updating from R2 requires an `electron-updater` version that supports the `
 Note: files are uploaded with a single PUT request, and R2 limits single-PUT uploads to ~5 GiB per object.
 
   {!./builder-util-runtime.Interface.R2Options.md!}
+
+## Custom Publisher {#custom-publisher}
+
+To upload artifacts with your own code, set the provider to `custom`. Any other options in the entry are passed to your publisher as is.
+
+```yaml
+publish:
+  provider: custom
+  url: https://updates.example.com
+```
+
+electron-builder then loads `electron-publisher-custom.mjs`, `.js` or `.cjs` (checked in that order) from the build resources directory (`directories.buildResources`, `build` by default) and uses the exported class (`export default` or `module.exports`) as the publisher. That directory is excluded from the app by default, so the publisher is not packaged unless your `files` patterns include it explicitly.
+
+The class is created with the publish context and the `publish` entry, and `upload(task)` is called for every artifact and update info file. `task.file` is the path of the file to upload; for update info files `task.fileContent` also holds the content.
+
+```js
+// build/electron-publisher-custom.js
+class CustomPublisher {
+  constructor(context, options) {
+    this.options = options
+  }
+
+  get providerName() {
+    return "custom"
+  }
+
+  async upload(task) {
+    // upload task.file to this.options.url
+  }
+}
+
+module.exports = CustomPublisher
+```
+
+electron-updater can only read a `custom` feed when the app passes a provider class itself, for example `autoUpdater.setFeedURL({ provider: "custom", updateProvider: MyProvider })`. The provider class returns its feed URL from `Provider.feedBaseUrl` (see [Auto Update](./features/auto-update.md#custom-options-instantiating-updater-directly)). To serve updates from your own server without writing a provider, use the [generic](#byo-generic-create-your-own) provider.
 
 ## BYO Generic (create-your-own)
 (And maybe submit it upstream in a PR!)

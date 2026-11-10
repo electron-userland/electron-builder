@@ -1,7 +1,7 @@
-import { createHttpError, newError, safeGetHeader } from "builder-util-runtime"
+import { ApiRequestOptions, CancellationError, createHttpError, newError, safeGetHeader } from "builder-util-runtime"
 import { IncomingMessage } from "http"
 import { Writable } from "stream"
-import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter.js"
+import { copyData, DataSplitter, parseMultipartBoundary, PartListDataTask } from "./DataSplitter.js"
 import { DifferentialDownloader } from "./DifferentialDownloader.js"
 import { Operation, OperationKind } from "./downloadPlanBuilder.js"
 
@@ -11,12 +11,44 @@ export const ERR_MULTIPLE_RANGES_NOT_SUPPORTED = "ERR_UPDATER_MULTIPLE_RANGES_NO
 // 400 Bad Request (Google Cloud Storage: "Multiple ranges are not supported"), 416 Range Not Satisfiable, 501 Not Implemented (GitHub release assets)
 const MULTIPLE_RANGES_REJECTED_STATUS_CODES = new Set([400, 416, 501])
 
+/**
+ * Maximum number of DOWNLOAD ranges packed into one `multipart/byteranges` request. Apache's `MaxRanges`
+ * default is 200 (more → a plain 200 response with the whole file, which fails the multipart content-type
+ * check), and at ~19 B per range more than ~400–500 ranges push the `Range` header alone past the 8 KB
+ * request-header limits of nginx and Apache (HTTP 400). Both failures degrade to a full download.
+ */
+export const MAX_RANGES_PER_REQUEST = 200
+
+/** Maximum number of operations (COPY + DOWNLOAD) handled by one request/batch. */
+export const MAX_TASKS_PER_REQUEST = 1000
+
+/**
+ * Returns the exclusive end index of the batch starting at `start`: at most `maxTasks` operations and at
+ * most `maxRanges` DOWNLOAD operations. COPY operations following the last DOWNLOAD of a batch stay in it
+ * (they cost nothing on the wire), the batch is cut right before the DOWNLOAD that would exceed the cap.
+ */
+export function computeBatchEnd(tasks: Array<Operation>, start: number, maxRanges: number = MAX_RANGES_PER_REQUEST, maxTasks: number = MAX_TASKS_PER_REQUEST): number {
+  const limit = Math.min(tasks.length, start + maxTasks)
+  let rangeCount = 0
+  let end = start
+  while (end < limit) {
+    if (tasks[end].kind === OperationKind.DOWNLOAD) {
+      if (rangeCount >= maxRanges) {
+        break
+      }
+      rangeCount++
+    }
+    end++
+  }
+  return end
+}
+
 export function executeTasksUsingMultipleRangeRequests(
   differentialDownloader: DifferentialDownloader,
   tasks: Array<Operation>,
   out: Writable,
   oldFileFd: number,
-  reject: (error: Error) => void
+  reject: (error: unknown) => void
 ): (taskOffset: number) => void {
   const w = (taskOffset: number): void => {
     if (taskOffset >= tasks.length) {
@@ -27,13 +59,13 @@ export function executeTasksUsingMultipleRangeRequests(
       return
     }
 
-    const nextOffset = taskOffset + 1000
+    const nextOffset = computeBatchEnd(tasks, taskOffset)
     doExecuteTasks(
       differentialDownloader,
       {
         tasks,
         start: taskOffset,
-        end: Math.min(tasks.length, nextOffset),
+        end: nextOffset,
         oldFileFd,
       },
       out,
@@ -44,7 +76,9 @@ export function executeTasksUsingMultipleRangeRequests(
   return w
 }
 
-function doExecuteTasks(differentialDownloader: DifferentialDownloader, options: PartListDataTask, out: Writable, resolve: () => void, reject: (error: Error) => void): void {
+// Each request starts at the update URL and follows its own redirects: a redirect target can be a pre-signed URL that
+// expires before a later batch of a long download.
+function doExecuteTasks(differentialDownloader: DifferentialDownloader, options: PartListDataTask, out: Writable, resolve: () => void, reject: (error: unknown) => void): void {
   let ranges = "bytes="
   let partCount = 0
   let grandTotalBytes = 0
@@ -74,22 +108,25 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       if (task.kind === OperationKind.COPY) {
         copyData(task, out, options.oldFileFd, reject, () => w(index))
       } else {
-        const requestOptions = differentialDownloader.createRequestOptions()
-        requestOptions.headers!.Range = `bytes=${task.start}-${task.end - 1}`
-        const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
-          response.on("error", reject)
+        requestRange(
+          differentialDownloader,
+          { options: differentialDownloader.createRequestOptions() },
+          `bytes=${task.start}-${task.end - 1}`,
+          response => {
+            response.on("error", reject)
 
-          if (!checkIsPartialContent(response, task.start, task.end - 1, reject)) {
-            return
-          }
+            if (!checkIsPartialContent(response, task.start, task.end - 1, reject)) {
+              return
+            }
 
-          response.pipe(out, {
-            end: false,
-          })
-          response.once("end", () => w(index))
-        })
-        differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
-        request.end()
+            response.pipe(out, {
+              end: false,
+            })
+            response.once("end", () => w(index))
+          },
+          reject,
+          out
+        )
       }
     }
 
@@ -97,9 +134,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
     return
   }
 
-  const requestOptions = differentialDownloader.createRequestOptions()
-  requestOptions.headers!.Range = ranges.substring(0, ranges.length - 2)
-  const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
+  const onResponse = (response: IncomingMessage, request: AbortableRequest): void => {
     response.on("error", reject)
 
     // other errors (auth, missing file, server failure) are not about ranges: fail as before, without a range-by-range retry
@@ -113,11 +148,16 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
     // Hosts that serve only one range per request answer a multi-range request with an error (GitHub release assets: 501,
     // GCS: 400), the whole file (S3: 200) or a single coalesced part. Stop reading and let the caller retry range by range.
     const contentType = safeGetHeader(response, "content-type")
-    const m = statusCode === 206 ? /^multipart\/.+?\s*;\s*boundary=(?:"([^"]+)"|([^\s";]+))\s*$/i.exec(contentType) : null
-    if (m == null) {
+    const boundary = statusCode === 206 ? parseMultipartBoundary(contentType) : null
+    if (boundary == null) {
       response.destroy()
       request.abort()
-      reject(newError(`Server does not support multiple ranges in one request (status ${statusCode}, Content-Type "${contentType}")`, ERR_MULTIPLE_RANGES_NOT_SUPPORTED))
+      reject(
+        newError(
+          `Server does not support multiple ranges in one request (status ${statusCode}, Content-Type "${String(contentType).substring(0, 200)}")`,
+          ERR_MULTIPLE_RANGES_NOT_SUPPORTED
+        )
+      )
       return
     }
 
@@ -139,7 +179,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       out,
       options,
       partIndexToTaskIndex,
-      m[1] || m[2],
+      boundary,
       partIndexToLength,
       onBatchFinished,
       grandTotalBytes,
@@ -162,9 +202,76 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
         reject(new Error("Response ends without calling any handlers"))
       }, 10000)
     })
-  })
-  differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
-  request.end()
+  }
+  requestRange(differentialDownloader, { options: differentialDownloader.createRequestOptions() }, ranges.substring(0, ranges.length - 2), onResponse, reject, out)
+}
+
+/** Where a range is requested: the update URL, or the redirect target once a request to it was redirected. */
+export interface RangeRequestTarget {
+  options: ApiRequestOptions
+}
+
+export interface AbortableRequest {
+  abort(): void
+}
+
+/**
+ * Requests `range` (a `Range` header value) from `target`, whose options ask for manual redirects (see
+ * DifferentialDownloader.createRequestOptions). The executor's redirect handler aborts a redirected request and it is sent
+ * again to the redirect target, with the headers the executor's cross-origin header policy keeps and its own (Accept, `range`) when the
+ * target is on another origin, up to the executor's
+ * redirect limit. The redirect target becomes the `target`, so a caller that passes the same `target` again requests the next
+ * range from the redirect target. `onResponse` gets the request that was answered.
+ *
+ * Every request, a redirected one included, is created with DifferentialDownloader.createRangeRequest, so a cancel aborts it.
+ * No request is sent once the download stopped (cancelled, or failed and destroyed `out`): it would outlive the download.
+ */
+export function requestRange(
+  differentialDownloader: DifferentialDownloader,
+  target: RangeRequestTarget,
+  range: string,
+  onResponse: (response: IncomingMessage, request: AbortableRequest) => void,
+  reject: (error: unknown) => void,
+  out?: Writable
+): void {
+  const { httpExecutor } = differentialDownloader
+  const send = (requestOptions: ApiRequestOptions, redirectCount: number): void => {
+    if (differentialDownloader.options.cancellationToken.cancelled) {
+      reject(new CancellationError())
+      return
+    }
+    if (out?.destroyed === true) {
+      reject(new Error("Cannot request a range: the output stream is destroyed"))
+      return
+    }
+    // sent from stream and response callbacks too: a request that cannot be created (a URL the updater rejects, a protocol net.request
+    // does not support) would escape from them as an uncaught exception, and the download would never settle
+    let request: AbortableRequest & { end(): void }
+    try {
+      request = differentialDownloader.createRangeRequest(requestOptions, (response: IncomingMessage) => onResponse(response, request))
+    } catch (e: unknown) {
+      // as is, like a throw from the first request, which is sent inside the download's promise executor
+      reject(e)
+      return
+    }
+    httpExecutor.addErrorAndTimeoutHandlers(request, reject)
+    httpExecutor.addRedirectHandlers(request, requestOptions, reject, redirectCount, redirectOptions => {
+      differentialDownloader.logger.info(`Redirect to ${urlWithoutQuery(redirectOptions)}`)
+      target.options = redirectOptions
+      send(redirectOptions, redirectCount + 1)
+    })
+    request.end()
+  }
+  // `range` is the request's own: a redirect to another origin sends it whatever the cross-origin header policy keeps
+  send({ ...target.options, headers: { ...target.options.headers, range }, ownHeaders: { ...target.options.ownHeaders, range } }, 0)
+}
+
+// the query of a redirect target (a pre-signed URL) can hold a signature, and the user info is not in the options
+function urlWithoutQuery(options: ApiRequestOptions): string {
+  const port = options.port == null ? "" : `:${options.port}`
+  const path = options.path ?? "/"
+  const queryIndex = path.indexOf("?")
+  return `${options.protocol ?? "https:"}//${options.hostname ?? ""}${port}${queryIndex < 0 ? path : path.substring(0, queryIndex)}`
 }
 
 /**
@@ -173,7 +280,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
  * fails. A rejected response is destroyed, so nothing more is read from it.
  */
 export function checkIsPartialContent(response: IncomingMessage, start: number, endInclusive: number, reject: (error: Error) => void): boolean {
-  // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
+  // requestRange follows redirects (Electron reports them as events); any other status but 206, a 3xx included, is rejected below
   const { statusCode } = response
   if (typeof statusCode === "number" && statusCode >= 400) {
     response.destroy()
