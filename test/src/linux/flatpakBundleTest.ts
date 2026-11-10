@@ -39,9 +39,10 @@ type Command = [file: string, ...args: string[]]
 /** What the tools print for --version, in the two formats that are in use ("flatpak-builder 1.2.3" is the third). */
 const VERSION_OUTPUT: Record<string, string> = { flatpak: "Flatpak 1.16.6\n", "flatpak-builder": "flatpak-builder-1.4.4\n", appstreamcli: "AppStream version: 1.0.3\n" }
 
-// flatpak and flatpak-builder are started by absolute path, which the resolver would look for on this machine's disk
+// the tools are started by absolute path, which the resolver would look for on this machine's disk
 beforeEach(() => {
   vi.spyOn(Executables, "resolve").mockImplementation(name => `${TOOLS_DIR}/${name}`)
+  vi.spyOn(Executables, "find").mockImplementation(name => `${TOOLS_DIR}/${name}`)
 })
 
 afterEach(() => {
@@ -121,10 +122,8 @@ async function rejection(promise: Promise<unknown>): Promise<unknown> {
 /** Every command in the order it was started, after checking the directory and the environment that each one ran with. */
 function commands(expect: ExpectStatic, options: FlatpakBundleOptions): Command[] {
   return vi.mocked(exec).mock.calls.map(([toolPath, args, execOptions]) => {
-    // never looked up on PATH — except appstreamcli, which is probed by the bare name flatpak-builder itself execvps
-    if (path.basename(toolPath) !== "appstreamcli") {
-      expect(path.dirname(toolPath)).toBe(TOOLS_DIR)
-    }
+    // never looked up on PATH
+    expect(path.dirname(toolPath)).toBe(TOOLS_DIR)
     const command: Command = [path.basename(toolPath), ...(args ?? [])]
     // with modules, the two runs of flatpak-builder download their sources, which can take credentials from the environment.
     // Every other command, and flatpak-builder without modules, gets the filtered environment that exec defaults to
@@ -951,15 +950,19 @@ describe("buildFlatpakBundle", { concurrent: false }, () => {
   // flatpak-builder 1.4 and newer compose the staged metainfo file with appstreamcli, which runs on the build machine and which
   // flatpak-builder looks up on PATH itself, so a missing appstreamcli fails the build early instead of after the refs are installed
   describe("linux.metainfo and appstreamcli", () => {
-    const appstreamcliMissing = (file: string) => {
-      if (file === "appstreamcli") {
-        throw new ExecError("appstreamcli", "ENOENT" as any, "Exit code: ENOENT. spawn appstreamcli ENOENT", "", "ENOENT")
+    /** appstreamcli is not installed: the resolver finds nothing, and the stand-in fails should something start it anyway */
+    const appstreamcliMissing = () => {
+      vi.spyOn(Executables, "find").mockImplementation(name => (name === "appstreamcli" ? null : `${TOOLS_DIR}/${name}`))
+      return (file: string) => {
+        if (file === "appstreamcli") {
+          throw new Error("appstreamcli must not be started when it is not installed")
+        }
       }
     }
 
     test("fails before anything is installed when appstreamcli is missing with flatpak-builder 1.4.4", async ({ expect, tmpDir }) => {
       const { options, manifestFile } = await setup(tmpDir, { hasMetainfo: true })
-      mockTools(["--user"], appstreamcliMissing)
+      mockTools(["--user"], appstreamcliMissing())
 
       const error = await rejection(buildFlatpakBundle(options))
 
@@ -995,7 +998,7 @@ describe("buildFlatpakBundle", { concurrent: false }, () => {
     // before 1.4 flatpak-builder composes with the SDK's appstream-compose, never with the host's appstreamcli
     test("does not look for appstreamcli with flatpak-builder 1.2.2: the version gate fails first on the freedesktop SDK 24.08", async ({ expect, tmpDir }) => {
       const { options } = await setup(tmpDir, { hasMetainfo: true })
-      mockTools(["--user"], appstreamcliMissing, { ...VERSION_OUTPUT, "flatpak-builder": "flatpak-builder 1.2.2\n" })
+      mockTools(["--user"], appstreamcliMissing(), { ...VERSION_OUTPUT, "flatpak-builder": "flatpak-builder 1.2.2\n" })
 
       const error = await rejection(buildFlatpakBundle(options))
 
@@ -1006,7 +1009,7 @@ describe("buildFlatpakBundle", { concurrent: false }, () => {
 
     test("builds without appstreamcli with flatpak-builder 1.2.2 on the freedesktop SDK 23.08, which still ships appstream-compose", async ({ expect, tmpDir }) => {
       const { options } = await setup(tmpDir, { hasMetainfo: true, manifest: { ...manifest, "runtime-version": "23.08" } })
-      mockTools(["--user"], appstreamcliMissing, { ...VERSION_OUTPUT, "flatpak-builder": "flatpak-builder 1.2.2\n" })
+      mockTools(["--user"], appstreamcliMissing(), { ...VERSION_OUTPUT, "flatpak-builder": "flatpak-builder 1.2.2\n" })
 
       await buildFlatpakBundle(options)
 
@@ -1017,7 +1020,7 @@ describe("buildFlatpakBundle", { concurrent: false }, () => {
 
     test("does not look for appstreamcli without metainfo", async ({ expect, tmpDir }) => {
       const { options } = await setup(tmpDir)
-      mockTools(["--user"], appstreamcliMissing)
+      mockTools(["--user"], appstreamcliMissing())
 
       await buildFlatpakBundle(options)
 

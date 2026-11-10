@@ -1,7 +1,6 @@
-import { exec, InvalidConfigurationError, log } from "builder-util"
+import { exec, Executables, InvalidConfigurationError, log } from "builder-util"
 import { Nullish, parseXml, XElement } from "builder-util-runtime"
 import { readFile } from "fs/promises"
-import { Lazy } from "lazy-val"
 import * as path from "path"
 import { LinuxMetainfoConfiguration } from "../../options/linuxOptions.js"
 import type { PlatformPackager } from "../../platformPackager.js"
@@ -128,7 +127,7 @@ export async function prepareMetainfoFile(options: MetainfoOptions): Promise<Sta
   }
 
   // one success line per build and file: every target and arch of the packager stages the same file
-  const appstreamcli = validate ? await appstreamCliVersion.value : null
+  const appstreamcli = validate ? ((await findAppstreamCli())?.version ?? null) : null
   log
     .once(`metainfo-staged:${file}`, options.packager)
     .info({ file: path.basename(file), validated: validate ? "yes" : "no", ...(appstreamcli == null ? {} : { appstreamcli }) }, "metainfo staged")
@@ -263,26 +262,46 @@ async function tryReadComponentId(file: string): Promise<string | null> {
   }
 }
 
-// probe once per process — appstreamcli availability does not change during a build
-const appstreamCliVersion = new Lazy<string | null>(async () => {
-  try {
-    return (await exec("appstreamcli", ["--version"])).trim()
-  } catch (e: any) {
-    log.debug({ error: e.message }, "appstreamcli is not installed — skipping external metainfo validation")
-    return null
-  }
-})
+// what `appstreamcli --version` printed, by resolved path — probed once per binary and process, since the path a scope
+// resolves can differ between builds (toolsets.executables) but the same binary keeps its version
+const appstreamCliVersions = new Map<string, Promise<{ path: string; version: string } | null>>()
 
 /**
- * Runs `appstreamcli validate --no-net` when the tool is available on PATH.
+ * The absolute path and version of appstreamcli, an optional tool: null when it is not installed (at its
+ * `toolsets.executables` location or the default install locations — never looked up on PATH, where package managers
+ * prepend directories such as node_modules/.bin) or when it does not run, which only skips the external validation.
+ */
+function findAppstreamCli(): Promise<{ path: string; version: string } | null> {
+  const file = Executables.find("appstreamcli")
+  if (file == null) {
+    log.debug(null, "appstreamcli is not installed — skipping external metainfo validation")
+    return Promise.resolve(null)
+  }
+  let probed = appstreamCliVersions.get(file)
+  if (probed == null) {
+    probed = exec(file, ["--version"]).then(
+      it => ({ path: file, version: it.trim() }),
+      (e: any) => {
+        log.debug({ error: e.message }, "appstreamcli failed to run — skipping external metainfo validation")
+        return null
+      }
+    )
+    appstreamCliVersions.set(file, probed)
+  }
+  return probed
+}
+
+/**
+ * Runs `appstreamcli validate --no-net` when the tool is installed (see {@link findAppstreamCli}).
  * Failures are reported as warnings and never fail the build; an absent tool is only debug-logged.
  */
 async function validateWithAppstreamCli(file: string): Promise<void> {
-  if ((await appstreamCliVersion.value) == null) {
+  const appstreamCli = await findAppstreamCli()
+  if (appstreamCli == null) {
     return
   }
   try {
-    const stdout = await exec("appstreamcli", ["validate", "--no-net", file])
+    const stdout = await exec(appstreamCli.path, ["validate", "--no-net", file])
     log.debug({ file: log.filePath(file), output: stdout.trim() }, "appstreamcli validation passed")
   } catch (e: any) {
     // builder-util's exec folds stdout/stderr into the ExecError message

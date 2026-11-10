@@ -243,9 +243,19 @@ export async function buildFlatpakBundle(options: FlatpakBundleOptions): Promise
   // flatpak-builder itself looks up on PATH (execvp): without it the build fails late, after the refs are installed and the app is
   // built, with 'Failed to execute child process "appstreamcli"'
   if (options.hasMetainfo && builderVersion != null && semver.gte(builderVersion, METAINFO_FLATPAK_BUILDER_VERSION)) {
-    try {
-      await exec("appstreamcli", ["--version"], { cwd })
-    } catch (_e: any) {
+    // resolved like every other host program (toolsets.executables or the default install locations, never through this
+    // process's PATH); found-but-broken fails the same way as absent
+    const appstreamCli = Executables.find("appstreamcli")
+    let runs = false
+    if (appstreamCli != null) {
+      try {
+        await exec(appstreamCli, ["--version"], { cwd })
+        runs = true
+      } catch (_e: any) {
+        // reported below
+      }
+    }
+    if (!runs) {
       throw new InvalidConfigurationError(
         `linux.metainfo stages share/metainfo/${manifest.id}.metainfo.xml, which flatpak-builder ${builderVersion.version} composes with appstreamcli, and appstreamcli is not installed (flatpak-builder runs it from PATH). ` +
           `Install it (the "appstream" package on Debian/Ubuntu, Fedora and Arch Linux), or set flatpak: { metainfo: null } to leave the file out of the flatpak target. See ${FLATPAK_DOCS}#build-requirements`

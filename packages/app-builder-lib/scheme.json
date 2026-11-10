@@ -1437,6 +1437,23 @@
           ],
           "description": "One file:// URI, or a list of them, of the `actool` executable on the build machine, such as `file:///opt/homebrew/bin/actool` or `file:///C:/Program%20Files/actool/actool.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
         },
+        "appstreamcli": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `appstreamcli` executable on the build machine, such as `file:///opt/homebrew/bin/appstreamcli` or `file:///C:/Program%20Files/appstreamcli/appstreamcli.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
         "codesign": {
           "anyOf": [
             {

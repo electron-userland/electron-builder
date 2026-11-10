@@ -326,6 +326,7 @@ Each entry is one `file://` URI or a list of them. A list can serve several host
 | `lzip` | `tar.lz` archives on hosts without an `archive` toolset bundle | Linux: `/usr/bin/lzip`, `/usr/local/bin/lzip` |
 | `snapcraft` | Building and publishing snaps | macOS: `/opt/homebrew/bin/snapcraft`, `/usr/local/bin/snapcraft`; Linux: `/snap/bin/snapcraft`, `/usr/bin/snapcraft` |
 | `flatpak`, `flatpak-builder` | Building flatpaks | Linux: `/usr/bin/<name>`, `/usr/local/bin/<name>` |
+| `appstreamcli` | Validating [`linux.metainfo`](./linux.md#appstream-metainfo-metainfo) files when it is installed (optional); required by the flatpak target when it stages a metainfo file | Linux: `/usr/bin/appstreamcli`, `/usr/local/bin/appstreamcli`; macOS: `/opt/homebrew/bin/appstreamcli`, `/usr/local/bin/appstreamcli` |
 
 Where a program has several default locations they are tried in the order of the default `PATH`. `SystemRoot` (or `windir`) and `ProgramFiles` must be drive-absolute paths such as `C:\Windows`; they are read only for the default locations, so a program whose entry is set does not need them.
 
