@@ -1176,7 +1176,6 @@ BAMCA0cAMEQCIBatA9LgGVzZvqS8X/x3cgV/lk9r86fB/O5hXBhkgBmNAiBlj5Iw
     ["certificateSubjectName", { type: "signtool", sign: "./customSign.js", certificateSubjectName: "Acme Corp" }, {}],
     ["certificateSha1", { type: "signtool", sign: "./customSign.js", certificateSha1: "ABCDEF" }, {}],
     ["win.cscLink", { type: "signtool", sign: "./customSign.js" }, { platformOptions: { sign: { type: "signtool", sign: "./customSign.js" }, cscLink: "cert.pfx" } }],
-    ["the top-level cscLink", { type: "signtool", sign: "./customSign.js" }, { config: { cscLink: "cert.pfx" } }],
     ["WIN_CSC_LINK / CSC_LINK", { type: "signtool", sign: "./customSign.js" }, { getCscLink: () => "env-cert.pfx" }],
     ["HSM certificateFile", { ...hsmSign, sign: "./customSign.js", certificateFile: "chain.crt" }, {}],
   ] as const)("custom sign hook with a readable certificate (%s) throws without publisherName", async ([, sign, overrides]) => {

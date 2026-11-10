@@ -383,6 +383,43 @@ exports[`macPackager > extraFiles are placed in product app bundle Contents, not
 ]
 `;
 
+exports[`macPackager > mas Info.plist options and helper bundle ids override mac 1`] = `
+{
+  "mac": [],
+}
+`;
+
+exports[`macPackager > mas Info.plist options and helper bundle ids override mac 2`] = `
+{
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "public.app-category.games",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {},
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
 exports[`macPackager > mas bundleVersion overrides mac bundleVersion 1`] = `
 {
   "mac": [],
@@ -406,6 +443,43 @@ exports[`macPackager > mas bundleVersion overrides mac bundleVersion 2`] = `
     },
   },
   "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {},
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`macPackager > mas-dev Info.plist options warn for the layer that sets them, not for a repeated mac value 1`] = `
+{
+  "mac": [],
+}
+`;
+
+exports[`macPackager > mas-dev Info.plist options warn for the layer that sets them, not for a repeated mac value 2`] = `
+{
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "public.app-category.games",
   "LSEnvironment": {
     "MallocNanoZone": "0",
   },

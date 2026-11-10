@@ -66,8 +66,7 @@ export function registerAppxTests(toolsets: ToolsetConfig): void {
         targets: target,
         config: {
           toolsets,
-          cscLink: protectedCscLink,
-          cscKeyPassword: "test",
+          win: { cscLink: protectedCscLink, cscKeyPassword: "test" },
           appx: {
             identityName: "01234Test.ApplicationDataSample",
           },
@@ -97,8 +96,7 @@ export function registerAppxTests(toolsets: ToolsetConfig): void {
       targets: Platform.WINDOWS.createTarget(["appx"], Arch.ia32, Arch.x64),
       config: {
         toolsets,
-        cscLink: protectedCscLink,
-        cscKeyPassword: "test",
+        win: { cscLink: protectedCscLink, cscKeyPassword: "test" },
         appx: {
           languages: ["de-DE", "ru-RU"],
           minVersion: "10.0.16299.0",
@@ -142,8 +140,7 @@ export function registerAppxTests(toolsets: ToolsetConfig): void {
       targets: target,
       config: {
         toolsets,
-        cscLink: protectedCscLink,
-        cscKeyPassword: "test",
+        win: { cscLink: protectedCscLink, cscKeyPassword: "test" },
         appx: {
           capabilities: ["internetClient", "picturesLibrary", "webcam", "screenDuplication", "graphicsCapture", "globalMediaControl"],
         },
@@ -167,8 +164,7 @@ export function registerAppxTests(toolsets: ToolsetConfig): void {
         targets: target,
         config: {
           toolsets,
-          cscLink: protectedCscLink,
-          cscKeyPassword: "test",
+          win: { cscLink: protectedCscLink, cscKeyPassword: "test" },
           appx: {
             capabilities: ["invalid01", "invalid02"],
           },
@@ -185,8 +181,7 @@ export function registerAppxTests(toolsets: ToolsetConfig): void {
       targets: target,
       config: {
         toolsets,
-        cscLink: protectedCscLink,
-        cscKeyPassword: "test",
+        win: { cscLink: protectedCscLink, cscKeyPassword: "test" },
         appx: {
           displayName: "Test <&>\"'",
         },

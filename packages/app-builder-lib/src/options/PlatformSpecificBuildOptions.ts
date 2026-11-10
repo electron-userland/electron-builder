@@ -1,4 +1,4 @@
-import { CompressionLevel, TargetConfiguration, TargetSpecificOptions } from "../core.js"
+import { CompressionLevel, TargetSpecificOptions } from "../core.js"
 import { FileAssociation } from "./FileAssociation.js"
 
 export interface FileSet {
@@ -324,7 +324,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   /**
    * Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,
    * notarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for
-   * what is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.
+   * what is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like the other options `MasConfiguration` lists, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.
    * @default false
    */
   readonly forceCodeSigning?: boolean
@@ -383,20 +383,6 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
    * ```
    */
   readonly releaseInfo?: ReleaseInfo
-
-  /**
-   * The build target(s) for this platform. Can be a target name string, a {@link TargetConfiguration}
-   * object, or an array of either. Available targets depend on the platform — see platform-specific
-   * options (e.g. {@link MacConfiguration.target}, {@link WindowsConfiguration.target},
-   * {@link LinuxConfiguration.target}).
-   */
-  readonly target?: Array<string | TargetConfiguration> | string | TargetConfiguration | null
-
-  /** @private */
-  cscLink?: string | null
-
-  /** @private */
-  cscKeyPassword?: string | null
 
   /**
    * The default architecture to build for when no `--arch` flag is specified.

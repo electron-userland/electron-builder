@@ -7,11 +7,22 @@ import {
   ELECTRON_DOWNLOAD_DROPPED,
   FILE_OPTION_KEYS,
   formatLegacyOptionMessage,
+  LINUX_UNREAD_TARGET_OPTIONS,
+  MAC_HELPER_REMOVED_FIELDS,
+  MAC_PLATFORM_KEYS,
   MAC_SIGN_FIELDS,
   MAC_SIGN_REMOVED_FIELDS,
   MAC_UNIVERSAL_FIELDS,
+  MAS_CERTIFICATE_WARNING,
+  MAS_REMOVED_CERTIFICATE_FIELDS,
+  MAS_REMOVED_FIELDS,
+  MSI_WRAPPED_ONE_CLICK_WARNING,
+  MSI_WRAPPED_REMOVED_FIELDS,
   NSIS_CONFIG_KEYS,
+  PUBLISH_MANAGED_OPTIONS,
   RESOLVED_LEGACY_CONFIG_OPTIONS,
+  SNAP_CORE_KEYS,
+  SNAP_CORE_TARGET_OPTION_KEYS,
 } from "app-builder-lib/internal"
 import { log, orNullIfFileNotExist } from "builder-util"
 import { asArray, isLoopbackHostname, isValidPublisherNameDn } from "builder-util-runtime"
@@ -174,6 +185,9 @@ export const MAC_NULL_MEANS_UNSET_FIELDS: ReadonlySet<string> = new Set(["type",
 /** Platform keys that accepted a platform-level `asarUnpack` in v26. */
 export const ASAR_PLATFORM_KEYS = ["mac", "mas", "masDev", "win", "linux"] as const
 
+/** The certificate options v26 accepted at the root and on `linux`; v27 has them on `mac` and `win` only. */
+export const CERTIFICATE_KEYS = ["cscLink", "cscKeyPassword"] as const
+
 /** v26 `snap` options that the v27 `snapcraft.core24` shape does not accept (core24 uses the snapcraft CLI directly). */
 export const SNAP_CORE24_UNSUPPORTED = ["allowNativeWayland", "useTemplateApp"] as const
 
@@ -200,9 +214,9 @@ function hasTarget(target: any, names: ReadonlyArray<string>): boolean {
   return false
 }
 
-/** True when the build config selects one of `names` (via `<platform>.target` or the global target). */
+/** True when the build config selects one of `names` via `<platform>.target` (a root-level `target` never selected anything). */
 function detectTarget(config: Record<string, any>, platform: "win" | "linux", names: ReadonlyArray<string>): boolean {
-  return hasTarget(config[platform]?.target, names) || hasTarget(config.target, names)
+  return hasTarget(config[platform]?.target, names)
 }
 
 /**
@@ -258,8 +272,16 @@ function detectDefaultMacEntitlements(config: Record<string, any>): boolean {
 }
 
 /** True when a root or platform/target-level `publish` (walked like step 7) has a generic provider whose url has a query string. */
+/**
+ * The top-level sections whose `publish` is a publish configuration: every one except the root `publish` value itself (a custom provider
+ * may have an option named `publish`) and the free-form `extraMetadata` (package.json fields), as the build-time check walks them.
+ */
+function publishSections(config: Record<string, any>): Array<[string, Record<string, any>]> {
+  return Object.entries(config).filter((entry): entry is [string, Record<string, any>] => entry[0] !== "publish" && entry[0] !== "extraMetadata" && isPlainObject(entry[1]))
+}
+
 function detectGenericFeedQuery(config: Record<string, any>): boolean {
-  return [config, ...Object.values(config)].some(
+  return [config, ...publishSections(config).map(([, section]) => section)].some(
     section =>
       isPlainObject(section) &&
       (Array.isArray(section.publish) ? section.publish : [section.publish]).some(
@@ -281,6 +303,9 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   const changes: MigrationChange[] = []
   const warnings: string[] = []
   const advisories: string[] = []
+  // Kept keys are reported only after `modified` is computed: a key that is merely kept must not re-serialize the file
+  // (dropping YAML/JSON5 comments) when nothing else changed. The build then fails with the same targeted message.
+  const keptKeyWarnings: string[] = []
 
   // ── 1. electronCompile ────────────────────────────────────────────────────
   if ("electronCompile" in c) {
@@ -323,6 +348,62 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
         "linux.syncDesktopName: false disabled desktop-name syncing in v26. In v27 the installed .desktop filename is always derived from `desktopName` " +
           "(falling back to executableName). If you relied on the old filename, set `desktopName` explicitly to control it."
       )
+    }
+  }
+
+  // ── 2d. root-level target removed (it never selected a target) ───────────
+  // electron-builder reads only mac.target / win.target / linux.target. The value is never moved to a platform:
+  // zip / 7z / dir name no platform, and placing dmg / nsis / deb there would change what is built.
+  if ("target" in c) {
+    const value = c.target
+    delete c.target
+    changes.push({ key: "target", description: "removed the root-level target (it never selected a target; targets are set per platform)" })
+    if (value != null) {
+      warnings.push(`the root-level target ${JSON.stringify(value)} never had an effect and was removed; to build it, set it under mac.target, win.target or linux.target`)
+    }
+  }
+
+  // ── 2e. msiWrapped installer options and msix.electronUpdaterAware removed (they never had an effect) ──
+  // The wrapped NSIS installer takes the installer options from nsis.*: they are never moved there, which would change it.
+  if (isPlainObject(c.msiWrapped)) {
+    if (c.msiWrapped.oneClick === false) {
+      warnings.push(MSI_WRAPPED_ONE_CLICK_WARNING)
+    }
+    for (const key of MSI_WRAPPED_REMOVED_FIELDS) {
+      if (key in c.msiWrapped) {
+        delete c.msiWrapped[key]
+        changes.push({ key: `msiWrapped.${key}`, description: `removed msiWrapped.${key} (no effect on the MSI wrapper; the wrapped installer uses nsis.${key})` })
+      }
+    }
+  }
+  if (isPlainObject(c.msix) && "electronUpdaterAware" in c.msix) {
+    delete c.msix.electronUpdaterAware
+    changes.push({ key: "msix.electronUpdaterAware", description: "removed msix.electronUpdaterAware (it had no effect: MSIX writes no update info)" })
+  }
+
+  // ── 2f. mas / masDev options Mac App Store builds never read, and the Helper EH / NP bundle ids ──
+  // Before step 7, which would rewrite a mas.publish first. Never moved to mac, which would change the macOS build; only key
+  // names are reported, because the certificate options hold secrets.
+  for (const platform of ["mas", "masDev"] as const) {
+    if (!isPlainObject(c[platform])) {
+      continue
+    }
+    if (MAS_REMOVED_CERTIFICATE_FIELDS.some(key => key in c[platform]) && !warnings.includes(MAS_CERTIFICATE_WARNING)) {
+      warnings.push(MAS_CERTIFICATE_WARNING)
+    }
+    for (const key of Object.keys(MAS_REMOVED_FIELDS)) {
+      if (key in c[platform]) {
+        delete c[platform][key]
+        changes.push({ key: `${platform}.${key}`, description: `removed ${platform}.${key} (Mac App Store builds never read it there)` })
+      }
+    }
+  }
+  for (const platform of MAC_PLATFORM_KEYS) {
+    for (const key of MAC_HELPER_REMOVED_FIELDS) {
+      if (isPlainObject(c[platform]) && key in c[platform]) {
+        delete c[platform][key]
+        changes.push({ key: `${platform}.${key}`, description: `removed ${platform}.${key} (Electron 4 and later ship no such helper)` })
+      }
     }
   }
 
@@ -395,20 +476,36 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     }
   }
 
-  // ── 7. GithubOptions.vPrefixedTagName → tagNamePrefix ─────────────────────
-  if (c.publish != null) {
-    migratePublishEntries(c, "publish", changes, warnings)
+  // ── 6b. snap → snapcraft restructuring ────────────────────────────────────
+  // Before step 7, so a snap.publish moved to snapcraft.publish is rewritten there, and one of a dropped snap is not.
+  if ("snap" in c) {
+    migrateSnap(c, changes, warnings)
   }
-  // Also handle publish nested inside any platform/target section (mac, win, nsis, dmg, snap, …)
-  for (const value of Object.values(c)) {
-    if (isPlainObject(value) && value.publish != null) {
-      migratePublishEntries(value, "publish", changes, warnings)
+
+  // ── 6c. snapcraft.<core>.publish / artifactName → snapcraft.* (never read per base) ──
+  if (isPlainObject(c.snapcraft)) {
+    migrateSnapcraftCoreTargetOptions(c.snapcraft, changes, warnings)
+  }
+
+  // ── 6d. Linux target options that never had an effect (after 6b: a v26 snap.synopsis is under snapcraft.<base> by now) ──
+  for (const { parent, key } of LINUX_UNREAD_TARGET_OPTIONS) {
+    const holder: unknown = parent.reduce<unknown>((node, segment) => (isPlainObject(node) ? node[segment] : undefined), c)
+    if (isPlainObject(holder) && key in holder) {
+      delete holder[key]
+      const path = [...parent, key].join(".")
+      changes.push({ key: path, description: `removed ${path} (it never had an effect)` })
     }
   }
 
-  // ── 8. snap → snapcraft restructuring ─────────────────────────────────────
-  if ("snap" in c) {
-    migrateSnap(c, changes, warnings)
+  // ── 7. GithubOptions.vPrefixedTagName → tagNamePrefix; fields electron-builder writes into app-update.yml removed ──
+  if (c.publish != null) {
+    migratePublishEntries(c, "publish", changes, warnings, keptKeyWarnings)
+  }
+  // Also handle publish nested inside any platform/target section (mac, win, nsis, dmg, snapcraft, …)
+  for (const [name, section] of publishSections(c)) {
+    if (section.publish != null) {
+      migratePublishEntries(section, `${name}.publish`, changes, warnings, keptKeyWarnings)
+    }
   }
 
   // ── 9. helper-bundle-id → mac.helperBundleId ──────────────────────────────
@@ -626,10 +723,6 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     migrateToolsets(c.toolsets, changes)
   }
 
-  // Kept keys are reported only after `modified` is computed: a key that is merely kept must not re-serialize the file
-  // (dropping YAML/JSON5 comments) when nothing else changed. The build then fails with the same targeted message.
-  const keptKeyWarnings: string[] = []
-
   // ── 16. files / extraResources / extraFiles → fileOptions (root + platform configs) ──
   migrateFileOptions(c, "", changes, warnings, keptKeyWarnings)
   for (const platform of ALL_PLATFORM_KEYS) {
@@ -664,7 +757,7 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   if (detectGenericFeedQuery(c)) {
     advisories.push(FEED_QUERY_ADVISORY)
   }
-  if ([c, ...Object.values(c)].some(section => isPlainObject(section) && asArray(section.publish).some(isInsecureFeedEntry))) {
+  if ([c, ...publishSections(c).map(([, section]) => section)].some(section => asArray(section.publish).some(isInsecureFeedEntry))) {
     advisories.push(INSECURE_FEED_ADVISORY)
   }
   const pdbPatterns = pdbFilesPatterns(c)
@@ -673,6 +766,44 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   }
   if (c.forceCodeSigning === true || ["mac", "win", "linux"].some(platform => isPlainObject(c[platform]) && c[platform].forceCodeSigning === true)) {
     advisories.push(FORCE_CODE_SIGNING_ADVISORY)
+  }
+
+  // ── root cscLink / cscKeyPassword → mac.* and win.*; linux.* removed ──────
+  // The root value applied to macOS and Windows alike and won over their own values, so it is copied into both. Only key names are
+  // reported: the values are certificates and passwords. After the advisories, which describe the configuration as written (as the
+  // programmatic migrator's do): a mac section created here is no sign of a macOS build.
+  for (const key of CERTIFICATE_KEYS) {
+    if (!(key in c)) {
+      continue
+    }
+    const value = c[key]
+    delete c[key]
+    if (value == null) {
+      changes.push({ key, description: `removed ${key}: ${value} (it had no effect)` })
+      continue
+    }
+    for (const platform of ["mac", "win"] as const) {
+      if (c[platform] == null) {
+        c[platform] = {}
+      }
+      const section = c[platform]
+      if (section[key] != null && section[key] !== value) {
+        warnings.push(
+          `the root ${key} was copied over the different ${platform}.${key}: in v26 the root value won over it, so the build is unchanged. ` +
+            `If ${platform} should use its own value, set ${platform}.${key} back.`
+        )
+      }
+      section[key] = value
+    }
+    changes.push({ key, description: `moved ${key} → mac.${key} and win.${key} (the root value applied to both)` })
+  }
+  if (isPlainObject(c.linux)) {
+    for (const key of CERTIFICATE_KEYS) {
+      if (key in c.linux) {
+        delete c.linux[key]
+        changes.push({ key: `linux.${key}`, description: `removed linux.${key} (it never had an effect: Linux packages are not code-signed)` })
+      }
+    }
   }
 
   // ── nsis/nsisWeb/portable customNsisBinary / customNsisResources removed ──
@@ -1263,11 +1394,38 @@ function mergeAsarUnpack(existing: string | string[] | undefined, incoming: stri
   return arr.length === 1 ? arr[0] : arr
 }
 
-function migratePublishEntries(parent: Record<string, any>, key: string, changes: MigrationChange[], warnings: string[]) {
-  const entries: any[] = Array.isArray(parent[key]) ? parent[key] : [parent[key]]
+/**
+ * Rewrites the publish entries at `label` (`publish` or `<section>.publish`): GitHub `vPrefixedTagName` → `tagNamePrefix`, and the fields
+ * electron-builder writes into app-update.yml itself are removed on every provider. `publisherName` is kept with a warning: it was honored,
+ * and only the user can tell which `win.sign.publisherName` it belongs in.
+ */
+function migratePublishEntries(parent: Record<string, any>, label: string, changes: MigrationChange[], warnings: string[], keptKeyWarnings: string[]) {
+  const entries: any[] = Array.isArray(parent.publish) ? parent.publish : [parent.publish]
   let changed = false
   for (const entry of entries) {
-    if (entry == null || entry.provider !== "github") {
+    if (!isPlainObject(entry)) {
+      continue
+    }
+    for (const field of Object.keys(PUBLISH_MANAGED_OPTIONS)) {
+      if (!(field in entry)) {
+        continue
+      }
+      const warning = managedPublishOptionWarning(label, field)
+      if (field === "publisherName") {
+        if (warning != null && !keptKeyWarnings.includes(warning)) {
+          keptKeyWarnings.push(warning)
+        }
+        continue
+      }
+      delete entry[field]
+      if (!changes.some(it => it.key === `${label}[].${field}`)) {
+        changes.push({ key: `${label}[].${field}`, description: `removed ${label}[].${field} (electron-builder writes it into app-update.yml itself)` })
+      }
+      if (warning != null && !warnings.includes(warning)) {
+        warnings.push(warning)
+      }
+    }
+    if (entry.provider !== "github") {
       continue
     }
     if ("vPrefixedTagName" in entry) {
@@ -1288,7 +1446,24 @@ function migratePublishEntries(parent: Record<string, any>, key: string, changes
     // (gitlabPublisher honors it) and has no tagNamePrefix equivalent, so leave it untouched.
   }
   if (changed) {
-    changes.push({ key: `${key}[].vPrefixedTagName`, description: "replaced vPrefixedTagName with tagNamePrefix on GitHub publish entries" })
+    changes.push({ key: `${label}[].vPrefixedTagName`, description: "replaced vPrefixedTagName with tagNamePrefix on GitHub publish entries" })
+  }
+}
+
+/** What both migrators tell a user whose publish entry at `label` sets a field electron-builder writes into app-update.yml itself. */
+export function managedPublishOptionWarning(label: string, field: string): string | null {
+  switch (field) {
+    case "verifyUpdateCodeSignature":
+      return `${label}.verifyUpdateCodeSignature was removed: it never had an effect. To opt out of update signature verification, set win.verifyUpdateCodeSignature: false.`
+    case "updateManifestPublicKey":
+      return `${label}.updateManifestPublicKey was removed: it never had an effect. To pin the update-manifest trust list, set updateManifest.publicKey.`
+    case "publisherName":
+      return (
+        `${label}.publisherName no longer overrides the Windows publisher name in v27, and the build rejects it (on a custom provider, when it is the first one): move it to win.sign.publisherName ` +
+        '(adding type: "signtool" when win.sign is unset), or remove it from a macOS or Linux section, where it never had an effect.'
+      )
+    default:
+      return null
   }
 }
 
@@ -1310,7 +1485,14 @@ function migrateSnap(c: Record<string, any>, changes: MigrationChange[], warning
     return
   }
 
-  const snapcraft: Record<string, any> = { ...(c.snapcraft ?? {}) }
+  if (c.snapcraft != null) {
+    // v26.12 and later ignored snap when snapcraft was set (and warned at every build), so merging it in would change the snap
+    changes.push({ key: "snap", description: "removed snap (it was ignored next to snapcraft)" })
+    warnings.push(snapNextToSnapcraftWarning(Object.keys(snap)))
+    return
+  }
+
+  const snapcraft: Record<string, any> = {}
   const rest: Record<string, any> = { ...snap }
   let base: string | undefined = rest.base
   delete rest.base
@@ -1346,12 +1528,65 @@ function migrateSnap(c: Record<string, any>, changes: MigrationChange[], warning
   }
 
   snapcraft.base = base
-  snapcraft[base] = { ...(snapcraft[base] ?? {}), ...rest }
+  // the snap's file name and upload target are read from snapcraft itself, never per base
+  for (const key of SNAP_CORE_TARGET_OPTION_KEYS) {
+    if (key in rest) {
+      snapcraft[key] = rest[key]
+      delete rest[key]
+    }
+  }
+  snapcraft[base] = rest
   c.snapcraft = snapcraft
   changes.push({ key: "snap", description: `moved snap → snapcraft.${base}${assumed ? " (base defaulted to core20)" : ""}` })
   if (assumed && warnings.every(w => !w.includes("unrecognized base"))) {
     warnings.push('snap config had no "base"; assumed "core20" for snapcraft. Verify and adjust the base if needed (core18/core20/core22/core24).')
   }
+}
+
+/** What both migrators tell a user whose v26 `snap` is dropped because `snapcraft` is set. */
+export function snapNextToSnapcraftWarning(keys: ReadonlyArray<string>): string {
+  return (
+    `snap was removed: snapcraft is set, so v26 ignored snap${keys.length > 0 ? ` (it set [${keys.join(", ")}])` : ""}. ` +
+    "If you need any of its options, set them under snapcraft (publish / artifactName on snapcraft itself, the others under snapcraft.<base>)."
+  )
+}
+
+/**
+ * Moves a `snapcraft.<core>.publish` / `artifactName` (written there by the v27 alpha migrator, and never read) to `snapcraft` itself
+ * when `<core>` is the selected base and `snapcraft` does not set the key, and removes it otherwise. Both warn: a moved value now takes
+ * effect, and a removed one was never used.
+ */
+function migrateSnapcraftCoreTargetOptions(snapcraft: Record<string, any>, changes: MigrationChange[], warnings: string[]): void {
+  for (const core of SNAP_CORE_KEYS) {
+    const options = snapcraft[core]
+    if (!isPlainObject(options)) {
+      continue
+    }
+    for (const key of SNAP_CORE_TARGET_OPTION_KEYS) {
+      if (!(key in options)) {
+        continue
+      }
+      const value = options[key]
+      delete options[key]
+      const path = `snapcraft.${core}.${key}`
+      if (core === snapcraft.base && snapcraft[key] === undefined) {
+        snapcraft[key] = value
+        changes.push({ key: path, description: `moved ${path} → snapcraft.${key}` })
+        warnings.push(snapcraftCoreTargetOptionWarning(path, key, true))
+      } else {
+        changes.push({ key: path, description: `removed ${path} (it was never read)` })
+        warnings.push(snapcraftCoreTargetOptionWarning(path, key, false))
+      }
+    }
+  }
+}
+
+/** What both migrators tell a user whose `snapcraft.<core>.publish` / `artifactName` is moved (`moved`) or removed. */
+export function snapcraftCoreTargetOptionWarning(path: string, key: string, moved: boolean): string {
+  const what = key === "publish" ? "upload target" : "file name"
+  return moved
+    ? `${path} was never read; it was moved to snapcraft.${key}, where it now sets the snap's ${what}. Check that this is what you want.`
+    : `${path} was never read and was removed: the snap's ${what} comes from snapcraft.${key}.`
 }
 
 // ─── File I/O ─────────────────────────────────────────────────────────────────
@@ -1639,6 +1874,8 @@ function printManualSteps() {
     "",
     "• Remove electronCompile",
     "• Remove framework, nodeVersion, launchUiVersion",
+    "• Remove the root-level target (it never selected a target; set mac.target / win.target / linux.target)",
+    "• Remove msiWrapped.oneClick / perMachine / runAfterFinish / createDesktopShortcut / createStartMenuShortcut / menuCategory / shortcutName (the wrapped installer uses nsis.*) and msix.electronUpdaterAware",
     "• Rename npmSkipBuildFromSource → buildDependenciesFromSource",
     '• Move buildDependenciesFromSource, nodeGypRebuild, npmRebuild, nativeRebuilder into nativeModules (rename nativeRebuilder → rebuildMode; drop a "legacy" value)',
     "• Rename asar-unpack / asar-unpack-dir / asar.unpackDir → asarUnpack; then move asarUnpack → asar.unpack",
@@ -1648,8 +1885,10 @@ function printManualSteps() {
     "• Replace asar: true with an asar object (e.g. asar: {} or omit entirely - asar is enabled by default)",
     "• Remove appImage.systemIntegration",
     "• Remove linux.syncDesktopName (the installed .desktop filename is always synced from desktopName in v27)",
-    "• Rename snap → snapcraft; nest options under a base-named sub-key (default base: core20)",
+    "• Remove deb/rpm/pacman/freebsd/p5p/apk icon, freebsd/p5p/apk compression, and appImage/flatpak/snapcraft.<base> synopsis (they never had an effect)",
+    "• Rename snap → snapcraft; nest options under a base-named sub-key (default base: core20), except publish / artifactName, which go on snapcraft itself; remove a snap next to an existing snapcraft (v26.12 and later ignored it); move snapcraft.<base>.publish / artifactName to snapcraft",
     "• Replace vPrefixedTagName with tagNamePrefix on GitHub publish entries ('v' is the default prefix - just like before - but can now be customized with tagNamePrefix); an empty tagNamePrefix is now honored",
+    "• Remove updaterCacheDirName, verifyUpdateCodeSignature and updateManifestPublicKey from publish entries (electron-builder writes them into app-update.yml); move a publish publisherName to win.sign.publisherName",
     "• Move win.signtoolOptions → win.sign: { type: 'signtool', ...fields }",
     "• Move win.azureSignOptions → win.sign: { type: 'azure', ...fields }; move untyped extra keys into win.sign.additionalMetadata",
     "• Remove win.signAndEditExecutable (resource editing always runs in v27); replace win.signExecutable: false with win.sign: false",
@@ -1659,6 +1898,9 @@ function printManualSteps() {
     "• Move nsis/nsisWeb customNsisBinary.debugLogging → installerDebugLogging (it needs a log-enabled NSIS: the default toolsets.nsis or a log-enabled custom bundle); remove customNsisBinary and customNsisResources, replacing a custom url/checksum with a toolsets.nsis custom bundle (the checksum carries over; the bundle must also contain the NSIS plugins)",
     "• Move mac/mas/masDev signing fields (identity, entitlements, entitlementsInherit, entitlementsLoginHelper, hardenedRuntime, type, requirements, timestamp, binaries, strictVerify, preAutoEntitlements, provisioningProfile, additionalArguments) into the `sign` object; rename signIgnore → sign.ignore; remove gatekeeperAssess",
     "• Move mac/mas/masDev mergeASARs / singleArchFiles / x64ArchFiles into the `universal` object",
+    "• Move the root cscLink / cscKeyPassword into both mac and win (the root value applied to both); remove linux.cscLink / linux.cscKeyPassword",
+    "• Remove mac/mas/masDev helperEHBundleId / helperNPBundleId (Electron 4 and later ship no such helper)",
+    "• Remove from mas/masDev the options Mac App Store builds never read (target, icon, notarize, publish, cscLink, updateManifest, …); do not move them to mac",
     "• Rename electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum:false → unsafelyDisableChecksums:true; drop cache/customDir/customFilename/strictSSL/platform/arch/version/force)",
     '• Remove toolsets.* entries set to null (unset resolves to "latest"); replace toolsets.appimage "1.0.2" with "1.0.3" and "1.2.0" with "1.2.1"',
     "• Move root-level package.json directories → build.directories",

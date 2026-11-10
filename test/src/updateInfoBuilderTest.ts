@@ -8,7 +8,7 @@ import { afterEach, vi } from "vitest"
 import { generateKeyPairSync, KeyObject } from "crypto"
 import { derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationError, loadUpdateSigningKeys, log, parsePrivateKey } from "builder-util"
 import { computeUpdateManifestKeyId, verifyManifestSignature, verifyManifestSignatures } from "builder-util-runtime"
-import { getAppUpdatePublishConfiguration } from "app-builder-lib/src/publish/PublishManager"
+import { getAppUpdatePublishConfiguration, getPackAppUpdatePublishConfiguration } from "app-builder-lib/src/publish/PublishManager"
 import { PlatformPackager } from "app-builder-lib/src/platformPackager"
 import { SigntoolSignManager } from "app-builder-lib/src/codeSign/win/signtoolBaseSignManager"
 
@@ -906,7 +906,7 @@ test("the managed publish.updateManifestPublicKey error wins over the signing re
   const packager = makeAppUpdateConfigPackager()
   packager.requireUpdateSigningKeys = () => Promise.reject(new InvalidConfigurationError("auto-update manifests must be signed"))
   packager.config.publish.updateManifestPublicKey = publicKeyPem
-  await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, true)).rejects.toThrow(/is managed by electron-builder/)
+  await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, true)).rejects.toThrow(/removed from the publish options in electron-builder v27/)
 })
 
 test("writeUpdateInfoFiles writes nothing when a manifest that must be signed has no key", async ({ expect }) => {
@@ -941,7 +941,35 @@ test("app-update.yml rejects a manually configured publish.updateManifestPublicK
     (e: Error) => e
   )
   expect(error).toBeInstanceOf(InvalidConfigurationError)
-  expect(error!.message).toBe("publish.updateManifestPublicKey is managed by electron-builder and must not be set; configure updateManifest.publicKey instead")
+  expect(error!.message).toContain("publish updateManifestPublicKey (provider generic): removed from the publish options in electron-builder v27")
+  expect(error!.message).toContain("updateManifestPublicKey from updateManifest.publicKey")
+  expect(error!.message).toContain("v27-config-changes#publish-options-managed-by-electron-builder")
+})
+
+// a custom provider's options are not validated, so the writer is what rejects the fields it computes itself
+test.for<[string, unknown]>([
+  ["updaterCacheDirName", "x"],
+  ["updateManifestPublicKey", "k"],
+  ["verifyUpdateCodeSignature", false],
+  ["publisherName", ["CN=Acme"]],
+])("app-update.yml rejects %s on a custom provider", async ([key, value], { expect, tmpDir }) => {
+  // the provider module a custom publish config needs (electron-publisher-<provider> in the build resources)
+  const buildResourcesDir = await tmpDir.getTempDir({ prefix: "build-resources" })
+  await fsp.mkdir(buildResourcesDir, { recursive: true })
+  await fsp.writeFile(path.join(buildResourcesDir, "electron-publisher-custom.cjs"), "module.exports = class {}\n")
+  const packager = { ...makeAppUpdateConfigPackager(), buildResourcesDir }
+  packager.config.publish = { provider: "custom", [key]: value }
+  await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)).rejects.toThrow(
+    `publish ${key} (provider custom): removed from the publish options in electron-builder v27`
+  )
+})
+
+// a GitHub provider whose repository cannot be inferred resolves to null outside a publish; a pack whose targets write no update info
+// (snap, flatpak, an archive) still gets the app-update.yml of the platform, holding only the cache directory name
+test("app-update.yml of a pack whose provider could not be resolved holds the updater cache directory name", async ({ expect }) => {
+  const packager = { ...makeAppUpdateConfigPackager([], undefined, { provider: "github" }), repositoryInfo: Promise.resolve(null) }
+  const target: any = { name: "snap", options: null, writesUpdateInfo: false }
+  await expect(getPackAppUpdatePublishConfiguration(packager, [target], Arch.x64, false)).resolves.toEqual({ updaterCacheDirName: "test-app" })
 })
 
 // ── app-update.yml: Windows publisherName ────────────────────────────────────

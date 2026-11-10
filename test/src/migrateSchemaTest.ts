@@ -1,4 +1,4 @@
-import { doMergeConfigs } from "app-builder-lib/internal"
+import { doMergeConfigs, MAS_CERTIFICATE_WARNING } from "app-builder-lib/internal"
 import { Configuration } from "electron-builder"
 import { readFileSync } from "fs"
 import * as path from "path"
@@ -10,12 +10,15 @@ import {
   INCLUDE_PDB_CHANGES,
   includePdbManualStep,
   MAC_ENTITLEMENTS_ADVISORY,
+  managedPublishOptionWarning,
   migrateConfig,
   NSIS_PER_MACHINE_UPDATE_ADVISORY,
   NSIS_WEB_ADVISORY,
   pdbFilesPatternsAdvisory,
   platformExcludedExtsPdbChange,
   PORTABLE_DEBUG_LOGGING_DROPPED,
+  snapcraftCoreTargetOptionWarning,
+  snapNextToSnapcraftWarning,
   WIN_MISSING_PUBLISHER_NAME_ADVISORY,
   WIN_PUBLISHER_NAME_DN_ADVISORY,
   WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
@@ -546,12 +549,40 @@ describe("migrateConfig — snap → snapcraft", () => {
     expect(result.warnings[0]).toContain("unrecognized base")
   })
 
-  test("merges into an existing snapcraft block", () => {
-    const result = migrateConfig({ snap: { summary: "My App", base: "core22" }, snapcraft: { base: "core22", core22: { confinement: "strict" } } })
-    expect(result.migrated.snapcraft).toEqual({
-      base: "core22",
-      core22: { confinement: "strict", summary: "My App" },
+  test("a snap next to snapcraft is removed with a warning, and snapcraft is unchanged: v26.12 and later ignored that snap", () => {
+    const snapcraft = { base: "core24", core24: { grade: "stable" } }
+    const result = migrateConfig({ snap: { base: "core20", summary: "My App", publish: { provider: "github", vPrefixedTagName: false } }, snapcraft })
+    expect(result.migrated).toEqual({ snapcraft })
+    expect(result.changes.map(it => it.key)).toEqual(["snap"])
+    expect(result.warnings).toEqual([snapNextToSnapcraftWarning(["base", "summary", "publish"])])
+    // a snapcraft: null is no snapcraft
+    expect(migrateConfig({ snap: { base: "core22", summary: "x" }, snapcraft: null }).migrated).toEqual({ snapcraft: { base: "core22", core22: { summary: "x" } } })
+  })
+
+  test("publish and artifactName go to snapcraft itself, the other options under the base", () => {
+    const publish = [{ provider: "snapStore", channels: ["stable"] }]
+    const result = migrateConfig({ snap: { base: "core22", publish, artifactName: "${name}.snap", summary: "s" } })
+    expect(result.migrated.snapcraft).toEqual({ base: "core22", publish, artifactName: "${name}.snap", core22: { summary: "s" } })
+  })
+})
+
+describe("migrateConfig — snapcraft.<base>.publish / artifactName", () => {
+  test("moves the selected base's value to an unset snapcraft key and removes the others, warning for each", () => {
+    const result = migrateConfig({
+      snapcraft: { base: "core24", publish: "s3", core24: { publish: "github", artifactName: "a.snap", grade: "stable" }, core22: { artifactName: "b.snap" } },
     })
+    expect(result.migrated.snapcraft).toEqual({ base: "core24", publish: "s3", artifactName: "a.snap", core24: { grade: "stable" }, core22: {} })
+    expect(result.changes.map(it => it.key)).toEqual(["snapcraft.core22.artifactName", "snapcraft.core24.publish", "snapcraft.core24.artifactName"])
+    expect(result.warnings).toEqual([
+      snapcraftCoreTargetOptionWarning("snapcraft.core22.artifactName", "artifactName", false),
+      snapcraftCoreTargetOptionWarning("snapcraft.core24.publish", "publish", false),
+      snapcraftCoreTargetOptionWarning("snapcraft.core24.artifactName", "artifactName", true),
+    ])
+  })
+
+  test("a moved publish gets the GitHub tagNamePrefix rewrite", () => {
+    const result = migrateConfig({ snapcraft: { base: "core22", core22: { publish: { provider: "github", vPrefixedTagName: false } } } })
+    expect(result.migrated.snapcraft).toEqual({ base: "core22", publish: { provider: "github", tagNamePrefix: "" }, core22: {} })
   })
 })
 
@@ -968,9 +999,14 @@ describe("migrateConfig — nsis-web advisory", () => {
     expect(migrateConfig({ win: { target: [{ target: "NSIS-Web", arch: "x64" }] } }).advisories).toEqual([NSIS_WEB_ADVISORY])
   })
 
-  test("global top-level target: 'nsis-web' emits an advisory", () => {
-    const result = migrateConfig({ target: "nsis-web" })
-    expect(result.advisories).toHaveLength(1)
+  test("a root-level target is removed with a warning that names it, and selects no nsis-web advisory (it never selected a target)", () => {
+    const result = migrateConfig({ target: "nsis-web", win: { target: "nsis" } })
+    expect(result.advisories).toHaveLength(0)
+    expect(result.migrated).toEqual({ win: { target: "nsis" } })
+    expect(result.changes).toEqual(expect.arrayContaining([expect.objectContaining({ key: "target" })]))
+    expect(result.warnings.join("\n")).toContain('the root-level target "nsis-web" never had an effect')
+    // a null root target is removed without a warning
+    expect(migrateConfig({ target: null }).warnings).toEqual([])
   })
 
   test("a non-web target produces no advisory", () => {
@@ -1453,7 +1489,7 @@ describe("migrateConfig — GitHub tag prefix semantics", () => {
       snap: { base: "core22", publish: [{ provider: "github", vPrefixedTagName: true }] },
     })
     expect(result.migrated.nsis.publish).toEqual({ provider: "github", tagNamePrefix: "" })
-    expect(result.migrated.snapcraft.core22.publish).toEqual([{ provider: "github", tagNamePrefix: "v" }])
+    expect(result.migrated.snapcraft.publish).toEqual([{ provider: "github", tagNamePrefix: "v" }])
   })
 
   test("GitLab entries are untouched", () => {
@@ -1572,6 +1608,45 @@ describe("migrateConfig — round-trip: migrator output passes v27 schema valida
   const v26Configs: Array<[string, Record<string, any>]> = [
     ["mac signing", { mac: { identity: "Developer ID Application: Acme (TEAM)", hardenedRuntime: true, gatekeeperAssess: false, signIgnore: ["**/*.txt"] } }],
     ["mac universal", { mac: { mergeASARs: true, singleArchFiles: "*.node", x64ArchFiles: "*.node" } }],
+    ["root target", { target: "zip" }],
+    [
+      "msiWrapped installer options",
+      {
+        win: { target: ["nsis", "msiWrapped"] },
+        msiWrapped: {
+          oneClick: true,
+          perMachine: true,
+          runAfterFinish: false,
+          createDesktopShortcut: "always",
+          createStartMenuShortcut: false,
+          menuCategory: "Acme",
+          shortcutName: "App",
+        },
+      },
+    ],
+    ["msix.electronUpdaterAware", { msix: { electronUpdaterAware: true } }],
+    [
+      "Linux target options without effect",
+      { deb: { icon: "build/icon.png", synopsis: "d" }, apk: { compression: "xz" }, appImage: { synopsis: "s" }, snap: { base: "core22", synopsis: "s" } },
+    ],
+    ["publish updaterCacheDirName (v26)", { publish: [{ provider: "generic", url: "https://example.com/", updaterCacheDirName: "x" }] }],
+    ["root and linux certificate options", { cscLink: "build/certificate.p12", cscKeyPassword: "password", linux: { cscLink: "x", cscKeyPassword: "y" } }],
+    [
+      "mas options Mac App Store builds never read",
+      {
+        mac: { target: ["dmg", "mas"], helperEHBundleId: "com.example.eh" },
+        mas: {
+          target: "mas",
+          icon: "mas.icns",
+          notarize: false,
+          cscLink: "cert.p12",
+          publish: { provider: "github", vPrefixedTagName: false },
+          updateManifest: false,
+          category: "public.app-category.games",
+        },
+        masDev: { helperNPBundleId: "com.example.np", releaseInfo: { releaseName: "x" } },
+      },
+    ],
     ["mas signing", { mas: { entitlements: "build/e.plist", provisioningProfile: "build/embedded.provisionprofile", gatekeeperAssess: true } }],
     ["asar options", { asarUnpack: ["**/*.node"], disableSanityCheckAsar: true, disableAsarIntegrity: true }],
     ["native modules", { buildDependenciesFromSource: true, nodeGypRebuild: false, npmRebuild: true, nativeRebuilder: "parallel" }],
@@ -1764,8 +1839,8 @@ describe("migrateConfig — files / extraResources / extraFiles → fileOptions"
   })
 
   test.each(["mac", "mas", "masDev", "win", "linux"])("moves the %s platform-level keys under its fileOptions", platform => {
-    const result = migrateConfig({ [platform]: { target: "dir", files: ["!x/**"], extraFiles: "f" } })
-    expect(result.migrated).toEqual({ [platform]: { target: "dir", fileOptions: { files: ["!x/**"], extraFiles: "f" } } })
+    const result = migrateConfig({ [platform]: { appId: "com.example.app", files: ["!x/**"], extraFiles: "f" } })
+    expect(result.migrated).toEqual({ [platform]: { appId: "com.example.app", fileOptions: { files: ["!x/**"], extraFiles: "f" } } })
     expect(result.changes.map(c => c.key)).toEqual([`${platform}.files`, `${platform}.extraFiles`])
   })
 
@@ -1798,5 +1873,185 @@ describe("migrateConfig — files / extraResources / extraFiles → fileOptions"
     const result = migrateConfig(structuredClone(input))
     expect(result.modified).toBe(false)
     expect(result.migrated).toEqual(input)
+  })
+})
+
+describe("migrateConfig — options that never had an effect on msiWrapped and msix", () => {
+  test("drops the seven msiWrapped installer options, keeps the WiX ones, and warns for oneClick: false", () => {
+    const result = migrateConfig({
+      msiWrapped: {
+        oneClick: false,
+        perMachine: true,
+        runAfterFinish: false,
+        createDesktopShortcut: "always",
+        createStartMenuShortcut: false,
+        menuCategory: true,
+        shortcutName: "App",
+        upgradeCode: "U",
+        impersonate: true,
+      },
+    })
+    expect(result.migrated.msiWrapped).toEqual({ upgradeCode: "U", impersonate: true })
+    const keys = result.changes.filter(it => it.key.startsWith("msiWrapped.")).map(it => it.key)
+    expect(keys).toHaveLength(7)
+    for (const change of result.changes.filter(it => it.key.startsWith("msiWrapped."))) {
+      expect(change.description).toContain(`nsis.${change.key.substring("msiWrapped.".length)}`)
+    }
+    expect(result.warnings).toHaveLength(1)
+    expect(result.warnings[0]).toContain("WixUIExtension")
+    expect(result.warnings[0]).toContain("additionalLightArgs")
+    expect(migrateConfig({ msiWrapped: { oneClick: true } }).warnings).toEqual([])
+  })
+
+  test("drops msix.electronUpdaterAware and keeps appx.electronUpdaterAware", () => {
+    const result = migrateConfig({ msix: { electronUpdaterAware: true, identityName: "Acme.App" }, appx: { electronUpdaterAware: true } })
+    expect(result.migrated.msix).toEqual({ identityName: "Acme.App" })
+    expect(result.migrated.appx.electronUpdaterAware).toBe(true)
+    expect(result.changes.map(it => it.key)).toContain("msix.electronUpdaterAware")
+  })
+})
+
+describe("migrateConfig — options Mac App Store builds never read, and the Helper EH / NP bundle ids", () => {
+  test("removes the mas / masDev options a Mac App Store build never reads, keeps the ones it reads, and never moves a value to mac", () => {
+    const result = migrateConfig({
+      mac: { category: "public.app-category.developer-tools" },
+      mas: {
+        target: "mas",
+        icon: "mas.icns",
+        notarize: false,
+        publish: { provider: "github", vPrefixedTagName: false },
+        cscKeyPassword: "s3cr3t-password",
+        category: "public.app-category.games",
+        extendInfo: { NSCameraUsageDescription: "camera" },
+      },
+      masDev: { updateManifest: false, minimumSystemVersion: "13.0", cscLink: "s3cr3t-link" },
+    })
+    expect(result.migrated.mac).toEqual({ category: "public.app-category.developer-tools" })
+    expect(result.migrated.mas).toEqual({ category: "public.app-category.games", extendInfo: { NSCameraUsageDescription: "camera" } })
+    expect(result.migrated.masDev).toEqual({ minimumSystemVersion: "13.0" })
+    expect(result.changes.map(it => it.key).sort()).toEqual([
+      "mas.cscKeyPassword",
+      "mas.icon",
+      "mas.notarize",
+      "mas.publish",
+      "mas.target",
+      "masDev.cscLink",
+      "masDev.updateManifest",
+    ])
+    // mas.publish is removed, not rewritten first
+    expect(result.changes.some(it => it.description.includes("tagNamePrefix"))).toBe(false)
+    // one warning for the certificates of both
+    expect(result.warnings).toEqual([MAS_CERTIFICATE_WARNING])
+    expect(JSON.stringify(result)).not.toContain("s3cr3t")
+  })
+
+  test("removes helperEHBundleId / helperNPBundleId from mac, mas and masDev, and keeps the other helper ids", () => {
+    const result = migrateConfig({
+      mac: { helperBundleId: "com.example.helper", helperEHBundleId: "com.example.eh", helperNPBundleId: "com.example.np", helperGPUBundleId: "com.example.gpu" },
+      masDev: { helperNPBundleId: "com.example.np" },
+    })
+    expect(result.migrated.mac).toEqual({ helperBundleId: "com.example.helper", helperGPUBundleId: "com.example.gpu" })
+    expect(result.migrated.masDev).toEqual({})
+    expect(result.changes.map(it => it.key)).toEqual(["mac.helperEHBundleId", "mac.helperNPBundleId", "masDev.helperNPBundleId"])
+    expect(result.warnings).toEqual([])
+  })
+})
+
+describe("migrateConfig — root and linux certificate options", () => {
+  test("copies a root cscLink / cscKeyPassword into mac and win, and replaces a different platform value with a warning that names no value", () => {
+    const result = migrateConfig({ cscLink: "root.p12", cscKeyPassword: "s3cr3t-password", win: { cscLink: "win.pfx", target: "nsis" } })
+    expect(result.migrated).toEqual({
+      mac: { cscLink: "root.p12", cscKeyPassword: "s3cr3t-password" },
+      win: { cscLink: "root.p12", cscKeyPassword: "s3cr3t-password", target: "nsis" },
+    })
+    expect(result.changes.map(it => it.key)).toEqual(["cscLink", "cscKeyPassword"])
+    expect(result.warnings).toHaveLength(1)
+    expect(result.warnings[0]).toContain("win.cscLink")
+    expect(JSON.stringify([result.changes, result.warnings])).not.toMatch(/root\.p12|win\.pfx|s3cr3t/)
+  })
+
+  test("the same value on a platform is no conflict", () => {
+    const result = migrateConfig({ cscLink: "same.p12", mac: { cscLink: "same.p12" } })
+    expect(result.migrated).toEqual({ mac: { cscLink: "same.p12" }, win: { cscLink: "same.p12" } })
+    expect(result.warnings).toEqual([])
+  })
+
+  test("a root cscLink: null is removed without creating a platform section", () => {
+    const result = migrateConfig({ cscLink: null })
+    expect(result.migrated).toEqual({})
+    expect(result.changes.map(it => it.key)).toEqual(["cscLink"])
+  })
+
+  test("removes linux.cscLink / linux.cscKeyPassword, which never had an effect", () => {
+    const result = migrateConfig({ linux: { cscLink: "x", cscKeyPassword: "y", target: "deb" } })
+    expect(result.migrated).toEqual({ linux: { target: "deb" } })
+    expect(result.changes.map(it => it.key)).toEqual(["linux.cscLink", "linux.cscKeyPassword"])
+  })
+})
+
+describe("migrateConfig — publish options electron-builder writes into app-update.yml", () => {
+  test("removes updaterCacheDirName / verifyUpdateCodeSignature / updateManifestPublicKey from every entry and section, naming the section", () => {
+    const result = migrateConfig({
+      publish: [{ provider: "generic", url: "https://example.com/", updaterCacheDirName: "x", verifyUpdateCodeSignature: false }, "github"],
+      win: { publish: { provider: "s3", bucket: "b", updateManifestPublicKey: "k" } },
+      nsis: { publish: { provider: "custom", updaterCacheDirName: "y" } },
+    })
+    expect(result.migrated).toEqual({
+      publish: [{ provider: "generic", url: "https://example.com/" }, "github"],
+      win: { publish: { provider: "s3", bucket: "b" } },
+      nsis: { publish: { provider: "custom" } },
+    })
+    expect(result.changes.map(it => it.key)).toEqual([
+      "publish[].verifyUpdateCodeSignature",
+      "publish[].updaterCacheDirName",
+      "win.publish[].updateManifestPublicKey",
+      "nsis.publish[].updaterCacheDirName",
+    ])
+    expect(result.warnings).toEqual([managedPublishOptionWarning("publish", "verifyUpdateCodeSignature"), managedPublishOptionWarning("win.publish", "updateManifestPublicKey")])
+  })
+
+  test("extraMetadata and the options of a custom provider are not publish configurations, so they are left alone", () => {
+    for (const config of [
+      { extraMetadata: { publish: { provider: "github", updaterCacheDirName: "x", vPrefixedTagName: false, publisherName: ["CN=A"] } } },
+      { publish: { provider: "custom", publish: { provider: "github", updaterCacheDirName: "x", publisherName: ["CN=A"] } } },
+    ]) {
+      const result = migrateConfig(config)
+      expect(result.migrated).toEqual(config)
+      expect(result.changes).toEqual([])
+      expect(result.warnings).toEqual([])
+    }
+  })
+
+  test("keeps publisherName with a warning, and a config with nothing else to change is not rewritten", () => {
+    const result = migrateConfig({ publish: { provider: "generic", url: "https://example.com/", publisherName: ["CN=Acme"] } })
+    expect(result.migrated.publish.publisherName).toEqual(["CN=Acme"])
+    expect(result.changes).toEqual([])
+    expect(result.modified).toBe(false)
+    expect(result.warnings).toEqual([managedPublishOptionWarning("publish", "publisherName")])
+    expect(result.warnings[0]).toContain("win.sign.publisherName")
+  })
+})
+
+describe("migrateConfig — Linux target options that never had an effect", () => {
+  test("removes them, keeps the fpm targets' synopsis, and never moves deb.icon to linux", () => {
+    const result = migrateConfig({
+      deb: { icon: "build/icon.png", synopsis: "d" },
+      apk: { compression: "xz", maintainer: "m <m@example.com>" },
+      appImage: { synopsis: "s", category: "Utility" },
+      snapcraft: { base: "core22", core22: { synopsis: "s", summary: "x" } },
+    })
+    expect(result.migrated).toEqual({
+      deb: { synopsis: "d" },
+      apk: { maintainer: "m <m@example.com>" },
+      appImage: { category: "Utility" },
+      snapcraft: { base: "core22", core22: { summary: "x" } },
+    })
+    expect(result.changes.map(it => it.key)).toEqual(["deb.icon", "apk.compression", "appImage.synopsis", "snapcraft.core22.synopsis"])
+  })
+
+  test("a v26 snap.synopsis is dropped when the snap moves to snapcraft", () => {
+    const result = migrateConfig({ snap: { base: "core22", synopsis: "s", summary: "x" } })
+    expect(result.migrated).toEqual({ snapcraft: { base: "core22", core22: { summary: "x" } } })
+    expect(result.changes.map(it => it.key)).toEqual(["snap", "snapcraft.core22.synopsis"])
   })
 })

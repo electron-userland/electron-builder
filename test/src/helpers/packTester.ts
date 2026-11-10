@@ -888,7 +888,7 @@ async function checkMacResult(expect: ExpectStatic, packager: Packager, packager
     await checkOptions.checkMacApp(packedAppDir, snapshot)
   }
 
-  if (packagerOptions.config != null && (packagerOptions.config as Configuration).cscLink != null) {
+  if (packagerOptions.config != null && (packagerOptions.config as Configuration).mac?.cscLink != null) {
     const result = await exec("codesign", ["--verify", packedAppDir])
     expect(result).not.toMatch(/is not signed at all/)
   }
@@ -1126,7 +1126,8 @@ async function signed(packagerOptions: PackagerOptions, platform: "win" | "mac")
   // our own builds with an ephemeral identity, so opt back into signing for the test.
   process.env.CSC_FOR_PULL_REQUEST = "true"
   const { p12Base64, password } = platform === "mac" ? await getMacSigningIdentity() : await getWindowsSigningIdentity()
-  const options = deepAssign<PackagerOptions>({}, packagerOptions, { config: { cscLink: p12Base64, cscKeyPassword: password } })
+  // per platform: v27 has no root cscLink / cscKeyPassword (MacPackager / WinPackager read their own options first)
+  const options = deepAssign<PackagerOptions>({}, packagerOptions, { config: { [platform]: { cscLink: p12Base64, cscKeyPassword: password } } })
   return options
 }
 

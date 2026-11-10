@@ -52,6 +52,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [Flatpak `runtimeVersion` / `baseVersion` default to `26.08`](#flatpak-tooling-requirements) | Warns | A build that sets neither is built for the `26.08` runtime and installs the three `26.08` refs (about 3.2 GB) on the build machine if they are missing — install them in images and on offline machines that held the `20.08` ones. Set both to `"20.08"` to keep the previous, end-of-life runtime |
 | [Flatpak `files` and `symlinks` must stay inside the app](#flatpak-tooling-requirements) | Fails build | A `flatpak.files` destination or `flatpak.symlinks` link that leaves the app prefix with `..`, or a directory in `flatpak.files` copied onto a symlink to a directory, now fails the build |
 | [Cascaded options no longer leak between platforms and targets](#cascaded-options-no-longer-leak) | Silent | None for most builds. A `mac` + `mas` build now signs the macOS app with `mac.sign` as written (before, `mas.sign` values leaked into it); a later configuration layer's hook or signer function now wins; check builds that relied on a merged result |
+| [Mac App Store builds apply their own Info.plist options](#mas-info-plist-options) | Warns | None, unless `mas` / `masDev` set `minimumSystemVersion`, `category` or `helperRendererBundleId` / `helperPluginBundleId` / `helperGPUBundleId`: these now apply to the Mac App Store app; remove them to keep the `mac` values |
 | [`linux.compression` no longer reaches the deb, rpm and pacman targets](#linux-compression-no-longer-reaches-fpm-targets) | Silent | None: a level such as `"maximum"` failed these builds; set `deb.compression` / `rpm.compression` / `pacman.compression` to choose their algorithm |
 
 ---
@@ -664,6 +665,12 @@ electron-builder merges options in cascades: `extends` presets, then the configu
 - **No layer is changed by the merge**, so a configuration object passed to `build()` (or a JS `extends` preset reused by a second build in the same process) keeps its own values.
 
 No configuration change is needed. If a build relied on a leaked value, set it where it applies (for example in `mas.sign` *and* `mac.sign`).
+
+### Mac App Store builds apply their own Info.plist options {#mas-info-plist-options}
+
+**How you'll find out:** **Warns** once, naming the options, when a `mas` / `masDev` value differs from the `mac` one.
+
+`mas.minimumSystemVersion`, `mas.category` and `mas.helperRendererBundleId` / `helperPluginBundleId` / `helperGPUBundleId` (and the `masDev` ones for `mas-dev`) were ignored: the Mac App Store app took `LSMinimumSystemVersion`, `LSApplicationCategoryType` and its helper bundle ids from `mac`. They are now merged over `mac`, like `bundleVersion` and `extendInfo`, so they apply to the Mac App Store app. The macOS app is unchanged. To keep the `mac` values, remove them from `mas` / `masDev`.
 
 ### `linux.compression` no longer reaches the deb, rpm and pacman targets {#linux-compression-no-longer-reaches-fpm-targets}
 

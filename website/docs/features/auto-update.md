@@ -251,7 +251,7 @@ autoUpdater.logger = require("electron-log")
 autoUpdater.logger.transports.file.level = "info"
 ```
 
-Note that in order to develop/test UI/UX of updating without packaging the application you need to have a file named `dev-app-update.yml` in the root of your project, which matches your `publish` setting from electron-builder config (but in [yaml](https://www.json2yaml.com) format).
+Note that in order to develop/test UI/UX of updating without packaging the application you need to have a file named `dev-app-update.yml` in the root of your project, which matches your `publish` setting from electron-builder config (but in [yaml](https://www.json2yaml.com) format), plus the fields of `app-update.yml` you need (`AppUpdateConfiguration`): `updateManifestPublicKey` for signed update manifests, and on Windows `publisherName` or `verifyUpdateCodeSignature: false`.
 In latest version you need [force the updater](https://github.com/electron-userland/electron-builder/issues/6863) to work in "dev" mode:
 ```js
 autoUpdater.forceDevUpdateConfig = true

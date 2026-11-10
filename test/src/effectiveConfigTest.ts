@@ -34,7 +34,6 @@ test("the effective config and its debug log mask every certificate link and URL
   const debug = vi.spyOn(log, "debug")
   const config: Configuration = {
     writeEffectiveConfig: true,
-    cscLink: "ROOT_CSC_LINK_SECRET",
     mac: { cscLink: "MAC_CSC_LINK_SECRET", cscInstallerLink: "MAC_INSTALLER_LINK_SECRET" },
     win: { cscLink: "WIN_CSC_LINK_SECRET" },
     snapcraft: { base: "core24", cscLink: "SNAP_STORE_LOGIN_SECRET" },
@@ -49,7 +48,7 @@ test("the effective config and its debug log mask every certificate link and URL
         const effectiveConfigLog = debug.mock.calls.find(([, message]) => message === "effective config")
         for (const content of [await fsExtra.readFile(effectiveConfigFile(context.outDir), "utf8"), String((effectiveConfigLog?.[0] as any)?.config)]) {
           expect(content).not.toMatch(/SECRET/)
-          expect(content).toMatch(/^cscLink: /m)
+          expect(content).toMatch(/^ +cscLink: /m)
           expect(content).toMatch(/cscInstallerLink: /)
           expect(content).toContain("https://<redacted>@example.com/updates")
           expect(content).toContain("https://<redacted>@example.com/packages")

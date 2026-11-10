@@ -29,7 +29,7 @@ function formatPublisherNames(names: ReadonlyArray<unknown>): string {
  * derive from the certificate) are not validated: a build that writes `app-update.yml` without a publisherName fails elsewhere
  * ({@link missingUpdatePublisherNameError}).
  */
-export function validatePublisherNameFormat(publisherName: string | ReadonlyArray<string> | null | undefined, configKey = "win.sign.publisherName"): void {
+export function validatePublisherNameFormat(publisherName: string | ReadonlyArray<string> | null | undefined): void {
   if (publisherName == null) {
     return
   }
@@ -38,8 +38,8 @@ export function validatePublisherNameFormat(publisherName: string | ReadonlyArra
     return
   }
   throw new InvalidConfigurationError(
-    `${configKey} ${formatPublisherNames(invalid)} is not a distinguished name. ${PUBLISHER_NAME_DN_REQUIREMENT}. ` +
-      `Set ${configKey} to the subject of the certificate that signs your app (on Windows, (Get-AuthenticodeSignature <signed .exe>).SignerCertificate.Subject prints it), ` +
+    `win.sign.publisherName ${formatPublisherNames(invalid)} is not a distinguished name. ${PUBLISHER_NAME_DN_REQUIREMENT}. ` +
+      `Set win.sign.publisherName to the subject of the certificate that signs your app (on Windows, (Get-AuthenticodeSignature <signed .exe>).SignerCertificate.Subject prints it), ` +
       `or set win.verifyUpdateCodeSignature: false to opt out of update signature verification. See ${PUBLISHER_NAME_DN_DOCS_URL}`
   )
 }

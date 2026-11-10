@@ -58,6 +58,97 @@ export const AZURE_KNOWN_FIELDS = new Set([
 /** `electronDownload` fields with no equivalent in the v27 `ElectronGetOptions` (@electron/get v5) shape. */
 export const ELECTRON_DOWNLOAD_DROPPED = ["cache", "customDir", "customFilename", "strictSSL", "platform", "arch", "version", "force"] as const
 
+/** The installer options `msiWrapped` inherited without ever applying them: the wrapped NSIS installer takes them from `nsis.*`. */
+export const MSI_WRAPPED_REMOVED_FIELDS = ["oneClick", "perMachine", "runAfterFinish", "createDesktopShortcut", "createStartMenuShortcut", "menuCategory", "shortcutName"] as const
+
+/** What `msiWrapped.oneClick: false` still did, for the guard detail and both migrators. */
+export const MSI_WRAPPED_ONE_CLICK_WARNING =
+  "`msiWrapped.oneClick: false` only added `-ext WixUIExtension` to light.exe; if an `msiProjectCreated` hook adds WixUI dialogs to the wrapper, " +
+  'set `msiWrapped.additionalLightArgs: ["-ext", "WixUIExtension"]`.'
+
+/** Helper bundle ids removed in v27: Electron 4 and later ship no `Helper EH` / `Helper NP` app. */
+export const MAC_HELPER_REMOVED_FIELDS = ["helperEHBundleId", "helperNPBundleId"] as const
+
+const MAS_USES_MAC = "Mac App Store builds never read it there: every macOS build, the Mac App Store app included, uses the `mac` value (or the root one)."
+const MAS_NO_UPDATE_INFO = "Mac App Store builds write no update information; the `mac` and root values apply to the macOS app."
+const MAS_CERTIFICATES =
+  "Mac App Store builds never read it there: the certificates of every macOS build come from the `mac` options or the `CSC_LINK` / `CSC_INSTALLER_LINK` environment variables (and their passwords)."
+
+/**
+ * The `mac` options that `mas` / `masDev` no longer accept, with where a Mac App Store build takes the value from. Shared by the guard and
+ * both migrators, which delete them: moving them to `mac` would change the macOS build.
+ */
+export const MAS_REMOVED_FIELDS: Readonly<Record<string, string>> = {
+  target: "Mac App Store builds never read it there: list `mas` / `mas-dev` in `mac.target` or on the command line (`--mac mas`).",
+  icon: MAS_USES_MAC,
+  executableName: MAS_USES_MAC,
+  electronLanguages: MAS_USES_MAC,
+  fileAssociations: MAS_USES_MAC,
+  protocols: MAS_USES_MAC,
+  compression: MAS_USES_MAC,
+  defaultArch: MAS_USES_MAC,
+  darkModeSupport: "Mac App Store builds never read it there: `mac.darkModeSupport` applies to every macOS build, the Mac App Store app included.",
+  extraDistFiles: "Mac App Store builds never read it: it adds files to the macOS `zip` / `7z` archives, which take it from `mac.extraDistFiles`.",
+  notarize: "Mac App Store apps are not notarized; `mac.notarize` applies to the macOS app and the pkg installer.",
+  cscLink: MAS_CERTIFICATES,
+  cscKeyPassword: MAS_CERTIFICATES,
+  cscInstallerLink: MAS_CERTIFICATES,
+  cscInstallerKeyPassword: MAS_CERTIFICATES,
+  publish: "Mac App Store builds never read it there: the Mac App Store .pkg is published with `mac.publish` (or the root `publish`).",
+  releaseInfo: MAS_NO_UPDATE_INFO,
+  detectUpdateChannel: MAS_NO_UPDATE_INFO,
+  generateUpdatesFilesForAllChannels: MAS_NO_UPDATE_INFO,
+  electronUpdaterCompatibility: MAS_NO_UPDATE_INFO,
+  updateManifest: MAS_NO_UPDATE_INFO,
+}
+
+/** Certificate options among {@link MAS_REMOVED_FIELDS}: the migrators warn when they remove one. */
+export const MAS_REMOVED_CERTIFICATE_FIELDS = ["cscLink", "cscKeyPassword", "cscInstallerLink", "cscInstallerKeyPassword"] as const
+
+/** What the migrators tell a user whose `mas` / `masDev` sets a certificate option. */
+export const MAS_CERTIFICATE_WARNING =
+  "Mac App Store builds never read certificates from mas / masDev: they import the certificates of mac.cscLink / mac.cscInstallerLink " +
+  "or the CSC_LINK / CSC_INSTALLER_LINK environment variables (and their passwords). If the Mac App Store app or installer needs the removed certificate, set it there."
+
+/**
+ * The fields electron-builder writes into `app-update.yml` itself, removed from the publish options in v27, with the setting that decides
+ * each (null: derived from the package name). Shared by the guard, both migrators and the `app-update.yml` writer.
+ */
+export const PUBLISH_MANAGED_OPTIONS = {
+  publisherName: "win.sign.publisherName",
+  verifyUpdateCodeSignature: "win.verifyUpdateCodeSignature",
+  updateManifestPublicKey: "updateManifest.publicKey",
+  updaterCacheDirName: null,
+} as const
+
+/** Anchor of the managed publish options within the config-changes page. */
+export const PUBLISH_MANAGED_OPTIONS_ANCHOR = "publish-options-managed-by-electron-builder"
+
+/** The per-base `snapcraft` keys typed `SnapOptionsLegacy` / `SnapOptions24`. */
+export const SNAP_CORE_KEYS = ["core18", "core20", "core22", "core24"] as const
+
+/** Target options the per-base snap options accepted without reading them: only `snapcraft.publish` / `snapcraft.artifactName` are read. */
+export const SNAP_CORE_TARGET_OPTION_KEYS = ["publish", "artifactName"] as const
+
+/** Linux target options that were accepted but never read, with why. Shared by the guard and both migrators, which delete them. */
+export const LINUX_UNREAD_TARGET_OPTIONS: ReadonlyArray<{ readonly parent: readonly string[]; readonly key: string; readonly detail: string }> = [
+  ...["deb", "rpm", "pacman", "freebsd", "p5p", "apk"].map(target => ({
+    parent: [target],
+    key: "icon",
+    detail: "Linux icons come from `linux.icon`, then `mac.icon` or the root `icon`.",
+  })),
+  ...["freebsd", "p5p", "apk"].map(target => ({
+    parent: [target],
+    key: "compression",
+    detail: "fpm has no compression option for this package type; only deb, rpm and pacman pass one.",
+  })),
+  ...[["appImage"], ["flatpak"], ...SNAP_CORE_KEYS.map(core => ["snapcraft", core])].map(parent => ({
+    parent,
+    key: "synopsis",
+    detail: "Only the fpm-built packages (deb, rpm, pacman, freebsd, p5p, apk) read `synopsis`; a snap uses `summary`.",
+  })),
+]
+
 /** Platform keys that accept the macOS signing/universal options. */
 export const MAC_PLATFORM_KEYS = ["mac", "mas", "masDev"] as const
 
@@ -116,6 +207,7 @@ const NATIVE_MODULES_ANCHOR = "native-module-options-nativemodules"
 const ELECTRON_GET_ANCHOR = "electrondownload-electronget"
 const WIN_SIGN_ANCHOR = "windows-signing-winsign"
 const CUSTOM_NSIS_ANCHOR = "customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis"
+const CSC_ANCHOR = "signing-certificates-csclink"
 const TOOLSETS_NSIS_DETAIL =
   "Set a custom NSIS bundle via `toolsets.nsis: { url, checksum, version }`. " +
   "This is not a rename. The artifacts provided by `.customNsisBinary` & `.customNsisResources` have been merged into one toolset. " +
@@ -185,6 +277,16 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
       "The behaviour it gated is now always on: the installed .desktop filename is always derived from `desktopName` (falling back to executableName). " +
       "If you relied on the old filename, set `desktopName` explicitly to control it.",
     anchor: "linuxsyncdesktopname-always-synced",
+  },
+  {
+    key: "target",
+    replacement: null,
+    autoMigrated: true,
+    severity: "error",
+    detail:
+      "A `target` at the configuration root never selected anything: electron-builder reads only `mac.target`, `win.target` and `linux.target` " +
+      "(or the targets passed on the command line), so removing it changes no build. To build the targets it names, set them on their platform key.",
+    anchor: "root-level-target",
   },
 
   // ── Renamed / restructured: native modules ────────────────────────────────
@@ -364,6 +466,30 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
     anchor: "winsignexecutable-winsignandeditexecutable-removed",
   },
 
+  // ── Windows installers: options that never had an effect ─────────────────
+  ...MSI_WRAPPED_REMOVED_FIELDS.map((key): LegacyConfigOption => ({
+    key,
+    parent: ["msiWrapped"],
+    replacement: null,
+    autoMigrated: true,
+    severity: "error",
+    detail:
+      `It never had an effect: the MSI wrapper only runs the NSIS installer, which takes it from \`nsis.${key}\`.` +
+      (key === "oneClick" ? ` ${MSI_WRAPPED_ONE_CLICK_WARNING}` : ""),
+    anchor: "msiwrapped-installer-options-removed",
+  })),
+  {
+    key: "electronUpdaterAware",
+    parent: ["msix"],
+    replacement: null,
+    autoMigrated: true,
+    severity: "error",
+    detail:
+      "It never had an effect: no update info is written for MSIX packages, which update through the Microsoft Store or App Installer, not electron-updater. " +
+      "`appx.electronUpdaterAware` is unchanged.",
+    anchor: "msixelectronupdateraware-removed",
+  },
+
   // ── NSIS: custom bundles moved to toolsets.nsis ───────────────────────────
   ...NSIS_CONFIG_KEYS.flatMap((section): LegacyConfigOption[] => [
     {
@@ -437,6 +563,92 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
     severity: "error",
     anchor: "macuniversal",
   })),
+
+  // ── Snap: the file name and upload target are set on snapcraft itself ───
+  ...SNAP_CORE_KEYS.flatMap(core =>
+    SNAP_CORE_TARGET_OPTION_KEYS.map((key): LegacyConfigOption => ({
+      key,
+      parent: ["snapcraft", core],
+      replacement: `snapcraft.${key}`,
+      autoMigrated: true,
+      severity: "error",
+      detail: `It was never read: the snap's ${key === "publish" ? "upload target" : "file name"} comes from \`snapcraft.${key}\`, then \`linux.${key}\`, then the root \`${key}\`.`,
+      anchor: "snapcraft-base-publish-artifactname",
+    }))
+  ),
+
+  // ── Linux: target options that never had an effect ──────────────────────
+  ...LINUX_UNREAD_TARGET_OPTIONS.map(({ parent, key, detail }): LegacyConfigOption => ({
+    key,
+    parent,
+    replacement: null,
+    autoMigrated: true,
+    severity: "error",
+    detail: `It never had an effect. ${detail}`,
+    anchor: "linux-target-options-without-effect",
+  })),
+
+  // ── Signing certificates: set per platform ───────────────────────────────
+  {
+    key: "cscLink",
+    replacement: "`mac.cscLink` and `win.cscLink`",
+    autoMigrated: true,
+    severity: "error",
+    detail:
+      "The root value applied to macOS and Windows alike and won over `mac.cscLink`, `win.cscLink` and `WIN_CSC_LINK`. " +
+      "Set the certificate per platform (`-c.mac.cscLink` / `-c.win.cscLink` on the command line), or use the `CSC_LINK` / `WIN_CSC_LINK` environment variables.",
+    anchor: CSC_ANCHOR,
+  },
+  {
+    key: "cscKeyPassword",
+    replacement: "`mac.cscKeyPassword` and `win.cscKeyPassword`",
+    autoMigrated: true,
+    severity: "error",
+    detail:
+      "The root value applied to macOS and Windows alike and won over `mac.cscKeyPassword` and `win.cscKeyPassword`. " +
+      "Set the password per platform, or use the `CSC_KEY_PASSWORD` / `WIN_CSC_KEY_PASSWORD` environment variables.",
+    anchor: CSC_ANCHOR,
+  },
+  {
+    key: "cscLink",
+    parent: ["linux"],
+    replacement: null,
+    autoMigrated: true,
+    severity: "error",
+    detail: "It never had an effect: Linux packages are not code-signed. The Snap Store login is `snapcraft.cscLink` or `SNAP_CSC_LINK`.",
+    anchor: CSC_ANCHOR,
+  },
+  {
+    key: "cscKeyPassword",
+    parent: ["linux"],
+    replacement: null,
+    autoMigrated: true,
+    severity: "error",
+    detail: "It never had an effect: Linux packages are not code-signed.",
+    anchor: CSC_ANCHOR,
+  },
+
+  // ── macOS: helpers Electron no longer ships, and options Mac App Store builds never read ──
+  ...MAC_HELPER_REMOVED_FIELDS.map((field): LegacyConfigOption => ({
+    key: field,
+    scope: "mac",
+    replacement: null,
+    autoMigrated: true,
+    severity: "error",
+    detail: "Electron 4 and later ship no `Helper EH` / `Helper NP` app (with an older Electron, those helpers get the default `<helperBundleId>.EH` / `.NP`).",
+    anchor: "machelperehbundleid-machelpernpbundleid",
+  })),
+  ...(["mas", "masDev"] as const).flatMap(parent =>
+    Object.entries(MAS_REMOVED_FIELDS).map(([key, detail]): LegacyConfigOption => ({
+      key,
+      parent: [parent],
+      replacement: null,
+      autoMigrated: true,
+      severity: "error",
+      detail,
+      anchor: "mas-masdev-options",
+    }))
+  ),
 ]
 
 /** A `LegacyConfigOption` with its `scope` expanded to a concrete parent path. */

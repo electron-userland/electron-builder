@@ -33,27 +33,6 @@ export interface PublishConfiguration {
   channel?: string | null
 
   /**
-   * @private
-   * win-only
-   */
-  publisherName?: Array<string> | null
-
-  /**
-   * @private
-   * win-only. Written as `false` into `app-update.yml` by electron-builder for a build with `win.verifyUpdateCodeSignature: false`:
-   * the explicit opt-out that makes electron-updater install an update without verifying its Authenticode signature, which it
-   * otherwise rejects when there is no `publisherName`. Managed by electron-builder; setting it in the `publish` configuration is
-   * rejected as a configuration error.
-   */
-  verifyUpdateCodeSignature?: false | null
-
-  /**
-   * @private
-   * win-only
-   */
-  readonly updaterCacheDirName?: string | null
-
-  /**
    * The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything
    * verifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses
    * (release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`
@@ -61,17 +40,6 @@ export interface PublishConfiguration {
    * @default 10485760
    */
   readonly maxUpdateInfoSize?: number | null
-
-  /**
-   * Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update
-   * manifest before downloading — the install's trust list. A manifest is accepted when any listed key
-   * validates one of its signatures. Embedded into `app-update.yml` at build time when update manifest
-   * signing is enabled: a single string for one key, an array for several. Managed by electron-builder —
-   * populated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it
-   * manually in the `publish` configuration is rejected as a configuration error.
-   * @private
-   */
-  readonly updateManifestPublicKey?: string | Array<string> | null
 
   /**
    * Whether to publish auto update info files.
@@ -96,6 +64,36 @@ export interface PublishConfiguration {
    * @default 120000
    */
   readonly timeout?: number | null
+}
+
+/**
+ * The content of `app-update.yml`, which electron-builder writes into the packaged app: the options of the first publish provider that
+ * receives the update manifest (without the build-time-only ones), plus the fields below. electron-builder computes them; they are not
+ * publish options. electron-updater reads them only from this file, or from a hand-written `dev-app-update.yml` / `updateConfigPath`
+ * file, never from `setFeedURL` or the updater constructor.
+ */
+export type AppUpdateConfiguration<T extends PublishConfiguration = PublishConfiguration> = T & {
+  /**
+   * Windows: the subjects an update's Authenticode signature must match, in distinguished name format: `win.sign.publisherName`, else
+   * `CN=<common name>` of the signing certificate. Not written with `win.verifyUpdateCodeSignature: false`.
+   */
+  publisherName?: Array<string> | null
+
+  /**
+   * Windows: `false` for a build with `win.verifyUpdateCodeSignature: false`, the explicit opt-out that makes electron-updater install an
+   * update without verifying its Authenticode signature, which it otherwise rejects when there is no `publisherName`.
+   */
+  verifyUpdateCodeSignature?: false | null
+
+  /** The name of the updater cache directory: `<sanitized package name>-updater`. */
+  readonly updaterCacheDirName?: string | null
+
+  /**
+   * The install's update-manifest trust list: Ed25519 public key(s) (PEM or base64 SPKI) electron-updater verifies the signed update
+   * manifest with before downloading; a manifest is accepted when any listed key validates one of its signatures. `updateManifest.publicKey`,
+   * else the public keys of the signing keys: a single string for one key, a list for several.
+   */
+  updateManifestPublicKey?: string | Array<string> | null
 }
 
 // https://github.com/electron-userland/electron-builder/issues/3261

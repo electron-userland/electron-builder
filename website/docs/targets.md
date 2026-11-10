@@ -12,7 +12,7 @@ This page helps you choose the right packaging format for each platform. The rig
 | `appx` | `.appx` | Windows Store, enterprise MDM | Managed by Store | Store only |
 | `msix` | `.msix` / `.msixbundle` / `.msixupload` | Windows Store, modern deployment (successor to AppX) | Managed by Store | Store only |
 | `msi` | `.msi` | Enterprise deployment (SCCM/Intune/GPO) | Yes | Not supported via electron-updater |
-| `msi-wrapped` | `.msi` wrapping NSIS | Enterprise + existing NSIS installer | Yes | electron-updater |
+| `msiWrapped` | `.msi` wrapping NSIS | Enterprise + existing NSIS installer | Yes | electron-updater |
 | `squirrel.windows` | `.exe` / NuGet | Legacy (not recommended) | No | Squirrel |
 
 ### When to Use Each Windows Target
@@ -52,7 +52,7 @@ This page helps you choose the right packaging format for each platform. The rig
 - Upgrade code is critical — changing it breaks silent upgrades of existing installs
 - See [MSI Configuration](msi.md)
 
-**MSI-Wrapped** (`msi-wrapped`) — use when you need MSI packaging but want NSIS features.
+**MSI-Wrapped** (`msiWrapped`) — use when you need MSI packaging but want NSIS features.
 - Wraps your existing NSIS installer inside an MSI container
 - Enables Group Policy deployment of apps with NSIS-based setup logic
 - See [MSI-Wrapped Configuration](msi-wrapped.md)

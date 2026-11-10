@@ -1,4 +1,4 @@
-import { asArray, copyOrLinkFile, getPlatformIconFileName, InvalidConfigurationError } from "builder-util"
+import { asArray, copyOrLinkFile, getPlatformIconFileName, InvalidConfigurationError, log } from "builder-util"
 import { rename, utimes } from "fs/promises"
 import * as path from "path"
 import * as fs from "fs"
@@ -10,6 +10,10 @@ import { savePlistFile, parsePlistFile, PlistObject, PlistValue } from "../../ut
 import { createBrandingOpts } from "../ElectronFramework.js"
 import { MacTargetHelper, PlatformType } from "../../targets/mac/MacTargetHelper.js"
 import { assertSafeHelperName, configureLocalhostAts, getAvailableHelperSuffixes } from "./electronMacUtils.js"
+import { BUILD_CHANGES_URL } from "../../util/config/legacyOptions.js"
+
+/** Info.plist options a Mac App Store app takes from `mas` / `masDev` since v27; v26 used the `mac` values for them. */
+const MAS_INFO_PLIST_OPTIONS = ["minimumSystemVersion", "category", "helperRendererBundleId", "helperPluginBundleId", "helperGPUBundleId"] as const
 
 function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
@@ -92,6 +96,17 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   const isMasFlavor = MacTargetHelper.isMasTarget(targetPlatform)
   if (!isMasFlavor) {
     configureLocalhostAts(appPlist)
+  } else {
+    const changed = MAS_INFO_PLIST_OPTIONS.filter(key => cascadedOptions[key] !== packager.platformOptions[key])
+    if (changed.length > 0) {
+      const layer = (key: (typeof MAS_INFO_PLIST_OPTIONS)[number]) => (targetPlatform === "mas-dev" && packager.config.masDev?.[key] != null ? "masDev" : "mas")
+      log
+        .once(`mas-info-plist-options:${targetPlatform}`)
+        .warn(
+          { options: changed.map(key => `${layer(key)}.${key}`) },
+          `since v27, these options apply to the ${targetPlatform} app; v26 ignored them and used the mac values. Remove them to keep the mac values. ${BUILD_CHANGES_URL}#mas-info-plist-options`
+        )
+    }
   }
 
   if (helperPlist != null) {
@@ -120,19 +135,20 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   }
 
   if (helperRendererPlist != null) {
-    configureHelper(helperRendererPlist, "(Renderer)", packager.platformOptions.helperRendererBundleId)
+    configureHelper(helperRendererPlist, "(Renderer)", cascadedOptions.helperRendererBundleId)
   }
   if (helperPluginPlist != null) {
-    configureHelper(helperPluginPlist, "(Plugin)", packager.platformOptions.helperPluginBundleId)
+    configureHelper(helperPluginPlist, "(Plugin)", cascadedOptions.helperPluginBundleId)
   }
   if (helperGPUPlist != null) {
-    configureHelper(helperGPUPlist, "(GPU)", packager.platformOptions.helperGPUBundleId)
+    configureHelper(helperGPUPlist, "(GPU)", cascadedOptions.helperGPUBundleId)
   }
+  // only Electron 3 and older ship these helpers, so their bundle ids are not configurable
   if (helperEHPlist != null) {
-    configureHelper(helperEHPlist, "EH", packager.platformOptions.helperEHBundleId)
+    configureHelper(helperEHPlist, "EH")
   }
   if (helperNPPlist != null) {
-    configureHelper(helperNPPlist, "NP", packager.platformOptions.helperNPBundleId)
+    configureHelper(helperNPPlist, "NP")
   }
   if (helperLoginPlist != null) {
     helperLoginPlist.CFBundleExecutable = `${appFilename} Login Helper`

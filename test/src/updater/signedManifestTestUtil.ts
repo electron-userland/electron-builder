@@ -1,5 +1,5 @@
 import { createUpdateManifestSignatures, serializeToYaml } from "builder-util"
-import { PublishConfiguration, UpdateInfo } from "builder-util-runtime"
+import { AppUpdateConfiguration, UpdateInfo } from "builder-util-runtime"
 import { outputFile, readdir, readFile, stat } from "fs-extra"
 import { load } from "js-yaml"
 import path from "path"
@@ -12,7 +12,7 @@ import path from "path"
 export const UPDATE_MANIFEST_FILE_PATTERN = /^latest.*\.yml$/
 
 /** `app-update.yml` as written into the packaged app's resources by PublishManager. */
-export type EmbeddedUpdateConfig = PublishConfiguration & { updateManifestPublicKey?: string | Array<string> | null }
+export type EmbeddedUpdateConfig = AppUpdateConfiguration
 
 /**
  * Returns a copy of `info` with every existing signature removed and, when `privateKeyPems` is non-empty,

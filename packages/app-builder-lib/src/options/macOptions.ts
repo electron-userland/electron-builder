@@ -141,40 +141,28 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly darkModeSupport?: boolean
 
   /**
-   * The bundle identifier to use in the application helper's plist.
+   * The bundle identifier of `<productName> Helper.app`, and the prefix of the default bundle identifiers of the other helpers.
    * @default ${appBundleIdentifier}.helper
    */
   readonly helperBundleId?: string | null
 
   /**
-   * The bundle identifier to use in the Renderer helper's plist.
-   * @default ${appBundleIdentifier}.helper.Renderer
+   * The bundle identifier of `<productName> Helper (Renderer).app`.
+   * @default ${helperBundleId}.Renderer
    */
   readonly helperRendererBundleId?: string | null
 
   /**
-   * The bundle identifier to use in the Plugin helper's plist.
-   * @default ${appBundleIdentifier}.helper.Plugin
+   * The bundle identifier of `<productName> Helper (Plugin).app`.
+   * @default ${helperBundleId}.Plugin
    */
   readonly helperPluginBundleId?: string | null
 
   /**
-   * The bundle identifier to use in the GPU helper's plist.
-   * @default ${appBundleIdentifier}.helper.GPU
+   * The bundle identifier of `<productName> Helper (GPU).app`.
+   * @default ${helperBundleId}.GPU
    */
   readonly helperGPUBundleId?: string | null
-
-  /**
-   * The bundle identifier to use in the EH helper's plist.
-   * @default ${appBundleIdentifier}.helper.EH
-   */
-  readonly helperEHBundleId?: string | null
-
-  /**
-   * The bundle identifier to use in the NP helper's plist.
-   * @default ${appBundleIdentifier}.helper.NP
-   */
-  readonly helperNPBundleId?: string | null
 
   /**
    * The extra entries for `Info.plist`.
@@ -185,6 +173,16 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.
    */
   readonly minimumSystemVersion?: string | null
+
+  /**
+   * The application signing certificate (`.p12`) imported into a temporary keychain for the build: a file path (relative to the project
+   * directory), an `https://` URL, or a base64-encoded certificate. Defaults to the `CSC_LINK` environment variable. Mac App Store builds
+   * use it too.
+   */
+  readonly cscLink?: string | null
+
+  /** The password of `cscLink`. Defaults to the `CSC_KEY_PASSWORD` environment variable. */
+  readonly cscKeyPassword?: string | null
 
   /** @private */
   readonly cscInstallerLink?: string | null
@@ -437,5 +435,31 @@ export interface DmgContent {
   path?: string
 }
 
+/**
+ * Mac App Store options: `mas`, and `masDev` for the `mas-dev` target. A Mac App Store build merges `mac` → `mas` (→ `masDev`) and reads
+ * these options from the result, so a value set here overrides `mac` for the Mac App Store app only. The other `mac` options apply to Mac
+ * App Store builds as set on `mac` (target, icon, publish, the certificates, ...), except `notarize`, `extraDistFiles` and the update-info
+ * options, which Mac App Store builds do not use.
+ */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface MasConfiguration extends MacConfiguration {}
+export interface MasConfiguration extends Pick<MacConfiguration, MasOverridableOption> {}
+
+/** The `mac` options a Mac App Store build reads from `mas` / `masDev`, merged over `mac`. */
+type MasOverridableOption =
+  | "appId"
+  | "artifactName"
+  | "asar"
+  | "asarIntegrityDigest"
+  | "bundleShortVersion"
+  | "bundleVersion"
+  | "category"
+  | "extendInfo"
+  | "fileOptions"
+  | "forceCodeSigning"
+  | "helperBundleId"
+  | "helperGPUBundleId"
+  | "helperPluginBundleId"
+  | "helperRendererBundleId"
+  | "minimumSystemVersion"
+  | "sign"
+  | "universal"

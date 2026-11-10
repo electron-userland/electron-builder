@@ -166,8 +166,8 @@ describe("what app-update.yml carries when the build passes", () => {
       { sign: false, verifyUpdateCodeSignature: false },
       { sign: { type: "signtool", publisherName: null }, verifyUpdateCodeSignature: false },
       { verifyUpdateCodeSignature: false },
-      // not even a publish-level or an explicit one: the opt-out wins, and electron-updater would verify against any publisherName
-      { sign: { type: "signtool", publisherName: ["CN=Acme"] }, verifyUpdateCodeSignature: false, publish: { ...generic, publisherName: ["CN=Acme"] } },
+      // not even an explicit one: the opt-out wins, and electron-updater would verify against any publisherName
+      { sign: { type: "signtool", publisherName: ["CN=Acme"] }, verifyUpdateCodeSignature: false },
     ]) {
       const { appUpdate, error } = await afterPack(tmpDir, { publish: generic, ...win })
       expect(error).toBeNull()
@@ -182,22 +182,23 @@ describe("what app-update.yml carries when the build passes", () => {
     expect(appUpdate).not.toHaveProperty("verifyUpdateCodeSignature")
   })
 
-  test("a publish-level publisherName is written once it is a distinguished name", async ({ expect, tmpDir }) => {
-    const { appUpdate, error } = await afterPack(tmpDir, { sign: false, publish: { ...generic, publisherName: ["CN=Acme Corp"] } })
-    expect(error).toBeNull()
-    expect(appUpdate.publisherName).toEqual(["CN=Acme Corp"])
-
-    const invalid = await afterPack(tmpDir, { sign: false, publish: { ...generic, publisherName: ["Acme Corp"] } })
-    expect(invalid.error).toBeInstanceOf(InvalidConfigurationError)
-    expect(invalid.error!.message).toContain('publish.publisherName "Acme Corp" is not a distinguished name')
-    expect(invalid.appUpdate).toBeNull()
+  test("a publish-level publisherName fails the build and writes nothing: since v27 it is win.sign.publisherName", async ({ expect, tmpDir }) => {
+    for (const win of [{ sign: false }, { sign: { type: "signtool", publisherName: ["CN=Acme"] } }, { sign: false, verifyUpdateCodeSignature: false }]) {
+      const { appUpdate, error } = await afterPack(tmpDir, { ...win, publish: { ...generic, publisherName: ["CN=Acme Corp"] } })
+      expect(error).toBeInstanceOf(InvalidConfigurationError)
+      expect(error!.message).toContain("publish publisherName (provider generic): removed from the publish options in electron-builder v27")
+      expect(error!.message).toContain("publisherName from win.sign.publisherName")
+      expect(error!.message).toContain("v27-config-changes#publish-options-managed-by-electron-builder")
+      expect(appUpdate).toBeNull()
+    }
   })
 
   test("the opt-out marker is managed by electron-builder and must not be set in the publish configuration", async ({ expect, tmpDir }) => {
     for (const win of [{ sign: false }, { sign: false, verifyUpdateCodeSignature: false }]) {
       const { appUpdate, error } = await afterPack(tmpDir, { ...win, publish: { ...generic, verifyUpdateCodeSignature: false } })
       expect(error).toBeInstanceOf(InvalidConfigurationError)
-      expect(error!.message).toContain("publish.verifyUpdateCodeSignature is managed by electron-builder and must not be set; configure win.verifyUpdateCodeSignature instead")
+      expect(error!.message).toContain("publish verifyUpdateCodeSignature (provider generic): removed from the publish options in electron-builder v27")
+      expect(error!.message).toContain("verifyUpdateCodeSignature from win.verifyUpdateCodeSignature")
       expect(appUpdate).toBeNull()
     }
   })

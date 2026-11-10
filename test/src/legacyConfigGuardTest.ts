@@ -41,15 +41,28 @@ describe("checkLegacyConfiguration — every mapped option is reported", () => {
     }
     expect(message).toContain("v27-breaking-changes")
   })
+
+  test("every guarded path has one entry, so it is reported once", () => {
+    const paths = RESOLVED_LEGACY_CONFIG_OPTIONS.map(o => o.fullPath)
+    expect(paths.filter((p, i) => paths.indexOf(p) !== i)).toEqual([])
+  })
 })
+
+const generatedScheme = JSON.parse(readFileSync(path.join(import.meta.dirname, "../../packages/app-builder-lib/scheme.json"), "utf8"))
 
 describe("checkLegacyConfiguration — never rejects a valid v27 config", () => {
   // The guard must not be able to fail a config the schema accepts. Anything guarded here must also
   // be rejected by scheme.json; if a key is ever re-added to v27, this fails instead of the guard
-  // silently blocking a legitimate config.
-  test.each(RESOLVED_LEGACY_CONFIG_OPTIONS.map(o => [o.fullPath, o] as const))("v27 schema also rejects %s", async (_fullPath, option) => {
+  // silently blocking a legitimate config. scheme.json is checked on its own: validateConfiguration
+  // runs the guard first, so it would reject every guarded key whatever the schema says.
+  test.each(RESOLVED_LEGACY_CONFIG_OPTIONS.map(o => [o.fullPath, o] as const))("v27 schema also rejects %s", (_fullPath, option) => {
     const config = configWith([...option.parentPath, option.key], "value")
-    await expect(validateConfiguration(config as any, new DebugLogger(false))).rejects.toThrow()
+    // a snapcraft.<base> path needs its base selected, or snapcraft is rejected whatever the base options accept
+    if (option.parentPath[0] === "snapcraft" && option.parentPath.length > 1) {
+      config.snapcraft.base = option.parentPath[1]
+    }
+    // the key itself is what fails, not the type of the test value
+    expect(() => validateSchema(generatedScheme, config)).toThrow(new RegExp(`unknown property '${option.key}'`))
   })
 
   test.each([
@@ -116,6 +129,16 @@ describe("checkLegacyConfiguration — structural checks", () => {
     expect(() => checkLegacyConfiguration({ mac: { sign: "./customSign.js" } } as any)).not.toThrow()
   })
 
+  test("a custom signer's union explanation names only the signing options, not other legacy keys of the platform", () => {
+    const message = expectRejected({ mac: { sign: "./customSign.js", identity: "Acme (TEAM)", signIgnore: ["x"], mergeASARs: false } })
+    expect(message).toContain("single union")
+    const unionLine = message.split("\n").find(line => line.includes("is a custom signing function or module path"))
+    // signIgnore is neither a moved nor a removed sign field, and still a signing option
+    expect(unionLine).toContain("[identity, signIgnore]")
+    // mergeASARs is still reported, as a moved universal option
+    expect(message).toContain("mac.universal.mergeASARs")
+  })
+
   test("win.sign without a type discriminator names the discriminator", () => {
     const message = expectRejected({ win: { sign: { certificateFile: "cert.pfx", publisherName: "CN=ACME Inc" } } })
     expect(message).toContain("missing its `type` discriminator")
@@ -157,6 +180,32 @@ describe("checkLegacyConfiguration — structural checks", () => {
       })
     ).toContain("tagNamePrefix")
     expect(expectRejected({ win: { publish: { provider: "github", owner: "o", repo: "r", vPrefixedTagName: false } } })).toContain("win.publish.vPrefixedTagName")
+  })
+
+  test("vPrefixedTagName is found under every section that holds a publish, as migrate-schema rewrites them", () => {
+    for (const section of ["nsis", "nsisWeb", "dmg", "appImage", "snapcraft"]) {
+      const config = { [section]: { publish: { provider: "github", owner: "o", repo: "r", vPrefixedTagName: false } } }
+      expect(expectRejected(config), section).toContain(`${section}.publish.vPrefixedTagName`)
+    }
+  })
+
+  test("a removed mas.publish / masDev.publish is reported once, not entry by entry", () => {
+    for (const section of ["mas", "masDev"]) {
+      const message = expectRejected({ [section]: { publish: { provider: "github", vPrefixedTagName: false, publisherName: ["CN=Acme"] } } })
+      expect(message, section).toContain(`\`${section}.publish\` was removed in electron-builder v27.`)
+      expect(message, section).toContain("Your configuration uses an option that was removed")
+      expect(message, section).not.toContain(`${section}.publish.`)
+    }
+  })
+
+  test("the root publish value is not a section: a custom provider may have an option named publish", () => {
+    const config = { publish: { provider: "custom", publish: { provider: "github", publisherName: ["CN=Acme"], vPrefixedTagName: false } } }
+    expect(() => checkLegacyConfiguration(config as any)).not.toThrow()
+    expect(() => validateSchema(generatedScheme, config)).not.toThrow()
+  })
+
+  test("extraMetadata is free-form package.json metadata, never a publish configuration", () => {
+    expect(() => checkLegacyConfiguration({ extraMetadata: { publish: { provider: "github", vPrefixedTagName: false, updaterCacheDirName: "x" } } } as any)).not.toThrow()
   })
 })
 
@@ -374,5 +423,191 @@ describe("assertInstallerDebugLoggingSupported", () => {
 
   test("accepts a custom toolsets.nsis bundle", () => {
     expect(() => assertInstallerDebugLoggingSupported({ url: "file:///opt/nsis-log" }, "nsis")).not.toThrow()
+  })
+})
+
+describe("options that never had an effect on msiWrapped and msix", () => {
+  test("msiWrapped.oneClick: false explains what it still did", () => {
+    const message = expectRejected({ msiWrapped: { oneClick: false } })
+    expect(message).toContain("nsis.oneClick")
+    expect(message).toContain("WixUIExtension")
+    expect(message).toContain("additionalLightArgs")
+  })
+
+  test.each([
+    ["oneClick", false],
+    ["perMachine", true],
+    ["runAfterFinish", false],
+    ["createDesktopShortcut", "always"],
+    ["createStartMenuShortcut", false],
+    ["menuCategory", "Acme"],
+    ["shortcutName", "App"],
+  ])("scheme.json rejects msiWrapped.%s, which msi and nsis still accept", (key, value) => {
+    expect(() => validateSchema(generatedScheme, { msiWrapped: { [key]: value } })).toThrow(key)
+    expect(() => validateSchema(generatedScheme, { msi: { [key]: value }, nsis: { [key]: value } })).not.toThrow()
+  })
+
+  test("scheme.json rejects msix.electronUpdaterAware, which appx still accepts", () => {
+    expect(() => validateSchema(generatedScheme, { msix: { electronUpdaterAware: true } })).toThrow("electronUpdaterAware")
+    expect(() => validateSchema(generatedScheme, { appx: { electronUpdaterAware: true } })).not.toThrow()
+  })
+})
+
+describe("options Mac App Store builds never read, and the Helper EH / NP bundle ids", () => {
+  const masOptions = {
+    appId: "com.example.mas",
+    artifactName: "${productName}-mas.${ext}",
+    asar: { unpack: ["**/*.node"] },
+    asarIntegrityDigest: false,
+    bundleShortVersion: "1.0",
+    bundleVersion: "1",
+    category: "public.app-category.games",
+    extendInfo: { NSCameraUsageDescription: "camera" },
+    fileOptions: { files: ["dist/**"] },
+    forceCodeSigning: true,
+    helperBundleId: "com.example.mas.helper",
+    helperGPUBundleId: "com.example.mas.gpu",
+    helperPluginBundleId: "com.example.mas.plugin",
+    helperRendererBundleId: "com.example.mas.renderer",
+    minimumSystemVersion: "13.0",
+    sign: { identity: "Acme (TEAM)", entitlements: "build/entitlements.mas.plist" },
+    universal: { mergeASARs: false },
+  }
+
+  test("mas and masDev accept every option a Mac App Store build reads", () => {
+    const config = { appId: "com.example.app", mas: masOptions, masDev: masOptions }
+    expect(() => checkLegacyConfiguration(config as any)).not.toThrow()
+    expect(() => validateSchema(generatedScheme, config)).not.toThrow()
+  })
+
+  test("a removed mas certificate option is named without its value", () => {
+    const message = expectRejected({ mas: { cscInstallerLink: "s3cr3t-link", cscInstallerKeyPassword: "s3cr3t-password", notarize: true } })
+    expect(message).toContain("mas.cscInstallerLink")
+    expect(message).toContain("mas.cscInstallerKeyPassword")
+    expect(message).toContain("mas.notarize")
+    expect(message).toContain("CSC_INSTALLER_LINK")
+    expect(message).toContain("v27-config-changes#mas-masdev-options")
+    expect(message).not.toContain("s3cr3t")
+  })
+
+  test("a removed mas option next to a custom signer is not called a signing option", () => {
+    const message = expectRejected({ mas: { sign: "./customSign.js", target: "mas" } })
+    expect(message).toContain("mas.target")
+    expect(message).toContain("mac.target")
+    expect(message).not.toContain("single union")
+  })
+
+  test("helperEHBundleId names the Electron version that dropped the helper, and the other helper ids are kept", () => {
+    const message = expectRejected({ mac: { helperEHBundleId: "com.example.eh", helperRendererBundleId: "com.example.renderer" } })
+    expect(message).toContain("mac.helperEHBundleId")
+    expect(message).toContain("Electron 4")
+    expect(message).not.toContain("helperRendererBundleId")
+  })
+})
+
+describe("signing certificates are set per platform", () => {
+  test("a root cscLink / cscKeyPassword names both platform options and never its value", () => {
+    const message = expectRejected({ cscLink: "s3cr3t-link", cscKeyPassword: "s3cr3t-password" })
+    expect(message).toContain("`mac.cscLink` and `win.cscLink`")
+    expect(message).toContain("`mac.cscKeyPassword` and `win.cscKeyPassword`")
+    expect(message).toContain("WIN_CSC_LINK")
+    expect(message).toContain("v27-config-changes#signing-certificates-csclink")
+    expect(message).not.toContain("s3cr3t")
+  })
+
+  test("linux.cscLink names the Snap Store login", () => {
+    const message = expectRejected({ linux: { cscLink: "x", cscKeyPassword: "y" } })
+    expect(message).toContain("linux.cscLink")
+    expect(message).toContain("linux.cscKeyPassword")
+    expect(message).toContain("snapcraft.cscLink")
+    expect(message).toContain("SNAP_CSC_LINK")
+  })
+
+  test("mac and win accept their certificate options", () => {
+    const config = {
+      appId: "com.example.app",
+      mac: { cscLink: "mac.p12", cscKeyPassword: "p", cscInstallerLink: "installer.p12", cscInstallerKeyPassword: "p" },
+      win: { cscLink: "win.pfx", cscKeyPassword: "p" },
+    }
+    expect(() => checkLegacyConfiguration(config as any)).not.toThrow()
+    expect(() => validateSchema(generatedScheme, config)).not.toThrow()
+  })
+})
+
+describe("snapcraft.<base>.publish / artifactName", () => {
+  test.each(["publish", "artifactName"])("scheme.json rejects snapcraft.core24.%s and accepts snapcraft.%s", key => {
+    expect(() => validateSchema(generatedScheme, { snapcraft: { base: "core24", core24: { [key]: "x" } } })).toThrow(key)
+    expect(() => validateSchema(generatedScheme, { snapcraft: { base: "core24", [key]: "x", core24: { grade: "stable" } } })).not.toThrow()
+  })
+
+  test("the guard names where the value is read", () => {
+    const message = expectRejected({ snapcraft: { base: "core22", core22: { publish: "github" } } })
+    expect(message).toContain("`snapcraft.core22.publish` was replaced by `snapcraft.publish`")
+    expect(message).toContain("then `linux.publish`, then the root `publish`")
+  })
+})
+
+describe("publish options electron-builder writes into app-update.yml itself", () => {
+  test.each<[string, unknown, string]>([
+    ["updaterCacheDirName", "x", "<sanitized package name>-updater"],
+    ["verifyUpdateCodeSignature", false, "win.verifyUpdateCodeSignature: false"],
+    ["updateManifestPublicKey", "k", "updateManifest.publicKey"],
+    ["publisherName", ["CN=Acme"], 'win.sign.publisherName: ["CN=Acme"]'],
+  ])("%s is reported in every section and array entry, with what replaces it", (key, value, replacement) => {
+    for (const [config, label] of [
+      [{ publish: { provider: "generic", url: "https://example.com/", [key]: value } }, "publish"],
+      [{ publish: ["github", { provider: "s3", bucket: "b", [key]: value }] }, "publish"],
+      [{ win: { publish: { provider: "github", [key]: value } } }, "win.publish"],
+      [{ nsis: { publish: { provider: "generic", url: "https://example.com/", [key]: value } } }, "nsis.publish"],
+      [{ appImage: { publish: { provider: "github", [key]: value } } }, "appImage.publish"],
+    ] as const) {
+      const message = expectRejected(config)
+      expect(message).toContain(`\`${label}.${key}\` was removed from the publish options in electron-builder v27`)
+      expect(message).toContain(replacement)
+      expect(message).toContain("v27-config-changes#publish-options-managed-by-electron-builder")
+      // publisherName is not rewritten: only the user can tell which win.sign it belongs in
+      expect(message.includes("electron-builder migrate-schema")).toBe(key !== "publisherName")
+    }
+  })
+
+  test.each<[string, unknown]>([
+    ["updaterCacheDirName", "x"],
+    ["verifyUpdateCodeSignature", false],
+    ["updateManifestPublicKey", "k"],
+    ["publisherName", ["CN=Acme"]],
+  ])("scheme.json rejects %s on generic, github and s3 entries; a custom provider is left to the app-update.yml writer", (key, value) => {
+    for (const entry of [
+      { provider: "generic", url: "https://example.com/" },
+      { provider: "github", owner: "o", repo: "r" },
+      { provider: "s3", bucket: "b" },
+    ]) {
+      expect(() => validateSchema(generatedScheme, { publish: { ...entry, [key]: value } })).toThrow()
+    }
+    const custom = { publish: { provider: "custom", [key]: value } }
+    expect(() => validateSchema(generatedScheme, custom)).not.toThrow()
+    expect(() => checkLegacyConfiguration(custom as any)).not.toThrow()
+  })
+})
+
+describe("Linux target options that never had an effect", () => {
+  test("the fpm package metadata stays valid under linux and on the fpm targets, and deb / rpm / pacman keep their compression", () => {
+    const config = {
+      appId: "com.example.app",
+      linux: { synopsis: "s", maintainer: "Maintainer <m@example.com>", vendor: "v", packageCategory: "utils", icon: "build/icons" },
+      deb: { synopsis: "d", packageCategory: "net", compression: "zst" },
+      rpm: { compression: "xzmt", packageCategory: "Applications/Internet" },
+      pacman: { compression: "zstd" },
+      apk: { synopsis: "a", maintainer: "Maintainer <m@example.com>" },
+      appImage: { category: "Utility" },
+    }
+    expect(() => checkLegacyConfiguration(config as any)).not.toThrow()
+    expect(() => validateSchema(generatedScheme, config)).not.toThrow()
+  })
+
+  test("deb.icon names where Linux icons come from", () => {
+    const message = expectRejected({ deb: { icon: "build/icon.png" } })
+    expect(message).toContain("`deb.icon` was removed in electron-builder v27.")
+    expect(message).toContain("`linux.icon`")
+    expect(message).toContain("v27-config-changes#linux-target-options-without-effect")
   })
 })

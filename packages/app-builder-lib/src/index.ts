@@ -46,6 +46,7 @@ export {
   DebOptions,
   FlatpakAdditionalArgs,
   FlatpakOptions,
+  FpmPackageMetadata,
   LinuxConfiguration,
   LinuxDesktopFile,
   LinuxTargetSpecificOptions,

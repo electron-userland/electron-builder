@@ -43,6 +43,8 @@ Signing credentials are read from the environment so certificates and passwords 
 Use `WIN_CSC_LINK` / `WIN_CSC_KEY_PASSWORD` to supply a separate Windows certificate while keeping your macOS certificate in `CSC_LINK` / `CSC_KEY_PASSWORD`.
 :::
 
+The `mac.cscLink` / `mac.cscKeyPassword` and `win.cscLink` / `win.cscKeyPassword` options take precedence over these variables, except that `WIN_CSC_KEY_PASSWORD` takes precedence over `win.cscKeyPassword`. v27 has no root-level `cscLink` / `cscKeyPassword` ([migration](./migration/v27-config-changes.md#signing-certificates-csclink)).
+
 :::note[More signing variables]
 The macOS keychain/identity variables (`CSC_NAME`, `CSC_IDENTITY_AUTO_DISCOVERY`, `CSC_KEYCHAIN`) and Azure Trusted Signing variables (`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`) are documented in the code-signing guides: [Code Signing](./features/code-signing/code-signing.md), [macOS](./features/code-signing/code-signing-mac.md), and [Windows](./features/code-signing/code-signing-win.md). In v27, `WIN_CSC_LINK` fallback applies only to `signtool` mode; `hsm`, `pkcs11`, and `azure` are configured through [`win.sign`](./migration/v27-config-changes.md#windows-signing-winsign).
 :::

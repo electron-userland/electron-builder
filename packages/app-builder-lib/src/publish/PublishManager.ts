@@ -13,6 +13,7 @@ import {
   serializeToYaml,
 } from "builder-util"
 import {
+  AppUpdateConfiguration,
   BitbucketOptions,
   CancellationToken,
   computeUpdateManifestKeyId,
@@ -62,14 +63,14 @@ import { ArtifactCreated, PlannedTargets } from "../packagerApi.js"
 import { PlatformSpecificBuildOptions, UpdateManifestSigningOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { Packager } from "../packager.js"
 import { PlatformPackager } from "../platformPackager.js"
-import { missingUpdatePublisherNameError, validatePublisherNameFormat } from "../codeSign/win/publisherName.js"
+import { missingUpdatePublisherNameError } from "../codeSign/win/publisherName.js"
 import { WinPackager } from "../winPackager.js"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
 import { findUpdaterSettingsMentions, UpdaterSettingsMentions, warnAboutUpdaterSettings } from "./updaterSettingsCheck.js"
 import { resolveModule } from "../util/resolve.js"
 import { parseUrl } from "../util/pathManager.js"
 import { isPublishForPullRequest } from "../util/flags.js"
-import { BUILD_CHANGES_URL } from "../util/config/legacyOptions.js"
+import { BUILD_CHANGES_URL, CONFIG_CHANGES_URL, PUBLISH_MANAGED_OPTIONS, PUBLISH_MANAGED_OPTIONS_ANCHOR } from "../util/config/legacyOptions.js"
 
 const publishForPrWarning =
   "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/guides/integration/oss/#pass-secrets-to-builds-from-forked-pull-requests) for details)" +
@@ -473,7 +474,7 @@ export async function getAppUpdatePublishConfiguration(
    * the configs resolved here then only decide the embedded trust list, and neither enforce nor warn.
    */
   signingRequirementApplied = false
-): Promise<PublishConfiguration | null> {
+): Promise<AppUpdateConfiguration | null> {
   const own = await getEmittingUpdateInfoPublishConfigs(packager, targetSpecificOptions, arch, isPublish)
   const publishConfigs = own ?? (await getPlatformUpdateInfoPublishConfigs(packager, arch, isPublish))
   return await createAppUpdateConfiguration(packager, publishConfigs, isPublish, own != null && !signingRequirementApplied)
@@ -490,7 +491,7 @@ export async function getPackAppUpdatePublishConfiguration(
   targets: ReadonlyArray<Target>,
   arch: Arch,
   isPublish: boolean
-): Promise<PublishConfiguration | null> {
+): Promise<AppUpdateConfiguration | null> {
   const { publishConfigs, emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, targets, arch, isPublish)
   return await createAppUpdateConfiguration(packager, publishConfigs, isPublish, emitsManifest)
 }
@@ -619,12 +620,25 @@ async function createAppUpdateConfiguration(
   publishConfigs: Array<PublishConfiguration> | null,
   isPublish: boolean,
   requireSigning: boolean
-): Promise<PublishConfiguration | null> {
+): Promise<AppUpdateConfiguration | null> {
   if (publishConfigs == null || publishConfigs.length === 0) {
     return null
   }
 
-  const publishConfig = {
+  // electron-builder computes these below; only a `custom` provider can carry them here, because the guard and scheme.json reject them
+  // on every other one. The first config is null when a provider could not be resolved outside a publish (e.g. GitHub without a repository).
+  const first: PublishConfiguration | null = publishConfigs[0]
+  const managed = first == null ? [] : Object.keys(PUBLISH_MANAGED_OPTIONS).filter(key => key in first)
+  if (first != null && managed.length > 0) {
+    throw new InvalidConfigurationError(
+      `publish ${managed.join(", ")} (provider ${first.provider}): removed from the publish options in electron-builder v27. ` +
+        "electron-builder writes them into app-update.yml itself: publisherName from win.sign.publisherName, verifyUpdateCodeSignature from " +
+        "win.verifyUpdateCodeSignature, updateManifestPublicKey from updateManifest.publicKey and updaterCacheDirName from the package name. " +
+        `Remove them. See ${CONFIG_CHANGES_URL}#${PUBLISH_MANAGED_OPTIONS_ANCHOR}`
+    )
+  }
+
+  const publishConfig: AppUpdateConfiguration = {
     ...stripBuildTimeOnlyPublishOptions(publishConfigs[0]),
     updaterCacheDirName: packager.appInfo.updaterCacheDirName,
   }
@@ -639,10 +653,6 @@ async function createAppUpdateConfiguration(
     )
   }
 
-  // like updateManifestPublicKey: the opt-out marker is only ever assigned below, from win.verifyUpdateCodeSignature
-  if (publishConfig.verifyUpdateCodeSignature !== undefined) {
-    throw new InvalidConfigurationError("publish.verifyUpdateCodeSignature is managed by electron-builder and must not be set; configure win.verifyUpdateCodeSignature instead")
-  }
   if (packager.platform === Platform.WINDOWS) {
     await applyUpdateCodeSignatureVerification(packager as WinPackager, publishConfig)
   }
@@ -652,13 +662,6 @@ async function createAppUpdateConfiguration(
   // so the user only manages the secrets. One key is written as a plain string (byte-identical to the
   // single-key format), several as a YAML list.
   const updateManifestConfig = packager.updateManifestOptions
-  // `updateManifestPublicKey` is only ever assigned right below, on this fresh copy, so a value that is
-  // already present can only have come from the user's `publish` configuration. Rejecting it (rather than
-  // taking it as-is) keeps the trust list on the single validated path and stops a stale hand-copied key
-  // from silently shadowing the derived one.
-  if (publishConfig.updateManifestPublicKey != null) {
-    throw new InvalidConfigurationError("publish.updateManifestPublicKey is managed by electron-builder and must not be set; configure updateManifest.publicKey instead")
-  }
   // The very same keys updateInfoBuilder signs `latest*.yml` with, so env-var-only signing
   // (no `updateManifest` config block) embeds the matching public keys too, and the two sides
   // cannot disagree about whether signing is enabled.
@@ -681,22 +684,14 @@ async function createAppUpdateConfiguration(
  * The Windows publisher electron-updater verifies the Authenticode signature of NSIS updates against, written into a fresh copy of the
  * first provider's config. electron-updater 7 rejects an update when `app-update.yml` has no publisherName, so:
  *
- * - `win.verifyUpdateCodeSignature: false` writes the explicit opt-out marker (`verifyUpdateCodeSignature: false`) and no publisherName,
- *   not even a publish-level one;
- * - otherwise a publish-level publisherName (validated as a distinguished name) or the one of the signing configuration (explicit, or
- *   `CN=<common name>` of the certificate) is written, and without any the build fails ({@link missingUpdatePublisherNameError}).
+ * - `win.verifyUpdateCodeSignature: false` writes the explicit opt-out marker (`verifyUpdateCodeSignature: false`) and no publisherName;
+ * - otherwise the publisherName of the signing configuration (explicit, or `CN=<common name>` of the certificate) is written, and without
+ *   one the build fails ({@link missingUpdatePublisherNameError}).
  */
-async function applyUpdateCodeSignatureVerification(winPackager: WinPackager, publishConfig: PublishConfiguration): Promise<void> {
+async function applyUpdateCodeSignatureVerification(winPackager: WinPackager, publishConfig: AppUpdateConfiguration): Promise<void> {
   if (!winPackager.isForceCodeSigningVerification) {
-    delete publishConfig.publisherName
     publishConfig.verifyUpdateCodeSignature = false
     return
-  }
-  if (publishConfig.publisherName != null) {
-    validatePublisherNameFormat(publishConfig.publisherName, "publish.publisherName")
-    if (asArray(publishConfig.publisherName).length > 0) {
-      return
-    }
   }
   const publisherName = await (await winPackager.signingManager.value).computedPublisherName.value
   if (publisherName == null || publisherName.length === 0) {
@@ -801,7 +796,7 @@ export function stripBuildTimeOnlyPublishOptions<T extends PublishConfiguration>
  * Writes `app-update.yml` into the resources directory. Untrusted files (extraResources, the app directory) were copied there before,
  * so the write is confined to `containmentRoot` by real path and replaces, rather than follows, a symlink already at the file name.
  */
-export async function writeAppUpdateYaml(resourcesDir: string, publishConfig: PublishConfiguration, containmentRoot: string = resourcesDir): Promise<void> {
+export async function writeAppUpdateYaml(resourcesDir: string, publishConfig: AppUpdateConfiguration, containmentRoot: string = resourcesDir): Promise<void> {
   const file = path.join(resourcesDir, "app-update.yml")
   await prepareFixedNameWrite(containmentRoot, file, "auto-update configuration")
   await outputFile(file, serializeToYaml(stripBuildTimeOnlyPublishOptions(publishConfig)))

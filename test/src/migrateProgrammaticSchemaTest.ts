@@ -1,3 +1,5 @@
+import { MAS_CERTIFICATE_WARNING } from "app-builder-lib/internal"
+import * as vm from "node:vm"
 import { describe, expect, test } from "vitest"
 import {
   FEED_QUERY_ADVISORY,
@@ -10,6 +12,7 @@ import {
   NSIS_WEB_ADVISORY,
   pdbFilesPatternsAdvisory,
   PORTABLE_DEBUG_LOGGING_DROPPED,
+  snapNextToSnapcraftWarning,
   WIN_MISSING_PUBLISHER_NAME_ADVISORY,
   WIN_PUBLISHER_NAME_DN_ADVISORY,
   WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
@@ -813,7 +816,16 @@ describe("migrateProgrammaticSource — nsis-web advisory", () => {
   test("an ':arch' suffix, any letter case and a nested { target } are detected", () => {
     expectAdvisories(`{ win: { target: "nsis-web:ia32" } }`, [NSIS_WEB_ADVISORY])
     expectAdvisories(`{ win: { target: [{ target: "NSIS-Web", arch: "x64" }] } }`, [NSIS_WEB_ADVISORY])
-    expectAdvisories(`{ target: { target: ["nsis-web"] } }`, [NSIS_WEB_ADVISORY])
+    // a root-level target never selected a target, so it selects no advisory either (it is removed, see below)
+    expectAdvisories(`{ target: { target: ["nsis-web"] } }`, [])
+  })
+
+  test("a root-level target is removed with a warning that names it", () => {
+    const result = run(`export default {\n  target: ["zip", "nsis-web"],\n  win: { target: "nsis" },\n}\n`)
+    expect(result.code).not.toMatch(/^\s*target:/m)
+    expect(result.code).toContain(`win: { target: "nsis" }`)
+    expect(result.changes).toEqual(expect.arrayContaining([expect.objectContaining({ key: "target" })]))
+    expect(result.warnings.join("\n")).toContain('the root-level target ["zip", "nsis-web"] never had an effect')
   })
 
   test("a spread or computed key before win.target does not hide it; one after it may override it", () => {
@@ -972,6 +984,10 @@ describe("migrateProgrammaticSource — updater advisories", () => {
       `{ nsis: { publish: [{ provider: "generic", url: "https://u.example.com/?key=k" }] } }`,
       `{ linux: { publish: [{ provider: "generic", url: "https://u.example.com/?key=\${env.KEY}" }] } }`,
       `{ snap: { base: "custom", publish: { provider: "generic", url: "https://u.example.com/?key=k" } } }`,
+      // a v26 snap.publish moves to snapcraft.publish, whatever the base
+      `{ snap: { base: "core22", publish: { provider: "generic", url: "https://u.example.com/?key=k" } } }`,
+      // and so does the selected base's publish
+      `{ snapcraft: { base: "core22", core22: { publish: { provider: "generic", url: "https://u.example.com/?key=k" } } } }`,
     ])("%s emits the advisory", body => expectAdvisories(body, [FEED_QUERY_ADVISORY]))
 
     test.each([
@@ -980,8 +996,10 @@ describe("migrateProgrammaticSource — updater advisories", () => {
       `{ publish: ["github", "generic"] }`,
       `{ publish: null, win: { publish: [null] } }`,
       `{ publish: [{ provider: "s3", bucket: "b", endpoint: "https://s3.example.com/?x=1" }, { provider: "custom", url: "https://u.example.com/?t=1" }] }`,
-      // a v26 snap moves under snapcraft.<base>, where migrateConfig does not look
-      `{ snap: { base: "core22", publish: { provider: "generic", url: "https://u.example.com/?key=k" } } }`,
+      // a v26 snap next to snapcraft is dropped
+      `{ snap: { base: "core22", publish: { provider: "generic", url: "https://u.example.com/?key=k" } }, snapcraft: { base: "core22" } }`,
+      // the publish of a base that is not selected is removed
+      `{ snapcraft: { base: "core24", core22: { publish: { provider: "generic", url: "https://u.example.com/?key=k" } } } }`,
     ])("%s emits nothing", body => expectAdvisories(body, []))
 
     test("a non-literal url or provider is not read; a '?' in a template's static text is", () => {
@@ -993,10 +1011,10 @@ describe("migrateProgrammaticSource — updater advisories", () => {
       expectAdvisories(`{ publish: { ...base, provider: "generic", url: "https://u.example.com/?t=1" } }`, [FEED_QUERY_ADVISORY], "const base = {}\n")
       expectAdvisories(`{ win: { publish: { provider: "generic", url: "https://u.example.com/?t=1" }, ...base } }`, [], "const base = {}\n")
       expectAdvisories(`{ win: { ...base, publish: { provider: "generic", url: "https://u.example.com/?t=1" } } }`, [FEED_QUERY_ADVISORY], "const base = {}\n")
-      // a custom-base snap whose spread may carry a publish may replace snapcraft.publish
+      // a snap next to snapcraft is dropped, so it never replaces snapcraft.publish
       const snapcraft = `snapcraft: { publish: { provider: "generic", url: "https://u.example.com/?t=1" } }`
-      expectAdvisories(`{ snap: { base: "custom", ...base }, ${snapcraft} }`, [], "const base = {}\n")
-      expectAdvisories(`{ snap: { ...base, base: "custom", publish: { provider: "github" } }, ${snapcraft} }`, [], "const base = {}\n")
+      expectAdvisories(`{ snap: { base: "custom", ...base }, ${snapcraft} }`, [FEED_QUERY_ADVISORY], "const base = {}\n")
+      expectAdvisories(`{ snap: { ...base, base: "custom", publish: { provider: "github" } }, ${snapcraft} }`, [FEED_QUERY_ADVISORY], "const base = {}\n")
       expectAdvisories(`{ publish: [...base, { provider: "generic", url: "https://u.example.com/?t=1" }] }`, [FEED_QUERY_ADVISORY], "const base = []\n")
     })
   })
@@ -1162,6 +1180,10 @@ describe("migrateProgrammaticSource — advisories match migrateConfig (parity)"
     feedSnapCustomPublishNull: { snap: { base: "custom", publish: null }, snapcraft: { publish: feed } },
     feedSnapCustomPublishUndefined: { snap: { base: "custom", publish: undefined }, snapcraft: { publish: feed } },
     feedSnapcraftBaseSection: { snapcraft: { core22: { publish: feed } } },
+    feedSnapcraftSelectedBaseSection: { snapcraft: { base: "core22", core22: { publish: feed } } },
+    feedSnapcraftBaseSectionNextToPublish: { snapcraft: { base: "core22", publish: "github", core22: { publish: feed } } },
+    feedMasRemoved: { mas: { publish: feed } },
+    insecureMasDevRemoved: { masDev: { publish: { provider: "generic", url: "http://u.example.com/feed" } } },
     feedAnySection: { directories: { output: "dist" }, extraMetadata: { publish: feed } },
     feedNestedArray: { publish: [[feed]] },
     feedProviderCase: { publish: { provider: "Generic", url: feed.url } },
@@ -1322,5 +1344,299 @@ export default {
     expect(result.status).toBe("no-op")
     expect(result.code).toBe(src)
     expect(result.warnings).toEqual(["fileOptions is not an object literal; move extraFiles into it manually."])
+  })
+})
+
+describe("migrateProgrammaticSource — options that never had an effect on msiWrapped and msix", () => {
+  test("drops the seven msiWrapped installer options, keeps the WiX ones, and warns for oneClick: false or a non-literal", () => {
+    const result = run(
+      `export default {\n  msiWrapped: { oneClick: false, perMachine: true, menuCategory: true, shortcutName: "App", upgradeCode: "U", impersonate: true },\n  msix: { electronUpdaterAware: true, identityName: "Acme.App" },\n  appx: { electronUpdaterAware: true },\n}\n`
+    )
+    expect(result.code).toContain(`upgradeCode: "U"`)
+    expect(result.code).toContain("impersonate: true")
+    expect(result.code).not.toMatch(/oneClick|perMachine|menuCategory|shortcutName/)
+    expect(result.code).toContain(`msix: { identityName: "Acme.App" }`)
+    expect(result.code).toContain("appx: { electronUpdaterAware: true }")
+    expect(result.changes.map(it => it.key)).toEqual(
+      expect.arrayContaining(["msiWrapped.oneClick", "msiWrapped.perMachine", "msiWrapped.menuCategory", "msiWrapped.shortcutName", "msix.electronUpdaterAware"])
+    )
+    expect(result.warnings.filter(it => it.includes("WixUIExtension"))).toHaveLength(1)
+
+    expect(run(`const oneClick = false\nexport default { msiWrapped: { oneClick } }\n`).warnings.filter(it => it.includes("WixUIExtension"))).toHaveLength(1)
+    expect(run(`export default { msiWrapped: { oneClick: true } }\n`).warnings).toEqual([])
+  })
+})
+
+describe("migrateProgrammaticSource — options Mac App Store builds never read, and the Helper EH / NP bundle ids", () => {
+  test("removes the mas / masDev options a Mac App Store build never reads, including a publish the GitHub rule would rewrite", () => {
+    const result = run(
+      `export default {\n  mac: { helperEHBundleId: "com.example.eh", helperRendererBundleId: "com.example.renderer" },\n  mas: {\n    target: "mas",\n    publish: { provider: "github", vPrefixedTagName: false },\n    cscInstallerLink: process.env.MAS_INSTALLER_CERT,\n    category: "public.app-category.games",\n  },\n  masDev: { notarize: false, helperNPBundleId: "com.example.np", cscKeyPassword: process.env.MAS_KEY_PASSWORD, publish: { provider: "github", vPrefixedTagName: false } },\n}\n`
+    )
+    expect(result.status).toBe("migrated")
+    expect(result.code).toContain(`mac: { helperRendererBundleId: "com.example.renderer" }`)
+    expect(result.code).toContain(`category: "public.app-category.games"`)
+    expect(result.code).not.toMatch(/helperEHBundleId|helperNPBundleId|target|publish|cscInstallerLink|cscKeyPassword|notarize|tagNamePrefix/)
+    expect(result.changes.map(it => it.key).sort()).toEqual([
+      "mac.helperEHBundleId",
+      "mas.cscInstallerLink",
+      "mas.publish",
+      "mas.target",
+      "masDev.cscKeyPassword",
+      "masDev.helperNPBundleId",
+      "masDev.notarize",
+      "masDev.publish",
+    ])
+    // one warning for the certificates of both
+    expect(result.warnings).toEqual([MAS_CERTIFICATE_WARNING])
+  })
+
+  test("a spread inside mas warns, because the keys it brings in can fail the v27 build", () => {
+    const result = run(`const mac = { category: "public.app-category.games" }\nexport default { mac, mas: { ...mac, sign: { entitlements: "build/e.plist" } } }\n`)
+    expect(result.status).toBe("no-op")
+    expect(result.warnings).toHaveLength(1)
+    expect(result.warnings[0]).toContain("mas spreads another object")
+    expect(result.warnings[0]).toContain("#mas-masdev-options")
+  })
+})
+
+/** Evaluates a migrated `module.exports = …` config with a stand-in `process.env`. */
+function evaluateCjs(code: string): any {
+  const module = { exports: {} as any }
+  vm.runInNewContext(code, { module, process: { env: { CERT_LINK: "link", CERT_PASSWORD: "password" } } })
+  return module.exports
+}
+
+describe("migrateProgrammaticSource — root and linux certificate options", () => {
+  test("copies the root initializers into mac and win, creating a missing section once for both keys", () => {
+    const result = run(
+      `module.exports = {\n  cscLink: process.env.CERT_LINK,\n  cscKeyPassword: process.env.CERT_PASSWORD,\n  mac: { category: "public.app-category.games" },\n  linux: { cscLink: "x", target: "deb" },\n}\n`,
+      "electron-builder.cjs"
+    )
+    expect(result.status).toBe("migrated")
+    expect(result.code.match(/\bwin: \{/g)).toHaveLength(1)
+    expect(evaluateCjs(result.code)).toEqual({
+      mac: { category: "public.app-category.games", cscLink: "link", cscKeyPassword: "password" },
+      win: { cscLink: "link", cscKeyPassword: "password" },
+      linux: { target: "deb" },
+    })
+    expect(result.changes.map(it => it.key)).toEqual(["cscLink", "cscKeyPassword", "linux.cscLink"])
+    expect(result.warnings).toEqual([])
+  })
+
+  test("a different platform value is replaced with a warning, and a section that is not an object literal leaves the root key for the guard", () => {
+    const replaced = run(`module.exports = { cscLink: "root.p12", win: { cscLink: "win.pfx" } }\n`, "electron-builder.cjs")
+    expect(evaluateCjs(replaced.code)).toEqual({ mac: { cscLink: "root.p12" }, win: { cscLink: "root.p12" } })
+    expect(replaced.warnings).toHaveLength(1)
+    expect(replaced.warnings[0]).toContain("win.cscLink")
+    expect(replaced.warnings[0]).not.toMatch(/root\.p12|win\.pfx/)
+
+    const src = `const sharedWin = { target: "nsis" }\nmodule.exports = { cscLink: "root.p12", win: sharedWin }\n`
+    const unreadable = run(src, "electron-builder.cjs")
+    expect(unreadable.code).toBe(src)
+    expect(unreadable.warnings).toHaveLength(1)
+    expect(unreadable.warnings[0]).toContain("win is not an object literal")
+  })
+})
+
+describe("migrateProgrammaticSource — snap and snapcraft", () => {
+  test("a snap next to snapcraft is dropped with the migrateConfig warning, and no second snapcraft property is created", () => {
+    const result = run(`export default {\n  snap: { base: "core20", summary: "x" },\n  snapcraft: { base: "core24", core24: { grade: "stable" } },\n}\n`)
+    expect(result.code.match(/\bsnapcraft:/g)).toHaveLength(1)
+    expect(result.code).not.toMatch(/\bsnap:/)
+    expect(result.warnings).toEqual([snapNextToSnapcraftWarning(["base", "summary"])])
+  })
+
+  test("snap publish / artifactName go to snapcraft itself, and a snapcraft: null is replaced in place", () => {
+    const result = run(`module.exports = {\n  snapcraft: null,\n  snap: { base: "core22", publish: "github", artifactName: "a.snap", summary: "s" },\n}\n`, "electron-builder.cjs")
+    expect(result.code.match(/\bsnapcraft:/g)).toHaveLength(1)
+    expect(evaluateCjs(result.code)).toEqual({ snapcraft: { base: "core22", publish: "github", artifactName: "a.snap", core22: { summary: "s" } } })
+  })
+
+  test("the selected base's publish / artifactName move to snapcraft and the others are removed, as migrateConfig does", () => {
+    const config = { snapcraft: { base: "core24", publish: "s3", core24: { publish: "github", artifactName: "a.snap", grade: "stable" }, core22: { artifactName: "b.snap" } } }
+    const result = run(`module.exports = ${JSON.stringify(config, null, 2)}\n`, "electron-builder.cjs")
+    const expected = migrateConfig(config)
+    expect(evaluateCjs(result.code)).toEqual(expected.migrated)
+    expect(result.changes.map(it => it.key)).toEqual(expected.changes.map(it => it.key))
+    expect(result.warnings).toEqual(expected.warnings)
+  })
+
+  test("a snapcraft.base that is not a string literal leaves them for the guard", () => {
+    const src = `const base = "core24"\nmodule.exports = { snapcraft: { base, core24: { publish: "github" } } }\n`
+    const result = run(src, "electron-builder.cjs")
+    expect(result.code).toBe(src)
+    expect(result.warnings).toHaveLength(1)
+    expect(result.warnings[0]).toContain("snapcraft.core24.publish")
+  })
+})
+
+describe("migrateProgrammaticSource — publish options electron-builder writes into app-update.yml", () => {
+  test("removes them like migrateConfig, and keeps publisherName with a warning", () => {
+    const config = {
+      publish: [{ provider: "generic", url: "https://example.com/", updaterCacheDirName: "x", verifyUpdateCodeSignature: false, publisherName: ["CN=Acme"] }, "github"],
+      win: { publish: { provider: "s3", bucket: "b", updateManifestPublicKey: "k" } },
+    }
+    const result = run(`module.exports = ${JSON.stringify(config, null, 2)}\n`, "electron-builder.cjs")
+    const expected = migrateConfig(config)
+    expect(evaluateCjs(result.code)).toEqual(expected.migrated)
+    expect(result.changes.map(it => it.key)).toEqual(expected.changes.map(it => it.key))
+    expect([...result.warnings].sort()).toEqual([...expected.warnings].sort())
+  })
+})
+
+describe("migrateProgrammaticSource — Linux target options that never had an effect", () => {
+  test.each<[string, Record<string, any>]>([
+    [
+      "target options",
+      {
+        deb: { icon: "build/icon.png", synopsis: "d" },
+        apk: { compression: "xz", maintainer: "m <m@example.com>" },
+        appImage: { synopsis: "s", category: "Utility" },
+        snapcraft: { base: "core22", core22: { synopsis: "s", summary: "x" } },
+      },
+    ],
+    ["a v26 snap", { snap: { base: "core22", synopsis: "s", summary: "x" } }],
+  ])("%s are removed as migrateConfig does", (_name, config) => {
+    const result = run(`module.exports = ${JSON.stringify(config, null, 2)}\n`, "electron-builder.cjs")
+    const expected = migrateConfig(config)
+    expect(evaluateCjs(result.code)).toEqual(expected.migrated)
+    expect(result.changes.map(it => it.key)).toEqual(expected.changes.map(it => it.key))
+  })
+})
+
+describe("migrateProgrammaticSource — review follow-ups", () => {
+  /** Runs `config` through both migrators as a CJS module and expects the same object, and the same changes and warnings in any order. */
+  function expectSameAsMigrateConfig(config: Record<string, any>): ReturnType<typeof run> {
+    const result = run(`module.exports = ${JSON.stringify(config, null, 2)}\n`, "electron-builder.cjs")
+    const expected = migrateConfig(config)
+    expect(evaluateCjs(result.code)).toEqual(expected.migrated)
+    expect(result.changes.map(it => it.key).sort()).toEqual(expected.changes.map(it => it.key).sort())
+    expect([...result.warnings].sort()).toEqual([...expected.warnings].sort())
+    return result
+  }
+
+  test.each<[string, Record<string, any>]>([
+    ["a hoisted snap.publish", { snap: { base: "core22", publish: { provider: "github", owner: "o", repo: "r", updaterCacheDirName: "x", verifyUpdateCodeSignature: false } } }],
+    [
+      "a moved snapcraft.<base>.publish",
+      { snapcraft: { base: "core22", core22: { publish: { provider: "generic", url: "https://u.example.com", updateManifestPublicKey: "k" } } } },
+    ],
+    ["a custom-base snap.publish list", { snap: { base: "custom", publish: [{ provider: "github", updaterCacheDirName: "x", publisherName: ["CN=Acme"] }, "s3"] } }],
+  ])("%s loses the fields electron-builder writes into app-update.yml, as migrateConfig does", (_name, config) => {
+    expectSameAsMigrateConfig(config)
+  })
+
+  test("a root cscLink next to a v26 helper-bundle-id creates one mac section", () => {
+    const config = { cscLink: "x.p12", "helper-bundle-id": "com.example.helper" }
+    expectSameAsMigrateConfig(config)
+    const ts = run(`export default ${JSON.stringify(config)}\n`)
+    expect(ts.code.match(/\bmac:/g)).toHaveLength(1)
+  })
+
+  test("a root cscLink: null or undefined is removed without creating mac / win; the same value on a platform does not warn", () => {
+    expect(evaluateCjs(run(`module.exports = { cscLink: null, cscKeyPassword: undefined }\n`, "electron-builder.cjs").code)).toEqual({})
+    expectSameAsMigrateConfig({ cscLink: null })
+    expect(expectSameAsMigrateConfig({ cscLink: "a.p12", mac: { cscLink: "a.p12" } }).warnings).toEqual([])
+  })
+
+  test("a mac or win that spreads another object keeps the root certificate for the guard: the spread could set it after the copy", () => {
+    const src = `const shared = { cscLink: "other.p12" }\nmodule.exports = { cscLink: "root.p12", mac: { ...shared } }\n`
+    const result = run(src, "electron-builder.cjs")
+    expect(result.code).toBe(src)
+    expect(result.warnings).toHaveLength(1)
+    expect(result.warnings[0]).toContain("mac is not an object literal, spreads another object or uses a computed key")
+  })
+
+  test("a root target: null is removed without a warning", () => {
+    const result = run(`module.exports = { target: null }\n`, "electron-builder.cjs")
+    expect(result.changes.map(it => it.key)).toEqual(["target"])
+    expect(result.warnings).toEqual([])
+  })
+
+  test("a snap next to snapcraft: undefined is moved there, and one next to a snapcraft the AST cannot read is left with a warning", () => {
+    const moved = run(`module.exports = { snap: { base: "core22", grade: "stable" }, snapcraft: undefined }\n`, "electron-builder.cjs")
+    expect(evaluateCjs(moved.code)).toEqual({ snapcraft: { base: "core22", core22: { grade: "stable" } } })
+    expect(moved.code.match(/\bsnapcraft:/g)).toHaveLength(1)
+
+    const src = `module.exports = { snap: { base: "core22" }, snapcraft: process.env.CORE24 ? { base: "core24" } : undefined }\n`
+    const left = run(src, "electron-builder.cjs")
+    expect(left.code).toBe(src)
+    expect(left.warnings).toHaveLength(1)
+    expect(left.warnings[0]).toContain("v26 read snap whenever snapcraft was null or undefined")
+  })
+
+  test("a moved snapcraft.<base>.publish that sets vPrefixedTagName gets the manual-rewrite warning", () => {
+    const result = run(`module.exports = { snapcraft: { base: "core22", core22: { publish: { provider: "github", vPrefixedTagName: false } } } }\n`, "electron-builder.cjs")
+    expect(result.warnings).toContain(
+      "snapcraft.core22.publish sets vPrefixedTagName or an empty tagNamePrefix; after the move, apply the GitHub tagNamePrefix change under snapcraft.publish manually."
+    )
+  })
+
+  test("two publish entries with the same app-update.yml field give one change and one warning", () => {
+    const result = expectSameAsMigrateConfig({
+      publish: [
+        { provider: "generic", url: "https://a.example.com/", verifyUpdateCodeSignature: false, updaterCacheDirName: "a" },
+        { provider: "generic", url: "https://b.example.com/", verifyUpdateCodeSignature: false, updaterCacheDirName: "b" },
+      ],
+    })
+    expect(result.changes.map(it => it.key)).toEqual(["publish[].verifyUpdateCodeSignature", "publish[].updaterCacheDirName"])
+    expect(result.warnings).toHaveLength(1)
+  })
+})
+
+describe("migrateProgrammaticSource — second review follow-ups", () => {
+  test("extraMetadata and the options of a custom provider are left alone, as migrateConfig leaves them", () => {
+    for (const config of [
+      { extraMetadata: { publish: { provider: "github", updaterCacheDirName: "x", vPrefixedTagName: false, publisherName: ["CN=A"] } } },
+      { publish: { provider: "custom", publish: { provider: "github", updaterCacheDirName: "x", publisherName: ["CN=A"] } } },
+    ]) {
+      const src = `module.exports = ${JSON.stringify(config, null, 2)}\n`
+      const result = run(src, "electron-builder.cjs")
+      expect(result.code).toBe(src)
+      expect(result.changes).toEqual([])
+      expect(result.warnings).toEqual([])
+    }
+  })
+
+  test.each<[string, string, string]>([
+    [
+      "a snap held in a variable",
+      `const snapOptions = { base: "core22", summary: "s" }\nmodule.exports = { appId: "a", snap: snapOptions }\n`,
+      "snap was left in place: it is not an object literal",
+    ],
+    [
+      "a mac with a computed key next to a root cscLink",
+      `const k = "cscLink"\nmodule.exports = { cscLink: "root.p12", mac: { [k]: "mac.p12" } }\n`,
+      "mac is not an object literal, spreads another object or uses a computed key",
+    ],
+    [
+      "a snapcraft whose base may come from a spread",
+      `const shared = { base: "core22" }\nmodule.exports = { snapcraft: { ...shared, core22: { publish: "github" } } }\n`,
+      "snapcraft.base is not a string literal (or a spread / computed key may set it)",
+    ],
+  ])("%s is left for the build-time check, with a warning", (_name, src, warning) => {
+    const result = run(src, "electron-builder.cjs")
+    expect(result.code).toBe(src)
+    expect(result.warnings).toHaveLength(1)
+    expect(result.warnings[0]).toContain(warning)
+  })
+
+  test("a snapcraft publish: undefined is unset: the selected base's publish replaces it in place", () => {
+    const result = run(
+      `module.exports = { snapcraft: { base: "core22", publish: undefined, core22: { publish: { provider: "generic", url: "https://u.example.com/" } } } }\n`,
+      "electron-builder.cjs"
+    )
+    expect(evaluateCjs(result.code)).toEqual({ snapcraft: { base: "core22", publish: { provider: "generic", url: "https://u.example.com/" }, core22: {} } })
+    expect(result.code.match(/\bpublish:/g)).toHaveLength(1)
+    expect(result.changes.map(it => it.key)).toEqual(["snapcraft.core22.publish"])
+  })
+
+  test.each([
+    ["a comment between the value and its comma", `module.exports = {\n  electronCompile: true /* old */,\n  appId: "a",\n}\n`],
+    ["comma-first style", `module.exports = {\n  electronCompile: true\n  , appId: "a"\n}\n`],
+  ])("removing a property keeps valid code with %s", (_name, src) => {
+    const result = run(src, "electron-builder.cjs")
+    expect(result.status).toBe("migrated")
+    expect(evaluateCjs(result.code)).toEqual({ appId: "a" })
   })
 })

@@ -62,21 +62,22 @@ function isElectronSignOptions(sign: MacConfiguration["sign"]): sign is Electron
 /**
  * Merges the mac → mas (→ masDev) cascade into a new configuration: merging the mas layer never changes the mac one (its `sign`,
  * `extendInfo`, `fileOptions`, ...), which the macOS app of the same build is packed and signed with. A later layer's
- * `fileOptions.excludedExts` replaces an earlier one (see replaceMergedExcludedExts).
+ * `fileOptions.excludedExts` replaces an earlier one (see replaceMergedExcludedExts). The result holds every `mac` option, with the
+ * `MasConfiguration` ones overridden.
  */
-function mergeMasConfig(...layers: Array<MacConfiguration | MasConfiguration | Nullish>): MasConfiguration {
-  const config = mergeConfigLayers<MasConfiguration>(...layers)
+function mergeMasConfig(...layers: Array<MacConfiguration | MasConfiguration | Nullish>): MacConfiguration {
+  const config = mergeConfigLayers<MacConfiguration>(...layers)
   replaceMergedExcludedExts(config, layers)
   return config
 }
 
-interface PlatformConfig<C extends MacConfiguration | MasConfiguration = MacConfiguration | MasConfiguration> {
+interface PlatformConfig {
   type: PlatformType
-  config: C
+  config: MacConfiguration
   platformName: ElectronPlatformName
 }
 
-export class MacPackager extends PlatformPackager<MacConfiguration | MasConfiguration> {
+export class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo = new MemoLazy<CreateKeychainOptions | null, CodeSigningInfo>(
     () => {
       const cscLink = this.getCscLink()
@@ -175,8 +176,17 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     }
   }
 
+  // one keychain for every flavor: mas / masDev have no certificate options
+  getCscLink(extraEnvName?: string | null): string | Nullish {
+    return chooseNotNull(this.platformSpecificBuildOptions.cscLink, super.getCscLink(extraEnvName))
+  }
+
+  doGetCscPassword(): string | Nullish {
+    return chooseNotNull(this.platformSpecificBuildOptions.cscKeyPassword, super.doGetCscPassword())
+  }
+
   /**
-   * `forceCodeSigning` of a flavor: `mas` and `mas-dev` cascade `mac` → `mas` → `masDev` like every other option (see
+   * `forceCodeSigning` of a flavor: `mas` and `mas-dev` cascade `mac` → `mas` → `masDev` like the other `MasConfiguration` options (see
    * getPlatformConfig), then the root value. For `mac` it is {@link forceCodeSigning}.
    */
   forceCodeSigningFor(platformType: PlatformType): boolean {
@@ -229,14 +239,9 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     return this.info.framework.macOsDefaultTargets
   }
 
-  /**
-   * Get the merged configuration for a specific platform type. Calls statically known to be a MAS
-   * flavor (`mas` / `mas-dev`) get a `MasConfiguration` back, so no cast is needed downstream.
-   */
-  getPlatformConfig(platformType: MasPlatformType): PlatformConfig<MasConfiguration>
-  getPlatformConfig(platformType: PlatformType): PlatformConfig
+  /** Get the merged configuration for a specific platform type: `mas` / `mas-dev` merge their `MasConfiguration` options over `mac`. */
   getPlatformConfig(platformType: PlatformType): PlatformConfig {
-    let config: MacConfiguration | MasConfiguration
+    let config: MacConfiguration
     let platformName: ElectronPlatformName
 
     switch (platformType) {
@@ -440,11 +445,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
    * Embeds the ASAR integrity digest into the Electron Framework, see `mac.asarIntegrityDigest`. A universal app gets it after the slices are merged: they
    * have no `ElectronAsarIntegrity` entries, and re-signing the framework of a slice would make the slices differ in a way `@electron/universal` rejects.
    */
-  protected async doAddAsarIntegrityDigest(
-    packContext: AfterPackContext,
-    platformSpecificBuildOptions: MacConfiguration | MasConfiguration,
-    asarOptions: AsarOptions | null
-  ): Promise<void> {
+  protected async doAddAsarIntegrityDigest(packContext: AfterPackContext, platformSpecificBuildOptions: MacConfiguration, asarOptions: AsarOptions | null): Promise<void> {
     // nothing to protect without the entries electron-builder computes: a stock Electron Info.plist still lists the removed default_app.asar
     if (asarOptions == null || asarOptions.disableIntegrity) {
       return
@@ -806,7 +807,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
   }
 
   // todo fileAssociations
-  async applyCommonInfo(appPlist: any, contentsPath: string, cascadedOptions: MacConfiguration | MasConfiguration): Promise<void> {
+  async applyCommonInfo(appPlist: any, contentsPath: string, cascadedOptions: MacConfiguration): Promise<void> {
     const appInfo = this.appInfo
     const appFilename = appInfo.productFilename
 
@@ -854,7 +855,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       }
     }
 
-    const minimumSystemVersion = this.platformSpecificBuildOptions.minimumSystemVersion
+    // the flavor's own values: for mas / mas-dev, merged over the mac ones (like bundleVersion and extendInfo below)
+    const minimumSystemVersion = cascadedOptions.minimumSystemVersion
     if (minimumSystemVersion != null) {
       appPlist.LSMinimumSystemVersion = minimumSystemVersion
     }
@@ -863,7 +865,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     appPlist.CFBundleShortVersionString = cascadedOptions.bundleShortVersion || appInfo.version
     appPlist.CFBundleVersion = cascadedOptions.bundleVersion || appInfo.buildVersion
 
-    use(this.platformSpecificBuildOptions.category || (this.config as any).category, it => (appPlist.LSApplicationCategoryType = it))
+    // an empty category is unset, as before
+    use(cascadedOptions.category || null, it => (appPlist.LSApplicationCategoryType = it))
     appPlist.NSHumanReadableCopyright = appInfo.copyright
 
     if (this.platformSpecificBuildOptions.darkModeSupport) {

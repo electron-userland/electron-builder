@@ -11,7 +11,7 @@ import { Target } from "../../core.js"
 import * as errorMessages from "../../errorMessages.js"
 import { LinuxPackager } from "../../linuxPackager.js"
 import { waitForPackWork } from "../../platformPackager.js"
-import { DebOptions, LinuxTargetSpecificOptions } from "../../options/linuxOptions.js"
+import { DebOptions, LinuxTargetSpecificOptions, PacmanOptions, RpmOptions } from "../../options/linuxOptions.js"
 import { ArtifactCreated } from "../../packagerApi.js"
 import { getPackAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../publish/PublishManager.js"
 import { getFpmPath } from "../../toolsets/fpm.js"
@@ -23,6 +23,9 @@ import { getTemplatePath } from "../../util/pathManager.js"
 import { buildLauncherScript, shellQuote } from "./launcherScript.js"
 import { installPrefix, LinuxTargetHelper, quoteDesktopExecPath } from "./LinuxTargetHelper.js"
 const { copyFile, outputFile, stat } = _fsExtra
+
+/** The options of an fpm target: `deb`, `rpm` and `pacman` also take a compression; fpm has none for the other package types. */
+type FpmTargetOptions = LinuxTargetSpecificOptions & { readonly compression?: DebOptions["compression"] | RpmOptions["compression"] | PacmanOptions["compression"] }
 
 interface FpmOptions {
   name: string
@@ -38,7 +41,7 @@ interface ScriptFiles {
 }
 
 export default class FpmTarget extends Target {
-  readonly options: LinuxTargetSpecificOptions = this.packager.getOptionsForTarget<LinuxTargetSpecificOptions>(this.name)
+  readonly options: FpmTargetOptions = this.packager.getOptionsForTarget<FpmTargetOptions>(this.name)
 
   private readonly scriptFiles: Promise<ScriptFiles>
 
@@ -483,7 +486,7 @@ interface FpmConfiguration {
   args: Array<string>
   customDepends?: Array<string>
   customRecommends?: Array<string>
-  compression?: LinuxTargetSpecificOptions["compression"]
+  compression?: FpmTargetOptions["compression"]
 }
 
 /**

@@ -218,13 +218,11 @@ Electron spawns several helper processes, each with its own bundle ID. electron-
 | Option | Default | Process |
 |---|---|---|
 | `helperBundleId` | `${appId}.helper` | Generic helper |
-| `helperRendererBundleId` | `${appId}.helper.Renderer` | Renderer process |
-| `helperPluginBundleId` | `${appId}.helper.Plugin` | Plugin helper |
-| `helperGPUBundleId` | `${appId}.helper.GPU` | GPU process |
-| `helperEHBundleId` | `${appId}.helper.EH` | Exception handler |
-| `helperNPBundleId` | `${appId}.helper.NP` | NP helper |
+| `helperRendererBundleId` | `${helperBundleId}.Renderer` | Renderer process |
+| `helperPluginBundleId` | `${helperBundleId}.Plugin` | Plugin helper |
+| `helperGPUBundleId` | `${helperBundleId}.GPU` | GPU process |
 
-You only need to override these if you have a specific naming requirement (e.g., for provisioning profiles that enumerate each helper ID explicitly).
+You only need to override these if you have a specific naming requirement (e.g., for provisioning profiles that enumerate each helper ID explicitly). `mas` and `masDev` can override each of them for the Mac App Store app. `helperEHBundleId` and `helperNPBundleId` were removed in v27: Electron 4 and later ship no `Helper EH` / `Helper NP` app.
 
 ## Other Common Options
 

@@ -47,6 +47,8 @@ linux:
     - --enable-features=WebContentsFocusOnResize
 ```
 
+`synopsis`, `maintainer`, `vendor` and `packageCategory` are package metadata that only the fpm-built packages (`deb`, `rpm`, `pacman`, `freebsd`, `p5p`, `apk`) read; a target-level value replaces the `linux` one. The deb `Section` and the rpm `Group` use different category vocabularies, so set `packageCategory` per target when you build both.
+
 :::note[v27: launcher entrypoint]
 Every Linux target except flatpak (deb/rpm, AppImage, snap) now launches through a generated `<executableName>-launcher` shell script rather than invoking the executable directly. `executableArgs` (and `forceX11`) are injected into that launcher, and the generated `.desktop` `Exec` key points at it (e.g. `Exec=/opt/MyApp/MyApp-launcher %U`) rather than inlining the args. This makes `executableArgs` apply consistently across all Linux targets. If you ship a custom `.desktop` override, an AppArmor/snap profile, or a MIME handler that hard-codes the `Exec` command, point it at the `*-launcher` script. The flatpak target keeps its own `electron-wrapper` script (`Exec=electron-wrapper %U`), which receives `executableArgs` as well. See [v27 Breaking Changes → Linux launcher entrypoint](./migration/v27-runtime-changes.md#linux-launcher-entrypoint).
 :::

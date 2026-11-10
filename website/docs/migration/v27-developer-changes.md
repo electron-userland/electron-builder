@@ -21,6 +21,7 @@ Changes that only matter if you write code that plugs into electron-builder: bui
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | TS error | Import the new names — no compat aliases |
 | [`SnapOptions`, `ProtonFramework`, `LibUiFramework` exports removed](#removed-exports) | Import / TS error | Use the `snapcraft` config shape / Electron framework |
 | [builder-util-runtime: a cross-origin header policy per `HttpExecutor`](#builder-util-runtime-cross-origin-headers) | Advisory | None for custom publishers: an `HttpExecutor` without a policy leaves the credential-bearing headers (see `addSensitiveRedirectHeader`) off a redirect to another origin. Pass a `CrossOriginHeaderPolicy` to its constructor to choose the headers yourself |
+| [`PublishConfiguration` no longer declares the `app-update.yml` fields](#app-update-configuration) | TS error | Type `app-update.yml` / `dev-app-update.yml` content as `AppUpdateConfiguration`; remove these fields from `setFeedURL` / updater-constructor options, which never read them |
 | [Custom electron-updater providers return a URL from `feedBaseUrl`](#custom-provider-feed-base-url) | TS error, runtime error | Return the feed URL from `Provider.feedBaseUrl`; anything else, `null` included, fails the update check with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED` |
 | [Hooks reading `files` / `extraResources` / `extraFiles`](#hooks-reading-file-options) | Warns / fails | Read and write `fileOptions.files` / `.extraResources` / `.extraFiles` instead; assigning a flat key throws |
 | [NSIS `customInstallMode` macro guard casing corrected](#nsis-custominstallmode-macro-guard-casing-corrected) | Silent | Rename a `customInstallmode` (lowercase `m`) macro definition in custom NSIS scripts to the documented `customInstallMode` |
@@ -165,6 +166,12 @@ An `HttpExecutor` follows each redirect to another origin with the headers its c
 - `HttpExecutor.crossOriginHeaders(headers, ownHeaders, hop, policy)`: the headers to send to `hop.to` for a request whose headers are meant for `hop.from`. All of them, without calling the policy, when `to` is on the same origin; else what the policy returns, with the own headers it left out. It never changes `headers`.
 
 **Action:** none for a custom publisher. To choose the headers a redirect to another origin sends yourself, pass a `CrossOriginHeaderPolicy` to your `HttpExecutor` subclass's constructor.
+
+### `PublishConfiguration` no longer declares the `app-update.yml` fields {#app-update-configuration}
+
+**How you'll find out:** **TS error** in code that sets or reads these fields on a publish configuration.
+
+`PublishConfiguration` (and so `AllPublishOptions`, `setFeedURL` and the updater constructors) no longer declares `publisherName`, `verifyUpdateCodeSignature`, `updaterCacheDirName` and `updateManifestPublicKey`. electron-builder computes them and writes them into `app-update.yml`, and electron-updater reads them only from that file (or a hand-written `dev-app-update.yml` / `updateConfigPath` file), never from the options passed to `setFeedURL` or a constructor. The new `AppUpdateConfiguration<T extends PublishConfiguration>` type (from `builder-util-runtime`) is a publish configuration plus these fields: use it to type the content of such a file. To set the update-manifest trust list at runtime, use `autoUpdater.updateManifestPublicKey`; to verify NSIS updates against a publisher name set at runtime, use [`autoUpdater.publisherName`](../win.md#how-do-you-set-the-publishername-of-updates-at-runtime). The configuration side of this change is in [Publish options managed by electron-builder](./v27-config-changes.md#publish-options-managed-by-electron-builder).
 
 ### Custom electron-updater providers return a URL from `feedBaseUrl` {#custom-provider-feed-base-url}
 

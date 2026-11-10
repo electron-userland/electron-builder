@@ -74,7 +74,7 @@ See the [MSI upgrade code warning](msi.md#upgrade-code) — the same applies her
 win:
   target:
     - nsis
-    - msi-wrapped
+    - msiWrapped
 
 nsis:
   oneClick: false

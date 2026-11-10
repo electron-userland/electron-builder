@@ -1,7 +1,16 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { AsarIntegrity, getWindowsVm, parsePlistFile, ParallelsVmManager, PM, VmManager } from "app-builder-lib/internal"
 import { ASAR_INTEGRITY_DIGEST_SENTINEL, computeAsarIntegrityDigest } from "app-builder-lib/src/electron/mac/asarIntegrityDigest"
-import { computeUpdateManifestKeyId, GenericServerOptions, hashFile, Nullish, UpdateInfo, verifyManifestSignatures, WindowsUpdateInfo } from "builder-util-runtime"
+import {
+  AppUpdateConfiguration,
+  computeUpdateManifestKeyId,
+  GenericServerOptions,
+  hashFile,
+  Nullish,
+  UpdateInfo,
+  verifyManifestSignatures,
+  WindowsUpdateInfo,
+} from "builder-util-runtime"
 import { BLOCK_MAP_V3_MAGIC } from "builder-util-runtime/internal"
 import { archFromString, deepAssign, DebugLogger, generateUpdateSigningKeypair, log, serializeToYaml, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
@@ -30,6 +39,9 @@ import {
 import { cleanupLinux, installLinux } from "./blackboxInstallLinux"
 import { installMac } from "./blackboxInstallMac"
 import { readEmbeddedUpdateConfig, readUpdateManifest, resignManifest, rewriteServedManifests } from "./signedManifestTestUtil"
+
+/** The runtime update config a blackbox launch reads (`autoUpdater.updateConfigPath`): the generic feed plus the fields electron-builder writes into app-update.yml. */
+type ServedUpdateConfig = AppUpdateConfiguration<GenericServerOptions>
 
 export const optionsForFlakyE2E = { concurrent: false, retry: 2, timeout: EXTENDED_TIMEOUT } as const
 // Three or four builds and two or three update hops (plus negative launches) instead of two builds and one hop: 15-25 min per
@@ -311,7 +323,7 @@ export function assertDifferentialDownload(expect: ExpectStatic, stdout: string)
  * `updaterCacheDirName`: without it the updater looks for its cache (the NSIS installer's own copy, the cached block map) under the
  * app name instead of where the installer put it, and every differential download falls back to a full one.
  */
-export async function embeddedCacheDirConfig(distDir: string): Promise<Partial<GenericServerOptions>> {
+export async function embeddedCacheDirConfig(distDir: string): Promise<Partial<ServedUpdateConfig>> {
   try {
     const { updaterCacheDirName } = await readEmbeddedUpdateConfig(distDir)
     return updaterCacheDirName == null ? {} : { updaterCacheDirName }
@@ -365,8 +377,8 @@ async function handleCleanupPerOS({ target, perMachine }: { target: string; perM
 // The Windows builds are signed with an untrusted self-signed certificate, which the Authenticode verification of electron-updater rejects, and the
 // served config has no publisherName (with which electron-updater 7 rejects every update): it opts out the way electron-builder writes it for
 // win.verifyUpdateCodeSignature: false, as writeUpdateConfig does.
-export async function writeServedUpdateConfig(updateConfigPath: string, config: GenericServerOptions): Promise<void> {
-  const served: GenericServerOptions = config.publisherName != null || config.verifyUpdateCodeSignature !== undefined ? config : { ...config, verifyUpdateCodeSignature: false }
+export async function writeServedUpdateConfig(updateConfigPath: string, config: ServedUpdateConfig): Promise<void> {
+  const served: ServedUpdateConfig = config.publisherName != null || config.verifyUpdateCodeSignature !== undefined ? config : { ...config, verifyUpdateCodeSignature: false }
   await outputFile(updateConfigPath, serializeToYaml(served))
 }
 
@@ -377,9 +389,9 @@ export async function writeServedUpdateConfig(updateConfigPath: string, config: 
  * {@link writeServedUpdateConfig}.
  */
 export async function runTestWithinServer(
-  doTest: (rootDirectory: string, updateConfigPath: string, serverConfig: GenericServerOptions) => Promise<void>,
+  doTest: (rootDirectory: string, updateConfigPath: string, serverConfig: ServedUpdateConfig) => Promise<void>,
   vm?: VmManager,
-  extraUpdateConfig?: Partial<GenericServerOptions> | null
+  extraUpdateConfig?: Partial<ServedUpdateConfig> | null
 ) {
   const tmpDir = new TmpDir("blackbox-update-test")
   const root = await tmpDir.getTempDir({ prefix: "server-root" })
@@ -393,7 +405,7 @@ export async function runTestWithinServer(
   }
   const { server, port } = await createLocalServer(root, serverHost)
 
-  const serverConfig: GenericServerOptions = { ...extraUpdateConfig, provider: "generic", url: `http://${serverHost}:${port}` }
+  const serverConfig: ServedUpdateConfig = { ...extraUpdateConfig, provider: "generic", url: `http://${serverHost}:${port}` }
   let updateConfig: string
   let vmConfigDir: string | undefined
   if (vm) {
@@ -670,7 +682,7 @@ export async function runInstallOnNextLaunchTest(
   extraConfig?: Partial<Configuration>,
   options: {
     /** merged into the served update config (e.g. `updaterCacheDirName`) */
-    extraUpdateConfig?: Partial<GenericServerOptions>
+    extraUpdateConfig?: Partial<ServedUpdateConfig>
     /** runs after step 2, while the old version is still installed and the update is queued */
     afterQueued?: (outDirs: Array<ApplicationUpdatePaths>) => Promise<void>
     /** checks the stdout of the launch that installs the pending update (step 3) */
@@ -974,7 +986,7 @@ interface ScenarioContext {
   packageManager: string
   rootDirectory: string
   updateConfigPath: string
-  serverConfig: GenericServerOptions
+  serverConfig: ServedUpdateConfig
 }
 
 /**
@@ -1002,7 +1014,7 @@ async function runUpdateScenario(
     builds: Array<VersionBuild>
     tmpDirPrefix: string
     /** merged into the served update config, derived from the builds (e.g. the trust list embedded into the installed version) */
-    initialUpdateConfig: (outDirs: Array<ApplicationUpdatePaths>) => Promise<Partial<GenericServerOptions>>
+    initialUpdateConfig: (outDirs: Array<ApplicationUpdatePaths>) => Promise<Partial<ServedUpdateConfig>>
     scenario: (ctx: ScenarioContext) => Promise<void>
   }
 ): Promise<void> {
@@ -1032,7 +1044,7 @@ async function runUpdateScenario(
   let queuedError: Error | null = null
   try {
     await runTestWithinServer(
-      async (rootDirectory: string, updateConfigPath: string, serverConfig: GenericServerOptions) => {
+      async (rootDirectory: string, updateConfigPath: string, serverConfig: ServedUpdateConfig) => {
         // Serve the first update
         await copy(updateFilesDir(targetOf(1), outDirs[1].dir), rootDirectory, { recursive: true, overwrite: true })
         await scenario({ expect, vm, appPath, outDirs, packageManager, rootDirectory, updateConfigPath, serverConfig })

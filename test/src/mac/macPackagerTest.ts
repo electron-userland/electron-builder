@@ -1,4 +1,6 @@
-import { copyOrLinkFile, exec } from "builder-util"
+import { copyOrLinkFile, exec, log } from "builder-util"
+import { vi } from "vitest"
+import { MacPackager } from "app-builder-lib"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -6,6 +8,11 @@ import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, assertPack, checkDirContents, modifyPackageJson, platform } from "../helpers/packTester"
 import { verifySmartUnpack } from "../helpers/verifySmartUnpack"
 import { parsePlistFile, PlistObject } from "app-builder-lib/internal"
+
+/** The fields of the warnings that announce the v27 change of the MAS Info.plist options (v27-build-changes#mas-info-plist-options). */
+function masInfoPlistWarnings(warn: { mock: { calls: Array<Array<unknown>> } }): Array<unknown> {
+  return warn.mock.calls.filter(([, message]) => typeof message === "string" && message.includes("#mas-info-plist-options")).map(([fields]) => fields)
+}
 
 describe("macPackager", { concurrent: false }, () => {
   test.ifMac("two-package", ({ expect }) =>
@@ -298,6 +305,64 @@ describe("macPackager", { concurrent: false }, () => {
     )
   )
 
+  // mas.minimumSystemVersion, mas.category and the per-helper bundle ids apply to the MAS app; v26 used the mac values for them.
+  test.ifMac("mas Info.plist options and helper bundle ids override mac", async ({ expect }) => {
+    log.resetLimits("mas-info-plist-options:mas")
+    const warn = vi.spyOn(log, "warn")
+    await app(
+      expect,
+      {
+        targets: Platform.MAC.createTarget("mas", Arch.x64),
+        config: {
+          mac: { minimumSystemVersion: "12.0", helperBundleId: "org.electron-builder.testApp.mac-helper", helperRendererBundleId: "org.electron-builder.testApp.mac-renderer" },
+          mas: { minimumSystemVersion: "13.0", category: "public.app-category.games", helperRendererBundleId: "org.electron-builder.testApp.mas-renderer" },
+        },
+      },
+      {
+        signedMac: false,
+        checkMacApp: async appDir => {
+          const info = await parsePlistFile<PlistObject>(path.join(appDir, "Contents", "Info.plist"))
+          expect(info.LSMinimumSystemVersion).toBe("13.0")
+          expect(info.LSApplicationCategoryType).toBe("public.app-category.games")
+          const cfBundleName = info.CFBundleName as string
+          const helperInfo = (suffix: string) =>
+            parsePlistFile<PlistObject>(path.join(appDir, "Contents", "Frameworks", `${cfBundleName} Helper ${suffix}.app`, "Contents", "Info.plist"))
+          expect((await helperInfo("(Renderer)")).CFBundleIdentifier).toBe("org.electron-builder.testApp.mas-renderer")
+          // not overridden on mas: the default still follows the cascaded helperBundleId
+          expect((await helperInfo("(GPU)")).CFBundleIdentifier).toBe("org.electron-builder.testApp.mac-helper.GPU")
+        },
+      }
+    )
+    // the v27 announcement: once, naming the options whose value is new for the MAS app
+    expect(masInfoPlistWarnings(warn)).toEqual([{ options: ["mas.minimumSystemVersion", "mas.category", "mas.helperRendererBundleId"] }])
+    warn.mockRestore()
+  })
+
+  test.ifMac("mas-dev Info.plist options warn for the layer that sets them, not for a repeated mac value", async ({ expect }) => {
+    log.resetLimits("mas-info-plist-options:mas-dev")
+    const warn = vi.spyOn(log, "warn")
+    await app(
+      expect,
+      {
+        targets: Platform.MAC.createTarget("mas-dev", Arch.x64),
+        config: {
+          mac: { minimumSystemVersion: "12.0" },
+          mas: { minimumSystemVersion: "12.0" },
+          masDev: { category: "public.app-category.games" },
+        },
+      },
+      {
+        signedMac: false,
+        checkMacApp: async appDir => {
+          const info = await parsePlistFile<PlistObject>(path.join(appDir, "Contents", "Info.plist"))
+          expect(info.LSApplicationCategoryType).toBe("public.app-category.games")
+        },
+      }
+    )
+    expect(masInfoPlistWarnings(warn)).toEqual([{ options: ["masDev.category"] }])
+    warn.mockRestore()
+  })
+
   // Electron resolves its helper apps at runtime as `${CFBundleName} Helper.app`, so the on-disk
   // helper bundle name and `CFBundleName` must stay identical. Product names with composed Unicode
   // (NFC) must not be decomposed to NFD, otherwise the two diverge byte-for-byte.
@@ -353,4 +418,33 @@ describe("macPackager", { concurrent: false }, () => {
       error => expect(error.message).toContain("is not a valid macOS app bundle name")
     )
   )
+})
+
+describe("MacPackager.applyCommonInfo", () => {
+  // `this` is only read for the app info, the icon and darkModeSupport, so a hand-rolled one is enough (cf. macPackagerDoSignTest)
+  test("writes the flavor's own LSMinimumSystemVersion, category and extendInfo, not the mac ones", async ({ expect }) => {
+    const self = {
+      appInfo: { productFilename: "MyApp", productName: "MyApp", version: "1.0.0", buildVersion: "1.0.0", copyright: "Copyright" },
+      platformSpecificBuildOptions: { minimumSystemVersion: "12.0", category: "public.app-category.developer-tools", extendInfo: { MacOnly: "mac" } },
+      getIconPath: () => Promise.resolve(null),
+    }
+    const plist: Record<string, any> = {}
+    const masOptions = { minimumSystemVersion: "13.0", category: "public.app-category.games", extendInfo: { MasOnly: "mas" } }
+    await (MacPackager.prototype.applyCommonInfo as (this: unknown, ...args: any[]) => Promise<void>).call(self, plist, "/nonexistent/Contents", masOptions)
+    expect(plist.LSMinimumSystemVersion).toBe("13.0")
+    expect(plist.LSApplicationCategoryType).toBe("public.app-category.games")
+    expect(plist.MasOnly).toBe("mas")
+    expect(plist.MacOnly).toBeUndefined()
+  })
+
+  test("an empty category leaves LSApplicationCategoryType as it is", async ({ expect }) => {
+    const self = {
+      appInfo: { productFilename: "MyApp", productName: "MyApp", version: "1.0.0", buildVersion: "1.0.0", copyright: "Copyright" },
+      platformSpecificBuildOptions: { category: "" },
+      getIconPath: () => Promise.resolve(null),
+    }
+    const plist: Record<string, any> = { LSApplicationCategoryType: "public.app-category.developer-tools" }
+    await (MacPackager.prototype.applyCommonInfo as (this: unknown, ...args: any[]) => Promise<void>).call(self, plist, "/nonexistent/Contents", { category: "" })
+    expect(plist.LSApplicationCategoryType).toBe("public.app-category.developer-tools")
+  })
 })

@@ -25,9 +25,6 @@ export interface MsixWindowsService {
 }
 
 export interface MsixOptions extends CommonAppxOptions {
-  /** @private */
-  readonly electronUpdaterAware?: boolean
-
   /**
    * The manifest's `TargetDeviceFamily/@MinVersion`. The default is Windows 10 version 1809, the minimum for Store submissions.
    * @default 10.0.17763.0

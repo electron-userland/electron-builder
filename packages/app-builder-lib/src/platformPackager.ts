@@ -371,15 +371,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
+  /** The signing certificate from the environment. MacPackager and WinPackager put their `cscLink` option first. */
   getCscLink(extraEnvName?: string | null): string | Nullish {
     // allow to specify as empty string
-    const envValue = chooseNotNull(extraEnvName == null ? null : process.env[extraEnvName], process.env.CSC_LINK)
-    return chooseNotNull(chooseNotNull(this.info.config.cscLink, this.platformSpecificBuildOptions.cscLink), envValue)
+    return chooseNotNull(extraEnvName == null ? null : process.env[extraEnvName], process.env.CSC_LINK)
   }
 
+  /** The certificate password from the environment. MacPackager and WinPackager put their `cscKeyPassword` option first. */
   doGetCscPassword(): string | Nullish {
     // allow to specify as empty string
-    return chooseNotNull(chooseNotNull(this.info.config.cscKeyPassword, this.platformSpecificBuildOptions.cscKeyPassword), process.env.CSC_KEY_PASSWORD)
+    return process.env.CSC_KEY_PASSWORD
   }
 
   protected computeAppOutDir(outDir: string, arch: Arch): string {

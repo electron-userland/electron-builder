@@ -34,8 +34,16 @@ It rewrites every change marked **Auto ✓** below. See the [walkthrough](./v26-
 | [`build.helper-bundle-id` removed](#buildhelper-bundle-id) | ✓ | Moved to `mac.helperBundleId` |
 | [`squirrelWindows.noMsi` removed](#squirrelwindowsnomsi) | ✓ | Replaced by `msi` (inverted) |
 | [`linux.syncDesktopName` removed](#linuxsyncdesktopname-always-synced) | ✓ | Removed automatically; behaviour is always on. If it was `false`, set `desktopName` to control the filename |
+| [Root-level `target` removed](#root-level-target) | ✓ | Removed automatically (it never selected a target); set `mac.target` / `win.target` / `linux.target` to choose targets |
+| [`msiWrapped` installer options removed](#msiwrapped-installer-options-removed) | ✓ | Removed automatically (they never affected the MSI wrapper); configure the wrapped installer under `nsis` |
+| [`msix.electronUpdaterAware` removed](#msixelectronupdateraware-removed) | ✓ | Removed automatically (it never had an effect); `appx.electronUpdaterAware` is unchanged |
+| [Linux target options that never had an effect removed](#linux-target-options-without-effect) | ✓ | Removed automatically: `deb`/`rpm`/`pacman`/`freebsd`/`p5p`/`apk` `icon`, `freebsd`/`p5p`/`apk` `compression`, `appImage`/`flatpak`/`snapcraft.<base>` `synopsis` |
+| [`helperEHBundleId` / `helperNPBundleId` removed](#machelperehbundleid-machelpernpbundleid) | ✓ | Removed automatically from `mac` / `mas` / `masDev` (Electron 4 and later ship no such helper) |
+| [`mas` / `masDev` accept only the options Mac App Store builds read](#mas-masdev-options) | ✓ | Removed automatically. Mac App Store builds already take `target`, `icon`, `publish` and the certificates from `mac`, and do not use `notarize`, `extraDistFiles` or the update-info options; do not move them to `mac`, which would change the macOS build |
 | [`GithubOptions.vPrefixedTagName` removed](#githuboptions-gitlaboptions-vprefixedtagname) | ✓ | Use `tagNamePrefix`; an empty `tagNamePrefix: ""` is now honored (v26 ignored it) |
 | [`GitlabOptions.vPrefixedTagName` retained](#githuboptions-gitlaboptions-vprefixedtagname) | — | None — still functional; the migrator leaves GitLab entries untouched |
+| [`publish` `updaterCacheDirName` / `verifyUpdateCodeSignature` / `updateManifestPublicKey` removed](#publish-options-managed-by-electron-builder) | ✓ | Removed automatically (they never had an effect); the settings are `win.verifyUpdateCodeSignature` and `updateManifest.publicKey` |
+| [`publish.publisherName` removed](#publish-options-managed-by-electron-builder) | — | Move it to `win.sign.publisherName` (`migrate-schema` warns): it no longer overrides the Windows publisher name |
 | [`squirrelWindows.customSquirrelVendorDir` removed](#squirrelwindowscustomsquirrelvendordir) | — | Supply a custom Squirrel bundle via `toolsets.squirrel` (a `ToolsetCustom` object); `migrate-schema` warns but cannot rewrite it (different bundle layout) |
 | [`.customNsisBinary` / `.customNsisResources` removed](#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis) | partial | Originally avail on nsis, nsisWeb, portable. Now combined and moved to a [NSIS Toolset Bundle](../toolsets#custom-nsis-bundle-layout) configured under `toolsets.nsis`. **Manual action required** - [A complete migration guide is available](./v26-to-v27#step-4-custom-nsis-migration-guide). A config that still sets removed key(s) fails the build with a message naming the replacement. (`migrate-schema` warns, cannot convert it). |
 | [`toolsets.*: null` rejected; `appimage` `"1.0.2"` and `"1.2.0"` retired](#toolsets-null-rejected) | ✓ | `null` entries are removed (unset = `"latest"`); `"1.0.2"` becomes `"1.0.3"` and `"1.2.0"` becomes `"1.2.1"` |
@@ -48,8 +56,10 @@ It rewrites every change marked **Auto ✓** below. See the [walkthrough](./v26-
 | [Windows signing unified under `win.sign`](#windows-signing-winsign) | ✓ | Discriminated union `type: "signtool" \| "hsm" \| "pkcs11" \| "azure"` |
 | [`win.signExecutable` / `win.signAndEditExecutable` removed](#winsignexecutable-winsignandeditexecutable-removed) | ✓ | `false` → `win.sign: false`; resource editing always runs |
 | [Custom Windows signing hook moved to `win.sign.sign`](#custom-windows-signing-hooks-move-to-winsignsign) | ✓ | `win.signtoolOptions.sign` moves with the rest of `signtoolOptions` to `win.sign.sign` |
+| [Root `cscLink` / `cscKeyPassword` moved to `mac` / `win`](#signing-certificates-csclink) | ✓ | Copied into both `mac` and `win` (the root value applied to both); `linux.cscLink` / `linux.cscKeyPassword` removed (they never had an effect) |
 | [`electronDownload` → `electronGet`](#electrondownload-electronget) | ✓ | Reshaped to `@electron/get` options; some legacy fields dropped (warned) |
 | [`snap` config key removed](#snap-snapcraft) | ✓ | Restructured to `snapcraft` with an explicit `base` |
+| [`snapcraft.<base>.publish` / `.artifactName` removed](#snapcraft-base-publish-artifactname) | ✓ | Set them on `snapcraft` itself; the selected base's values are moved there automatically |
 
 ---
 
@@ -158,6 +168,67 @@ The `linux.syncDesktopName` flag is removed. The behaviour it gated is now **alw
 
 **Why this changed:** Electron derives its `app_id` / `WM_CLASS` from `desktopName`, and desktop environments match a running window to its launcher entry by comparing `WM_CLASS` against the installed `.desktop` filename. When the two diverged — which is exactly what happened with `syncDesktopName: false` (the v26 default) whenever a `desktopName` was set — GNOME, KDE, and others failed to associate the window with its launcher, breaking taskbar grouping, dock icons, and launcher highlighting (see [#9103](https://github.com/electron-userland/electron-builder/issues/9103)). Removing the flag eliminates a footgun rather than removing functionality. Path-traversal/NUL validation on the resulting filename is unchanged.
 
+### Root-level `target` {#root-level-target}
+
+A `target` at the configuration root never selected anything, in v26 or v27: electron-builder reads only `mac.target`, `win.target` and `linux.target` (or the targets passed on the command line), so `{ "target": "zip" }` silently built the platform defaults. v27 rejects it, so that a target you meant to build is not skipped without notice.
+
+```json5
+// Before — has no effect
+{ "build": { "target": "zip" } }
+// After — on the platform that should build it
+{ "build": { "mac": { "target": "zip" } } }
+```
+
+`migrate-schema` removes the key and warns with its value. It never moves the value to a platform: `zip`, `7z` or `dir` name no platform, and placing `dmg`, `nsis` or `deb` there would change what is built.
+
+### `msiWrapped` installer options {#msiwrapped-installer-options-removed}
+
+`msiWrapped.oneClick`, `perMachine`, `runAfterFinish`, `createDesktopShortcut`, `createStartMenuShortcut`, `menuCategory` and `shortcutName` are removed. The `msiWrapped` target is an MSI that only runs the NSIS installer, and the installer takes these options from `nsis.*`, so they never changed the result. `msiWrapped` keeps its WiX options (`upgradeCode`, `warningsAsErrors`, `additionalWixArgs`, and now also `additionalLightArgs`, which light.exe already received) and `wrappedInstallerArgs` / `impersonate`.
+
+`migrate-schema` removes them without moving them to `nsis`, which would change the installer. One value did something: `msiWrapped.oneClick: false` added `-ext WixUIExtension` to light.exe. If an `msiProjectCreated` hook adds WixUI dialogs to the wrapper, set `msiWrapped.additionalLightArgs: ["-ext", "WixUIExtension"]`; the migrator warns about this case.
+
+### `msix.electronUpdaterAware` {#msixelectronupdateraware-removed}
+
+`msix.electronUpdaterAware` is removed. It never had an effect: no update info is written for MSIX packages, which update through the Microsoft Store or App Installer, not electron-updater. `migrate-schema` removes it. `appx.electronUpdaterAware` is unchanged.
+
+### Linux target options that never had an effect {#linux-target-options-without-effect}
+
+These target options were accepted but never read, and are removed:
+
+| Removed | Why it had no effect |
+|---|---|
+| `deb`, `rpm`, `pacman`, `freebsd`, `p5p`, `apk` `.icon` | Linux icons come from `linux.icon`, then `mac.icon` or the root `icon` |
+| `freebsd`, `p5p`, `apk` `.compression` | fpm has no compression option for these package types; only `deb`, `rpm` and `pacman` pass one |
+| `appImage`, `flatpak`, `snapcraft.<base>` `.synopsis` | Only the fpm-built packages read `synopsis`; a snap uses `summary` |
+
+`migrate-schema` removes them, also a v26 `snap.synopsis`. It does not move `deb.icon` to `linux.icon`, which would change the icon of the other Linux targets. `linux.synopsis` and the fpm targets' `synopsis` are unchanged, and `linux.packageCategory` is now documented (it was accepted already).
+
+### `mac.helperEHBundleId` / `mac.helperNPBundleId` {#machelperehbundleid-machelpernpbundleid}
+
+`helperEHBundleId` and `helperNPBundleId` are removed from `mac`, `mas` and `masDev`. Electron 4 and later ship no `Helper EH` / `Helper NP` app, so they had no effect. `migrate-schema` removes them. The other helper bundle ids are unchanged; their defaults are `${helperBundleId}.Renderer`, `.Plugin` and `.GPU`.
+
+### `mas` / `masDev` options {#mas-masdev-options}
+
+`mas` and `masDev` accepted every `mac` option, but a Mac App Store build reads only some of them there. They now accept only these, which override `mac` for the Mac App Store app (merged `mac` → `mas` → `masDev`):
+
+`appId`, `artifactName`, `asar`, `asarIntegrityDigest`, `bundleShortVersion`, `bundleVersion`, `category`, `extendInfo`, `fileOptions`, `forceCodeSigning`, `helperBundleId`, `helperGPUBundleId`, `helperPluginBundleId`, `helperRendererBundleId`, `minimumSystemVersion`, `sign` and `universal`.
+
+`category`, `minimumSystemVersion` and the Renderer / Plugin / GPU helper bundle ids were ignored there before and now apply (`helperBundleId` already applied); see [Mac App Store builds apply their own Info.plist options](./v27-build-changes.md#mas-info-plist-options).
+
+The other options are removed from `mas` / `masDev`. A Mac App Store build takes them from `mac`:
+
+| Removed from `mas` / `masDev` | Where a Mac App Store build takes it from |
+|---|---|
+| `target` | `mac.target`, or the command line (`--mac mas`) |
+| `icon`, `executableName`, `electronLanguages`, `fileAssociations`, `protocols`, `compression`, `defaultArch`, `darkModeSupport` | `mac` (or the root) |
+| `cscLink`, `cscKeyPassword`, `cscInstallerLink`, `cscInstallerKeyPassword` | `mac`, or the `CSC_LINK` / `CSC_KEY_PASSWORD` / `CSC_INSTALLER_LINK` / `CSC_INSTALLER_KEY_PASSWORD` environment variables |
+| `publish` | `mac.publish` (or the root `publish`), which publishes the Mac App Store `.pkg` |
+| `notarize` | Not used: Mac App Store apps are not notarized |
+| `extraDistFiles` | Not used: it adds files to the macOS `zip` / `7z` archives |
+| `releaseInfo`, `detectUpdateChannel`, `generateUpdatesFilesForAllChannels`, `electronUpdaterCompatibility`, `updateManifest` | Not used: Mac App Store builds write no update information |
+
+`migrate-schema` removes them and never moves them to `mac`, which would change the macOS build. For a certificate option it also warns: if the Mac App Store app or installer needs that certificate, set it on `mac` or in the environment. In a JS/TS config, a spread inside `mas` / `masDev` (`mas: { ...mac, … }`) is left in place with a warning: Mac App Store builds already inherit every `mac` option, so remove the spread. In v26, an object value set on both `mac` and `mas` (for example `publish` or `updateManifest`) was also merged into the `mac` one in a build of both; see [Cascaded options no longer leak](./v27-build-changes.md#cascaded-options-no-longer-leak).
+
 ### `GithubOptions` / `GitlabOptions` `vPrefixedTagName` {#githuboptions-gitlaboptions-vprefixedtagname}
 
 The `vPrefixedTagName` boolean on `GithubOptions` is removed. Use `tagNamePrefix` to control the tag prefix.
@@ -176,6 +247,26 @@ Only the **GitHub** field was removed. On **GitLab**, `vPrefixedTagName` is unch
 :::
 
 ---
+
+### Publish options managed by electron-builder {#publish-options-managed-by-electron-builder}
+
+The publish options no longer accept the fields electron-builder writes into `app-update.yml` itself. The configuration check rejects them on every provider except `custom`, whose options are not validated: a `custom` provider is rejected when `app-update.yml` is written from it (as the first provider), and on any other `custom` entry they are not checked and have no effect.
+
+| Removed from `publish` entries | What it did | What decides it |
+|---|---|---|
+| `updaterCacheDirName` | Nothing: it was always replaced | The package name: `<package name>-updater` |
+| `verifyUpdateCodeSignature` | Nothing: the build rejected it | `win.verifyUpdateCodeSignature: false` opts out of update signature verification |
+| `updateManifestPublicKey` | Nothing: the build rejected it | `updateManifest.publicKey`, else the public keys of the signing keys |
+| `publisherName` | On Windows, it overrode the publisher name an update's signature must match, even `win.sign.publisherName` | `win.sign.publisherName`, else `CN=<common name>` of the signing certificate |
+
+`migrate-schema` removes the first three. It keeps a `publisherName` and warns: move it to `win.sign.publisherName` yourself (adding `type: "signtool"` when `win.sign` is unset), because only you can tell which publish entry a Windows build used. In a macOS or Linux section it never had an effect, so remove it.
+
+```json5
+// Before
+{ "build": { "publish": { "provider": "generic", "url": "https://example.com/updates", "publisherName": ["CN=Acme Corp"] } } }
+// After
+{ "build": { "publish": { "provider": "generic", "url": "https://example.com/updates" }, "win": { "sign": { "type": "signtool", "publisherName": ["CN=Acme Corp"] } } } }
+```
 
 ## Replaced by toolsets {#replaced-by-toolsets}
 
@@ -602,6 +693,26 @@ The v27 Azure integration switches from PowerShell `Invoke-TrustedSigning` to `s
 
 </details>
 
+### Signing certificates: `cscLink` / `cscKeyPassword` {#signing-certificates-csclink}
+
+The root `cscLink` and `cscKeyPassword` are removed: set them on `mac` and `win`. The root value applied to macOS and Windows alike and won over `mac.cscLink`, `win.cscLink` and `WIN_CSC_LINK`, so a root `cscLink` also overrode a Windows certificate kept in `WIN_CSC_LINK`. Each platform now resolves its own:
+
+| | Certificate | Password |
+|---|---|---|
+| macOS (and Mac App Store) | `mac.cscLink`, then `CSC_LINK` | `mac.cscKeyPassword`, then `CSC_KEY_PASSWORD` |
+| Windows (`signtool`) | `win.sign.certificateFile` or a certificate-store selector, then `win.cscLink`, `WIN_CSC_LINK`, `CSC_LINK` | `win.sign.certificatePassword`, then `WIN_CSC_KEY_PASSWORD`, `win.cscKeyPassword`, `CSC_KEY_PASSWORD` |
+
+`linux.cscLink` and `linux.cscKeyPassword` are removed too. Linux packages are not code-signed, so they never had an effect; the Snap Store login is `snapcraft.cscLink` or `SNAP_CSC_LINK`.
+
+```json5
+// Before
+{ "build": { "cscLink": "build/certificate.p12" } }
+// After — the same certificate for both platforms, as before
+{ "build": { "mac": { "cscLink": "build/certificate.p12" }, "win": { "cscLink": "build/certificate.p12" } } }
+```
+
+`migrate-schema` copies a root value into both `mac` and `win`, which keeps the build unchanged; remove it from a platform you do not build. When `mac` or `win` set a different value, the root one replaces it (it already won in v26) and the migrator warns, naming the key but not the value. On the command line, use `-c.mac.cscLink=…` / `-c.win.cscLink=…` instead of `-c.cscLink=…`.
+
 ### `electronDownload` → `electronGet` {#electrondownload-electronget}
 
 The `electronDownload` configuration key is renamed to `electronGet` and reshaped to match [`@electron/get`](https://github.com/electron/get)'s options directly (v27 upgrades to `@electron/get` v5, which downloads via `fetch`).
@@ -641,7 +752,7 @@ The top-level `snap` configuration key is removed. Use `snapcraft` with an expli
 { "build": { "snapcraft": { "base": "core22", "core22": { "confinement": "strict", "stagePackages": ["libfoo"] } } } }
 ```
 
-Supported `base` values: `"core18"`, `"core20"`, `"core22"`, `"core24"`, and `"custom"`. `migrate-schema` performs this restructuring; when the old config has no `base`, it assumes `"core20"` and warns so you can confirm. A `base: "custom"` config (inline/path `snapcraft.yaml`) is moved verbatim. The `SnapOptions` export is also removed — see [Removed exports](./v27-developer-changes.md#removed-exports).
+Supported `base` values: `"core18"`, `"core20"`, `"core22"`, `"core24"`, and `"custom"`. `migrate-schema` performs this restructuring; when the old config has no `base`, it assumes `"core20"` and warns so you can confirm. `publish` and `artifactName` move to `snapcraft` itself, which names and routes the snap (see [below](#snapcraft-base-publish-artifactname)). A `base: "custom"` config (inline/path `snapcraft.yaml`) is moved verbatim. A `snap` next to an existing `snapcraft` was ignored since v26.12, so `migrate-schema` removes it with a warning instead of merging it in. The `SnapOptions` export is also removed — see [Removed exports](./v27-developer-changes.md#removed-exports).
 
 <details>
 <summary>Why restructure <code>snap</code> into <code>snapcraft</code>?</summary>
@@ -649,3 +760,16 @@ Supported `base` values: `"core18"`, `"core20"`, `"core22"`, `"core24"`, and `"c
 The `snapcraft` shape makes the `base` explicit and nests per-base options under a base-named sub-key, so a single config can describe multiple bases unambiguously and core24 (which uses the snapcraft CLI directly) can coexist with legacy bases. `migrate-schema` automates the move but assumes `core20` when no base is present, because that is the v27 1-to-1 migration target — verify the assumption for your project.
 
 </details>
+
+### `snapcraft.<base>.publish` / `.artifactName` {#snapcraft-base-publish-artifactname}
+
+The per-base snap options (`snapcraft.core18` … `snapcraft.core24`) no longer accept `publish` and `artifactName`. They were never read there: the snap's upload target and file name come from `snapcraft.publish` / `snapcraft.artifactName`, then `linux.*`, then the root. An earlier v27 alpha `migrate-schema` wrote a v26 `snap.publish` / `snap.artifactName` there, so a migrated config could upload to the Snap Store although v26 published elsewhere.
+
+```json5
+// Before — never read
+{ "build": { "snapcraft": { "base": "core24", "core24": { "publish": "github", "grade": "stable" } } } }
+// After
+{ "build": { "snapcraft": { "base": "core24", "publish": "github", "core24": { "grade": "stable" } } } }
+```
+
+`migrate-schema` moves the selected base's value to `snapcraft` when `snapcraft` does not set it, and warns that it now takes effect; it removes the other bases' values with a warning.

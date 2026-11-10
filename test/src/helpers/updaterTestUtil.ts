@@ -1,5 +1,5 @@
 import { NodeHttpExecutor, serializeToYaml, TmpDir } from "builder-util"
-import { AllPublishOptions, BlockMap, DownloadOptions } from "builder-util-runtime"
+import { AppUpdateConfiguration, BlockMap, DownloadOptions, PublishConfiguration } from "builder-util-runtime"
 import { AppUpdater, NsisUpdater, type NonThrowableLogger, type VerifyUpdateFile, type VerifyUpdateFileResult } from "electron-updater"
 import { createCrossOriginHeaderPolicy, NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/src/AppUpdater"
 import { ElectronHttpExecutor, type ElectronHttpExecutorOptions } from "electron-updater/src/electronHttpExecutor"
@@ -54,16 +54,15 @@ export async function createNsisUpdater(version = "0.0.1") {
 // no publisherName, so a config without publisherName opts out of the verification the way electron-builder writes it for
 // win.verifyUpdateCodeSignature: false (unless the test sets verifyUpdateCodeSignature itself). Use writeRawUpdateConfig to write the
 // config as given.
-export async function writeUpdateConfig<T extends AllPublishOptions>(data: T): Promise<string> {
-  const options: AllPublishOptions = data
-  if (typeof options === "string" || options.publisherName != null || options.verifyUpdateCodeSignature !== undefined) {
-    return await writeRawUpdateConfig(options)
+export async function writeUpdateConfig<T extends PublishConfiguration>(data: AppUpdateConfiguration<T>): Promise<string> {
+  if (data.publisherName != null || data.verifyUpdateCodeSignature !== undefined) {
+    return await writeRawUpdateConfig(data)
   }
-  return await writeRawUpdateConfig({ ...options, verifyUpdateCodeSignature: false })
+  return await writeRawUpdateConfig({ ...data, verifyUpdateCodeSignature: false })
 }
 
 /** Writes the update config exactly as given (see {@link writeUpdateConfig}). */
-export async function writeRawUpdateConfig<T extends AllPublishOptions>(data: T): Promise<string> {
+export async function writeRawUpdateConfig<T extends PublishConfiguration>(data: AppUpdateConfiguration<T>): Promise<string> {
   const updateConfigPath = path.join(await tmpDir.getTempDir({ prefix: "test-update-config" }), "app-update.yml")
   await fsExtra.outputFile(updateConfigPath, serializeToYaml(data))
   return updateConfigPath

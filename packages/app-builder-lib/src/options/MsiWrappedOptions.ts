@@ -1,7 +1,10 @@
-import { CommonWindowsInstallerConfiguration } from "./CommonWindowsInstallerConfiguration.js"
 import { CommonWixOptions } from "./MsiOptions.js"
 
-export interface MsiWrappedOptions extends CommonWixOptions, CommonWindowsInstallerConfiguration {
+/**
+ * Options of the `msiWrapped` target, an MSI that runs the NSIS installer. The installer itself (one-click or assisted, per-machine,
+ * shortcuts, ...) is configured under `nsis`.
+ */
+export interface MsiWrappedOptions extends CommonWixOptions {
   /**
    * Extra arguments to provide to the wrapped installer (ie: /S for silent install)
    */

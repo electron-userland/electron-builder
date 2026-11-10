@@ -140,12 +140,14 @@ export interface CommonConfiguration {
    */
   readonly mac?: MacConfiguration | null
   /**
-   * macOS App Store (MAS) submission options.
+   * Mac App Store (MAS) options for the `mas` target, merged over `mac`. Only the options of {@link MasConfiguration} can be overridden here;
+   * the other `mac` options apply to the Mac App Store app as set on `mac`, except those Mac App Store builds do not use (`notarize`,
+   * `extraDistFiles`, the update-info options).
    * @see {@link MasConfiguration}
    */
   readonly mas?: MasConfiguration | null
   /**
-   * macOS App Store development-signing options (`mas-dev` target).
+   * Mac App Store development-signing options (`mas-dev` target), merged over `mac` and `mas`.
    * Used for local testing of MAS builds without submitting to the store.
    * @see {@link MasConfiguration}
    */

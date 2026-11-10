@@ -16,7 +16,8 @@ import { Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 const { emptyDir, readdir, readFile, writeFile } = _fsExtra
 import * as path from "path"
-import type { Target, TargetSpecificOptions } from "../../core.js"
+import type { Target } from "../../core.js"
+import type { CommonAppxOptions } from "../../options/AppXOptions.js"
 import { FileAssociation } from "../../options/FileAssociation.js"
 import { Protocol } from "../../options/PlatformSpecificBuildOptions.js"
 import { getWindowsKitsBundle } from "../../toolsets/winCodeSign.js"
@@ -387,13 +388,6 @@ export function buildWindowsServicesXml(services: ReadonlyArray<MsixWindowsServi
     .join("")
 }
 
-/** Options shared by the AppX and MSIX targets that the build pipeline reads directly. */
-export interface AppxPackageBuildOptions extends TargetSpecificOptions {
-  readonly publisher?: string | null
-  readonly makeappxArgs?: Array<string> | null
-  readonly electronUpdaterAware?: boolean
-}
-
 export interface AppxBuildContext {
   readonly arch: Arch
   readonly artifactPath: string
@@ -427,7 +421,7 @@ export interface AppxPackageBuildConfig {
 export async function buildAppxPackage(
   target: Target,
   packager: WinPackager,
-  options: AppxPackageBuildOptions,
+  options: CommonAppxOptions,
   appOutDir: string,
   arch: Arch,
   config: AppxPackageBuildConfig
@@ -527,7 +521,8 @@ export async function buildAppxPackage(
       arch,
       safeArtifactName: packager.computeSafeArtifactName(artifactName, config.kind),
       target,
-      isWriteUpdateInfo: options.electronUpdaterAware,
+      // appx with electronUpdaterAware; MSIX writes no update info
+      isWriteUpdateInfo: target.writesUpdateInfo,
     })
   })
 }

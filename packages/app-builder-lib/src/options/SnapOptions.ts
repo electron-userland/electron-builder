@@ -45,7 +45,7 @@ export interface SnapcraftOptions extends TargetSpecificOptions {
 
   /**
    * Options for building a core24 snap. Uses the snapcraft CLI directly.
-   * Inherits desktop-entry fields from `CommonLinuxOptions` and publish config from `TargetSpecificOptions`.
+   * Inherits desktop-entry fields from `CommonLinuxOptions`; the artifact name and upload target are `snapcraft.artifactName` / `snapcraft.publish`.
    */
   readonly core24?: SnapOptions24 | null
   /**
@@ -71,9 +71,9 @@ export interface SnapOptionsCustom {
  *
  * The `linux.*` options of {@link CommonLinuxOptions} (`description`, `category`, `mimeTypes`, `executableArgs`, `desktop`, ...) are
  * merged in first, so they do not need to be repeated per base: a value set here replaces a `linux` value, and a list is added to
- * the `linux` list.
+ * the `linux` list. The snap's file name and upload target are `snapcraft.artifactName` / `snapcraft.publish`, not set per base.
  */
-export interface CommonSnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
+export interface CommonSnapOptions extends CommonLinuxOptions {
   /**
    * The type of [snap confinement](https://snapcraft.io/docs/snap-confinement).
    * - `strict` — recommended; the snap runs in a fully isolated sandbox.

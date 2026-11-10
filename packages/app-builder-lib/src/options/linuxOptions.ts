@@ -33,7 +33,7 @@ export interface LinuxDesktopFile {
   } | null
 }
 
-export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecificBuildOptions {
+export interface LinuxConfiguration extends CommonLinuxOptions, FpmPackageMetadata, PlatformSpecificBuildOptions {
   /**
    * Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
    *
@@ -45,25 +45,37 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
   readonly target?: TargetConfigType
 
   /**
-   * The maintainer. Defaults to [author](https://www.electron.build/configuration#author).
-   */
-  readonly maintainer?: string | null
-
-  /**
-   * The vendor. Defaults to [author](https://www.electron.build/configuration#author).
-   */
-  readonly vendor?: string | null
-
-  /**
    * The path to icon set directory or one png file, relative to the [build resources](https://www.electron.build/contents#extraresources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon.
    * By default will be generated automatically based on the macOS icns file.
    */
   readonly icon?: string
+}
+
+/**
+ * Package metadata that only the fpm-built targets (`deb`, `rpm`, `pacman`, `freebsd`, `p5p`, `apk`) read. Set it under `linux` for all of
+ * them, or per target, where it replaces the `linux` value.
+ */
+export interface FpmPackageMetadata {
+  /**
+   * The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description): the first line of the package
+   * description, and the rpm `Summary`.
+   */
+  readonly synopsis?: string | null
 
   /**
-   * @private
-   * @internal Allows specifying an FPM-only package category for all FPM targets in one place.
-   * For user-facing category configuration use the target-specific options (e.g. {@link DebOptions}).
+   * The maintainer, as `name <email>`. Defaults to the [author](https://www.electron.build/configuration#author) in package.json; the
+   * build fails when neither is set or the author has no email.
+   */
+  readonly maintainer?: string | null
+
+  /**
+   * The vendor. Defaults to the maintainer.
+   */
+  readonly vendor?: string | null
+
+  /**
+   * The package category (fpm `--category`): the deb `Section`, the rpm `Group`. They use different vocabularies, so when building both,
+   * set it per target.
    */
   readonly packageCategory?: string | null
 }
@@ -77,11 +89,6 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
  * When both are set, a per-core value replaces the `linux` one, and a per-core list is added to the `linux` list.
  */
 export interface CommonLinuxOptions {
-  /**
-   * The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
-   */
-  readonly synopsis?: string | null
-
   /**
    * As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.
    */
@@ -109,7 +116,7 @@ export interface CommonLinuxOptions {
 }
 
 // fpm-only specific options
-export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSpecificOptions {
+export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, FpmPackageMetadata, TargetSpecificOptions {
   /**
    * Package dependencies.
    * `rpm` defaults to `["gtk3", "libnotify", "nss", "libXScrnSaver", "(libXtst or libXtst6)", "xdg-utils", "at-spi2-core", "(libuuid or libuuid1)"]`
@@ -121,27 +128,9 @@ export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSp
   readonly depends?: Array<string> | null
 
   /**
-   * The compression type passed to fpm. For `deb`, `rpm`, and `pacman` targets prefer the
-   * typed per-format interfaces (`DebOptions`, `RpmOptions`, `PacmanOptions`) which narrow
-   * this to only the values that fpm actually accepts for that format.
-   * @default xz
-   */
-  readonly compression?: "gz" | "bzip2" | "xz" | "xzmt" | "gzip" | "zst" | "zstd" | null
-
-  readonly icon?: string
-
-  /**
-   * The package category.
-   */
-  readonly packageCategory?: string | null
-
-  /**
    * The name of the package.
    */
   readonly packageName?: string | null
-
-  readonly vendor?: string | null
-  readonly maintainer?: string | null
 
   /**
    * File path to script to be passed to FPM for `--after-install` arg.

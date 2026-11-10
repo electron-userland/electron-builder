@@ -25,6 +25,7 @@ export {
   LinuxConfiguration,
   DebOptions,
   CommonLinuxOptions,
+  FpmPackageMetadata,
   LinuxTargetSpecificOptions,
   AppImageOptions,
   Configuration,

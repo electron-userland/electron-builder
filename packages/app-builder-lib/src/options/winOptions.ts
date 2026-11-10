@@ -4,7 +4,7 @@ import { PlatformSpecificBuildOptions } from "./PlatformSpecificBuildOptions.js"
 
 export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   /**
-   * The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable app](https://www.electron.build/nsis#portable) without installation), `appx`, `msix`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
+   * The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable app](https://www.electron.build/nsis#portable) without installation), `appx`, `msix`, `msi`, `msiWrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
    * AppX and MSIX packages can be built on Windows 10 or Windows Server 2012 R2 (version 6.3+) or later, and on macOS via Parallels Desktop.
    *
    * To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
@@ -60,6 +60,19 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    * See [Code Signing](https://www.electron.build/docs/features/code-signing).
    */
   readonly sign?: WindowsSigningConfiguration | false | null
+
+  /**
+   * The Windows signing certificate (`.pfx` / `.p12`) when `win.sign` is unset, or is `type: "signtool"` without `certificateFile`,
+   * `certificateSubjectName` or `certificateSha1`: a file path (relative to the project directory), an `https://` URL, or a base64-encoded
+   * certificate. Defaults to the `WIN_CSC_LINK` environment variable, then `CSC_LINK`.
+   */
+  readonly cscLink?: string | null
+
+  /**
+   * The password of the Windows signing certificate (or of a PKCS#11 `certificateFile`), used when neither `win.sign.certificatePassword`
+   * nor the `WIN_CSC_KEY_PASSWORD` environment variable is set. Defaults to the `CSC_KEY_PASSWORD` environment variable.
+   */
+  readonly cscKeyPassword?: string | null
 
   /**
    * Whether the NSIS auto-updater should verify the Authenticode signature of a downloaded update

@@ -1,10 +1,26 @@
 import { createRequire } from "node:module"
-import { ALL_PLATFORM_KEYS, FILE_OPTION_KEYS, NSIS_CONFIG_KEYS } from "app-builder-lib/internal"
+import {
+  ALL_PLATFORM_KEYS,
+  FILE_OPTION_KEYS,
+  LINUX_UNREAD_TARGET_OPTIONS,
+  MAC_HELPER_REMOVED_FIELDS,
+  MAC_PLATFORM_KEYS,
+  MAS_CERTIFICATE_WARNING,
+  MAS_REMOVED_CERTIFICATE_FIELDS,
+  MAS_REMOVED_FIELDS,
+  MSI_WRAPPED_ONE_CLICK_WARNING,
+  MSI_WRAPPED_REMOVED_FIELDS,
+  NSIS_CONFIG_KEYS,
+  PUBLISH_MANAGED_OPTIONS,
+  SNAP_CORE_KEYS,
+  SNAP_CORE_TARGET_OPTION_KEYS,
+} from "app-builder-lib/internal"
 import { isValidPublisherNameDn } from "builder-util-runtime"
 import * as path from "path"
 import {
   ASAR_PLATFORM_KEYS,
   AZURE_KNOWN_FIELDS,
+  CERTIFICATE_KEYS,
   ELECTRON_DOWNLOAD_DROPPED,
   excludesPdb,
   FEED_QUERY_ADVISORY,
@@ -18,6 +34,7 @@ import {
   isAppDirFrom,
   isLegacyElectronDownloadKey,
   legacyKeyMessage,
+  managedPublishOptionWarning,
   MAC_ENTITLEMENTS_ADVISORY,
   MAC_NULL_MEANS_UNSET_FIELDS,
   MAC_SIGN_FIELDS,
@@ -34,6 +51,8 @@ import {
   retiredAppImagePinDescription,
   SNAP_BASES,
   SNAP_CORE24_UNSUPPORTED,
+  snapcraftCoreTargetOptionWarning,
+  snapNextToSnapcraftWarning,
   v26IncludePdb,
   WIN_MISSING_PUBLISHER_NAME_ADVISORY,
   WIN_PUBLISHER_NAME_DN_ADVISORY,
@@ -129,6 +148,8 @@ function scriptKindFor(ts: any, fileName: string): any {
 
 class ConfigCodemod {
   readonly edits: Edit[] = []
+  /** The object children createChild added, by parent node and key. */
+  private readonly createdChildren = new Map<any, Map<string, { edit: Edit; entries: string[] }>>()
   readonly changes: MigrationChange[] = []
   readonly warnings: string[] = []
   readonly advisories: string[] = []
@@ -360,6 +381,10 @@ class ConfigCodemod {
   run(root: any): void {
     this.indentUnit = this.detectIndentUnit(root)
     this.ruleRemoveKeys(root, ["electronCompile"], "removed electronCompile (unsupported since v27; migrate to electron-vite, esbuild, or webpack)")
+    this.ruleRootTarget(root)
+    this.ruleMsiWrappedAndMsix(root)
+    this.ruleMasAndHelperIds(root)
+    this.ruleRootCertificates(root)
     this.ruleRemoveKeys(root, ["framework", "nodeVersion", "launchUiVersion"], key => `removed ${key} (Electron is the only supported framework in v27)`)
     const disableDefaultIgnoredFilesDesc = "removed disableDefaultIgnoredFiles (in v27, include a default-excluded file via an explicit `fileOptions.files` glob, e.g. `**/*.obj`)"
     this.ruleRemoveKeys(root, ["disableDefaultIgnoredFiles"], disableDefaultIgnoredFilesDesc)
@@ -383,15 +408,18 @@ class ConfigCodemod {
     this.ruleAppImageSystemIntegration(root)
     this.rulePublish(root, "publish")
     // publish nested in any platform/target section (mac, win, nsis, dmg, …). `snap` is skipped: ruleSnap
-    // re-emits its properties verbatim, which would overlap an edit made inside it.
+    // re-emits its properties verbatim, which would overlap an edit made inside it. mas / masDev are skipped too: ruleMasAndHelperIds
+    // removes their publish.
     for (const prop of root.properties) {
       const name = this.propName(prop)
-      const obj = name != null && name !== "snap" ? this.getObjectProp(root, name) : null
+      const obj = name != null && !["snap", "mas", "masDev", "publish", "extraMetadata"].includes(name) ? this.getObjectProp(root, name) : null
       if (obj != null) {
         this.rulePublish(obj, "publish", name + ".")
       }
     }
     this.ruleSnap(root)
+    this.ruleSnapcraftCoreTargetOptions(root)
+    this.ruleLinuxUnreadTargetOptions(root)
     this.ruleHelperBundleId(root)
     this.ruleSquirrelNoMsi(root)
     this.ruleCustomNsis(root)
@@ -634,21 +662,27 @@ class ConfigCodemod {
   // under snapcraft.<base> (not walked) unless its base is "custom", when its keys replace snapcraft's.
   private publishEntries(root: any): any[] {
     const ts = this.ts
-    const snap = this.objectLiteral(this.propValue(root, "snap"))
-    const snapBase = this.propValue(snap, "base")
-    const snapIsCustom = snapBase !== undefined && ts.isStringLiteral(snapBase) && snapBase.text === "custom"
-    // A base the AST cannot read may be "custom" too, so snapcraft.publish is not read when the snap may replace it.
-    const snapReplacesPublish = (snapIsCustom || (snapBase !== undefined && !this.isLiteral(snapBase))) && this.propValue(snap, "publish") !== undefined
+    // migrateConfig drops a v26 snap next to a snapcraft that is set (ruleSnap: an object literal), and otherwise moves snap.publish to
+    // snapcraft.publish; both remove mas.publish / masDev.publish
+    const snapcraftValue = this.propValue(root, "snapcraft")
+    const snapDropped = snapcraftValue !== undefined && ts.isObjectLiteralExpression(snapcraftValue)
     const sections: any[] = [root]
     for (const prop of root.properties) {
       const name = this.propName(prop)
-      const section = name == null || name === "snap" ? null : this.objectLiteral(this.propValue(root, name))
-      if (section != null && !(name === "snapcraft" && snapReplacesPublish)) {
+      const skipped = name == null || ["mas", "masDev", "publish", "extraMetadata"].includes(name) || (name === "snap" && snapDropped)
+      const section = skipped ? null : this.objectLiteral(this.propValue(root, name))
+      if (section != null) {
         sections.push(section)
       }
     }
-    if (snapIsCustom) {
-      sections.push(snap)
+    // it also moves snapcraft.<base>.publish to an unset snapcraft.publish
+    const snapcraft = this.objectLiteral(snapcraftValue)
+    const base = snapcraft == null ? undefined : this.propValue(snapcraft, "base")
+    if (snapcraft != null && base !== undefined && ts.isStringLiteral(base) && this.propValue(snapcraft, "publish") === undefined) {
+      const baseOptions = this.objectLiteral(this.propValue(snapcraft, base.text))
+      if (baseOptions != null) {
+        sections.push(baseOptions)
+      }
     }
     return sections.flatMap(section => {
       const publish = this.propValue(section, "publish")
@@ -735,10 +769,10 @@ class ConfigCodemod {
     }
   }
 
-  /** Mirrors migrateConfig's detectTarget: `<platform>.target` or the root target selects one of `names`. */
+  /** Mirrors migrateConfig's detectTarget: `<platform>.target` selects one of `names` (a root-level `target` never selected anything). */
   private detectTarget(root: any, platform: "win" | "linux", names: ReadonlyArray<string>): boolean {
     const platformTarget = this.propValue(this.objectLiteral(this.propValue(root, platform)), "target")
-    return this.hasTargetIn(platformTarget, names) || this.hasTargetIn(this.propValue(root, "target"), names)
+    return this.hasTargetIn(platformTarget, names)
   }
 
   /** Mirrors migrateConfig's hasTarget: a target name (with an optional ":<arch>" suffix, any case), a `{ target }` object, or an array of either. */
@@ -755,6 +789,163 @@ class ConfigCodemod {
       return value.elements.some((el: any) => this.hasTargetIn(this.unwrap(el), names))
     }
     return this.hasTargetIn(this.propValue(this.objectLiteral(value), "target"), names)
+  }
+
+  // A root-level `target` never selected a target (only <platform>.target is read): remove it and say what it named. It is never
+  // moved to a platform: zip / 7z / dir name no platform, and placing dmg / nsis / deb there would change what is built.
+  private ruleRootTarget(root: any): void {
+    const ts = this.ts
+    const prop = this.getProp(root, "target")
+    if (prop == null) {
+      return
+    }
+    const value = ts.isPropertyAssignment(prop) ? prop.initializer.getText(this.sf) : ts.isShorthandPropertyAssignment(prop) ? prop.name.getText(this.sf) : null
+    this.removeProp(prop)
+    this.changes.push({ key: "target", description: "removed the root-level target (it never selected a target; targets are set per platform)" })
+    if (value != null && value !== "null" && value !== "undefined") {
+      this.warnings.push(`the root-level target ${value} never had an effect and was removed; to build it, set it under mac.target, win.target or linux.target`)
+    }
+  }
+
+  // Mirrors migrateConfig step 2e: the msiWrapped installer options and msix.electronUpdaterAware never had an effect. They are
+  // never moved to nsis.*, which would change the NSIS installer. oneClick: false (or a value that is not a literal true) warns.
+  private ruleMsiWrappedAndMsix(root: any): void {
+    const ts = this.ts
+    const msiWrapped = this.getObjectProp(root, "msiWrapped")
+    if (msiWrapped != null) {
+      const oneClick = this.getProp(msiWrapped, "oneClick")
+      if (oneClick != null && !(ts.isPropertyAssignment(oneClick) && oneClick.initializer.kind === ts.SyntaxKind.TrueKeyword)) {
+        this.warnings.push(MSI_WRAPPED_ONE_CLICK_WARNING)
+      }
+      for (const key of MSI_WRAPPED_REMOVED_FIELDS) {
+        const prop = this.getProp(msiWrapped, key)
+        if (prop != null) {
+          this.removeProp(prop)
+          this.changes.push({ key: `msiWrapped.${key}`, description: `removed msiWrapped.${key} (no effect on the MSI wrapper; the wrapped installer uses nsis.${key})` })
+        }
+      }
+    }
+    const msix = this.getObjectProp(root, "msix")
+    const electronUpdaterAware = msix == null ? null : this.getProp(msix, "electronUpdaterAware")
+    if (electronUpdaterAware != null) {
+      this.removeProp(electronUpdaterAware)
+      this.changes.push({ key: "msix.electronUpdaterAware", description: "removed msix.electronUpdaterAware (it had no effect: MSIX writes no update info)" })
+    }
+  }
+
+  // Mirrors migrateConfig step 2f: the mas / masDev options Mac App Store builds never read, and the Helper EH / NP bundle ids. They are
+  // never moved to mac, which would change the macOS build. A spread can bring any mac option into mas / masDev, so it warns.
+  private ruleMasAndHelperIds(root: any): void {
+    const ts = this.ts
+    for (const platform of ["mas", "masDev"]) {
+      const p = this.getObjectProp(root, platform)
+      if (p == null) {
+        continue
+      }
+      if (p.properties.some((prop: any) => ts.isSpreadAssignment(prop))) {
+        this.warnings.push(
+          `${platform} spreads another object: Mac App Store builds already inherit every mac option, and a spread key that ${platform} no longer accepts ` +
+            "(target, icon, publish, …) fails the v27 build. Remove the spread and keep only the options Mac App Store builds read. " +
+            "See https://www.electron.build/docs/migration/v27-config-changes#mas-masdev-options"
+        )
+      }
+      if (MAS_REMOVED_CERTIFICATE_FIELDS.some(key => this.getProp(p, key) != null) && !this.warnings.includes(MAS_CERTIFICATE_WARNING)) {
+        this.warnings.push(MAS_CERTIFICATE_WARNING)
+      }
+      for (const key of Object.keys(MAS_REMOVED_FIELDS)) {
+        const prop = this.getProp(p, key)
+        if (prop != null) {
+          this.removeProp(prop)
+          this.changes.push({ key: `${platform}.${key}`, description: `removed ${platform}.${key} (Mac App Store builds never read it there)` })
+        }
+      }
+    }
+    for (const platform of MAC_PLATFORM_KEYS) {
+      const p = this.getObjectProp(root, platform)
+      for (const key of MAC_HELPER_REMOVED_FIELDS) {
+        const prop = p == null ? null : this.getProp(p, key)
+        if (prop != null) {
+          this.removeProp(prop)
+          this.changes.push({ key: `${platform}.${key}`, description: `removed ${platform}.${key} (Electron 4 and later ship no such helper)` })
+        }
+      }
+    }
+  }
+
+  // Mirrors migrateConfig's root cscLink step: a root cscLink / cscKeyPassword applied to mac and win alike and won over their own values, so it is
+  // copied into both (a missing section is created). A mac / win that is not an object literal leaves the root keys for the build-time
+  // guard, with a warning. linux.cscLink / cscKeyPassword never had an effect.
+  private ruleRootCertificates(root: any): void {
+    const ts = this.ts
+    const valueOf = (prop: any): string | null =>
+      ts.isPropertyAssignment(prop) ? prop.initializer.getText(this.sf) : ts.isShorthandPropertyAssignment(prop) ? prop.name.getText(this.sf) : null
+    const moved: Array<{ key: string; prop: any }> = []
+    for (const key of CERTIFICATE_KEYS) {
+      const prop = this.getProp(root, key)
+      if (prop == null) {
+        continue
+      }
+      const value = valueOf(prop)
+      if (value === "null" || value === "undefined") {
+        this.removeProp(prop)
+        this.changes.push({ key, description: `removed ${key}: ${value} (it had no effect)` })
+      } else {
+        moved.push({ key, prop })
+      }
+    }
+    const platforms = ["mac", "win"]
+    // a spread or computed key in mac / win could set the key after the copied root value, which won over it in v26
+    const unreadable = platforms.filter(platform => {
+      const section = this.getObjectProp(root, platform)
+      return this.getProp(root, platform) != null && (section == null || this.hasSpreadOrComputed(section))
+    })
+    if (moved.length > 0 && unreadable.length > 0) {
+      this.warnings.push(
+        `the root ${moved.map(it => it.key).join(" / ")} applies to mac and win, but ${unreadable.join(" and ")} is not an object literal, spreads another object or uses a computed key: ` +
+          "move it into mac and win manually"
+      )
+    } else if (moved.length > 0) {
+      for (const platform of platforms) {
+        const section = this.getObjectProp(root, platform)
+        if (section == null) {
+          this.createChild(
+            root,
+            platform,
+            moved.map(it => this.entryText(it.prop, this.propIndentFor(root) + this.indentUnit))
+          )
+          continue
+        }
+        for (const { key, prop } of moved) {
+          const existing = this.getProp(section, key)
+          if (existing == null) {
+            continue
+          }
+          if (valueOf(existing) !== valueOf(prop)) {
+            this.warnings.push(
+              `the root ${key} was copied over the different ${platform}.${key}: in v26 the root value won over it, so the build is unchanged. ` +
+                `If ${platform} should use its own value, set ${platform}.${key} back.`
+            )
+          }
+          this.removeProp(existing)
+        }
+        this.insertIntoObject(
+          section,
+          moved.map(it => this.entryText(it.prop, this.propIndentFor(section)))
+        )
+      }
+      for (const { key, prop } of moved) {
+        this.removeProp(prop)
+        this.changes.push({ key, description: `moved ${key} → mac.${key} and win.${key} (the root value applied to both)` })
+      }
+    }
+    const linux = this.getObjectProp(root, "linux")
+    for (const key of linux == null ? [] : CERTIFICATE_KEYS) {
+      const prop = this.getProp(linux, key)
+      if (prop != null) {
+        this.removeProp(prop)
+        this.changes.push({ key: `linux.${key}`, description: `removed linux.${key} (it never had an effect: Linux packages are not code-signed)` })
+      }
+    }
   }
 
   private ruleRemoveKeys(obj: any, keys: string[], description: string | ((key: string) => string)): void {
@@ -1062,11 +1253,30 @@ class ConfigCodemod {
     }
     const value = this.unwrap(prop.initializer)
     const entries: any[] = ts.isArrayLiteralExpression(value) ? value.elements : [value]
+    const label = `${prefix}${key}`
     let changed = false
     for (const entry of entries) {
       const obj = this.unwrap(entry)
       if (!ts.isObjectLiteralExpression(obj)) {
         continue
+      }
+      // Mirrors migratePublishEntries: the fields electron-builder writes into app-update.yml are removed on every provider, except
+      // publisherName, which is kept with a warning
+      for (const field of Object.keys(PUBLISH_MANAGED_OPTIONS)) {
+        const fieldProp = this.getProp(obj, field)
+        if (fieldProp == null) {
+          continue
+        }
+        if (field !== "publisherName") {
+          this.removeProp(fieldProp)
+          if (!this.changes.some(it => it.key === `${label}[].${field}`)) {
+            this.changes.push({ key: `${label}[].${field}`, description: `removed ${label}[].${field} (electron-builder writes it into app-update.yml itself)` })
+          }
+        }
+        const warning = managedPublishOptionWarning(label, field)
+        if (warning != null && !this.warnings.includes(warning)) {
+          this.warnings.push(warning)
+        }
       }
       const provider = this.stringLiteralValue(this.getProp(obj, "provider"))
       // GitLab keeps vPrefixedTagName in v27 (no tagNamePrefix equivalent) — leave it untouched.
@@ -1100,7 +1310,7 @@ class ConfigCodemod {
     }
     if (changed) {
       this.changes.push({
-        key: `${prefix}${key}[].vPrefixedTagName`,
+        key: `${label}[].vPrefixedTagName`,
         description: "replaced vPrefixedTagName with tagNamePrefix on GitHub publish entries",
       })
     }
@@ -1113,30 +1323,71 @@ class ConfigCodemod {
       return
     }
     const snap = this.unwrap(snapProp.initializer)
-    if (!ts.isObjectLiteralExpression(snap)) {
+    // an empty value (null, undefined, false, a string): there is nothing to move. A variable, a conditional or a call may hold options.
+    const snapIsEmpty = (ts.isIdentifier(snap) && snap.text === "undefined") || (this.isLiteral(snap) && !ts.isObjectLiteralExpression(snap) && !ts.isArrayLiteralExpression(snap))
+    if (snapIsEmpty) {
       this.removeProp(snapProp)
       this.changes.push({ key: "snap", description: "removed empty snap config (use snapcraft in v27)" })
       return
     }
 
+    // Mirrors migrateConfig: v26.12 and later read `snapcraft ?? snap`, so a snap next to a snapcraft that is set was ignored and is dropped
+    // rather than merged in. A `snapcraft: null` / `undefined` is no snapcraft; a value the AST cannot read leaves both for the guard.
+    const snapcraftProp = this.getProp(root, "snapcraft")
+    const snapcraftValue = snapcraftProp != null && ts.isPropertyAssignment(snapcraftProp) ? this.unwrap(snapcraftProp.initializer) : null
+    const snapcraftIsUnset =
+      snapcraftValue != null && (snapcraftValue.kind === ts.SyntaxKind.NullKeyword || (ts.isIdentifier(snapcraftValue) && snapcraftValue.text === "undefined"))
+    if (snapcraftProp != null && !snapcraftIsUnset) {
+      if (snapcraftValue == null || !ts.isObjectLiteralExpression(snapcraftValue)) {
+        this.warnings.push(
+          "snap was left in place: snapcraft is not an object literal, and v26 read snap whenever snapcraft was null or undefined. " +
+            "Move the snap options you need into snapcraft yourself (publish / artifactName on snapcraft itself, the others under snapcraft.<base>) and remove snap."
+        )
+        return
+      }
+      this.removeProp(snapProp)
+      this.changes.push({ key: "snap", description: "removed snap (it was ignored next to snapcraft)" })
+      const keys = ts.isObjectLiteralExpression(snap) ? snap.properties.map((p: any) => this.propName(p)).filter((name: string | undefined) => name != null) : []
+      this.warnings.push(snapNextToSnapcraftWarning(keys))
+      return
+    }
+    if (!ts.isObjectLiteralExpression(snap)) {
+      this.warnings.push(
+        "snap was left in place: it is not an object literal, so its options cannot be moved automatically. " +
+          "Move them into snapcraft yourself (publish / artifactName on snapcraft itself, the others under snapcraft.<base>) and remove snap."
+      )
+      return
+    }
+
     // snap's properties are re-emitted verbatim below, so rulePublish skipped it — flag what it would have rewritten.
     const snapPublish = this.getProp(snap, "publish")
-    if (snapPublish != null && /\bvPrefixedTagName\b|\btagNamePrefix\s*:\s*(""|'')/.test(this.text.slice(this.start(snapPublish), snapPublish.end))) {
-      this.warnings.push(
-        "snap.publish sets vPrefixedTagName or an empty tagNamePrefix; after the move, apply the GitHub tagNamePrefix change under snapcraft.<base>.publish manually."
-      )
+    if (snapPublish != null && this.setsGithubTagPrefix(snapPublish)) {
+      this.warnings.push("snap.publish sets vPrefixedTagName or an empty tagNamePrefix; after the move, apply the GitHub tagNamePrefix change under snapcraft.publish manually.")
+    }
+
+    // A `snapcraft: null` / `undefined` is replaced in place: a second `snapcraft` property would be a TS error, and the last one wins in JS.
+    const emit = (entries: string[]) => {
+      this.removeProp(snapProp)
+      if (snapcraftIsUnset) {
+        this.replaceValue(snapcraftProp.initializer, this.objectLiteralTextAt(entries, this.propIndentFor(root)))
+      } else {
+        this.createChild(root, "snapcraft", entries)
+      }
     }
 
     const baseProp = this.getProp(snap, "base")
     let base = this.stringLiteralValue(baseProp)
     const restProps = snap.properties.filter((p: any) => p !== baseProp)
+    const snapcraftChildIndent = this.propIndentFor(root) + this.indentUnit
+
+    // the snap's publish lands on snapcraft.publish, which migrateConfig then strips of the fields electron-builder writes into app-update.yml
+    const movedPublish = snapPublish == null ? null : this.movedPublishEntry(snapPublish, snapcraftChildIndent)
+    const movedEntryText = (p: any) => (p === snapPublish && movedPublish != null ? movedPublish.text : this.entryText(p, snapcraftChildIndent))
 
     if (base === "custom") {
-      const childIndent = this.propIndentFor(root) + this.indentUnit
-      const entries = ['base: "custom"', ...restProps.map((p: any) => this.entryText(p, childIndent))]
-      this.removeProp(snapProp)
-      this.createChild(root, "snapcraft", entries)
+      emit(['base: "custom"', ...restProps.map(movedEntryText)])
       this.changes.push({ key: "snap", description: "moved snap (base: custom) → snapcraft verbatim" })
+      this.recordMovedPublish(movedPublish)
       return
     }
 
@@ -1151,10 +1402,14 @@ class ConfigCodemod {
       assumed = true
     }
 
-    let nestedProps = restProps
+    // the snap's file name and upload target are read from snapcraft itself, never per base
+    const hoistedProps = restProps.filter((p: any) => (SNAP_CORE_TARGET_OPTION_KEYS as readonly string[]).includes(this.propName(p) ?? ""))
+    // a snap never read synopsis (migrateConfig removes it once it is under snapcraft.<base>)
+    const synopsisProp = restProps.find((p: any) => this.propName(p) === "synopsis")
+    let nestedProps = restProps.filter((p: any) => !hoistedProps.includes(p) && p !== synopsisProp)
     if (base === "core24") {
       const unsupported = (SNAP_CORE24_UNSUPPORTED as readonly string[]).filter(k => this.getProp(snap, k) != null)
-      nestedProps = restProps.filter((p: any) => !unsupported.includes(this.propName(p)!))
+      nestedProps = nestedProps.filter((p: any) => !unsupported.includes(this.propName(p)!))
       if (unsupported.length > 0) {
         this.warnings.push(
           `snap config set [${unsupported.join(", ")}], which the v27 snapcraft.core24 options do not support (core24 builds with the snapcraft CLI directly); they were dropped.`
@@ -1162,14 +1417,163 @@ class ConfigCodemod {
       }
     }
 
-    const baseChildIndent = this.propIndentFor(root) + this.indentUnit + this.indentUnit
+    const baseChildIndent = snapcraftChildIndent + this.indentUnit
     const nestedEntries = nestedProps.map((p: any) => this.entryText(p, baseChildIndent))
-    const snapcraftChildIndent = this.propIndentFor(root) + this.indentUnit
     const nestedObject = nestedEntries.length > 0 ? this.objectLiteralTextAt(nestedEntries, snapcraftChildIndent) : "{}"
-    const entries = [`base: "${base}"`, `${base}: ${nestedObject}`]
-    this.removeProp(snapProp)
-    this.createChild(root, "snapcraft", entries)
+    emit([`base: "${base}"`, ...hoistedProps.map(movedEntryText), `${base}: ${nestedObject}`])
     this.changes.push({ key: "snap", description: `moved snap → snapcraft.${base}${assumed ? " (base defaulted to core20)" : ""}` })
+    if (synopsisProp != null) {
+      this.changes.push({ key: `snapcraft.${base}.synopsis`, description: `removed snapcraft.${base}.synopsis (it never had an effect)` })
+    }
+    this.recordMovedPublish(movedPublish)
+  }
+
+  /**
+   * The `publish: …` entry that ruleSnap / ruleSnapcraftCoreTargetOptions move to snapcraft (as entryText makes it), without the fields
+   * electron-builder writes into app-update.yml, with the removals and warnings to record. Mirrors migratePublishEntries, which
+   * migrateConfig runs on snapcraft.publish after the move; publisherName is kept with a warning, as rulePublish keeps it.
+   */
+  private movedPublishEntry(prop: any, targetIndent: string): { text: string; changes: MigrationChange[]; warnings: string[] } {
+    const ts = this.ts
+    const label = "snapcraft.publish"
+    const changes: MigrationChange[] = []
+    const warnings: string[] = []
+    if (!ts.isPropertyAssignment(prop)) {
+      return { text: this.entryText(prop, targetIndent), changes, warnings }
+    }
+    const value = this.unwrap(prop.initializer)
+    const cuts: Array<[number, number]> = []
+    for (const entry of ts.isArrayLiteralExpression(value) ? value.elements : [value]) {
+      const obj = this.unwrap(entry)
+      if (!ts.isObjectLiteralExpression(obj)) {
+        continue
+      }
+      for (const field of Object.keys(PUBLISH_MANAGED_OPTIONS)) {
+        const fieldProp = this.getProp(obj, field)
+        if (fieldProp == null) {
+          continue
+        }
+        if (field !== "publisherName") {
+          cuts.push([fieldProp.pos, this.endWithTrailingComma(fieldProp)])
+          if (!changes.some(it => it.key === `${label}[].${field}`)) {
+            changes.push({ key: `${label}[].${field}`, description: `removed ${label}[].${field} (electron-builder writes it into app-update.yml itself)` })
+          }
+        }
+        const warning = managedPublishOptionWarning(label, field)
+        if (warning != null && !warnings.includes(warning)) {
+          warnings.push(warning)
+        }
+      }
+    }
+    if (cuts.length === 0) {
+      return { text: this.entryText(prop, targetIndent), changes, warnings }
+    }
+    // the initializer's text without the removed properties, cut the way removeProp cuts them
+    const start = this.start(prop.initializer)
+    let raw = ""
+    let cursor = start
+    for (const [from, to] of cuts.sort((a, b) => a[0] - b[0])) {
+      raw += this.text.slice(cursor, from)
+      cursor = to
+    }
+    raw += this.text.slice(cursor, prop.initializer.end)
+    const valueText = raw.includes("\n") ? this.reindent(raw, this.lineIndentAt(start), targetIndent) : raw
+    return { text: `${this.text.slice(this.start(prop.name), prop.name.end)}: ${valueText}`, changes, warnings }
+  }
+
+  private recordMovedPublish(moved: { changes: MigrationChange[]; warnings: string[] } | null): void {
+    for (const change of moved?.changes ?? []) {
+      if (!this.changes.some(it => it.key === change.key)) {
+        this.changes.push(change)
+      }
+    }
+    for (const warning of moved?.warnings ?? []) {
+      if (!this.warnings.includes(warning)) {
+        this.warnings.push(warning)
+      }
+    }
+  }
+
+  // Mirrors migrateConfig step 6c: a snapcraft.<core>.publish / artifactName was never read. It is moved to snapcraft itself when <core> is
+  // the snapcraft.base literal and snapcraft does not set the key, and removed otherwise. A base the AST cannot read leaves them for the guard.
+  private ruleSnapcraftCoreTargetOptions(root: any): void {
+    const snapcraft = this.getObjectProp(root, "snapcraft")
+    if (snapcraft == null) {
+      return
+    }
+    const found = SNAP_CORE_KEYS.flatMap(core => {
+      const options = this.getObjectProp(snapcraft, core)
+      return options == null ? [] : SNAP_CORE_TARGET_OPTION_KEYS.map(key => ({ core, key, prop: this.getProp(options, key) })).filter(it => it.prop != null)
+    })
+    if (found.length === 0) {
+      return
+    }
+    const ts = this.ts
+    // propValue returns the spread or computed key that may set base, when one does
+    const baseValue = this.propValue(snapcraft, "base")
+    const base = baseValue !== undefined && ts.isStringLiteral(baseValue) ? baseValue.text : undefined
+    if (baseValue !== undefined && base == null) {
+      this.warnings.push(
+        `snapcraft.base is not a string literal (or a spread / computed key may set it), so [${found.map(it => `snapcraft.${it.core}.${it.key}`).join(", ")}] were left in place: ` +
+          "move the selected base's publish / artifactName to snapcraft itself and remove the others"
+      )
+      return
+    }
+    const entries: string[] = []
+    let movedPublish: ReturnType<typeof this.movedPublishEntry> | null = null
+    for (const { core, key, prop } of found) {
+      const path = `snapcraft.${core}.${key}`
+      this.removeProp(prop)
+      // a literal `publish: undefined` on snapcraft is unset, as migrateConfig and publishEntries read it: the value replaces it in place
+      const existing = this.getProp(snapcraft, key)
+      const existingIsUndefined = existing != null && this.propValue(snapcraft, key) === undefined
+      if (core === base && (existing == null || existingIsUndefined)) {
+        let text: string
+        if (key === "publish") {
+          movedPublish = this.movedPublishEntry(prop, this.propIndentFor(snapcraft))
+          text = movedPublish.text
+        } else {
+          text = this.entryText(prop, this.propIndentFor(snapcraft))
+        }
+        if (existingIsUndefined) {
+          this.replaceRange(this.start(existing), existing.end, text)
+        } else {
+          entries.push(text)
+        }
+        this.changes.push({ key: path, description: `moved ${path} → snapcraft.${key}` })
+        this.warnings.push(snapcraftCoreTargetOptionWarning(path, key, true))
+        if (key === "publish" && this.setsGithubTagPrefix(prop)) {
+          this.warnings.push(`${path} sets vPrefixedTagName or an empty tagNamePrefix; after the move, apply the GitHub tagNamePrefix change under snapcraft.publish manually.`)
+        }
+      } else {
+        this.changes.push({ key: path, description: `removed ${path} (it was never read)` })
+        this.warnings.push(snapcraftCoreTargetOptionWarning(path, key, false))
+      }
+    }
+    this.insertIntoObject(snapcraft, entries)
+    this.recordMovedPublish(movedPublish)
+  }
+
+  // Mirrors migrateConfig step 6d: Linux target options that never had an effect are removed. A v26 snap.synopsis is dropped by ruleSnap,
+  // which re-emits the snap's other options as text.
+  private ruleLinuxUnreadTargetOptions(root: any): void {
+    for (const { parent, key } of LINUX_UNREAD_TARGET_OPTIONS) {
+      let holder: any = root
+      for (const segment of parent) {
+        holder = holder == null ? null : this.getObjectProp(holder, segment)
+      }
+      const prop = holder == null ? null : this.getProp(holder, key)
+      if (prop != null) {
+        this.removeProp(prop)
+        const path = [...parent, key].join(".")
+        this.changes.push({ key: path, description: `removed ${path} (it never had an effect)` })
+      }
+    }
+  }
+
+  /** Whether the source of a publish property sets what rulePublish rewrites on GitHub entries: vPrefixedTagName, or an empty tagNamePrefix. */
+  private setsGithubTagPrefix(publishProp: any): boolean {
+    return /\bvPrefixedTagName\b|\btagNamePrefix\s*:\s*(""|'')/.test(this.text.slice(this.start(publishProp), publishProp.end))
   }
 
   private ruleHelperBundleId(root: any): void {
@@ -1871,9 +2275,23 @@ class ConfigCodemod {
   /** Prepends `childKey: { entries }` (or `childKey: rawValue`) as the first property of `parent`. */
   private createChild(parent: any, childKey: string, entries: string[], rawValue?: string): void {
     const parentPropIndent = this.propIndentFor(parent)
+    // a child another rule already created here (e.g. `mac` from the root cscLink and from helper-bundle-id) gets the entries, so the
+    // key is never written twice (TS1117 in a .ts config, and in JS the later one silently wins)
+    const created = rawValue == null ? this.createdChildren.get(parent)?.get(childKey) : undefined
+    if (created != null) {
+      created.entries.push(...entries)
+      created.edit.text = `\n${parentPropIndent}${childKey}: ${this.objectLiteralTextAt(created.entries, parentPropIndent)},`
+      return
+    }
     const value = rawValue != null ? rawValue : this.objectLiteralTextAt(entries, parentPropIndent)
     const braceEnd = this.start(parent) + 1
-    this.insertEdit(braceEnd, `\n${parentPropIndent}${childKey}: ${value},`)
+    const edit: Edit = { start: braceEnd, end: braceEnd, text: `\n${parentPropIndent}${childKey}: ${value},` }
+    this.edits.push(edit)
+    if (rawValue == null) {
+      const children = this.createdChildren.get(parent) ?? new Map<string, { edit: Edit; entries: string[] }>()
+      children.set(childKey, { edit, entries: [...entries] })
+      this.createdChildren.set(parent, children)
+    }
   }
 
   /** Inserts already-built "key: value" entries as the first properties of `objLit`. */
@@ -2079,12 +2497,11 @@ class ConfigCodemod {
     return ts.isStringLiteral(v) ? v.text : undefined
   }
 
+  /** The end of `prop` with its trailing comma, which may follow whitespace, line breaks or comments (comma-first style included). */
   private endWithTrailingComma(prop: any): number {
-    let i = prop.end
-    while (i < this.text.length && (this.text[i] === " " || this.text[i] === "\t")) {
-      i++
-    }
-    return this.text[i] === "," ? i + 1 : prop.end
+    const ts = this.ts
+    const scanner = ts.createScanner(ts.ScriptTarget.Latest, true, ts.LanguageVariant.Standard, this.text, undefined, prop.end)
+    return scanner.scan() === ts.SyntaxKind.CommaToken ? scanner.getTokenEnd() : prop.end
   }
 
   private lineIndentAt(pos: number): string {

@@ -4,7 +4,7 @@ title: "Mac App Store"
 
 {!./partials/_upgrading-from-v26.md!}
 
-The top-level [mas](configuration.md) key contains a set of options instructing electron-builder on how it should build the MAS (Mac Application Store) target. Inherits all [macOS options](mac.md).
+The top-level [mas](configuration.md) key contains a set of options instructing electron-builder on how it should build the MAS (Mac Application Store) target. A Mac App Store build merges `mac` → `mas` (→ `masDev` for `mas-dev`), so `mas` overrides these [macOS options](mac.md) for the Mac App Store app: `appId`, `artifactName`, `asar`, `asarIntegrityDigest`, `bundleShortVersion`, `bundleVersion`, `category`, `extendInfo`, `fileOptions`, `forceCodeSigning`, `helperBundleId`, `helperGPUBundleId`, `helperPluginBundleId`, `helperRendererBundleId`, `minimumSystemVersion`, `sign` and `universal`. The other macOS options apply to Mac App Store builds as set on `mac` (`target`, `icon`, `publish`, the certificates, …), except `notarize`, `extraDistFiles` and the update-info options (`releaseInfo`, `detectUpdateChannel`, `generateUpdatesFilesForAllChannels`, `electronUpdaterCompatibility`, `updateManifest`), which Mac App Store builds do not use.
 
 Use the `mas-dev` target (configured via the top-level `masDev` key) for local testing of MAS builds with a development provisioning profile.
 
@@ -151,7 +151,7 @@ This produces:
 
 - **Sandbox violations** — the app attempts to access files or resources not permitted by entitlements
 - **Deprecated APIs** — using APIs Apple has removed or flagged (check release notes)
-- **Missing privacy strings** — if you access camera/mic/location, `NSCameraUsageDescription` etc. must be in `Info.plist`
+- **Missing privacy strings** — if you access camera/mic/location, `NSCameraUsageDescription` etc. must be in `Info.plist` (set them in `mac.extendInfo`, or in `mas.extendInfo` for the Mac App Store app only)
 - **UI guidelines violations** — buttons, windows, or flows that don't match Human Interface Guidelines
 - **Crash on launch** — always test the MAS build on a clean machine before submitting
 

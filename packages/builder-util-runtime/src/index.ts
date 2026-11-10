@@ -37,6 +37,7 @@ export { MemoLazy } from "./MemoLazy.js"
 export { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform.js"
 export {
   AllPublishOptions,
+  AppUpdateConfiguration,
   BaseS3Options,
   BitbucketOptions,
   CustomPublishOptions,

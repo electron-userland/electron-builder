@@ -128,10 +128,14 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return this._iconPath.value
   }
 
+  getCscLink(extraEnvName?: string | null): string | Nullish {
+    return chooseNotNull(this.platformSpecificBuildOptions.cscLink, super.getCscLink(extraEnvName))
+  }
+
   doGetCscPassword(): string | Nullish {
     const signing = resolveWindowsSigningConfiguration(this.platformSpecificBuildOptions)
     const certPassword = signing?.type === "signtool" ? signing.certificatePassword : null
-    return chooseNotNull(chooseNotNull(certPassword, process.env.WIN_CSC_KEY_PASSWORD), super.doGetCscPassword())
+    return chooseNotNull(chooseNotNull(certPassword, process.env.WIN_CSC_KEY_PASSWORD), chooseNotNull(this.platformSpecificBuildOptions.cscKeyPassword, super.doGetCscPassword()))
   }
 
   async signIf(file: string): Promise<SigningResult> {

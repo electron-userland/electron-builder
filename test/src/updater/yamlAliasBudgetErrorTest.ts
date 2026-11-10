@@ -1,5 +1,5 @@
 import { serializeToYaml } from "builder-util"
-import { GenericServerOptions } from "builder-util-runtime"
+import { AppUpdateConfiguration, GenericServerOptions } from "builder-util-runtime"
 import type { AppUpdater } from "electron-updater"
 import fsExtra from "fs-extra"
 import * as path from "path"
@@ -20,7 +20,11 @@ async function createGenericUpdater(tmpDir: TmpDir, requestSpy: ReturnType<typeo
   ;(updater as any).httpExecutor = { request: requestSpy }
   updater.autoDownload = false
   updater.logger = logger
-  const options: GenericServerOptions = { provider: "generic", url: `https://updates.example.com/feed?token=${FEED_TOKEN}`, verifyUpdateCodeSignature: false }
+  const options: AppUpdateConfiguration<GenericServerOptions> = {
+    provider: "generic",
+    url: `https://updates.example.com/feed?token=${FEED_TOKEN}`,
+    verifyUpdateCodeSignature: false,
+  }
   const configPath = path.join(await tmpDir.getTempDir({ prefix: "update-config" }), "app-update.yml")
   await fsExtra.outputFile(configPath, serializeToYaml(options))
   updater.updateConfigPath = configPath

@@ -8,6 +8,10 @@ import {
   FILE_OPTION_KEYS,
   FILE_OPTIONS_ANCHOR,
   formatLegacyOptionMessage,
+  MAC_SIGN_FIELDS,
+  MAC_SIGN_REMOVED_FIELDS,
+  PUBLISH_MANAGED_OPTIONS,
+  PUBLISH_MANAGED_OPTIONS_ANCHOR,
   RESOLVED_LEGACY_CONFIG_OPTIONS,
 } from "./legacyOptions.js"
 
@@ -24,7 +28,8 @@ import {
  * test asserting the v27 schema rejects it too.
  */
 
-const PLATFORMS_WITH_PUBLISH = ["mac", "win", "linux"] as const
+/** The v26 signing options of `mac` / `mas` / `masDev`, reported next to a custom signer. */
+const MAC_SIGN_SIBLING_KEYS: ReadonlySet<string> = new Set<string>([...MAC_SIGN_FIELDS, ...MAC_SIGN_REMOVED_FIELDS, "signIgnore"])
 
 /** v26 `snap` options that belong under the base-named sub-key in v27, not directly on `snapcraft`. */
 const SNAPCRAFT_BASE_LEVEL_KEYS = new Set([
@@ -49,6 +54,19 @@ const SNAPCRAFT_BASE_LEVEL_KEYS = new Set([
 ])
 
 const SNAPCRAFT_BASES = ["core18", "core20", "core22", "core24", "custom"]
+
+/** The `<section>.publish` paths that are removed themselves (`mas.publish`, `masDev.publish`): their entries are not checked one by one. */
+const REMOVED_PUBLISH_PATHS: ReadonlySet<string> = new Set(RESOLVED_LEGACY_CONFIG_OPTIONS.filter(o => o.key === "publish").map(o => o.fullPath))
+
+/** What a managed publish option did, and what replaces it. */
+const PUBLISH_MANAGED_OPTION_DETAILS: Record<keyof typeof PUBLISH_MANAGED_OPTIONS, (value: unknown) => string> = {
+  updaterCacheDirName: () => "It never had an effect: electron-builder always writes `<sanitized package name>-updater`.",
+  verifyUpdateCodeSignature: () => "It never had an effect (the build rejected it). To opt out of update signature verification, set `win.verifyUpdateCodeSignature: false`.",
+  updateManifestPublicKey: () => "It never had an effect (the build rejected it). To pin the update-manifest trust list, set `updateManifest.publicKey`.",
+  publisherName: value =>
+    `It no longer overrides the Windows publisher name: set \`win.sign.publisherName: ${JSON.stringify(value)}\` (adding \`type: "signtool"\` when \`win.sign\` is unset), ` +
+    "or `win.verifyUpdateCodeSignature: false` only if your updates are not Authenticode-signed. In a macOS or Linux section it never had an effect: remove it.",
+}
 
 function docLink(anchor: string): string {
   return `  ${CONFIG_CHANGES_URL}#${anchor}`
@@ -98,7 +116,10 @@ function checkMacCustomSigner(config: Record<string, any>, errors: string[]): vo
     if (typeof sign !== "string" && typeof sign !== "function") {
       continue
     }
-    const legacySiblings = RESOLVED_LEGACY_CONFIG_OPTIONS.filter(o => o.parentPath.length === 1 && o.parentPath[0] === platform && o.key in platformConfig).map(o => o.key)
+    // only the signing options: other legacy keys of the platform (universal fields, mas removals, ...) are not signer siblings
+    const legacySiblings = RESOLVED_LEGACY_CONFIG_OPTIONS.filter(
+      o => o.parentPath.length === 1 && o.parentPath[0] === platform && MAC_SIGN_SIBLING_KEYS.has(o.key) && o.key in platformConfig
+    ).map(o => o.key)
     if (legacySiblings.length === 0) {
       continue
     }
@@ -159,7 +180,8 @@ function checkSnapcraftShape(config: Record<string, any>, errors: string[]): voi
 
 /**
  * `vPrefixedTagName` was removed from GitHub publish options only — GitLab still supports it, so the
- * check has to discriminate on `provider` rather than on the key name.
+ * check has to discriminate on `provider` rather than on the key name. The fields electron-builder writes into app-update.yml itself
+ * are rejected on every provider but `custom`, whose options are not validated (the app-update.yml writer rejects them there).
  */
 function checkPublishEntries(config: Record<string, any>, errors: string[]): void {
   const check = (value: unknown, label: string) => {
@@ -167,7 +189,21 @@ function checkPublishEntries(config: Record<string, any>, errors: string[]): voi
       return
     }
     for (const entry of Array.isArray(value) ? value : [value]) {
-      if (!isPlainObject(entry) || entry.provider !== "github" || !("vPrefixedTagName" in entry)) {
+      if (!isPlainObject(entry)) {
+        continue
+      }
+      for (const key of Object.keys(PUBLISH_MANAGED_OPTIONS) as Array<keyof typeof PUBLISH_MANAGED_OPTIONS>) {
+        if (entry.provider === "custom" || !(key in entry)) {
+          continue
+        }
+        errors.push(
+          `\`${label}.${key}\` was removed from the publish options in electron-builder v27: electron-builder writes it into app-update.yml itself.\n` +
+            `  ${PUBLISH_MANAGED_OPTION_DETAILS[key](entry[key])}\n` +
+            (key === "publisherName" ? "" : "  Run `electron-builder migrate-schema` to update your configuration automatically.\n") +
+            docLink(PUBLISH_MANAGED_OPTIONS_ANCHOR)
+        )
+      }
+      if (entry.provider !== "github" || !("vPrefixedTagName" in entry)) {
         continue
       }
       const suggested = entry.vPrefixedTagName === false ? '""' : '"v"'
@@ -181,8 +217,13 @@ function checkPublishEntries(config: Record<string, any>, errors: string[]): voi
     }
   }
   check(config.publish, "publish")
-  for (const platform of PLATFORMS_WITH_PUBLISH) {
-    check(config[platform]?.publish, `${platform}.publish`)
+  // every section that can hold a publish (mac, win, nsis, dmg, appImage, snapcraft, ...), as migrate-schema rewrites them. Not the root
+  // publish value itself (a custom provider may have an option named publish), the free-form extraMetadata (package.json fields), or a
+  // section whose publish is itself removed (mas, masDev), which collectLegacyKeys reports.
+  for (const [key, section] of Object.entries(config)) {
+    if (key !== "publish" && key !== "extraMetadata" && isPlainObject(section) && !REMOVED_PUBLISH_PATHS.has(`${key}.publish`)) {
+      check(section.publish, `${key}.publish`)
+    }
   }
 }
 
