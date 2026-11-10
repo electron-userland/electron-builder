@@ -1,4 +1,5 @@
 import { log } from "builder-util"
+import { deepAssign } from "builder-util-runtime"
 import { LinuxMetainfoConfiguration } from "app-builder-lib/src/options/linuxOptions"
 import { fpmFormatUsesMetainfo, MetainfoPackager, normalizeMetainfoOption, prepareMetainfoFile, validateMetainfoFile } from "app-builder-lib/src/targets/linux/metainfo"
 import { mkdtemp, rm, writeFile } from "fs/promises"
@@ -182,6 +183,37 @@ describe("normalizeMetainfoOption", () => {
     for (const value of ["", "   "]) {
       expect(() => normalizeMetainfoOption(value)).toThrowError(/metainfo must name a file when it is a string/)
     }
+  })
+})
+
+// what PlatformPackager.getOptionsForTarget does for each Linux target: deepAssign({}, config.linux, config.<target>)
+describe("per-target metainfo overrides", () => {
+  const optionsForTarget = (linux: any, targetOptions?: any): any => deepAssign({}, linux, targetOptions ?? {})
+
+  test("an object override does not mutate the shared linux options or leak into other targets", () => {
+    const linux = { metainfo: { file: "build/app.metainfo.xml", validate: true } }
+
+    const flatpak = optionsForTarget(linux, { metainfo: { validate: false } })
+    expect(flatpak.metainfo).toEqual({ file: "build/app.metainfo.xml", validate: false })
+
+    // the override must have been merged into the target's own object, not into config.linux.metainfo itself
+    expect(linux.metainfo).toEqual({ file: "build/app.metainfo.xml", validate: true })
+
+    // a target without an override resolves the original values, through an object of its own
+    const deb = optionsForTarget(linux)
+    expect(deb.metainfo).toEqual({ file: "build/app.metainfo.xml", validate: true })
+    expect(deb.metainfo).not.toBe(linux.metainfo)
+
+    const appImage = optionsForTarget(linux, { metainfo: { file: "build/appimage.appdata.xml" } })
+    expect(appImage.metainfo).toEqual({ file: "build/appimage.appdata.xml", validate: true })
+    expect(linux.metainfo).toEqual({ file: "build/app.metainfo.xml", validate: true })
+  })
+
+  test("the string and null forms replace the platform value", () => {
+    const linux = { metainfo: { file: "build/app.metainfo.xml" } }
+    expect(optionsForTarget(linux, { metainfo: null }).metainfo).toBeNull()
+    expect(optionsForTarget(linux, { metainfo: "other.xml" }).metainfo).toBe("other.xml")
+    expect(linux.metainfo).toEqual({ file: "build/app.metainfo.xml" })
   })
 })
 

@@ -44,6 +44,33 @@ function isObject(x: any) {
   return type === "object" || type === "function"
 }
 
+function isPlainObject(x: any): boolean {
+  if (x == null || typeof x !== "object" || Array.isArray(x)) {
+    return false
+  }
+  const proto = Object.getPrototypeOf(x)
+  return proto === Object.prototype || proto === null
+}
+
+/**
+ * A plain object taken from a source is cloned (deeply, through nested plain objects) instead of stored by reference: the target
+ * owns what deepAssign has put into it and may merge a later source into it, which must never mutate the source itself — e.g.
+ * `deepAssign({}, config.linux, config.flatpak)` merging `flatpak.metainfo` into a `linux.metainfo` stored by reference would
+ * change `config.linux` for every other target. Arrays, class instances and functions are kept as they are, like before.
+ */
+function cloneFromSource(value: any): any {
+  if (!isPlainObject(value)) {
+    return value
+  }
+  const clone: any = {}
+  for (const key of Object.keys(value)) {
+    if (isValidKey(key) && value[key] !== undefined) {
+      clone[key] = cloneFromSource(value[key])
+    }
+  }
+  return clone
+}
+
 function assignKey(target: any, from: any, key: string) {
   const value = from[key]
   // https://github.com/electron-userland/electron-builder/pull/562
@@ -57,7 +84,7 @@ function assignKey(target: any, from: any, key: string) {
     if (Array.isArray(prevValue) && Array.isArray(value)) {
       target[key] = Array.from(new Set(prevValue.concat(value)))
     } else {
-      target[key] = value
+      target[key] = cloneFromSource(value)
     }
   } else {
     target[key] = assign(prevValue, value)
