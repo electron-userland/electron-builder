@@ -416,7 +416,10 @@ export class Packager {
     } else {
       this._metadata = await this.readProjectMetadataIfTwoPackageStructureOrPrepacked(appPackageFile)
     }
-    this._originalMetadata = deepAssign({}, this._metadata)
+    // A deep copy: `deepAssign({}, …)` would share the nested objects (dependencies, author, …) that the extraMetadata merge below
+    // writes into. JSON rather than structuredClone: in a single package.json project `build` is the object the programmatic
+    // configuration was merged into, functions included (the configuration is JSON-serialized for the debug log above as well).
+    this._originalMetadata = JSON.parse(JSON.stringify(this._metadata))
     deepAssign(this._metadata, configuration.extraMetadata)
 
     if (this.isTwoPackageJsonProjectLayoutUsed) {

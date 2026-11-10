@@ -395,3 +395,33 @@ describe("Packager electron-updater check", () => {
     })
   })
 })
+
+describe("Packager originalMetadata", () => {
+  test("is package.json as declared, without extraMetadata", async ({ tmpDir }) => {
+    await withProjectDir(tmpDir, null, async projectDir => {
+      await fsExtra.outputJson(path.join(projectDir, "package.json"), {
+        name: "test-app",
+        version: "1.0.0",
+        description: "test",
+        author: "test",
+        dependencies: { "declared-dep": "^1.0.0" },
+        build: { win: { sign: { type: "signtool" } } },
+      })
+      const packager = new Packager({
+        projectDir,
+        config: {
+          // getConfig merges this signer function into package.json's `build.win.sign` object (a single package.json project),
+          // so `structuredClone(metadata)` would throw DataCloneError here
+          win: { sign: { type: "signtool", sign: () => Promise.resolve() } },
+          extraMetadata: { dependencies: { "extra-only-dep": "^2.0.0" }, author: { email: "extra@example.com" } },
+        },
+      })
+      await packager.validateConfig()
+
+      expect(packager.metadata.dependencies).toEqual({ "declared-dep": "^1.0.0", "extra-only-dep": "^2.0.0" })
+      // the node-module collection is checked against these, so an extraMetadata-only dependency cannot reject it
+      expect(packager.originalMetadata.dependencies).toEqual({ "declared-dep": "^1.0.0" })
+      expect(packager.originalMetadata.author).toEqual({ name: "test" })
+    })
+  })
+})
