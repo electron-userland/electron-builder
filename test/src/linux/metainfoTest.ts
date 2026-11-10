@@ -1,6 +1,6 @@
 import { log } from "builder-util"
-import { deepAssign } from "builder-util-runtime"
 import { LinuxMetainfoConfiguration } from "app-builder-lib/src/options/linuxOptions"
+import { mergeTargetOptions } from "app-builder-lib/src/platformPackager"
 import { fpmFormatUsesMetainfo, MetainfoPackager, normalizeMetainfoOption, prepareMetainfoFile, validateMetainfoFile } from "app-builder-lib/src/targets/linux/metainfo"
 import { mkdtemp, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
@@ -186,9 +186,9 @@ describe("normalizeMetainfoOption", () => {
   })
 })
 
-// what PlatformPackager.getOptionsForTarget does for each Linux target: deepAssign({}, config.linux, config.<target>)
+// what PlatformPackager.getOptionsForTarget does for each Linux target: merge config.linux with config.<target>
 describe("per-target metainfo overrides", () => {
-  const optionsForTarget = (linux: any, targetOptions?: any): any => deepAssign({}, linux, targetOptions ?? {})
+  const optionsForTarget = (linux: any, targetOptions?: any): any => mergeTargetOptions(linux, targetOptions)
 
   test("an object override does not mutate the shared linux options or leak into other targets", () => {
     const linux = { metainfo: { file: "build/app.metainfo.xml", validate: true } }
