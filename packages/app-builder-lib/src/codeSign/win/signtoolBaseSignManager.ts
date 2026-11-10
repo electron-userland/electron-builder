@@ -33,23 +33,6 @@ const PUBLISHER_NAME_DOCS = `${BUILD_CHANGES_URL}#windows-publishername-is-valid
 
 const { rename } = _fsExtra
 
-/** Emitted once per process; a build signs many files. */
-let offlineTimestampWarned = false
-
-function warnOfflineSkipsTimestamp(): void {
-  if (offlineTimestampWarned || !isOfflineModeEnabled()) {
-    return
-  }
-  offlineTimestampWarned = true
-  log.warn(
-    null,
-    "ELECTRON_BUILDER_OFFLINE is set, so Windows signatures get no timestamp and stop validating once the signing certificate expires. " +
-      "Since electron-builder v27, ELECTRON_BUILDER_OFFLINE=1 skips the timestamp server the same as ELECTRON_BUILDER_OFFLINE=true. " +
-      "Unset ELECTRON_BUILDER_OFFLINE for release builds. " +
-      `See ${BUILD_CHANGES_URL}#electron_builder_offline-skips-the-signing-timestamp`
-  )
-}
-
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
 
 export interface WindowsSignToolOptions extends WindowsSignOptions {
@@ -435,7 +418,17 @@ export abstract class SigntoolBaseSignManager implements SignManager {
 
   // on windows be aware of http://stackoverflow.com/a/32640183/1910191
   computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boolean, vm: VmManager = new VmManager()): Array<string> {
-    warnOfflineSkipsTimestamp()
+    if (isOfflineModeEnabled()) {
+      log
+        .once("offline-skips-timestamp", options.cscInfo)
+        .warn(
+          null,
+          "ELECTRON_BUILDER_OFFLINE is set, so Windows signatures get no timestamp and stop validating once the signing certificate expires. " +
+            "ELECTRON_BUILDER_OFFLINE=1 skips the timestamp server the same as ELECTRON_BUILDER_OFFLINE=true. " +
+            "Unset ELECTRON_BUILDER_OFFLINE for release builds. " +
+            `See ${BUILD_CHANGES_URL}#electron_builder_offline-skips-the-signing-timestamp`
+        )
+    }
     return isWin ? this.computeWindowsSignArgs(options, vm) : this.computeOsslsigncodeArgs(options, vm)
   }
 
