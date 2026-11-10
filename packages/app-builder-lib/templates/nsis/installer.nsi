@@ -98,21 +98,34 @@ Section "install" INSTALL_SECTION_ID
     # but that won't be executed when silent.
     !ifndef INSTALL_MODE_PER_ALL_USERS
       !ifndef ONE_CLICK
+          !macro elevateSilentPerMachineUpdate
+            ShowWindow $HWNDPARENT ${SW_HIDE}
+            !insertmacro UAC_RunElevated
+            ${Switch} $0
+              ${Case} 0
+                ${Break}
+              ${Case} 1223 ;user aborted
+                ${Break}
+              ${Default}
+                MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Unable to elevate, error $0" /SD IDOK
+                ${Break}
+            ${EndSwitch}
+            Quit
+          !macroend
+
           ${if} $hasPerMachineInstallation == "1" # set in onInit by initMultiUser
           ${andIf} ${Silent}
             ${ifNot} ${UAC_IsAdmin}
-              ShowWindow $HWNDPARENT ${SW_HIDE}
-              !insertmacro UAC_RunElevated
-              ${Switch} $0
-                ${Case} 0
-                  ${Break}
-                ${Case} 1223 ;user aborted
-                  ${Break}
-                ${Default}
-                  MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Unable to elevate, error $0" /SD IDOK
-                  ${Break}
-              ${EndSwitch}
-              Quit
+              !ifdef UNELEVATED_PER_MACHINE_UPDATE
+                !insertmacro checkUnelevatedPerMachineUpdate
+                ${if} $unelevatedAccess == "1"
+                  ${LogText} "Per-machine update without elevation (nsis.allowUnelevatedPerMachineUpdate): $INSTDIR and its registration are writable"
+                ${else}
+                  !insertmacro elevateSilentPerMachineUpdate
+                ${endif}
+              !else
+                !insertmacro elevateSilentPerMachineUpdate
+              !endif
             ${else}
               !insertmacro setInstallModePerAllUsers
             ${endIf}
