@@ -342,7 +342,7 @@ export class NsisUpdater extends BaseUpdater {
           "so there is no publisherName to verify its Authenticode signature against (a custom verifyUpdateFileAuthenticodeSignature is called only with a publisherName). " +
           "Make sure the file exists (build the app with a publish configuration so that electron-builder writes app-update.yml with the publisherName), " +
           "or set autoUpdater.publisherName to the subject of the certificate that signs your updates. " +
-          "https://www.electron.build/docs/win#how-do-you-set-the-publishername-of-updates-at-runtime",
+          "https://www.electron.build/docs/migration/v27-build-changes#missing-publishername-fails-update-verification",
         "ERR_UPDATER_NO_PUBLISHER_NAME"
       )
     }
@@ -372,6 +372,7 @@ export class NsisUpdater extends BaseUpdater {
       }
       hasConfigFile = false
     }
+    // the runtime value goes through the same normalizer as the config's: a string, or the string entries of an array, else null
     const publisherNames = readConfiguredPublisherNames(config) ?? readConfiguredPublisherNames({ publisherName: this.publisherName })
     return { publisherNames, config, hasConfigFile }
   }
