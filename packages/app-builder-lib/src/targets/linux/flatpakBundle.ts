@@ -239,6 +239,19 @@ export async function buildFlatpakBundle(options: FlatpakBundleOptions): Promise
         `Upgrade flatpak-builder to ${METAINFO_FLATPAK_BUILDER_VERSION} or newer, which composes with appstreamcli, or set flatpak: { metainfo: null } to leave the file out of the flatpak target. See ${FLATPAK_DOCS}#build-requirements`
     )
   }
+  // flatpak-builder 1.4 and newer compose the staged metainfo file with appstreamcli, which runs on the build machine and which
+  // flatpak-builder itself looks up on PATH (execvp): without it the build fails late, after the refs are installed and the app is
+  // built, with 'Failed to execute child process "appstreamcli"'
+  if (options.hasMetainfo && builderVersion != null && semver.gte(builderVersion, METAINFO_FLATPAK_BUILDER_VERSION)) {
+    try {
+      await exec("appstreamcli", ["--version"], { cwd })
+    } catch (_e: any) {
+      throw new InvalidConfigurationError(
+        `linux.metainfo stages share/metainfo/${manifest.id}.metainfo.xml, which flatpak-builder ${builderVersion.version} composes with appstreamcli, and appstreamcli is not installed (flatpak-builder runs it from PATH). ` +
+          `Install it (the "appstream" package on Debian/Ubuntu, Fedora and Arch Linux), or set flatpak: { metainfo: null } to leave the file out of the flatpak target. See ${FLATPAK_DOCS}#build-requirements`
+      )
+    }
+  }
   if ((manifest.modules?.length ?? 0) > 0 && builderVersion != null && semver.lt(builderVersion, MODULES_FLATPAK_BUILDER_VERSION) && !oldFreedesktopSdk) {
     // once per process: every arch is built with the same flatpak-builder
     log
@@ -286,6 +299,18 @@ export async function buildFlatpakBundle(options: FlatpakBundleOptions): Promise
         [
           "execvp appstream-compose",
           `flatpak-builder could not compose the AppStream metadata of the app (share/metainfo/${manifest.id}.metainfo.xml or share/appdata/${manifest.id}.appdata.xml, from linux.metainfo, flatpak.files or a module): it runs appstream-compose, which the freedesktop SDK no longer ships from 24.08 on. flatpak-builder 1.4 and newer use appstreamcli instead: update flatpak-builder, or leave the file out. See ${FLATPAK_DOCS}#build-requirements`,
+        ],
+        // the appstreamcli compose that flatpak-builder 1.4 and newer run filters for the flatpak id: a metainfo <id> that differs
+        // composes no component at all
+        [
+          // the bare tag: compose prints it as "E: <component-id>: filters-but-no-output" or "E: filters-but-no-output"
+          "filters-but-no-output",
+          `appstreamcli compose produced no AppStream component for ${manifest.id}: the <id> in the staged metainfo file (share/metainfo/${manifest.id}.metainfo.xml, from linux.metainfo) does not match the flatpak application id. Set the metainfo <id> to "${manifest.id}", or set flatpak: { metainfo: null } to leave the file out of the flatpak target. See ${FLATPAK_DOCS}#build-requirements`,
+        ],
+        // compose finds the icon through the .desktop file the launchable names, so a wrong launchable surfaces as a missing icon
+        [
+          "gui-app-without-icon",
+          `appstreamcli compose did not find the icon of the app, which it looks up through the .desktop file that the <launchable type="desktop-id"> element of the staged metainfo file (share/metainfo/${manifest.id}.metainfo.xml, from linux.metainfo) names: set the launchable to "${manifest.id}.desktop", the .desktop file the flatpak installs, or set flatpak: { metainfo: null } to leave the file out of the flatpak target. See ${FLATPAK_DOCS}#build-requirements`,
         ]
       )
     )

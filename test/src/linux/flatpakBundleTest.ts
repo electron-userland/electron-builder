@@ -37,7 +37,7 @@ const REFS = ["runtime/org.freedesktop.Platform/x86_64/24.08", "runtime/org.free
 type Command = [file: string, ...args: string[]]
 
 /** What the tools print for --version, in the two formats that are in use ("flatpak-builder 1.2.3" is the third). */
-const VERSION_OUTPUT: Record<string, string> = { flatpak: "Flatpak 1.16.6\n", "flatpak-builder": "flatpak-builder-1.4.4\n" }
+const VERSION_OUTPUT: Record<string, string> = { flatpak: "Flatpak 1.16.6\n", "flatpak-builder": "flatpak-builder-1.4.4\n", appstreamcli: "AppStream version: 1.0.3\n" }
 
 // flatpak and flatpak-builder are started by absolute path, which the resolver would look for on this machine's disk
 beforeEach(() => {
@@ -121,8 +121,10 @@ async function rejection(promise: Promise<unknown>): Promise<unknown> {
 /** Every command in the order it was started, after checking the directory and the environment that each one ran with. */
 function commands(expect: ExpectStatic, options: FlatpakBundleOptions): Command[] {
   return vi.mocked(exec).mock.calls.map(([toolPath, args, execOptions]) => {
-    // never looked up on PATH
-    expect(path.dirname(toolPath)).toBe(TOOLS_DIR)
+    // never looked up on PATH — except appstreamcli, which is probed by the bare name flatpak-builder itself execvps
+    if (path.basename(toolPath) !== "appstreamcli") {
+      expect(path.dirname(toolPath)).toBe(TOOLS_DIR)
+    }
     const command: Command = [path.basename(toolPath), ...(args ?? [])]
     // with modules, the two runs of flatpak-builder download their sources, which can take credentials from the environment.
     // Every other command, and flatpak-builder without modules, gets the filtered environment that exec defaults to
@@ -802,6 +804,45 @@ describe("buildFlatpakBundle", { concurrent: false }, () => {
       expect(hint).toContain("https://www.electron.build/docs/flatpak#build-requirements")
     })
 
+    // appstreamcli compose (flatpak-builder 1.4 and newer) filters for the flatpak id and composes nothing for a metainfo <id> that differs
+    test("hints at the metainfo <id> when appstreamcli compose outputs no component, and rethrows", async ({ expect, tmpDir }) => {
+      const { options } = await setup(tmpDir, { hasMetainfo: true })
+      const failure = failWith(
+        ["--user"],
+        args => args.includes("--finish-only"),
+        () => "AS: E: com.example.App: filters-but-no-output\nError: appstreamcli compose failed: Child process exited with code 1"
+      )
+
+      expect(await rejection(buildFlatpakBundle(options))).toBe(failure.error)
+
+      expect(log.error).toHaveBeenCalledOnce()
+      const hint = vi.mocked(log.error).mock.calls[0][1]
+      expect(hint).toContain("does not match the flatpak application id")
+      expect(hint).toContain('Set the metainfo <id> to "com.example.App"')
+      expect(hint).toContain("share/metainfo/com.example.App.metainfo.xml")
+      expect(hint).toContain("flatpak: { metainfo: null }")
+      expect(hint).toContain("https://www.electron.build/docs/flatpak#build-requirements")
+    })
+
+    // compose finds the icon through the .desktop file named by the metainfo <launchable>, so a wrong launchable surfaces as a missing icon
+    test("hints at the metainfo launchable when appstreamcli compose finds no icon, and rethrows", async ({ expect, tmpDir }) => {
+      const { options } = await setup(tmpDir, { hasMetainfo: true })
+      const failure = failWith(
+        ["--user"],
+        args => args.includes("--finish-only"),
+        () => "AS: E: com.example.App: gui-app-without-icon\nError: appstreamcli compose failed: Child process exited with code 1"
+      )
+
+      expect(await rejection(buildFlatpakBundle(options))).toBe(failure.error)
+
+      expect(log.error).toHaveBeenCalledOnce()
+      const hint = vi.mocked(log.error).mock.calls[0][1]
+      expect(hint).toContain('<launchable type="desktop-id">')
+      expect(hint).toContain('"com.example.App.desktop"')
+      expect(hint).toContain("flatpak: { metainfo: null }")
+      expect(hint).toContain("https://www.electron.build/docs/flatpak#build-requirements")
+    })
+
     test("hints at --disable-sandbox when flatpak build-export cannot start bubblewrap, and rethrows", async ({ expect, tmpDir }) => {
       const { options } = await setup(tmpDir, { flatpakBuilderArgs: ["--disable-rofiles-fuse"] })
       const failure = failWith(
@@ -904,6 +945,85 @@ describe("buildFlatpakBundle", { concurrent: false }, () => {
       await buildFlatpakBundle(options)
 
       expect(commands(expect, options).at(-1)?.[1]).toBe("build-bundle")
+    })
+  })
+
+  // flatpak-builder 1.4 and newer compose the staged metainfo file with appstreamcli, which runs on the build machine and which
+  // flatpak-builder looks up on PATH itself, so a missing appstreamcli fails the build early instead of after the refs are installed
+  describe("linux.metainfo and appstreamcli", () => {
+    const appstreamcliMissing = (file: string) => {
+      if (file === "appstreamcli") {
+        throw new ExecError("appstreamcli", "ENOENT" as any, "Exit code: ENOENT. spawn appstreamcli ENOENT", "", "ENOENT")
+      }
+    }
+
+    test("fails before anything is installed when appstreamcli is missing with flatpak-builder 1.4.4", async ({ expect, tmpDir }) => {
+      const { options, manifestFile } = await setup(tmpDir, { hasMetainfo: true })
+      mockTools(["--user"], appstreamcliMissing)
+
+      const error = await rejection(buildFlatpakBundle(options))
+
+      expect(error).toBeInstanceOf(InvalidConfigurationError)
+      const message = (error as Error).message
+      expect(message).toContain("linux.metainfo stages share/metainfo/com.example.App.metainfo.xml")
+      expect(message).toContain("flatpak-builder 1.4.4 composes with appstreamcli")
+      expect(message).toContain("appstreamcli is not installed")
+      expect(message).toContain('the "appstream" package on Debian/Ubuntu')
+      expect(message).toContain("flatpak: { metainfo: null }")
+      expect(message).toContain("https://www.electron.build/docs/flatpak#build-requirements")
+      // nothing ran but the version checks and the probe: the refs are not even looked up, let alone installed
+      expect(commands(expect, options).every(it => it[1] === "--version")).toBe(true)
+      expect(existsSync(manifestFile)).toBe(false)
+    })
+
+    test("probes appstreamcli once, before the refs, and builds when it is present", async ({ expect, tmpDir }) => {
+      const { options } = await setup(tmpDir, { hasMetainfo: true })
+      mockTools(["--user"])
+
+      await buildFlatpakBundle(options)
+
+      const all = commands(expect, options)
+      expect(all.slice(0, 3)).toEqual([
+        ["flatpak", "--version"],
+        ["flatpak-builder", "--version"],
+        ["appstreamcli", "--version"],
+      ])
+      expect(all.filter(it => it[0] === "appstreamcli")).toHaveLength(1)
+      expect(all.at(-1)?.[1]).toBe("build-bundle")
+    })
+
+    // before 1.4 flatpak-builder composes with the SDK's appstream-compose, never with the host's appstreamcli
+    test("does not look for appstreamcli with flatpak-builder 1.2.2: the version gate fails first on the freedesktop SDK 24.08", async ({ expect, tmpDir }) => {
+      const { options } = await setup(tmpDir, { hasMetainfo: true })
+      mockTools(["--user"], appstreamcliMissing, { ...VERSION_OUTPUT, "flatpak-builder": "flatpak-builder 1.2.2\n" })
+
+      const error = await rejection(buildFlatpakBundle(options))
+
+      expect(error).toBeInstanceOf(InvalidConfigurationError)
+      expect((error as Error).message).toContain("Upgrade flatpak-builder to 1.4.0 or newer")
+      expect(commands(expect, options).filter(it => it[0] === "appstreamcli")).toEqual([])
+    })
+
+    test("builds without appstreamcli with flatpak-builder 1.2.2 on the freedesktop SDK 23.08, which still ships appstream-compose", async ({ expect, tmpDir }) => {
+      const { options } = await setup(tmpDir, { hasMetainfo: true, manifest: { ...manifest, "runtime-version": "23.08" } })
+      mockTools(["--user"], appstreamcliMissing, { ...VERSION_OUTPUT, "flatpak-builder": "flatpak-builder 1.2.2\n" })
+
+      await buildFlatpakBundle(options)
+
+      const all = commands(expect, options)
+      expect(all.filter(it => it[0] === "appstreamcli")).toEqual([])
+      expect(all.at(-1)?.[1]).toBe("build-bundle")
+    })
+
+    test("does not look for appstreamcli without metainfo", async ({ expect, tmpDir }) => {
+      const { options } = await setup(tmpDir)
+      mockTools(["--user"], appstreamcliMissing)
+
+      await buildFlatpakBundle(options)
+
+      const all = commands(expect, options)
+      expect(all.filter(it => it[0] === "appstreamcli")).toEqual([])
+      expect(all.at(-1)?.[1]).toBe("build-bundle")
     })
   })
 

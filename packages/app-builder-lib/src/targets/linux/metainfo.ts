@@ -61,6 +61,9 @@ export function normalizeMetainfoOption(value: string | LinuxMetainfoConfigurati
     return null
   }
   if (typeof value === "string") {
+    if (value.trim().length === 0) {
+      throw new InvalidConfigurationError(`metainfo must name a file when it is a string, but found ${JSON.stringify(value)}`)
+    }
     return { file: value, validate: true }
   }
   if (typeof value.file !== "string" || value.file.trim().length === 0) {
@@ -123,6 +126,13 @@ export async function prepareMetainfoFile(options: MetainfoOptions): Promise<Sta
   if (/[/\\]/.test(installBasename) || [...installBasename].some(c => c.charCodeAt(0) === 0)) {
     throw new InvalidConfigurationError(`metainfo component id produces an invalid file name "${installBasename}" — remove any path separators or NUL characters`)
   }
+
+  // one success line per build and file: every target and arch of the packager stages the same file
+  const appstreamcli = validate ? await appstreamCliVersion.value : null
+  log
+    .once(`metainfo-staged:${file}`, options.packager)
+    .info({ file: path.basename(file), validated: validate ? "yes" : "no", ...(appstreamcli == null ? {} : { appstreamcli }) }, "metainfo staged")
+
   return { file, installBasename }
 }
 

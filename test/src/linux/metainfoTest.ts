@@ -177,6 +177,12 @@ describe("normalizeMetainfoOption", () => {
   test("object without file is rejected", () => {
     expect(() => normalizeMetainfoOption({ validate: false } as any)).toThrowError(/metainfo.file is required/)
   })
+
+  test("blank string is rejected with a configuration error, not a TypeError", () => {
+    for (const value of ["", "   "]) {
+      expect(() => normalizeMetainfoOption(value)).toThrowError(/metainfo must name a file when it is a string/)
+    }
+  })
 })
 
 describe("fpmFormatUsesMetainfo", () => {
@@ -282,6 +288,40 @@ describe("prepareMetainfoFile", () => {
     // another packager (another build) warns again
     await prepare(path.basename(file), fakePackager())
     expect(count(/reverse-DNS identifier/)).toBe(2)
+  })
+
+  test("logs one staged info line per packager and file", async () => {
+    const info = vi.spyOn(log, "info").mockImplementation(() => undefined)
+    try {
+      const file = await writeFixture(metainfoXml(), "staged-log.metainfo.xml")
+      const packager = fakePackager()
+      // e.g. deb x64, deb arm64 and rpm x64 of one build
+      for (let i = 0; i < 3; i++) {
+        await prepare(path.basename(file), packager)
+      }
+      const staged = info.mock.calls.filter(call => call[1] === "metainfo staged")
+      expect(staged).toHaveLength(1)
+      expect(staged[0][0]).toMatchObject({ file: "staged-log.metainfo.xml", validated: "yes" })
+
+      // another packager (another build) logs again
+      await prepare(path.basename(file), fakePackager())
+      expect(info.mock.calls.filter(call => call[1] === "metainfo staged")).toHaveLength(2)
+    } finally {
+      info.mockRestore()
+    }
+  })
+
+  test("the staged info line says validated: no and names no appstreamcli when validation is disabled", async () => {
+    const info = vi.spyOn(log, "info").mockImplementation(() => undefined)
+    try {
+      const file = await writeFixture(metainfoXml(), "staged-log-unvalidated.metainfo.xml")
+      await prepare({ file: path.basename(file), validate: false })
+      const staged = info.mock.calls.filter(call => call[1] === "metainfo staged")
+      expect(staged).toHaveLength(1)
+      expect(staged[0][0]).toEqual({ file: "staged-log-unvalidated.metainfo.xml", validated: "no" })
+    } finally {
+      info.mockRestore()
+    }
   })
 
   test("launchable matches when any desktop-id launchable is the installed .desktop file", async () => {
