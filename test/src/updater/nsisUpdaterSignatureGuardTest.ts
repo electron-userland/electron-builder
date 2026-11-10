@@ -133,8 +133,6 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
 
   // no update config file at all: an unpackaged app (dev mode) is not verified; a packaged one (e.g. updateConfigPath names a missing file) is
   describe("no update config file", () => {
-    const NO_CONFIG_DOCS = "https://www.electron.build/docs/win#how-do-you-set-the-publishername-of-updates-at-runtime"
-
     async function createUpdaterWithoutConfig(isPackaged: boolean) {
       const updater = await createNsisUpdater()
       // @ts-expect-error accessing the protected app adapter
@@ -173,7 +171,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
       const message = error instanceof Error ? error.message : ""
       expect(message.startsWith("The update is rejected: the update config file of the packaged app (app-update.yml or the updateConfigPath file) is missing")).toBe(true)
       expect(message).toContain("autoUpdater.publisherName")
-      expect(message.endsWith(NO_CONFIG_DOCS)).toBe(true)
+      expect(message.endsWith(MISSING_DOCS)).toBe(true)
     })
 
     // a custom verifier would get no names to match (one checking them with e.g. `every` would accept any signer), so it is not called,
@@ -184,6 +182,21 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
     ])("a packaged app without app-update.yml rejects the update without calling a custom verifier that %s", async (_name, verifierResult) => {
       const { updater } = await createUpdaterWithoutConfig(true)
       const verifyHook = vi.fn(async () => verifierResult)
+      updater.verifyUpdateFileAuthenticodeSignature = verifyHook
+
+      // @ts-expect-error accessing a private method
+      await expect(updater.verifySignature("/path/to/installer.exe")).rejects.toMatchObject({ code: "ERR_UPDATER_NO_PUBLISHER_NAME" })
+      expect(verifyHook).not.toHaveBeenCalled()
+    })
+
+    // the runtime value is normalized like the config's: no string entry means no publisherName
+    test.each([
+      ["an empty list", []],
+      ["a list without a string entry", [123]],
+    ])("a packaged app without app-update.yml rejects the update when autoUpdater.publisherName is %s", async (_name, publisherName: unknown) => {
+      const { updater } = await createUpdaterWithoutConfig(true)
+      updater.publisherName = publisherName as Array<string>
+      const verifyHook = vi.fn(async () => ({ response: "success" as const }))
       updater.verifyUpdateFileAuthenticodeSignature = verifyHook
 
       // @ts-expect-error accessing a private method
@@ -244,6 +257,25 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
     // @ts-expect-error accessing a private method
     await updater.verifySignature("/path/to/installer.exe")
     expect(verifyHook).toHaveBeenLastCalledWith(["CN=Build Corp"], "/path/to/installer.exe")
+  })
+
+  test.each([
+    ["an empty list", []],
+    ["a list without a string entry", [123]],
+  ])("an app-update.yml without publisherName is rejected when autoUpdater.publisherName is %s", async (_name, publisherName: unknown) => {
+    const updater = await createNsisUpdater()
+    updater.updateConfigPath = await writeRawUpdateConfig<GenericServerOptions>({ provider: "generic", url: "https://example.com/updates" })
+    updater.logger = mockLogger()
+    updater.publisherName = publisherName as Array<string>
+    const verifyHook = vi.fn(async () => ({ response: "success" as const }))
+    updater.verifyUpdateFileAuthenticodeSignature = verifyHook
+
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifySignature("/path/to/installer.exe")).resolves.toEqual({
+      response: "failure",
+      message: expect.stringContaining("app-update.yml has no publisherName"),
+    })
+    expect(verifyHook).not.toHaveBeenCalled()
   })
 
   test("an unpackaged app (dev mode) with a dev-app-update.yml without publisherName is rejected too", async () => {
