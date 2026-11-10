@@ -1740,7 +1740,7 @@
       "description": "File associations.\n\nmacOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)), NSIS, and MSI only.\n\nOn Windows (NSIS) works only if [nsis.perMachine](https://www.electron.build/nsis) is set to `true`.",
       "properties": {
         "description": {
-          "description": "*windows-only.* The description.",
+          "description": "The description. On Windows, the file type description. On Linux, the `<comment>` of the MIME type declared for `mimeType`: deb, rpm and pacman write it only when set, while AppImage and Flatpak fall back to `<productName> document`.",
           "type": [
             "null",
             "string"
@@ -8752,7 +8752,7 @@
           ]
         },
         "name": {
-          "description": "The space name.",
+          "description": "The space name: 3-63 letters, digits and dashes, starting with a letter or digit.",
           "type": "string"
         },
         "path": {
@@ -8787,7 +8787,7 @@
           ]
         },
         "region": {
-          "description": "The region (e.g. `nyc3`).",
+          "description": "The DigitalOcean region slug (e.g. `nyc3`): three letters followed by one or two digits.",
           "type": "string"
         },
         "requestHeaders": {

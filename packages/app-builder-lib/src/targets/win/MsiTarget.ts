@@ -253,7 +253,7 @@ export default class MsiTarget extends Target {
         if (!dirNames.has(dirName)) {
           dirNames.add(dirName)
           if (!isWix3) {
-            dirs.push(`<Directory Id="${directoryId}" Name="${ROOT_DIR_ID}:\\${dirName.replace(/\//g, "\\")}\\"/>`)
+            dirs.push(`<Directory Id="${directoryId}" Name="${ROOT_DIR_ID}:\\${escapeForXml(dirName.replace(/\//g, "\\"))}\\"/>`)
           }
         }
       } else if (!isRootDirAddedToRemoveTable) {
@@ -291,7 +291,7 @@ export default class MsiTarget extends Target {
         if (commonOptions.isCreateStartMenuShortcut) {
           if (menuCategory != null) {
             if (!isWix3) {
-              dirs.push(`<Directory Id="${startMenuShortcutDirectoryId}" Name="ProgramMenuFolder:\\${menuCategory}\\"/>`)
+              dirs.push(`<Directory Id="${startMenuShortcutDirectoryId}" Name="ProgramMenuFolder:\\${escapeForXml(menuCategory)}\\"/>`)
             } else {
               startMenuCategory = menuCategory
             }

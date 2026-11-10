@@ -133,7 +133,8 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
     const syncReleasesExe = path.join(vendorDirectory, "SyncReleases.exe")
     const syncArgs = ["-u", remoteReleases, "-r", outputDirectory]
     if (remoteToken) {
-      syncArgs.push("-t", remoteToken)
+      // the long form, so exec's flag redaction hashes the token in debug logs and failure messages (`-t` is not redacted)
+      syncArgs.push("--token", remoteToken)
     }
     await (mono == null ? exec(syncReleasesExe, syncArgs) : exec(mono, [syncReleasesExe, ...syncArgs]))
   }

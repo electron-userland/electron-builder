@@ -47,9 +47,9 @@ export type ListedFileComparison =
 
 /**
  * Compares each file update info lists with a local file by the size and sha512 it declares, which electron-updater checks a download
- * against: the file of the same name in `filesByName` (the base name of the url or path, without a query), or else any of
+ * against: the file of the same name in `filesByName` (the base name of the url or path, without a query), or, when there is none, any of
  * `hashCandidates` with the declared size and sha512, since a GitHub update info lists the safe artifact name, which can differ from the
- * local file name. A file that is not a regular file or cannot be read is not found. Hashes are memoized in `hashes`, by file.
+ * local file name. A file found by its name is never replaced by a hash candidate. A file that is not a regular file or cannot be read is not found. Hashes are memoized in `hashes`, by file.
  */
 export async function compareListedFiles(
   info: UpdateInfo,
@@ -98,7 +98,9 @@ export async function compareListedFiles(
       }
       comparison = mismatched.length === 0 ? { status: "matches", file: named } : { status: "mismatch", file: named, mismatched }
     }
-    if (comparison.status !== "matches" && entry.sha512 != null) {
+    // only for a file no local file is named as: a file found by its name keeps its result, so a byte-identical copy of the file as
+    // built (an unsigned copy, a backup) cannot stand in for the changed file the manifest lists
+    if (comparison.status === "not found" && entry.sha512 != null) {
       for (const candidate of hashCandidates) {
         const candidateStats = await stat(candidate).catch(() => null)
         if (candidateStats?.isFile() === true && (entry.size == null || candidateStats.size === entry.size) && (await sha512Of(candidate)) === entry.sha512) {
@@ -110,6 +112,47 @@ export async function compareListedFiles(
     compared.push({ entry, comparison })
   }
   return compared
+}
+
+/**
+ * The folders the files listed by `manifestFile` are looked for in, closest first, as the build writes them: the manifest's own folder,
+ * the folder of its target (`<outDir>/nsis-web/`, also for a further provider's `<outDir>/nsis-web/<provider>/latest.yml`), and the
+ * output folder (the artifacts of a further provider's `<outDir>/<provider>/latest.yml`).
+ */
+export function listedFileFolders(manifestFile: string, outDir: string): Array<string> {
+  const parts = path.relative(outDir, manifestFile).split(path.sep)
+  const targetDir = parts.length > 1 ? path.join(outDir, parts[0]) : outDir
+  return [...new Set([path.dirname(manifestFile), targetDir, outDir])]
+}
+
+/**
+ * {@link compareListedFiles} for a manifest in a build output folder: each listed file is the file of its name in the
+ * {@link listedFileFolders} (the closest wins), else the file whose GitHub safe name it is (spaces replaced by `-`, as
+ * computeSafeArtifactNameIfNeeded makes it), else any of them with the declared size and sha512. `files` are the regular files to consider;
+ * those outside the listed-file folders, manifests and block maps are ignored.
+ */
+export function compareListedFilesInOutput(
+  info: UpdateInfo,
+  manifestFile: string,
+  outDir: string,
+  files: ReadonlyArray<string>,
+  hashes: Map<string, Promise<string | null>>
+): ReturnType<typeof compareListedFiles> {
+  const dirs = listedFileFolders(manifestFile, outDir)
+  const candidates = files.filter(it => dirs.includes(path.dirname(it)) && !/\.(ya?ml|blockmap)$/.test(it))
+  // a file of the same name tells which value is stale; the closest one wins, and an exact name wins over a safe name
+  const candidatesByName = new Map<string, string>()
+  for (const nameOf of [(name: string) => name, (name: string) => name.replace(/ /g, "-")]) {
+    for (const dir of dirs) {
+      for (const candidate of candidates) {
+        const name = nameOf(path.basename(candidate))
+        if (path.dirname(candidate) === dir && !candidatesByName.has(name)) {
+          candidatesByName.set(name, candidate)
+        }
+      }
+    }
+  }
+  return compareListedFiles(info, candidatesByName, hashes, candidates)
 }
 
 /**
