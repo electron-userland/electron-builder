@@ -7,12 +7,14 @@ import * as semver from "semver"
 import { CompressionLevel } from "../../core.js"
 import { LinuxPackager } from "../../linuxPackager.js"
 import { CommonLinuxOptions } from "../../options/linuxOptions.js"
+import type { SnapOptions24, SnapOptionsLegacy } from "../../options/SnapOptions.js"
 import { SnapCore } from "./snap/SnapTarget.js"
 import { SnapCore24 } from "./snap/core24.js"
 import { SnapCoreCustom } from "./snap/coreCustom.js"
 import { SnapCoreLegacy } from "./snap/coreLegacy.js"
 import { IconInfo } from "../../util/iconConverter.js"
 import { generateMimeTypeXml } from "./appimage/appLauncher.js"
+import { mergeConfigLayers } from "../../util/config/mergeConfigLayers.js"
 import _fsExtra from "fs-extra"
 const { outputFile } = _fsExtra
 
@@ -134,7 +136,7 @@ export class LinuxTargetHelper {
             }
             log.warn(null, "electron 4 and higher is highly recommended for Snap with core18/core20/core22")
           }
-          return new SnapCoreLegacy(this.packager, this, deepAssign({ base: core }, snapLinuxOptions, options))
+          return new SnapCoreLegacy(this.packager, this, mergeConfigLayers<SnapOptionsLegacy & { base: typeof core }>({ base: core }, snapLinuxOptions, options))
         case "core24":
           if (!this.isElectronVersionGreaterOrEqualThan("28.0.0")) {
             if (!this.isElectronVersionGreaterOrEqualThan("25.0.0")) {
@@ -142,13 +144,13 @@ export class LinuxTargetHelper {
             }
             log.warn(null, "electron 28 and higher is highly recommended for Snap with core24")
           }
-          return new SnapCore24(this.packager, this, deepAssign({}, snapLinuxOptions, options))
+          return new SnapCore24(this.packager, this, mergeConfigLayers<SnapOptions24>(snapLinuxOptions, options))
         case "custom":
           // Pass-through: do not inject linux options into user-supplied yaml
           return new SnapCoreCustom(this.packager, this, snapcraft.custom || {})
       }
     }
-    return new SnapCoreLegacy(this.packager, this, deepAssign({ base: "core20" as const }, snapLinuxOptions, {}))
+    return new SnapCoreLegacy(this.packager, this, mergeConfigLayers<SnapOptionsLegacy & { base: "core20" }>({ base: "core20" }, snapLinuxOptions))
   }
 
   isElectronVersionGreaterOrEqualThan(version: string, fallback?: string): boolean {

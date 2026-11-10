@@ -36,6 +36,7 @@ import { AppInfo } from "./appInfo.js"
 import { isSignResultSigned, SigningResult } from "./codeSign/signResult.js"
 import { FORCE_CODE_SIGNING_DOCS, forceCodeSigningOverrideHint } from "./codeSign/forceCodeSigning.js"
 import { BUILD_CHANGES_URL } from "./util/config/legacyOptions.js"
+import { mergeConfigLayers } from "./util/config/mergeConfigLayers.js"
 import { checkFileInArchive } from "./asar/asarFileChecker.js"
 import { AsarPackager } from "./asar/asarUtil.js"
 import { AsarIntegrity, computeData } from "./asar/integrity.js"
@@ -113,11 +114,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   /**
-   * Merge platform-level options with target-specific config under `key`.
-   * Replaces the manual `deepAssign({}, packager.platformSpecificBuildOptions, config.X)` pattern.
+   * Merge platform-level options with target-specific config under `key`, into a new object: building one target never changes the
+   * platform options or another target's (e.g. a `deb.desktop` entry does not reach the AppImage).
+   *
+   * The platform `compression` is a level (`store` / `normal` / `maximum`, read as {@link compression}), while a target's own
+   * `compression` is an algorithm (`deb.compression: "xz"`), so the platform value is not merged into the target options.
    */
   getOptionsForTarget<T>(key: string): T {
-    return deepAssign({}, this.platformSpecificBuildOptions, (this.config as any)[key] ?? {}) as T
+    const { compression: _level, ...platformOptions } = this.platformSpecificBuildOptions
+    return mergeConfigLayers<T>(platformOptions, (this.config as any)[key])
   }
 
   private externalLinkPolicy: Promise<ExternalLinkPolicy> | null = null

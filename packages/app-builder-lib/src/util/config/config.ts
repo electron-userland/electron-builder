@@ -2,7 +2,7 @@ import { createRequire } from "node:module"
 import { DebugLogger, InvalidConfigurationError, log, safeStringifyJson, statOrNull } from "builder-util"
 
 const _requireResolve = createRequire(import.meta.url).resolve
-import { deepAssign, Nullish } from "builder-util-runtime"
+import { Nullish } from "builder-util-runtime"
 
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -14,34 +14,39 @@ import { PACKAGE_VERSION } from "../../version.js"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js"
 import { forwardFlatFileOptionReads, isPlainObject, normalizeFileOptions, replaceMergedConfigExcludedExts, validateExcludedExtensionsOptions } from "./fileOptions.js"
 import { checkLegacyConfiguration } from "./legacyConfigGuard.js"
+import { mergeConfigLayers } from "./mergeConfigLayers.js"
 import { validateSchema } from "./schemaValidator.js"
 import _fsExtra from "fs-extra"
 const { readJson } = _fsExtra
 
 // https://github.com/electron-userland/electron-builder/issues/1847
-function mergePublish(config: Configuration, configFromOptions: Configuration) {
-  // if config from disk doesn't have publish (or object), no need to handle, it will be simply merged by deepAssign
+/**
+ * Merges the programmatic / `-c` configuration over the configuration file into a new configuration. Neither layer is changed:
+ * the file's objects can be a cached JS module, the programmatic ones the caller's own `build({ config })` objects.
+ */
+function mergePublish(config: Configuration, configFromOptions: Configuration): Configuration {
+  // if config from disk doesn't have publish (or object), no need to handle, it will be simply merged
   const publish = Array.isArray(config.publish) ? configFromOptions.publish : null
   if (publish != null) {
     delete (configFromOptions as any).publish
   }
 
-  // a copy of the root and platform `fileOptions` from before `deepAssign` merges into them, for replaceMergedConfigExcludedExts
-  const fileConfig = normalizeFileOptions(config)
-  deepAssign(config, configFromOptions)
-  replaceMergedConfigExcludedExts(config, [fileConfig, configFromOptions])
+  const merged = mergeConfigLayers<Configuration>(config, configFromOptions)
+  replaceMergedConfigExcludedExts(merged, [config, configFromOptions])
 
   if (publish == null) {
-    return
+    return merged
   }
 
-  const listOnDisk = config.publish as Array<any>
+  // a copy of the file's list (its entries are not copied)
+  const listOnDisk = merged.publish as Array<any>
   if (listOnDisk.length === 0) {
-    config.publish = publish
+    merged.publish = publish
   } else {
     // apply to first
-    deepAssign(listOnDisk[0], publish)
+    listOnDisk[0] = mergeConfigLayers(listOnDisk[0], publish as object)
   }
+  return merged
 }
 
 export function createProjectMetadataLazy(projectDir: string): Lazy<Record<string, any> | null> {
@@ -58,10 +63,8 @@ export async function getConfig(
   const configAndEffectiveFile = await _getConfig<Configuration>(configRequest, configPath)
   // Before merging: a CLI `-c.files` must be added to a `fileOptions.files` from the config file, not conflict with it.
   // Both are normalized copies, so the caller's `configFromOptions` (the `config` passed to `build()`) is not rewritten.
-  const config = normalizeFileOptions<Configuration>(configAndEffectiveFile == null ? {} : configAndEffectiveFile.result)
-  if (configFromOptions != null) {
-    mergePublish(config, normalizeFileOptions(configFromOptions))
-  }
+  const fileConfig = normalizeFileOptions<Configuration>(configAndEffectiveFile == null ? {} : configAndEffectiveFile.result)
+  const config = configFromOptions == null ? fileConfig : mergePublish(fileConfig, normalizeFileOptions(configFromOptions))
 
   if (configAndEffectiveFile != null) {
     log.info({ file: configAndEffectiveFile.configFile == null ? 'package.json ("build" field)' : configAndEffectiveFile.configFile }, "loaded configuration")
@@ -206,8 +209,7 @@ function mergeFileSets(lists: FileSet[][]): FileSet[] {
  * Object.assign as sources.
  */
 export function doMergeConfigs(inputConfigs: Configuration[]): Configuration {
-  // Copies (root, platform sections and their `fileOptions`): `normalizeFiles`, `deepAssign` and
-  // `forwardFlatFileOptionReads` write into them, and they can be the caller's own objects.
+  // Copies (root, platform sections and their `fileOptions`): `normalizeFiles` writes into them, and they can be the caller's own objects.
   const configs = inputConfigs.map(it => normalizeFileOptions(it))
   for (const config of configs) {
     // A non-object `fileOptions` is left as is for `checkLegacyConfiguration` to report.
@@ -218,18 +220,17 @@ export function doMergeConfigs(inputConfigs: Configuration[]): Configuration {
     }
   }
 
-  // `deepAssign` prioritises latter configs, while `mergeFilesSets` prioritises
+  // `mergeConfigLayers` prioritises latter configs, while `mergeFilesSets` prioritises
   // former configs, so we have to reverse the order, because latter configs
   // must have higher priority.
   const fileLists = configs.map(config => (config.fileOptions?.files ?? []) as FileSet[]).reverse()
 
-  // copies of the root and platform `fileOptions` from before `deepAssign` merges the later configs into them, for replaceMergedConfigExcludedExts
-  const layers = configs.map(it => normalizeFileOptions(it))
-  const result = deepAssign(getDefaultConfig(), ...configs)
+  // a new configuration: no layer is changed, so an `extends` preset (a cached module) never takes values from a later layer
+  const result = mergeConfigLayers<Configuration>(getDefaultConfig(), ...configs)
   if (result.fileOptions == null || isPlainObject(result.fileOptions)) {
     result.fileOptions = { ...result.fileOptions, files: mergeFileSets(fileLists) }
   }
-  replaceMergedConfigExcludedExts(result, layers)
+  replaceMergedConfigExcludedExts(result, configs)
   forwardFlatFileOptionReads(result)
   return result
 }
