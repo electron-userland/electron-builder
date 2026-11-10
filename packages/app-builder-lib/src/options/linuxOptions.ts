@@ -33,7 +33,7 @@ export interface LinuxDesktopFile {
   } | null
 }
 
-export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecificBuildOptions {
+export interface LinuxConfiguration extends CommonLinuxOptions, LinuxAppStreamOptions, PlatformSpecificBuildOptions {
   /**
    * Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
    *
@@ -108,8 +108,38 @@ export interface CommonLinuxOptions {
   readonly executableArgs?: Array<string> | null
 }
 
+export interface LinuxMetainfoConfiguration {
+  /**
+   * The path to the metainfo XML file, relative to the [build resources](https://www.electron.build/contents#extraresources) or to the project directory.
+   */
+  readonly file: string
+
+  /**
+   * Whether to validate the file at build time (structure checks and the optional `appstreamcli validate --no-net` run). When `false` the file is still staged into the package.
+   * @default true
+   */
+  readonly validate?: boolean
+}
+
+/**
+ * Options of the Linux targets that can ship an AppStream metainfo file: `deb`, `rpm`, `pacman`, `apk`, `AppImage` and `flatpak`.
+ * Snap does not extend it: the Snap Store does not read metainfo.
+ */
+export interface LinuxAppStreamOptions {
+  /**
+   * A user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file: a path (relative to the build resources or to the project directory), or `{ file, validate }`.
+   *
+   * Installed into `/usr/share/metainfo` for `deb`, `rpm`, `pacman` and `apk`, into `usr/share/metainfo` inside the AppImage, and into `share/metainfo` for `flatpak`.
+   * The other fpm targets (`freebsd`, `p5p`, `sh`) and `snap` don't use it, so setting it at the `linux` level is safe.
+   *
+   * The file is installed as `<component-id>.metainfo.xml`, except that a basename ending in `.appdata.xml` (the AppImageHub convention) is kept. Flatpak always installs it as `<flatpak id>.metainfo.xml`.
+   * Set to `null` on a specific target to leave the file out of that target.
+   */
+  readonly metainfo?: string | LinuxMetainfoConfiguration | null
+}
+
 // fpm-only specific options
-export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSpecificOptions {
+export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, LinuxAppStreamOptions, TargetSpecificOptions {
   /**
    * Package dependencies.
    * `rpm` defaults to `["gtk3", "libnotify", "nss", "libXScrnSaver", "(libXtst or libXtst6)", "xdg-utils", "at-spi2-core", "(libuuid or libuuid1)"]`
@@ -209,7 +239,7 @@ export interface PacmanOptions extends LinuxTargetSpecificOptions {
   readonly compression?: "gz" | "bzip2" | "xz" | "zstd" | null
 }
 
-export interface AppImageOptions extends CommonLinuxOptions, TargetSpecificOptions {
+export interface AppImageOptions extends CommonLinuxOptions, LinuxAppStreamOptions, TargetSpecificOptions {
   /**
    * The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). Only plain text is supported.
    */
@@ -232,7 +262,7 @@ export interface AppImageOptions extends CommonLinuxOptions, TargetSpecificOptio
   readonly compression?: "gzip" | "xz" | "zstd" | null
 }
 
-export interface FlatpakOptions extends CommonLinuxOptions, TargetSpecificOptions {
+export interface FlatpakOptions extends CommonLinuxOptions, LinuxAppStreamOptions, TargetSpecificOptions {
   /**
    * The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). Only plain text is supported.
    */

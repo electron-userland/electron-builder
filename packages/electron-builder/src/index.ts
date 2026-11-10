@@ -25,6 +25,8 @@ export {
   LinuxConfiguration,
   DebOptions,
   CommonLinuxOptions,
+  LinuxAppStreamOptions,
+  LinuxMetainfoConfiguration,
   LinuxTargetSpecificOptions,
   AppImageOptions,
   Configuration,

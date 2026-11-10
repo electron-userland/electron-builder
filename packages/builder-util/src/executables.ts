@@ -32,6 +32,7 @@ export type ExecutableName =
   | "snapcraft"
   | "flatpak"
   | "flatpak-builder"
+  | "appstreamcli"
 
 /**
  * One `file://` URI, or a list of them, of an executable file on the build machine, such as `file:///opt/homebrew/bin/mono` or
@@ -144,6 +145,12 @@ export const DEFAULT_EXECUTABLES: Readonly<Record<ExecutableName, DefaultLocatio
   },
   flatpak: inUsrBinOnLinux("flatpak"),
   "flatpak-builder": inUsrBinOnLinux("flatpak-builder"),
+  // the "appstream" package of the Linux distributions, or Homebrew on macOS. Optional: it validates metainfo files when it is
+  // installed, and the flatpak target requires it only when a metainfo file is staged
+  appstreamcli: {
+    linux: () => ["/usr/bin/appstreamcli", "/usr/local/bin/appstreamcli"],
+    darwin: () => ["/opt/homebrew/bin/appstreamcli", "/usr/local/bin/appstreamcli"],
+  },
 }
 
 function isExecutableName(name: string): name is ExecutableName {

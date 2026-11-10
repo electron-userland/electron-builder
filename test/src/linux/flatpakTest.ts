@@ -142,6 +142,7 @@ describe.heavy.ifNotWindows("flatpak", { concurrent: false, timeout: EXTENDED_TI
       flatpakBuilderArgs: [],
       buildExportArgs: [],
       buildBundleArgs: [],
+      hasMetainfo: false,
     })
     expect(path.isAbsolute(options.artifactPath)).toBe(true)
     // a scratch directory of its own, outside of the output and stage directories
