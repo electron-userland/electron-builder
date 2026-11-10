@@ -459,5 +459,20 @@ describe("fileOptions.excludedExts: a later layer replaces an earlier one", () =
       platformConfig("mas-dev", { fileOptions: null }, masOnly, masDev)
       expect(masOnly).toEqual({ fileOptions: { excludedExts: ["map"] } })
     })
+
+    test("merging the mas configuration does not change the mac sign, extendInfo or universal options the macOS app is built with", ({ expect }) => {
+      const mac = { sign: { identity: "Developer ID", hardenedRuntime: true }, extendInfo: { A: "mac" }, universal: { mergeASARs: true } }
+      const mas = { sign: { identity: "Apple Distribution", entitlements: "build/mas.plist", hardenedRuntime: false }, extendInfo: { B: "mas" }, universal: { mergeASARs: false } }
+      const masConfig = platformConfig("mas", mac, mas)
+      expect(masConfig.sign).toEqual({ identity: "Apple Distribution", entitlements: "build/mas.plist", hardenedRuntime: false })
+      expect(masConfig.extendInfo).toEqual({ A: "mac", B: "mas" })
+      expect(mac).toEqual({ sign: { identity: "Developer ID", hardenedRuntime: true }, extendInfo: { A: "mac" }, universal: { mergeASARs: true } })
+    })
+
+    test("a mas custom signer function replaces the mac one", ({ expect }) => {
+      const macSigner = () => Promise.resolve()
+      const masSigner = () => Promise.resolve()
+      expect(platformConfig("mas", { sign: macSigner }, { sign: masSigner }).sign).toBe(masSigner)
+    })
   })
 })

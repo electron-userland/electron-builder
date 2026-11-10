@@ -44,7 +44,8 @@ import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackag
 import { ArchiveTarget } from "./targets/ArchiveTarget.js"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/mac/pkg.js"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory.js"
-import { isPlainObject, replaceMergedExcludedExts } from "./util/config/fileOptions.js"
+import { replaceMergedExcludedExts } from "./util/config/fileOptions.js"
+import { mergeConfigLayers } from "./util/config/mergeConfigLayers.js"
 import { isMacOsHighSierra } from "./util/mac/macosVersion.js"
 import { buildSingleArchFilesPattern, collectIdenticalSingleArchMachOFiles, collectSingleArchPackageNames } from "./util/archCompatibility.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
@@ -59,12 +60,12 @@ function isElectronSignOptions(sign: MacConfiguration["sign"]): sign is Electron
 }
 
 /**
- * Merges the mac → mas (→ masDev) cascade. `deepAssign` merges a later layer into a nested object it took from an earlier one, so each
- * layer's `fileOptions` is copied first: merging the mas configuration must not change the `fileOptions` of the mac one. A later layer's
+ * Merges the mac → mas (→ masDev) cascade into a new configuration: merging the mas layer never changes the mac one (its `sign`,
+ * `extendInfo`, `fileOptions`, ...), which the macOS app of the same build is packed and signed with. A later layer's
  * `fileOptions.excludedExts` replaces an earlier one (see replaceMergedExcludedExts).
  */
 function mergeMasConfig(...layers: Array<MacConfiguration | MasConfiguration | Nullish>): MasConfiguration {
-  const config: MasConfiguration = deepAssign({}, ...layers.map(it => (it != null && isPlainObject(it.fileOptions) ? { ...it, fileOptions: { ...it.fileOptions } } : it)))
+  const config = mergeConfigLayers<MasConfiguration>(...layers)
   replaceMergedExcludedExts(config, layers)
   return config
 }
@@ -869,7 +870,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       appPlist.NSRequiresAquaSystemAppearance = false
     }
 
-    const extendInfo = this.platformSpecificBuildOptions.extendInfo
+    // the flavor's own extendInfo: for mas / mas-dev, the mas (and masDev) keys merged over the mac ones
+    const extendInfo = cascadedOptions.extendInfo
     if (extendInfo != null) {
       deepAssign(appPlist, extendInfo)
     }

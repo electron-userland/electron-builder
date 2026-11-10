@@ -173,7 +173,7 @@ rpm:
     - libappindicator
     - nss
     - gtk3
-  compression: xz     # gz | bzip2 | xz | lzo (default: xz)
+  compression: xz     # xz | xzmt | gzip | bzip2 (default: xzmt)
   packageCategory: Applications/Internet
 ```
 

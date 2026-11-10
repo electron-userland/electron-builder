@@ -77,6 +77,7 @@ export {
 export type { LegacyConfigOption, ResolvedLegacyConfigOption } from "./util/config/legacyOptions.js"
 export { checkLegacyConfiguration } from "./util/config/legacyConfigGuard.js"
 export { normalizeFileOptions } from "./util/config/fileOptions.js"
+export { mergeConfigLayers } from "./util/config/mergeConfigLayers.js"
 export { assertNoRemovedEnvVars, checkRemovedEnvVars, resetRemovedEnvVarsCheck } from "./util/flags.js"
 export { validateSchema } from "./util/config/schemaValidator.js"
 export {

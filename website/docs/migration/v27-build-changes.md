@@ -51,6 +51,8 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [Flatpak target requires `flatpak` >= 1.12.4 and `flatpak-builder` >= 1.2.2](#flatpak-tooling-requirements) | Fails build | Only for tools older than the stock packages of Ubuntu 22.04 and Debian 12: update them (the `electronuserland/builder` images with a date tag newer than `-05.26` include them, those up to `-05.26` none); replace `DEBUG=@malept/flatpak-bundler` with `DEBUG=electron-builder` |
 | [Flatpak `runtimeVersion` / `baseVersion` default to `26.08`](#flatpak-tooling-requirements) | Warns | A build that sets neither is built for the `26.08` runtime and installs the three `26.08` refs (about 3.2 GB) on the build machine if they are missing — install them in images and on offline machines that held the `20.08` ones. Set both to `"20.08"` to keep the previous, end-of-life runtime |
 | [Flatpak `files` and `symlinks` must stay inside the app](#flatpak-tooling-requirements) | Fails build | A `flatpak.files` destination or `flatpak.symlinks` link that leaves the app prefix with `..`, or a directory in `flatpak.files` copied onto a symlink to a directory, now fails the build |
+| [Cascaded options no longer leak between platforms and targets](#cascaded-options-no-longer-leak) | Silent | None for most builds. A `mac` + `mas` build now signs the macOS app with `mac.sign` as written (before, `mas.sign` values leaked into it); a later configuration layer's hook or signer function now wins; check builds that relied on a merged result |
+| [`linux.compression` no longer reaches the deb, rpm and pacman targets](#linux-compression-no-longer-reaches-fpm-targets) | Silent | None: a level such as `"maximum"` failed these builds; set `deb.compression` / `rpm.compression` / `pacman.compression` to choose their algorithm |
 
 ---
 
@@ -644,6 +646,30 @@ The Bitbucket publisher now selects its authentication scheme by whether a usern
 - **No username** → the token is sent as `Authorization: Bearer <token>` (a repository / project / workspace **access token**). This is the new behavior; previously a token was always sent as Basic auth using the repository owner as the username.
 
 **Action is required only if** your CI sets `BITBUCKET_TOKEN` (or `bitbucket.token`) to an **app password / API token without a username** — those requests now go out as Bearer and will fail authentication. Set `BITBUCKET_USERNAME` (or `bitbucket.username`) so Basic auth is used. Genuine access tokens need no username.
+
+---
+
+## Configuration merging {#configuration-merging}
+
+### Cascaded options no longer leak between platforms and targets {#cascaded-options-no-longer-leak}
+
+**How you'll find out:** **Silent.** Builds that set an object option at two levels get the result the docs describe.
+
+electron-builder merges options in cascades: `extends` presets, then the configuration file, then `build({ config })` / `-c`; `mac` → `mas` → `masDev`; a platform into each of its targets (`linux` → `deb`, `win` → `appx`, …); `nsis` → `nsisWeb`; `linux` → the snap core. Before this change, a merge wrote the later layer *into* the earlier layer's nested objects, and treated functions as objects to merge into. v27 merges every cascade into new objects. What changes:
+
+- **A `mac` + `mas` build signs the macOS app with `mac.sign` as written.** The Mac App Store flavor is built first, and its merge used to write the `mas.sign` values (identity, entitlements, provisioning profile, `hardenedRuntime: false`) into `mac.sign`, so the Developer ID app and its DMG were signed with them. The same applied to `mac.extendInfo`, `mac.universal`, `mac.asar` and `mac.updateManifest`.
+- **`mas.extendInfo` reaches the Mac App Store app on its own.** It is merged over `mac.extendInfo` for the `mas` / `mas-dev` flavors, also when `mac.extendInfo` is not set (before, it was ignored in that case).
+- **Each target keeps its own nested options.** A `deb.desktop` entry or a `deb.publish` object no longer reaches the AppImage or the `linux` options, an `msi.publish` object no longer rewrites `win.publish`, and `nsisWeb.publish` no longer rewrites `nsis.publish`. The values a target merges from its platform are unchanged.
+- **A later layer's function replaces the earlier one.** An `afterSign` (or any hook, or a `win.sign.sign` / `mac.sign` signer) set in the configuration file now wins over one from an `extends` preset, and one passed to `build({ config })` wins over the file's. Before, the earlier function was kept. A `RegExp` or other class instance is replaced the same way.
+- **No layer is changed by the merge**, so a configuration object passed to `build()` (or a JS `extends` preset reused by a second build in the same process) keeps its own values.
+
+No configuration change is needed. If a build relied on a leaked value, set it where it applies (for example in `mas.sign` *and* `mac.sign`).
+
+### `linux.compression` no longer reaches the deb, rpm and pacman targets {#linux-compression-no-longer-reaches-fpm-targets}
+
+**How you'll find out:** **Silent.** These builds stop failing on a compression level.
+
+`compression` is a level (`store`, `normal`, `maximum`) at the root and on `mac` / `win` / `linux`, but an algorithm on the Linux package targets (`deb.compression: "xz"`). A `linux.compression` level was merged into the deb, rpm and pacman options and passed to fpm as `--deb-compression maximum`, which fpm rejects. The level is no longer merged into any target's options: deb, rpm and pacman use their own `compression` (or their default), and the AppImage and snap targets still map the level to their algorithm as before.
 
 ---
 
