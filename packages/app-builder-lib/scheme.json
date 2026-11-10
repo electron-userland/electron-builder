@@ -3092,7 +3092,7 @@
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
-          "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
+          "description": "The release info, for two destinations:\n\n- The update info (`latest*.yml`) of each platform: `<platform>.releaseInfo` when it is set (it replaces the root object, it is not\n  merged with it), otherwise the root one.\n- The GitHub / GitLab release: one release is shared by every platform of the version (and by `electron-builder publish`), so it\n  uses only the root `releaseInfo`, for the release name and body, and only when electron-builder creates the release: an existing\n  or hand-drafted release keeps its title and notes.\n\nBoth find the notes the same way (see {@link ReleaseInfo.releaseNotesFile}). Convenient on the command line:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```\n\nSee [Release name and notes](https://www.electron.build/docs/publish#release-notes)."
         },
         "synopsis": {
           "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
@@ -3728,7 +3728,7 @@
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
-          "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
+          "description": "The release info, for two destinations:\n\n- The update info (`latest*.yml`) of each platform: `<platform>.releaseInfo` when it is set (it replaces the root object, it is not\n  merged with it), otherwise the root one.\n- The GitHub / GitLab release: one release is shared by every platform of the version (and by `electron-builder publish`), so it\n  uses only the root `releaseInfo`, for the release name and body, and only when electron-builder creates the release: an existing\n  or hand-drafted release keeps its title and notes.\n\nBoth find the notes the same way (see {@link ReleaseInfo.releaseNotesFile}). Convenient on the command line:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```\n\nSee [Release name and notes](https://www.electron.build/docs/publish#release-notes)."
         },
         "sign": {
           "anyOf": [
@@ -4159,7 +4159,7 @@
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
-          "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
+          "description": "The release info, for two destinations:\n\n- The update info (`latest*.yml`) of each platform: `<platform>.releaseInfo` when it is set (it replaces the root object, it is not\n  merged with it), otherwise the root one.\n- The GitHub / GitLab release: one release is shared by every platform of the version (and by `electron-builder publish`), so it\n  uses only the root `releaseInfo`, for the release name and body, and only when electron-builder creates the release: an existing\n  or hand-drafted release keeps its title and notes.\n\nBoth find the notes the same way (see {@link ReleaseInfo.releaseNotesFile}). Convenient on the command line:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```\n\nSee [Release name and notes](https://www.electron.build/docs/publish#release-notes)."
         },
         "sign": {
           "anyOf": [
@@ -6861,25 +6861,25 @@
       "additionalProperties": false,
       "properties": {
         "releaseDate": {
-          "description": "The release date.",
+          "description": "The release date in `latest*.yml`. Defaults to the build time. Not sent to GitHub or GitLab, and not covered by the update\nmanifest signature.",
           "type": "string"
         },
         "releaseName": {
-          "description": "The release name.",
+          "description": "The release name, written to `latest*.yml`, and the title of a GitHub / GitLab release that electron-builder creates.",
           "type": [
             "null",
             "string"
           ]
         },
         "releaseNotes": {
-          "description": "The release notes.",
+          "description": "The release notes. Set, they are used instead of a notes file; `\"\"` means no notes.",
           "type": [
             "null",
             "string"
           ]
         },
         "releaseNotesFile": {
-          "description": "The path to release notes file. Defaults to `release-notes-${platform}.md` (where `platform` it is current platform — `mac`, `linux` or `windows`) or `release-notes.md` in the [build resources](https://www.electron.build/contents#extraresources).",
+          "description": "The release notes file, used when `releaseNotes` is not set. A path is looked up in the\n[build resources](https://www.electron.build/configuration#directories) directory, then relative to the project directory, and a\nmissing file fails the build. `null` turns the default file off.\n\nDefaults to a file in the build resources directory: for `latest*.yml`, `release-notes-<platform>.md` (`mac` or `darwin`, `win`,\n`windows` or `win32`, `linux`), then `release-notes.md`; for the GitHub / GitLab release body, `release-notes.md`.",
           "type": [
             "null",
             "string"
@@ -6894,7 +6894,7 @@
               "type": "null"
             }
           ],
-          "description": "Vendor specific information."
+          "description": "Vendor specific information, written as-is to `latest*.yml` and passed to electron-updater's update events. Not covered by the\nupdate manifest signature."
         }
       },
       "type": "object"
@@ -9535,7 +9535,7 @@
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
-          "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
+          "description": "The release info, for two destinations:\n\n- The update info (`latest*.yml`) of each platform: `<platform>.releaseInfo` when it is set (it replaces the root object, it is not\n  merged with it), otherwise the root one.\n- The GitHub / GitLab release: one release is shared by every platform of the version (and by `electron-builder publish`), so it\n  uses only the root `releaseInfo`, for the release name and body, and only when electron-builder creates the release: an existing\n  or hand-drafted release keeps its title and notes.\n\nBoth find the notes the same way (see {@link ReleaseInfo.releaseNotesFile}). Convenient on the command line:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```\n\nSee [Release name and notes](https://www.electron.build/docs/publish#release-notes)."
         },
         "requestedExecutionLevel": {
           "anyOf": [
@@ -10776,7 +10776,7 @@
     },
     "releaseInfo": {
       "$ref": "#/definitions/ReleaseInfo",
-      "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
+      "description": "The release info, for two destinations:\n\n- The update info (`latest*.yml`) of each platform: `<platform>.releaseInfo` when it is set (it replaces the root object, it is not\n  merged with it), otherwise the root one.\n- The GitHub / GitLab release: one release is shared by every platform of the version (and by `electron-builder publish`), so it\n  uses only the root `releaseInfo`, for the release name and body, and only when electron-builder creates the release: an existing\n  or hand-drafted release keeps its title and notes.\n\nBoth find the notes the same way (see {@link ReleaseInfo.releaseNotesFile}). Convenient on the command line:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```\n\nSee [Release name and notes](https://www.electron.build/docs/publish#release-notes)."
     },
     "removePackageKeywords": {
       "default": true,

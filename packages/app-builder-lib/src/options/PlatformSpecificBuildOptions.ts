@@ -388,11 +388,21 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly updateManifest?: UpdateManifestSigningOptions | false | null
 
   /**
-   * The release info. Intended for command line usage:
+   * The release info, for two destinations:
+   *
+   * - The update info (`latest*.yml`) of each platform: `<platform>.releaseInfo` when it is set (it replaces the root object, it is not
+   *   merged with it), otherwise the root one.
+   * - The GitHub / GitLab release: one release is shared by every platform of the version (and by `electron-builder publish`), so it
+   *   uses only the root `releaseInfo`, for the release name and body, and only when electron-builder creates the release: an existing
+   *   or hand-drafted release keeps its title and notes.
+   *
+   * Both find the notes the same way (see {@link ReleaseInfo.releaseNotesFile}). Convenient on the command line:
    *
    * ```
    * -c.releaseInfo.releaseNotes="new features"
    * ```
+   *
+   * See [Release name and notes](https://www.electron.build/docs/publish#release-notes).
    */
   readonly releaseInfo?: ReleaseInfo
 
@@ -463,27 +473,34 @@ export interface UpdateManifestSigningOptions {
 
 export interface ReleaseInfo {
   /**
-   * The release name.
+   * The release name, written to `latest*.yml`, and the title of a GitHub / GitLab release that electron-builder creates.
    */
   releaseName?: string | null
 
   /**
-   * The release notes.
+   * The release notes. Set, they are used instead of a notes file; `""` means no notes.
    */
   releaseNotes?: string | null
 
   /**
-   * The path to release notes file. Defaults to `release-notes-${platform}.md` (where `platform` it is current platform — `mac`, `linux` or `windows`) or `release-notes.md` in the [build resources](https://www.electron.build/contents#extraresources).
+   * The release notes file, used when `releaseNotes` is not set. A path is looked up in the
+   * [build resources](https://www.electron.build/configuration#directories) directory, then relative to the project directory, and a
+   * missing file fails the build. `null` turns the default file off.
+   *
+   * Defaults to a file in the build resources directory: for `latest*.yml`, `release-notes-<platform>.md` (`mac` or `darwin`, `win`,
+   * `windows` or `win32`, `linux`), then `release-notes.md`; for the GitHub / GitLab release body, `release-notes.md`.
    */
   releaseNotesFile?: string | null
 
   /**
-   * The release date.
+   * The release date in `latest*.yml`. Defaults to the build time. Not sent to GitHub or GitLab, and not covered by the update
+   * manifest signature.
    */
   releaseDate?: string
 
   /**
-   * Vendor specific information.
+   * Vendor specific information, written as-is to `latest*.yml` and passed to electron-updater's update events. Not covered by the
+   * update manifest signature.
    */
   vendor?: { [key: string]: any } | null
 }

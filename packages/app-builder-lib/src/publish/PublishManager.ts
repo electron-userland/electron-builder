@@ -61,7 +61,7 @@ import { Platform, Target, TargetSpecificOptions } from "../core.js"
 import { ArtifactCreated, PlannedTargets } from "../packagerApi.js"
 import { PlatformSpecificBuildOptions, UpdateManifestSigningOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { Packager } from "../packager.js"
-import { PlatformPackager } from "../platformPackager.js"
+import { findBuildResource, PlatformPackager } from "../platformPackager.js"
 import { missingUpdatePublisherNameError, validatePublisherNameFormat } from "../codeSign/win/publisherName.js"
 import { WinPackager } from "../winPackager.js"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
@@ -833,24 +833,58 @@ export async function getPublishConfigsForUpdateInfo(
   return publishConfigs
 }
 
+const RELEASE_BODY_DOCS = `${BUILD_CHANGES_URL}#github-gitlab-release-body-follows-latestyml`
+
+/**
+ * The body of the GitHub/GitLab release. One release is shared by every platform of a version (and by `electron-builder publish`,
+ * which has no platform), so it reads the root `releaseInfo` only, with the rules of `latest*.yml`: `releaseNotes` when set (`""`
+ * gives no body); otherwise `releaseNotesFile`, found in the build resources, then the project directory (a missing file fails the
+ * build, `null` gives no body); otherwise `release-notes.md` in the build resources.
+ */
 async function resolveReleaseBody(packager: Packager): Promise<string | null> {
   const releaseInfo = packager.config.releaseInfo
-  if (releaseInfo?.releaseNotes) {
-    return releaseInfo.releaseNotes
+  if (releaseInfo?.releaseNotes != null) {
+    return releaseInfo.releaseNotes === "" ? null : releaseInfo.releaseNotes
   }
-  if (releaseInfo?.releaseNotesFile) {
-    try {
-      return await readFile(path.resolve(packager.projectDir, releaseInfo.releaseNotesFile), "utf-8")
-    } catch (e: any) {
-      log.warn({ file: releaseInfo.releaseNotesFile, error: e.message }, "cannot read release notes file")
-      return null
+
+  const { buildResourcesDir, projectDir } = packager
+  let file: string | null
+  try {
+    file = await findBuildResource(buildResourcesDir, projectDir, releaseInfo?.releaseNotesFile, ["release-notes.md"])
+  } catch (e: any) {
+    if (!(e instanceof InvalidConfigurationError)) {
+      throw e
+    }
+    throw new InvalidConfigurationError(
+      `releaseInfo.releaseNotesFile "${releaseInfo?.releaseNotesFile}" was not found in the build resources ("${buildResourcesDir}") or the project directory ("${projectDir}"). ` +
+        "electron-builder v27 fails the build when the release notes file of the GitHub/GitLab release does not exist, as it already did for latest*.yml; " +
+        `electron-builder <= 26 only warned and created the release without a body. Fix the path or remove the option. See ${RELEASE_BODY_DOCS}`
+    )
+  }
+
+  // the default file: <= 26 read <projectDir>/release-notes.md for the release body, and only that file
+  if (releaseInfo?.releaseNotesFile === undefined && path.resolve(buildResourcesDir) !== path.resolve(projectDir)) {
+    const projectRootNotes = path.join(projectDir, "release-notes.md")
+    if (await exists(projectRootNotes)) {
+      log
+        .once("release-body-project-root-notes")
+        .warn(
+          { file: log.filePath(projectRootNotes), buildResources: log.filePath(buildResourcesDir) },
+          "release-notes.md in the project directory is no longer used for the GitHub/GitLab release body: electron-builder v27 reads the body from " +
+            "release-notes.md in the build resources, the file latest*.yml has always used (electron-builder 26 read the project root instead). " +
+            `Move the file into the build resources (its notes then also go into latest*.yml), or point releaseInfo.releaseNotesFile at it. See ${RELEASE_BODY_DOCS}`
+        )
+    }
+    if (file != null) {
+      log
+        .once("release-body-build-resources-notes")
+        .info(
+          { file: log.filePath(file) },
+          `the GitHub/GitLab release body comes from the release notes of latest*.yml (electron-builder v27; electron-builder 26 read only release-notes.md in the project directory). See ${RELEASE_BODY_DOCS}`
+        )
     }
   }
-  try {
-    return await readFile(path.resolve(packager.projectDir, "release-notes.md"), "utf-8")
-  } catch {
-    return null
-  }
+  return file == null ? null : await readFile(file, "utf-8")
 }
 
 export async function createPublisher(
@@ -866,6 +900,7 @@ export async function createPublisher(
   switch (provider) {
     case "github": {
       const releaseBody = await resolveReleaseBody(packager)
+      // root only, like the body: the release is shared by every platform of the version
       const releaseName = packager.config.releaseInfo?.releaseName ?? null
       return new GitHubPublisher(context, publishConfig as GithubOptions, version, options, releaseBody, releaseName)
     }

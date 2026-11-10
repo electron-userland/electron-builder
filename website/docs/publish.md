@@ -127,6 +127,19 @@ But please consider using automatic rules instead of explicitly specifying `publ
 
 The benefit of this workflow is that it allows you to always have the latest artifacts, and the release can be published once it is ready.
 
+### Release name and notes {#release-notes}
+
+[`releaseInfo`](./configuration.md) sets the release name and notes for two destinations:
+
+| Destination | Which `releaseInfo` | Default notes file (in the build resources directory) |
+|---|---|---|
+| The update info of each platform (`latest.yml`, `latest-mac.yml`, `latest-linux.yml`) | `<platform>.releaseInfo` when set (it replaces the root one), otherwise the root one | `release-notes-<platform>.md`, then `release-notes.md` |
+| The GitHub / GitLab release, shared by every platform of the version | the root `releaseInfo` only | `release-notes.md` |
+
+Both find the notes the same way. `releaseNotes`, when set, is used as is (`""` means no notes). Otherwise `releaseNotesFile` is looked up in the build resources directory, then relative to the project directory, and the build fails when it is missing; `releaseNotesFile: null` turns the default file off.
+
+electron-builder names the release and sets its body only when it creates the release. A release that already exists (for example one you drafted, as in the workflow above) keeps its title and notes. The GitHub and GitLab update providers show the release body in the app only when `latest*.yml` has no notes: to keep `autoUpdater.fullChangelog` working, keep the notes out of `latest*.yml` with `<platform>.releaseInfo: { releaseNotesFile: null }`.
+
 ### Continuous Deployment Workflow on Amazon S3 and other non-GitHub
 
 This example workflow is modeled on how releases are handled in Maven (it is an example of one of many possible workflows, you are not forced to follow it).

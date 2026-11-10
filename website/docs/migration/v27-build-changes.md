@@ -43,6 +43,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [Signed update manifests are required](#signed-update-manifests-are-required) | Fails when publishing (or with `forceCodeSigning`) | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY` to the base64-encoded PEM file, or set `updateManifest: false` to keep publishing unsigned manifests |
 | [Signing key must be in `updateManifest.publicKey`](#signing-key-must-be-in-updatemanifestpublickey) | Fails when publishing | Only if you set `updateManifest.publicKey`: list a key the build signs with, or set `updateManifest.allowSigningKeyOutsideTrustList: true` for a deliberate cutover release |
 | [`app-update.yml` feed follows the update-writing targets](#app-updateyml-feed-follows-the-update-writing-targets) | Silent (conflicts fail) | Only with target-level `publish` (e.g. `nsis.publish`), targets of one app with different feeds, or a first provider with `publishAutoUpdate: false`: check which feed installs will poll |
+| [GitHub/GitLab release body follows `latest*.yml`](#github-gitlab-release-body-follows-latestyml) | Warns / fails | Move a project-root `release-notes.md` into the build resources directory; fix a missing `releaseInfo.releaseNotesFile` |
 | [Suffixed channels expand to lower channels](#suffixed-update-channels-now-expand-to-lower-channels) | Warns | Only with `generateUpdatesFilesForAllChannels`: a `beta-*`/`latest-*` channel now writes 2–3 yml files instead of 1 |
 | [`latest*.yml` drops legacy top-level `path`/`sha512`](#latestyml-drops-legacy-top-level-pathsha512) | Silent | None for electron-updater >=2.16 (all modern clients); set `electronUpdaterCompatibility` to a legacy-inclusive range only if you still ship apps embedding electron-updater 1.x–2.15 |
 | [Block map format follows `electronUpdaterCompatibility` (default `>=7`)](#block-map-format-follows-electronupdatercompatibility) | Fails build / warns | Apps on electron-updater 6 fail the build: upgrade electron-updater to 7, or set `electronUpdaterCompatibility` to a range that includes them (e.g. `">=6"`), which keeps the JSON `.blockmap` and warns. Installs still on electron-updater 6 download the first release with a binary map in full once |
@@ -579,6 +580,23 @@ v27 adds a binary `.blockmap` format that electron-updater 7 fetches in parts wi
 - **Your app still ships electron-updater 6:** the build fails with a link here. Upgrade `electron-updater` to 7, or keep it and set `"electronUpdaterCompatibility": ">=6"` (per platform with e.g. `win.electronUpdaterCompatibility`), which keeps the JSON map. Raise the range to `>=7` once your installed apps ship electron-updater 7. Installs on electron-updater 7.0.0-alpha.14 or later update differentially to the first release with binary maps: they compare their cached JSON map with the new binary map, since both describe the same blocks. Only a stored `app.asar` (`nsis.differentialPackage: "store-asar"`), which the binary map cuts into finer blocks, is downloaded whole by that update. The same holds when going back to `"blockmap": "v2"`.
 - **Opting out:** `"blockmap": "v2"` always writes the JSON map, whatever the range. `"blockmap": "v3"` asks for the binary map and fails the build when the range includes electron-updater 6 or earlier; `"blockmap": "latest"` follows the newest format the range allows.
 - With the JSON map, NSIS packages and their block maps are byte-for-byte what v26 wrote. With the binary map, the 7z header of a differential package is also stored uncompressed and chunked on its own.
+
+### GitHub/GitLab release body follows `latest*.yml` {#github-gitlab-release-body-follows-latestyml}
+
+**How you'll find out:** **Warns** once when a `release-notes.md` in the project directory is no longer used, **fails the build** when an explicit `releaseInfo.releaseNotesFile` is missing, and logs an info line when the body newly comes from the build resources.
+
+The body (and name) of the GitHub/GitLab release electron-builder creates now come from the root `releaseInfo` with the rules `latest*.yml` has always used. electron-builder 26.9 added the release body with a lookup of its own:
+
+| | electron-builder 26 | electron-builder 27 |
+|---|---|---|
+| Default notes file | `<projectDir>/release-notes.md` | `release-notes.md` in the build resources directory (`build/` by default), the file of `latest*.yml` |
+| Explicit `releaseNotesFile` | relative to the project directory | the build resources directory, then the project directory |
+| Missing explicit file | warning, release without a body | `InvalidConfigurationError` |
+| `releaseNotes: ""` / `releaseNotesFile: null` | fall through to the default file | no body |
+
+`latest*.yml` does not change. The release still uses only the root `releaseInfo` (one release is shared by every platform), and an existing or hand-drafted release keeps its title and body.
+
+**Action:** move a project-root `release-notes.md` into the build resources directory (its notes then also go into `latest*.yml`), or point `releaseInfo.releaseNotesFile` at it. If the GitHub/GitLab updater should keep showing the release body instead (for `autoUpdater.fullChangelog`), set `<platform>.releaseInfo: { releaseNotesFile: null }` to keep the notes out of `latest*.yml`.
 
 ### S3 publishing requires an explicit `awsCredentials.source` {#s3-publishing-requires-an-explicit-awscredentialssource}
 

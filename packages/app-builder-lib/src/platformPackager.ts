@@ -1032,35 +1032,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return asArray(this.config.fileAssociations).concat(asArray(this.platformSpecificBuildOptions.fileAssociations))
   }
 
-  async getResource(custom: string | Nullish, ...names: Array<string>): Promise<string | null> {
-    const resourcesDir = this.info.buildResourcesDir
-    if (custom === undefined) {
-      const resourceList = await this.resourceList
-      for (const name of names) {
-        if (resourceList.includes(name)) {
-          // sanitizeDirPath with resourcesDir base enforces containment — CodeQL recognises the startsWith check inside as a path-traversal sanitizer
-          return sanitizeDirPath(path.join(resourcesDir, path.basename(name)), resourcesDir)
-        }
-      }
-    } else if (custom != null && !isEmptyOrSpaces(custom)) {
-      const resourceList = await this.resourceList
-      if (resourceList.includes(custom)) {
-        return sanitizeDirPath(path.join(resourcesDir, path.basename(custom)), resourcesDir)
-      }
-
-      // codeql[js/shell-command-constructed-from-input] - intentional: custom may be an absolute path outside the build resources dir; existence is verified below via statOrNull
-      let p = path.resolve(resourcesDir, custom)
-      if ((await statOrNull(p)) == null) {
-        p = path.resolve(this.projectDir, custom)
-        if ((await statOrNull(p)) == null) {
-          throw new InvalidConfigurationError(
-            `cannot find specified resource "${custom}", nor relative to "${resourcesDir}", neither relative to project dir ("${this.projectDir}")`
-          )
-        }
-      }
-      return p
-    }
-    return null
+  /** A build resource, see {@link findBuildResource}. */
+  getResource(custom: string | Nullish, ...names: Array<string>): Promise<string | null> {
+    return findBuildResource(this.info.buildResourcesDir, this.projectDir, custom, names, () => this.resourceList)
   }
 
   get forceCodeSigning(): boolean {
@@ -1193,6 +1167,48 @@ export function normalizeExt(ext: string) {
 
 export function chooseNotNull<T>(v1: T | Nullish, v2: T | Nullish): T | Nullish {
   return v1 == null ? v2 : v1
+}
+
+/**
+ * @internal
+ * A build resource: with `custom` undefined, the first of `names` present in the build resources directory (or null); with `custom`
+ * null or blank, null (the default is turned off); otherwise `custom` in the build resources directory, then relative to it, then
+ * relative to the project directory, and an InvalidConfigurationError when it is in none of them. Used by
+ * {@link PlatformPackager.getResource}, and for the GitHub/GitLab release notes (PublishManager), which have no platform packager.
+ */
+export async function findBuildResource(
+  buildResourcesDir: string,
+  projectDir: string,
+  custom: string | Nullish,
+  names: ReadonlyArray<string>,
+  resourceList: () => Promise<ReadonlyArray<string>> = () => orIfFileNotExist(readdir(buildResourcesDir), [])
+): Promise<string | null> {
+  const resourcesDir = buildResourcesDir
+  if (custom === undefined) {
+    const list = await resourceList()
+    for (const name of names) {
+      if (list.includes(name)) {
+        // sanitizeDirPath with resourcesDir base enforces containment — CodeQL recognises the startsWith check inside as a path-traversal sanitizer
+        return sanitizeDirPath(path.join(resourcesDir, path.basename(name)), resourcesDir)
+      }
+    }
+  } else if (custom != null && !isEmptyOrSpaces(custom)) {
+    const list = await resourceList()
+    if (list.includes(custom)) {
+      return sanitizeDirPath(path.join(resourcesDir, path.basename(custom)), resourcesDir)
+    }
+
+    // codeql[js/shell-command-constructed-from-input] - intentional: custom may be an absolute path outside the build resources dir; existence is verified below via statOrNull
+    let p = path.resolve(resourcesDir, custom)
+    if ((await statOrNull(p)) == null) {
+      p = path.resolve(projectDir, custom)
+      if ((await statOrNull(p)) == null) {
+        throw new InvalidConfigurationError(`cannot find specified resource "${custom}", nor relative to "${resourcesDir}", neither relative to project dir ("${projectDir}")`)
+      }
+    }
+    return p
+  }
+  return null
 }
 
 function capitalizeFirstLetter(text: string) {

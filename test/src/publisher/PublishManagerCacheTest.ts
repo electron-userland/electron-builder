@@ -33,6 +33,8 @@ afterEach(() => {
 function fakePackager(projectDir: string): Packager {
   return {
     projectDir,
+    // the GitHub release body is looked up in the build resources
+    buildResourcesDir: path.join(projectDir, "build"),
     config: {},
     onTargetsCreated: () => {
       // ignore
