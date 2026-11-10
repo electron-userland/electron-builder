@@ -15,6 +15,7 @@ import {
   trackEvents,
   tuneTestUpdater,
   validateDownload,
+  windowsExecutable,
   writeRawUpdateConfig,
   writeUpdateConfig,
 } from "../helpers/updaterTestUtil.js"
@@ -37,13 +38,16 @@ function installerName(version: string) {
   return `TestApp Setup ${version}.exe`
 }
 
-function channelYml(options: { version?: string; sha512?: string; stagingPercentage?: number; webInstallerPackage?: { fileName: string; content: Buffer } } = {}): string {
+function channelYml(
+  options: { version?: string; sha512?: string; stagingPercentage?: number; webInstallerPackage?: { fileName: string; content: Buffer }; installer?: Buffer } = {}
+): string {
   const version = options.version ?? UPDATE_VERSION
   const fileName = installerName(version)
-  const sha512 = options.sha512 ?? createHash("sha512").update(INSTALLER_CONTENT).digest("base64")
+  const installer = options.installer ?? INSTALLER_CONTENT
+  const sha512 = options.sha512 ?? createHash("sha512").update(installer).digest("base64")
   const info: any = {
     version,
-    files: [{ url: fileName, sha512, size: INSTALLER_CONTENT.length }],
+    files: [{ url: fileName, sha512, size: installer.length }],
     path: fileName,
     sha512,
     releaseDate: RELEASE_DATE,
@@ -85,10 +89,10 @@ async function serveUpdate(files: Record<string, string | Buffer>): Promise<{ ur
   }
 }
 
-function serveDefaultUpdate() {
+function serveDefaultUpdate(installer: Buffer = INSTALLER_CONTENT) {
   return serveUpdate({
-    "latest.yml": channelYml(),
-    [installerName(UPDATE_VERSION)]: INSTALLER_CONTENT,
+    "latest.yml": channelYml({ installer }),
+    [installerName(UPDATE_VERSION)]: installer,
   })
 }
 
@@ -424,8 +428,9 @@ test.ifWindows("invalid signature", config, async ({ expect }) => {
   }
 })
 
+// the signature is verified against a publisherName, so the ProductVersion of the installer is checked too: serve a PE carrying the update version
 test.ifWindows("test custom signature verifier", config, async ({ expect }) => {
-  const { url, close } = await serveDefaultUpdate()
+  const { url, close } = await serveDefaultUpdate(windowsExecutable([UPDATE_VERSION]))
   try {
     const updater = await createNsisUpdater("1.0.2")
     updater.updateConfigPath = await writeUpdateConfig({
