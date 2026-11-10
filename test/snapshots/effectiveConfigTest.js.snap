@@ -1,5 +1,11 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`the effective config and its debug log mask every certificate link and URL credentials 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`writeEffectiveConfig: false skips the file 1`] = `
 {
   "linux": [],

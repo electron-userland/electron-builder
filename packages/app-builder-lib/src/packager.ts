@@ -841,10 +841,33 @@ export interface BuildResult {
   readonly configuration: Configuration
 }
 
+/**
+ * Configuration fields that hold a credential but match none of the sensitive-name patterns of safeStringifyJson (password, token,
+ * secret, auth, credential, apikey, passphrase, `*key`): a certificate or Snap Store login, as a base64 value or a link to one.
+ */
+const CONFIG_SECRET_FIELD_NAMES = new Set(["cscLink", "cscInstallerLink"])
+
+/** The user info (`user:password@`) of a URL at the start of a string, up to the last `@` before the path. */
+const URL_USER_INFO = /^([a-z][a-z0-9+.-]*:\/\/)[^/?#\s]*@/i
+
+/**
+ * The configuration for `builder-effective-config.yaml` and the debug log, with every secret masked: the values of sensitive fields
+ * at any depth (root, platform and target sections, publish entries, including every `cscLink` / `cscInstallerLink`) and the
+ * credentials of URLs (a feed or mirror URL with `user:password@`).
+ */
 function getSafeEffectiveConfig(configuration: Configuration): string {
-  const o = JSON.parse(safeStringifyJson(configuration))
-  if (o.cscLink != null) {
-    o.cscLink = "<hidden by builder>"
+  return serializeToYaml(redactUrlCredentials(JSON.parse(safeStringifyJson(configuration, CONFIG_SECRET_FIELD_NAMES))), true)
+}
+
+/** Redacts the user info of every URL in the parsed JSON, in place. */
+function redactUrlCredentials(value: any): any {
+  if (typeof value === "string") {
+    return value.replace(URL_USER_INFO, "$1<redacted>@")
   }
-  return serializeToYaml(o, true)
+  if (value != null && typeof value === "object") {
+    for (const key of Object.keys(value)) {
+      value[key] = redactUrlCredentials(value[key])
+    }
+  }
+  return value
 }
