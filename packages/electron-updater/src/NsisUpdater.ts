@@ -225,6 +225,20 @@ export class NsisUpdater extends BaseUpdater {
     // the app set disableWebInstaller to false (read with the options above), not the default of an install made by an nsis-web installer
     const webInstallerEnabledByApp = this.isWebInstallerEnabledByApp
     // checked before executeDownload, so that it also applies to an update cached by a previous launch
+    const info = downloadUpdateOptions.updateInfoAndProvider.info
+    const packages = "packages" in info ? info.packages : null
+    // a web installer started as an update without --package-file aborts (installer.nsh), so an update without a package for this arch
+    // (the resolved one is of process.arch, else ia32) is rejected before it is downloaded
+    if (packages != null && typeof packages === "object" && fileInfo.packageInfo == null) {
+      return Promise.reject(
+        newError(
+          `Unable to download new version ${info.version}: its web installer has no app package for the arch ${process.arch} (packages: ${Object.keys(packages).join(", ") || "none"}). ` +
+            `Build the nsis-web target for ${process.arch} (or ia32) and publish its package with latest.yml. ` +
+            "https://www.electron.build/docs/migration/v27-runtime-changes#an-nsis-web-installer-started-as-an-update-needs-a-package-file",
+          "ERR_UPDATER_NO_WEB_PACKAGE_FOR_ARCH"
+        )
+      )
+    }
     if (fileInfo.packageInfo != null) {
       if (webInstallerDisabled) {
         return Promise.reject(
@@ -396,6 +410,10 @@ export class NsisUpdater extends BaseUpdater {
     try {
       versions = await readExecutableProductVersions(installerPath)
     } catch (e: unknown) {
+      // a file system error (e.g. EBUSY or EACCES while an antivirus scans the installer) is no verdict on the installer
+      if (e instanceof Error && "syscall" in e) {
+        throw e
+      }
       throw installerVersionMismatch(`its ProductVersion cannot be read (${e instanceof Error ? e.message : String(e)})`, expected)
     }
     if (versions.length === 0) {
@@ -409,20 +427,12 @@ export class NsisUpdater extends BaseUpdater {
 
   // the cached installer sat on disk since a previous launch, so its Authenticode signature and its ProductVersion are re-verified before
   // an install-on-next-launch is executed (same checks as at download time). The pending installer is matched to the latest update info
-  // by sha512 only, so a manifest announcing another version for it is rejected here. A version mismatch is returned as a failure, so
-  // the caller clears the pending update and does not retry it on every launch.
+  // by sha512 only, so a manifest announcing another version for it is rejected here (ERR_UPDATER_INSTALLER_VERSION_MISMATCH is thrown,
+  // and the caller clears the pending update, so it is not retried on every launch).
   protected async verifyInstallerSignatureOnLaunch(installerPath: string, updateInfoAndProvider: UpdateInfoAndProvider): Promise<VerifyUpdateFileResult> {
     const signature = await this.verifySignature(installerPath, updateInfoAndProvider)
-    if (signature.response !== "success") {
-      return signature
-    }
-    try {
+    if (signature.response === "success") {
       await this.verifyInstallerVersion(installerPath, updateInfoAndProvider)
-    } catch (e: unknown) {
-      if (e instanceof Error && "code" in e && e.code === "ERR_UPDATER_INSTALLER_VERSION_MISMATCH") {
-        return { response: "failure", message: e.message }
-      }
-      throw e
     }
     return signature
   }

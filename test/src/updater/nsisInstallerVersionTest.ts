@@ -7,6 +7,7 @@ import { createHash } from "crypto"
 import fsExtra from "fs-extra"
 import type { Server } from "http"
 import * as path from "path"
+import { NtExecutable, NtExecutableResource, Resource } from "resedit"
 import type { TmpDir } from "temp-file"
 import { afterEach, describe, test, vi } from "vitest"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
@@ -85,6 +86,12 @@ describe("readExecutableProductVersions", () => {
     ]
     await spawnAndWriteWithOutput(makensis.path, ["-WX", "-V2", "-"], script.join("\n"), { env: { ...process.env, ...makensis.env } })
     expect(await readExecutableProductVersions(installer)).toEqual(["1.2.3-beta.1"])
+    // the same as resedit reads
+    const resources = NtExecutableResource.from(NtExecutable.from(await fsExtra.readFile(installer), { ignoreCert: true }))
+    const resedit = Resource.VersionInfo.fromEntries(resources.entries).flatMap(info =>
+      info.getAllLanguagesForStringValues().map(language => info.getStringValues(language).ProductVersion)
+    )
+    expect(resedit).toEqual(["1.2.3-beta.1"])
   })
 
   test("is empty without a version resource, or without a ProductVersion in it", async ({ expect, tmpDir }) => {
@@ -102,6 +109,30 @@ describe("readExecutableProductVersions", () => {
     ["a file that is no executable", () => Buffer.alloc(128, "not an executable"), "no MZ signature"],
     ["an executable without a PE signature", () => corrupt((exe, { pe }) => exe.writeUInt32LE(0, pe)), "no PE signature"],
     ["an unknown optional header", () => corrupt((exe, { optionalHeader }) => exe.writeUInt16LE(0x107, optionalHeader)), "unknown optional header magic 0x107"],
+    [
+      "an optional header too short for the resource directory entry",
+      () => corrupt((exe, { pe }) => exe.writeUInt16LE(100, pe + 20)),
+      "the optional header has 100 bytes, too few for the resource directory entry",
+    ],
+    // the RT_VERSION entry of the root directory points back to the root
+    [
+      "a resource directory that references itself",
+      () => corrupt((exe, { resourceRoot }) => exe.writeUInt32LE(0x80000000, resourceRoot + 16 + 4)),
+      "the resource directory at 0x0 is referenced more than once",
+    ],
+    [
+      "more than 64 version resources",
+      () => {
+        const exe = NtExecutable.createEmpty(false, false)
+        const resources = NtExecutableResource.from(exe)
+        for (let language = 0x0400; language <= 0x0440; language++) {
+          Resource.VersionInfo.create(language, {}, [{ lang: language, codepage: 1200, values: { ProductVersion: "1.1.0" } }]).outputToResourceEntries(resources.entries)
+        }
+        resources.outputResource(exe)
+        return Buffer.from(exe.generate())
+      },
+      "the executable has more than 64 version resources",
+    ],
     [
       "a resource directory in no section",
       () => corrupt((exe, { resourceDirectory }) => exe.writeUInt32LE(0x7fff0000, resourceDirectory)),
@@ -173,6 +204,13 @@ describe("NsisUpdater installer version check", () => {
       code: "ERR_UPDATER_INSTALLER_VERSION_MISMATCH",
       message: expect.stringContaining("its ProductVersion cannot be read (no MZ signature)"),
     })
+  })
+
+  test("rejects with the file system error when the installer cannot be read", async ({ expect, tmpDir }) => {
+    const updater = await signedUpdater()
+    const file = path.join(await tmpDir.getTempDir({ prefix: "installer-version" }), "missing.exe")
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifyInstallerVersion(file, update("1.1.0"))).rejects.toMatchObject({ code: "ENOENT" })
   })
 
   // a verified manifest binds the installer by its sha512
@@ -368,7 +406,7 @@ describe("NsisUpdater installer version check", () => {
       expect(doInstall).not.toHaveBeenCalled()
       expect(errors).toEqual([
         expect.objectContaining({
-          code: "ERR_UPDATER_INVALID_SIGNATURE",
+          code: "ERR_UPDATER_INSTALLER_VERSION_MISMATCH",
           message: expect.stringContaining('The installer of version 1.2.0 is rejected: its ProductVersion is "1.1.0"'),
         }),
       ])

@@ -11,6 +11,8 @@ const VERSION_RESOURCE_TYPE = 16
 const RESOURCE_DATA_DIRECTORY = 2
 // the resource section of an NSIS installer (icons, manifest, dialogs, version) is far smaller
 const MAX_RESOURCE_SECTION_SIZE = 16 * 1024 * 1024
+// an NSIS installer has one version resource per language, a few at most
+const MAX_VERSION_RESOURCES = 64
 
 async function readAt(file: FileHandle, position: number, length: number): Promise<Buffer> {
   const buffer = Buffer.alloc(length)
@@ -21,13 +23,6 @@ async function readAt(file: FileHandle, position: number, length: number): Promi
   return buffer
 }
 
-interface Section {
-  readonly virtualAddress: number
-  readonly virtualSize: number
-  readonly rawSize: number
-  readonly rawPointer: number
-}
-
 /**
  * The ProductVersion strings of every string table in the version resources of the Windows executable `file`, in file order: empty when it
  * has no version resource or no ProductVersion. Throws when the file is no PE executable or its resources cannot be read.
@@ -36,99 +31,117 @@ interface Section {
 export async function readExecutableProductVersions(file: string): Promise<Array<string>> {
   const handle = await open(file, "r")
   try {
-    const dosHeader = await readAt(handle, 0, 64)
-    if (dosHeader.readUInt16LE(0) !== 0x5a4d) {
-      throw new Error("no MZ signature")
-    }
-    const peOffset = dosHeader.readUInt32LE(0x3c)
-    const fileHeader = await readAt(handle, peOffset, 24)
-    if (fileHeader.readUInt32LE(0) !== 0x00004550) {
-      throw new Error("no PE signature")
-    }
-    const numberOfSections = fileHeader.readUInt16LE(6)
-    const sizeOfOptionalHeader = fileHeader.readUInt16LE(20)
-    const optionalHeader = await readAt(handle, peOffset + 24, sizeOfOptionalHeader)
-    // PE32 or PE32+: the offset of NumberOfRvaAndSizes, followed by the data directories
-    const magic = optionalHeader.readUInt16LE(0)
-    const directoriesCountOffset = magic === 0x10b ? 92 : magic === 0x20b ? 108 : -1
-    if (directoriesCountOffset === -1) {
-      throw new Error(`unknown optional header magic 0x${magic.toString(16)}`)
-    }
-    if (optionalHeader.readUInt32LE(directoriesCountOffset) <= RESOURCE_DATA_DIRECTORY) {
-      return []
-    }
-    const resourceDirectoryOffset = directoriesCountOffset + 4 + RESOURCE_DATA_DIRECTORY * 8
-    const resourceRva = optionalHeader.readUInt32LE(resourceDirectoryOffset)
-    if (resourceRva === 0) {
-      return []
-    }
-
-    const sectionTable = await readAt(handle, peOffset + 24 + sizeOfOptionalHeader, numberOfSections * 40)
-    let section: Section | null = null
-    for (let i = 0; i < numberOfSections; i++) {
-      const entry = i * 40
-      const candidate: Section = {
-        virtualSize: sectionTable.readUInt32LE(entry + 8),
-        virtualAddress: sectionTable.readUInt32LE(entry + 12),
-        rawSize: sectionTable.readUInt32LE(entry + 16),
-        rawPointer: sectionTable.readUInt32LE(entry + 20),
-      }
-      if (resourceRva >= candidate.virtualAddress && resourceRva < candidate.virtualAddress + Math.max(candidate.virtualSize, candidate.rawSize)) {
-        section = candidate
-        break
-      }
-    }
-    if (section == null) {
-      throw new Error("the resource directory is in no section")
-    }
-    if (section.rawSize > MAX_RESOURCE_SECTION_SIZE) {
-      throw new Error(`the resource section has ${section.rawSize} bytes`)
-    }
-    const data = await readAt(handle, section.rawPointer, section.rawSize)
-    const sectionStart = section.virtualAddress
-    // a resource address (RVA) as an offset in `data`
-    const offsetOf = (rva: number, length: number): number => {
-      const offset = rva - sectionStart
-      if (offset < 0 || offset + length > data.length) {
-        throw new Error(`resource address 0x${rva.toString(16)} is outside the resource section`)
-      }
-      return offset
-    }
-
-    // the entries of a resource directory at `directory` (an offset from the resource root), each [id or name, data offset]
-    const entriesOf = (directory: number): Array<[number, number]> => {
-      const header = offsetOf(resourceRva + directory, 16)
-      const count = data.readUInt16LE(header + 12) + data.readUInt16LE(header + 14)
-      offsetOf(resourceRva + directory + 16, count * 8)
-      const entries: Array<[number, number]> = []
-      for (let i = 0; i < count; i++) {
-        const entry = header + 16 + i * 8
-        entries.push([data.readUInt32LE(entry), data.readUInt32LE(entry + 4)])
-      }
-      return entries
-    }
-    // the three directory levels are type, name and language: the data offset of a subdirectory has its high bit set, the one of a data
-    // entry has not (any other value is outside the resource section)
-    const subdirectory = (dataOffset: number): number => dataOffset & 0x7fffffff
-
-    const versions: Array<string> = []
-    for (const [type, typeOffset] of entriesOf(0)) {
-      if (type !== VERSION_RESOURCE_TYPE) {
-        continue
-      }
-      for (const [, nameOffset] of entriesOf(subdirectory(typeOffset))) {
-        for (const [, languageOffset] of entriesOf(subdirectory(nameOffset))) {
-          const dataEntry = offsetOf(resourceRva + languageOffset, 16)
-          const size = data.readUInt32LE(dataEntry + 4)
-          const start = offsetOf(data.readUInt32LE(dataEntry), size)
-          versions.push(...readProductVersions(data.subarray(start, start + size)))
-        }
-      }
-    }
-    return versions
+    const resources = await readResourceSection(handle)
+    return resources == null ? [] : readVersionResources(resources)
   } finally {
     await handle.close()
   }
+}
+
+interface ResourceSection {
+  readonly data: Buffer
+  // the address (RVA) of the section, and of the resource directory in it
+  readonly sectionStart: number
+  readonly resourceRva: number
+}
+
+// the section that holds the resource directory, located through the DOS header, the PE headers and the section table; null without one
+async function readResourceSection(handle: FileHandle): Promise<ResourceSection | null> {
+  const dosHeader = await readAt(handle, 0, 64)
+  if (dosHeader.readUInt16LE(0) !== 0x5a4d) {
+    throw new Error("no MZ signature")
+  }
+  const peOffset = dosHeader.readUInt32LE(0x3c)
+  // the PE signature, the file header and the magic of the optional header
+  const fileHeader = await readAt(handle, peOffset, 26)
+  if (fileHeader.readUInt32LE(0) !== 0x00004550) {
+    throw new Error("no PE signature")
+  }
+  const numberOfSections = fileHeader.readUInt16LE(6)
+  const sizeOfOptionalHeader = fileHeader.readUInt16LE(20)
+  // PE32 or PE32+: the offset of NumberOfRvaAndSizes, followed by the data directories
+  const magic = fileHeader.readUInt16LE(24)
+  const directoriesCountOffset = magic === 0x10b ? 92 : magic === 0x20b ? 108 : -1
+  if (directoriesCountOffset === -1) {
+    throw new Error(`unknown optional header magic 0x${magic.toString(16)}`)
+  }
+  const resourceDirectoryOffset = directoriesCountOffset + 4 + RESOURCE_DATA_DIRECTORY * 8
+  if (sizeOfOptionalHeader < resourceDirectoryOffset + 8) {
+    throw new Error(`the optional header has ${sizeOfOptionalHeader} bytes, too few for the resource directory entry`)
+  }
+  const optionalHeader = await readAt(handle, peOffset + 24, sizeOfOptionalHeader)
+  if (optionalHeader.readUInt32LE(directoriesCountOffset) <= RESOURCE_DATA_DIRECTORY) {
+    return null
+  }
+  const resourceRva = optionalHeader.readUInt32LE(resourceDirectoryOffset)
+  if (resourceRva === 0) {
+    return null
+  }
+
+  const sectionTable = await readAt(handle, peOffset + 24 + sizeOfOptionalHeader, numberOfSections * 40)
+  for (let entry = 0; entry < sectionTable.length; entry += 40) {
+    const virtualSize = sectionTable.readUInt32LE(entry + 8)
+    const sectionStart = sectionTable.readUInt32LE(entry + 12)
+    const rawSize = sectionTable.readUInt32LE(entry + 16)
+    if (resourceRva < sectionStart || resourceRva >= sectionStart + Math.max(virtualSize, rawSize)) {
+      continue
+    }
+    if (rawSize > MAX_RESOURCE_SECTION_SIZE) {
+      throw new Error(`the resource section has ${rawSize} bytes`)
+    }
+    return { data: await readAt(handle, sectionTable.readUInt32LE(entry + 20), rawSize), sectionStart, resourceRva }
+  }
+  throw new Error("the resource directory is in no section")
+}
+
+// the ProductVersion values of the RT_VERSION resources, walking the three directory levels: type, name and language
+function readVersionResources({ data, sectionStart, resourceRva }: ResourceSection): Array<string> {
+  // a resource address (RVA) as an offset in `data`
+  const offsetOf = (rva: number, length: number): number => {
+    const offset = rva - sectionStart
+    if (offset < 0 || offset + length > data.length) {
+      throw new Error(`resource address 0x${rva.toString(16)} is outside the resource section`)
+    }
+    return offset
+  }
+
+  // a directory is read once: a crafted directory tree that reuses (or contains) a directory would otherwise be walked again and again
+  const visited = new Set<number>()
+  // the data offsets of the entries of a resource directory at `directory` (an offset from the resource root), with their ids
+  const entriesOf = (directory: number): Array<[number, number]> => {
+    if (visited.has(directory)) {
+      throw new Error(`the resource directory at 0x${directory.toString(16)} is referenced more than once`)
+    }
+    visited.add(directory)
+    const header = offsetOf(resourceRva + directory, 16)
+    const count = data.readUInt16LE(header + 12) + data.readUInt16LE(header + 14)
+    offsetOf(resourceRva + directory + 16, count * 8)
+    const entries: Array<[number, number]> = []
+    for (let i = 0; i < count; i++) {
+      const entry = header + 16 + i * 8
+      entries.push([data.readUInt32LE(entry), data.readUInt32LE(entry + 4)])
+    }
+    return entries
+  }
+  // the data offset of a subdirectory has its high bit set, the one of a data entry has not (any other value is outside the resource section)
+  const subdirectory = (dataOffset: number): number => dataOffset & 0x7fffffff
+
+  const versions: Array<string> = []
+  let resourceCount = 0
+  for (const [, typeOffset] of entriesOf(0).filter(([type]) => type === VERSION_RESOURCE_TYPE)) {
+    for (const [, nameOffset] of entriesOf(subdirectory(typeOffset))) {
+      for (const [, languageOffset] of entriesOf(subdirectory(nameOffset))) {
+        if (++resourceCount > MAX_VERSION_RESOURCES) {
+          throw new Error(`the executable has more than ${MAX_VERSION_RESOURCES} version resources`)
+        }
+        const dataEntry = offsetOf(resourceRva + languageOffset, 16)
+        const size = data.readUInt32LE(dataEntry + 4)
+        const start = offsetOf(data.readUInt32LE(dataEntry), size)
+        versions.push(...readProductVersions(data.subarray(start, start + size)))
+      }
+    }
+  }
+  return versions
 }
 
 interface Block {
