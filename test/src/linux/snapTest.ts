@@ -439,12 +439,11 @@ test.ifNotWindows("template app sets LD_LIBRARY_PATH in command.sh, not in snap.
     },
     {
       packed: async context => {
-        // snapd would expand an unset `$LD_LIBRARY_PATH` in snap.yaml to an empty entry; the launcher drops empty entries
+        // snapd would expand an unset `$LD_LIBRARY_PATH` in snap.yaml to an empty entry; the launcher adds it only when set
         const { commandSh, environment } = await readTemplateSnapStage(context.outDir)
         expect(environment.LD_LIBRARY_PATH).toBeUndefined()
-        expect(commandSh).toContain('_ld_library_path=":$SNAP_LIBRARY_PATH:$SNAP/lib:')
-        expect(commandSh).toContain("$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:")
-        expect(commandSh).toContain('export LD_LIBRARY_PATH="$_ld_library_path"')
+        expect(commandSh).toContain('export LD_LIBRARY_PATH="${SNAP_LIBRARY_PATH:+$SNAP_LIBRARY_PATH:}$SNAP/lib:')
+        expect(commandSh).toContain("$SNAP/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}:$SNAP/lib:")
       },
     }
   )

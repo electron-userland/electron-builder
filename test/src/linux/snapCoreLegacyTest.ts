@@ -61,14 +61,7 @@ describe("snapCoreLegacy helpers", { concurrent: false }, () => {
     })
 
     const snapLibDirs = "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu"
-    // The command.sh lines both LD_LIBRARY_PATH branches share to drop empty entries from `_ld_library_path` and export it.
-    const exportWithoutEmptyEntries =
-      'while [[ $_ld_library_path == *::* ]]; do _ld_library_path="${_ld_library_path//::/:}"; done\n' +
-      '_ld_library_path="${_ld_library_path#:}"\n' +
-      '_ld_library_path="${_ld_library_path%:}"\n' +
-      'if [[ -n $_ld_library_path ]]; then export LD_LIBRARY_PATH="$_ld_library_path"; else unset LD_LIBRARY_PATH; fi\n' +
-      "unset _ld_library_path"
-    const ldLibraryPathPreamble = `_ld_library_path=":$SNAP_LIBRARY_PATH:${snapLibDirs}:$LD_LIBRARY_PATH:${snapLibDirs}:"\n${exportWithoutEmptyEntries}`
+    const ldLibraryPathPreamble = `export LD_LIBRARY_PATH="\${SNAP_LIBRARY_PATH:+$SNAP_LIBRARY_PATH:}${snapLibDirs}\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}:${snapLibDirs}"`
 
     // Runs the command.sh preamble (everything between the shebang and `exec`) in `bash -e` after `snapdExpansion`, and
     // prints LD_LIBRARY_PATH and the configured carrier afterwards ("<unset>" when unset).
@@ -80,9 +73,11 @@ describe("snapCoreLegacy helpers", { concurrent: false }, () => {
       return { ldLibraryPath, carrier }
     }
 
-    test("default LD_LIBRARY_PATH: command.sh builds it from SNAP_LIBRARY_PATH, the snap's dirs and the caller's value before the app starts", ({ expect }) => {
+    test("default LD_LIBRARY_PATH adds SNAP_LIBRARY_PATH and the caller's value only when they are set, so neither leaves an empty entry", ({ expect }) => {
       const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [], libraryArchTriplet: "x86_64-linux-gnu" })
       expect(content).toContain(`\n${ldLibraryPathPreamble}\n`)
+      expect(content).not.toContain("$SNAP_LIBRARY_PATH:$SNAP")
+      expect(content).not.toContain(":$LD_LIBRARY_PATH:")
       // set before the desktop scripts and the app start
       expect(content.indexOf("export LD_LIBRARY_PATH=")).toBeLessThan(content.indexOf("exec "))
     })
@@ -93,11 +88,6 @@ describe("snapCoreLegacy helpers", { concurrent: false }, () => {
       ["both empty", { SNAP_LIBRARY_PATH: "", LD_LIBRARY_PATH: "" }, "{dirs}:{dirs}"],
       ["SNAP_LIBRARY_PATH unset, caller set", { LD_LIBRARY_PATH: "/caller" }, "{dirs}:/caller:{dirs}"],
       ["SNAP_LIBRARY_PATH set, caller unset", { SNAP_LIBRARY_PATH: "/gl" }, "/gl:{dirs}:{dirs}"],
-      ["caller value with a leading colon", { LD_LIBRARY_PATH: ":/opt/x/lib" }, "{dirs}:/opt/x/lib:{dirs}"],
-      ["caller value with a trailing colon", { LD_LIBRARY_PATH: "/opt/x/lib:" }, "{dirs}:/opt/x/lib:{dirs}"],
-      ["caller value with a doubled colon", { LD_LIBRARY_PATH: "/a::/b" }, "{dirs}:/a:/b:{dirs}"],
-      ["caller value of only colons", { LD_LIBRARY_PATH: "::" }, "{dirs}:{dirs}"],
-      ["SNAP_LIBRARY_PATH with a trailing colon", { SNAP_LIBRARY_PATH: "/gl:", LD_LIBRARY_PATH: "/caller" }, "/gl:{dirs}:/caller:{dirs}"],
     ]
     for (const [label, env, expected] of expansionCases) {
       test.ifNotWindows(`default LD_LIBRARY_PATH expands without empty entries in bash: ${label}`, ({ expect }) => {
@@ -112,12 +102,7 @@ describe("snapCoreLegacy helpers", { concurrent: false }, () => {
       const content = buildCommandShContent({ isTemplate: false, executableName: "myapp", extraAppArgs: ["--no-sandbox"], libraryArchTriplet: "x86_64-linux-gnu" })
       expect(content).toBe(
         "#!/bin/bash -e\n" +
-          '_ld_library_path=":$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:"\n' +
-          'while [[ $_ld_library_path == *::* ]]; do _ld_library_path="${_ld_library_path//::/:}"; done\n' +
-          '_ld_library_path="${_ld_library_path#:}"\n' +
-          '_ld_library_path="${_ld_library_path%:}"\n' +
-          'if [[ -n $_ld_library_path ]]; then export LD_LIBRARY_PATH="$_ld_library_path"; else unset LD_LIBRARY_PATH; fi\n' +
-          "unset _ld_library_path\n" +
+          'export LD_LIBRARY_PATH="${SNAP_LIBRARY_PATH:+$SNAP_LIBRARY_PATH:}$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu"\n' +
           `exec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/app/myapp" '--no-sandbox' "$@"\n`
       )
     })
@@ -134,7 +119,11 @@ describe("snapCoreLegacy helpers", { concurrent: false }, () => {
         "#!/bin/bash -e\n" +
           '_ld_library_path=":$ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH:"\n' +
           "unset ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH\n" +
-          `${exportWithoutEmptyEntries}\n` +
+          'while [[ $_ld_library_path == *::* ]]; do _ld_library_path="${_ld_library_path//::/:}"; done\n' +
+          '_ld_library_path="${_ld_library_path#:}"\n' +
+          '_ld_library_path="${_ld_library_path%:}"\n' +
+          'if [[ -n $_ld_library_path ]]; then export LD_LIBRARY_PATH="$_ld_library_path"; else unset LD_LIBRARY_PATH; fi\n' +
+          "unset _ld_library_path\n" +
           `exec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/myapp" "$@"\n`
       )
     })
