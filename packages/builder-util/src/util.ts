@@ -1,6 +1,6 @@
-import { hashSensitiveValue, isSensitiveFieldName, isValidKey, Nullish, retry, safeStringifyJson } from "builder-util-runtime"
+import { deepAssign, hashSensitiveValue, isSensitiveFieldName, isValidKey, Nullish, retry, safeStringifyJson } from "builder-util-runtime"
 import chalk from "chalk"
-import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
+import { ChildProcess, execFile, ExecFileException, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
 import _debug from "debug"
 import { dump } from "js-yaml"
@@ -182,6 +182,41 @@ function isTransientSpawnError(error: any): boolean {
   return typeof cause?.syscall === "string" && cause.syscall.startsWith("spawn") && TRANSIENT_SPAWN_CODES.has(cause.code)
 }
 
+// Node joins the argv into one string for the `execFile` error message and `cmd`. Replace that command line with the
+// per-argument redaction, which hashes a secret that contains a space in full, and redact the rest (stderr echoing
+// its arguments) as a string. Each piece is redacted once, so a fingerprint matches the one in the debug log.
+function redactCommandLine(text: string, file: string, args: Array<string> | Nullish): string {
+  if (args == null) {
+    return removePassword(text)
+  }
+  return text
+    .split(`${file} ${args.join(" ")}`)
+    .map(removePassword)
+    .join(`${file} ${removePasswordFromArgs(args)}`)
+}
+
+// The `execFile` error holds the raw arguments in its message, stack, `cmd` and `spawnargs`, and an API caller that
+// logs or inspects the ExecError prints its `cause` too. Keep only the fields callers read (`isTransientSpawnError`
+// reads `code` and `syscall`), with every text redacted.
+function redactedExecCause(error: ExecFileException, file: string, args: Array<string> | Nullish): Error {
+  const redact = (text: string) => redactCommandLine(text, file, args)
+  const cause = new Error(redact(error.message))
+  if (error.stack != null) {
+    cause.stack = redact(error.stack)
+  }
+  const kept = {
+    code: error.code,
+    errno: error.errno,
+    syscall: error.syscall,
+    path: error.path,
+    signal: error.signal,
+    killed: error.killed,
+    cmd: error.cmd == null ? undefined : redact(error.cmd),
+  }
+  // deepAssign, not Object.assign: it never assigns `__proto__`, `constructor` or `prototype`
+  return deepAssign(cause, Object.fromEntries(Object.entries(kept).filter(([, value]) => value != null)))
+}
+
 export function exec(file: string, args?: Array<string> | null, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
   if (log.isDebugEnabled) {
     const logFields: any = {
@@ -235,7 +270,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
             }
             resolve(stdout.toString())
           } else {
-            let message = chalk.red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
+            let message = chalk.red(`Exit code: ${error.code}. ${redactCommandLine(error.message, file, args)}`)
             if (stdout.length !== 0) {
               if (file.endsWith("wine")) {
                 stdout = stdout.toString()
@@ -249,7 +284,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
               message += `\n${chalk.red(removePassword(stderr.toString()))}`
             }
 
-            reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`, { cause: error }))
+            reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`, { cause: redactedExecCause(error, file, args) }))
           }
         }
       )

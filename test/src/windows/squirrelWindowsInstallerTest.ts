@@ -19,6 +19,7 @@ import {
 import { chmod, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
+import { inspect } from "util"
 
 describe("convertVersion", () => {
   test.each([
@@ -387,6 +388,9 @@ describe("createWindowsInstaller", () => {
         expect(error).toBeInstanceOf(ExecError)
         expect((error as ExecError).message).toContain("SyncReleases.exe")
         expect((error as ExecError).message).not.toContain("secret-token")
+        // an API caller that logs the error also prints its cause, which holds the command line
+        expect((error as ExecError).cause).toBeInstanceOf(Error)
+        expect(inspect(error, { depth: null })).not.toContain("secret-token")
       } finally {
         vi.mocked(exec).mockReset().mockResolvedValue("")
         setPlatform(originalPlatform)
