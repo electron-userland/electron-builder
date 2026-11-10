@@ -49,17 +49,17 @@ The macOS keychain/identity variables (`CSC_NAME`, `CSC_IDENTITY_AUTO_DISCOVERY`
 
 ## Notarization (macOS)
 
-For notarizing macOS apps distributed outside the Mac App Store. Provide **one** of the three credential sets. Full setup is in the [Notarization guide](./features/code-signing/notarization.md).
+For notarizing macOS apps distributed outside the Mac App Store. Provide **exactly one** of the three credential sets: more than one (even part of a second one) or an incomplete one fails the build at build start ([v27 change](./migration/v27-build-changes.md#notarization-uses-exactly-one-credential-set)). An empty value counts as unset. Full setup is in the [Notarization guide](./features/code-signing/notarization.md).
 
 | Variable | Description |
 |---|---|
 | `APPLE_ID` | Apple ID email (Apple-ID auth). |
 | `APPLE_APP_SPECIFIC_PASSWORD` | App-specific password for that Apple ID. |
-| `APPLE_TEAM_ID` | Apple Developer Team ID. |
+| `APPLE_TEAM_ID` | Apple Developer Team ID (used only with `APPLE_ID`). |
 | `APPLE_API_KEY` | Path to the App Store Connect API key (`.p8`), or the file's contents base64-encoded on one line so CI systems can mask it (`base64 < AuthKey_KEYID.p8 \| tr -d '\n'`). |
 | `APPLE_API_KEY_ID` | Key ID for the App Store Connect API key. |
 | `APPLE_API_ISSUER` | Issuer ID for the App Store Connect API key. |
-| `APPLE_KEYCHAIN` | Keychain to search for a stored notarization profile. |
+| `APPLE_KEYCHAIN` | Keychain to search for the `APPLE_KEYCHAIN_PROFILE` profile (optional, used only with `APPLE_KEYCHAIN_PROFILE`). |
 | `APPLE_KEYCHAIN_PROFILE` | Name of a `notarytool` keychain profile to use. |
 
 ## Update-manifest signing

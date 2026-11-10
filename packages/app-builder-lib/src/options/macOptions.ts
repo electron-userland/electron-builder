@@ -228,11 +228,14 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    *   outside a pull-request build, with signing not turned off), at build start and when notarizing.
    * - `false`: never notarize (for an ad-hoc or development-signed app, or one notarized in an `afterSign` hook).
    *
-   * The credentials are one of the following sets of environment variables:
+   * The credentials are exactly one of the following sets of environment variables. More than one set (even part of a second one,
+   * such as a leftover `APPLE_ID` next to an API key) or an incomplete set fails the build when it starts, naming the variables. An
+   * empty value counts as unset.
    *
    * 1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.
-   * 2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`
-   * 3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`
+   * 2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID` (`APPLE_TEAM_ID` is used only with an Apple ID, and may stay set
+   *    next to the other sets)
+   * 3. `APPLE_KEYCHAIN_PROFILE`, and optionally `APPLE_KEYCHAIN`
    *
    * For security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)
    */

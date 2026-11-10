@@ -204,21 +204,49 @@ describe("mac.notarize: true without forceCodeSigning", () => {
     expect(() => preflight(makeMacPackager({ notarize: true }, false), "dmg")).toThrow("mac.notarize is true")
   })
 
-  test("an incomplete credential set fails the build start only where the credentials are required", ({ expect }) => {
+  test("an incomplete credential set fails the build start wherever notarization runs", ({ expect }) => {
     vi.stubEnv("APPLE_ID", "me@example.com")
-    // notarize unset, no forceCodeSigning: the credentials are not read at build start
-    expect(() => preflight(makeMacPackager({}, false), "dmg")).not.toThrow()
-    // notarize: true on another host, in a pull-request build, or with signing turned off
+    // identity auto-discovery on, so that whether sign() signs the app does not depend on this host's environment
+    vi.stubEnv("CSC_IDENTITY_AUTO_DISCOVERY", undefined)
+    vi.stubEnv("CSC_NAME", undefined)
+    const incomplete = "APPLE_ID is set, but APPLE_APP_SPECIFIC_PASSWORD and APPLE_TEAM_ID are not"
+    // notarize unset, no forceCodeSigning: the app is notarized where sign() signs it, so the credentials are read at build start
+    expect(() => preflight(makeMacPackager({}, false), "dmg")).toThrow(incomplete)
+    expect(() => preflight(makeMacPackager({ notarize: true }, false), "dmg")).toThrow(incomplete)
+    // the pkg installer is notarized whenever it is built, also when the app is not signed
+    expect(() => preflight(makeMacPackager({ sign: null }, false), "pkg")).toThrow(incomplete)
+    // not where nothing is notarized: another host, signing turned off, notarize: false, a MAS-only build, a pull-request build
     setPlatform("linux")
     expect(() => preflight(makeMacPackager({ notarize: true }, false), "dmg")).not.toThrow()
     setPlatform("darwin")
     expect(() => preflight(makeMacPackager({ notarize: true, sign: null }, false), "dmg")).not.toThrow()
+    expect(() => preflight(makeMacPackager({ notarize: false }, false), "dmg", "pkg")).not.toThrow()
+    expect(() => preflight(makeMacPackager({}, false), "mas")).not.toThrow()
     vi.stubEnv("GITHUB_BASE_REF", "main")
     vi.spyOn(log, "warn").mockImplementation(() => undefined)
     expect(() => preflight(makeMacPackager({ notarize: true }, false), "dmg")).not.toThrow()
-    vi.stubEnv("GITHUB_BASE_REF", undefined)
-    // where they are required, the incomplete set is named
-    expect(() => preflight(makeMacPackager({ notarize: true }, false), "dmg")).toThrow("APPLE_APP_SPECIFIC_PASSWORD env var needs to be set")
+  })
+
+  test("more than one credential set fails the build start without forceCodeSigning, wherever notarization runs", ({ expect }) => {
+    vi.stubEnv("CSC_IDENTITY_AUTO_DISCOVERY", undefined)
+    vi.stubEnv("CSC_NAME", undefined)
+    vi.stubEnv("APPLE_API_KEY", "/path/to/AuthKey_ABCDE12345.p8")
+    vi.stubEnv("APPLE_API_KEY_ID", "ABCDE12345")
+    vi.stubEnv("APPLE_API_ISSUER", "issuer-uuid")
+    vi.stubEnv("APPLE_KEYCHAIN_PROFILE", "notary-profile")
+    const conflict = /More than one set of notarization credentials is set: an App Store Connect API key .* and a keychain profile \(APPLE_KEYCHAIN_PROFILE\)/
+    expect(() => preflight(makeMacPackager({}, false), "dmg")).toThrow(conflict)
+    expect(() => preflight(makeMacPackager({ sign: null }, false), "pkg")).toThrow(conflict)
+    expect(() => preflight(makeMacPackager({ notarize: false }, false), "dmg")).not.toThrow()
+  })
+
+  test("notarizing the app or the pkg installer rejects more than one set before notarize runs", async ({ expect }) => {
+    vi.stubEnv("APPLE_KEYCHAIN_PROFILE", "notary-profile")
+    vi.stubEnv("APPLE_ID", "me@example.com")
+    for (const file of ["/out/mac/My.app", "/out/My-1.0.0.pkg"]) {
+      await expect(makeMacPackager({}, false).helper.notarizeIfProvided(file)).rejects.toThrow(/More than one set of notarization credentials is set/)
+    }
+    expect(notarize).not.toHaveBeenCalled()
   })
 
   test("is not required at build start where the app cannot be signed (another host, a pull-request build)", ({ expect }) => {
@@ -416,13 +444,17 @@ describe("build-start preflight", () => {
     expect(() => preflight(prepackaged, planFor(prepackaged, "pkg"))).toThrow("no notarization credentials are set")
   })
 
-  test("passes when notarization credentials are set, and fails on an incomplete set", ({ expect }) => {
+  test("passes when notarization credentials are set, and fails on more than one set or an incomplete set", ({ expect }) => {
     const packager = makeMacPackager({})
     vi.stubEnv("APPLE_KEYCHAIN_PROFILE", "notary-profile")
     expect(() => preflight(packager, planFor(packager, "dmg"))).not.toThrow()
-    vi.stubEnv("APPLE_KEYCHAIN_PROFILE", undefined)
     vi.stubEnv("APPLE_ID", "me@example.com")
-    expect(() => preflight(packager, planFor(packager, "dmg"))).toThrow("APPLE_APP_SPECIFIC_PASSWORD env var needs to be set")
+    vi.stubEnv("APPLE_APP_SPECIFIC_PASSWORD", "xxxx-yyyy")
+    vi.stubEnv("APPLE_TEAM_ID", "TEAM123456")
+    expect(() => preflight(packager, planFor(packager, "dmg"))).toThrow(/More than one set of notarization credentials is set: an Apple ID .* and a keychain profile/)
+    vi.stubEnv("APPLE_KEYCHAIN_PROFILE", undefined)
+    vi.stubEnv("APPLE_APP_SPECIFIC_PASSWORD", undefined)
+    expect(() => preflight(packager, planFor(packager, "dmg"))).toThrow("APPLE_ID and APPLE_TEAM_ID are set, but APPLE_APP_SPECIFIC_PASSWORD is not")
   })
 
   test("ignores the plans of other packagers, and builds without forceCodeSigning", ({ expect }) => {

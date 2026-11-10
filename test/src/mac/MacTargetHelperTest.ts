@@ -945,11 +945,31 @@ ${body}
       "APPLE_KEYCHAIN",
       "APPLE_KEYCHAIN_PROFILE",
     ]
+    const apiKey = { APPLE_API_KEY: "/path/to/key.p8", APPLE_API_KEY_ID: "KEYID123", APPLE_API_ISSUER: "issuer-uuid" }
+    const appleId = { APPLE_ID: "dev@example.com", APPLE_APP_SPECIFIC_PASSWORD: "xxxx-yyyy", APPLE_TEAM_ID: "TEAM123" }
+    const stubEnv = (vars: Record<string, string>) => {
+      for (const [name, value] of Object.entries(vars)) {
+        vi.stubEnv(name, value)
+      }
+    }
+    const notarizeError = () => {
+      try {
+        MacTargetHelper.getNotarizeOptions("/My.app")
+      } catch (error: any) {
+        expect(error).toBeInstanceOf(InvalidConfigurationError)
+        return String(error.message)
+      }
+      throw new Error("getNotarizeOptions did not throw")
+    }
+
+    beforeEach(() => {
+      for (const key of envKeys) {
+        vi.stubEnv(key, undefined)
+      }
+    })
 
     afterEach(() => {
-      for (const key of envKeys) {
-        delete process.env[key]
-      }
+      vi.unstubAllEnvs()
     })
 
     test("returns undefined when no credentials are set", () => {
@@ -957,10 +977,7 @@ ${body}
     })
 
     test("returns app-specific-password config when all three vars are set", () => {
-      process.env.APPLE_ID = "dev@example.com"
-      process.env.APPLE_APP_SPECIFIC_PASSWORD = "xxxx-yyyy"
-      process.env.APPLE_TEAM_ID = "TEAM123"
-
+      stubEnv(appleId)
       expect(MacTargetHelper.getNotarizeOptions("/My.app")).toMatchObject({
         appPath: "/My.app",
         appleId: "dev@example.com",
@@ -969,27 +986,19 @@ ${body}
       })
     })
 
-    test("throws when APPLE_ID is set but APPLE_APP_SPECIFIC_PASSWORD is missing", () => {
-      process.env.APPLE_ID = "dev@example.com"
-      expect(() => MacTargetHelper.getNotarizeOptions("/My.app")).toThrow("APPLE_APP_SPECIFIC_PASSWORD env var needs to be set")
-    })
-
-    test("throws when APPLE_APP_SPECIFIC_PASSWORD is set but APPLE_ID is missing", () => {
-      process.env.APPLE_APP_SPECIFIC_PASSWORD = "xxxx-yyyy"
-      expect(() => MacTargetHelper.getNotarizeOptions("/My.app")).toThrow("APPLE_ID env var needs to be set")
-    })
-
-    test("throws when APPLE_ID + password are set but APPLE_TEAM_ID is missing", () => {
-      process.env.APPLE_ID = "dev@example.com"
-      process.env.APPLE_APP_SPECIFIC_PASSWORD = "xxxx-yyyy"
-      expect(() => MacTargetHelper.getNotarizeOptions("/My.app")).toThrow("APPLE_TEAM_ID env var needs to be set")
+    test("an incomplete Apple ID names every missing variable", () => {
+      stubEnv({ APPLE_ID: "dev@example.com" })
+      expect(notarizeError()).toContain("APPLE_ID is set, but APPLE_APP_SPECIFIC_PASSWORD and APPLE_TEAM_ID are not")
+      vi.stubEnv("APPLE_ID", undefined)
+      stubEnv({ APPLE_APP_SPECIFIC_PASSWORD: "xxxx-yyyy", APPLE_TEAM_ID: "TEAM123" })
+      expect(notarizeError()).toContain("APPLE_APP_SPECIFIC_PASSWORD and APPLE_TEAM_ID are set, but APPLE_ID is not")
+      stubEnv({ APPLE_ID: "dev@example.com" })
+      vi.stubEnv("APPLE_TEAM_ID", undefined)
+      expect(notarizeError()).toContain("APPLE_ID and APPLE_APP_SPECIFIC_PASSWORD are set, but APPLE_TEAM_ID is not")
     })
 
     test("returns API key config when all three API vars are set", () => {
-      process.env.APPLE_API_KEY = "/path/to/key.p8"
-      process.env.APPLE_API_KEY_ID = "KEYID123"
-      process.env.APPLE_API_ISSUER = "issuer-uuid"
-
+      stubEnv(apiKey)
       expect(MacTargetHelper.getNotarizeOptions("/My.app")).toMatchObject({
         appPath: "/My.app",
         appleApiKey: "/path/to/key.p8",
@@ -998,28 +1007,72 @@ ${body}
       })
     })
 
-    test("throws when only some API key vars are set", () => {
-      process.env.APPLE_API_KEY = "/path/to/key.p8"
-      expect(() => MacTargetHelper.getNotarizeOptions("/My.app")).toThrow("APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER need to be set")
+    test("an incomplete API key names every missing variable", () => {
+      stubEnv({ APPLE_API_KEY: "/path/to/key.p8" })
+      expect(notarizeError()).toContain(
+        "Notarization with an App Store Connect API key needs APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER: APPLE_API_KEY is set, but APPLE_API_KEY_ID and APPLE_API_ISSUER are not"
+      )
     })
 
     test("returns keychain-profile config", () => {
-      process.env.APPLE_KEYCHAIN_PROFILE = "my-profile"
-
-      expect(MacTargetHelper.getNotarizeOptions("/My.app")).toMatchObject({
-        appPath: "/My.app",
-        keychainProfile: "my-profile",
-      })
+      stubEnv({ APPLE_KEYCHAIN_PROFILE: "my-profile" })
+      expect(MacTargetHelper.getNotarizeOptions("/My.app")).toEqual({ appPath: "/My.app", keychainProfile: "my-profile" })
     })
 
     test("includes keychain when both APPLE_KEYCHAIN and APPLE_KEYCHAIN_PROFILE are set", () => {
-      process.env.APPLE_KEYCHAIN_PROFILE = "my-profile"
-      process.env.APPLE_KEYCHAIN = "/path/to/keychain.keychain"
-
+      stubEnv({ APPLE_KEYCHAIN_PROFILE: "my-profile", APPLE_KEYCHAIN: "/path/to/keychain.keychain" })
       expect(MacTargetHelper.getNotarizeOptions("/My.app")).toMatchObject({
         keychainProfile: "my-profile",
         keychain: "/path/to/keychain.keychain",
       })
+    })
+
+    test("APPLE_KEYCHAIN without APPLE_KEYCHAIN_PROFILE is an incomplete keychain profile", () => {
+      stubEnv({ APPLE_KEYCHAIN: "/path/to/keychain.keychain" })
+      expect(notarizeError()).toContain("APPLE_KEYCHAIN is set, but APPLE_KEYCHAIN_PROFILE is not")
+    })
+
+    test("rejects two complete credential sets, naming each set's variables but no value", () => {
+      stubEnv({ ...apiKey, ...appleId })
+      const message = notarizeError()
+      expect(message).toContain("More than one set of notarization credentials is set")
+      expect(message).toContain("an App Store Connect API key (APPLE_API_KEY, APPLE_API_KEY_ID, APPLE_API_ISSUER) and an Apple ID (APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD)")
+      expect(message).toContain("v27")
+      expect(message).toContain("https://www.electron.build/docs/migration/v27-build-changes#notarization-uses-exactly-one-credential-set")
+      for (const secret of [...Object.values(apiKey), ...Object.values(appleId)]) {
+        expect(message).not.toContain(secret)
+      }
+    })
+
+    test("a stray APPLE_ID next to a complete API key is named as a second set", () => {
+      stubEnv({ ...apiKey, APPLE_ID: "dev@example.com" })
+      const message = notarizeError()
+      expect(message).toContain("an App Store Connect API key (APPLE_API_KEY, APPLE_API_KEY_ID, APPLE_API_ISSUER) and an Apple ID (APPLE_ID)")
+      expect(message).toContain("unset APPLE_ID to notarize with an App Store Connect API key")
+      expect(message).not.toContain("APPLE_APP_SPECIFIC_PASSWORD")
+    })
+
+    test("an API key next to a keychain profile, or APPLE_KEYCHAIN next to an Apple ID, is a conflict", () => {
+      stubEnv({ ...apiKey, APPLE_KEYCHAIN_PROFILE: "my-profile" })
+      expect(notarizeError()).toMatch(/a keychain profile \(APPLE_KEYCHAIN_PROFILE\)/)
+      vi.unstubAllEnvs()
+      for (const key of envKeys) {
+        vi.stubEnv(key, undefined)
+      }
+      stubEnv({ ...appleId, APPLE_KEYCHAIN: "/path/to/keychain.keychain" })
+      expect(notarizeError()).toMatch(/a keychain profile \(APPLE_KEYCHAIN\)/)
+    })
+
+    test("APPLE_TEAM_ID does not select an Apple ID, and an empty value counts as unset", () => {
+      stubEnv({ ...apiKey, APPLE_TEAM_ID: "TEAM123", APPLE_ID: "", APPLE_KEYCHAIN_PROFILE: "" })
+      expect(MacTargetHelper.getNotarizeOptions("/My.app")).toMatchObject({ appleApiKeyId: "KEYID123" })
+      vi.stubEnv("APPLE_API_KEY", undefined)
+      vi.stubEnv("APPLE_API_KEY_ID", undefined)
+      vi.stubEnv("APPLE_API_ISSUER", undefined)
+      stubEnv({ APPLE_KEYCHAIN_PROFILE: "my-profile" })
+      expect(MacTargetHelper.getNotarizeOptions("/My.app")).toEqual({ appPath: "/My.app", keychainProfile: "my-profile" })
+      vi.stubEnv("APPLE_KEYCHAIN_PROFILE", undefined)
+      expect(MacTargetHelper.getNotarizeOptions("/My.app")).toBeUndefined()
     })
   })
 

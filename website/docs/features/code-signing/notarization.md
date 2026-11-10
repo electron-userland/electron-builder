@@ -44,6 +44,8 @@ electron-builder notarizes the app whenever notarization credentials are set (se
 Without credentials, electron-builder skips notarization with a warning. With [`forceCodeSigning: true`](./code-signing.md#the-forcecodesigning-option), missing credentials fail the build at build start instead (unless `mac.notarize: false`), and the stapled ticket is checked with `stapler validate` (the `stapler` of the selected Xcode, or [`toolsets.executables.stapler`](../../toolsets.md#executables)) after notarizing. The credentials must then be set when the build starts.
 :::
 
+Set exactly one of the three credential sets below. Since v27, more than one set (even part of a second one, such as a leftover `APPLE_ID` next to an API key) or an incomplete set fails the build when it starts, naming the variables ([migration note](../../migration/v27-build-changes.md#notarization-uses-exactly-one-credential-set)). An empty value counts as unset; `APPLE_TEAM_ID` is read only with an Apple ID.
+
 ### Authentication — Option A: Apple ID
 
 Create an app-specific password at [appleid.apple.com](https://appleid.apple.com) (do **not** use your Apple ID password directly).
@@ -87,9 +89,8 @@ electron-builder writes a base64 value to a new temporary file (mode `0600`) for
 If credentials are stored in a named keychain profile on the build machine:
 
 ```bash
-APPLE_KEYCHAIN=login.keychain
 APPLE_KEYCHAIN_PROFILE=my-notarization-profile
-APPLE_TEAM_ID=ABCDE12345
+APPLE_KEYCHAIN=login.keychain  # optional
 ```
 
 This method is mainly useful for local development. **Option B (API Key) is recommended for CI** — it doesn't expire and avoids two-factor authentication prompts.

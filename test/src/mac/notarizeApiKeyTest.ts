@@ -15,7 +15,7 @@ const p8Base64 = Buffer.from(p8).toString("base64")
 const p8Body = p8.split("\n")[1]
 
 function stubApiKeyEnv(apiKey: string) {
-  // the Apple ID and keychain-profile flows must not take over from a credential set on the developer's machine
+  // a credential set on the developer's machine would be a second set of notarization credentials, which fails the build
   for (const name of ["APPLE_ID", "APPLE_APP_SPECIFIC_PASSWORD", "APPLE_TEAM_ID", "APPLE_KEYCHAIN", "APPLE_KEYCHAIN_PROFILE"]) {
     vi.stubEnv(name, undefined)
   }
@@ -164,12 +164,14 @@ describe("notarizeIfProvided with APPLE_API_KEY", () => {
     expect(notarize).not.toHaveBeenCalled()
   })
 
-  test("the Apple ID flow takes precedence, so APPLE_API_KEY is not validated", async ({ expect, tmpDir }) => {
+  test("a complete Apple ID next to an API key fails before notarize runs, naming both sets", async ({ expect, tmpDir }) => {
     stubApiKeyEnv(p8)
     vi.stubEnv("APPLE_ID", "dev@example.com")
     vi.stubEnv("APPLE_APP_SPECIFIC_PASSWORD", "xxxx-yyyy-zzzz-wwww")
     vi.stubEnv("APPLE_TEAM_ID", "TEAM123456")
-    await createHelper(tmpDir).notarizeIfProvided("/My.app")
-    expect(notarize).toHaveBeenCalledWith(expect.objectContaining({ appleId: "dev@example.com" }))
+    await expect(createHelper(tmpDir).notarizeIfProvided("/My.app")).rejects.toThrow(
+      /More than one set of notarization credentials is set: an App Store Connect API key .* and an Apple ID/
+    )
+    expect(notarize).not.toHaveBeenCalled()
   })
 })

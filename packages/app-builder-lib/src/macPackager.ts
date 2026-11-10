@@ -122,6 +122,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
    * Fails a forceCodeSigning build at build start, before anything is packed, when the macOS app could not be signed or
    * notarized: on a host other than macOS, in a pull-request build without CSC_FOR_PULL_REQUEST, or without notarization
    * credentials; and a build with `mac.notarize: true` without notarization credentials, where notarization can happen.
+   * Any build that notarizes also fails here when more than one set of notarization credentials, or an incomplete set, is set.
    * sign() and notarizeIfProvided keep their own checks for callers that never emit `targetsCreated`.
    */
   private checkForceCodeSigningAtBuildStart(plans: ReadonlyArray<PlannedTargets>): void {
@@ -158,18 +159,20 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     if ((!packsApp && !packsPkg) || notarize === false) {
       return
     }
-    // the credentials are read (getNotarizeOptions also rejects an incomplete set) only where they are required
-    if (this.forceCodeSigning) {
-      if (MacTargetHelper.getNotarizeOptions("") == null) {
-        throw MacTargetHelper.missingNotarizationCredentialsError()
-      }
+    // The credentials are read wherever the build notarizes, so that more than one set of them, or an incomplete set, fails here
+    // (getNotarizeOptions), before anything is packed: the pkg installer whenever it is built, the app where sign() signs it (a macOS
+    // host outside a pull-request build, with signing not turned off by the configuration), and always under forceCodeSigning.
+    if (!this.forceCodeSigning && !packsPkg && (!isSignAllowed(false) || this.isMacSigningSkippedByConfiguration())) {
       return
+    }
+    if (MacTargetHelper.getNotarizeOptions("") != null) {
+      return
+    }
+    if (this.forceCodeSigning) {
+      throw MacTargetHelper.missingNotarizationCredentialsError()
     }
     // notarize: true requires notarization where it runs: the app only when sign() signs it, the pkg installer whenever it is built
-    if (!MacTargetHelper.isNotarizationRequired(notarize) || (!packsPkg && this.isMacSigningSkippedByConfiguration())) {
-      return
-    }
-    if (MacTargetHelper.getNotarizeOptions("") == null) {
+    if (MacTargetHelper.isNotarizationRequired(notarize)) {
       throw MacTargetHelper.notarizeTrueWithoutCredentialsError()
     }
   }

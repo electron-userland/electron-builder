@@ -1,4 +1,4 @@
-import { notarize, type NotarizeOptions, type NotaryToolKeychainCredentials } from "@electron/notarize"
+import { notarize, type NotarizeOptions } from "@electron/notarize"
 import type { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign"
 import { Arch, decodeStrictBase64, Executables, InvalidConfigurationError, log, MAX_FILE_REQUESTS, spawnAndWriteWithOutput, statOrNull, walk } from "builder-util"
 import { Nullish } from "builder-util-runtime"
@@ -27,6 +27,13 @@ const APPLE_API_KEY_HINT =
   "Set APPLE_API_KEY to the path of the AuthKey_<KEY_ID>.p8 file, or to the file's contents base64-encoded on one line: `base64 < AuthKey_<KEY_ID>.p8 | tr -d '\\n'` " +
   "(macOS, Linux) or `[Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path AuthKey_<KEY_ID>.p8)))` (PowerShell). " +
   "See https://www.electron.build/docs/features/code-signing/notarization"
+
+const NOTARIZATION_CREDENTIALS_DOCS = `${BUILD_CHANGES_URL}#notarization-uses-exactly-one-credential-set`
+
+/** `A`, `A and B`, `A, B and C`. */
+function listOf(names: ReadonlyArray<string>): string {
+  return names.length <= 1 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`
+}
 
 export class MacTargetHelper {
   constructor(private packager: MacPackager) {}
@@ -615,45 +622,68 @@ export class MacTargetHelper {
     }
   }
 
+  /**
+   * The notarization credentials, from exactly one of three sets of environment variables: an App Store Connect API key
+   * (APPLE_API_KEY, APPLE_API_KEY_ID, APPLE_API_ISSUER), an Apple ID (APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID) or a keychain
+   * profile (APPLE_KEYCHAIN_PROFILE, optionally APPLE_KEYCHAIN). An empty value counts as unset (a missing CI secret expands to one).
+   *
+   * A set is present when one of its selecting variables is set. APPLE_TEAM_ID completes an Apple ID but does not select it, since it
+   * may stay set next to an API key or a keychain profile, with which it is never used. No set present: undefined. More than one set
+   * present, even in part, or an incomplete set: an InvalidConfigurationError that names the variables, never their values.
+   */
   static getNotarizeOptions(appPath: string): NotarizeOptions | undefined {
-    const teamId = process.env.APPLE_TEAM_ID
-    const appleId = process.env.APPLE_ID
-    const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
+    const value = (name: string): string => process.env[name] || ""
+    const isSet = (name: string) => value(name) !== ""
+    const sets: Array<{ name: string; required: Array<string>; selectors: Array<string>; options: () => NotarizeOptions }> = [
+      {
+        name: "an App Store Connect API key",
+        required: ["APPLE_API_KEY", "APPLE_API_KEY_ID", "APPLE_API_ISSUER"],
+        selectors: ["APPLE_API_KEY", "APPLE_API_KEY_ID", "APPLE_API_ISSUER"],
+        options: () => ({ appPath, appleApiKey: value("APPLE_API_KEY"), appleApiKeyId: value("APPLE_API_KEY_ID"), appleApiIssuer: value("APPLE_API_ISSUER") }),
+      },
+      {
+        name: "an Apple ID",
+        required: ["APPLE_ID", "APPLE_APP_SPECIFIC_PASSWORD", "APPLE_TEAM_ID"],
+        selectors: ["APPLE_ID", "APPLE_APP_SPECIFIC_PASSWORD"],
+        options: () => ({ appPath, appleId: value("APPLE_ID"), appleIdPassword: value("APPLE_APP_SPECIFIC_PASSWORD"), teamId: value("APPLE_TEAM_ID") }),
+      },
+      {
+        name: "a keychain profile",
+        required: ["APPLE_KEYCHAIN_PROFILE"],
+        selectors: ["APPLE_KEYCHAIN_PROFILE", "APPLE_KEYCHAIN"],
+        options: () =>
+          isSet("APPLE_KEYCHAIN")
+            ? { appPath, keychainProfile: value("APPLE_KEYCHAIN_PROFILE"), keychain: value("APPLE_KEYCHAIN") }
+            : { appPath, keychainProfile: value("APPLE_KEYCHAIN_PROFILE") },
+      },
+    ]
 
-    if (appleId || appleIdPassword) {
-      if (!appleId) {
-        throw new InvalidConfigurationError(`APPLE_ID env var needs to be set`)
-      }
-      if (!appleIdPassword) {
-        throw new InvalidConfigurationError(`APPLE_APP_SPECIFIC_PASSWORD env var needs to be set`)
-      }
-      if (!teamId) {
-        throw new InvalidConfigurationError(`APPLE_TEAM_ID env var needs to be set`)
-      }
-      return { appPath, appleId, appleIdPassword, teamId }
+    const present = sets.filter(set => set.selectors.some(isSet))
+    const [selected, ...others] = present
+    if (selected == null) {
+      return undefined
+    }
+    const setSelectors = (set: (typeof sets)[number]) => set.selectors.filter(isSet)
+    if (others.length > 0) {
+      throw new InvalidConfigurationError(
+        `More than one set of notarization credentials is set: ${listOf(present.map(set => `${set.name} (${setSelectors(set).join(", ")})`))}. ` +
+          "Since v27 electron-builder requires exactly one set; v26 silently preferred an Apple ID, then an API key. " +
+          "Keep the variables of the set to notarize with and unset the others (an empty value counts as unset): " +
+          present.map(set => `unset ${listOf(present.filter(it => it !== set).flatMap(setSelectors))} to notarize with ${set.name}`).join("; or ") +
+          `. Or set mac.notarize: false to not notarize. See ${NOTARIZATION_CREDENTIALS_DOCS}`
+      )
     }
 
-    const appleApiKey = process.env.APPLE_API_KEY
-    const appleApiKeyId = process.env.APPLE_API_KEY_ID
-    const appleApiIssuer = process.env.APPLE_API_ISSUER
-    if (appleApiKey || appleApiKeyId || appleApiIssuer) {
-      if (!appleApiKey || !appleApiKeyId || !appleApiIssuer) {
-        throw new InvalidConfigurationError(`Env vars APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER need to be set`)
-      }
-      return { appPath, appleApiKey, appleApiKeyId, appleApiIssuer }
+    const missing = selected.required.filter(name => !isSet(name))
+    if (missing.length > 0) {
+      const found = [...new Set([...selected.required, ...selected.selectors])].filter(isSet)
+      throw new InvalidConfigurationError(
+        `Notarization with ${selected.name} needs ${listOf(selected.required)}: ${listOf(found)} ${found.length === 1 ? "is" : "are"} set, but ${listOf(missing)} ` +
+          `${missing.length === 1 ? "is" : "are"} not. Set ${listOf(missing)}, or unset ${listOf(setSelectors(selected))} to notarize with other credentials, ` +
+          `or set mac.notarize: false to not notarize. Since v27 the notarization credentials are checked when the build starts. See ${NOTARIZATION_CREDENTIALS_DOCS}`
+      )
     }
-
-    const keychain = process.env.APPLE_KEYCHAIN
-    const keychainProfile = process.env.APPLE_KEYCHAIN_PROFILE
-    if (keychainProfile) {
-      let args: NotaryToolKeychainCredentials = { keychainProfile }
-      if (keychain) {
-        args = { ...args, keychain }
-      }
-      return { appPath, ...args }
-    }
-
-    return undefined
+    return selected.options()
   }
 
   /** The error for a forceCodeSigning build that would skip notarization because no notarization credentials are set. */

@@ -40,6 +40,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [`ELECTRON_BUILDER_OFFLINE=1` skips the Windows signing timestamp](#electron_builder_offline-skips-the-signing-timestamp) | Warns | Only if you set `ELECTRON_BUILDER_OFFLINE=1`: unset it for release builds, or keep it to sign without a timestamp server |
 | [`forceCodeSigning` covers notarization and update manifests](#forcecodesigning-covers-notarization-and-update-manifests) | Fails build (with `forceCodeSigning`) | Provide notarization credentials and the update-manifest signing key wherever `forceCodeSigning` is set, or opt out explicitly (`mac.notarize: false`, `updateManifest: false`); pass `-c.forceCodeSigning=false` to pull-request and local builds that cannot sign |
 | [`mac.notarize: true` requires notarization credentials](#mac-notarize-true-requires-credentials) | Fails build (with `notarize: true`) | Only if you set `mac.notarize: true`: set the notarization credentials, or leave `notarize` unset to notarize only when they are set |
+| [Notarization uses exactly one credential set](#notarization-uses-exactly-one-credential-set) | Fails build | Only if the environment holds variables of more than one notarization credential set, or an incomplete one: keep only the set to notarize with (v26 silently used the Apple ID) |
 | [Signed update manifests are required](#signed-update-manifests-are-required) | Fails when publishing (or with `forceCodeSigning`) | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY` to the base64-encoded PEM file, or set `updateManifest: false` to keep publishing unsigned manifests |
 | [Signing key must be in `updateManifest.publicKey`](#signing-key-must-be-in-updatemanifestpublickey) | Fails when publishing | Only if you set `updateManifest.publicKey`: list a key the build signs with, or set `updateManifest.allowSigningKeyOutsideTrustList: true` for a deliberate cutover release |
 | [`app-update.yml` feed follows the update-writing targets](#app-updateyml-feed-follows-the-update-writing-targets) | Silent (conflicts fail) | Only with target-level `publish` (e.g. `nsis.publish`), targets of one app with different feeds, or a first provider with `publishAutoUpdate: false`: check which feed installs will poll |
@@ -455,6 +456,34 @@ Run [`electron-builder verify`](../cli.md#verify) after a build to check the sig
 `mac.notarize: true` now means that notarization is required: a build without notarization credentials (`APPLE_API_KEY` + `APPLE_API_KEY_ID` + `APPLE_API_ISSUER`, `APPLE_ID` + `APPLE_APP_SPECIFIC_PASSWORD` + `APPLE_TEAM_ID`, or `APPLE_KEYCHAIN_PROFILE`) fails with an `InvalidConfigurationError`, at build start and again when notarizing — wherever notarization would run: on a macOS host, outside a pull-request build, and, for the app, unless the configuration turns its signing off (`mac.sign: null`, `sign.identity: null`, or `CSC_IDENTITY_AUTO_DISCOVERY=false` without an identity or custom signer); a `pkg` installer is notarized whenever it is built. Elsewhere missing credentials only warn. Previously `true` behaved like leaving `notarize` unset, which notarizes when the credentials are set and skips notarization with a warning otherwise; that is still the default.
 
 **Action:** if you set `mac.notarize: true` only because the docs showed it, remove it: notarization still runs whenever the credentials are set. Keep it where a build without notarization must fail, and make sure the credentials are in the environment when the build starts.
+
+### Notarization uses exactly one credential set {#notarization-uses-exactly-one-credential-set}
+
+**How you'll find out:** **Fails the build** at build start, with an `InvalidConfigurationError` that names the variables it found (never their values) and links here.
+
+electron-builder reads the notarization credentials from one of three sets of environment variables:
+
+| Set | Variables |
+|---|---|
+| App Store Connect API key (recommended for CI) | `APPLE_API_KEY`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER` |
+| Apple ID | `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID` |
+| Keychain profile | `APPLE_KEYCHAIN_PROFILE`, optionally `APPLE_KEYCHAIN` |
+
+v26 picked one silently: the Apple ID whenever `APPLE_ID` or `APPLE_APP_SPECIFIC_PASSWORD` was set, then the API key, then the keychain profile. So a leftover `APPLE_ID` next to a complete API key switched notarization to the Apple ID, or failed after packing with a misleading `APPLE_APP_SPECIFIC_PASSWORD env var needs to be set`.
+
+| Environment | v26 | v27 |
+|---|---|---|
+| One complete set | used | used |
+| Two or more sets, even in part | the Apple ID (then the API key) silently wins | fails, naming each set's variables and what to unset |
+| An incomplete set | fails when notarizing, naming one missing variable | fails at build start, naming every missing variable |
+| `APPLE_KEYCHAIN` alone | ignored (notarization skipped with a warning) | fails: an incomplete keychain profile |
+| No set | skipped with a warning (`forceCodeSigning` and `mac.notarize: true` fail) | unchanged |
+
+An empty value counts as unset (a missing CI secret expands to an empty string). `APPLE_TEAM_ID` is used only with an Apple ID and may stay set next to an API key or a keychain profile.
+
+The check runs at build start wherever the build notarizes: whenever a `pkg` installer is built, for the app on a macOS host outside a pull-request build when its signing is not turned off by the configuration, and always under `forceCodeSigning`. It runs again when notarizing. `mac.notarize: false` reads no credentials.
+
+**Action:** keep the variables of the set to notarize with and unset the others, or set `mac.notarize: false` to not notarize.
 
 ---
 
