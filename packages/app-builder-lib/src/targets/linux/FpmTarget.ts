@@ -35,7 +35,7 @@ import { isMacOsSierra } from "../../util/mac/macosVersion.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import { buildLauncherScript, shellQuote } from "./launcherScript.js"
 import { installPrefix, LinuxTargetHelper, quoteDesktopExecPath } from "./LinuxTargetHelper.js"
-import { prepareMetainfoFile } from "./metainfo.js"
+import { fpmFormatUsesMetainfo, prepareMetainfoFile } from "./metainfo.js"
 const { copyFile, outputFile, stat } = _fsExtra
 
 interface FpmOptions {
@@ -309,14 +309,17 @@ export default class FpmTarget extends Target {
     args.push(`${desktopFilePath}=/usr/share/applications/${this.helper.getDesktopFileName()}.desktop`)
 
     if (options.metainfo != null) {
-      const metainfo = await prepareMetainfoFile({
-        projectDir: packager.projectDir,
-        metainfo: options.metainfo,
-        appId: appInfo.id,
-        expectedDesktopId: `${this.helper.getDesktopFileName()}.desktop`,
-        disableValidation: options.disableMetainfoValidation === true,
-      })
-      args.push(`${metainfo.file}=/usr/share/metainfo/${metainfo.installBasename}`)
+      if (fpmFormatUsesMetainfo(target)) {
+        const metainfo = await prepareMetainfoFile({
+          packager,
+          metainfo: options.metainfo,
+          appId: appInfo.id,
+          expectedDesktopId: `${this.helper.getDesktopFileName()}.desktop`,
+        })
+        args.push(`${metainfo.file}=/usr/share/metainfo/${metainfo.installBasename}`)
+      } else {
+        log.debug({ target }, "metainfo is not used by this target")
+      }
     }
 
     if (packager.packagerOptions.effectiveOptionComputed != null && (await packager.packagerOptions.effectiveOptionComputed([args, desktopFilePath]))) {

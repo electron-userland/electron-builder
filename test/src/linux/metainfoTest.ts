@@ -1,5 +1,6 @@
 import { log } from "builder-util"
-import { prepareMetainfoFile, validateMetainfoFile } from "app-builder-lib/src/targets/linux/metainfo"
+import { LinuxMetainfoConfiguration } from "app-builder-lib/src/options/linuxOptions"
+import { fpmFormatUsesMetainfo, MetainfoPackager, normalizeMetainfoOption, prepareMetainfoFile, validateMetainfoFile } from "app-builder-lib/src/targets/linux/metainfo"
 import { mkdtemp, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
@@ -163,11 +164,47 @@ describe("validateMetainfoFile", () => {
   })
 })
 
-describe("prepareMetainfoFile", () => {
-  const prepare = (metainfo: string, disableValidation = false) => prepareMetainfoFile({ projectDir, metainfo, appId: APP_ID, expectedDesktopId: DESKTOP_ID, disableValidation })
+describe("normalizeMetainfoOption", () => {
+  test("string and object forms", () => {
+    expect(normalizeMetainfoOption(null)).toBeNull()
+    expect(normalizeMetainfoOption(undefined)).toBeNull()
+    expect(normalizeMetainfoOption("a.metainfo.xml")).toEqual({ file: "a.metainfo.xml", validate: true })
+    expect(normalizeMetainfoOption({ file: "a.metainfo.xml" })).toEqual({ file: "a.metainfo.xml", validate: true })
+    expect(normalizeMetainfoOption({ file: "a.metainfo.xml", validate: false })).toEqual({ file: "a.metainfo.xml", validate: false })
+  })
 
-  test("keeps a basename ending in .metainfo.xml", async () => {
-    const file = await writeFixture(metainfoXml(), "com.example.MyApp.metainfo.xml")
+  // what deepAssign produces for `linux.metainfo: "a.xml"` + `appImage.metainfo: { validate: false }`: the object replaces the string
+  test("object without file is rejected", () => {
+    expect(() => normalizeMetainfoOption({ validate: false } as any)).toThrowError(/metainfo.file is required/)
+  })
+})
+
+describe("fpmFormatUsesMetainfo", () => {
+  test.each(["deb", "rpm", "pacman", "apk"])("%s stages the file", format => {
+    expect(fpmFormatUsesMetainfo(format)).toBe(true)
+  })
+
+  test.each(["freebsd", "p5p", "sh"])("%s does not", format => {
+    expect(fpmFormatUsesMetainfo(format)).toBe(false)
+  })
+})
+
+describe("prepareMetainfoFile", () => {
+  // stands in for PlatformPackager.getResource, which also looks in the build resources and throws when nothing is found
+  const fakePackager = () => ({ getResource: vi.fn(async (p: string | null | undefined) => path.resolve(projectDir, p!)) })
+  const prepare = (metainfo: string | LinuxMetainfoConfiguration, packager: MetainfoPackager = fakePackager(), expectedDesktopId = DESKTOP_ID, appId = APP_ID) =>
+    prepareMetainfoFile({ packager, metainfo, appId, expectedDesktopId })
+
+  test("resolves the configured path through the packager", async () => {
+    const file = await writeFixture(metainfoXml(), "resolved.metainfo.xml")
+    const packager = fakePackager()
+    await prepare({ file: "resolved.metainfo.xml" }, packager)
+    expect(packager.getResource).toHaveBeenCalledWith("resolved.metainfo.xml")
+    expect((await prepare("resolved.metainfo.xml", packager)).file).toBe(file)
+  })
+
+  test("normalizes a .metainfo.xml basename that differs from the component id", async () => {
+    const file = await writeFixture(metainfoXml(), "myapp.metainfo.xml")
     const staged = await prepare(path.basename(file))
     expect(staged).toEqual({ file, installBasename: "com.example.MyApp.metainfo.xml" })
   })
@@ -188,35 +225,71 @@ describe("prepareMetainfoFile", () => {
     expect(staged.file).toBe(file)
   })
 
-  test("disableMetainfoValidation skips the validator but still stages", async () => {
+  test("invalid file fails the build", async () => {
+    const file = await writeFixture(`<component type="web-application"><id>x</id></component>`, "invalid.metainfo.xml")
+    await expect(prepare(path.basename(file))).rejects.toThrowError(/Invalid AppStream metainfo file.*validate: false/s)
+  })
+
+  test("validate: false skips the validator but still stages", async () => {
     // would hard-fail validation on several counts (wrong type, missing required elements)
-    const file = await writeFixture(`<component type="web-application"><id>x</id></component>`, "broken.metainfo.xml")
-    const staged = await prepare(path.basename(file), true)
-    expect(staged).toEqual({ file, installBasename: "broken.metainfo.xml" })
+    const file = await writeFixture(`<component type="web-application"><id>x.y</id></component>`, "broken.appdata.xml")
+    const staged = await prepare({ file: path.basename(file), validate: false })
+    expect(staged).toEqual({ file, installBasename: "broken.appdata.xml" })
     expect(warn).not.toHaveBeenCalled()
   })
 
   test("with validation disabled the component id is still read for the installed name", async () => {
     const file = await writeFixture(metainfoXml({ id: "org.other.Thing" }), "some-name.xml")
-    const staged = await prepare(path.basename(file), true)
+    const staged = await prepare({ file: path.basename(file), validate: false })
     expect(staged.installBasename).toBe("org.other.Thing.metainfo.xml")
     expect(warn).not.toHaveBeenCalled()
   })
 
   test("with validation disabled and an unparseable file, falls back to appId for the installed name", async () => {
     const file = await writeFixture("not xml at all <<<", "some-other-name.xml")
-    const staged = await prepare(path.basename(file), true)
+    const staged = await prepare({ file: path.basename(file), validate: false })
     expect(staged.installBasename).toBe(`${APP_ID}.metainfo.xml`)
   })
 
   test("component id producing a path-escaping file name is rejected", async () => {
     const file = await writeFixture(metainfoXml({ id: "../../evil.id" }), "traversal.xml")
-    await expect(prepare(path.basename(file), true)).rejects.toThrowError(/invalid file name/)
+    await expect(prepare({ file: path.basename(file), validate: false })).rejects.toThrowError(/invalid file name/)
   })
 
   test("absolute metainfo path is used as-is", async () => {
     const file = await writeFixture(metainfoXml(), "abs.metainfo.xml")
     const staged = await prepare(file)
     expect(staged.file).toBe(file)
+  })
+
+  test("warnings are logged once per packager across targets and archs", async () => {
+    const file = await writeFixture(metainfoXml({ id: "myapp", launchable: null }), "repeated.xml")
+    const packager = fakePackager()
+    // e.g. deb x64, deb arm64 and rpm x64: same app id and .desktop name
+    for (let i = 0; i < 3; i++) {
+      await prepare(path.basename(file), packager)
+    }
+    const count = (re: RegExp) => warnMessages().filter(it => re.test(it)).length
+    expect(count(/reverse-DNS identifier/)).toBe(1)
+    expect(count(/differs from the configured appId/)).toBe(1)
+    expect(count(/no <launchable type="desktop-id">/)).toBe(1)
+
+    // a target with a different .desktop name (e.g. flatpak) gets its own launchable warning
+    await prepare(path.basename(file), packager, "other.desktop")
+    expect(count(/no <launchable type="desktop-id">/)).toBe(2)
+    expect(count(/reverse-DNS identifier/)).toBe(1)
+
+    // another packager (another build) warns again
+    await prepare(path.basename(file), fakePackager())
+    expect(count(/reverse-DNS identifier/)).toBe(2)
+  })
+
+  test("launchable matches when any desktop-id launchable is the installed .desktop file", async () => {
+    const file = await writeFixture(
+      metainfoXml({ launchable: `<launchable type="desktop-id">legacy.desktop</launchable><launchable type="desktop-id">${DESKTOP_ID}</launchable>` }),
+      "two-launchables.xml"
+    )
+    await prepare(path.basename(file))
+    expect(warn).not.toHaveBeenCalled()
   })
 })

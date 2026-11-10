@@ -12,7 +12,7 @@ import { buildFlatpakBundle, FlatpakBuilderManifest, FlatpakBundleOptions, Flatp
 import { LinuxTargetHelper } from "./LinuxTargetHelper.js"
 import { generateMimeTypeXml } from "./appimage/appLauncher.js"
 import { buildLauncherScript, shellQuote } from "./launcherScript.js"
-import { prepareMetainfoFile } from "./metainfo.js"
+import { normalizeMetainfoOption, prepareMetainfoFile } from "./metainfo.js"
 import { createStageDir, StageDir } from "../targetUtil.js"
 import { Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
@@ -198,12 +198,11 @@ export default class FlatpakTarget extends Target {
       return
     }
     const metainfo = await prepareMetainfoFile({
-      projectDir: this.packager.projectDir,
+      packager: this.packager,
       metainfo: this.options.metainfo,
       // the filtered flatpak id, not the raw appId: it is what the composed AppStream data and the desktop entry are named after
       appId: this.appId,
       expectedDesktopId: `${this.appId}.desktop`,
-      disableValidation: this.options.disableMetainfoValidation === true,
     })
     // always installed as <flatpak id>.metainfo.xml, whatever the source basename: flatpak-builder composes the AppStream
     // metadata only out of share/metainfo/<id>.metainfo.xml (or the legacy share/appdata/<id>.appdata.xml) — under any other
@@ -281,7 +280,7 @@ export default class FlatpakTarget extends Target {
       artifactPath,
       tempDir,
       files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...extraFiles],
-      hasMetainfo: this.options.metainfo != null,
+      hasMetainfo: normalizeMetainfoOption(this.options.metainfo) != null,
       symlinks: [[path.join("/lib", appIdentifier, executableName), path.join("/bin", executableName)], ...(this.options.symlinks || [])],
       installOrUpdateRefs: resolveInstallOrUpdateRefs(this.options.installOrUpdateRefs),
       flatpakBuilderArgs: this.options.additionalArgs?.flatpakBuilder ?? [],

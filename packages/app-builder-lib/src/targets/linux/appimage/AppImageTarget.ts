@@ -85,16 +85,15 @@ export default class AppImageTarget extends Target {
 
     // Validated (unless opted out) before packing; staged into usr/share/metainfo by writeAppLauncherAndRelatedFiles.
     // Note: appimagetool/AppImageHub conventionally expect `<desktop-basename>.appdata.xml` while the AppStream spec
-    // prefers `<id>.metainfo.xml` — both basenames are kept as-is (see prepareMetainfoFile).
+    // prefers `<id>.metainfo.xml` — an `.appdata.xml` basename is kept as-is (see prepareMetainfoFile).
     const metainfo =
       options.metainfo == null
         ? null
         : await prepareMetainfoFile({
-            projectDir: packager.projectDir,
+            packager,
             metainfo: options.metainfo,
             appId: packager.appInfo.id,
             expectedDesktopId: `${desktopBaseName}.desktop`,
-            disableValidation: options.disableMetainfoValidation === true,
           })
 
     if (
