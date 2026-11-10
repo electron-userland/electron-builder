@@ -7,6 +7,7 @@ exports[`snapcraft > auto start (core18) 1`] = `
       "autostart": "sep.desktop",
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -80,6 +81,7 @@ exports[`snapcraft > auto start (core20) 1`] = `
       "autostart": "sep.desktop",
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -153,6 +155,7 @@ exports[`snapcraft > auto start (core22) 1`] = `
       "autostart": "sep.desktop",
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -226,6 +229,7 @@ exports[`snapcraft > buildPackages (core18) 1`] = `
       "adapter": "none",
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -441,6 +445,7 @@ exports[`snapcraft > buildPackages (core20) 1`] = `
       "adapter": "none",
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -655,6 +660,7 @@ exports[`snapcraft > buildPackages (core22) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -966,6 +972,7 @@ exports[`snapcraft > compression option (core18) 1`] = `
       "adapter": "none",
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -1177,6 +1184,7 @@ exports[`snapcraft > compression option (core20) 1`] = `
       "adapter": "none",
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -1387,6 +1395,7 @@ exports[`snapcraft > compression option (core22) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -2305,6 +2314,7 @@ exports[`snapcraft > custom after, no desktop (core18) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -2377,6 +2387,7 @@ exports[`snapcraft > custom after, no desktop (core20) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -2449,6 +2460,7 @@ exports[`snapcraft > custom after, no desktop (core22) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -2521,6 +2533,7 @@ exports[`snapcraft > custom env (core18) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "FOO": "bar",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -2594,6 +2607,7 @@ exports[`snapcraft > custom env (core20) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "FOO": "bar",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -2667,6 +2681,7 @@ exports[`snapcraft > custom env (core22) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "FOO": "bar",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
@@ -4846,6 +4861,7 @@ exports[`snapcraft > no desktop plugs (core18) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -4908,6 +4924,7 @@ exports[`snapcraft > no desktop plugs (core20) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -4970,6 +4987,7 @@ exports[`snapcraft > no desktop plugs (core22) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -5033,6 +5051,7 @@ exports[`snapcraft > plugs option (core18) 1`] = `
       "adapter": "none",
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -5237,6 +5256,7 @@ exports[`snapcraft > plugs option (core18) 3`] = `
       "adapter": "none",
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -5441,6 +5461,7 @@ exports[`snapcraft > plugs option (core20) 1`] = `
       "adapter": "none",
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -5645,6 +5666,7 @@ exports[`snapcraft > plugs option (core20) 3`] = `
       "adapter": "none",
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -5848,6 +5870,7 @@ exports[`snapcraft > plugs option (core22) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -6051,6 +6074,7 @@ exports[`snapcraft > plugs option (core22) 3`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -6254,6 +6278,7 @@ exports[`snapcraft > slots option (core18) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -6330,6 +6355,7 @@ exports[`snapcraft > slots option (core18) 3`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -6412,6 +6438,7 @@ exports[`snapcraft > slots option (core20) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -6488,6 +6515,7 @@ exports[`snapcraft > slots option (core20) 3`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -6570,6 +6598,7 @@ exports[`snapcraft > slots option (core22) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -6646,6 +6675,7 @@ exports[`snapcraft > slots option (core22) 3`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -6728,6 +6758,7 @@ exports[`snapcraft > use template app (core18) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -6800,6 +6831,7 @@ exports[`snapcraft > use template app (core20) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -6872,6 +6904,7 @@ exports[`snapcraft > use template app (core22) 1`] = `
     "testapp": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },

@@ -245,6 +245,7 @@ exports[`snap heavy > snap full (core18 armhf) 1`] = `
     "se-wo-template": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -317,6 +318,7 @@ exports[`snap heavy > snap full (core18) 1`] = `
     "se-wo-template": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -389,6 +391,7 @@ exports[`snap heavy > snap full (core20 armhf) 1`] = `
     "se-wo-template": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -461,6 +464,7 @@ exports[`snap heavy > snap full (core20) 1`] = `
     "se-wo-template": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -533,6 +537,7 @@ exports[`snap heavy > snap full (core22 armhf) 1`] = `
     "se-wo-template": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/arm-linux-gnueabihf:$SNAP/usr/lib/arm-linux-gnueabihf",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -605,6 +610,7 @@ exports[`snap heavy > snap full (core22) 1`] = `
     "se-wo-template": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -754,6 +760,7 @@ exports[`snap heavy > snap install+launch (core18) 1`] = `
     "se-wo-template": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -826,6 +833,7 @@ exports[`snap heavy > snap install+launch (core20) 1`] = `
     "se-wo-template": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },
@@ -898,6 +906,7 @@ exports[`snap heavy > snap install+launch (core22) 1`] = `
     "se-wo-template": {
       "command": "command.sh",
       "environment": {
+        "ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
       },

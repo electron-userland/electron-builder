@@ -91,12 +91,12 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
    * `SNAP_DESKTOP_RUNTIME` (`$SNAP/gnome-platform`); user-supplied values take precedence.
    * `DISABLE_WAYLAND=1` is always added when native Wayland is disabled (see `allowNativeWayland`).
    *
-   * `LD_LIBRARY_PATH` is not set here by default: the snap's `command.sh` launcher sets it to the snap's library
-   * directories, adding `$SNAP_LIBRARY_PATH` and the caller's `LD_LIBRARY_PATH` only when they are set.
+   * The snap's library path goes into the snap YAML as `ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH`, not `LD_LIBRARY_PATH`
+   * (snapd expands it as usual), and the snap's `command.sh` launcher exports it as `LD_LIBRARY_PATH` without empty
+   * entries, such as the one an unset `$SNAP_LIBRARY_PATH` or `$LD_LIBRARY_PATH` reference leaves, because the dynamic
+   * linker searches the current directory for an empty entry. By default the library path is `$SNAP_LIBRARY_PATH`, the
+   * snap's library directories, the caller's `$LD_LIBRARY_PATH`, then the snap's library directories again.
    * Setting `LD_LIBRARY_PATH` here replaces that default library path, so include every directory the app needs.
-   * The value goes into the snap YAML as `ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH` (snapd expands it as usual), and the
-   * launcher exports it as `LD_LIBRARY_PATH` without empty entries, such as the one a `$LD_LIBRARY_PATH` reference leaves
-   * when the caller's value is unset, because the dynamic linker searches the current directory for an empty entry.
    *
    * Ignored with `confinement: "classic"`, where no environment is written and the launcher does not set `LD_LIBRARY_PATH`.
    */

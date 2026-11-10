@@ -439,11 +439,14 @@ test.ifNotWindows("template app sets LD_LIBRARY_PATH in command.sh, not in snap.
     },
     {
       packed: async context => {
-        // snapd would expand an unset `$LD_LIBRARY_PATH` in snap.yaml to an empty entry; the launcher adds it only when set
+        // snapd expands an unset `$SNAP_LIBRARY_PATH` or `$LD_LIBRARY_PATH` to an empty entry, so the default library path
+        // travels in a carrier variable and command.sh exports it without empty entries
         const { commandSh, environment } = await readTemplateSnapStage(context.outDir)
+        const snapLibDirs = "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu"
         expect(environment.LD_LIBRARY_PATH).toBeUndefined()
-        expect(commandSh).toContain('export LD_LIBRARY_PATH="${SNAP_LIBRARY_PATH:+$SNAP_LIBRARY_PATH:}$SNAP/lib:')
-        expect(commandSh).toContain("$SNAP/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}:$SNAP/lib:")
+        expect(environment.ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH).toBe(`$SNAP_LIBRARY_PATH:${snapLibDirs}:$LD_LIBRARY_PATH:${snapLibDirs}`)
+        expect(commandSh).toContain('_ld_library_path=":$ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH:"')
+        expect(commandSh).toContain('export LD_LIBRARY_PATH="$_ld_library_path"')
       },
     }
   )
@@ -468,7 +471,6 @@ test.ifNotWindows("template app moves a configured LD_LIBRARY_PATH into command.
         expect(environment.LD_LIBRARY_PATH).toBeUndefined()
         expect(environment.ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH).toBe("$SNAP/custom:$LD_LIBRARY_PATH")
         expect(commandSh).toContain('_ld_library_path=":$ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH:"')
-        expect(commandSh).not.toContain("SNAP_LIBRARY_PATH:+")
       },
     }
   )
