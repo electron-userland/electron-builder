@@ -3,10 +3,18 @@ import { sanitizeFileName } from "builder-util/internal"
 import { WinPackager } from "../winPackager.js"
 
 export interface CommonWindowsInstallerConfiguration {
+  /**
+   * Whether to create a one-click installer, or an assisted one that shows a wizard (install mode, installation directory, ...).
+   * @default true
+   */
   readonly oneClick?: boolean
 
   /**
-   * Whether to install per all users (per-machine).
+   * Whether to install per all users (per-machine), and for an assisted installer whether the user chooses:
+   *
+   * - `oneClick` `true` (default): whether to install per all users (per-machine).
+   * - `oneClick` `false` and `perMachine` `true`: no install mode page, always install per-machine.
+   * - `oneClick` `false` and `perMachine` `false` (default): an install mode page lets the user choose per-user or per-machine.
    * @default false
    */
   readonly perMachine?: boolean

@@ -43,7 +43,7 @@
       "additionalProperties": false,
       "properties": {
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -169,7 +169,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "synopsis": {
           "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
@@ -185,15 +186,15 @@
       "additionalProperties": false,
       "properties": {
         "addAutoLaunchExtension": {
-          "description": "Whether to add auto launch extension. Defaults to `true` if [electron-winstore-auto-launch](https://github.com/felixrieseberg/electron-winstore-auto-launch) in the dependencies.",
+          "description": "Whether to add the auto launch extension. Defaults to `true` when [electron-winstore-auto-launch](https://github.com/felixrieseberg/electron-winstore-auto-launch) is a dependency.",
           "type": "boolean"
         },
         "applicationId": {
-          "description": "The application id. Defaults to `identityName`. This string contains alpha-numeric fields separated by periods. Each field must begin with an ASCII alphabetic character.",
+          "description": "The application id (`Application/@Id`): alpha-numeric fields separated by periods, each beginning with an ASCII letter.\nDefaults to `identityName`, else the application name.",
           "type": "string"
         },
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -201,7 +202,7 @@
         },
         "backgroundColor": {
           "default": "#464646",
-          "description": "The background color of the app tile. See [Visual Elements](https://msdn.microsoft.com/en-us/library/windows/apps/br211471.aspx).",
+          "description": "The background color of the app tile. See [Visual Elements](https://learn.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-uap-visualelements).",
           "type": [
             "null",
             "string"
@@ -219,18 +220,18 @@
               "type": "null"
             }
           ],
-          "description": "The list of [capabilities](https://learn.microsoft.com/en-us/windows/uwp/packaging/app-capability-declarations) to be added to an `appmanifest.xml`.\nThe `runFullTrust` capability is obligatory for electron apps and will be auto added if not specified here.\nDefaults to `['runFullTrust']` if omitted\nExample:  `['runFullTrust', 'privateNetworkClientServer', 'webcam']`"
+          "description": "The [capabilities](https://learn.microsoft.com/en-us/windows/uwp/packaging/app-capability-declarations) to declare in the manifest,\ne.g. `[\"privateNetworkClientServer\", \"webcam\"]`. `runFullTrust`, which Electron apps need, is always added."
         },
         "customExtensionsPath": {
-          "description": "Relative path to custom extensions xml to be included in an `appmanifest.xml`.",
+          "description": "Path, relative to the app directory, of an XML file whose content is added to the manifest's extensions.",
           "type": "string"
         },
         "customManifestPath": {
-          "description": "(Advanced Option) Relative path to custom `appmanifest.xml` (file name doesn't matter, it'll be renamed) located in build resources directory.\nSupports the following template macros:\n\n- ${publisher}\n- ${publisherDisplayName}\n- ${version}\n- ${applicationId}\n- ${identityName}\n- ${executable}\n- ${displayName}\n- ${description}\n- ${backgroundColor}\n- ${logo}\n- ${square150x150Logo}\n- ${square44x44Logo}\n- ${lockScreen}\n- ${defaultTile}\n- ${splashScreen}\n- ${arch}\n- ${resourceLanguages}\n- ${capabilities}\n- ${extensions}\n- ${minVersion}\n- ${maxVersionTested}",
+          "description": "(Advanced) Path to a custom `AppxManifest.xml` template (any file name), looked up in the build resources directory, then the project\ndirectory. Supports the template macros of the default template:\n\n- ${publisher}\n- ${publisherDisplayName}\n- ${version}\n- ${applicationId}\n- ${identityName}\n- ${executable}\n- ${displayName}\n- ${description}\n- ${backgroundColor}\n- ${logo}\n- ${square150x150Logo}\n- ${square44x44Logo}\n- ${lockScreen}\n- ${defaultTile}\n- ${splashScreen}\n- ${arch}\n- ${resourceLanguages}\n- ${capabilities}\n- ${extensions}\n- ${minVersion}\n- ${maxVersionTested}\n\nThe `msix` target also supports `${packageIntegrity}`, and adds its `windowsServices` to `${extensions}`.",
           "type": "string"
         },
         "displayName": {
-          "description": "A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx).\nDefaults to the application product name.",
+          "description": "The name displayed to users ([Properties.DisplayName](https://learn.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-displayname)).\nDefaults to the application product name.",
           "type": [
             "null",
             "string"
@@ -241,7 +242,7 @@
           "type": "boolean"
         },
         "identityName": {
-          "description": "The name. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx). Defaults to the [application name](https://www.electron.build/configuration#metadata).",
+          "description": "The package name ([Identity.Name](https://learn.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-identity)).\nDefaults to the [application name](https://www.electron.build/configuration#metadata).",
           "type": [
             "null",
             "string"
@@ -262,7 +263,10 @@
               ]
             }
           ],
-          "description": "The list of [supported languages](https://docs.microsoft.com/en-us/windows/uwp/globalizing/manage-language-and-region#specify-the-supported-languages-in-the-apps-manifest) that will be listed in the Windows Store.\nThe first entry (index 0) will be the default language.\nDefaults to en-US if omitted."
+          "default": [
+            "en-US"
+          ],
+          "description": "The [supported languages](https://learn.microsoft.com/en-us/windows/uwp/globalizing/manage-language-and-region#specify-the-supported-languages-in-the-apps-manifest)\nlisted in the Windows Store. The first entry is the default language."
         },
         "makeappxArgs": {
           "anyOf": [
@@ -278,16 +282,14 @@
           ]
         },
         "maxVersionTested": {
-          "default": "arch === Arch.arm64 ? \"10.0.16299.0\" : \"10.0.14316.0\"",
-          "description": "Set the `MaxVersionTested` field in the appx manifest.xml",
+          "description": "The manifest's `TargetDeviceFamily/@MaxVersionTested`. Defaults to `minVersion`, else to its default.",
           "type": [
             "null",
             "string"
           ]
         },
         "minVersion": {
-          "default": "arch === Arch.arm64 ? \"10.0.16299.0\" : \"10.0.14316.0\"",
-          "description": "Set the MinVersion field in the appx manifest.xml",
+          "description": "The manifest's `TargetDeviceFamily/@MinVersion`. Defaults to `10.0.16299.0` for arm64 and `10.0.14316.0` otherwise.",
           "type": [
             "null",
             "string"
@@ -337,17 +339,18 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "publisher": {
-          "description": "The Windows Store publisher. Not used if AppX is build for testing. See [AppX Package Code Signing](#appx-package-code-signing) below.",
+          "description": "The package publisher (`Identity/@Publisher`). It must match the subject of the signing certificate exactly. Defaults to that\nsubject (`CN=ms` for an unsigned build, such as one for the Store); with `win.sign.type: \"azure\"`, `win.sign.publisherName` is used.",
           "type": [
             "null",
             "string"
           ]
         },
         "publisherDisplayName": {
-          "description": "A friendly name for the publisher that can be displayed to users. Corresponds to [Properties.PublisherDisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211460.aspx).\nDefaults to company name from the application metadata.",
+          "description": "The publisher name displayed to users ([Properties.PublisherDisplayName](https://learn.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-publisherdisplayname)).\nDefaults to the company name (the `author` in package.json); the build fails when neither is set.",
           "type": [
             "null",
             "string"
@@ -355,12 +358,12 @@
         },
         "setBuildNumber": {
           "default": false,
-          "description": "Whether to set build number. See https://github.com/electron-userland/electron-builder/issues/3875",
+          "description": "Whether the fourth component of the package version is the build number instead of 0. See https://github.com/electron-userland/electron-builder/issues/3875",
           "type": "boolean"
         },
         "showNameOnTiles": {
           "default": false,
-          "description": "Whether to overlay the app's name on top of tile images on the Start screen. Defaults to `false`. (https://docs.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-uap-shownameontiles) in the dependencies.",
+          "description": "Whether to overlay the app's name on its tile images on the Start screen ([showNameOnTiles](https://learn.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-uap-shownameontiles)).",
           "type": "boolean"
         }
       },
@@ -472,7 +475,7 @@
       "properties": {
         "channel": {
           "default": "latest",
-          "description": "The channel.",
+          "description": "The update channel: the base name of the update info files electron-updater fetches (`latest.yml`, `latest-mac.yml`,\n`latest-linux.yml` for `latest`). When unset, the `generic`, `s3`, `spaces` and `r2` providers take the prerelease component of\nthe app version (`beta` for `1.2.0-beta.1`, see `detectUpdateChannel`); the other providers use `latest`, and `keygen` its own\ndefault.",
           "type": [
             "null",
             "string"
@@ -603,6 +606,14 @@
     "CustomPublishOptions": {
       "additionalProperties": {},
       "properties": {
+        "channel": {
+          "default": "latest",
+          "description": "The update channel: the base name of the update info files electron-updater fetches (`latest.yml`, `latest-mac.yml`,\n`latest-linux.yml` for `latest`). When unset, the `generic`, `s3`, `spaces` and `r2` providers take the prerelease component of\nthe app version (`beta` for `1.2.0-beta.1`, see `detectUpdateChannel`); the other providers use `latest`, and `keygen` its own\ndefault.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "maxUpdateInfoSize": {
           "default": 10485760,
           "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
@@ -715,7 +726,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -905,7 +916,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "recommends": {
           "anyOf": [
@@ -979,7 +991,7 @@
       "additionalProperties": false,
       "properties": {
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -1130,7 +1142,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "shrink": {
           "default": true,
@@ -2018,7 +2031,7 @@
           "description": "*Advanced only* Additional arguments for the tools that build the bundle, by tool. Nothing is added unless it is set.\n\nA build in an unprivileged container, which has neither FUSE nor user namespaces for bubblewrap, needs `{ flatpakBuilder: [\"--disable-rofiles-fuse\"], buildExport: [\"--disable-sandbox\"] }`."
         },
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -2192,7 +2205,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "runtime": {
           "description": "The name of the runtime that the application uses. Defaults to `org.freedesktop.Platform`.\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
@@ -2290,7 +2304,7 @@
       "properties": {
         "channel": {
           "default": "latest",
-          "description": "The channel.",
+          "description": "The update channel: the base name of the update info files electron-updater fetches (`latest.yml`, `latest-mac.yml`,\n`latest-linux.yml` for `latest`). When unset, the `generic`, `s3`, `spaces` and `r2` providers take the prerelease component of\nthe app version (`beta` for `1.2.0-beta.1`, see `detectUpdateChannel`); the other providers use `latest`, and `keygen` its own\ndefault.",
           "type": [
             "null",
             "string"
@@ -2394,7 +2408,7 @@
       "properties": {
         "channel": {
           "default": "latest",
-          "description": "The channel.",
+          "description": "The update channel: the base name of the update info files electron-updater fetches (`latest.yml`, `latest-mac.yml`,\n`latest-linux.yml` for `latest`). When unset, the `generic`, `s3`, `spaces` and `r2` providers take the prerelease component of\nthe app version (`beta` for `1.2.0-beta.1`, see `detectUpdateChannel`); the other providers use `latest`, and `keygen` its own\ndefault.",
           "type": [
             "null",
             "string"
@@ -2563,7 +2577,7 @@
       "properties": {
         "channel": {
           "default": "latest",
-          "description": "The channel.",
+          "description": "The update channel: the base name of the update info files electron-updater fetches (`latest.yml`, `latest-mac.yml`,\n`latest-linux.yml` for `latest`). When unset, the `generic`, `s3`, `spaces` and `r2` providers take the prerelease component of\nthe app version (`beta` for `1.2.0-beta.1`, see `detectUpdateChannel`); the other providers use `latest`, and `keygen` its own\ndefault.",
           "type": [
             "null",
             "string"
@@ -2828,15 +2842,14 @@
       "additionalProperties": false,
       "properties": {
         "appId": {
-          "default": "com.electron.${name}",
-          "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
+          "description": "Overrides the root `appId` for this platform's targets (see the root option).",
           "type": [
             "null",
             "string"
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -3088,7 +3101,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration. See [Auto Update](https://www.electron.build/publish) for more information."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
@@ -3207,7 +3220,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -3382,7 +3395,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "synopsis": {
           "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
@@ -3404,15 +3418,14 @@
       "additionalProperties": false,
       "properties": {
         "appId": {
-          "default": "com.electron.${name}",
-          "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
+          "description": "Overrides the root `appId` for this platform's targets (see the root option).",
           "type": [
             "null",
             "string"
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -3724,7 +3737,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration. See [Auto Update](https://www.electron.build/publish) for more information."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
@@ -3835,15 +3848,14 @@
       "additionalProperties": false,
       "properties": {
         "appId": {
-          "default": "com.electron.${name}",
-          "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
+          "description": "Overrides the root `appId` for this platform's targets (see the root option).",
           "type": [
             "null",
             "string"
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -4155,7 +4167,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration. See [Auto Update](https://www.electron.build/publish) for more information."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
@@ -4307,7 +4319,7 @@
               "type": "null"
             }
           ],
-          "description": "Any additional arguments to be passed to the light.ext, such as `[\"-cultures:ja-jp\"]`"
+          "description": "Any additional arguments passed to the WiX linker (light.exe) only, such as `[\"-cultures:ja-jp\"]`."
         },
         "additionalWixArgs": {
           "anyOf": [
@@ -4321,10 +4333,10 @@
               "type": "null"
             }
           ],
-          "description": "Any additional arguments to be passed to the WiX installer compiler, such as `[\"-ext\", \"WixUtilExtension\"]`"
+          "description": "Any additional arguments passed to both the WiX compiler (candle.exe) and linker (light.exe), such as `[\"-ext\", \"WixUtilExtension\"]`."
         },
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -4354,12 +4366,12 @@
         },
         "oneClick": {
           "default": true,
-          "description": "One-click installation.",
+          "description": "Whether to create a one-click installer, or an assisted one that shows a wizard (install mode, installation directory, ...).",
           "type": "boolean"
         },
         "perMachine": {
           "default": false,
-          "description": "Whether to install per all users (per-machine).",
+          "description": "Whether to install per all users (per-machine), and for an assisted installer whether the user chooses:\n\n- `oneClick` `true` (default): whether to install per all users (per-machine).\n- `oneClick` `false` and `perMachine` `true`: no install mode page, always install per-machine.\n- `oneClick` `false` and `perMachine` `false` (default): an install mode page lets the user choose per-user or per-machine.",
           "type": "boolean"
         },
         "publish": {
@@ -4406,7 +4418,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "runAfterFinish": {
           "default": true,
@@ -4421,7 +4434,7 @@
           ]
         },
         "upgradeCode": {
-          "description": "The [upgrade code](https://msdn.microsoft.com/en-us/library/windows/desktop/aa372375(v=vs.85).aspx). Optional, by default generated using app id.",
+          "description": "The [upgrade code](https://learn.microsoft.com/en-us/windows/win32/msi/upgradecode). Optional, by default generated using app id.",
           "type": [
             "null",
             "string"
@@ -4438,6 +4451,20 @@
     "MsiWrappedOptions": {
       "additionalProperties": false,
       "properties": {
+        "additionalLightArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Any additional arguments passed to the WiX linker (light.exe) only, such as `[\"-cultures:ja-jp\"]`."
+        },
         "additionalWixArgs": {
           "anyOf": [
             {
@@ -4450,10 +4477,10 @@
               "type": "null"
             }
           ],
-          "description": "Any additional arguments to be passed to the WiX installer compiler, such as `[\"-ext\", \"WixUtilExtension\"]`"
+          "description": "Any additional arguments passed to both the WiX compiler (candle.exe) and linker (light.exe), such as `[\"-ext\", \"WixUtilExtension\"]`."
         },
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -4487,11 +4514,13 @@
           ]
         },
         "oneClick": {
+          "default": true,
+          "description": "Whether to create a one-click installer, or an assisted one that shows a wizard (install mode, installation directory, ...).",
           "type": "boolean"
         },
         "perMachine": {
           "default": false,
-          "description": "Whether to install per all users (per-machine).",
+          "description": "Whether to install per all users (per-machine), and for an assisted installer whether the user chooses:\n\n- `oneClick` `true` (default): whether to install per all users (per-machine).\n- `oneClick` `false` and `perMachine` `true`: no install mode page, always install per-machine.\n- `oneClick` `false` and `perMachine` `false` (default): an install mode page lets the user choose per-user or per-machine.",
           "type": "boolean"
         },
         "publish": {
@@ -4538,7 +4567,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "runAfterFinish": {
           "default": true,
@@ -4553,7 +4583,7 @@
           ]
         },
         "upgradeCode": {
-          "description": "The [upgrade code](https://msdn.microsoft.com/en-us/library/windows/desktop/aa372375(v=vs.85).aspx). Optional, by default generated using app id.",
+          "description": "The [upgrade code](https://learn.microsoft.com/en-us/windows/win32/msi/upgradecode). Optional, by default generated using app id.",
           "type": [
             "null",
             "string"
@@ -4578,15 +4608,15 @@
       "additionalProperties": false,
       "properties": {
         "addAutoLaunchExtension": {
-          "description": "Whether to add auto launch extension. Defaults to `true` if electron-winstore-auto-launch is in the dependencies.",
+          "description": "Whether to add the auto launch extension. Defaults to `true` when [electron-winstore-auto-launch](https://github.com/felixrieseberg/electron-winstore-auto-launch) is a dependency.",
           "type": "boolean"
         },
         "applicationId": {
-          "description": "The application id. Defaults to `identityName`. This string contains alpha-numeric fields separated by periods.\nEach field must begin with an ASCII alphabetic character.",
+          "description": "The application id (`Application/@Id`): alpha-numeric fields separated by periods, each beginning with an ASCII letter.\nDefaults to `identityName`, else the application name.",
           "type": "string"
         },
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -4594,7 +4624,7 @@
         },
         "backgroundColor": {
           "default": "#464646",
-          "description": "The background color of the app tile.",
+          "description": "The background color of the app tile. See [Visual Elements](https://learn.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-uap-visualelements).",
           "type": [
             "null",
             "string"
@@ -4612,10 +4642,7 @@
               "type": "null"
             }
           ],
-          "default": [
-            "runFullTrust"
-          ],
-          "description": "The list of capabilities to be added to the AppxManifest.xml.\nThe `runFullTrust` capability is obligatory for Electron apps and will be auto-added if not specified."
+          "description": "The [capabilities](https://learn.microsoft.com/en-us/windows/uwp/packaging/app-capability-declarations) to declare in the manifest,\ne.g. `[\"privateNetworkClientServer\", \"webcam\"]`. `runFullTrust`, which Electron apps need, is always added."
         },
         "createMsixbundle": {
           "default": true,
@@ -4628,15 +4655,15 @@
           "type": "boolean"
         },
         "customExtensionsPath": {
-          "description": "Relative path to custom extensions xml to be included in the AppxManifest.xml.",
+          "description": "Path, relative to the app directory, of an XML file whose content is added to the manifest's extensions.",
           "type": "string"
         },
         "customManifestPath": {
-          "description": "Relative path to a custom AppxManifest.xml template located in the build resources directory.\nSupports the same `${}` template macros as the default template, including the MSIX-specific\n`${packageIntegrity}` macro. Windows services are injected via the `${extensions}` macro\nalongside protocol/file-association extensions.",
+          "description": "(Advanced) Path to a custom `AppxManifest.xml` template (any file name), looked up in the build resources directory, then the project\ndirectory. Supports the template macros of the default template:\n\n- ${publisher}\n- ${publisherDisplayName}\n- ${version}\n- ${applicationId}\n- ${identityName}\n- ${executable}\n- ${displayName}\n- ${description}\n- ${backgroundColor}\n- ${logo}\n- ${square150x150Logo}\n- ${square44x44Logo}\n- ${lockScreen}\n- ${defaultTile}\n- ${splashScreen}\n- ${arch}\n- ${resourceLanguages}\n- ${capabilities}\n- ${extensions}\n- ${minVersion}\n- ${maxVersionTested}\n\nThe `msix` target also supports `${packageIntegrity}`, and adds its `windowsServices` to `${extensions}`.",
           "type": "string"
         },
         "displayName": {
-          "description": "A friendly name displayed to users. Corresponds to Properties.DisplayName. Defaults to the application product name.",
+          "description": "The name displayed to users ([Properties.DisplayName](https://learn.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-displayname)).\nDefaults to the application product name.",
           "type": [
             "null",
             "string"
@@ -4651,7 +4678,7 @@
           "type": "boolean"
         },
         "identityName": {
-          "description": "The package identity name. Corresponds to Identity.Name. Defaults to the application name.",
+          "description": "The package name ([Identity.Name](https://learn.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-identity)).\nDefaults to the [application name](https://www.electron.build/configuration#metadata).",
           "type": [
             "null",
             "string"
@@ -4675,7 +4702,7 @@
           "default": [
             "en-US"
           ],
-          "description": "The list of supported languages listed in the Windows Store. The first entry (index 0) will be the default language."
+          "description": "The [supported languages](https://learn.microsoft.com/en-us/windows/uwp/globalizing/manage-language-and-region#specify-the-supported-languages-in-the-apps-manifest)\nlisted in the Windows Store. The first entry is the default language."
         },
         "makeappxArgs": {
           "anyOf": [
@@ -4691,16 +4718,15 @@
           ]
         },
         "maxVersionTested": {
-          "default": "same as minVersion",
-          "description": "Set the MaxVersionTested field in the AppxManifest.xml.",
+          "description": "The manifest's `TargetDeviceFamily/@MaxVersionTested`. Defaults to `minVersion`, else to its default.",
           "type": [
             "null",
             "string"
           ]
         },
         "minVersion": {
-          "default": "\"10.0.17763.0\" (Windows 10 version 1809 — minimum for Store submissions)",
-          "description": "Set the MinVersion field in the AppxManifest.xml.",
+          "default": "10.0.17763.0",
+          "description": "The manifest's `TargetDeviceFamily/@MinVersion`. The default is Windows 10 version 1809, the minimum for Store submissions.",
           "type": [
             "null",
             "string"
@@ -4750,17 +4776,18 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "publisher": {
-          "description": "The Windows Store publisher. Not used if MSIX is built for testing.",
+          "description": "The package publisher (`Identity/@Publisher`). It must match the subject of the signing certificate exactly. Defaults to that\nsubject (`CN=ms` for an unsigned build, such as one for the Store); with `win.sign.type: \"azure\"`, `win.sign.publisherName` is used.",
           "type": [
             "null",
             "string"
           ]
         },
         "publisherDisplayName": {
-          "description": "A friendly name for the publisher displayed to users. Corresponds to Properties.PublisherDisplayName.\nDefaults to company name from the application metadata.",
+          "description": "The publisher name displayed to users ([Properties.PublisherDisplayName](https://learn.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-publisherdisplayname)).\nDefaults to the company name (the `author` in package.json); the build fails when neither is set.",
           "type": [
             "null",
             "string"
@@ -4768,12 +4795,12 @@
         },
         "setBuildNumber": {
           "default": false,
-          "description": "Whether to set the build number in the version field.",
+          "description": "Whether the fourth component of the package version is the build number instead of 0. See https://github.com/electron-userland/electron-builder/issues/3875",
           "type": "boolean"
         },
         "showNameOnTiles": {
           "default": false,
-          "description": "Whether to overlay the app's name on top of tile images on the Start screen.",
+          "description": "Whether to overlay the app's name on its tile images on the Start screen ([showNameOnTiles](https://learn.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-uap-shownameontiles)).",
           "type": "boolean"
         },
         "windowsServices": {
@@ -4903,7 +4930,7 @@
         },
         "buildUniversalInstaller": {
           "default": true,
-          "description": "Disable building an universal installer of the archs specified in the target configuration\n*Not supported for nsis-web*",
+          "description": "Whether to build one installer for all the archs of the target (`true`), or one installer per arch (`false`).\nnsis-web always builds a universal installer.",
           "type": "boolean"
         },
         "createDesktopShortcut": {
@@ -5043,7 +5070,7 @@
         },
         "oneClick": {
           "default": true,
-          "description": "Whether to create one-click installer or assisted.",
+          "description": "Whether to create a one-click installer, or an assisted one that shows a wizard (install mode, installation directory, ...).",
           "type": "boolean"
         },
         "packElevateHelper": {
@@ -5053,7 +5080,7 @@
         },
         "perMachine": {
           "default": false,
-          "description": "Whether to show install mode installer page (choice per-machine or per-user) for assisted installer. Or whether installation always per all users (per-machine).\n\nIf `oneClick` is `true` (default): Whether to install per all users (per-machine).\n\nIf `oneClick` is `false` and `perMachine` is `true`: no install mode installer page, always install per-machine.\n\nIf `oneClick` is `false` and `perMachine` is `false` (default): install mode installer page.",
+          "description": "Whether to install per all users (per-machine), and for an assisted installer whether the user chooses:\n\n- `oneClick` `true` (default): whether to install per all users (per-machine).\n- `oneClick` `false` and `perMachine` `true`: no install mode page, always install per-machine.\n- `oneClick` `false` and `perMachine` `false` (default): an install mode page lets the user choose per-user or per-machine.",
           "type": "boolean"
         },
         "preCompressedFileExtensions": {
@@ -5128,7 +5155,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "removeDefaultUninstallWelcomePage": {
           "default": false,
@@ -5403,7 +5431,7 @@
         },
         "oneClick": {
           "default": true,
-          "description": "Whether to create one-click installer or assisted.",
+          "description": "Whether to create a one-click installer, or an assisted one that shows a wizard (install mode, installation directory, ...).",
           "type": "boolean"
         },
         "packElevateHelper": {
@@ -5413,7 +5441,7 @@
         },
         "perMachine": {
           "default": false,
-          "description": "Whether to show install mode installer page (choice per-machine or per-user) for assisted installer. Or whether installation always per all users (per-machine).\n\nIf `oneClick` is `true` (default): Whether to install per all users (per-machine).\n\nIf `oneClick` is `false` and `perMachine` is `true`: no install mode installer page, always install per-machine.\n\nIf `oneClick` is `false` and `perMachine` is `false` (default): install mode installer page.",
+          "description": "Whether to install per all users (per-machine), and for an assisted installer whether the user chooses:\n\n- `oneClick` `true` (default): whether to install per all users (per-machine).\n- `oneClick` `false` and `perMachine` `true`: no install mode page, always install per-machine.\n- `oneClick` `false` and `perMachine` `false` (default): an install mode page lets the user choose per-user or per-machine.",
           "type": "boolean"
         },
         "preCompressedFileExtensions": {
@@ -5488,7 +5516,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "removeDefaultUninstallWelcomePage": {
           "default": false,
@@ -6044,7 +6073,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -6216,7 +6245,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "synopsis": {
           "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
@@ -6314,7 +6344,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -6479,7 +6509,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "scripts": {
           "default": "build/pkg-scripts",
@@ -6518,7 +6549,7 @@
       "description": "Portable options.",
       "properties": {
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -6526,7 +6557,7 @@
         },
         "buildUniversalInstaller": {
           "default": true,
-          "description": "Disable building an universal installer of the archs specified in the target configuration",
+          "description": "Whether to build one installer for all the archs of the target (`true`), or one installer per arch (`false`).\nnsis-web always builds a universal installer.",
           "type": "boolean"
         },
         "guid": {
@@ -6597,7 +6628,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "requestExecutionLevel": {
           "default": "user",
@@ -6688,7 +6720,7 @@
         },
         "channel": {
           "default": "latest",
-          "description": "The update channel.",
+          "description": "The update channel: the base name of the update info files electron-updater fetches (`latest.yml`, `latest-mac.yml`,\n`latest-linux.yml` for `latest`). When unset, the `generic`, `s3`, `spaces` and `r2` providers take the prerelease component of\nthe app version (`beta` for `1.2.0-beta.1`, see `detectUpdateChannel`); the other providers use `latest`, and `keygen` its own\ndefault.",
           "type": [
             "null",
             "string"
@@ -6980,7 +7012,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -7152,7 +7184,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "synopsis": {
           "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
@@ -7290,7 +7323,7 @@
         },
         "channel": {
           "default": "latest",
-          "description": "The update channel.",
+          "description": "The update channel: the base name of the update info files electron-updater fetches (`latest.yml`, `latest-mac.yml`,\n`latest-linux.yml` for `latest`). When unset, the `generic`, `s3`, `spaces` and `r2` providers take the prerelease component of\nthe app version (`beta` for `1.2.0-beta.1`, see `detectUpdateChannel`); the other providers use `latest`, and `keygen` its own\ndefault.",
           "type": [
             "null",
             "string"
@@ -7454,7 +7487,7 @@
     },
     "SnapOptions24": {
       "additionalProperties": false,
-      "description": "Options for building a core24 snap. This interface does not extend the legacy\n`SnapBaseOptions` — it uses the snapcraft CLI directly.\n\nFields inherited from {@link CommonLinuxOptions} (`description`, `category`, `mimeTypes`,\n`executableArgs`, `desktop`, `synopsis`) are automatically populated from the root `linux.*`\nconfiguration. You do not need to duplicate them here; values set directly on this interface\ntake precedence over the cascaded `linux.*` values.",
+      "description": "Options for building a core24 snap, which uses the snapcraft CLI directly. The options shared with the core18 / core20 / core22\nbases are documented on {@link CommonSnapOptions}.",
       "properties": {
         "after": {
           "anyOf": [
@@ -7468,7 +7501,7 @@
               "type": "null"
             }
           ],
-          "description": "Names of other snapcraft parts that must be built before the app part."
+          "description": "Names of other snapcraft parts that must be built before the app part. No default."
         },
         "appPartStage": {
           "anyOf": [
@@ -7482,10 +7515,10 @@
               "type": "null"
             }
           ],
-          "description": "Filesets controlling which files from the app part are staged into the snap.\nSupports glob patterns and exclusions. See [filesets](https://snapcraft.io/docs/snapcraft-filesets)."
+          "description": "Filesets controlling which files from the app part are staged into the snap.\nSupports individual files, directories, globs, globstars, and exclusions (prefix `!`).\nSee [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets).\nWhen not set, core18 / core20 / core22 use the snap template's stage list, and core24 stages everything."
         },
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -7506,11 +7539,11 @@
               ]
             }
           ],
-          "description": "Features that must be supported by the host snapd before the snap can be installed.\nSee [assumes](https://snapcraft.io/docs/snapcraft-yaml-reference#assumes)."
+          "description": "[Snapd features](https://snapcraft.io/docs/snapcraft-yaml-reference#assumes) that must\nbe present on the host before the snap can be installed."
         },
         "autoStart": {
           "default": false,
-          "description": "Whether the app should auto-start on login (creates an autostart desktop entry).",
+          "description": "Whether the snap should automatically start on login (creates an autostart desktop entry).",
           "type": "boolean"
         },
         "buildPackages": {
@@ -7525,7 +7558,7 @@
               "type": "null"
             }
           ],
-          "description": "Debian packages required at **build** time (installed inside the build environment)."
+          "description": "Debian packages required at **build** time (installed inside the build environment).\ncore18 / core20 / core22: setting it builds the snap with snapcraft instead of the template app."
         },
         "category": {
           "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
@@ -7547,7 +7580,7 @@
               "type": "null"
             }
           ],
-          "description": "Compression algorithm for the snap SquashFS image.\n- `xz` — smaller file, slower decompression (recommended for distribution).\n- `lzo` — larger file, faster decompression (useful for development iteration).\nOmit to use snapcraft's default (`xz`).\n\nWhen not set, `linux.compression` is mapped automatically:\n`\"store\"` → `\"lzo\"`, `\"maximum\"` → `\"xz\"`, `\"normal\"` → snapcraft default.\nExplicitly setting this field always overrides the mapped value."
+          "description": "Compression algorithm for the snap SquashFS image.\n- `xz` — smaller file, slower decompression (good for distribution).\n- `lzo` — larger file, faster decompression (good for development iteration).\nOmit to use snapcraft's default (`xz`).\n\nWhen not set, `linux.compression` is mapped automatically:\n`\"store\"` → `\"lzo\"`, `\"maximum\"` → `\"xz\"`, `\"normal\"` → snapcraft default.\nExplicitly setting this field always overrides the mapped value.\n\ncore18 / core20 / core22 template app builds (`useTemplateApp`) pack the image with the `mksquashfs` from the `toolsets.appimage` bundle. `lzo` requires a toolset other than the legacy `\"0.0.0\"`, whose `mksquashfs` supports only `gzip` and `xz`."
         },
         "confinement": {
           "anyOf": [
@@ -7564,7 +7597,7 @@
             }
           ],
           "default": "strict",
-          "description": "The type of [confinement](https://snapcraft.io/docs/snap-confinement) supported by the snap."
+          "description": "The type of [snap confinement](https://snapcraft.io/docs/snap-confinement).\n- `strict` — recommended; the snap runs in a fully isolated sandbox.\n- `devmode` — sandbox violations are logged but not enforced; for development only.\n- `classic` — no confinement; equivalent to a traditionally packaged application.\n  Requires Snap Store approval before publishing."
         },
         "description": {
           "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
@@ -7596,7 +7629,7 @@
               "type": "null"
             }
           ],
-          "description": "Additional environment variables injected into the snap's runtime environment.\nMerged with the electron-builder defaults (`TMPDIR=$XDG_RUNTIME_DIR`).\nUser-supplied values take precedence."
+          "description": "Environment variables of the snap's app (the app's `environment` in the snap YAML); the values set here take precedence.\n- core24: added to the default `TMPDIR=$XDG_RUNTIME_DIR` (set `TMPDIR` to replace it).\n- core18 / core20 / core22: added to the defaults `PATH` (the snap's `bin`/`sbin` directories, then `$PATH`) and\n  `SNAP_DESKTOP_RUNTIME` (`$SNAP/gnome-platform`); `DISABLE_WAYLAND=1` is always added when native Wayland is disabled\n  (see `allowNativeWayland`). Ignored with `confinement: \"classic\"`, where no environment is written and the launcher\n  does not set `LD_LIBRARY_PATH`.\n\ncore18 / core20 / core22: the snap's library path goes into the snap YAML as `ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH`, not\n`LD_LIBRARY_PATH` (snapd expands it as usual), and the snap's `command.sh` launcher exports it as `LD_LIBRARY_PATH` without\nempty entries, such as the one an unset `$SNAP_LIBRARY_PATH` or `$LD_LIBRARY_PATH` reference leaves, because the dynamic\nlinker searches the current directory for an empty entry. By default the library path is `$SNAP_LIBRARY_PATH`, the\nsnap's library directories, the caller's `$LD_LIBRARY_PATH`, then the snap's library directories again.\nSetting `LD_LIBRARY_PATH` here replaces that default library path, so include every directory the app needs."
         },
         "executableArgs": {
           "anyOf": [
@@ -7647,11 +7680,10 @@
             }
           ],
           "default": "stable",
-          "description": "The quality grade of the snap.\n`devel` — not publishable to stable/candidate channels.\n`stable` — suitable for all channels."
+          "description": "The quality grade of the snap.\n- `stable` — suitable for all channels, including `stable` and `candidate`.\n- `devel` — development snapshot; cannot be promoted to `stable` or `candidate`."
         },
         "hooks": {
-          "default": "build/snap-hooks",
-          "description": "Directory containing [snap hooks](https://snapcraft.io/docs/supported-snap-hooks), relative to\nthe build resources directory.",
+          "description": "Directory containing [snap hooks](https://snapcraft.io/docs/supported-snap-hooks), relative to the build resources directory.\nNo default.",
           "type": [
             "null",
             "string"
@@ -7666,7 +7698,7 @@
               "type": "null"
             }
           ],
-          "description": "[Snap layouts](https://snapcraft.io/docs/snap-layouts) — bind-mount or symlink host paths\ninto the snap's namespace. User-provided layouts always override the extension defaults."
+          "description": "[Snap layouts](https://snapcraft.io/docs/snap-layouts) — bind-mount or symlink host paths\ninto the snap's namespace, making libraries or config at `/usr`, `/var`, `/etc`, etc.\naccessible inside the confined environment.\n\ncore24: when unset, a strict build without the `gnome` extension (and not built on the host) gets a default layout that binds the\nfiles of its content snaps; a layout set here replaces it."
         },
         "mimeTypes": {
           "anyOf": [
@@ -7750,7 +7782,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "remoteBuild": {
           "anyOf": [
@@ -7785,7 +7818,7 @@
               "type": "null"
             }
           ],
-          "description": "[Slots](https://snapcraft.io/docs/reference/interfaces) (provided interfaces) for the app.\nUse for MPRIS, D-Bus services, etc.\n\nExample — expose MPRIS under the Chromium bus name:\n```json\n[{ \"mpris\": { \"name\": \"chromium\" } }]\n```"
+          "description": "[Slots](https://snapcraft.io/docs/reference/interfaces) (provided interfaces) to declare\nfor the app.\n\nTo expose an MPRIS player under the Chromium bus name (required for strict confinement):\n```json\n[{ \"mpris\": { \"name\": \"chromium\" } }]\n```\nChromium [hard-codes](https://source.chromium.org/chromium/chromium/src/+/master:components/system_media_controls/linux/system_media_controls_linux.cc;l=51;bpv=0;bpt=1)\nthe bus name `chromium`, so the slot name must match for snapd to\n[allow it](https://forum.snapcraft.io/t/unable-to-use-mpris-interface/15360/7)."
         },
         "stagePackages": {
           "anyOf": [
@@ -7799,10 +7832,10 @@
               "type": "null"
             }
           ],
-          "description": "Ubuntu packages to **stage** alongside the app (equivalent to `depends` for deb).\nDefaults to `[\"libnspr4\", \"libnss3\", \"libxss1\", \"libappindicator3-1\", \"libsecret-1-0\"]`.\nSupports the `\"default\"` keyword to reference the default list:\n`[\"default\", \"my-extra-lib\"]` appends `my-extra-lib` to the defaults."
+          "description": "Ubuntu packages to **stage** alongside the app (equivalent to `depends` for deb).\nDefaults to `[\"libnspr4\", \"libnss3\", \"libxss1\", \"libappindicator3-1\", \"libsecret-1-0\"]`.\n\nUse the `\"default\"` keyword to extend the default list:\n`[\"default\", \"my-extra-lib\"]` appends `my-extra-lib` to the defaults.\n\ncore18 / core20 / core22: a list other than the default builds the snap with snapcraft instead of the template app."
         },
         "summary": {
-          "description": "A short summary of the snap (max 78 characters). Defaults to `productName`.",
+          "description": "A short summary of the snap (max 78 characters).\nDefaults to [productName](https://www.electron.build/docs/configuration#productname).",
           "type": [
             "null",
             "string"
@@ -7816,7 +7849,7 @@
           ]
         },
         "title": {
-          "description": "An optional display title (may contain uppercase letters and spaces). Defaults to `productName`.\nSee [snap format](https://snapcraft.io/docs/the-snap-format).",
+          "description": "Display title for the snap (may contain uppercase letters and spaces).\nDefaults to `productName`.\nSee [snap format](https://snapcraft.io/docs/the-snap-format).",
           "type": [
             "null",
             "string"
@@ -7881,7 +7914,7 @@
               "type": "null"
             }
           ],
-          "description": "Names of snapcraft parts that must be built before the app part.\nDefaults to `[\"desktop-gtk2\"]`.\n\nUse `\"default\"` to keep the default and add extras:\n`[\"default\", \"my-helper-part\"]`."
+          "description": "Names of other snapcraft parts that must be built before the app part. No default."
         },
         "allowNativeWayland": {
           "description": "Allow the snap to run with native Wayland support (`--ozone-platform=wayland`).\nDefaults to `false` for Electron < 38 (legacy behaviour); `true` for Electron ≥ 38.\nSet explicitly to override the version-based default.",
@@ -7902,10 +7935,10 @@
               "type": "null"
             }
           ],
-          "description": "Filesets controlling which files from the app part are staged into the snap.\nSupports individual files, directories, globs, globstars, and exclusions (prefix `!`).\nSee [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets).\nWhen not set, the snap template's default stage list is used for legacy bases (core18/core20/core22)."
+          "description": "Filesets controlling which files from the app part are staged into the snap.\nSupports individual files, directories, globs, globstars, and exclusions (prefix `!`).\nSee [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets).\nWhen not set, core18 / core20 / core22 use the snap template's stage list, and core24 stages everything."
         },
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -7930,7 +7963,7 @@
         },
         "autoStart": {
           "default": false,
-          "description": "Whether the snap should automatically start on login.",
+          "description": "Whether the snap should automatically start on login (creates an autostart desktop entry).",
           "type": "boolean"
         },
         "buildPackages": {
@@ -7945,7 +7978,7 @@
               "type": "null"
             }
           ],
-          "description": "Debian packages required at **build** time (installed inside the build environment)."
+          "description": "Debian packages required at **build** time (installed inside the build environment).\ncore18 / core20 / core22: setting it builds the snap with snapcraft instead of the template app."
         },
         "category": {
           "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
@@ -7967,7 +8000,7 @@
               "type": "null"
             }
           ],
-          "description": "Compression algorithm for the snap SquashFS image.\n- `xz` — smaller file, slower decompression (good for distribution).\n- `lzo` — larger file, faster decompression (good for development iteration).\nOmit to use snapcraft's default (`xz`).\n\nWhen not set, `linux.compression` is mapped automatically:\n`\"store\"` → `\"lzo\"`, `\"maximum\"` → `\"xz\"`, `\"normal\"` → snapcraft default.\nExplicitly setting this field always overrides the mapped value.\n\nTemplate app builds (`useTemplateApp`) pack the image with the `mksquashfs` from the `toolsets.appimage` bundle. `lzo` requires a toolset other than the legacy `\"0.0.0\"`, whose `mksquashfs` supports only `gzip` and `xz`."
+          "description": "Compression algorithm for the snap SquashFS image.\n- `xz` — smaller file, slower decompression (good for distribution).\n- `lzo` — larger file, faster decompression (good for development iteration).\nOmit to use snapcraft's default (`xz`).\n\nWhen not set, `linux.compression` is mapped automatically:\n`\"store\"` → `\"lzo\"`, `\"maximum\"` → `\"xz\"`, `\"normal\"` → snapcraft default.\nExplicitly setting this field always overrides the mapped value.\n\ncore18 / core20 / core22 template app builds (`useTemplateApp`) pack the image with the `mksquashfs` from the `toolsets.appimage` bundle. `lzo` requires a toolset other than the legacy `\"0.0.0\"`, whose `mksquashfs` supports only `gzip` and `xz`."
         },
         "confinement": {
           "anyOf": [
@@ -8016,7 +8049,7 @@
               "type": "null"
             }
           ],
-          "description": "Environment variables injected into the snap's runtime environment (the app's `environment` in the snap YAML).\nMerged over the electron-builder defaults `PATH` (the snap's `bin`/`sbin` directories, then `$PATH`) and\n`SNAP_DESKTOP_RUNTIME` (`$SNAP/gnome-platform`); user-supplied values take precedence.\n`DISABLE_WAYLAND=1` is always added when native Wayland is disabled (see `allowNativeWayland`).\n\nThe snap's library path goes into the snap YAML as `ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH`, not `LD_LIBRARY_PATH`\n(snapd expands it as usual), and the snap's `command.sh` launcher exports it as `LD_LIBRARY_PATH` without empty\nentries, such as the one an unset `$SNAP_LIBRARY_PATH` or `$LD_LIBRARY_PATH` reference leaves, because the dynamic\nlinker searches the current directory for an empty entry. By default the library path is `$SNAP_LIBRARY_PATH`, the\nsnap's library directories, the caller's `$LD_LIBRARY_PATH`, then the snap's library directories again.\nSetting `LD_LIBRARY_PATH` here replaces that default library path, so include every directory the app needs.\n\nIgnored with `confinement: \"classic\"`, where no environment is written and the launcher does not set `LD_LIBRARY_PATH`."
+          "description": "Environment variables of the snap's app (the app's `environment` in the snap YAML); the values set here take precedence.\n- core24: added to the default `TMPDIR=$XDG_RUNTIME_DIR` (set `TMPDIR` to replace it).\n- core18 / core20 / core22: added to the defaults `PATH` (the snap's `bin`/`sbin` directories, then `$PATH`) and\n  `SNAP_DESKTOP_RUNTIME` (`$SNAP/gnome-platform`); `DISABLE_WAYLAND=1` is always added when native Wayland is disabled\n  (see `allowNativeWayland`). Ignored with `confinement: \"classic\"`, where no environment is written and the launcher\n  does not set `LD_LIBRARY_PATH`.\n\ncore18 / core20 / core22: the snap's library path goes into the snap YAML as `ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH`, not\n`LD_LIBRARY_PATH` (snapd expands it as usual), and the snap's `command.sh` launcher exports it as `LD_LIBRARY_PATH` without\nempty entries, such as the one an unset `$SNAP_LIBRARY_PATH` or `$LD_LIBRARY_PATH` reference leaves, because the dynamic\nlinker searches the current directory for an empty entry. By default the library path is `$SNAP_LIBRARY_PATH`, the\nsnap's library directories, the caller's `$LD_LIBRARY_PATH`, then the snap's library directories again.\nSetting `LD_LIBRARY_PATH` here replaces that default library path, so include every directory the app needs."
         },
         "executableArgs": {
           "anyOf": [
@@ -8049,8 +8082,8 @@
           "description": "The quality grade of the snap.\n- `stable` — suitable for all channels, including `stable` and `candidate`.\n- `devel` — development snapshot; cannot be promoted to `stable` or `candidate`."
         },
         "hooks": {
-          "default": "build/snap-hooks",
-          "description": "Directory containing [snap hooks](https://snapcraft.io/docs/supported-snap-hooks), relative to\nthe build resources directory (`build/`).",
+          "default": "snap-hooks",
+          "description": "Directory containing [snap hooks](https://snapcraft.io/docs/supported-snap-hooks), looked up in the build resources directory,\nthen relative to the project directory.",
           "type": [
             "null",
             "string"
@@ -8065,7 +8098,7 @@
               "type": "null"
             }
           ],
-          "description": "[Snap layouts](https://snapcraft.io/docs/snap-layouts) — bind-mount or symlink host paths\ninto the snap's namespace, making libraries or config at `/usr`, `/var`, `/etc`, etc.\naccessible inside the confined environment."
+          "description": "[Snap layouts](https://snapcraft.io/docs/snap-layouts) — bind-mount or symlink host paths\ninto the snap's namespace, making libraries or config at `/usr`, `/var`, `/etc`, etc.\naccessible inside the confined environment.\n\ncore24: when unset, a strict build without the `gnome` extension (and not built on the host) gets a default layout that binds the\nfiles of its content snaps; a layout set here replaces it."
         },
         "mimeTypes": {
           "anyOf": [
@@ -8149,7 +8182,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "slots": {
           "anyOf": [
@@ -8187,7 +8221,7 @@
               "type": "null"
             }
           ],
-          "description": "Ubuntu packages to **stage** alongside the app (equivalent to `depends` for deb).\nDefaults to `[\"libnspr4\", \"libnss3\", \"libxss1\", \"libappindicator3-1\", \"libsecret-1-0\"]`.\n\nUse the `\"default\"` keyword to extend the default list:\n`[\"default\", \"my-extra-lib\"]` appends `my-extra-lib` to the defaults."
+          "description": "Ubuntu packages to **stage** alongside the app (equivalent to `depends` for deb).\nDefaults to `[\"libnspr4\", \"libnss3\", \"libxss1\", \"libappindicator3-1\", \"libsecret-1-0\"]`.\n\nUse the `\"default\"` keyword to extend the default list:\n`[\"default\", \"my-extra-lib\"]` appends `my-extra-lib` to the defaults.\n\ncore18 / core20 / core22: a list other than the default builds the snap with snapcraft instead of the template app."
         },
         "summary": {
           "description": "A short summary of the snap (max 78 characters).\nDefaults to [productName](https://www.electron.build/docs/configuration#productname).",
@@ -8333,7 +8367,7 @@
       "description": "New-style snap configuration. Use this via the `snapcraft` key in your build config.\nSelects the snapcraft core version and its per-core options.",
       "properties": {
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -8453,7 +8487,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         }
       },
       "required": [
@@ -8736,7 +8771,7 @@
         },
         "channel": {
           "default": "latest",
-          "description": "The update channel.",
+          "description": "The update channel: the base name of the update info files electron-updater fetches (`latest.yml`, `latest-mac.yml`,\n`latest-linux.yml` for `latest`). When unset, the `generic`, `s3`, `spaces` and `r2` providers take the prerelease component of\nthe app version (`beta` for `1.2.0-beta.1`, see `detectUpdateChannel`); the other providers use `latest`, and `keygen` its own\ndefault.",
           "type": [
             "null",
             "string"
@@ -8847,7 +8882,7 @@
       "additionalProperties": false,
       "properties": {
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -8919,7 +8954,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "remoteReleases": {
           "description": "A URL to your existing updates. Or `true` to automatically set to your GitHub repository. If given, these will be downloaded to create delta updates.",
@@ -9326,15 +9362,14 @@
           "type": "boolean"
         },
         "appId": {
-          "default": "com.electron.${name}",
-          "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
+          "description": "Overrides the root `appId` for this platform's targets (see the root option).",
           "type": [
             "null",
             "string"
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
           "type": [
             "null",
             "string"
@@ -9531,7 +9566,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration. See [Auto Update](https://www.electron.build/publish) for more information."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
@@ -9983,7 +10018,7 @@
       "type": "object"
     }
   },
-  "description": "The root build configuration object passed to electron-builder.\n\nExtends {@link CommonConfiguration} with top-level Electron-specific options, configuration\ninheritance/presets, and all per-platform build hooks.",
+  "description": "The root build configuration object passed to electron-builder.\n\nThe options of {@link CommonConfiguration}, the per-platform options of {@link PlatformSpecificBuildOptions} (which can also be\nset at the root, as defaults for every platform), and the lifecycle {@link Hooks}.",
   "properties": {
     "afterAllArtifactBuild": {
       "anyOf": [
@@ -10098,7 +10133,7 @@
           "type": "null"
         }
       ],
-      "description": "Windows Store (MSIX/AppX) package options.\n\nProduces a `.appx` or `.msix` package suitable for distribution through the Microsoft Store or\nside-loading."
+      "description": "AppX package options (the `appx` target).\n\nProduces a `.appx` package suitable for distribution through the Microsoft Store or side-loading. The identity and manifest\noptions are shared with `msix` (`CommonAppxOptions`), but each target reads only its own section."
     },
     "appxManifestCreated": {
       "anyOf": [
@@ -10143,7 +10178,7 @@
       "description": "Called when an individual artifact build starts (e.g. just before a `.dmg` or `.exe` is\nwritten to disk).\n\nReceives an {@link ArtifactBuildStarted}."
     },
     "artifactName": {
-      "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+      "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).\nA target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,\nthe target's default name is used (see the target's options).",
       "type": [
         "null",
         "string"
@@ -10332,7 +10367,7 @@
           ]
         }
       ],
-      "description": "Override the source of the Electron distribution to stage.\n\nShould return the path to either:\n- A **directory** containing a pre-built, unpacked Electron app (e.g. `~/electron/out/R`).\n- A **directory** containing Electron zip archives following the naming convention\n  `electron-v${version}-${platformName}-${arch}.zip`.\n\nWhen not set, electron-builder downloads the official Electron release from GitHub (or the\nmirror configured via `electronGet`).\n\nReceives a {@link PrepareApplicationStageDirectoryOptions}."
+      "description": "The Electron distribution to package instead of the release downloaded with `electronGet`. A path, relative to the project\ndirectory, to:\n- a **directory** containing a pre-built, unpacked Electron app (e.g. `~/electron/out/R`),\n- a **directory** containing Electron zip archives named `electron-v${version}-${platformName}-${arch}.zip`, or\n- such a **`.zip` file**.\n\nIn a JS / TS configuration it can also be a function that returns such a path; it receives a\n{@link PrepareApplicationStageDirectoryOptions}. This is an option, not a lifecycle hook: a string is never loaded as a module.\n\nWhen not set, electron-builder downloads the official Electron release from GitHub (or the\nmirror configured via `electronGet`)."
     },
     "electronFuses": {
       "anyOf": [
@@ -10582,7 +10617,7 @@
           "type": "null"
         }
       ],
-      "description": "MSIX package options. MSIX is the modern successor to AppX with additional deployment features."
+      "description": "MSIX package options (the `msix` target). MSIX is the modern successor to AppX with additional deployment features."
     },
     "nativeModules": {
       "anyOf": [
@@ -10772,7 +10807,7 @@
           ]
         }
       ],
-      "description": "Publisher configuration. See [Auto Update](https://www.electron.build/publish) for more information."
+      "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
     },
     "releaseInfo": {
       "$ref": "#/definitions/ReleaseInfo",

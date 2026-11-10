@@ -74,7 +74,7 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
  * Fields set under `linux.*` in your build config (i.e. on {@link LinuxConfiguration}) are
  * automatically cascaded into each snap core's options by `LinuxTargetHelper.getSnapCore()`.
  * You do not need to duplicate them under `snapcraft.core24.*`, `snapcraft.core22.*`, etc.
- * Per-core values always take precedence when both are set.
+ * When both are set, a per-core value replaces the `linux` one, and a per-core list is added to the `linux` list.
  */
 export interface CommonLinuxOptions {
   /**

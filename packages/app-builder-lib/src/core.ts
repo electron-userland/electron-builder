@@ -108,10 +108,18 @@ export abstract class Target {
 
 export interface TargetSpecificOptions {
   /**
-   The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).
+   * The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template).
+   * A target uses its own value, else its platform's (`mac`, `win`, `linux`), else the root value; when none is set,
+   * the target's default name is used (see the target's options).
    */
   readonly artifactName?: string | null
 
+  /**
+   * Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.
+   * See [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns
+   * publishing off unless a more specific level sets its own. How the levels combine:
+   * [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed).
+   */
   publish?: Publish
 }
 

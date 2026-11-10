@@ -1,4 +1,4 @@
-import { TargetSpecificOptions } from "../core.js"
+import { CommonAppxOptions } from "./AppXOptions.js"
 
 export interface MsixWindowsService {
   /** The service name used in the Windows Service Control Manager. */
@@ -24,100 +24,20 @@ export interface MsixWindowsService {
   readonly arguments?: string
 }
 
-export interface MsixOptions extends TargetSpecificOptions {
-  /**
-   * The application id. Defaults to `identityName`. This string contains alpha-numeric fields separated by periods.
-   * Each field must begin with an ASCII alphabetic character.
-   */
-  readonly applicationId?: string
-
-  /**
-   * The background color of the app tile.
-   * @default #464646
-   */
-  readonly backgroundColor?: string | null
-
-  /**
-   * A friendly name displayed to users. Corresponds to Properties.DisplayName. Defaults to the application product name.
-   */
-  readonly displayName?: string | null
-
-  /**
-   * The package identity name. Corresponds to Identity.Name. Defaults to the application name.
-   */
-  readonly identityName?: string | null
-
-  /**
-   * The Windows Store publisher. Not used if MSIX is built for testing.
-   */
-  readonly publisher?: string | null
-
-  /**
-   * A friendly name for the publisher displayed to users. Corresponds to Properties.PublisherDisplayName.
-   * Defaults to company name from the application metadata.
-   */
-  readonly publisherDisplayName?: string | null
-
-  /**
-   * The list of supported languages listed in the Windows Store. The first entry (index 0) will be the default language.
-   * @default ["en-US"]
-   */
-  readonly languages?: Array<string> | string | null
-
-  /**
-   * Whether to add auto launch extension. Defaults to `true` if electron-winstore-auto-launch is in the dependencies.
-   */
-  readonly addAutoLaunchExtension?: boolean
-
-  /**
-   * Relative path to custom extensions xml to be included in the AppxManifest.xml.
-   */
-  readonly customExtensionsPath?: string
-
-  /**
-   * The list of capabilities to be added to the AppxManifest.xml.
-   * The `runFullTrust` capability is obligatory for Electron apps and will be auto-added if not specified.
-   * @default ["runFullTrust"]
-   */
-  readonly capabilities?: Array<string> | null
-
-  /**
-   * Relative path to a custom AppxManifest.xml template located in the build resources directory.
-   * Supports the same `${}` template macros as the default template, including the MSIX-specific
-   * `${packageIntegrity}` macro. Windows services are injected via the `${extensions}` macro
-   * alongside protocol/file-association extensions.
-   */
-  readonly customManifestPath?: string
-
-  /**
-   * Whether to overlay the app's name on top of tile images on the Start screen.
-   * @default false
-   */
-  readonly showNameOnTiles?: boolean
-
+export interface MsixOptions extends CommonAppxOptions {
   /** @private */
   readonly electronUpdaterAware?: boolean
 
   /**
-   * Whether to set the build number in the version field.
-   * @default false
-   */
-  readonly setBuildNumber?: boolean
-
-  /**
-   * Set the MinVersion field in the AppxManifest.xml.
-   * @default "10.0.17763.0" (Windows 10 version 1809 — minimum for Store submissions)
+   * The manifest's `TargetDeviceFamily/@MinVersion`. The default is Windows 10 version 1809, the minimum for Store submissions.
+   * @default 10.0.17763.0
    */
   readonly minVersion?: string | null
 
   /**
-   * Set the MaxVersionTested field in the AppxManifest.xml.
-   * @default same as minVersion
+   * The manifest's `TargetDeviceFamily/@MaxVersionTested`. Defaults to `minVersion`, else to its default.
    */
   readonly maxVersionTested?: string | null
-
-  /** @private */
-  readonly makeappxArgs?: Array<string> | null
 
   /**
    * Whether to produce a .msixbundle when more than one architecture is built.

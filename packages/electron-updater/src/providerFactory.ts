@@ -1,6 +1,5 @@
 import {
   AllPublishOptions,
-  BaseS3Options,
   BitbucketOptions,
   CustomPublishOptions,
   GenericServerOptions,
@@ -58,7 +57,7 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
         {
           provider: "generic",
           url: getS3LikeProviderBaseUrl(data),
-          channel: (data as BaseS3Options).channel || null,
+          channel: data.channel || null,
         },
         updater,
         {

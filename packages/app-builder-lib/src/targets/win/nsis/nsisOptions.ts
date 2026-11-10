@@ -28,15 +28,16 @@ export interface CommonNsisOptions {
    * @default false
    */
   readonly useZip?: boolean
+
+  /**
+   * Whether to build one installer for all the archs of the target (`true`), or one installer per arch (`false`).
+   * nsis-web always builds a universal installer.
+   * @default true
+   */
+  readonly buildUniversalInstaller?: boolean
 }
 
 export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerConfiguration, TargetSpecificOptions {
-  /**
-   * Whether to create one-click installer or assisted.
-   * @default true
-   */
-  readonly oneClick?: boolean
-
   /**
    * Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation
    * directory). In your custom NSIS scripts, write to the log via `${LogText}`.
@@ -51,18 +52,6 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    * @default false
    */
   readonly installerDebugLogging?: boolean
-
-  /**
-   * Whether to show install mode installer page (choice per-machine or per-user) for assisted installer. Or whether installation always per all users (per-machine).
-   *
-   * If `oneClick` is `true` (default): Whether to install per all users (per-machine).
-   *
-   * If `oneClick` is `false` and `perMachine` is `true`: no install mode installer page, always install per-machine.
-   *
-   * If `oneClick` is `false` and `perMachine` is `false` (default): install mode installer page.
-   * @default false
-   */
-  readonly perMachine?: boolean
 
   /**
    * Whether to set per-machine or per-user installation as default selection on the install mode installer page.
@@ -227,13 +216,6 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    * @default [".avi", ".mov", ".m4v", ".mp4", ".m4p", ".qt", ".mkv", ".webm", ".vmdk"]
    */
   readonly preCompressedFileExtensions?: Array<string> | string | null
-
-  /**
-   * Disable building an universal installer of the archs specified in the target configuration
-   * *Not supported for nsis-web*
-   * @default true
-   */
-  readonly buildUniversalInstaller?: boolean
 }
 
 /**
@@ -260,12 +242,6 @@ export interface PortableOptions extends TargetSpecificOptions, CommonNsisOption
    * The image to show while the portable executable is extracting. This image must be a bitmap (`.bmp`) image.
    */
   readonly splashImage?: string | null
-
-  /**
-   * Disable building an universal installer of the archs specified in the target configuration
-   * @default true
-   */
-  readonly buildUniversalInstaller?: boolean
 
   /**
    * The path to NSIS include script to customize the portable launcher, or an array of such paths to include multiple scripts. See [Custom NSIS script](#custom-nsis-script).

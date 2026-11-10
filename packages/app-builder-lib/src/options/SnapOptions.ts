@@ -65,16 +65,15 @@ export interface SnapOptionsCustom {
   readonly yaml?: string | SnapcraftYAML | null
 }
 
-export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOptions {
-  /**
-   * Whether to use the pre-built Electron snap template for faster builds.
-   * When `true`, electron-builder delegates snap assembly to the upstream Electron snap
-   * template rather than running a full snapcraft build, significantly reducing build time.
-   * Defaults to `true` when `stagePackages` is not customised.
-   * Only applicable to x64 and armv7l builds.
-   */
-  readonly useTemplateApp?: boolean
-
+/**
+ * Snap metadata, parts and interfaces shared by the core18 / core20 / core22 ({@link SnapOptionsLegacy}) and core24
+ * ({@link SnapOptions24}) bases.
+ *
+ * The `linux.*` options of {@link CommonLinuxOptions} (`description`, `category`, `mimeTypes`, `executableArgs`, `desktop`, ...) are
+ * merged in first, so they do not need to be repeated per base: a value set here replaces a `linux` value, and a list is added to
+ * the `linux` list.
+ */
+export interface CommonSnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   /**
    * The type of [snap confinement](https://snapcraft.io/docs/snap-confinement).
    * - `strict` — recommended; the snap runs in a fully isolated sandbox.
@@ -86,19 +85,19 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
   readonly confinement?: "devmode" | "strict" | "classic" | null
 
   /**
-   * Environment variables injected into the snap's runtime environment (the app's `environment` in the snap YAML).
-   * Merged over the electron-builder defaults `PATH` (the snap's `bin`/`sbin` directories, then `$PATH`) and
-   * `SNAP_DESKTOP_RUNTIME` (`$SNAP/gnome-platform`); user-supplied values take precedence.
-   * `DISABLE_WAYLAND=1` is always added when native Wayland is disabled (see `allowNativeWayland`).
+   * Environment variables of the snap's app (the app's `environment` in the snap YAML); the values set here take precedence.
+   * - core24: added to the default `TMPDIR=$XDG_RUNTIME_DIR` (set `TMPDIR` to replace it).
+   * - core18 / core20 / core22: added to the defaults `PATH` (the snap's `bin`/`sbin` directories, then `$PATH`) and
+   *   `SNAP_DESKTOP_RUNTIME` (`$SNAP/gnome-platform`); `DISABLE_WAYLAND=1` is always added when native Wayland is disabled
+   *   (see `allowNativeWayland`). Ignored with `confinement: "classic"`, where no environment is written and the launcher
+   *   does not set `LD_LIBRARY_PATH`.
    *
-   * The snap's library path goes into the snap YAML as `ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH`, not `LD_LIBRARY_PATH`
-   * (snapd expands it as usual), and the snap's `command.sh` launcher exports it as `LD_LIBRARY_PATH` without empty
-   * entries, such as the one an unset `$SNAP_LIBRARY_PATH` or `$LD_LIBRARY_PATH` reference leaves, because the dynamic
+   * core18 / core20 / core22: the snap's library path goes into the snap YAML as `ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH`, not
+   * `LD_LIBRARY_PATH` (snapd expands it as usual), and the snap's `command.sh` launcher exports it as `LD_LIBRARY_PATH` without
+   * empty entries, such as the one an unset `$SNAP_LIBRARY_PATH` or `$LD_LIBRARY_PATH` reference leaves, because the dynamic
    * linker searches the current directory for an empty entry. By default the library path is `$SNAP_LIBRARY_PATH`, the
    * snap's library directories, the caller's `$LD_LIBRARY_PATH`, then the snap's library directories again.
    * Setting `LD_LIBRARY_PATH` here replaces that default library path, so include every directory the app needs.
-   *
-   * Ignored with `confinement: "classic"`, where no environment is written and the launcher does not set `LD_LIBRARY_PATH`.
    */
   readonly environment?: { [key: string]: string } | null
 
@@ -124,6 +123,7 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
 
   /**
    * Debian packages required at **build** time (installed inside the build environment).
+   * core18 / core20 / core22: setting it builds the snap with snapcraft instead of the template app.
    */
   readonly buildPackages?: Array<string> | null
 
@@ -133,13 +133,90 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
    *
    * Use the `"default"` keyword to extend the default list:
    * `["default", "my-extra-lib"]` appends `my-extra-lib` to the defaults.
+   *
+   * core18 / core20 / core22: a list other than the default builds the snap with snapcraft instead of the template app.
    */
   readonly stagePackages?: Array<string> | null
 
   /**
-   * Directory containing [snap hooks](https://snapcraft.io/docs/supported-snap-hooks), relative to
-   * the build resources directory (`build/`).
-   * @default build/snap-hooks
+   * [Slots](https://snapcraft.io/docs/reference/interfaces) (provided interfaces) to declare
+   * for the app.
+   *
+   * To expose an MPRIS player under the Chromium bus name (required for strict confinement):
+   * ```json
+   * [{ "mpris": { "name": "chromium" } }]
+   * ```
+   * Chromium [hard-codes](https://source.chromium.org/chromium/chromium/src/+/master:components/system_media_controls/linux/system_media_controls_linux.cc;l=51;bpv=0;bpt=1)
+   * the bus name `chromium`, so the slot name must match for snapd to
+   * [allow it](https://forum.snapcraft.io/t/unable-to-use-mpris-interface/15360/7).
+   */
+  readonly slots?: Array<string | SlotDescriptor> | SlotDescriptor | null
+
+  /**
+   * Names of other snapcraft parts that must be built before the app part. No default.
+   */
+  readonly after?: Array<string> | null
+
+  /**
+   * Whether the snap should automatically start on login (creates an autostart desktop entry).
+   * @default false
+   */
+  readonly autoStart?: boolean
+
+  /**
+   * [Snap layouts](https://snapcraft.io/docs/snap-layouts) — bind-mount or symlink host paths
+   * into the snap's namespace, making libraries or config at `/usr`, `/var`, `/etc`, etc.
+   * accessible inside the confined environment.
+   *
+   * core24: when unset, a strict build without the `gnome` extension (and not built on the host) gets a default layout that binds the
+   * files of its content snaps; a layout set here replaces it.
+   */
+  readonly layout?: { [key: string]: { [key: string]: string } } | null
+
+  /**
+   * Filesets controlling which files from the app part are staged into the snap.
+   * Supports individual files, directories, globs, globstars, and exclusions (prefix `!`).
+   * See [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets).
+   * When not set, core18 / core20 / core22 use the snap template's stage list, and core24 stages everything.
+   */
+  readonly appPartStage?: Array<string> | null
+
+  /**
+   * Display title for the snap (may contain uppercase letters and spaces).
+   * Defaults to `productName`.
+   * See [snap format](https://snapcraft.io/docs/the-snap-format).
+   */
+  readonly title?: string | null
+
+  /**
+   * Compression algorithm for the snap SquashFS image.
+   * - `xz` — smaller file, slower decompression (good for distribution).
+   * - `lzo` — larger file, faster decompression (good for development iteration).
+   * Omit to use snapcraft's default (`xz`).
+   *
+   * When not set, `linux.compression` is mapped automatically:
+   * `"store"` → `"lzo"`, `"maximum"` → `"xz"`, `"normal"` → snapcraft default.
+   * Explicitly setting this field always overrides the mapped value.
+   *
+   * core18 / core20 / core22 template app builds (`useTemplateApp`) pack the image with the `mksquashfs` from the `toolsets.appimage` bundle. `lzo` requires a toolset other than the legacy `"0.0.0"`, whose `mksquashfs` supports only `gzip` and `xz`.
+   */
+  readonly compression?: "xz" | "lzo" | null
+}
+
+export interface SnapOptionsLegacy extends CommonSnapOptions {
+  /**
+   * Whether to use the pre-built Electron snap template for faster builds.
+   * When `true`, electron-builder delegates snap assembly to the upstream Electron snap
+   * template rather than running a full snapcraft build, significantly reducing build time.
+   * Defaults to `true` when `stagePackages` is not customised.
+   * Only applicable to x64 and armv7l builds.
+   */
+  readonly useTemplateApp?: boolean
+
+  /**
+   * Directory containing [snap hooks](https://snapcraft.io/docs/supported-snap-hooks), looked up in the build resources directory,
+   * then relative to the project directory.
+   * @default snap-hooks
    */
   readonly hooks?: string | null
 
@@ -163,71 +240,6 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
    * vetted publishers and rejects other uploads that request it; electron-builder warns when it is set.
    */
   readonly plugs?: Array<string | PlugDescriptor> | PlugDescriptor | null
-
-  /**
-   * [Slots](https://snapcraft.io/docs/reference/interfaces) (provided interfaces) to declare
-   * for the app.
-   *
-   * To expose an MPRIS player under the Chromium bus name (required for strict confinement):
-   * ```json
-   * [{ "mpris": { "name": "chromium" } }]
-   * ```
-   * Chromium [hard-codes](https://source.chromium.org/chromium/chromium/src/+/master:components/system_media_controls/linux/system_media_controls_linux.cc;l=51;bpv=0;bpt=1)
-   * the bus name `chromium`, so the slot name must match for snapd to
-   * [allow it](https://forum.snapcraft.io/t/unable-to-use-mpris-interface/15360/7).
-   */
-  readonly slots?: Array<string | SlotDescriptor> | SlotDescriptor | null
-
-  /**
-   * Names of snapcraft parts that must be built before the app part.
-   * Defaults to `["desktop-gtk2"]`.
-   *
-   * Use `"default"` to keep the default and add extras:
-   * `["default", "my-helper-part"]`.
-   */
-  readonly after?: Array<string> | null
-
-  /**
-   * Whether the snap should automatically start on login.
-   * @default false
-   */
-  readonly autoStart?: boolean
-
-  /**
-   * [Snap layouts](https://snapcraft.io/docs/snap-layouts) — bind-mount or symlink host paths
-   * into the snap's namespace, making libraries or config at `/usr`, `/var`, `/etc`, etc.
-   * accessible inside the confined environment.
-   */
-  readonly layout?: { [key: string]: { [key: string]: string } } | null
-
-  /**
-   * Filesets controlling which files from the app part are staged into the snap.
-   * Supports individual files, directories, globs, globstars, and exclusions (prefix `!`).
-   * See [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets).
-   * When not set, the snap template's default stage list is used for legacy bases (core18/core20/core22).
-   */
-  readonly appPartStage?: Array<string> | null
-
-  /**
-   * Display title for the snap (may contain uppercase letters and spaces).
-   * Defaults to `productName`.
-   * See [snap format](https://snapcraft.io/docs/the-snap-format).
-   */
-  readonly title?: string | null
-
-  /**
-   * Compression algorithm for the snap SquashFS image.
-   * - `xz` — smaller file, slower decompression (good for distribution).
-   * - `lzo` — larger file, faster decompression (good for development iteration).
-   * Omit to use snapcraft's default (`xz`).
-   *
-   * When not set, `linux.compression` is mapped automatically:
-   * `"store"` → `"lzo"`, `"maximum"` → `"xz"`, `"normal"` → snapcraft default.
-   * Explicitly setting this field always overrides the mapped value.
-   *
-   * Template app builds (`useTemplateApp`) pack the image with the `mksquashfs` from the `toolsets.appimage` bundle. `lzo` requires a toolset other than the legacy `"0.0.0"`, whose `mksquashfs` supports only `gzip` and `xz`.
-   */
-  readonly compression?: "xz" | "lzo" | null
 
   /**
    * Allow the snap to run with native Wayland support (`--ozone-platform=wayland`).
@@ -325,15 +337,10 @@ export interface RemoteBuildOptions {
 }
 
 /**
- * Options for building a core24 snap. This interface does not extend the legacy
- * `SnapBaseOptions` — it uses the snapcraft CLI directly.
- *
- * Fields inherited from {@link CommonLinuxOptions} (`description`, `category`, `mimeTypes`,
- * `executableArgs`, `desktop`, `synopsis`) are automatically populated from the root `linux.*`
- * configuration. You do not need to duplicate them here; values set directly on this interface
- * take precedence over the cascaded `linux.*` values.
+ * Options for building a core24 snap, which uses the snapcraft CLI directly. The options shared with the core18 / core20 / core22
+ * bases are documented on {@link CommonSnapOptions}.
  */
-export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions {
+export interface SnapOptions24 extends CommonSnapOptions {
   // ─── Build environment (mutually exclusive) ─────────────────────────────────
 
   /**
@@ -388,79 +395,6 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
    */
   readonly extensions?: Array<string> | null
 
-  // ─── Snap metadata ───────────────────────────────────────────────────────────
-
-  /**
-   * The type of [confinement](https://snapcraft.io/docs/snap-confinement) supported by the snap.
-   * @default strict
-   */
-  readonly confinement?: "devmode" | "strict" | "classic" | null
-
-  /**
-   * The quality grade of the snap.
-   * `devel` — not publishable to stable/candidate channels.
-   * `stable` — suitable for all channels.
-   * @default stable
-   */
-  readonly grade?: "devel" | "stable" | null
-
-  /**
-   * A short summary of the snap (max 78 characters). Defaults to `productName`.
-   */
-  readonly summary?: string | null
-
-  /**
-   * An optional display title (may contain uppercase letters and spaces). Defaults to `productName`.
-   * See [snap format](https://snapcraft.io/docs/the-snap-format).
-   */
-  readonly title?: string | null
-
-  /**
-   * Compression algorithm for the snap SquashFS image.
-   * - `xz` — smaller file, slower decompression (recommended for distribution).
-   * - `lzo` — larger file, faster decompression (useful for development iteration).
-   * Omit to use snapcraft's default (`xz`).
-   *
-   * When not set, `linux.compression` is mapped automatically:
-   * `"store"` → `"lzo"`, `"maximum"` → `"xz"`, `"normal"` → snapcraft default.
-   * Explicitly setting this field always overrides the mapped value.
-   */
-  readonly compression?: "xz" | "lzo" | null
-
-  /**
-   * Features that must be supported by the host snapd before the snap can be installed.
-   * See [assumes](https://snapcraft.io/docs/snapcraft-yaml-reference#assumes).
-   */
-  readonly assumes?: Array<string> | string | null
-
-  // ─── Build packages / stage packages ────────────────────────────────────────
-
-  /**
-   * Debian packages required at **build** time (installed inside the build environment).
-   */
-  readonly buildPackages?: Array<string> | null
-
-  /**
-   * Ubuntu packages to **stage** alongside the app (equivalent to `depends` for deb).
-   * Defaults to `["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]`.
-   * Supports the `"default"` keyword to reference the default list:
-   * `["default", "my-extra-lib"]` appends `my-extra-lib` to the defaults.
-   */
-  readonly stagePackages?: Array<string> | null
-
-  /**
-   * Filesets controlling which files from the app part are staged into the snap.
-   * Supports glob patterns and exclusions. See [filesets](https://snapcraft.io/docs/snapcraft-filesets).
-   */
-  readonly appPartStage?: Array<string> | null
-
-  /**
-   * Names of other snapcraft parts that must be built before the app part.
-   */
-  readonly after?: Array<string> | null
-
-  // ─── Snap interfaces ─────────────────────────────────────────────────────────
-
   /**
    * [Plugs](https://snapcraft.io/docs/reference/interfaces) (consumed interfaces) for the app.
    *
@@ -493,38 +427,6 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
   readonly plugs?: Array<string | PlugDescriptor> | PlugDescriptor | null
 
   /**
-   * [Slots](https://snapcraft.io/docs/reference/interfaces) (provided interfaces) for the app.
-   * Use for MPRIS, D-Bus services, etc.
-   *
-   * Example — expose MPRIS under the Chromium bus name:
-   * ```json
-   * [{ "mpris": { "name": "chromium" } }]
-   * ```
-   */
-  readonly slots?: Array<string | SlotDescriptor> | SlotDescriptor | null
-
-  /**
-   * [Snap layouts](https://snapcraft.io/docs/snap-layouts) — bind-mount or symlink host paths
-   * into the snap's namespace. User-provided layouts always override the extension defaults.
-   */
-  readonly layout?: { [key: string]: { [key: string]: string } } | null
-
-  // ─── Runtime environment ─────────────────────────────────────────────────────
-
-  /**
-   * Additional environment variables injected into the snap's runtime environment.
-   * Merged with the electron-builder defaults (`TMPDIR=$XDG_RUNTIME_DIR`).
-   * User-supplied values take precedence.
-   */
-  readonly environment?: { [key: string]: string } | null
-
-  /**
-   * Whether the app should auto-start on login (creates an autostart desktop entry).
-   * @default false
-   */
-  readonly autoStart?: boolean
-
-  /**
    * Set to `true` to force X11 by injecting `--ozone-platform=x11` into the snap command line.
    * When unset or `false`, no flag is injected and native Wayland is allowed.
    * Unlike the legacy `snap.allowNativeWayland`, there is no electron-version-based default here —
@@ -532,12 +434,9 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
    */
   readonly forceX11?: boolean | null
 
-  // ─── Hooks ───────────────────────────────────────────────────────────────────
-
   /**
-   * Directory containing [snap hooks](https://snapcraft.io/docs/supported-snap-hooks), relative to
-   * the build resources directory.
-   * @default build/snap-hooks
+   * Directory containing [snap hooks](https://snapcraft.io/docs/supported-snap-hooks), relative to the build resources directory.
+   * No default.
    */
   readonly hooks?: string | null
 }

@@ -1,4 +1,6 @@
 import { validateSchema } from "app-builder-lib/internal"
+import { readFileSync } from "fs"
+import * as path from "path"
 import { describe, expect, it } from "vitest"
 
 const simpleSchema = {
@@ -296,5 +298,53 @@ describe("validateSchema - JSON Pointer decoding", () => {
       additionalProperties: false,
     }
     expect(() => validateSchema(schema, { "a~b": { c: "ok", d: "extra" } })).toThrow("configuration.a~b has an unknown property 'd'")
+  })
+})
+
+describe("scheme.json: options shared through one base interface", () => {
+  const scheme = JSON.parse(readFileSync(path.join(import.meta.dirname, "../../packages/app-builder-lib/scheme.json"), "utf8"))
+  const description = (definition: string, property: string): string | undefined => scheme.definitions[definition]?.properties?.[property]?.description
+
+  it("documents publish the same way on every level and target", () => {
+    const expected = description("TargetSpecificOptions", "publish") ?? description("DebOptions", "publish")
+    expect(expected).toContain("Publisher configuration")
+    const holders = Object.keys(scheme.definitions).filter(name => scheme.definitions[name].properties?.publish != null)
+    expect(holders).toEqual(expect.arrayContaining(["DebOptions", "NsisOptions", "DmgOptions", "AppImageOptions", "SnapcraftOptions", "MacConfiguration"]))
+    for (const name of holders) {
+      expect(description(name, "publish"), name).toBe(expected)
+    }
+  })
+
+  it("gives AppX and MSIX, MSI and MSI-wrapped, and the snap bases one description per shared option", () => {
+    const pairs: Array<[string, string, Array<string>]> = [
+      [
+        "AppXOptions",
+        "MsixOptions",
+        [
+          "applicationId",
+          "backgroundColor",
+          "displayName",
+          "identityName",
+          "publisher",
+          "publisherDisplayName",
+          "languages",
+          "capabilities",
+          "customManifestPath",
+          "setBuildNumber",
+        ],
+      ],
+      ["MsiOptions", "MsiWrappedOptions", ["upgradeCode", "warningsAsErrors", "additionalWixArgs", "additionalLightArgs"]],
+      ["SnapOptionsLegacy", "SnapOptions24", ["confinement", "environment", "grade", "stagePackages", "slots", "layout", "appPartStage", "compression"]],
+    ]
+    for (const [first, second, properties] of pairs) {
+      for (const property of properties) {
+        expect(description(first, property), `${first}.${property}`).toBeTruthy()
+        expect(description(second, property), `${second}.${property}`).toBe(description(first, property))
+      }
+    }
+  })
+
+  it("accepts msiWrapped.additionalLightArgs, which light.exe already receives", () => {
+    expect(() => validateSchema(scheme, { msiWrapped: { additionalLightArgs: ["-cultures:ja-jp"] } })).not.toThrow()
   })
 })

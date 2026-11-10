@@ -37,7 +37,7 @@ export {
   TargetSpecificOptions,
 } from "./core.js"
 export { ElectronBrandingOptions, ElectronPlatformName } from "./electron/ElectronFramework.js"
-export { AppXOptions } from "./options/AppXOptions.js"
+export { AppXOptions, CommonAppxOptions } from "./options/AppXOptions.js"
 export { CommonWindowsInstallerConfiguration } from "./options/CommonWindowsInstallerConfiguration.js"
 export { FileAssociation } from "./options/FileAssociation.js"
 export {
@@ -54,12 +54,21 @@ export {
 } from "./options/linuxOptions.js"
 export type { DmgContent, DmgOptions, DmgWindow, ElectronSignOptions, ElectronUniversalOptions, MacConfiguration, MacOsTargetName, MasConfiguration } from "./options/macOptions.js"
 export { AuthorMetadata, Metadata, RepositoryInfo } from "./options/metadata.js"
-export { MsiOptions } from "./options/MsiOptions.js"
+export { CommonWixOptions, MsiOptions } from "./options/MsiOptions.js"
 export { MsiWrappedOptions } from "./options/MsiWrappedOptions.js"
 export { MsixOptions, MsixWindowsService } from "./options/MsixOptions.js"
 export { BackgroundAlignment, BackgroundScaling, PkgBackgroundOptions, PkgOptions } from "./options/pkgOptions.js"
 export { AsarOptions, FileSet, FilesBuildOptions, PlatformSpecificBuildOptions, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions.js"
-export { PlugDescriptor, RemoteBuildOptions, SlotDescriptor, SnapcraftOptions, SnapOptions24, SnapOptionsCustom, SnapOptionsLegacy } from "./options/SnapOptions.js"
+export {
+  CommonSnapOptions,
+  PlugDescriptor,
+  RemoteBuildOptions,
+  SlotDescriptor,
+  SnapcraftOptions,
+  SnapOptions24,
+  SnapOptionsCustom,
+  SnapOptionsLegacy,
+} from "./options/SnapOptions.js"
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions.js"
 export {
   WindowsAzureSigningConfig,

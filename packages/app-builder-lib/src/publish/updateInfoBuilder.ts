@@ -1,6 +1,6 @@
 import asyncPool from "tiny-async-pool"
 import { Arch, createUpdateManifestSignatures, derivePublicKeyPem, log, safeStringifyJson, serializeToYaml } from "builder-util"
-import { computeUpdateManifestKeyId, deepAssign, GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import { computeUpdateManifestKeyId, deepAssign, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import type { KeyObject } from "crypto"
 import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -47,7 +47,7 @@ function isGenerateUpdatesFilesForAllChannels(packager: PlatformPackager<any>) {
  if this is a "stable" version, we need to generate all the "alpha", "beta" and "stable" .yml file
  */
 function computeChannelNames(packager: PlatformPackager<any>, publishConfig: PublishConfiguration): Array<string> {
-  const currentChannel: string = (publishConfig as GenericServerOptions).channel || "latest"
+  const currentChannel: string = publishConfig.channel || "latest"
   const baseChannel = ["alpha", "beta", "latest"].find(name => currentChannel === name || currentChannel.startsWith(`${name}-`)) || currentChannel
   const suffix = currentChannel.slice(baseChannel.length)
   // for GitHub should be pre-release way be used

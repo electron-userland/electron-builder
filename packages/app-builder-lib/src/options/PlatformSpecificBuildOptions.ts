@@ -1,4 +1,4 @@
-import { CompressionLevel, Publish, TargetConfiguration, TargetSpecificOptions } from "../core.js"
+import { CompressionLevel, TargetConfiguration, TargetSpecificOptions } from "../core.js"
 import { FileAssociation } from "./FileAssociation.js"
 
 export interface FileSet {
@@ -280,16 +280,9 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   fileOptions?: FilesBuildOptions | null
 
   /**
-   * The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
-   * [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.
-   * @default com.electron.${name}
+   * Overrides the root `appId` for this platform's targets (see the root option).
    */
   readonly appId?: string | null
-
-  /**
-   * The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).
-   */
-  readonly artifactName?: string | null
 
   /**
    * The executable name. Defaults to `productName`
@@ -343,11 +336,6 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
    * @default >=7
    */
   readonly electronUpdaterCompatibility?: string | null
-
-  /**
-   * Publisher configuration. See [Auto Update](https://www.electron.build/publish) for more information.
-   */
-  publish?: Publish
 
   /**
    * Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.

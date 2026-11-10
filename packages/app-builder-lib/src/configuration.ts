@@ -193,15 +193,19 @@ export interface CommonConfiguration {
    */
   readonly portable?: PortableOptions | null
   /**
-   * Windows Store (MSIX/AppX) package options.
+   * AppX package options (the `appx` target).
    *
-   * Produces a `.appx` or `.msix` package suitable for distribution through the Microsoft Store or
-   * side-loading.
+   * Produces a `.appx` package suitable for distribution through the Microsoft Store or side-loading. The identity and manifest
+   * options are shared with `msix` (`CommonAppxOptions`), but each target reads only its own section.
    *
    * @see {@link AppXOptions}
    */
   readonly appx?: AppXOptions | null
-  /** MSIX package options. MSIX is the modern successor to AppX with additional deployment features. */
+  /**
+   * MSIX package options (the `msix` target). MSIX is the modern successor to AppX with additional deployment features.
+   *
+   * @see {@link MsixOptions}
+   */
   readonly msix?: MsixOptions | null
   /**
    * WiX-based MSI installer options.
@@ -527,15 +531,7 @@ export interface CommonConfiguration {
    * @see {@link Concurrency}
    */
   readonly concurrency?: Concurrency | null
-}
 
-/**
- * The root build configuration object passed to electron-builder.
- *
- * Extends {@link CommonConfiguration} with top-level Electron-specific options, configuration
- * inheritance/presets, and all per-platform build hooks.
- */
-export interface Configuration extends CommonConfiguration, PlatformSpecificBuildOptions, Hooks {
   /**
    * Options forwarded to [`@electron/get`](https://github.com/electron/get) when downloading the
    * Electron distribution to package.
@@ -591,7 +587,31 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
    * `dependencies`. Set `extends: null` to opt out of automatic preset detection.
    */
   extends?: Array<string> | string | null
+
+  /**
+   * The Electron distribution to package instead of the release downloaded with `electronGet`. A path, relative to the project
+   * directory, to:
+   * - a **directory** containing a pre-built, unpacked Electron app (e.g. `~/electron/out/R`),
+   * - a **directory** containing Electron zip archives named `electron-v${version}-${platformName}-${arch}.zip`, or
+   * - such a **`.zip` file**.
+   *
+   * In a JS / TS configuration it can also be a function that returns such a path; it receives a
+   * {@link PrepareApplicationStageDirectoryOptions}. This is an option, not a lifecycle hook: a string is never loaded as a module.
+   *
+   * When not set, electron-builder downloads the official Electron release from GitHub (or the
+   * mirror configured via `electronGet`).
+   */
+  readonly electronDist?: Hook<PrepareApplicationStageDirectoryOptions, string> | string | null
 }
+
+/**
+ * The root build configuration object passed to electron-builder.
+ *
+ * The options of {@link CommonConfiguration}, the per-platform options of {@link PlatformSpecificBuildOptions} (which can also be
+ * set at the root, as defaults for every platform), and the lifecycle {@link Hooks}.
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface Configuration extends CommonConfiguration, PlatformSpecificBuildOptions, Hooks {}
 
 /**
  * Configuration for native Node.js module installation and rebuilding.
@@ -1173,21 +1193,6 @@ export interface Hooks {
    * Receives a {@link BeforeBuildContext}.
    */
   readonly beforeBuild?: Hook<BeforeBuildContext, boolean | void> | string | null
-
-  /**
-   * Override the source of the Electron distribution to stage.
-   *
-   * Should return the path to either:
-   * - A **directory** containing a pre-built, unpacked Electron app (e.g. `~/electron/out/R`).
-   * - A **directory** containing Electron zip archives following the naming convention
-   *   `electron-v${version}-${platformName}-${arch}.zip`.
-   *
-   * When not set, electron-builder downloads the official Electron release from GitHub (or the
-   * mirror configured via `electronGet`).
-   *
-   * Receives a {@link PrepareApplicationStageDirectoryOptions}.
-   */
-  readonly electronDist?: Hook<PrepareApplicationStageDirectoryOptions, string> | string | null
 }
 
 /**

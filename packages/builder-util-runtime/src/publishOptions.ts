@@ -24,6 +24,15 @@ export interface PublishConfiguration {
   readonly provider: PublishProvider
 
   /**
+   * The update channel: the base name of the update info files electron-updater fetches (`latest.yml`, `latest-mac.yml`,
+   * `latest-linux.yml` for `latest`). When unset, the `generic`, `s3`, `spaces` and `r2` providers take the prerelease component of
+   * the app version (`beta` for `1.2.0-beta.1`, see `detectUpdateChannel`); the other providers use `latest`, and `keygen` its own
+   * default.
+   * @default latest
+   */
+  channel?: string | null
+
+  /**
    * @private
    * win-only
    */
@@ -157,12 +166,6 @@ export interface GithubOptions extends PublishConfiguration {
   readonly private?: boolean | null
 
   /**
-   * The channel.
-   * @default latest
-   */
-  readonly channel?: string | null
-
-  /**
    * The type of release. By default `draft` release will be created.
    *
    * Also you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRE_RELEASE`is set to `true` — `prerelease`.
@@ -240,12 +243,6 @@ export interface GitlabOptions extends PublishConfiguration {
   readonly vPrefixedTagName?: boolean
 
   /**
-   * The channel.
-   * @default latest
-   */
-  readonly channel?: string | null
-
-  /**
    * Upload target method. Can be "project_upload" for GitLab project uploads or "generic_package" for GitLab generic packages.
    * @default "project_upload"
    */
@@ -266,12 +263,6 @@ export interface GenericServerOptions extends PublishConfiguration {
    * The base url. e.g. `https://bucket_name.s3.amazonaws.com`.
    */
   readonly url: string
-
-  /**
-   * The channel.
-   * @default latest
-   */
-  readonly channel?: string | null
 
   /**
    * Whether to use multiple range requests for differential update. Defaults to `true` if `url` doesn't contain `s3.amazonaws.com`.
@@ -360,12 +351,6 @@ export interface BitbucketOptions extends PublishConfiguration {
    * Repository slug/name
    */
   readonly slug: string
-
-  /**
-   * The channel.
-   * @default latest
-   */
-  readonly channel?: string | null
 }
 
 /**
@@ -387,15 +372,12 @@ export interface SnapStoreOptions extends PublishConfiguration {
    * @default ["edge"]
    */
   readonly channels?: string | Array<string> | null
+
+  /** Not used by the Snap Store, which releases to `channels`. */
+  readonly channel?: never
 }
 
 export interface BaseS3Options extends PublishConfiguration {
-  /**
-   * The update channel.
-   * @default latest
-   */
-  channel?: string | null
-
   /**
    * The directory path.
    * @default /

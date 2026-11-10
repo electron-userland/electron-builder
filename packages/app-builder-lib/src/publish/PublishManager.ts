@@ -1144,7 +1144,7 @@ async function getResolvedPublishConfig(
 
   const ctx = platformPackager ?? fallbackPackager!
   let channelFromAppVersion: string | null = null
-  if ((options as GenericServerOptions).channel == null && isDetectUpdateChannel(platformPackager == null ? null : platformPackager.platformOptions, ctx.config)) {
+  if (options.channel == null && isDetectUpdateChannel(platformPackager == null ? null : platformPackager.platformOptions, ctx.config)) {
     channelFromAppVersion = ctx.appInfo.channel
   }
 
@@ -1156,7 +1156,7 @@ async function getResolvedPublishConfig(
     }
 
     if (channelFromAppVersion != null) {
-      ;(o as any).channel = channelFromAppVersion
+      o.channel = channelFromAppVersion
     }
     return options
   }

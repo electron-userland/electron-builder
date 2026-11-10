@@ -1,15 +1,10 @@
 import { TargetSpecificOptions } from "../core.js"
 import { CommonWindowsInstallerConfiguration } from "./CommonWindowsInstallerConfiguration.js"
 
-export interface MsiOptions extends CommonWindowsInstallerConfiguration, TargetSpecificOptions {
+/** WiX Toolset options shared by the `msi` and `msiWrapped` targets, which are both built with candle.exe and light.exe. */
+export interface CommonWixOptions extends TargetSpecificOptions {
   /**
-   * One-click installation.
-   * @default true
-   */
-  readonly oneClick?: boolean
-
-  /**
-   * The [upgrade code](https://msdn.microsoft.com/en-us/library/windows/desktop/aa372375(v=vs.85).aspx). Optional, by default generated using app id.
+   * The [upgrade code](https://learn.microsoft.com/en-us/windows/win32/msi/upgradecode). Optional, by default generated using app id.
    */
   readonly upgradeCode?: string | null
 
@@ -20,12 +15,15 @@ export interface MsiOptions extends CommonWindowsInstallerConfiguration, TargetS
   readonly warningsAsErrors?: boolean
 
   /**
-   * Any additional arguments to be passed to the WiX installer compiler, such as `["-ext", "WixUtilExtension"]`
+   * Any additional arguments passed to both the WiX compiler (candle.exe) and linker (light.exe), such as `["-ext", "WixUtilExtension"]`.
    */
   readonly additionalWixArgs?: Array<string> | null
 
   /**
-   * Any additional arguments to be passed to the light.ext, such as `["-cultures:ja-jp"]`
+   * Any additional arguments passed to the WiX linker (light.exe) only, such as `["-cultures:ja-jp"]`.
    */
   readonly additionalLightArgs?: Array<string> | null
 }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface MsiOptions extends CommonWixOptions, CommonWindowsInstallerConfiguration {}

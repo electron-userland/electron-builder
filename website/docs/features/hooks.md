@@ -20,11 +20,14 @@ Hooks fire in this order during every build. Pick the hook that runs at the righ
 Hook execution is serial within each platform/arch combination. Async hooks are awaited before the build proceeds.
 
 **Target-specific hooks** (only fire for their respective target):
-- `electronDist` — supply a custom Electron binary
 - `msiProjectCreated` — edit WiX XML before MSI compilation
 - `appxManifestCreated` — edit AppX manifest XML before packaging
 - `pkgDistributionCreated` — edit the macOS PKG `distribution.xml` before `productbuild`
+
+**Every platform:**
 - `onNodeModuleFile` — filter which `node_modules` files are included in the bundle
+
+`electronDist` (supply a custom Electron build) is an option, not a hook: a string is a path to the distribution, relative to the project directory, never a module to load. In a JS / TS configuration it can also be a function that returns that path. See [`electronDist`](../configuration.md).
 
 ## Defining Hooks
 
