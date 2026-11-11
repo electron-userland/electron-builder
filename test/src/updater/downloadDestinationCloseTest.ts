@@ -1,10 +1,13 @@
 import { CancellationToken, configureRequestOptions, configureRequestUrl, HttpExecutor } from "builder-util-runtime"
+import type { EventEmitter } from "events"
+import fs from "fs"
 import fsExtra from "fs-extra"
 import * as http from "http"
 import type { IncomingMessage } from "http"
 import type { Socket } from "net"
 import * as path from "path"
-import { describe, test } from "vitest"
+import { describe, test, vi } from "vitest"
+import { FakeNetRequest } from "../helpers/updaterTestUtil.js"
 
 const BODY_LENGTH = 64 * 1024
 const SENT_BEFORE_STALL = 1024
@@ -24,8 +27,8 @@ class StallingDownloadExecutor extends HttpExecutor<http.ClientRequest> {
     })
   }
 
-  downloadWithTimeout(url: URL, destination: string, timeout: number, cancellationToken = new CancellationToken()): Promise<string> {
-    return cancellationToken.createPromise<string>((resolve, reject, onCancel) => {
+  downloadWithTimeout(url: URL, destination: string | null, timeout: number, cancellationToken = new CancellationToken()): Promise<string | null> {
+    return cancellationToken.createPromise<string | null>((resolve, reject, onCancel) => {
       const requestOptions: http.RequestOptions = { timeout }
       configureRequestUrl(url, requestOptions)
       configureRequestOptions(requestOptions)
@@ -54,6 +57,46 @@ async function isFileOpen(file: string): Promise<boolean> {
     }
   }
   return false
+}
+
+// Holds back the close of `destination` by `delayMs`, as a busy disk or thread pool does, and reports `closeError` (when given) from that
+// close. WriteStream opens and closes its file through the fs module. `isClosed` tells whether the close has completed.
+function interceptDestinationClose(destination: string, delayMs: number, closeError: NodeJS.ErrnoException | null = null) {
+  const realOpen = fs.open
+  const realClose = fs.close
+  const destinationFds = new Set<number>()
+  const state = { isClosed: false }
+  const openSpy = vi.spyOn(fs, "open").mockImplementation(((...args: Array<any>) => {
+    const callback = args[args.length - 1]
+    if (args[0] === destination && typeof callback === "function") {
+      args[args.length - 1] = (error: Error | null, fd: number) => {
+        if (error == null) {
+          destinationFds.add(fd)
+        }
+        callback(error, fd)
+      }
+    }
+    ;(realOpen as any)(...args)
+  }) as any)
+  const closeSpy = vi.spyOn(fs, "close").mockImplementation(((fd: number, callback: (error: Error | null) => void) => {
+    if (!destinationFds.delete(fd)) {
+      ;(realClose as any)(fd, callback)
+      return
+    }
+    setTimeout(() => {
+      realClose(fd, error => {
+        state.isClosed = true
+        callback(closeError ?? error)
+      })
+    }, delayMs)
+  }) as any)
+  return {
+    isClosed: () => state.isClosed,
+    restore: () => {
+      openSpy.mockRestore()
+      closeSpy.mockRestore()
+    },
+  }
 }
 
 async function waitFor(condition: () => Promise<boolean>, what: string): Promise<void> {
@@ -138,7 +181,7 @@ describe.runIf(process.platform === "linux")("download destination is closed whe
   })
 })
 
-describe("a download whose response fails mid-body", () => {
+describe("a download that fails mid-body", () => {
   // configurePipes reports a failure of the response itself, after the destination is closed: without it, a connection cut mid-body
   // would leave the download pending (with no timeout) instead of rejecting it
   test("rejects with the response's error, and the destination is closed by then", async ({ expect, tmpDir }) => {
@@ -149,20 +192,116 @@ describe("a download whose response fails mid-body", () => {
       sendStartOfBody(response)
       setTimeout(() => response.socket?.destroy(), 100)
     }
-    await withStallingServer(async url => {
-      // no timeout: only the failed response can end this download
-      const outcome = await Promise.race([
-        new StallingDownloadExecutor(null).downloadWithTimeout(url, destination, 0).then(
+    const close = interceptDestinationClose(destination, 200)
+    try {
+      await withStallingServer(async url => {
+        // no timeout: only the failed response can end this download
+        const outcome = await Promise.race([
+          new StallingDownloadExecutor(null).downloadWithTimeout(url, destination, 0).then(
+            () => "resolved",
+            (error: any) => `rejected: ${error?.code}, closed: ${close.isClosed()}`
+          ),
+          new Promise<string>(resolve => setTimeout(() => resolve("still pending 5 s after the connection was cut"), 5000)),
+        ])
+        // closed before the rejection, so it can be removed at once (Windows cannot remove a file that is still open)
+        expect(outcome).toBe("rejected: ECONNRESET, closed: true")
+      }, cutAfterStartOfBody)
+    } finally {
+      close.restore()
+    }
+  })
+
+  // a failure of the request (here its timeout; with Electron's net, a lost connection too) goes the same way as one of the response
+  test("a request that times out mid-body rejects once the destination is closed", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "download-close" })
+    await fsExtra.ensureDir(dir)
+    const destination = path.join(dir, "timeout.exe")
+    const close = interceptDestinationClose(destination, 200)
+    try {
+      await withStallingServer(async url => {
+        const outcome = await new StallingDownloadExecutor(null).downloadWithTimeout(url, destination, 300).then(
           () => "resolved",
-          (error: any) => `rejected: ${error?.code}`
+          (error: any) => `rejected: ${error?.message}, closed: ${close.isClosed()}`
+        )
+        expect(outcome).toBe("rejected: Request timed out, closed: true")
+      })
+    } finally {
+      close.restore()
+    }
+  })
+
+  test("a destination whose close fails after the whole body is written rejects with that failure", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "download-close" })
+    await fsExtra.ensureDir(dir)
+    const destination = path.join(dir, "close-fails.exe")
+    const close = interceptDestinationClose(destination, 0, Object.assign(new Error("EIO: i/o error, close"), { code: "EIO" }))
+    try {
+      await withStallingServer(
+        async url => {
+          await expect(new StallingDownloadExecutor(null).downloadWithTimeout(url, destination, 0)).rejects.toMatchObject({ code: "EIO" })
+        },
+        response => response.end(Buffer.alloc(SENT_BEFORE_STALL, 1))
+      )
+    } finally {
+      close.restore()
+    }
+  })
+
+  // the response is not read on such a failure: an error it emits later (as Electron's net does when the connection is lost) must be
+  // handled, not thrown as an uncaught exception. A plain HttpExecutor over the net fake, which keeps the header's case as given and,
+  // unlike ElectronHttpExecutor, adds no idle timeout (whose listener would handle it)
+  test("a response rejected for its X-Checksum-Sha2 header still handles its errors", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "download-close" })
+    await fsExtra.ensureDir(dir)
+    const responses: Array<EventEmitter> = []
+    class FakeNetDownloadExecutor extends HttpExecutor<any> {
+      createRequest(options: http.RequestOptions, callback: (response: any) => void): any {
+        const request = new FakeNetRequest({
+          url: `${options.protocol}//${options.hostname}${options.path}`,
+          answer: () => ({ statusCode: 200, headers: { "X-Checksum-Sha2": "served" }, body: Buffer.alloc(16, 1) }),
+        })
+        request.on("response", response => {
+          responses.push(response)
+          callback(response)
+        })
+        return request
+      }
+
+      download(destination: string, sha2: string): Promise<void> {
+        const cancellationToken = new CancellationToken()
+        return cancellationToken.createPromise<void>((resolve, reject, onCancel) => {
+          const requestOptions: http.RequestOptions = {}
+          configureRequestUrl(new URL("https://example.com/update.exe"), requestOptions)
+          this.doDownload(
+            requestOptions,
+            {
+              destination,
+              options: { cancellationToken, sha2 },
+              onCancel,
+              callback: error => (error == null ? resolve() : reject(error)),
+              responseHandler: null,
+            },
+            0
+          )
+        })
+      }
+    }
+    await expect(new FakeNetDownloadExecutor().download(path.join(dir, "sha2-mismatch.exe"), "expected")).rejects.toThrow("X-Checksum-Sha2 header")
+    expect(responses).toHaveLength(1)
+    expect(() => responses[0].emit("error", new Error("net::ERR_CONNECTION_RESET"))).not.toThrow()
+  })
+
+  test("a download into a file without a destination rejects", async ({ expect }) => {
+    await withStallingServer(async url => {
+      const outcome = await Promise.race([
+        new StallingDownloadExecutor(null).downloadWithTimeout(url, null, 0).then(
+          () => "resolved",
+          (error: any) => `rejected: ${error?.message}`
         ),
-        new Promise<string>(resolve => setTimeout(() => resolve("still pending 5 s after the connection was cut"), 5000)),
+        new Promise<string>(resolve => setTimeout(() => resolve("still pending after 5 s"), 5000)),
       ])
-      expect(outcome).toBe("rejected: ECONNRESET")
-      // closed before the rejection, so it can be removed at once (Windows cannot remove a file that is still open)
-      await fsExtra.remove(destination)
-      expect(await fsExtra.pathExists(destination)).toBe(false)
-    }, cutAfterStartOfBody)
+      expect(outcome).toBe("rejected: Cannot download into a file: no destination")
+    })
   })
 })
 
