@@ -138,6 +138,34 @@ describe.runIf(process.platform === "linux")("download destination is closed whe
   })
 })
 
+describe("a download whose response fails mid-body", () => {
+  // configurePipes reports a failure of the response itself, after the destination is closed: without it, a connection cut mid-body
+  // would leave the download pending (with no timeout) instead of rejecting it
+  test("rejects with the response's error, and the destination is closed by then", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "download-close" })
+    await fsExtra.ensureDir(dir)
+    const destination = path.join(dir, "reset.exe")
+    const cutAfterStartOfBody = (response: http.ServerResponse) => {
+      sendStartOfBody(response)
+      setTimeout(() => response.socket?.destroy(), 100)
+    }
+    await withStallingServer(async url => {
+      // no timeout: only the failed response can end this download
+      const outcome = await Promise.race([
+        new StallingDownloadExecutor(null).downloadWithTimeout(url, destination, 0).then(
+          () => "resolved",
+          (error: any) => `rejected: ${error?.code}`
+        ),
+        new Promise<string>(resolve => setTimeout(() => resolve("still pending 5 s after the connection was cut"), 5000)),
+      ])
+      expect(outcome).toBe("rejected: ECONNRESET")
+      // closed before the rejection, so it can be removed at once (Windows cannot remove a file that is still open)
+      await fsExtra.remove(destination)
+      expect(await fsExtra.pathExists(destination)).toBe(false)
+    }, cutAfterStartOfBody)
+  })
+})
+
 // The server side of a request. The server never ends a response, so only the client closing the connection closes it.
 class ServedRequest {
   isClosed = false

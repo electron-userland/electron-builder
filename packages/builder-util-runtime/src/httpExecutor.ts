@@ -480,6 +480,8 @@ Please double check that your authentication token is correct. Due to security r
       }
 
       if (options.responseHandler == null) {
+        // configurePipes reports a failure of the response itself, once the destination file is closed (see there)
+        response.removeListener("error", options.callback)
         configurePipes(options, response, () => request.abort())
       } else {
         options.responseHandler(response, options.callback, () => request.abort())
@@ -846,14 +848,21 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage,
   const fileOut = createWriteStream(options.destination!)
   streams.push(fileOut)
 
-  let lastStream = response
-  for (const stream of streams) {
-    stream.on("error", (error: Error) => {
-      fileOut.close()
+  // A failure is reported once the destination is closed. createWriteStream opens the file asynchronously: reported before, a caller
+  // that removes the partly written file (electron-updater empties pending/) can run before that open creates it and leave it behind,
+  // and on Windows a file that is still open cannot be removed. A failure of the response goes the same way, so the abort that a
+  // failed stream leads to (the size limit's) is reported after the failure that caused it: close callbacks run in order.
+  const fail = (error: Error) => {
+    fileOut.close(() => {
       if (!options.options.cancellationToken.cancelled) {
         options.callback(error)
       }
     })
+  }
+  response.on("error", fail)
+  let lastStream = response
+  for (const stream of streams) {
+    stream.on("error", fail)
     lastStream = lastStream.pipe(stream)
   }
 
