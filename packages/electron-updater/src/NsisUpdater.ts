@@ -21,6 +21,17 @@ import {
   verifySignature,
 } from "./windowsExecutableCodeSignatureVerifier.js"
 import { URL } from "url"
+import { readExecutableProductVersions } from "./windowsExecutableVersion.js"
+
+const INSTALLER_VERSION_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#nsis-update-installers-must-carry-the-updates-version"
+
+function installerVersionMismatch(reason: string, expected: string): Error {
+  return newError(
+    `The installer of version ${expected} is rejected: ${reason}. electron-updater installs an update whose manifest is not signed only when the ProductVersion of its installer is the update version. ` +
+      `Publish the installer built for that version with its latest.yml, or sign update manifests (updateManifestPublicKey). ${INSTALLER_VERSION_DOCS}`,
+    "ERR_UPDATER_INSTALLER_VERSION_MISMATCH"
+  )
+}
 
 // import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
 const require = createRequire(import.meta.url ?? process.execPath)
@@ -214,6 +225,20 @@ export class NsisUpdater extends BaseUpdater {
     // the app set disableWebInstaller to false (read with the options above), not the default of an install made by an nsis-web installer
     const webInstallerEnabledByApp = this.isWebInstallerEnabledByApp
     // checked before executeDownload, so that it also applies to an update cached by a previous launch
+    const info = downloadUpdateOptions.updateInfoAndProvider.info
+    const packages = "packages" in info ? info.packages : null
+    // a web installer started as an update without --package-file aborts (installer.nsh), so an update without a package for this arch
+    // (the resolved one is of process.arch, else ia32) is rejected before it is downloaded
+    if (packages != null && typeof packages === "object" && fileInfo.packageInfo == null) {
+      return Promise.reject(
+        newError(
+          `Unable to download new version ${info.version}: its web installer has no app package for the arch ${process.arch} (packages: ${Object.keys(packages).join(", ") || "none"}). ` +
+            `Build the nsis-web target for ${process.arch} (or ia32) and publish its package with latest.yml. ` +
+            "https://www.electron.build/docs/migration/v27-runtime-changes#an-nsis-web-installer-started-as-an-update-needs-a-package-file",
+          "ERR_UPDATER_NO_WEB_PACKAGE_FOR_ARCH"
+        )
+      )
+    }
     if (fileInfo.packageInfo != null) {
       if (webInstallerDisabled) {
         return Promise.reject(
@@ -231,6 +256,9 @@ export class NsisUpdater extends BaseUpdater {
       fileExtension: "exe",
       downloadUpdateOptions,
       fileInfo,
+      // the cache is matched by sha512 only: an installer cached for another version (e.g. an older release, kept after it was installed)
+      // must not be reused for this one
+      verifyCachedFile: cachedFile => this.verifyInstallerVersion(cachedFile, downloadUpdateOptions.updateInfoAndProvider),
       task: async (destinationFile, downloadOptions, packageFile, removeTempDirIfAny) => {
         const packageInfo = fileInfo.packageInfo
         const isWebInstaller = packageInfo != null && packageFile != null
@@ -263,6 +291,7 @@ export class NsisUpdater extends BaseUpdater {
             "ERR_UPDATER_INVALID_SIGNATURE"
           )
         }
+        await this.verifyInstallerVersion(destinationFile, downloadUpdateOptions.updateInfoAndProvider)
 
         if (isWebInstaller) {
           if (await this.differentialDownloadWebPackage(downloadUpdateOptions, packageInfo, packageFile, provider)) {
@@ -307,23 +336,12 @@ export class NsisUpdater extends BaseUpdater {
   // `update` is the update the file belongs to: the default verify function accepts a catalog signature for it when its verified manifest
   // allows one (see allowCatalogSignature). Without it, only NsisUpdater.allowCatalogSignature does.
   private async verifySignature(tempUpdateFile: string, update: UpdateInfoAndProvider | null = null): Promise<VerifyUpdateFileResult> {
-    let config: unknown = null
-    let hasConfigFile = true
-    try {
-      config = await this.configOnDisk.value
-    } catch (e: any) {
-      if (e?.code !== "ENOENT") {
-        throw e
-      }
-      if (!this.app.isPackaged) {
-        // no dev-app-update.yml in dev mode: nothing to verify against, stay silent
-        return { response: "success" }
-      }
-      hasConfigFile = false
+    const resolved = await this.resolveUpdatePublisherNames()
+    if (resolved == null) {
+      // no dev-app-update.yml in dev mode: nothing to verify against, stay silent
+      return { response: "success" }
     }
-
-    // the runtime value goes through the same normalizer as the config's: a string, or the string entries of an array, else null
-    const publisherNames = readConfiguredPublisherNames(config) ?? readConfiguredPublisherNames({ publisherName: this.publisherName })
+    const { publisherNames, config, hasConfigFile } = resolved
     if (publisherNames != null) {
       const implementation = this._verifyUpdateFileAuthenticodeSignature
       if (implementation === this._defaultVerifyUpdateFileAuthenticodeSignature) {
@@ -351,10 +369,72 @@ export class NsisUpdater extends BaseUpdater {
     return { response: "failure", message: missingPublisherNameMessage() }
   }
 
-  // the cached installer sat on disk since a previous launch, so its Authenticode signature is re-verified before an
-  // install-on-next-launch is executed (same check as at download time)
-  protected verifyInstallerSignatureOnLaunch(installerPath: string, updateInfoAndProvider: UpdateInfoAndProvider): Promise<VerifyUpdateFileResult> {
-    return this.verifySignature(installerPath, updateInfoAndProvider)
+  // The publisherName an update is verified against (see verifySignature): the one of the update config, else the app's `publisherName`
+  // property. `null` for an unpackaged app (dev mode) without an update config file, which is not verified. `config` is null when a
+  // packaged app has no update config file.
+  private async resolveUpdatePublisherNames(): Promise<{ publisherNames: Array<string> | null; config: unknown; hasConfigFile: boolean } | null> {
+    let config: unknown = null
+    let hasConfigFile = true
+    try {
+      config = await this.configOnDisk.value
+    } catch (e: unknown) {
+      if (!(e instanceof Error && "code" in e && e.code === "ENOENT")) {
+        throw e
+      }
+      if (!this.app.isPackaged) {
+        return null
+      }
+      hasConfigFile = false
+    }
+    // the runtime value goes through the same normalizer as the config's: a string, or the string entries of an array, else null
+    const publisherNames = readConfiguredPublisherNames(config) ?? readConfiguredPublisherNames({ publisherName: this.publisherName })
+    return { publisherNames, config, hasConfigFile }
+  }
+
+  // A signature proves that the installer is a release of the app, not which one: an update manifest that is not signed could announce a
+  // newer version and serve the signed installer of an older release, or a web installer built for another version. The ProductVersion
+  // that electron-builder writes into the installer (the app version, also the version of latest.yml) must therefore be the version of the
+  // update. Checked whenever verifySignature verifies the signature against a publisherName (of the update config, or the app's
+  // `publisherName` property). Not checked when the manifest signature was verified (it binds the installer by its sha512), and not
+  // without a publisherName: the signature is then not verified (dev mode, `verifyUpdateCodeSignature: false`) or the update is rejected.
+  private async verifyInstallerVersion(installerPath: string, update: UpdateInfoAndProvider): Promise<void> {
+    if (update.manifestSignatureVerified === true) {
+      return
+    }
+    const resolved = await this.resolveUpdatePublisherNames()
+    if (resolved?.publisherNames == null) {
+      return
+    }
+    const expected = update.info.version
+    let versions: Array<string>
+    try {
+      versions = await readExecutableProductVersions(installerPath)
+    } catch (e: unknown) {
+      // a file system error (e.g. EBUSY or EACCES while an antivirus scans the installer) is no verdict on the installer
+      if (e instanceof Error && "syscall" in e) {
+        throw e
+      }
+      throw installerVersionMismatch(`its ProductVersion cannot be read (${e instanceof Error ? e.message : String(e)})`, expected)
+    }
+    if (versions.length === 0) {
+      throw installerVersionMismatch("it has no ProductVersion", expected)
+    }
+    const other = versions.find(it => it !== expected)
+    if (other != null) {
+      throw installerVersionMismatch(`its ProductVersion is ${JSON.stringify(other)}`, expected)
+    }
+  }
+
+  // the cached installer sat on disk since a previous launch, so its Authenticode signature and its ProductVersion are re-verified before
+  // an install-on-next-launch is executed (same checks as at download time). The pending installer is matched to the latest update info
+  // by sha512 only, so a manifest announcing another version for it is rejected here (ERR_UPDATER_INSTALLER_VERSION_MISMATCH is thrown,
+  // and the caller clears the pending update, so it is not retried on every launch).
+  protected async verifyInstallerSignatureOnLaunch(installerPath: string, updateInfoAndProvider: UpdateInfoAndProvider): Promise<VerifyUpdateFileResult> {
+    const signature = await this.verifySignature(installerPath, updateInfoAndProvider)
+    if (signature.response === "success") {
+      await this.verifyInstallerVersion(installerPath, updateInfoAndProvider)
+    }
+    return signature
   }
 
   // per-user NSIS installs run without an elevation prompt (per-machine installs are filtered separately via
