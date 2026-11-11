@@ -16,7 +16,7 @@ import escapeRegExp from "lodash.escaperegexp"
 import { AppUpdater } from "../AppUpdater.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
-import { channelFileNotFoundError, getFileList, parseUpdateInfo, Provider, ProviderRuntimeOptions } from "./Provider.js"
+import { attachPackageInfo, channelFileNotFoundError, getFileList, parseUpdateInfo, Provider, ProviderRuntimeOptions } from "./Provider.js"
 
 interface GitlabUpdateInfo extends UpdateInfo {
   tag: string
@@ -310,28 +310,23 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
   }
 
   resolveFiles(updateInfo: GitlabUpdateInfo): Array<ResolvedUpdateFileInfo> {
-    return getFileList(updateInfo).map((fileInfo: UpdateFileInfo) => {
-      // Try both original and normalized filename formats
-      const possibleNames = [
-        fileInfo.url, // Original filename
-        this.normalizeFilename(fileInfo.url), // Normalized filename (spaces/underscores → dashes)
-      ]
+    const files = getFileList(updateInfo).map((fileInfo: UpdateFileInfo) => ({
+      url: this.findAssetUrl(updateInfo, fileInfo.url),
+      info: fileInfo,
+    }))
+    return attachPackageInfo(files, updateInfo, packagePath => this.findAssetUrl(updateInfo, packagePath))
+  }
 
-      const matchingAssetName = possibleNames.find(name => updateInfo.assets.has(name))
-      const assetUrl = matchingAssetName ? updateInfo.assets.get(matchingAssetName) : undefined
-
-      if (!assetUrl) {
-        throw newError(
-          `Cannot find asset "${fileInfo.url}" in GitLab release assets. Available assets: ${Array.from(updateInfo.assets.keys()).join(", ")}`,
-          "ERR_UPDATER_ASSET_NOT_FOUND"
-        )
-      }
-
-      return {
-        url: new URL(assetUrl),
-        info: fileInfo,
-      }
-    })
+  // the release asset named `fileName` (the original or the normalized filename)
+  private findAssetUrl(updateInfo: GitlabUpdateInfo, fileName: string): URL {
+    const assetUrl = updateInfo.assets.get(fileName) ?? updateInfo.assets.get(this.normalizeFilename(fileName))
+    if (!assetUrl) {
+      throw newError(
+        `Cannot find asset "${fileName}" in GitLab release assets. Available assets: ${Array.from(updateInfo.assets.keys()).join(", ")}`,
+        "ERR_UPDATER_ASSET_NOT_FOUND"
+      )
+    }
+    return new URL(assetUrl)
   }
 
   toString(): string {

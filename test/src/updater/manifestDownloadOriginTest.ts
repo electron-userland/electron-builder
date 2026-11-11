@@ -18,7 +18,15 @@ import type { TmpDir } from "temp-file"
 import { afterEach, describe, test, vi } from "vitest"
 import { gzipSync } from "zlib"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
-import { createNsisUpdater, createTestAppAdapter, FakeElectronHttpExecutor, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
+import {
+  createNsisUpdater,
+  createTestAppAdapter,
+  FakeElectronHttpExecutor,
+  trackEvents,
+  tuneTestUpdater,
+  windowsExecutable,
+  writeUpdateConfig,
+} from "../helpers/updaterTestUtil.js"
 
 // The app's request headers (requestHeaders / addAuthHeader) other than the ones its crossOriginHeaders keeps, and the feed URL's query, are
 // only sent to download URLs on the feed's origin. The test updaters set crossOriginHeaders to () => [] (see tuneTestUpdater).
@@ -27,7 +35,8 @@ const sha512 = (data: Buffer) => createHash("sha512").update(data).digest("base6
 
 describe("download URLs chosen by the update manifest", () => {
   const INSTALLER_NAME = "TestApp-Setup-1.1.0.exe"
-  const INSTALLER = Buffer.from("manifest download origin test installer — not a real executable")
+  // the installer of the update version: its signature is checked (stubbed), so is its ProductVersion
+  const INSTALLER = windowsExecutable(["1.1.0"])
   const PACKAGE_NAME = "TestApp-1.1.0.nsis.7z"
   const PACKAGE = Buffer.from("manifest download origin test web package — not a real 7z archive")
 

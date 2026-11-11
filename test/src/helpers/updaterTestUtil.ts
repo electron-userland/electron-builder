@@ -8,6 +8,7 @@ import { EventEmitter } from "events"
 import fsExtra from "fs-extra"
 import type { OutgoingHttpHeaders, RequestOptions } from "http"
 import * as path from "path"
+import { NtExecutable, NtExecutableResource, Resource } from "resedit"
 import { PassThrough } from "stream"
 import { gzipSync } from "zlib"
 import { assertThat } from "./fileAssert.js"
@@ -15,6 +16,27 @@ import { TestAppAdapter } from "./TestAppAdapter.js"
 import { type ExpectStatic, type Mock, vi } from "vitest"
 
 const tmpDir = new TmpDir("updater-test-util")
+
+/**
+ * A minimal Windows executable (PE) whose version resource has one string table per entry of `productVersions` with that ProductVersion
+ * (none when an entry is null), like the installer electron-builder writes for an app version. No version resource for an empty list.
+ */
+export function windowsExecutable(productVersions: Array<string | null>, options: { is32Bit?: boolean } = {}): Buffer {
+  const exe = NtExecutable.createEmpty(options.is32Bit ?? false, false)
+  if (productVersions.length > 0) {
+    const res = NtExecutableResource.from(exe)
+    const stringTables = productVersions.map((productVersion, index) => {
+      const values: Record<string, string> = { ProductName: "Test App" }
+      if (productVersion != null) {
+        values.ProductVersion = productVersion
+      }
+      return { lang: 0x0409 + index, codepage: 1200, values }
+    })
+    Resource.VersionInfo.create(0x0409, {}, stringTables).outputToResourceEntries(res.entries)
+    res.outputResource(exe)
+  }
+  return Buffer.from(exe.generate())
+}
 
 export async function createTestAppAdapter(version = "0.0.1") {
   return new TestAppAdapter(version, await tmpDir.getTempDir())
