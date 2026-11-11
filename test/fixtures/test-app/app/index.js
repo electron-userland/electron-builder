@@ -30,6 +30,55 @@ const isInstallPendingMode = process.env.AUTO_UPDATER_TEST_INSTALL_PENDING === "
 // Custom update-file verification (AppUpdater.verifyUpdateFile). Unset = no hook installed (default stub).
 // "accept" / "reject" install a hook that logs what it was handed and then succeeds or fails.
 const verifyUpdateFileMode = process.env.AUTO_UPDATER_TEST_VERIFY_UPDATE_FILE?.trim()
+
+// Updater knobs of the blackbox cases, written by fixtureEnv() in test/src/updater/blackboxFixtureEnv.ts. Unset, each one keeps the
+// configuration below. A bad value throws here, and the launch logs INVALID_FIXTURE_KNOB and quits (see isReady): a throw out of
+// isReady would end in init().catch, which does not quit, and leave the launch hanging until the harness times out.
+function readUpdaterKnobs() {
+  const read = name => process.env[`AUTO_UPDATER_TEST_${name}`] || null
+  const oneOf = (name, values) => {
+    const value = read(name)
+    if (value != null && !values.includes(value)) {
+      throw new Error(`AUTO_UPDATER_TEST_${name} is ${JSON.stringify(value)}, not one of ${values.join(", ")}`)
+    }
+    return value
+  }
+  const requestHeaders = read("REQUEST_HEADERS")
+  const pendingOnlyQuitAfterMs = read("PENDING_ONLY_QUIT_AFTER_MS")
+  if (pendingOnlyQuitAfterMs != null && !/^[1-9][0-9]*$/.test(pendingOnlyQuitAfterMs)) {
+    throw new Error(`AUTO_UPDATER_TEST_PENDING_ONLY_QUIT_AFTER_MS is ${JSON.stringify(pendingOnlyQuitAfterMs)}, not a number of milliseconds`)
+  }
+  return {
+    // "unset" leaves autoUpdater.crossOriginHeaders null: the update check fails with ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED
+    unsetCrossOriginHeaders: oneOf("CROSS_ORIGIN_HEADERS", ["unset"]) != null,
+    requestHeaders: requestHeaders == null ? null : parseRequestHeaders(requestHeaders),
+    authHeader: read("AUTH_HEADER"),
+    // "false" changes nothing: it overrides the "true" that the harness passes for a served feed that is not loopback (insecureFeedEnv)
+    allowInsecureFeed: oneOf("ALLOW_INSECURE_FEED", ["true", "false"]) === "true",
+    publisherName: read("PUBLISHER_NAME"),
+    // "accept": a verifyUpdateFileAuthenticodeSignature that accepts every update, e.g. one signed with the untrusted test certificate
+    authenticodeStub: oneOf("AUTHENTICODE_STUB", ["accept"]) != null,
+    autoInstallEvent: oneOf("AUTO_INSTALL_EVENT", ["onQuit", "onNextLaunch", "manual"]),
+    // no update check: the launch only runs the install at launch of a pending update, and quits after this many milliseconds otherwise
+    pendingOnlyQuitAfterMs: pendingOnlyQuitAfterMs == null ? null : Number(pendingOnlyQuitAfterMs),
+    debugLog: oneOf("DEBUG_LOG", ["true"]) != null,
+  }
+}
+
+function parseRequestHeaders(json) {
+  let headers = null
+  try {
+    headers = JSON.parse(json)
+  } catch {
+    // not JSON: reported below
+  }
+  // a plain object (not null, an array, a string or a number) of strings
+  if (Object.prototype.toString.call(headers) !== "[object Object]" || Object.values(headers).some(value => typeof value !== "string")) {
+    throw new Error(`AUTO_UPDATER_TEST_REQUEST_HEADERS is ${JSON.stringify(json)}, not a JSON object of strings`)
+  }
+  return headers
+}
+
 const root = path.dirname(process.execPath)
 const _appUpdateConfigPath = path.resolve(process.platform === "darwin" ? `${root}/../Resources` : `${root}/resources`, "app-update.yml")
 
@@ -76,6 +125,15 @@ async function isReady() {
   db.close()
 
   if (shouldTestAutoUpdater) {
+    let knobs
+    try {
+      knobs = readUpdaterKnobs()
+    } catch (error) {
+      console.log(`INVALID_FIXTURE_KNOB: ${error.message}`)
+      app.quit()
+      return
+    }
+
     const { autoUpdater } = require("electron-updater")
 
     // autoUpdater._appUpdateConfigPath = _appUpdateConfigPath
@@ -84,14 +142,35 @@ async function isReady() {
       info: (...args) => console.log("[updater]", ...args),
       warn: (...args) => console.log("[updater warn]", ...args),
       error: (...args) => console.log("[updater error]", ...args),
-      debug: () => {},
+      debug: knobs.debugLog ? (...args) => console.log("[updater debug]", ...args) : () => {},
     }
     autoUpdater.autoRunAppAfterInstall = false
     // required; set it before the pending-install check at launch, for the same reason as autoInstallEvent below
-    autoUpdater.crossOriginHeaders = () => []
+    if (!knobs.unsetCrossOriginHeaders) {
+      autoUpdater.crossOriginHeaders = () => []
+    }
     // Must be assigned synchronously after require: BaseUpdater schedules the automatic
     // pending-install check on app.whenReady(), which has already resolved at this point.
-    autoUpdater.autoInstallEvent = isAutoInstallOnNextLaunchMode ? "onNextLaunch" : "onQuit"
+    autoUpdater.autoInstallEvent = knobs.autoInstallEvent ?? (isAutoInstallOnNextLaunchMode ? "onNextLaunch" : "onQuit")
+    // the other knobs too, for the same reason: the install at launch sends requests and verifies the pending update
+    if (knobs.requestHeaders != null) {
+      autoUpdater.requestHeaders = knobs.requestHeaders
+    }
+    if (knobs.authHeader != null) {
+      autoUpdater.addAuthHeader(knobs.authHeader)
+    }
+    if (knobs.allowInsecureFeed) {
+      autoUpdater.allowInsecureFeed = true
+    }
+    if (knobs.publisherName != null) {
+      autoUpdater.publisherName = knobs.publisherName
+    }
+    if (knobs.authenticodeStub) {
+      autoUpdater.verifyUpdateFileAuthenticodeSignature = async publisherNames => {
+        console.log(`AUTHENTICODE_STUB_CALLED: ${JSON.stringify({ publisherNames })}`)
+        return { response: "success" }
+      }
+    }
 
     // Assigned in the same synchronous block as autoInstallEvent, and for the same reason: the automatic
     // pending-install check is scheduled on app.whenReady(), which has already resolved here, so the hook
@@ -143,13 +222,14 @@ async function isReady() {
         app.quit()
       }
       // when a pending update was installed, the updater quits the app itself
-    } else if (isAutoInstallOnNextLaunchMode) {
-      // The updater installs the pending update at startup on its own (autoInstallEvent: "onNextLaunch").
+    } else if (isAutoInstallOnNextLaunchMode || knobs.pendingOnlyQuitAfterMs != null) {
+      // The updater installs the pending update at startup on its own (autoInstallEvent: "onNextLaunch", or
+      // any but "manual" for an update queued with waitUntilNextLaunch).
       // Fallback quit so a skipped or failed automatic install cannot hang the test harness.
       setTimeout(() => {
         console.log("AUTO_INSTALL_ON_NEXT_LAUNCH_TIMEOUT: automatic install did not quit the app")
         app.quit()
-      }, 90 * 1000)
+      }, knobs.pendingOnlyQuitAfterMs ?? 90 * 1000)
     } else {
       autoUpdater.checkForUpdates().catch(err => {
         console.log("checkForUpdates rejected (handled via error event):", err?.message)
