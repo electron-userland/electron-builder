@@ -910,11 +910,18 @@ test.for([
     expectedFile: "nightly.yml",
   },
   {
-    name: "numeric pre-release current (1.0.0-1) matches the same numeric identifier only",
+    name: "numeric pre-release current (1.0.0-1) has no channel and picks the highest release",
     version: "1.0.0-1",
     feed: ["v1.0.0-2", "v1.0.0-1.1", "v2.0.0"],
-    expectedTag: "v1.0.0-1.1",
-    expectedFile: "1.yml",
+    expectedTag: "v2.0.0",
+    expectedFile: "latest.yml",
+  },
+  {
+    name: "numeric pre-release current (1.0.0-1) moves to a higher numeric pre-release",
+    version: "1.0.0-1",
+    feed: ["v1.0.0-1.1", "v1.0.0-2", "v0.9.0"],
+    expectedTag: "v1.0.0-2",
+    expectedFile: "2.yml",
   },
   {
     name: "a 0 pre-release identifier (v1.0.0-0) is treated like a stable tag",
