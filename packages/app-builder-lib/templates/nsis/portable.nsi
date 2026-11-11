@@ -83,7 +83,7 @@ Section
     BgImage::Destroy
   !endif
 
-	ExecWait "$INSTDIR\${APP_EXECUTABLE_FILENAME} $R0" $0
+	ExecWait "$\"$INSTDIR\${APP_EXECUTABLE_FILENAME}$\" $R0" $0
   SetErrorLevel $0
 
   SetOutPath $EXEDIR

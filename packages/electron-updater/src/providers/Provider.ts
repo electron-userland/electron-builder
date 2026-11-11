@@ -428,13 +428,24 @@ export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransform
     }
   })
 
-  const packages = (updateInfo as WindowsUpdateInfo).packages
+  return attachPackageInfo(result, updateInfo, packagePath => newUrlFromBase(pathTransformer(packagePath), baseUrl))
+}
+
+/**
+ * Sets the `packageInfo` of the first of `files` (the web installer) to the nsis-web package of `updateInfo` for `process.arch`, else
+ * `ia32`, with its `path` resolved by `resolvePackageUrl` the way the provider resolves the installer's: NsisUpdater passes this package
+ * to the web installer with `--package-file`. Returns `files`.
+ */
+export function attachPackageInfo(
+  files: Array<ResolvedUpdateFileInfo>,
+  updateInfo: WindowsUpdateInfo,
+  resolvePackageUrl: (packagePath: string) => URL
+): Array<ResolvedUpdateFileInfo> {
+  const packages = updateInfo.packages
   const packageInfo = packages == null ? null : packages[process.arch] || packages.ia32
-  if (packageInfo != null) {
-    ;(result[0] as any).packageInfo = {
-      ...packageInfo,
-      path: newUrlFromBase(pathTransformer(packageInfo.path), baseUrl).href,
-    }
+  const installer = files[0]
+  if (packageInfo != null && installer != null) {
+    installer.packageInfo = { ...packageInfo, path: resolvePackageUrl(packageInfo.path).href }
   }
-  return result
+  return files
 }

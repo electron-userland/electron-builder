@@ -7,7 +7,7 @@ import { URL } from "url"
 import { getChannelFilename, newUrlFromBase } from "../util.js"
 import { BaseGitHubProvider } from "./GitHubProvider.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
-import { channelFileNotFoundError, getFileList, parseUpdateInfo, ProviderRuntimeOptions } from "./Provider.js"
+import { attachPackageInfo, channelFileNotFoundError, getFileList, parseUpdateInfo, ProviderRuntimeOptions } from "./Provider.js"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>
@@ -102,18 +102,22 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
   }
 
   resolveFiles(updateInfo: PrivateGitHubUpdateInfo): Array<ResolvedUpdateFileInfo> {
-    return getFileList(updateInfo).map(it => {
-      const name = path.posix.basename(it.url).replace(/ /g, "-")
-      const asset = updateInfo.assets.find(it => it != null && it.name === name)
-      if (asset == null) {
-        throw newError(`Cannot find asset "${name}" in: ${JSON.stringify(updateInfo.assets, null, 2)}`, "ERR_UPDATER_ASSET_NOT_FOUND")
-      }
+    const files = getFileList(updateInfo).map(it => ({
+      url: this.findAssetUrl(updateInfo, it.url),
+      info: it,
+    }))
+    // the package is downloaded from its API asset URL with fileExtraDownloadHeaders, like the installer
+    return attachPackageInfo(files, updateInfo, packagePath => this.findAssetUrl(updateInfo, packagePath))
+  }
 
-      return {
-        url: new URL(asset.url),
-        info: it,
-      }
-    })
+  // the API URL of the release asset of `fileUrl` (its file name, spaces as dashes the way it is uploaded)
+  private findAssetUrl(updateInfo: PrivateGitHubUpdateInfo, fileUrl: string): URL {
+    const name = path.posix.basename(fileUrl).replace(/ /g, "-")
+    const asset = updateInfo.assets.find(it => it != null && it.name === name)
+    if (asset == null) {
+      throw newError(`Cannot find asset "${name}" in: ${JSON.stringify(updateInfo.assets, null, 2)}`, "ERR_UPDATER_ASSET_NOT_FOUND")
+    }
+    return new URL(asset.url)
   }
 }
 

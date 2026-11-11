@@ -93,6 +93,19 @@ describe("copyMimeTypes - invalid extension handling", () => {
     const xml = await fs.readFile(path.join(dir, result!), "utf8")
     expect(xml).toContain('<glob pattern="*.txt"/>')
   })
+
+  test("the comment is the description, or <productName> document without one", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "mime-types-test" })
+    const result = await copyMimeTypes(dir, {
+      fileAssociations: [valid, { mimeType: "application/x-other", ext: "other", description: "Other & more" }],
+      productName: "Test<App>",
+      executableName: "testapp",
+    })
+    expect(result).not.toBeNull()
+    const xml = await fs.readFile(path.join(dir, result!), "utf8")
+    expect(xml).toContain('<mime-type type="application/x-test">\n  <comment>Test&lt;App&gt; document</comment>')
+    expect(xml).toContain('<mime-type type="application/x-other">\n  <comment>Other &amp; more</comment>')
+  })
 })
 
 describe.heavy.ifLinux("AppImage", () => {

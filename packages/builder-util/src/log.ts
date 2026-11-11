@@ -1,4 +1,4 @@
-import type { LimitedLogger, LogLevel, LogLimitOptions } from "builder-util-runtime"
+import type { LimitedLogger, LogLevel, LogLimitOptions, Nullish } from "builder-util-runtime"
 import { LogLimiter } from "builder-util-runtime/internal"
 import chalk from "chalk"
 import { Chalk } from "chalk"
@@ -48,12 +48,12 @@ export class Logger {
   }
 
   /** Shorthand for `limit({ key, max: 1, scope })`. */
-  once(key: string, scope?: object): LimitedLogger<Logger> {
+  once(key: string, scope?: object | Nullish): LimitedLogger<Logger> {
     return this.limit({ key, scope })
   }
 
   /** Forgets recorded emissions of `key` (in `scope`), of every key in `scope`, or of everything. Intended for tests. */
-  resetLimits(key?: string, scope?: object): void {
+  resetLimits(key?: string, scope?: object | Nullish): void {
     this.limiter.reset(key, scope)
   }
 

@@ -1,6 +1,7 @@
 import { InvalidConfigurationError } from "builder-util"
 import { MemoLazy } from "builder-util-runtime"
 import { resolveWindowsSigningConfiguration, WindowsConfiguration, WindowsPkcs11SigningConfig } from "../../options/winOptions.js"
+import { isOfflineModeEnabled } from "../../util/flags.js"
 import { VmManager } from "../../vm/vm.js"
 import type { WinPackager } from "../../winPackager.js"
 import {
@@ -74,7 +75,7 @@ export class Pkcs11SignManager extends SigntoolBaseSignManager {
     const args = ["sign", "-in", inputFile, "-out", outputPath]
 
     // RFC 3161 for sha256/nested (mirrors signtool /tr); HTTP Authenticode for sha1 (/t).
-    if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
+    if (!isOfflineModeEnabled()) {
       const isRfc3161 = options.isNest || options.hash === "sha256"
       if (isRfc3161) {
         args.push("-ts", signing.rfc3161TimeStampServer || "http://timestamp.digicert.com")
