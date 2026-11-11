@@ -19,7 +19,7 @@ jobs:
       id-token: write  # Required for OIDC token
     environment: release
     timeout-minutes: 15
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       docker-version: ${{ steps.docker.outputs.version }}
     steps:

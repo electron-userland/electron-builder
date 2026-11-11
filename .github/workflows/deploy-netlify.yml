@@ -20,7 +20,7 @@ jobs:
     permissions:
       contents: read  # actions/checkout
       statuses: write  # the "Netlify Documentation Site preview" commit status
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     # No release-line guard, deliberately: every `published` event that reaches THIS
     # copy of the file should prod-deploy, master's `next` prereleases included. A
     # release event runs the workflow from the release tag's own commit, so master's

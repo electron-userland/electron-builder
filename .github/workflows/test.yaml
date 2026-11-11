@@ -37,7 +37,7 @@ env:
 jobs:
   check-if-docker-build:
     name: Check for Docker image changes
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     outputs:
       force-docker-build: ${{ steps.changes.outputs.docker == 'true' || steps.changes.outputs.workflow == 'true' }}
@@ -72,7 +72,7 @@ jobs:
 
   validate-and-shard:
     name: Validate and plan shards
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     outputs:
       linux: ${{ steps.plan.outputs.linux }}
@@ -343,7 +343,7 @@ jobs:
       always() &&
       needs.check-if-docker-build.result == 'success' &&
       (needs.run-docker-build.result == 'success' || needs.run-docker-build.result == 'skipped')
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -420,7 +420,7 @@ jobs:
 
   test-snap:
     name: Test Snap (${{ matrix.core }})
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -504,7 +504,7 @@ jobs:
       always() &&
       needs.check-if-docker-build.result == 'success' &&
       (needs.run-docker-build.result == 'success' || needs.run-docker-build.result == 'skipped')
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 40
     env:
       # Every ref the suite needs, pre-installed so the flatpak target's own `flatpak install` inside a test does not eat the
@@ -593,7 +593,7 @@ jobs:
 
   test-e2e:
     name: Test e2e Auto Updater Linux (${{ matrix.test_config.id }})
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -716,7 +716,7 @@ jobs:
     name: Merge smart cache and test reports
     needs: [test-linux, test-windows, test-macos, test-e2e, test-updater, test-snap, test-flatpak]
     if: always()
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

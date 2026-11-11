@@ -56,7 +56,7 @@ jobs:
       group: ${{ github.workflow }}-plan-${{ github.event.pull_request.number || 'dry-run' }}
       cancel-in-progress: true
     timeout-minutes: 10
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       # the merge commit of the pull request; master for a dry run, whichever branch it was started on
       - name: Checkout code repository
@@ -84,7 +84,7 @@ jobs:
       group: ${{ github.workflow }}-check
       cancel-in-progress: false
     timeout-minutes: 5
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       # whoever started the run and, on every attempt, whoever started that attempt (triggering_actor: the merger of a
       # push, the user of a re-run) needs the maintain or admin role, as a re-run applies the file of master as well.
@@ -133,7 +133,7 @@ jobs:
       group: ${{ github.workflow }}
       cancel-in-progress: false
     timeout-minutes: 15
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       # the check of the check job again, first and on every attempt: that job is not re-run with failed jobs or with
       # this job alone, so its result can be from an attempt that someone else started

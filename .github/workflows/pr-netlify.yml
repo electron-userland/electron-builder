@@ -19,7 +19,7 @@ jobs:
     permissions:
       contents: read  # actions/checkout
       statuses: write  # the "Netlify Documentation Site preview" commit status
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     # Only run on the main repository, not on forks
     if: github.repository == 'electron-userland/electron-builder'
 

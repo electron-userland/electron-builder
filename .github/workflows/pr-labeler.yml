@@ -16,7 +16,7 @@ jobs:
     permissions:
       contents: read  # for actions/labeler to determine modified files
       pull-requests: write  # for actions/labeler to add labels to PRs
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     if: github.repository == 'electron-userland/electron-builder'
     steps:
     - name: Checkout code repository
