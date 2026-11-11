@@ -8,6 +8,7 @@ import type { TmpDir } from "temp-file"
 import { promisify } from "util"
 import { afterEach, describe, ExpectStatic, test } from "vitest"
 import { createLocalServer, insecureFeedEnv, launchAndWaitForQuit, LocalServer } from "../helpers/launchAppCrossPlatform"
+import { trustSigningIdentityInMachineRoot } from "../helpers/windowsSignedFixture"
 import { authenticodeStubCalls, countOf, fixtureEnv, leftoverPartialDownloads, NOT_LOOPBACK_LOCALHOST_NAME } from "./blackboxFixtureEnv"
 import { BlackboxServers, expectRejectedUpdate, MANIFEST_VERIFICATION_DISABLED_MARKER, runTestWithinServer, ScenarioContext } from "./blackboxUpdateHelpers"
 
@@ -339,5 +340,12 @@ describe("leftoverPartialDownloads", () => {
     }
     expect((await leftoverPartialDownloads(pendingDir)).sort()).toEqual(["0-temp-TestApp Setup.exe", "temp-TestApp.zip"])
     expect(await leftoverPartialDownloads(path.join(pendingDir, "missing"))).toEqual([])
+  })
+})
+
+describe("trustSigningIdentityInMachineRoot", () => {
+  test.skipIf(process.platform === "win32")("trusts nothing off Windows", async ({ expect, tmpDir }) => {
+    // the PKCS#12 is never read off Windows
+    expect(await trustSigningIdentityInMachineRoot({ commonName: "EB Test Code Signing", p12Base64: "", password: "" }, tmpDir)).toBeNull()
   })
 })

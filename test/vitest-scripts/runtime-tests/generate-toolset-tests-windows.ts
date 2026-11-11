@@ -3,6 +3,7 @@ import * as fs from "fs"
 import * as path from "path"
 import type * as _BlackboxWinSuite from "../../src/updater/blackboxUpdateWinSuite.js"
 import type * as _BlackboxWebWinSuite from "../../src/updater/blackboxUpdateWebWinSuite.js"
+import type * as _BlackboxWinChecksSuite from "../../src/updater/blackboxUpdateWinChecksSuite.js"
 import type * as _DifferentialWinSuite from "../../src/updater/differentialUpdateWinSuite.js"
 import type * as _AppxSuite from "../../src/windows/appxTestSuite.js"
 import type * as _AssistedInstallerSuite from "../../src/windows/assistedInstallerTestSuite.js"
@@ -54,6 +55,20 @@ const blackboxWebWinSuite = (name: string, registerFn: SuiteConfig["registerFn"]
   describeOptions: { concurrent: false, retry: 1 },
   winCodeSignVersions: newestVersion(WIN_CODE_SIGN_VERSIONS),
   nsisVersions,
+  wineVersions: WINE_VERSIONS,
+})
+
+// NSIS update checks of electron-updater 7 (blackboxUpdateWinChecksSuite.ts): one suite per test, like blackboxWebWinSuite, built with the
+// newest version of every toolset (the toolsets take no part in what the updater checks). The names don't contain "blackboxWin".
+const blackboxNsisChecksSuite = (name: string, registerFn: SuiteConfig["registerFn"], chain?: WindowsSuiteConfig["describeConfig"]["chain"]): WindowsSuiteConfig => ({
+  name,
+  e2e: true,
+  registerFn,
+  importPath: "updater/blackboxUpdateWinChecksSuite",
+  describeConfig: { name: "blackboxWin", chain },
+  describeOptions: { concurrent: false, retry: 1 },
+  winCodeSignVersions: newestVersion(WIN_CODE_SIGN_VERSIONS),
+  nsisVersions: newestVersion(NSIS_VERSIONS),
   wineVersions: WINE_VERSIONS,
 })
 
@@ -172,6 +187,10 @@ const SUITES: WindowsSuiteConfig[] = [
   blackboxWebWinSuite("blackboxWebWinNextLaunch", namedFn("registerBlackboxWebWinNextLaunchTests" satisfies keyof typeof _BlackboxWebWinSuite), newestVersion(NSIS_VERSIONS)),
   // installs plain nsis and never runs the web installer
   blackboxWebWinSuite("blackboxWebWinRejected", namedFn("registerBlackboxWebWinRejectedTests" satisfies keyof typeof _BlackboxWebWinSuite), newestVersion(NSIS_VERSIONS)),
+  blackboxNsisChecksSuite("blackboxNsisInstallerChecks", namedFn("registerBlackboxNsisInstallerChecksTests" satisfies keyof typeof _BlackboxWinChecksSuite)),
+  blackboxNsisChecksSuite("blackboxNsisNextLaunchModes", namedFn("registerBlackboxNsisNextLaunchModesTests" satisfies keyof typeof _BlackboxWinChecksSuite)),
+  // native Windows only: the .win. file is left out of the Linux and mac runs
+  blackboxNsisChecksSuite("blackboxNsisAuthenticode", namedFn("registerBlackboxNsisAuthenticodeTests" satisfies keyof typeof _BlackboxWinChecksSuite), ["ifWindows"]),
   {
     name: "winCodeSign",
     registerFn: namedFn("registerWinCodeSignTests" satisfies keyof typeof _WinCodeSignSuite),
