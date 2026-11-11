@@ -178,11 +178,13 @@ describe("createClient — channel file size", () => {
   })
 
   // Bitbucket, Keygen: the code is kept, not wrapped in a "latest version not found" error
-  test.each(providers)("$name: a channel file larger than the limit fails the check with an error naming the options", async ({ options }) => {
+  test.each(providers)("$name: a channel file larger than the limit fails the check with an error naming the options and linking the docs", async ({ options }) => {
     const { provider, executor } = createProvider(options, largeChannelFile)
     await expect(provider.getLatestVersion()).rejects.toMatchObject({
       code: "ERR_HTTP_RESPONSE_TOO_LARGE",
-      message: expect.stringContaining(`${LIMIT} bytes: raise the limit with maxUpdateInfoSize in the publish configuration (app-update.yml) or autoUpdater.maxUpdateInfoSize`),
+      message: expect.stringContaining(
+        `${LIMIT} bytes: raise the limit with maxUpdateInfoSize in the publish configuration (app-update.yml) or autoUpdater.maxUpdateInfoSize. See https://www.electron.build/docs/migration/v27-runtime-changes#channel-files-are-limited-to-10-mib`
+      ),
     })
     expect(executor.sent.at(-1)?.url).toMatch(/(latest|stable)-mac\.yml|releases\/assets\/1/)
   })

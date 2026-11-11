@@ -30,6 +30,8 @@ import {
   pdbFilesPatternsAdvisory,
   platformExcludedExtsPdbChange,
   PORTABLE_DEBUG_LOGGING_DROPPED,
+  RETIRED_APPIMAGE_PINS,
+  retiredAppImagePinDescription,
   SNAP_BASES,
   SNAP_CORE24_UNSUPPORTED,
   v26IncludePdb,
@@ -723,12 +725,12 @@ class ConfigCodemod {
           key: `toolsets.${name}`,
           description: `removed toolsets.${name}: null (v27 rejects null; unset resolves to "latest", the newest bundle — pin "0.0.0" to keep the legacy bundle v26 used)`,
         })
-      } else if (name === "appimage" && ts.isStringLiteral(value) && value.text === "1.0.2") {
-        this.replaceValue(prop.initializer, '"1.0.3"')
-        this.changes.push({
-          key: "toolsets.appimage",
-          description: 'replaced toolsets.appimage: "1.0.2" with "1.0.3" (1.0.2 is no longer offered; 1.0.3 is the same runtime with the #9598 fix)',
-        })
+      } else if (name === "appimage" && ts.isStringLiteral(value)) {
+        const retired = RETIRED_APPIMAGE_PINS.get(value.text)
+        if (retired != null) {
+          this.replaceValue(prop.initializer, JSON.stringify(retired.replacement))
+          this.changes.push({ key: "toolsets.appimage", description: retiredAppImagePinDescription(value.text, retired) })
+        }
       }
     }
   }

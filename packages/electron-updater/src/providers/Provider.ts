@@ -164,7 +164,7 @@ export abstract class Provider<T extends UpdateInfo> {
       // names the options that raise the limit
       if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
         throw newError(
-          `${e.message}: raise the limit with maxUpdateInfoSize in the publish configuration (app-update.yml) or autoUpdater.maxUpdateInfoSize`,
+          `${e.message}: raise the limit with maxUpdateInfoSize in the publish configuration (app-update.yml) or autoUpdater.maxUpdateInfoSize. See https://www.electron.build/docs/migration/v27-runtime-changes#channel-files-are-limited-to-10-mib`,
           "ERR_HTTP_RESPONSE_TOO_LARGE"
         )
       }

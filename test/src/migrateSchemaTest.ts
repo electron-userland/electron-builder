@@ -1371,9 +1371,29 @@ describe("migrateConfig — toolsets", () => {
     expect(result.migrated.toolsets).toEqual({ appimage: "1.0.3" })
   })
 
+  test('remaps the withdrawn appimage "1.2.0" pin to "1.2.1"', () => {
+    const result = migrateConfig({ toolsets: { appimage: "1.2.0", nsis: "2.0.4" } })
+    expect(result.migrated.toolsets).toEqual({ appimage: "1.2.1", nsis: "2.0.4" })
+    expect(result.changes).toEqual([
+      {
+        key: "toolsets.appimage",
+        description: 'replaced toolsets.appimage: "1.2.0" with "1.2.1" (1.2.0 was withdrawn for missing license files; 1.2.1 is its license-corrected re-release)',
+      },
+    ])
+  })
+
   test("leaves valid pins untouched", () => {
     const input = { toolsets: { appimage: "0.0.0", wine: "system", winCodeSign: "1.3.0" } }
     expect(migrateConfig(input).modified).toBe(false)
+    expect(migrateConfig({ toolsets: { appimage: "1.2.1" } }).modified).toBe(false)
+    expect(migrateConfig({ toolsets: { appimage: "latest" } }).modified).toBe(false)
+  })
+
+  test("does not read an appimage pin through Object.prototype", () => {
+    const input = { toolsets: { appimage: "constructor" } }
+    const result = migrateConfig(input)
+    expect(result.modified).toBe(false)
+    expect(result.migrated.toolsets).toEqual({ appimage: "constructor" })
   })
 
   test("keeps toolsets.executables, for which null is valid", () => {
@@ -1586,6 +1606,7 @@ describe("migrateConfig — round-trip: migrator output passes v27 schema valida
     ],
     ["asar false with root keys", { asar: false, asarUnpack: ["**/*.node"], disableAsarIntegrity: true, mac: { asar: true } }],
     ["toolsets null / retired pin", { toolsets: { wine: null, nsis: null, winCodeSign: null, appimage: "1.0.2" } }],
+    ["withdrawn appimage pin", { toolsets: { appimage: "1.2.0" } }],
     ["nativeRebuilder legacy", { nativeRebuilder: "legacy", npmRebuild: false }],
     ["mac null fields", { mac: { type: null, provisioningProfile: null, binaries: null, signIgnore: null, singleArchFiles: null, x64ArchFiles: null, identity: null } }],
     ["electronDownload force", { electronDownload: { force: true, mirrorOptions: { mirror: "https://m/" } } }],
