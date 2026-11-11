@@ -7,7 +7,8 @@ import { readCertInfoFromX509 } from "app-builder-lib/src/codeSign/certInfo"
 import { WindowsSignAzureManager } from "app-builder-lib/src/codeSign/win/windowsSignAzureManager"
 import AppXTarget from "app-builder-lib/src/targets/win/AppxTarget"
 import MsixTarget from "app-builder-lib/src/targets/win/MsixTarget"
-import { getAtsBundleDir, getDotnetRuntimeDir, getWindowsKitsBundle } from "app-builder-lib/src/toolsets/winCodeSign"
+import { getAtsBundleDir, getDotnetRuntimeDir, getSignToolPath, getWindowsKitsBundle } from "app-builder-lib/src/toolsets/winCodeSign"
+import { VmManager } from "app-builder-lib/src/vm/vm"
 import type { WinPackager } from "app-builder-lib/src/winPackager"
 import { exec, InvalidConfigurationError } from "builder-util"
 import { matchPublisherName, parseDn } from "builder-util-runtime"
@@ -18,7 +19,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 vi.mock("app-builder-lib/src/toolsets/winCodeSign", async importOriginal => {
   const actual = await importOriginal<typeof import("app-builder-lib/src/toolsets/winCodeSign")>()
-  return { ...actual, getWindowsKitsBundle: vi.fn(), getAtsBundleDir: vi.fn(), getDotnetRuntimeDir: vi.fn() }
+  return { ...actual, getWindowsKitsBundle: vi.fn(), getAtsBundleDir: vi.fn(), getDotnetRuntimeDir: vi.fn(), getSignToolPath: vi.fn(actual.getSignToolPath) }
 })
 
 function makeManager(winCodeSign?: string): SigntoolSignManager {
@@ -143,8 +144,7 @@ describe("computeSignToolArgs (isWin=true, modern toolset)", () => {
   })
 
   test("omits /td in offline mode", () => {
-    const origEnv = process.env.ELECTRON_BUILDER_OFFLINE
-    process.env.ELECTRON_BUILDER_OFFLINE = "true"
+    vi.stubEnv("ELECTRON_BUILDER_OFFLINE", "true")
     try {
       const manager = makeManager("1.1.0")
       const config = makeTaskConfig({ hash: "sha256" })
@@ -153,11 +153,7 @@ describe("computeSignToolArgs (isWin=true, modern toolset)", () => {
       expect(args).not.toContain("/t")
       expect(args).not.toContain("/td")
     } finally {
-      if (origEnv === undefined) {
-        delete process.env.ELECTRON_BUILDER_OFFLINE
-      } else {
-        process.env.ELECTRON_BUILDER_OFFLINE = origEnv
-      }
+      vi.unstubAllEnvs()
     }
   })
 })
@@ -502,8 +498,7 @@ describe("PKCS#11 timestamp flags", () => {
   })
 
   test("offline mode omits all timestamp args", () => {
-    const origEnv = process.env.ELECTRON_BUILDER_OFFLINE
-    process.env.ELECTRON_BUILDER_OFFLINE = "true"
+    vi.stubEnv("ELECTRON_BUILDER_OFFLINE", "true")
     try {
       const manager = makePkcs11Manager()
       const config = makeTaskConfig({ options: { sign: pkcs11Base }, hash: "sha256" })
@@ -511,12 +506,65 @@ describe("PKCS#11 timestamp flags", () => {
       expect(args).not.toContain("-ts")
       expect(args).not.toContain("-t")
     } finally {
-      if (origEnv === undefined) {
-        delete process.env.ELECTRON_BUILDER_OFFLINE
-      } else {
-        process.env.ELECTRON_BUILDER_OFFLINE = origEnv
-      }
+      vi.unstubAllEnvs()
     }
+  })
+})
+
+// ─── ELECTRON_BUILDER_OFFLINE: only true and 1 skip the timestamp ─────────────
+
+describe("ELECTRON_BUILDER_OFFLINE: true and 1 skip timestamping in every sign manager, other values keep it", () => {
+  const pkcs11Options = {
+    sign: {
+      type: "pkcs11" as const,
+      pkcs11Module: "/usr/lib/opensc-pkcs11.so",
+      pkcs11KeyUri: "pkcs11:token=T;object=K;type=private",
+    },
+  } as any
+  const hsmOptions = {
+    sign: { type: "hsm" as const, cryptoServiceProvider: "Provider", keyContainer: "container" },
+  } as any
+  const timestampFlags = ["/tr", "/t", "/td", "-ts", "-t"]
+
+  beforeEach(() => {
+    vi.stubEnv("ELECTRON_BUILDER_OFFLINE", "1")
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test.each([
+    ["signtool, modern toolset, sha256", () => makeManager("1.1.0").computeSignToolArgs(makeTaskConfig({ hash: "sha256" }), true)],
+    ["signtool, modern toolset, sha1", () => makeManager("1.1.0").computeSignToolArgs(makeTaskConfig({ hash: "sha1" }), true)],
+    ["signtool, legacy toolset, sha256", () => makeManager("0.0.0").computeSignToolArgs(makeTaskConfig({ hash: "sha256" }), true)],
+    ["osslsigncode", () => makeManager("1.1.0").computeSignToolArgs(makeTaskConfig({ hash: "sha256" }), false)],
+    ["HSM, sha256", () => makeHsmManager("1.1.0").computeSignToolArgs(makeTaskConfig({ options: hsmOptions, hash: "sha256" }), true)],
+    ["HSM, sha1", () => makeHsmManager("1.1.0").computeSignToolArgs(makeTaskConfig({ options: hsmOptions, hash: "sha1" }), true)],
+    ["PKCS#11, sha256", () => makePkcs11Manager().computeSignToolArgs(makeTaskConfig({ options: pkcs11Options, hash: "sha256" }), false)],
+    ["PKCS#11, sha1", () => makePkcs11Manager().computeSignToolArgs(makeTaskConfig({ options: pkcs11Options, hash: "sha1" }), false)],
+  ])("%s", (_name, computeArgs) => {
+    const args = computeArgs()
+    for (const flag of timestampFlags) {
+      expect(args).not.toContain(flag)
+    }
+  })
+
+  test('a value padded with whitespace, " true ", skips timestamping', () => {
+    vi.stubEnv("ELECTRON_BUILDER_OFFLINE", " true ")
+    const args = makeManager("1.1.0").computeSignToolArgs(makeTaskConfig({ hash: "sha256" }), true)
+    for (const flag of timestampFlags) {
+      expect(args).not.toContain(flag)
+    }
+  })
+
+  // An empty value (e.g. a CI template mapping an unset variable) must not silently drop the timestamp from release signatures.
+  test.each(["", "  ", "false", "0"])("ELECTRON_BUILDER_OFFLINE=%j keeps timestamping on in every sign manager", value => {
+    vi.stubEnv("ELECTRON_BUILDER_OFFLINE", value)
+    expect(makeManager("1.1.0").computeSignToolArgs(makeTaskConfig({ hash: "sha256" }), true)).toEqual(expect.arrayContaining(["/tr", "/td"]))
+    expect(makeManager("1.1.0").computeSignToolArgs(makeTaskConfig({ hash: "sha256" }), false)).toContain("-t")
+    expect(makeHsmManager("1.1.0").computeSignToolArgs(makeTaskConfig({ options: hsmOptions, hash: "sha256" }), true)).toEqual(expect.arrayContaining(["/tr", "/td"]))
+    expect(makePkcs11Manager().computeSignToolArgs(makeTaskConfig({ options: pkcs11Options, hash: "sha256" }), false)).toContain("-ts")
   })
 })
 
@@ -560,6 +608,42 @@ describe("PKCS#11 certificateFile passed as -certs to osslsigncode", () => {
     const hashIdx = args.indexOf("-h")
     expect(certsIdx).toBeGreaterThan(keyIdx)
     expect(certsIdx).toBeLessThan(hashIdx)
+  })
+})
+
+// ─── doSign: environment of the signing tool ─────────────────────────────────
+
+describe("doSign passes the signing tool no publish credentials", { concurrent: false }, () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.restoreAllMocks()
+  })
+
+  test("publish credentials are removed; signing variables and the tool's own variables are kept", async () => {
+    vi.stubEnv("GH_TOKEN", "gh-secret")
+    vi.stubEnv("GITHUB_RELEASE_TOKEN", "release-secret")
+    vi.stubEnv("KEYGEN_TOKEN", "keygen-secret")
+    vi.stubEnv("DO_SECRET_KEY", "spaces-secret")
+    vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", "update-key")
+    // Windows env names are case-insensitive
+    vi.stubEnv("Gitlab_Token", "gitlab-secret")
+    vi.stubEnv("CSC_KEY_PASSWORD", "csc-password")
+    // read by signing providers (a cloud KSP, a KMS PKCS#11 module) to authenticate
+    vi.stubEnv("SM_API_KEY", "provider-key")
+    vi.stubEnv("AWS_ACCESS_KEY_ID", "aws-key")
+    vi.mocked(getSignToolPath).mockResolvedValueOnce({ path: "/tools/osslsigncode", env: { DYLD_LIBRARY_PATH: "/tools/lib" } })
+    const exec = vi.spyOn(VmManager.prototype, "exec").mockResolvedValue("")
+
+    const config = { ...makeTaskConfig(), computeSignToolArgs: () => ["sign"] }
+    await makeManager().doSign(config, {} as WinPackager)
+
+    expect(exec).toHaveBeenCalledTimes(1)
+    const env = exec.mock.calls[0][2]?.env ?? {}
+    const names = Object.keys(env).map(it => it.toUpperCase())
+    for (const name of ["GH_TOKEN", "GITHUB_RELEASE_TOKEN", "KEYGEN_TOKEN", "DO_SECRET_KEY", "ELECTRON_BUILDER_UPDATE_SIGN_KEY", "GITLAB_TOKEN"]) {
+      expect(names).not.toContain(name)
+    }
+    expect(env).toMatchObject({ CSC_KEY_PASSWORD: "csc-password", SM_API_KEY: "provider-key", AWS_ACCESS_KEY_ID: "aws-key", DYLD_LIBRARY_PATH: "/tools/lib" })
   })
 })
 

@@ -37,6 +37,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [Windows `publisherName` validated against the certificate](#windows-publishername-is-validated-against-the-signing-certificate) | Fails build | Update `publisherName` after a certificate rotation, or drop it. Custom `win.sign.sign` hooks (even with a certificate configured) and certificates without a CN now **require** it when `app-update.yml` is written (or set `win.verifyUpdateCodeSignature: false` if your updates are not Authenticode-signed) |
 | [Windows `publisherName` must be a distinguished name](#windows-publishername-must-be-a-distinguished-name) | Fails build, advisory | Set every `win.sign.publisherName` entry to a distinguished name (e.g. `"CN=My Company, O=My Company, C=US"`) — a bare name now **fails the build**, and electron-updater 7 never matches it. Without `publisherName`, the build now writes `CN=<common name>` of the certificate (a DN) instead of the bare Common Name |
 | [A missing Windows `publisherName` fails update verification](#missing-publishername-fails-update-verification) | Fails build, advisory | A Windows build that writes `app-update.yml` without a `publisherName` (`win.sign: false` / `null`, no certificate, `publisherName: null`) now **fails the build**, and electron-updater 7 rejects updates whose `app-update.yml` has none. Sign the build, set `win.sign.publisherName`, or set `win.verifyUpdateCodeSignature: false` (the only opt-out) |
+| [`ELECTRON_BUILDER_OFFLINE=1` skips the Windows signing timestamp](#electron_builder_offline-skips-the-signing-timestamp) | Warns | Only if you set `ELECTRON_BUILDER_OFFLINE=1`: unset it for release builds, or keep it to sign without a timestamp server |
 | [`forceCodeSigning` covers notarization and update manifests](#forcecodesigning-covers-notarization-and-update-manifests) | Fails build (with `forceCodeSigning`) | Provide notarization credentials and the update-manifest signing key wherever `forceCodeSigning` is set, or opt out explicitly (`mac.notarize: false`, `updateManifest: false`); pass `-c.forceCodeSigning=false` to pull-request and local builds that cannot sign |
 | [`mac.notarize: true` requires notarization credentials](#mac-notarize-true-requires-credentials) | Fails build (with `notarize: true`) | Only if you set `mac.notarize: true`: set the notarization credentials, or leave `notarize` unset to notarize only when they are set |
 | [Signed update manifests are required](#signed-update-manifests-are-required) | Fails when publishing (or with `forceCodeSigning`) | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY` to the base64-encoded PEM file, or set `updateManifest: false` to keep publishing unsigned manifests |
@@ -410,6 +411,14 @@ electron-updater verifies the Authenticode signature of a downloaded NSIS update
 For testing updates in development (`forceDevUpdateConfig`), put the certificate subject into `dev-app-update.yml` as `publisherName`, or `verifyUpdateCodeSignature: false` to skip the check. Without a `dev-app-update.yml` (a feed set only with `setFeedURL`), the update is not verified, as before.
 
 > **Tip:** `electron-builder migrate-schema` prints an advisory for `win.sign: false` / `null` or `win.sign.publisherName: null` without `win.verifyUpdateCodeSignature: false`.
+
+### `ELECTRON_BUILDER_OFFLINE=1` skips the Windows signing timestamp {#electron_builder_offline-skips-the-signing-timestamp}
+
+**How you'll find out:** **Warns** once per build when it signs a Windows file without a timestamp, with a link here.
+
+v26 skipped the timestamp server for signtool, osslsigncode, HSM and PKCS#11 signing only when `ELECTRON_BUILDER_OFFLINE` was exactly `true`. v27 also accepts `1`, like electron-builder's other boolean environment variables. An empty value still keeps timestamping on. A signature without a timestamp stops validating once the signing certificate expires.
+
+**Action:** unset `ELECTRON_BUILDER_OFFLINE` for release builds. Keep it only for builds that must sign without network access.
 
 ### `forceCodeSigning` covers notarization and update manifests, and verifies signatures {#forcecodesigning-covers-notarization-and-update-manifests}
 

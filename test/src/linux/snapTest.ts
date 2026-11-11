@@ -1,4 +1,6 @@
 import { Arch, Platform } from "electron-builder"
+import { readFile } from "fs/promises"
+import { load } from "js-yaml"
 import * as path from "path"
 import { readSquashfsCompression } from "../helpers/fileAssert.js"
 import { app, appThrows, assertPack, snapTarget } from "../helpers/packTester.js"
@@ -68,21 +70,31 @@ test.ifNotWindows("default stagePackages", async ({ expect }) => {
 })
 
 test.ifNotWindows("classic confinement", ({ expect }) =>
-  app(expect, {
-    targets: snapTarget,
-    config: {
-      extraMetadata: {
-        name: "cl-co-app",
-      },
-      productName: "Snap Electron App (classic confinement)",
-      snapcraft: {
-        base: "core20",
-        core20: {
-          confinement: "classic",
+  app(
+    expect,
+    {
+      targets: snapTarget,
+      config: {
+        extraMetadata: {
+          name: "cl-co-app",
+        },
+        productName: "Snap Electron App (classic confinement)",
+        snapcraft: {
+          base: "core20",
+          core20: {
+            confinement: "classic",
+          },
         },
       },
     },
-  })
+    {
+      packed: async context => {
+        // classic snaps run unconfined: the launcher leaves LD_LIBRARY_PATH alone
+        const commandSh = await readFile(path.join(context.outDir, "__snap-amd64", "command.sh"), "utf8")
+        expect(commandSh).not.toContain("LD_LIBRARY_PATH")
+      },
+    }
+  )
 )
 
 test.ifNotWindows("buildPackages", async ({ expect }) => {
@@ -401,6 +413,64 @@ test.ifNotWindows("template app with lzo compression (#7013)", ({ expect }) =>
       packed: async context => {
         // Template builds pack with toolsets.appimage's mksquashfs; the legacy "0.0.0" one supported only gzip/xz.
         expect(await readSquashfsCompression(path.join(context.outDir, "sep_1.1.0_amd64.snap"))).toBe("lzo")
+      },
+    }
+  )
+)
+
+async function readTemplateSnapStage(outDir: string) {
+  const stageDir = path.join(outDir, "__snap-amd64")
+  return {
+    commandSh: await readFile(path.join(stageDir, "command.sh"), "utf8"),
+    environment: (load(await readFile(path.join(stageDir, "meta", "snap.yaml"), "utf8")) as { apps: Record<string, { environment: Record<string, string> }> }).apps.sep.environment,
+  }
+}
+
+test.ifNotWindows("template app sets LD_LIBRARY_PATH in command.sh, not in snap.yaml", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep" },
+        productName: "Sep",
+        snapcraft: { base: "core20", core20: { useTemplateApp: true } },
+      },
+    },
+    {
+      packed: async context => {
+        // snapd expands an unset `$SNAP_LIBRARY_PATH` or `$LD_LIBRARY_PATH` to an empty entry, so the default library path
+        // travels in a carrier variable and command.sh exports it without empty entries
+        const { commandSh, environment } = await readTemplateSnapStage(context.outDir)
+        const snapLibDirs = "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu"
+        expect(environment.LD_LIBRARY_PATH).toBeUndefined()
+        expect(environment.ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH).toBe(`$SNAP_LIBRARY_PATH:${snapLibDirs}:$LD_LIBRARY_PATH:${snapLibDirs}`)
+        expect(commandSh).toContain('_ld_library_path=":$ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH:"')
+        expect(commandSh).toContain('export LD_LIBRARY_PATH="$_ld_library_path"')
+      },
+    }
+  )
+)
+
+test.ifNotWindows("template app moves a configured LD_LIBRARY_PATH into command.sh without empty entries", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep" },
+        productName: "Sep",
+        snapcraft: { base: "core20", core20: { useTemplateApp: true, environment: { LD_LIBRARY_PATH: "$SNAP/custom:$LD_LIBRARY_PATH" } } },
+      },
+    },
+    {
+      packed: async context => {
+        // snapd expands an unset `$LD_LIBRARY_PATH` here to an empty entry, and `/bin/bash` starts with the snap.yaml
+        // environment, so the value travels in a carrier variable and command.sh exports it without empty entries
+        const { commandSh, environment } = await readTemplateSnapStage(context.outDir)
+        expect(environment.LD_LIBRARY_PATH).toBeUndefined()
+        expect(environment.ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH).toBe("$SNAP/custom:$LD_LIBRARY_PATH")
+        expect(commandSh).toContain('_ld_library_path=":$ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH:"')
       },
     }
   )
