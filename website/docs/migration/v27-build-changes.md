@@ -104,7 +104,7 @@ These flags are removed (they have thrown since v22).
 
 **How you'll find out:** **Info log only.** The build logs which toolset version it uses, with a link here, but not that the default changed. Without Wine installed, a macOS build that needs it fails with a bare `spawn wine ENOENT`. An `msiProjectCreated` hook that adds a WiX 4 namespace fails the MSI build with an error that links here.
 
-In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset property or the literal `"latest"` resolves to the **newest published bundle** for that toolset. (Earlier v27 prereleases pinned a fixed default per toolset; those fixed defaults are gone.) (In v26 an unset or `null` toolset resolved to the legacy `"0.0.0"` bundle, so pin `"0.0.0"` if you need to stay on it.) A `null` value and the retired `appimage: "1.0.2"` pin are config changes: see [`toolsets.*: null` rejected](./v27-config-changes.md#toolsets-null-rejected).
+In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset property or the literal `"latest"` resolves to the **newest published bundle** for that toolset. (Earlier v27 prereleases pinned a fixed default per toolset; those fixed defaults are gone.) (In v26 an unset or `null` toolset resolved to the legacy `"0.0.0"` bundle, so pin `"0.0.0"` if you need to stay on it.) A `null` value and the retired `appimage` pins `"1.0.2"` and `"1.2.0"` are config changes: see [`toolsets.*: null` rejected](./v27-config-changes.md#toolsets-null-rejected).
 
 | Toolset | v26 default | v27 `"latest"` resolves to | What the upgrade entails |
 |---------|-------------|----------------------------|--------------------------|

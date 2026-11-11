@@ -1170,23 +1170,22 @@
     },
     "DmgWindow": {
       "additionalProperties": false,
+      "description": "With a background image (the default), each unset value is derived from the image. With `backgroundColor`, the unset values of a set\n`window` use fixed defaults; without `window`, dmgbuild's own window defaults apply.",
       "properties": {
         "height": {
-          "description": "The height. Defaults to background image height or 380.",
+          "description": "The height. Defaults to the background image height (380 for the default background), or 300 with `backgroundColor`.",
           "type": "number"
         },
         "width": {
-          "description": "The width. Defaults to background image width or 540.",
+          "description": "The width. Defaults to the background image width (540 for the default background), or 540 with `backgroundColor`.",
           "type": "number"
         },
         "x": {
-          "default": 400,
-          "description": "The X position relative to left of the screen.",
+          "description": "The X position relative to left of the screen. Defaults to 400 with a background image, or 100 with `backgroundColor`.",
           "type": "number"
         },
         "y": {
-          "default": 100,
-          "description": "The Y position relative to bottom of the screen.",
+          "description": "The Y position relative to bottom of the screen. Defaults to (1440 - background image height) / 2, rounded, with a background image,\nor 400 with `backgroundColor`.",
           "type": "number"
         }
       },

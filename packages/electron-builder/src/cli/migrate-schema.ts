@@ -1146,6 +1146,17 @@ function migratePlatformAsar(c: Record<string, any>, name: string, rootAsarValue
   })
 }
 
+/** `toolsets.appimage` pins whose bundle is no longer published, and the pin migrate-schema rewrites each to. */
+export const RETIRED_APPIMAGE_PINS: ReadonlyMap<string, { readonly replacement: string; readonly reason: string }> = new Map([
+  ["1.0.2", { replacement: "1.0.3", reason: "1.0.2 is no longer offered; 1.0.3 is the same runtime with the #9598 fix" }],
+  ["1.2.0", { replacement: "1.2.1", reason: "1.2.0 was withdrawn for missing license files; 1.2.1 is its license-corrected re-release" }],
+])
+
+/** The change note for rewriting the retired `toolsets.appimage` pin `pin`. */
+export function retiredAppImagePinDescription(pin: string, retired: { readonly replacement: string; readonly reason: string }): string {
+  return `replaced toolsets.appimage: "${pin}" with "${retired.replacement}" (${retired.reason})`
+}
+
 /** Removes `null` toolset values (rejected by the v27 schema) and remaps pins to bundles that are no longer published. */
 function migrateToolsets(toolsets: Record<string, any>, changes: MigrationChange[]) {
   for (const [key, value] of Object.entries(toolsets)) {
@@ -1158,12 +1169,10 @@ function migrateToolsets(toolsets: Record<string, any>, changes: MigrationChange
       })
     }
   }
-  if (toolsets.appimage === "1.0.2") {
-    toolsets.appimage = "1.0.3"
-    changes.push({
-      key: "toolsets.appimage",
-      description: 'replaced toolsets.appimage: "1.0.2" with "1.0.3" (1.0.2 is no longer offered; 1.0.3 is the same runtime with the #9598 fix)',
-    })
+  const retired = typeof toolsets.appimage === "string" ? RETIRED_APPIMAGE_PINS.get(toolsets.appimage) : undefined
+  if (retired != null) {
+    changes.push({ key: "toolsets.appimage", description: retiredAppImagePinDescription(toolsets.appimage, retired) })
+    toolsets.appimage = retired.replacement
   }
 }
 
@@ -1651,7 +1660,7 @@ function printManualSteps() {
     "• Move mac/mas/masDev signing fields (identity, entitlements, entitlementsInherit, entitlementsLoginHelper, hardenedRuntime, type, requirements, timestamp, binaries, strictVerify, preAutoEntitlements, provisioningProfile, additionalArguments) into the `sign` object; rename signIgnore → sign.ignore; remove gatekeeperAssess",
     "• Move mac/mas/masDev mergeASARs / singleArchFiles / x64ArchFiles into the `universal` object",
     "• Rename electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum:false → unsafelyDisableChecksums:true; drop cache/customDir/customFilename/strictSSL/platform/arch/version/force)",
-    '• Remove toolsets.* entries set to null (unset resolves to "latest"); replace toolsets.appimage "1.0.2" with "1.0.3"',
+    '• Remove toolsets.* entries set to null (unset resolves to "latest"); replace toolsets.appimage "1.0.2" with "1.0.3" and "1.2.0" with "1.2.1"',
     "• Move root-level package.json directories → build.directories",
     "• Move files / extraResources / extraFiles → fileOptions.files / fileOptions.extraResources / fileOptions.extraFiles, at the root and in mac/mas/masDev/win/linux",
     '• Replace includePdb: true with fileOptions.excludedExts: ["default", "!pdb"] (and add "!pdb" to a mac/mas/masDev/win/linux fileOptions.excludedExts that lists "default"); replace includePdb: false with fileOptions.excludedExts: ["default"]',
