@@ -11,6 +11,7 @@ import { trustSigningIdentityInMachineRoot } from "../helpers/windowsSignedFixtu
 import { authenticodeStubCalls, countOf, FixtureUpdaterKnobs, fixtureEnv, leftoverPartialDownloads, NOT_LOOPBACK_LOCALHOST_NAME, pendingUpdateDir } from "./blackboxFixtureEnv"
 import { NSIS_INSTALLER_IMAGE_NAME, readInstalledPackageType, UPDATER_STORE_DIR_NAME, waitForWindowsProcessExit } from "./blackboxInstallWindows"
 import {
+  assertDifferentialDownload,
   expectRejectedUpdate,
   pollUntilNewVersionInstalled,
   runUpdateScenario,
@@ -36,6 +37,11 @@ const SQUIRREL_PROXY_REJECTED = "[updater debug] Proxy server for native Squirre
 // the app's credential and custom header in the update launch: neither may reach another origin, and no log line may hold the credential
 const AUTH_SECRET = "e2e-secret"
 const APP_REQUEST_HEADERS = { "X-Tenant": "acme" }
+
+/** The warning about APP_REQUEST_HEADERS and the Authorization header, which a request from `feed` to `other` leaves out. */
+function leftOutHeadersWarning(feed: LocalServer, other: LocalServer): string {
+  return `[updater warn] autoUpdater.crossOriginHeaders left out authorization, x-tenant for the request from ${feed.url} to ${other.url}, another origin than the update feed, so they are not sent there.`
+}
 
 /** The path of the served channel file on the feed: `/latest-mac.yml`, `/latest-linux.yml`, ... */
 async function channelFilePath(rootDirectory: string): Promise<string> {
@@ -186,13 +192,7 @@ async function expectUpdateFromOtherOrigin(ctx: ScenarioContext, other: LocalSer
     toVersion: NEW_VERSION_NUMBER,
     env: fixtureEnv({ requestHeaders: APP_REQUEST_HEADERS, authHeader: `Bearer ${AUTH_SECRET}`, debugLog: true }),
     assertLaunch: stdout => {
-      expect(
-        countOf(
-          stdout,
-          `[updater warn] autoUpdater.crossOriginHeaders left out authorization, x-tenant for the request from ${feed.url} to ${other.url}, another origin than the update feed, so they are not sent there.`
-        ),
-        "the warning about the headers left out for the other origin"
-      ).toBe(1)
+      expect(countOf(stdout, leftOutHeadersWarning(feed, other)), "the warning about the headers left out for the other origin").toBe(1)
       expect(stdout, "a log line holds the value of the Authorization header").not.toContain(AUTH_SECRET)
       expectSquirrelProxyChallenge(expect, stdout)
     },
@@ -409,7 +409,7 @@ export async function runNsisInstallerChecksTest(context: TestContext, toolsets:
   })
 }
 
-/** One launch of the installed app with `knobs` (and VERIFIED_BY_STUB); its version must be the installed one. */
+/** One launch of the installed 1.0.0 with `knobs`. */
 async function launchInstalled(ctx: ScenarioContext, knobs: FixtureUpdaterKnobs, check: (stdout: string) => void): Promise<void> {
   const { expect, appPath, vm, updateConfigPath, packageManager } = ctx
   const result = await launchAndWaitForQuit({
@@ -420,7 +420,7 @@ async function launchInstalled(ctx: ScenarioContext, knobs: FixtureUpdaterKnobs,
     expectedVersion: OLD_VERSION_NUMBER,
     packageManagerToTest: packageManager,
     waitForExit: true,
-    env: fixtureEnv({ ...VERIFIED_BY_STUB, ...knobs }),
+    env: fixtureEnv(knobs),
   })
   await result.assert(() => {
     expect(result.version).toMatch(OLD_VERSION_NUMBER)
@@ -443,11 +443,12 @@ async function expectInstalledVersion(ctx: ScenarioContext, version: string): Pr
 }
 
 /** The update is downloaded and queued with quitAndInstall({ waitUntilNextLaunch: true }); nothing is installed. */
-async function queueForNextLaunch(ctx: ScenarioContext, knobs: FixtureUpdaterKnobs = {}): Promise<void> {
+async function queueForNextLaunch(ctx: ScenarioContext, knobs: FixtureUpdaterKnobs, check?: (stdout: string) => void): Promise<void> {
   const { expect } = ctx
   await launchInstalled(ctx, { ...knobs, nextLaunch: true }, stdout => {
     expect(stdout).toContain("Deferring install to next launch on explicit quitAndInstall (waitUntilNextLaunch)")
     expect(stdout).toContain("Update is marked for install on next launch")
+    check?.(stdout)
   })
   await expectInstalledVersion(ctx, OLD_VERSION_NUMBER)
 }
@@ -456,13 +457,13 @@ async function queueForNextLaunch(ctx: ScenarioContext, knobs: FixtureUpdaterKno
  * A pending-only launch with autoInstallEvent "manual" leaves a queued update alone (#10525): it sends no request and the update stays
  * marked for the next launch. `cacheDirName` is the updater cache of the app.
  */
-async function expectManualModeKeepsPendingUpdate(ctx: ScenarioContext, cacheDirName: string, isNative: boolean): Promise<void> {
+async function expectManualModeKeepsPendingUpdate(ctx: ScenarioContext, knobs: FixtureUpdaterKnobs, cacheDirName: string, isNative: boolean): Promise<void> {
   const { expect } = ctx
   const servers = [ctx.servers.feed, ...ctx.servers.origins]
   for (const server of servers) {
     server.clearRequests()
   }
-  await launchInstalled(ctx, { pendingOnly: { quitAfterMs: 15_000 }, autoInstallEvent: "manual" }, stdout => {
+  await launchInstalled(ctx, { ...knobs, pendingOnly: { quitAfterMs: 15_000 }, autoInstallEvent: "manual" }, stdout => {
     expect(stdout).toContain("AUTO_INSTALL_ON_NEXT_LAUNCH_TIMEOUT")
   })
   expect(
@@ -485,10 +486,10 @@ export async function runNsisNextLaunchModesTest(context: TestContext, toolsets:
   await nsisScenario(context, toolsets, "nsis-next-launch-modes", async ctx => {
     const { expect, rootDirectory } = ctx
     const pendingDir = pendingUpdateDir(UPDATER_STORE_DIR_NAME)
-    await queueForNextLaunch(ctx)
+    await queueForNextLaunch(ctx, VERIFIED_BY_STUB)
 
     await withForgedVersion(rootDirectory, () =>
-      launchInstalled(ctx, { pendingOnly: { quitAfterMs: 20_000 } }, stdout => {
+      launchInstalled(ctx, { ...VERIFIED_BY_STUB, pendingOnly: { quitAfterMs: 20_000 } }, stdout => {
         expect(stdout).toContain("Update is marked for install on next launch, validating it against the latest update info")
         expect(stdout).toContain("ERR_UPDATER_INSTALLER_VERSION_MISMATCH")
         expectForgedVersionMismatch(expect, stdout)
@@ -500,11 +501,11 @@ export async function runNsisNextLaunchModesTest(context: TestContext, toolsets:
     }
     await expectInstalledVersion(ctx, OLD_VERSION_NUMBER)
 
-    await queueForNextLaunch(ctx)
-    await expectManualModeKeepsPendingUpdate(ctx, UPDATER_STORE_DIR_NAME, isNativeWindows())
+    await queueForNextLaunch(ctx, VERIFIED_BY_STUB)
+    await expectManualModeKeepsPendingUpdate(ctx, VERIFIED_BY_STUB, UPDATER_STORE_DIR_NAME, isNativeWindows())
 
     // the quit timeout also ends the app that the installer starts again (--force-run), which inherits this env
-    await launchInstalled(ctx, { pendingOnly: { quitAfterMs: 20_000 } }, stdout => {
+    await launchInstalled(ctx, { ...VERIFIED_BY_STUB, pendingOnly: { quitAfterMs: 20_000 } }, stdout => {
       expect(countOf(stdout, `Installing pending update ${NEW_VERSION_NUMBER} on launch`)).toBe(1)
       expect(authenticodeStubCalls(stdout)).toEqual([{ publisherNames: [WIN_SIGNING_PUBLISHER_NAME] }])
       expect(stdout).toMatch(/Executing: .*\\pending\\TestApp Setup\.exe with args: --updated,\/S,--force-run/i)
@@ -566,4 +567,71 @@ export async function runNsisAuthenticodeTest(context: TestContext, toolsets: Ns
   } finally {
     await trusted.untrust()
   }
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// AppImage: the request rules (#10563, #10566) on a differential update, and the modes of the install at launch (#10525)
+// ---------------------------------------------------------------------------------------------------------
+
+/**
+ * The update is queued for the next launch while the feed redirects the AppImage (and its block map) to `other`: the differential
+ * download's range requests go there without the Authorization and the custom header that the feed gets (#10563).
+ */
+async function queueFromOtherOrigin(ctx: ScenarioContext, other: LocalServer): Promise<void> {
+  const { expect, rootDirectory } = ctx
+  const { feed } = ctx.servers
+  const appImagePath = `/${(await readUpdateManifest(rootDirectory)).files[0].url}`
+  feed.setRouter(pathname => (pathname.startsWith(appImagePath) ? { redirectTo: `${other.url}${pathname}` } : null))
+  feed.clearRequests()
+  other.clearRequests()
+  try {
+    await queueForNextLaunch(ctx, { requestHeaders: APP_REQUEST_HEADERS, authHeader: `Bearer ${AUTH_SECRET}` }, stdout => {
+      assertDifferentialDownload(expect, stdout)
+      expect(countOf(stdout, leftOutHeadersWarning(feed, other)), "the warning about the headers left out for the other origin").toBe(1)
+    })
+  } finally {
+    feed.setRouter(null)
+  }
+  await Promise.all([feed.settled(), other.settled()])
+  expect(
+    other.requests.some(it => it.headerNames.includes("range")),
+    "the differential download sends its range requests to the other origin"
+  ).toBe(true)
+  for (const { pathname, headerNames } of other.requests) {
+    expect(headerNames, `the headers of ${pathname} on the other origin`).not.toContain("authorization")
+    expect(headerNames, `the headers of ${pathname} on the other origin`).not.toContain("x-tenant")
+  }
+}
+
+/**
+ * The request rules of electron-updater 7 on a real AppImage update (Electron's net, a differential download), and the install at launch
+ * of the update queued with waitUntilNextLaunch: "manual" leaves it alone, the default autoInstallEvent ("onQuit") installs it (#10525).
+ */
+export async function runAppImageRequestRulesTest(context: TestContext, arch: Arch, toolsets: ToolsetConfig): Promise<void> {
+  await withEmptyUpdaterCaches(() =>
+    runUpdateScenario(context, {
+      target: "AppImage",
+      packageManager: "appimage",
+      arch,
+      toolsets,
+      tmpDirPrefix: "appimage-request-rules",
+      builds: [{ version: OLD_VERSION_NUMBER }, { version: NEW_VERSION_NUMBER }],
+      // the AppImage embeds its app-update.yml, so the served config names its updater cache, which withEmptyUpdaterCaches empties
+      initialUpdateConfig: () => Promise.resolve({ updaterCacheDirName: UPDATER_STORE_DIR_NAME }),
+      scenario: async ctx => {
+        const { expect } = ctx
+        const other = await ctx.servers.createOrigin()
+        await expectCrossOriginHeadersRequired(ctx)
+        await expectNonLoopbackFeedRules(ctx, other)
+        await queueFromOtherOrigin(ctx, other)
+        await expectManualModeKeepsPendingUpdate(ctx, {}, UPDATER_STORE_DIR_NAME, true)
+
+        await launchInstalled(ctx, { pendingOnly: { quitAfterMs: 20_000 } }, stdout => {
+          expect(countOf(stdout, `Installing pending update ${NEW_VERSION_NUMBER} on launch`)).toBe(1)
+          expect(stdout).toMatch(/Executing: .*\.AppImage with args: /)
+        })
+        await pollUntilNewVersionInstalled(expect, { ...ctx, packageManagerToTest: ctx.packageManager, expectedVersion: NEW_VERSION_NUMBER })
+      },
+    })
+  )
 }
