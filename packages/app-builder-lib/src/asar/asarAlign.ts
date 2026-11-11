@@ -48,6 +48,30 @@ function collectPackedFiles(node: Node, result: Array<PackedFile>): void {
   }
 }
 
+/**
+ * The size an asar archive must have for its header: the 8-byte size prefix, the header, and the end of the last packed file.
+ * Packed content is read at `8 + header size + offset` (https://github.com/electron/asar/blob/fde819a/src/disk.ts#L428).
+ */
+export function expectedArchiveSize(header: Node, headerSize: number): number {
+  const files: Array<PackedFile> = []
+  collectPackedFiles(header, files)
+  return 8 + headerSize + files.reduce((end, file) => Math.max(end, file.offset + file.size), 0)
+}
+
+/**
+ * The archive size the header describes when only entries whose content ends inside the file count.
+ * Entries past the end of the file (asarmor's bloat patch) are left out, so bytes after the last entry that fits are trailing bytes.
+ */
+export function expectedArchiveSizeWithin(header: Node, headerSize: number, archiveSize: number): number {
+  const contentStart = 8 + headerSize
+  const files: Array<PackedFile> = []
+  collectPackedFiles(header, files)
+  return files.reduce((end, file) => {
+    const fileEnd = contentStart + file.offset + file.size
+    return fileEnd <= archiveSize ? Math.max(end, fileEnd) : end
+  }, contentStart)
+}
+
 function serializeHeader(headerJson: string): Buffer {
   const headerPickle = chromiumPickleJs.createEmpty()
   headerPickle.writeString(headerJson)
@@ -106,6 +130,12 @@ export async function alignAsarContent(asarFile: string, alignment: number): Pro
   const header = JSON.parse(headerJson) as Node
   const contentStart = 8 + headerSize
   const sizeBefore = (await fs.stat(asarFile)).size
+  // Alignment copies each file from its header offset and drops bytes after the last file, so a drifted archive would come out the right size
+  // and pass the sanity check. Refuse it before anything is rewritten.
+  const expectedSizeBefore = expectedArchiveSize(header, headerSize)
+  if (sizeBefore !== expectedSizeBefore) {
+    throw new Error(`"${asarFile}" is corrupted: the header describes an archive of ${expectedSizeBefore} bytes, but it is ${sizeBefore} bytes; refusing to align it`)
+  }
 
   const files: Array<PackedFile> = []
   collectPackedFiles(header, files)
