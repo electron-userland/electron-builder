@@ -5,13 +5,14 @@ import { computeUpdateManifestKeyId, GenericServerOptions, hashFile, Nullish, Up
 import { BLOCK_MAP_V3_MAGIC } from "builder-util-runtime/internal"
 import { archFromString, deepAssign, DebugLogger, generateUpdateSigningKeypair, log, serializeToYaml, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
+import { getAppCacheDir } from "electron-updater/src/AppAdapter"
 import { copy, emptyDir, existsSync, move, outputFile, readdir, readFile, readJson, readJsonSync, remove, stat } from "fs-extra"
 import { open } from "fs/promises"
 import { homedir } from "os"
 import path from "path"
 import { randomUUID } from "crypto"
 import { ExpectStatic, TestContext } from "vitest"
-import { createLocalServer, getParallelsHostIP, launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
+import { createLocalServer, getParallelsHostIP, launchAndWaitForQuit, LocalServer } from "../helpers/launchAppCrossPlatform"
 import { assertPack, expectedWindowsPublisherName, EXTENDED_TIMEOUT, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION, PACMAN_TEST_DEPENDS } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
@@ -367,17 +368,35 @@ async function handleCleanupPerOS({ target, perMachine }: { target: string; perM
 // win.verifyUpdateCodeSignature: false, as writeUpdateConfig does.
 export async function writeServedUpdateConfig(updateConfigPath: string, config: GenericServerOptions): Promise<void> {
   const served: GenericServerOptions = config.publisherName != null || config.verifyUpdateCodeSignature !== undefined ? config : { ...config, verifyUpdateCodeSignature: false }
-  await outputFile(updateConfigPath, serializeToYaml(served))
+  await writeRawServedUpdateConfig(updateConfigPath, served)
+}
+
+/**
+ * Writes the runtime update config exactly as given (see {@link writeServedUpdateConfig}): without publisherName and
+ * verifyUpdateCodeSignature, electron-updater rejects every NSIS update unless the app sets autoUpdater.publisherName.
+ */
+export async function writeRawServedUpdateConfig(updateConfigPath: string, config: GenericServerOptions): Promise<void> {
+  await outputFile(updateConfigPath, serializeToYaml(config))
+}
+
+/** The servers of a blackbox scenario, which record the requests they get; all of them are closed when the scenario ends. */
+export interface BlackboxServers {
+  /** serves the root directory at the url of the served update config */
+  readonly feed: LocalServer
+  /** the servers of {@link createOrigin}, in the order they were created */
+  readonly origins: ReadonlyArray<LocalServer>
+  /** another origin than the feed: a server on another port of the feed's host that serves the same root directory */
+  createOrigin(): Promise<LocalServer>
 }
 
 /**
  * Serves `rootDirectory` over HTTP and writes the runtime update config (generic provider pointing at that
  * server, merged with `extraUpdateConfig` — e.g. `updateManifestPublicKey`) the fixture app is launched with.
  * `doTest` also receives the server config so a scenario can rewrite the update config between hops via
- * {@link writeServedUpdateConfig}.
+ * {@link writeServedUpdateConfig}, and the servers, whose requests it can check and route.
  */
 export async function runTestWithinServer(
-  doTest: (rootDirectory: string, updateConfigPath: string, serverConfig: GenericServerOptions) => Promise<void>,
+  doTest: (rootDirectory: string, updateConfigPath: string, serverConfig: GenericServerOptions, servers: BlackboxServers) => Promise<void>,
   vm?: VmManager,
   extraUpdateConfig?: Partial<GenericServerOptions> | null
 ) {
@@ -391,7 +410,18 @@ export async function runTestWithinServer(
   if (vm && !serverHost) {
     throw new Error("Cannot determine Parallels host IP for update server — no prl*/bridge* interface found")
   }
-  const { server, port } = await createLocalServer(root, serverHost)
+  const feed = await createLocalServer(root, serverHost)
+  const { server, port } = feed
+  const origins: Array<LocalServer> = []
+  const servers: BlackboxServers = {
+    feed,
+    origins,
+    createOrigin: async () => {
+      const origin = await createLocalServer(root, serverHost)
+      origins.push(origin)
+      return origin
+    },
+  }
 
   const serverConfig: GenericServerOptions = { ...extraUpdateConfig, provider: "generic", url: `http://${serverHost}:${port}` }
   let updateConfig: string
@@ -412,10 +442,12 @@ export async function runTestWithinServer(
     } catch (error) {
       console.error("Failed to cleanup tmpDir", error)
     }
-    try {
-      server.close()
-    } catch (error) {
-      console.error("Failed to close server", error)
+    for (const localServer of [feed, ...origins]) {
+      try {
+        localServer.server.close()
+      } catch (error) {
+        console.error("Failed to close server", error)
+      }
     }
     if (vmConfigDir) {
       remove(vmConfigDir).catch(() => {})
@@ -424,7 +456,7 @@ export async function runTestWithinServer(
 
   return await new Promise<void>((resolve, reject) => {
     server.on("error", reject)
-    doTest(root, updateConfig, serverConfig).then(resolve).catch(reject)
+    doTest(root, updateConfig, serverConfig, servers).then(resolve).catch(reject)
   }).then(
     v => {
       cleanup()
@@ -545,6 +577,7 @@ export async function updateHop(
     fromVersion,
     toVersion,
     assertLaunch,
+    env,
   }: {
     appPath: string
     vm: VmManager | undefined
@@ -553,6 +586,8 @@ export async function updateHop(
     fromVersion: string
     toVersion: string
     assertLaunch?: (stdout: string) => void
+    /** fixture env of the update launch (see fixtureEnv) */
+    env?: Record<string, string>
   }
 ): Promise<void> {
   // waitForExit: true — don't proceed until the old app fully quits.
@@ -567,6 +602,7 @@ export async function updateHop(
     expectedVersion: fromVersion,
     packageManagerToTest: packageManager,
     waitForExit: true,
+    env,
   })
   log.info({ version: result.version, stdout: result.stdout }, "Initial launch completed")
   expect(result.version).toMatch(fromVersion)
@@ -585,7 +621,7 @@ export async function updateHop(
  * AUTO_UPDATER_TEST is disabled so the probe app quits immediately after printing its version
  * (no update cycle triggered), which also prevents a second installer from running in parallel.
  */
-async function pollUntilNewVersionInstalled(
+export async function pollUntilNewVersionInstalled(
   expect: ExpectStatic,
   {
     appPath,
@@ -964,7 +1000,7 @@ export const manifestVerifiedMarker = (version: string) => `Update manifest sign
 /** Substring of the warning the updater logs when no `updateManifestPublicKey` is configured at all. */
 export const MANIFEST_VERIFICATION_DISABLED_MARKER = "verification is disabled"
 
-interface ScenarioContext {
+export interface ScenarioContext {
   expect: ExpectStatic
   vm: VmManager | undefined
   /** installed (old) app binary, updated in place by every hop */
@@ -975,13 +1011,14 @@ interface ScenarioContext {
   rootDirectory: string
   updateConfigPath: string
   serverConfig: GenericServerOptions
+  servers: BlackboxServers
 }
 
 /**
  * Shared skeleton of every blackbox update scenario: build all versions, install the first one, serve the
  * second one and run `scenario`; cleanup mirrors {@link runTest}.
  */
-async function runUpdateScenario(
+export async function runUpdateScenario(
   context: TestContext,
   {
     target,
@@ -1032,10 +1069,10 @@ async function runUpdateScenario(
   let queuedError: Error | null = null
   try {
     await runTestWithinServer(
-      async (rootDirectory: string, updateConfigPath: string, serverConfig: GenericServerOptions) => {
+      async (rootDirectory: string, updateConfigPath: string, serverConfig: GenericServerOptions, servers: BlackboxServers) => {
         // Serve the first update
         await copy(updateFilesDir(targetOf(1), outDirs[1].dir), rootDirectory, { recursive: true, overwrite: true })
-        await scenario({ expect, vm, appPath, outDirs, packageManager, rootDirectory, updateConfigPath, serverConfig })
+        await scenario({ expect, vm, appPath, outDirs, packageManager, rootDirectory, updateConfigPath, serverConfig, servers })
       },
       vm,
       extraUpdateConfig
@@ -1060,22 +1097,37 @@ async function runUpdateScenario(
 }
 
 /**
- * Launches the installed app against a served manifest it must refuse: the updater has to fail with
- * `expectedErrorCode` before anything is downloaded, and the installed version must be unchanged afterwards.
+ * Launches the installed app against a served update it must refuse: the updater has to fail with
+ * `expectedErrorCode` before it reports the update downloaded, and the installed version must be unchanged afterwards.
  */
-async function expectRejectedUpdate(
-  { expect, appPath, vm, updateConfigPath, packageManager }: ScenarioContext,
+export async function expectRejectedUpdate(
+  { expect, appPath, vm, updateConfigPath, packageManager, servers }: ScenarioContext,
   {
     installedVersion,
     expectedErrorCode,
     assertLaunch,
+    env,
+    manifests = "signed",
+    expectNoRequests = false,
   }: {
     installedVersion: string
     expectedErrorCode: string
     /** further checks of the stdout of the launch that refuses the update */
     assertLaunch?: (stdout: string) => void
+    /** fixture env of the launch that refuses the update (see fixtureEnv) */
+    env?: Record<string, string>
+    /** "unsigned": the served manifests have no signature, whose verification the launch may then log as disabled */
+    manifests?: "signed" | "unsigned"
+    /** the launch must send no request at all, to the feed or to an origin of servers.createOrigin() */
+    expectNoRequests?: boolean
   }
 ): Promise<void> {
+  const allServers = [servers.feed, ...servers.origins]
+  if (expectNoRequests) {
+    for (const server of allServers) {
+      server.clearRequests()
+    }
+  }
   const result = await launchAndWaitForQuit({
     appPath,
     vm,
@@ -1084,6 +1136,7 @@ async function expectRejectedUpdate(
     expectedVersion: installedVersion,
     packageManagerToTest: packageManager,
     waitForExit: true,
+    env,
   })
   log.info({ version: result.version, expectedErrorCode }, "Rejected-update launch completed")
   await result.assert(() => {
@@ -1091,7 +1144,12 @@ async function expectRejectedUpdate(
     // the fixture prints `Error in auto-updater: <util.inspect(err)>`, which includes the `code` property
     expect(result.stdout).toContain(expectedErrorCode)
     expect(result.stdout).not.toContain("Update downloaded")
-    expect(result.stdout).not.toContain(MANIFEST_VERIFICATION_DISABLED_MARKER)
+    if (manifests === "signed") {
+      expect(result.stdout).not.toContain(MANIFEST_VERIFICATION_DISABLED_MARKER)
+    }
+    if (expectNoRequests) {
+      expect(allServers.flatMap(server => server.requests)).toEqual([])
+    }
     assertLaunch?.(result.stdout)
   })
 
@@ -1497,15 +1555,21 @@ async function webPackageSha512(dist: ApplicationUpdatePaths): Promise<string> {
 
 /**
  * Runs `test` with empty updater caches and clears them again afterwards: they hold the stored and pending packages of the test
- * app (up to ~250 MB each), which the uninstaller keeps.
+ * app (up to ~250 MB each), which the uninstaller keeps, and any partial download that a failed one left behind.
  */
-async function withEmptyUpdaterCaches(test: () => Promise<void>): Promise<void> {
-  await clearWindowsUpdaterCaches()
+export async function withEmptyUpdaterCaches(test: () => Promise<void>): Promise<void> {
+  await clearUpdaterCaches()
   try {
     await test()
   } finally {
-    await clearWindowsUpdaterCaches().catch((error: any) => log.warn({ error: error.message }, "Failed to clear the updater caches"))
+    await clearUpdaterCaches().catch((error: any) => log.warn({ error: error.message }, "Failed to clear the updater caches"))
   }
+}
+
+async function clearUpdaterCaches(): Promise<void> {
+  await clearWindowsUpdaterCaches()
+  // on mac and Linux (on Windows, clearWindowsUpdaterCaches has removed it already)
+  await remove(path.join(getAppCacheDir(), UPDATER_STORE_DIR_NAME))
 }
 
 /**
