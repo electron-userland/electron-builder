@@ -169,25 +169,49 @@ Legitimate reasons to opt out: an app that does not auto-update at all. A pipeli
 Each signed `latest*.yml` gains:
 
 ```yaml
-signature: b0Qk…               # legacy single field: the FIRST signing key's signature
+signature: b0Qk…               # legacy single field: the FIRST signing key's EBUM1 signature
 signatures:
   - keyId: 3f9c…e1             # hex SHA-256 of the signing key's public key (SPKI DER), as printed by create-update-key
     signature: b0Qk…           # same value as `signature` above
-  - keyId: a71d…04             # one more entry per additional signing key
+    format: EBUM1              # the payload this entry signs (see What is signed)
+  - keyId: a71d…04             # one EBUM1 entry per additional signing key
     signature: Xr2w…
+    format: EBUM1
+  - keyId: 3f9c…e1             # then one EBUM2 entry per signing key, in the same order
+    signature: 9fLp…
+    format: EBUM2
+  - keyId: a71d…04
+    signature: Qm0c…
+    format: EBUM2
 ```
 
-Both fields are always written, even with a single key, so the manifest shape does not change when a second key is added. Each entry signs the same payload; the `keyId` lets an updater holding several trusted keys pick the matching signature directly, and lets you tell at a glance which keys signed a release.
+Both fields are always written, even with a single key, so the manifest shape does not change when a second key is added. Every key signs both payload formats: electron-updater 7.0.0-alpha.14 and later verify the `EBUM2` entries, while 7.0.0-alpha.8 to alpha.13, which predate `format`, ignore the tag, fail on the `EBUM2` entries and verify the `EBUM1` entry of the same key. The `keyId` lets an updater holding several trusted keys pick the matching signature directly, and lets you tell at a glance which keys signed a release. An entry without `format` is an `EBUM1` signature, as electron-builder 27.0.0-alpha.9 to alpha.14 wrote them.
+
+Before writing the file, electron-builder parses the YAML back the way electron-updater does and checks that both payloads come out exactly as signed, so a build cannot publish a manifest its own installs would refuse.
 
 Before any manifest is written, each one is read back the way electron-updater parses it and verified with every signing key, so a manifest that would not verify is never written or uploaded. To check a finished build — for example after an external step signed its manifests — run [`electron-builder verify`](../cli.md#verify): it verifies every manifest against the trust list each packaged app embeds, and every file it lists against the artifacts.
 
 ## What is signed
 
-Every signature covers the integrity-critical fields of the manifest: `version`, `stagingPercentage`, `minimumSystemVersion` (its absence is signed too, so an OS-version gate cannot be added or removed after signing), `allowCatalogSignature` when it is `true` (written for `win.allowCatalogSignature`; a manifest without it, or with `false`, is signed exactly as before), every file entry's `url`, `sha512`, and `size` (and its `blockMapUrl` when present), and — for the NSIS web installer — every `packages` entry's `path`, `sha512`, `size`, `blockMapSize`, and `isAdminRightsRequired` (all in a canonical, order-independent form). Cosmetic fields — `releaseName`, `releaseNotes`, and `releaseDate` — are not covered, so they remain editable after publishing without invalidating the signature. A covered field is not: setting or changing `stagingPercentage` for a [staged rollout](./auto-update.md#staged-rollouts), for example, means signing the manifest again. To change a covered field after publishing, edit the file and [re-sign it](#re-signing-a-published-manifest). The `signature`/`signatures` fields themselves (including `keyId`) are not part of the signed payload, so signatures can be added or removed without invalidating the others.
+### EBUM2: every field
+
+An `EBUM2` signature covers **every top-level field except `signature`, `signatures`, `releaseName` and `releaseNotes`**, and everything below those fields in full. A field added to `latest*.yml` later — by a newer electron-builder, or by you — is therefore signed as soon as the build that writes it signs the manifest, without any change to the updater, and adding, changing or removing any covered field invalidates the signature. That includes the fields `EBUM1` leaves unsigned: `releaseDate`, `vendor`, `files[].blockMapSize` and `files[].isAdminRightsRequired`.
+
+`releaseNotes` stays editable after publishing. `releaseName` is not signed because the GitHub and GitLab providers fill it in from the release when the manifest has none, so the updater could not tell a signed name from one it added itself.
+
+The signed bytes are the tag `EBUM2`, a newline and the manifest as canonical JSON (the [RFC 8785](https://www.rfc-editor.org/rfc/rfc8785) serialization): object keys sorted at every depth, arrays in their original order, no whitespace, strings and numbers exactly as `JSON.stringify` writes them. electron-builder signs the manifest as js-yaml parses it back from the YAML it writes, and electron-updater canonicalizes the manifest as js-yaml parses it from the server, before the provider adds anything of its own (a GitHub `tag`, `assets`, a release name from the feed). Values whose parsed form is not guaranteed to be the same on both sides are refused rather than converted: a `Date` (an unquoted YAML timestamp — electron-builder writes `releaseDate` quoted, so it stays a string), binary data, `NaN`/infinity, negative zero, YAML anchors and aliases, and nesting deeper than 32 levels. A build whose manifest contains such a value — for example a `Date` in `releaseInfo.vendor` — fails with the path of the value; if you edit `latest*.yml` by hand, keep quoted strings quoted.
+
+To produce an `EBUM2` signature outside electron-builder, parse the final `latest*.yml` with js-yaml and sign the `payload` of `canonicalizeForSigningV2(parsed)` from `builder-util-runtime`, then append `{ keyId, signature, format: EBUM2 }` to `signatures`; the [re-signing script](#re-signing-without-electron-builder) below does this.
+
+### EBUM1: the integrity-critical fields
+
+Every `EBUM1` signature covers the integrity-critical fields of the manifest: `version`, `stagingPercentage`, `minimumSystemVersion` (its absence is signed too, so an OS-version gate cannot be added or removed after signing), `allowCatalogSignature` when it is `true` (written for `win.allowCatalogSignature`; a manifest without it, or with `false`, is signed exactly as before), every file entry's `url`, `sha512`, and `size` (and its `blockMapUrl` when present), and — for the NSIS web installer — every `packages` entry's `path`, `sha512`, `size`, `blockMapSize`, and `isAdminRightsRequired` (all in a canonical, order-independent form). Cosmetic fields — `releaseName`, `releaseNotes`, and `releaseDate` — are not covered, so they remain editable after publishing without invalidating the signature. A covered field is not: setting or changing `stagingPercentage` for a [staged rollout](./auto-update.md#staged-rollouts), for example, means signing the manifest again. To change a covered field after publishing, edit the file and [re-sign it](#re-signing-a-published-manifest). The `signature`/`signatures` fields themselves (including `keyId`) are not part of the signed payload, so signatures can be added or removed without invalidating the others.
 
 `files[].isAdminRightsRequired` is intentionally not signed either. It only decides how electron-updater launches the already hash-verified installer (directly, or through `elevate.exe`), so tampering with it cannot change what gets installed — at worst it causes an unexpected UAC prompt — while leaving it unsigned lets you correct a misconfigured value in `latest.yml` after publishing without re-signing.
 
 The canonical form is injective: every string value is JSON-quoted (so a value can never contain an unescaped newline or tab and cannot impersonate another record), numbers are written bare, and an absent optional field is encoded differently from an empty one. Two manifests therefore produce the same signed bytes only if every covered field is identical.
+
+An `EBUM1` signature cannot vouch for a field it does not cover, so electron-updater accepts one only for a manifest whose top-level fields are all ones an `EBUM1`-only electron-builder writes: `version`, `files`, `path`, `sha512`, `sha2`, `packages`, `isAdminRightsRequired`, `releaseName`, `releaseNotes`, `releaseDate`, `stagingPercentage`, `minimumSystemVersion`, `allowCatalogSignature`, `vendor`, `signature` and `signatures`. Any other top-level field needs a valid `EBUM2` signature, so a field added after `EBUM2` cannot be slipped in by stripping the `EBUM2` signatures from a manifest. While installs still accept `EBUM1`, such a field can be *removed* along with the `EBUM2` signatures, though, so a new field must default to the safe behavior when it is absent.
 
 A signed manifest must also have the shape the signature is meant to protect. Before trying any key, the updater rejects a manifest whose `files` list is empty or missing, whose `version`, `files[].url`/`sha512`, `minimumSystemVersion` or `packages` entries are not plain strings/numbers, whose `allowCatalogSignature` is not a boolean, or whose signed string fields contain control characters, with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID` naming the problem. In particular, the deprecated top-level `path`/`sha512` fields (an unsigned mirror of `files[0]`) are never used to download a verified update. electron-builder applies the same checks when signing, so a build cannot produce a signed manifest that its updaters would refuse.
 
@@ -204,7 +228,7 @@ npx electron-builder sign-update-manifest latest.yml -c electron-builder.release
 npx electron-builder sign-update-manifest latest.yml -c.updateManifest.signingKeyFile=keys/update-key.pem
 ```
 
-The platform of each manifest follows from its name, as the build writes it: `<channel>-mac.yml` is macOS, `<channel>-linux.yml` and `<channel>-linux-<arch>.yml` are Linux, and `<channel>.yml` is Windows. Each file is parsed the way electron-updater parses it, its existing `signature`/`signatures` fields are dropped, and it is checked against the same shape rules the updater applies (a manifest the updater would reject is never signed). Like a publishing build, it refuses signing keys of which none is in an explicit `updateManifest.publicKey`, unless `updateManifest.allowSigningKeyOutsideTrustList` marks a cutover release (without a `publicKey`, the trust list is derived from the signing keys, so there is nothing to refuse). It is then signed by every configured key (several keys dual-sign, as in a build) and written back in place in the format a build writes: every other field keeps its value and position, and `signature` plus `signatures` come last. YAML comments are not preserved. A manifest that is not a regular file is refused, a symlink included: it would overwrite the link's target. When several files are given, all of them are signed before any is written, so one invalid manifest leaves every file untouched. Without a key, or with `updateManifest: false`, the command fails with an error naming the key sources; errors name the configuration field or environment variable a key came from, and key material itself is never printed.
+The platform of each manifest follows from its name, as the build writes it: `<channel>-mac.yml` is macOS, `<channel>-linux.yml` and `<channel>-linux-<arch>.yml` are Linux, and `<channel>.yml` is Windows. Each file is parsed the way electron-updater parses it, its existing `signature`/`signatures` fields are dropped, and it is checked against the same shape rules the updater applies (a manifest the updater would reject is never signed). Like a publishing build, it refuses signing keys of which none is in an explicit `updateManifest.publicKey`, unless `updateManifest.allowSigningKeyOutsideTrustList` marks a cutover release (without a `publicKey`, the trust list is derived from the signing keys, so there is nothing to refuse). It is then signed by every configured key, as in a build — an `EBUM1` entry per key, then an `EBUM2` entry per key (several keys dual-sign) — and written back in place in the format a build writes: every other field keeps its value and position, and `signature` plus `signatures` come last. Re-signing a manifest of an `EBUM1`-only release (electron-builder 27.0.0-alpha.9 to alpha.14) this way upgrades it to both formats. YAML comments are not preserved. A manifest that is not a regular file is refused, a symlink included: it would overwrite the link's target. When several files are given, all of them are signed before any is written, so one invalid manifest leaves every file untouched. Without a key, or with `updateManifest: false`, the command fails with an error naming the key sources; errors name the configuration field or environment variable a key came from, and key material itself is never printed.
 
 To check an edited file without writing anything, pass `--verify`. It runs the same manifest check as [`electron-builder verify`](../cli.md#verify), with the trust list it uses when no packaged app is at hand: the public keys in `updateManifest.publicKey` (the platform's own block first). Like `verify`, it uses public keys only and never loads a signing key, so it fails with an error naming `updateManifest.publicKey` when that is not set, also when the build derives its trust list from the signing keys. A manifest that `updateManifest: false` opts out of is skipped, and so is one that no trusted key validates when `updateManifest.allowSigningKeyOutsideTrustList` marks a cutover release — unless the trust list was given on the command line, which is always checked exactly as given: every `-c.<platform>.updateManifest.publicKey=...` for that platform's manifests, otherwise every `-c.updateManifest.publicKey=...` (also when the configuration has a platform block), never merged with the configured keys; any other manifest that is unsigned or not signed by a trusted key makes the command exit non-zero, naming the file:
 
@@ -230,14 +254,14 @@ npx electron-builder verify dist
 
 ### Without electron-builder {#re-signing-without-electron-builder}
 
-A release step that has no electron-builder project at hand can do the same with a short Node.js script, using `builder-util-runtime` (the version that comes with the electron-builder that built the release) and `js-yaml`. It takes the `sha512` and `size` of every listed file from the file next to the manifest, checks the manifest the way the updater does, and signs it with the key file(s) named in `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`, the variable the build reads; it never looks for a key anywhere else. Make any other edit, such as `stagingPercentage`, in the file before running it:
+A release step that has no electron-builder project at hand can do the same with a short Node.js script, using the latest `builder-util-runtime` and `js-yaml`. Like the build, it writes an `EBUM1` and an `EBUM2` signature for each key; updaters that predate `EBUM2` verify the `EBUM1` one. It takes the `sha512` and `size` of every listed file from the file next to the manifest, checks the manifest the way the updater does, and signs it with the key file(s) named in `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`, the variable the build reads; it never looks for a key anywhere else. Make any other edit, such as `stagingPercentage`, in the file before running it:
 
 ```js
 // resign-update-manifest.mjs — usage: ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=update-private-key.pem node resign-update-manifest.mjs dist/latest.yml
 import { createHash, createPrivateKey, sign } from "node:crypto"
 import { createReadStream, lstatSync, readFileSync, writeFileSync } from "node:fs"
 import { basename, delimiter, dirname, join } from "node:path"
-import { canonicalizeForSigning, createManifestSignatureEntry, validateSignedManifestShape } from "builder-util-runtime"
+import { canonicalizeForSigning, canonicalizeForSigningV2, createManifestSignatureEntry, validateSignedManifestShape } from "builder-util-runtime"
 import { dump, load } from "js-yaml"
 
 // every key the release was signed with, in the same order: PEM files separated by ":" (";" on Windows), one key per file
@@ -280,9 +304,16 @@ if (problem != null) {
   throw new Error(`${file} cannot be signed: ${problem}`)
 }
 
-const payload = Buffer.from(canonicalizeForSigning(info), "utf8")
+const ebum2 = canonicalizeForSigningV2(info)
+if (!ebum2.ok) {
+  throw new Error(`${file} cannot be signed: ${ebum2.reason}`)
+}
 const keys = keyFiles.map(keyFile => createPrivateKey(readFileSync(keyFile)))
-const signatures = keys.map(key => createManifestSignatureEntry(key, sign(null, payload, key).toString("base64")))
+// an EBUM1 entry per key, then an EBUM2 entry per key, as electron-builder writes them
+const payloads = [["EBUM1", canonicalizeForSigning(info)], ["EBUM2", ebum2.payload]]
+const signatures = payloads.flatMap(([format, payload]) =>
+  keys.map(key => createManifestSignatureEntry(key, sign(null, Buffer.from(payload, "utf8"), key).toString("base64"), format))
+)
 info.signature = signatures[0].signature
 info.signatures = signatures
 writeFileSync(file, dump(info, { lineWidth: -1, noRefs: true }))
@@ -292,13 +323,16 @@ Before uploading, run [`electron-builder verify`](../cli.md#verify) on the outpu
 
 ## Verification behavior in electron-updater
 
-When at least one public key is configured (embedded or set at runtime), verification is enforced on every update check, for every provider. The manifest is accepted when **any trusted key validates any of its signatures** (`signatures` entries tagged with that key's id are tried first, then the untagged legacy `signature`):
+When at least one public key is configured (embedded or set at runtime), verification is enforced on every update check, for every provider. The manifest is accepted when **any trusted key validates any of its signatures**. `EBUM2` entries are tried first; `EBUM1` entries and the legacy `signature` only after them, and only for a manifest whose fields `EBUM1` can vouch for (see [What is signed](#what-is-signed)). Entries in a format the updater does not know are skipped. Within a format, entries tagged with a trusted key's id are tried before untagged ones. The update log names the format that verified (`Update manifest signature verified for version 1.2.3 (EBUM2)`).
+
+A custom provider that builds the `UpdateInfo` itself is verified on the object it returns, so a field it adds counts against the signature. Parse the manifest with `parseUpdateInfo` from `electron-updater`, and pass a copy you return through `carryUpdateManifestSource(parsed, copy)`, so the updater verifies the manifest as published.
 
 | Manifest state | Result |
 | --- | --- |
 | At least one signature validates against a trusted key | Update proceeds |
 | No `signature` and no `signatures` | Error `ERR_UPDATER_MANIFEST_NOT_SIGNED` |
 | Signed, but tampered or signed only by keys the install does not trust | Error `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID` |
+| Signed with `EBUM1` only, but carries a field `EBUM1` does not vouch for | Error `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`, naming the field |
 
 Both errors are emitted through the updater's regular `error` event and abort the update **before any download begins**.
 

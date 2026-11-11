@@ -34,6 +34,12 @@ exports[`mac > mac auto-update > x64 - key rotation 1`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -128,10 +134,22 @@ exports[`mac > mac auto-update > x64 - key rotation 3`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
             "keyId": "@keyId",
             "signature": "@signature",
           },
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -226,6 +244,12 @@ exports[`mac > mac auto-update > x64 - key rotation 5`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },

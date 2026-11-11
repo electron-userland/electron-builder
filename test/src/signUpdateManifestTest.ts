@@ -12,7 +12,8 @@ import {
   signUpdateManifestOptionsFromArgs,
 } from "electron-builder/src/cli/sign-update-manifest"
 import { load } from "js-yaml"
-import { afterEach, beforeEach, vi } from "vitest"
+import { afterEach, beforeEach, ExpectStatic, vi } from "vitest"
+import { alpha11VerifyManifestSignatures } from "./updater/signedManifestTestUtil"
 
 const sha512 = "Qd2bZ0X8W1yB6kq1e9YgD8mJvW9c+3sR2fT4nL5pA7hU0oI6eK3jM8rS1tV4wX7yZ0aB3cD6eF9gH2iJ5kL8mN=="
 
@@ -36,6 +37,21 @@ async function writeSigned(file: string, info: UpdateInfo, privateKeys: Array<st
 /** Parses a manifest the way electron-updater does (`parseUpdateInfo` is a plain js-yaml `load`). */
 async function readManifest(file: string): Promise<UpdateInfo> {
   return load(await fsp.readFile(file, "utf8")) as UpdateInfo
+}
+
+/**
+ * `info`, re-signed by `privateKeys`, carries exactly the signatures a build writes for it (createUpdateManifestSignatures): an EBUM1 entry
+ * per key, then an EBUM2 entry per key, with `signature` repeating the first EBUM1 one. It verifies with EBUM2 for `publicKeyPem`, and the
+ * EBUM1-only verifier of electron-updater 7.0.0-alpha.8 to alpha.13 still accepts it.
+ */
+function expectSignedAsBuild(expect: ExpectStatic, info: UpdateInfo, privateKeys: Array<string>, publicKeyPem: string): void {
+  const { signature, signatures, ...unsigned } = info
+  expect(signatures).toEqual(createUpdateManifestSignatures(unsigned, privateKeys))
+  expect(signatures?.map(it => it.format)).toEqual([...privateKeys.map(() => "EBUM1"), ...privateKeys.map(() => "EBUM2")])
+  expect(signature).toBe(signatures?.[0].signature)
+  const keyId = computeUpdateManifestKeyId(publicKeyPem)
+  expect(verifyManifestSignatures(info, [publicKeyPem])).toEqual({ ok: true, keyId, format: "EBUM2" })
+  expect(alpha11VerifyManifestSignatures(info, [publicKeyPem])).toEqual({ ok: true, keyId })
 }
 
 async function editManifest(file: string, edit: (info: Record<string, any>) => void): Promise<void> {
@@ -140,6 +156,23 @@ test("the CLI takes manifest paths, -c / --config (a path, inline overrides or b
   expect(() => parseCli(["-c", "custom.yml"])).toThrow()
 })
 
+test("refuses a manifest with a value EBUM2 cannot sign, naming the file and the value's path, and leaves it untouched", async ({ expect, tmpDir }) => {
+  captureOutput()
+  const dir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }))
+  const file = path.join(dir, "latest.yml")
+  await writeSigned(file, manifest("1.2.3", "App-Setup-1.2.3.exe"), [current.privateKeyPem])
+  vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", Buffer.from(current.privateKeyPem + "\n").toString("base64"))
+  // a hand edit that unquotes releaseDate: js-yaml then reads a Date, which has no canonical EBUM2 form
+  const edited = (await fsp.readFile(file, "utf8")).replace(/^releaseDate: .*$/m, "releaseDate: 2026-10-02T12:00:00.000Z")
+  expect(edited).toContain("releaseDate: 2026-10-02T12:00:00.000Z\n")
+  await fsp.writeFile(file, edited)
+
+  const error = await rejection(run(dir, [file]))
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  expect(error!.message).toMatch(new RegExp(`^Cannot sign ${file.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}: .*releaseDate`))
+  expect(await fsp.readFile(file, "utf8")).toBe(edited)
+})
+
 test("re-signs an edited manifest with the env key so the runtime verifier accepts it again, keeping every other field", async ({ expect, tmpDir }) => {
   const output = captureOutput()
   const dir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }))
@@ -163,13 +196,16 @@ test("re-signs an edited manifest with the env key so the runtime verifier accep
 
   expect(await run(dir, [file])).toEqual([{ file, version: "1.2.3", keyIds: [currentId], rehashed: [] }])
   const resigned = await readManifest(file)
-  expect(verifyManifestSignatures(resigned, [current.publicKeyPem])).toEqual({ ok: true, keyId: currentId })
+  expectSignedAsBuild(expect, resigned, [current.privateKeyPem], current.publicKeyPem)
   expect(resigned.stagingPercentage).toBe(25)
   expect(resigned.releaseNotes).toBe("Fixed release notes")
   expect(resigned.releaseDate).toBe("2026-10-01T12:00:00.000Z")
   expect(resigned.files).toEqual([{ url: "App-Setup-1.2.3.exe", sha512, size: 81234567 }])
-  // same shape as a build writes: one tagged entry per key, the legacy field repeating the first
-  expect(resigned.signatures).toEqual([{ keyId: currentId, signature: resigned.signature }])
+  // same shape as a build writes: an EBUM1 then an EBUM2 entry per key (expectSignedAsBuild), the legacy field repeating the first
+  expect(resigned.signatures?.map(it => [it.keyId, it.format])).toEqual([
+    [currentId, "EBUM1"],
+    [currentId, "EBUM2"],
+  ])
   expect(Object.keys(resigned).slice(-2)).toEqual(["signature", "signatures"])
 
   // --verify now passes and writes nothing
@@ -294,14 +330,16 @@ test("signs several manifests with the configured key files, and writes none whe
   for (const file of [win, mac]) {
     const info = await readManifest(file)
     expect(verifyManifestSignatures(info, [current.publicKeyPem]).ok).toBe(true)
-    expect(verifyManifestSignatures(info, [next.publicKeyPem])).toEqual({ ok: true, keyId: nextId })
+    expect(verifyManifestSignatures(info, [next.publicKeyPem])).toEqual({ ok: true, keyId: nextId, format: "EBUM2" })
+    // both keys dual-sign, as a build with both keys does
+    expectSignedAsBuild(expect, info, [current.privateKeyPem, next.privateKeyPem], next.publicKeyPem)
   }
   expect((await readManifest(win)).minimumSystemVersion).toBe("10.0.19041")
   expect((await readManifest(mac)).files[0].url).toBe("App-3.1.0-universal-mac.zip")
 
   // a -c override replaces the file's key list: sign with the next key only
   await run(dir, [win, "-c.updateManifest.signingKeyFile=keys/next.pem"])
-  expect((await readManifest(win)).signatures).toEqual([{ keyId: nextId, signature: (await readManifest(win)).signature }])
+  expectSignedAsBuild(expect, await readManifest(win), [next.privateKeyPem], next.publicKeyPem)
 
   // the trust list is updateManifest.publicKey when set (a multi-PEM string, split like the build and the updater do)
   const unsigned = path.join(dir, "beta.yml")
@@ -369,7 +407,7 @@ test("re-signs a manifest with allowCatalogSignature: true over the shared EBUM1
   const withFlag = (await readManifest(file)) as WindowsUpdateInfo
   expect(withFlag.allowCatalogSignature).toBe(true)
   expect(canonicalizeForSigning(withFlag).split("\n")).toContain("allowCatalogSignature:true")
-  expect(verifyManifestSignatures(withFlag, [current.publicKeyPem])).toEqual({ ok: true, keyId: currentId })
+  expect(verifyManifestSignatures(withFlag, [current.publicKeyPem])).toEqual({ ok: true, keyId: currentId, format: "EBUM2" })
   // the signatures are exactly what a build would write for the same manifest
   expect(withFlag.signatures).toEqual(createUpdateManifestSignatures(info, [current.privateKeyPem]))
 })
@@ -741,7 +779,8 @@ test("re-signing refuses a manifest that does not describe a listed file next to
   expect(resigned.sha512).toBe(sha512)
   expect(resigned.sha2).toBe(await hashFile(installer, "sha256", "hex"))
   expect(resigned.releaseDate).toBe("2026-10-01T12:00:00.000Z")
-  expect(verifyManifestSignatures(resigned, [current.publicKeyPem])).toEqual({ ok: true, keyId: currentId })
+  // signed over the rehashed entries exactly as a build signs them
+  expectSignedAsBuild(expect, resigned, [current.privateKeyPem], current.publicKeyPem)
 
   // electron-builder verify accepts the output: the signature, and the sha512 and size of the listed file
   const results = (await verifyBuildOutput({ outDir: dir, config })).filter(it => it.file === file || it.check === "update manifest file")
@@ -873,7 +912,7 @@ test("a listed file that is not found is refused while the output holds other fi
   await fsp.rm(listed)
   await editManifest(file, info => (info.stagingPercentage = 10))
   expect(await run(dir, [file])).toEqual([{ file, version: "1.0.0", keyIds: [currentId], rehashed: [] }])
-  expect(verifyManifestSignatures(await readManifest(file), [current.publicKeyPem])).toEqual({ ok: true, keyId: currentId })
+  expect(verifyManifestSignatures(await readManifest(file), [current.publicKeyPem])).toEqual({ ok: true, keyId: currentId, format: "EBUM2" })
 })
 
 test("a manifest outside the build output folder is checked against the files next to it only", async ({ expect, tmpDir }) => {

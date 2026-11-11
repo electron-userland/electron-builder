@@ -20,7 +20,7 @@ export { ProviderRuntimeOptions } from "./providers/Provider.js"
 export { AppImageUpdater, AppUpdater, DebUpdater, MacUpdater, NsisUpdater, PacmanUpdater, RpmUpdater }
 export { NoOpLogger } from "./AppUpdater.js"
 
-export { Provider } from "./providers/Provider.js"
+export { carryUpdateManifestSource, parseUpdateInfo, Provider } from "./providers/Provider.js"
 
 export * from "./types.js"
 

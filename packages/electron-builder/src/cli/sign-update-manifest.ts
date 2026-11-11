@@ -334,7 +334,8 @@ async function resignUpdateManifests(files: Array<string>, settings: ManifestSig
   }
 
   return signed.map(({ file, result, rehashed }) => {
-    const keyIds = result.signatures.map(it => it.keyId)
+    // each key signs in both formats (an EBUM1 and an EBUM2 entry): its id is listed once
+    const keyIds = [...new Set(result.signatures.map(it => it.keyId))]
     log.info({ file, version: result.info.version, keyIds, ...(rehashed.length > 0 ? { rehashed } : {}) }, "update manifest signed")
     return { file, version: result.info.version, keyIds, rehashed }
   })

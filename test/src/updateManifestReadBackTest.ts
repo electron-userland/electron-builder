@@ -12,8 +12,11 @@ vi.mock("builder-util", async importOriginal => {
   const actual = await importOriginal<typeof import("builder-util")>()
   return {
     ...actual,
-    createUpdateManifestSignatures: vi.fn((info: any, keys: any) =>
-      actual.createUpdateManifestSignatures(info.files[0].url.endsWith(".exe") ? { ...info, version: "9.9.9" } : info, keys)
+    // the .exe manifest is signed as version 9.9.9 but written with its own version
+    serializeSignedUpdateManifest: vi.fn((info: any, keys: any) =>
+      info.files[0].url.endsWith(".exe")
+        ? actual.serializeSignedUpdateManifest({ ...info, version: "9.9.9" }, keys).replace("version: 9.9.9", `version: ${info.version}`)
+        : actual.serializeSignedUpdateManifest(info, keys)
     ),
   }
 })
