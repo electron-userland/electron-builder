@@ -1,5 +1,23 @@
 # electron-publish
 
+## 27.0.0-alpha.15
+### Patch Changes
+
+- Fix(publish): reject a DigitalOcean Spaces `name` that is not a bucket name or a `region` that is not a region slug (e.g. `nyc3`), since both become the endpoint host _[`#10597`](https://github.com/electron-userland/electron-builder/pull/10597) [`802f7ab`](https://github.com/electron-userland/electron-builder/commit/802f7abff53ada423be0524eab6e8c198ccb23ea)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`39db76f`](https://github.com/electron-userland/electron-builder/commit/39db76fc9034061769aaf87b02d020d60b00a254) [`96b222f`](https://github.com/electron-userland/electron-builder/commit/96b222f2f678934b4131895fadcb002dc0fc2021) [`13d953d`](https://github.com/electron-userland/electron-builder/commit/13d953d8dab5d1bd5af340363e3df160ac413efd) [`bfd6405`](https://github.com/electron-userland/electron-builder/commit/bfd6405fa27b28c6ea6e7551a2e82a9f387d151f) [`e955338`](https://github.com/electron-userland/electron-builder/commit/e9553386c90ce928795aa4ecceb62758b8fad685) [`d699bdf`](https://github.com/electron-userland/electron-builder/commit/d699bdffd37afc59221b7bf38fc554afef405179) [`be288a8`](https://github.com/electron-userland/electron-builder/commit/be288a8739f2a2fd34c7c338115ccff29f78f0ad) [`141bb9b`](https://github.com/electron-userland/electron-builder/commit/141bb9b2ca86de21e85d616279f5b1fb15f95270) [`c5b5895`](https://github.com/electron-userland/electron-builder/commit/c5b5895973528155285b3f24b82fa67d6d82cb36) [`36f0536`](https://github.com/electron-userland/electron-builder/commit/36f05367af6738459892e8cc7d5c93193c4c72e1) [`23c34f0`](https://github.com/electron-userland/electron-builder/commit/23c34f02cff0277fb681d78efc8843e865a7c615) [`cdd9f7e`](https://github.com/electron-userland/electron-builder/commit/cdd9f7ec77007cdc9657b9f9faa0be2000564d59) [`3f7126f`](https://github.com/electron-userland/electron-builder/commit/3f7126fb3d664983dd84c8ea95d352e996c8bb8b) [`0afbb44`](https://github.com/electron-userland/electron-builder/commit/0afbb44c36521974620174ea9a57a573a8ed1862) [`2a5a06f`](https://github.com/electron-userland/electron-builder/commit/2a5a06f6cfc6fbf78880e38b379988848432721c) [`94d4d46`](https://github.com/electron-userland/electron-builder/commit/94d4d46c57742a4d54ec350c2742a4ffe1c1535b) [`c79e07c`](https://github.com/electron-userland/electron-builder/commit/c79e07c3ede7c85e12aa9739856ecaee3d507299) [`ab396ea`](https://github.com/electron-userland/electron-builder/commit/ab396eaac978c1b85d63f6b7a85c77439168d53d) [`4e8d8cc`](https://github.com/electron-userland/electron-builder/commit/4e8d8cc8e414467ddbe9639c5f075d8f8be47247) [`e955338`](https://github.com/electron-userland/electron-builder/commit/e9553386c90ce928795aa4ecceb62758b8fad685) [`ab86bb6`](https://github.com/electron-userland/electron-builder/commit/ab86bb6344d7bd84398616aa7beaeedeb5a13d6b)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.14`
+- `builder-util@27.0.0-alpha.15`
+
+</details>
+
 ## 27.0.0-alpha.14
 ### Patch Changes
 
