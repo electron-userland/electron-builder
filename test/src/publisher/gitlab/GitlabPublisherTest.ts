@@ -1,3 +1,4 @@
+import { Arch, httpExecutor } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { GitlabPublisher, PublishContext } from "electron-publish"
 import { beforeEach, describe, test, vi } from "vitest"
@@ -94,26 +95,40 @@ describe("GitLab Publisher - Unit Tests", () => {
 
         expect(publisher.toString()).toContain(GitlabTestFixtures.VERSIONS.validWithBuild)
       })
+    })
 
-      test("should handle vPrefixedTagName option", ({ expect }) => {
-        const publisherWithPrefix = new GitlabPublisher(
+    describe("Tag name", () => {
+      // The GitLab API as the publisher calls it: the release list is empty, the default branch is main, and a POST returns what it sent.
+      // The token is passed in (not "__test__", which skips the API), so no environment variable is read.
+      function mockGitlabApi() {
+        vi.mocked(httpExecutor.request).mockImplementation(async (options, _cancellationToken, data) =>
+          options.method !== "GET" ? JSON.stringify(data) : options.path?.endsWith("/releases") ? "[]" : JSON.stringify({ default_branch: "main" })
+        )
+      }
+
+      test.for([
+        [undefined, "v1.0.0"],
+        ["", "1.0.0"],
+        ["release-", "release-1.0.0"],
+      ] as const)("tagNamePrefix %j tags and names the release %s", async ([tagNamePrefix, expected], { expect }) => {
+        mockGitlabApi()
+        const publisher = new GitlabPublisher(publishContext, GitlabTestFixtures.createOptions({ token: "glpat-test", tagNamePrefix }), GitlabTestFixtures.VERSIONS.valid)
+        await publisher._release.value
+        const createRelease = vi.mocked(httpExecutor.request).mock.calls.find(([options]) => options.method === "POST")
+        expect(createRelease?.[2]).toMatchObject({ tag_name: expected, name: expected })
+      })
+
+      test("a tag name with a slash is one path segment of the release asset link URL", async ({ expect }) => {
+        mockGitlabApi()
+        const publisher = new GitlabPublisher(
           publishContext,
-          GitlabTestFixtures.createOptions({
-            vPrefixedTagName: true,
-          }),
+          GitlabTestFixtures.createOptions({ token: "glpat-test", tagNamePrefix: "release/", uploadTarget: "generic_package" }),
           GitlabTestFixtures.VERSIONS.valid
         )
-
-        const publisherWithoutPrefix = new GitlabPublisher(
-          publishContext,
-          GitlabTestFixtures.createOptions({
-            vPrefixedTagName: false,
-          }),
-          GitlabTestFixtures.VERSIONS.valid
+        await publisher.upload({ file: "app.exe", fileContent: Buffer.from("x"), arch: Arch.x64 })
+        expect(vi.mocked(httpExecutor.request).mock.calls.map(([options]) => options.path)).toContain(
+          `/api/v4/projects/${GitlabTestFixtures.PROJECTS.valid}/releases/release%2F1.0.0/assets/links`
         )
-
-        expect(publisherWithPrefix.toString()).toContain("GitLab")
-        expect(publisherWithoutPrefix.toString()).toContain("GitLab")
       })
     })
 

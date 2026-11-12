@@ -21,7 +21,7 @@ import * as path from "path"
 import { Target } from "../../../core.js"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../../options/CommonWindowsInstallerConfiguration.js"
 import { FileAssociation } from "../../../options/FileAssociation.js"
-import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../../platformPackager.js"
+import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt, warnAboutReplacedPublish } from "../../../platformPackager.js"
 import { envWithoutPublishCredentials } from "../../../util/bundledTool.js"
 import { mergeConfigLayers } from "../../../util/config/mergeConfigLayers.js"
 import { hashFile } from "../../../util/hash.js"
@@ -119,9 +119,17 @@ export class NsisTarget extends Target {
             preCompressedFileExtensions: [".avi", ".mov", ".m4v", ".mp4", ".m4p", ".qt", ".mkv", ".webm", ".vmdk"],
             ...this.packager.config.nsis,
           }
-    // nsisWeb / portable are merged into a new object, so building them never changes the nsis options (e.g. nsis.publish)
+    // nsisWeb / portable are merged into a new object, so building them never changes the nsis options. An nsisWeb.publish replaces
+    // nsis.publish instead of being merged with it, as a target's publish replaces its platform's (see getOptionsForTarget).
     const ownOptions = targetName === "nsis" ? null : (this.packager.config as any)[targetName === "nsis-web" ? "nsisWeb" : targetName]
-    this.options = mergeConfigLayers<NsisOptions>(nsisOptions, ownOptions)
+    let inheritedOptions = nsisOptions
+    // nsisOptions and ownOptions are both set only for nsis-web: portable inherits nothing
+    if (nsisOptions != null && ownOptions?.publish !== undefined) {
+      const { publish: inheritedPublish, ...rest } = nsisOptions
+      warnAboutReplacedPublish("nsisWeb", inheritedPublish, ownOptions.publish)
+      inheritedOptions = rest
+    }
+    this.options = mergeConfigLayers<NsisOptions>(inheritedOptions, ownOptions)
 
     // Fails before packaging rather than when makensis rejects LogSet. Portable has no such option (its template never logs).
     if (this.options.installerDebugLogging === true) {

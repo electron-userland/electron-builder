@@ -8,7 +8,7 @@ electron-updater always verifies the sha512 checksum of a downloaded artifact ag
 
 Signed update manifests close that gap: electron-builder can sign each `latest*.yml` with one or more **Ed25519** private keys at publish time, and electron-updater verifies the signature — before anything is downloaded — against a list of trusted public keys baked into the app at build time. Signing uses Node's built-in `crypto`; no additional dependencies or external tools are involved.
 
-Signing is **required**: publishing a build that emits auto-update metadata fails unless a signing key resolves, and `updateManifest: false` is the only way to opt out. See [Opting out](#opting-out).
+Signing is **required**: publishing a build that emits auto-update metadata fails unless a signing key resolves, and `updateManifestSigning: false` is the only way to opt out. See [Opting out](#opting-out).
 
 Verification remains backward compatible in both directions:
 
@@ -45,9 +45,9 @@ A publishing build with no resolvable key fails instead — at build start, befo
 ```
 auto-update manifests must be signed when publishing, but no Ed25519 signing key was found for mac. Generate
 one with `electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded
-PEM file) or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey /
-updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out
-explicitly with `updateManifest: false`. See https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required
+PEM file) or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifestSigning.signingKey /
+updateManifestSigning.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out
+explicitly with `updateManifestSigning: false`. See https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required
 ```
 
 A build **without** a publish policy only warns, so local builds keep working while your release pipeline is the thing that has to hold the key. With [`forceCodeSigning`](./code-signing/code-signing.md#the-forcecodesigning-option), every build that emits a manifest requires the key, whether or not it publishes — pull-request builds included.
@@ -95,7 +95,7 @@ To keep the key in a file instead — a Docker or Kubernetes secret, or a file y
 Instead of (or in addition to) the environment variables, you can configure signing in the [build configuration](../configuration.md) — at the top level, or per platform (e.g. under `linux` or `win`) to sign only some platforms' manifests:
 
 ```yaml
-updateManifest:
+updateManifestSigning:
   # Ed25519 private key(s), PEM (PKCS#8). Secret — prefer ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded) in CI.
   # A string (which may contain several concatenated PEM blocks) or an array of strings.
   signingKey: null
@@ -114,7 +114,7 @@ updateManifest:
 The whole option may instead be set to `false`, the only opt-out:
 
 ```yaml
-updateManifest: false # publishes UNSIGNED manifests; warns on every build
+updateManifestSigning: false # publishes UNSIGNED manifests; warns on every build
 ```
 
 Key resolution order is: `signingKey` → `signingKeyFile` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`. The first source that is set wins, but that source may provide **several keys**:
@@ -143,24 +143,24 @@ autoUpdater.updateManifestPublicKey = "-----BEGIN PUBLIC KEY-----\n…" // or an
 
 ## Opting out
 
-Set `updateManifest: false` — at the top level, or under a platform key — to publish unsigned manifests. This is the only opt-out, and every build that produces a manifest logs a warning naming the consequence.
+Set `updateManifestSigning: false` — at the top level, or under a platform key — to publish unsigned manifests. This is the only opt-out, and every build that produces a manifest logs a warning naming the consequence. The manifests are still written and published, unsigned; `publishAutoUpdate: false` on every publish provider is what stops writing them.
 
 ```yaml
-updateManifest: false
+updateManifestSigning: false
 ```
 
 Two properties are worth knowing:
 
 - **It short-circuits the environment variables.** A leftover `ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing behind the back of the opt-out, so `false` means unsigned everywhere, deterministically.
-- **A platform value wins over the root**, so `linux: { updateManifest: false }` opts out for Linux only while a root signing config still covers the other platforms — and the converse works too. A platform value of `null`, on the other hand, falls back to the root rather than opting out.
+- **A platform value wins over the root**, so `linux: { updateManifestSigning: false }` opts out for Linux only while a root signing config still covers the other platforms — and the converse works too. A platform value of `null`, on the other hand, falls back to the root rather than opting out.
 
 The requirement is also waived, without any configuration, where no manifest is emitted at all: a build whose publish providers all set `publishAutoUpdate: false`, a build whose targets write no update info (for example only snap, flatpak, MSI/MSIX, portable, mas/pkg or plain archives), and any build without a publish policy or `forceCodeSigning` (which only warns).
 
 :::danger[Opting out is not reversible for a release line]
-Once a release embeds a public key, its installs are **fail-closed**: an unsigned manifest is rejected with `ERR_UPDATER_MANIFEST_NOT_SIGNED` and those installs stop updating entirely. Do not switch to `updateManifest: false` after shipping signed manifests, and make sure *every* pipeline that can publish a release — including a hotfix built from a laptop — has the key.
+Once a release embeds a public key, its installs are **fail-closed**: an unsigned manifest is rejected with `ERR_UPDATER_MANIFEST_NOT_SIGNED` and those installs stop updating entirely. Do not switch to `updateManifestSigning: false` after shipping signed manifests, and make sure *every* pipeline that can publish a release — including a hotfix built from a laptop — has the key.
 :::
 
-Legitimate reasons to opt out: an app that does not auto-update at all. A pipeline that signs `latest*.yml` itself in a later step should **not** opt out — `false` also drops `updateManifest.publicKey`, so installs would embed no trust list and never verify those signatures; see [Key storage](./key-rotation.md#key-storage) for its two routes.
+Legitimate reasons to opt out: an app that does not auto-update at all. A pipeline that signs `latest*.yml` itself in a later step should **not** opt out — `false` also drops `updateManifestSigning.publicKey`, so installs would embed no trust list and never verify those signatures; see [Key storage](./key-rotation.md#key-storage) for its two routes.
 
 ## What is written
 
@@ -193,7 +193,7 @@ A signed manifest must also have the shape the signature is meant to protect. Be
 
 ## Re-signing a published manifest {#re-signing-a-published-manifest}
 
-Cosmetic fields can be edited in a published `latest*.yml` as they are, but changing a signed field — raising `stagingPercentage` during a staged rollout, adding a `minimumSystemVersion`, pointing a file `url` at a different host — invalidates its signatures, and every install that embeds a public key then refuses the update with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`. Rather than rebuilding, edit the file and sign it again from the project directory. Like `electron-builder publish`, the command reads the project's electron-builder configuration (`-c` / `--config` picks a different file), and it takes the key(s) from the same place the build does: `updateManifest.signingKey` / `updateManifest.signingKeyFile` (the platform's own `mac.updateManifest` / `win.updateManifest` / `linux.updateManifest` first), then `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`. There is no flag that takes key material.
+Cosmetic fields can be edited in a published `latest*.yml` as they are, but changing a signed field — raising `stagingPercentage` during a staged rollout, adding a `minimumSystemVersion`, pointing a file `url` at a different host — invalidates its signatures, and every install that embeds a public key then refuses the update with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`. Rather than rebuilding, edit the file and sign it again from the project directory. Like `electron-builder publish`, the command reads the project's electron-builder configuration (`-c` / `--config` picks a different file), and it takes the key(s) from the same place the build does: `updateManifestSigning.signingKey` / `updateManifestSigning.signingKeyFile` (the platform's own `mac.updateManifestSigning` / `win.updateManifestSigning` / `linux.updateManifestSigning` first), then `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`. There is no flag that takes key material.
 
 ```sh
 # keys from the configuration or the environment, exactly as in a build
@@ -201,16 +201,16 @@ npx electron-builder sign-update-manifest dist/latest.yml dist/latest-mac.yml di
 
 # a different config file, or an inline override of a single setting (relative key files resolve against the project directory)
 npx electron-builder sign-update-manifest latest.yml -c electron-builder.release.yml
-npx electron-builder sign-update-manifest latest.yml -c.updateManifest.signingKeyFile=keys/update-key.pem
+npx electron-builder sign-update-manifest latest.yml -c.updateManifestSigning.signingKeyFile=keys/update-key.pem
 ```
 
-The platform of each manifest follows from its name, as the build writes it: `<channel>-mac.yml` is macOS, `<channel>-linux.yml` and `<channel>-linux-<arch>.yml` are Linux, and `<channel>.yml` is Windows. Each file is parsed the way electron-updater parses it, its existing `signature`/`signatures` fields are dropped, and it is checked against the same shape rules the updater applies (a manifest the updater would reject is never signed). Like a publishing build, it refuses signing keys of which none is in an explicit `updateManifest.publicKey`, unless `updateManifest.allowSigningKeyOutsideTrustList` marks a cutover release (without a `publicKey`, the trust list is derived from the signing keys, so there is nothing to refuse). It is then signed by every configured key (several keys dual-sign, as in a build) and written back in place in the format a build writes: every other field keeps its value and position, and `signature` plus `signatures` come last. YAML comments are not preserved. A manifest that is not a regular file is refused, a symlink included: it would overwrite the link's target. When several files are given, all of them are signed before any is written, so one invalid manifest leaves every file untouched. Without a key, or with `updateManifest: false`, the command fails with an error naming the key sources; errors name the configuration field or environment variable a key came from, and key material itself is never printed.
+The platform of each manifest follows from its name, as the build writes it: `<channel>-mac.yml` is macOS, `<channel>-linux.yml` and `<channel>-linux-<arch>.yml` are Linux, and `<channel>.yml` is Windows. Each file is parsed the way electron-updater parses it, its existing `signature`/`signatures` fields are dropped, and it is checked against the same shape rules the updater applies (a manifest the updater would reject is never signed). Like a publishing build, it refuses signing keys of which none is in an explicit `updateManifestSigning.publicKey`, unless `updateManifestSigning.allowSigningKeyOutsideTrustList` marks a cutover release (without a `publicKey`, the trust list is derived from the signing keys, so there is nothing to refuse). It is then signed by every configured key (several keys dual-sign, as in a build) and written back in place in the format a build writes: every other field keeps its value and position, and `signature` plus `signatures` come last. YAML comments are not preserved. A manifest that is not a regular file is refused, a symlink included: it would overwrite the link's target. When several files are given, all of them are signed before any is written, so one invalid manifest leaves every file untouched. Without a key, or with `updateManifestSigning: false`, the command fails with an error naming the key sources; errors name the configuration field or environment variable a key came from, and key material itself is never printed.
 
-To check an edited file without writing anything, pass `--verify`. It runs the same manifest check as [`electron-builder verify`](../cli.md#verify), with the trust list it uses when no packaged app is at hand: the public keys in `updateManifest.publicKey` (the platform's own block first). Like `verify`, it uses public keys only and never loads a signing key, so it fails with an error naming `updateManifest.publicKey` when that is not set, also when the build derives its trust list from the signing keys. A manifest that `updateManifest: false` opts out of is skipped, and so is one that no trusted key validates when `updateManifest.allowSigningKeyOutsideTrustList` marks a cutover release — unless the trust list was given on the command line, which is always checked exactly as given: every `-c.<platform>.updateManifest.publicKey=...` for that platform's manifests, otherwise every `-c.updateManifest.publicKey=...` (also when the configuration has a platform block), never merged with the configured keys; any other manifest that is unsigned or not signed by a trusted key makes the command exit non-zero, naming the file:
+To check an edited file without writing anything, pass `--verify`. It runs the same manifest check as [`electron-builder verify`](../cli.md#verify), with the trust list it uses when no packaged app is at hand: the public keys in `updateManifestSigning.publicKey` (the platform's own block first). Like `verify`, it uses public keys only and never loads a signing key, so it fails with an error naming `updateManifestSigning.publicKey` when that is not set, also when the build derives its trust list from the signing keys. A manifest that `updateManifestSigning: false` opts out of is skipped, and so is one that no trusted key validates when `updateManifestSigning.allowSigningKeyOutsideTrustList` marks a cutover release — unless the trust list was given on the command line, which is always checked exactly as given: every `-c.<platform>.updateManifestSigning.publicKey=...` for that platform's manifests, otherwise every `-c.updateManifestSigning.publicKey=...` (also when the configuration has a platform block), never merged with the configured keys; any other manifest that is unsigned or not signed by a trusted key makes the command exit non-zero, naming the file:
 
 ```sh
 npx electron-builder sign-update-manifest latest.yml --verify
-npx electron-builder sign-update-manifest latest.yml --verify "-c.updateManifest.publicKey=$(cat update-public-key.pem)"
+npx electron-builder sign-update-manifest latest.yml --verify "-c.updateManifestSigning.publicKey=$(cat update-public-key.pem)"
 ```
 
 `sign-update-manifest --verify` is the per-file check after an edit; [`electron-builder verify`](../cli.md#verify) is the whole-output check of a build, which also checks each manifest against the trust list the packaged apps embed and every file it lists against the artifacts.
@@ -316,8 +316,8 @@ An install trusts the **list** of public keys embedded in its `app-update.yml`, 
 2. **Keep dual-signing** for as long as you want installs that predate the first bridge release to be able to update.
 3. **Drop the old key** from the environment. Manifests are signed by the new key only; every install that took a bridge release keeps verifying. Installs that never did stop updating (`ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`) and must be reinstalled or served from a separate feed still signed with the old key.
 
-Better still, embed the *next* key before you need it: set `updateManifest.publicKey` to `[current, next]` and keep the next private key offline. A compromise of the current key can then be answered by switching to the next key at once, with no bridge release. Note that a trust list does not protect against a leaked key itself while installs still list it — remove it from the list as fast as adoption allows. The full procedure — including compromise handling, key storage advice, and the equivalent steps for Windows, macOS, and Linux code-signing keys — is in the [Key Rotation](./key-rotation.md) runbook.
+Better still, embed the *next* key before you need it: set `updateManifestSigning.publicKey` to `[current, next]` and keep the next private key offline. A compromise of the current key can then be answered by switching to the next key at once, with no bridge release. Note that a trust list does not protect against a leaked key itself while installs still list it — remove it from the list as fast as adoption allows. The full procedure — including compromise handling, key storage advice, and the equivalent steps for Windows, macOS, and Linux code-signing keys — is in the [Key Rotation](./key-rotation.md) runbook.
 
 ## Related: Linux package signature enforcement
 
-On Linux, the manifest signature is what makes an update authentic. electron-updater checks the downloaded file against the manifest's `sha512`, and no package-level signature check backs that up by default: an AppImage has none, and a `.deb` has none whatever `allowUnverifiedLinuxPackages` is set to, because `apt` verifies no signature on a local `.deb` file. Only for `.rpm` updates does `AppUpdater.allowUnverifiedLinuxPackages` (default `true`) control the package manager's own signature check: if you sign your rpm packages, set it to `false` to have `dnf`/`yum` and `zypper` enforce it. Don't set `updateManifest: false` for Linux apps. See [Linux update authenticity](./auto-update.md#linux-update-authenticity) and [Security & Hardening](./security.md#update-security-electron-updater).
+On Linux, the manifest signature is what makes an update authentic. electron-updater checks the downloaded file against the manifest's `sha512`, and no package-level signature check backs that up by default: an AppImage has none, and a `.deb` has none whatever `allowUnverifiedLinuxPackages` is set to, because `apt` verifies no signature on a local `.deb` file. Only for `.rpm` updates does `AppUpdater.allowUnverifiedLinuxPackages` (default `true`) control the package manager's own signature check: if you sign your rpm packages, set it to `false` to have `dnf`/`yum` and `zypper` enforce it. Don't set `updateManifestSigning: false` for Linux apps. See [Linux update authenticity](./auto-update.md#linux-update-authenticity) and [Security & Hardening](./security.md#update-security-electron-updater).

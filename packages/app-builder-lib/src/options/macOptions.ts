@@ -22,14 +22,15 @@ export interface ElectronUniversalOptions extends Omit<MakeUniversalOpts, "x64Ap
 
 /**
  * Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control
- * itself — `app`, `keychain`, `platform`, `version`, and `optionsForFile` — and forwards everything else.
+ * itself — `app`, `keychain`, `platform`, `version`, `optionsForFile`, and `identityValidation` (electron-builder
+ * resolves the identity itself) — and forwards everything else.
  *
  * Additionally exposes a small set of per-file convenience fields that electron-builder maps
  * internally through `optionsForFile`.
  *
  * @see https://packages.electronjs.org/osx-sign
  */
-export interface ElectronSignOptions extends Omit<OnlySignOptions, "optionsForFile" | "version"> {
+export interface ElectronSignOptions extends Omit<OnlySignOptions, "optionsForFile" | "version" | "identityValidation"> {
   /**
    * The type of certificate to use when signing: `development` or `distribution`.
    *
@@ -95,6 +96,27 @@ export interface ElectronSignOptions extends Omit<OnlySignOptions, "optionsForFi
    * @example ["--deep"]
    */
   readonly additionalArguments?: Array<string> | null
+}
+
+/**
+ * The macOS signing configuration (`mac.sign`, `mas.sign`, `masDev.sign`): options forwarded to `@electron/osx-sign`, and optionally a
+ * custom signer that replaces it.
+ */
+export interface MacSignConfiguration extends ElectronSignOptions {
+  /**
+   * A custom signer that replaces `@electron/osx-sign`: a function (JS/TS config only), or the path or module id of a file exporting one
+   * (named export `sign`, else the default export). It is called with the `@electron/osx-sign` options built from this object
+   * (`CustomMacSignOptions`: `app`; `identity`, the SHA-1 hash of the keychain identity (`-` for ad-hoc signing), unset when none is
+   * found; `keychain`; `platform`; `type`; `provisioningProfile`; `binaries`; `ignore`; `strictVerify`; `preAutoEntitlements`;
+   * `preEmbedProvisioningProfile`; `batchCodesignCalls`; and, per file through `optionsForFile`, `entitlements`, `hardenedRuntime`,
+   * `timestamp`, `requirements` and `additionalArguments`) and the `MacPackager`, and must sign the app at `app` in place. `identity` set
+   * next to it selects the keychain identity whose hash the signer receives; a signer that needs a certificate name (a remote or HSM
+   * signer) reads it itself. The DMG (`dmg.sign`) and the Mac App Store installer are signed from the keychain, never by this signer.
+   *
+   * It reaches the Mac App Store apps through the `mac` → `mas` → `masDev` merge, called with their options; `null` removes a signer set
+   * by an earlier layer, e.g. `mas.sign.sign: null` over `mac.sign.sign` signs the Mac App Store app with `@electron/osx-sign`.
+   */
+  readonly sign?: CustomMacSign | string | null
 }
 
 export type MacOsTargetName = "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"
@@ -195,19 +217,18 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly extraDistFiles?: Array<string> | string | null
 
   /**
-   * Codesigning configuration. The signing certificate is selected via `sign.identity` (or the
+   * Code signing configuration. The signing certificate is selected via `sign.identity` (or the
    * `CSC_LINK` / `CSC_NAME` environment variables).
    *
    * - **Not set** (default): electron-builder auto-discovers a valid certificate in the keychain. If none is found, signing is skipped.
-   * - **`null`**: skip signing entirely.
-   * - **`string`**: path or module ID of a file that exports a {@link CustomMacSign} function.
-   * - **{@link CustomMacSign}**: inline custom signing function (JS/TS config only).
-   * - **{@link ElectronSignOptions}**: options forwarded directly to `@electron/osx-sign`.
+   * - **`false`** (or `null`): skip signing, like `win.sign: false`.
+   * - **{@link MacSignConfiguration}**: options forwarded to `@electron/osx-sign`, with an optional custom signer in `sign`
+   *   (`mac.sign.sign`) that replaces it.
    *
-   * @see {@link ElectronSignOptions}
+   * @see {@link MacSignConfiguration}
    * @see https://www.electron.build/docs/features/code-signing
    */
-  readonly sign?: CustomMacSign | ElectronSignOptions | string | null
+  readonly sign?: MacSignConfiguration | false | null
 
   /**
    * Options forwarded to `@electron/universal` when building a universal (multi-arch) app.
@@ -250,6 +271,11 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * @default true
    */
   readonly asarIntegrityDigest?: boolean
+}
+
+/** Whether a macOS `sign` value turns signing off. `false` and `null` mean the same: schema validation turns a `null` into `false`. */
+export function isMacSigningDisabled(sign: unknown): sign is false | null {
+  return sign === false || sign === null
 }
 
 export interface DmgOptions extends TargetSpecificOptions {

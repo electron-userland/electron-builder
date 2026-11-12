@@ -633,7 +633,7 @@ async function createAppUpdateConfiguration(
     throw new InvalidConfigurationError(
       `publish ${managed.join(", ")} (provider ${first.provider}): removed from the publish options in electron-builder v27. ` +
         "electron-builder writes them into app-update.yml itself: publisherName from win.sign.publisherName, verifyUpdateCodeSignature from " +
-        "win.verifyUpdateCodeSignature, updateManifestPublicKey from updateManifest.publicKey and updaterCacheDirName from the package name. " +
+        "win.verifyUpdateCodeSignature, updateManifestPublicKey from updateManifestSigning.publicKey and updaterCacheDirName from the package name. " +
         `Remove them. See ${CONFIG_CHANGES_URL}#${PUBLISH_MANAGED_OPTIONS_ANCHOR}`
     )
   }
@@ -663,7 +663,7 @@ async function createAppUpdateConfiguration(
   // single-key format), several as a YAML list.
   const updateManifestConfig = packager.updateManifestOptions
   // The very same keys updateInfoBuilder signs `latest*.yml` with, so env-var-only signing
-  // (no `updateManifest` config block) embeds the matching public keys too, and the two sides
+  // (no `updateManifestSigning` config block) embeds the matching public keys too, and the two sides
   // cannot disagree about whether signing is enabled.
   // Whether the requirement applies was decided by the caller from the manifest-emitting targets (a publish target
   // with `publishAutoUpdate: false` on every provider emits none, so it is waived there) - the trust list is still
@@ -701,10 +701,10 @@ async function applyUpdateCodeSignatureVerification(winPackager: WinPackager, pu
 }
 
 /**
- * An explicit `updateManifest.publicKey` list that holds none of the signing keys ships an app that rejects manifests
+ * An explicit `updateManifestSigning.publicKey` list that holds none of the signing keys ships an app that rejects manifests
  * signed with those keys, so every later release has to be signed by a listed key. That is a mistake unless it is a
  * deliberate cutover release: with `fail` (a publishing build whose manifest is signed) it is an error unless
- * `updateManifest.allowSigningKeyOutsideTrustList` is set; otherwise it only warns, once per process. Only key ids are
+ * `updateManifestSigning.allowSigningKeyOutsideTrustList` is set; otherwise it only warns, once per process. Only key ids are
  * ever reported, never key material.
  */
 function checkSigningKeysTrusted(packager: PlatformPackager<any>, signingKeys: ReadonlyArray<KeyObject>, explicitKeys: ReadonlyArray<string>, fail: boolean): void {
@@ -712,7 +712,7 @@ function checkSigningKeysTrusted(packager: PlatformPackager<any>, signingKeys: R
 }
 
 /**
- * {@link checkSigningKeysTrusted} for a platform's resolved `updateManifest` options (`<platform>.updateManifest ?? updateManifest`)
+ * {@link checkSigningKeysTrusted} for a platform's resolved `updateManifestSigning` options (`<platform>.updateManifestSigning ?? updateManifestSigning`)
  * rather than a packager, so a step outside the build (the `sign-update-manifest` CLI) refuses exactly what the build refuses.
  * @internal
  */
@@ -735,10 +735,10 @@ export function checkUpdateSigningKeysTrusted(
   const allowed = updateManifestConfig !== false && updateManifestConfig?.allowSigningKeyOutsideTrustList === true
   if (fail && !allowed) {
     throw new InvalidConfigurationError(
-      `none of the update-manifest signing keys (key id(s) ${signingIds.join(", ")}) is in updateManifest.publicKey (key id(s) ${trustedIds.join(", ")}) for ${platformName}. ` +
-        "The app built here embeds only the listed keys, so its installs will reject manifests signed with the signing key(s) above: every later release would have to be signed by a key in updateManifest.publicKey. " +
-        "Add the signing key's public key to updateManifest.publicKey, or sign with a key that is listed. " +
-        "For a deliberate cutover release that hands installs over to a listed key, set updateManifest.allowSigningKeyOutsideTrustList: true. " +
+      `none of the update-manifest signing keys (key id(s) ${signingIds.join(", ")}) is in updateManifestSigning.publicKey (key id(s) ${trustedIds.join(", ")}) for ${platformName}. ` +
+        "The app built here embeds only the listed keys, so its installs will reject manifests signed with the signing key(s) above: every later release would have to be signed by a key in updateManifestSigning.publicKey. " +
+        "Add the signing key's public key to updateManifestSigning.publicKey, or sign with a key that is listed. " +
+        "For a deliberate cutover release that hands installs over to a listed key, set updateManifestSigning.allowSigningKeyOutsideTrustList: true. " +
         `See ${SIGNING_KEY_OUTSIDE_TRUST_LIST_DOCS}`
     )
   }
@@ -746,10 +746,10 @@ export function checkUpdateSigningKeysTrusted(
     .once("update-manifest-signing-key-outside-trust-list")
     .warn(
       { platform: platformName, signingKeyIds: signingIds, trustedKeyIds: trustedIds },
-      "none of the update-manifest signing keys is in updateManifest.publicKey: installs of this release will not be able to verify manifests signed with the current key(s). " +
+      "none of the update-manifest signing keys is in updateManifestSigning.publicKey: installs of this release will not be able to verify manifests signed with the current key(s). " +
         (allowed
-          ? "Allowed by updateManifest.allowSigningKeyOutsideTrustList for a deliberate cutover release; every later release must be signed by a key in updateManifest.publicKey."
-          : "Publishing a manifest signed with these keys fails: add the current public key to updateManifest.publicKey, or set updateManifest.allowSigningKeyOutsideTrustList: true for a deliberate cutover release. " +
+          ? "Allowed by updateManifestSigning.allowSigningKeyOutsideTrustList for a deliberate cutover release; every later release must be signed by a key in updateManifestSigning.publicKey."
+          : "Publishing a manifest signed with these keys fails: add the current public key to updateManifestSigning.publicKey, or set updateManifestSigning.allowSigningKeyOutsideTrustList: true for a deliberate cutover release. " +
             `See ${SIGNING_KEY_OUTSIDE_TRUST_LIST_DOCS}`)
     )
 }
@@ -757,7 +757,7 @@ export function checkUpdateSigningKeysTrusted(
 const SIGNING_KEY_OUTSIDE_TRUST_LIST_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#signing-key-must-be-in-updatemanifestpublickey"
 
 /**
- * Normalizes the configured `updateManifest.publicKey` (string, multi-PEM string, or array) into distinct,
+ * Normalizes the configured `updateManifestSigning.publicKey` (string, multi-PEM string, or array) into distinct,
  * validated Ed25519 public keys, preserving order. Duplicates and non-Ed25519 keys are configuration errors.
  * @internal
  */
@@ -769,11 +769,11 @@ export function normalizeExplicitPublicKeys(value: string | Array<string> | null
     try {
       keyId = computeUpdateManifestKeyId(key)
     } catch (e: any) {
-      throw new InvalidConfigurationError(`updateManifest.publicKey #${index + 1} is not a valid Ed25519 public key: ${e.message || e}`)
+      throw new InvalidConfigurationError(`updateManifestSigning.publicKey #${index + 1} is not a valid Ed25519 public key: ${e.message || e}`)
     }
     const previous = seen.get(keyId)
     if (previous != null) {
-      throw new InvalidConfigurationError(`updateManifest.publicKey #${index + 1} duplicates entry #${previous + 1} (key id ${keyId}). List each trusted key once.`)
+      throw new InvalidConfigurationError(`updateManifestSigning.publicKey #${index + 1} duplicates entry #${previous + 1} (key id ${keyId}). List each trusted key once.`)
     }
     seen.set(keyId, index)
   })

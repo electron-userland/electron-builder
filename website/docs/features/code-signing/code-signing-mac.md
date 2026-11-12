@@ -30,11 +30,11 @@ The `mac.sign.identity` configuration controls how (or whether) the app is signe
 | Value | Behavior |
 |---|---|
 | Not set (default) | electron-builder searches the keychain for a valid certificate; signing is skipped if none is found |
-| `null` | Signing is skipped entirely |
+| `null` | Signing is skipped entirely (as with `mac.sign: false`) |
 | `"-"` | Ad-hoc signing — see caveats below |
 | Certificate name | Uses that specific certificate from the keychain |
 
-To skip signing, leave all `CSC_*` environment variables unset and set `CSC_IDENTITY_AUTO_DISCOVERY=false`, or set `mac.sign.identity` to `null` in your config (CLI: `-c.mac.sign.identity=null`).
+To skip signing, leave all `CSC_*` environment variables unset and set `CSC_IDENTITY_AUTO_DISCOVERY=false`, or set `mac.sign: false` (CLI: `-c.mac.sign=false`) or `mac.sign.identity: null` (CLI: `-c.mac.sign.identity=null`) in your config.
 
 ## Ad-hoc Signing (`mac.sign.identity: "-"`)
 
@@ -53,14 +53,14 @@ The following issues can occur when using ad-hoc signing (`mac.sign.identity: "-
 :::
 
 :::tip[Local development without a certificate]
-Setting `mac.sign.identity` to `null` (or leaving signing unconfigured with no certificate in the keychain) skips signing entirely. On Apple Silicon, unsigned apps can still be run locally by approving them in **System Settings → Privacy & Security**.
+Setting `mac.sign: false` or `mac.sign.identity: null` (or leaving signing unconfigured with no certificate in the keychain) skips signing entirely. On Apple Silicon, unsigned apps can still be run locally by approving them in **System Settings → Privacy & Security**.
 :::
 
 ## Local Development vs. CI/Production
 
 | Scenario | Recommended approach |
 |---|---|
-| Local dev, no certificate | Leave identity unconfigured or set `mac.sign.identity: null` |
+| Local dev, no certificate | Leave identity unconfigured or set `mac.sign: false` |
 | Local dev, want a runnable ad-hoc build | `mac.sign.identity: "-"` — the required `com.apple.security.cs.disable-library-validation` entitlement is applied automatically |
 | CI/production distribution | Configure a Developer ID certificate via `CSC_LINK` / keychain |
 

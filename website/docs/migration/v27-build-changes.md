@@ -38,11 +38,12 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [Windows `publisherName` must be a distinguished name](#windows-publishername-must-be-a-distinguished-name) | Fails build, advisory | Set every `win.sign.publisherName` entry to a distinguished name (e.g. `"CN=My Company, O=My Company, C=US"`) — a bare name now **fails the build**, and electron-updater 7 never matches it. Without `publisherName`, the build now writes `CN=<common name>` of the certificate (a DN) instead of the bare Common Name |
 | [A missing Windows `publisherName` fails update verification](#missing-publishername-fails-update-verification) | Fails build, advisory | A Windows build that writes `app-update.yml` without a `publisherName` (`win.sign: false` / `null`, no certificate, `publisherName: null`) now **fails the build**, and electron-updater 7 rejects updates whose `app-update.yml` has none. Sign the build, set `win.sign.publisherName`, or set `win.verifyUpdateCodeSignature: false` (the only opt-out) |
 | [`ELECTRON_BUILDER_OFFLINE=1` skips the Windows signing timestamp](#electron_builder_offline-skips-the-signing-timestamp) | Warns | Only if you set `ELECTRON_BUILDER_OFFLINE=1`: unset it for release builds, or keep it to sign without a timestamp server |
-| [`forceCodeSigning` covers notarization and update manifests](#forcecodesigning-covers-notarization-and-update-manifests) | Fails build (with `forceCodeSigning`) | Provide notarization credentials and the update-manifest signing key wherever `forceCodeSigning` is set, or opt out explicitly (`mac.notarize: false`, `updateManifest: false`); pass `-c.forceCodeSigning=false` to pull-request and local builds that cannot sign |
+| [`forceCodeSigning` covers notarization and update manifests](#forcecodesigning-covers-notarization-and-update-manifests) | Fails build (with `forceCodeSigning`) | Provide notarization credentials and the update-manifest signing key wherever `forceCodeSigning` is set, or opt out explicitly (`mac.notarize: false`, `updateManifestSigning: false`); pass `-c.forceCodeSigning=false` to pull-request and local builds that cannot sign |
 | [`mac.notarize: true` requires notarization credentials](#mac-notarize-true-requires-credentials) | Fails build (with `notarize: true`) | Only if you set `mac.notarize: true`: set the notarization credentials, or leave `notarize` unset to notarize only when they are set |
-| [Signed update manifests are required](#signed-update-manifests-are-required) | Fails when publishing (or with `forceCodeSigning`) | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY` to the base64-encoded PEM file, or set `updateManifest: false` to keep publishing unsigned manifests |
-| [Signing key must be in `updateManifest.publicKey`](#signing-key-must-be-in-updatemanifestpublickey) | Fails when publishing | Only if you set `updateManifest.publicKey`: list a key the build signs with, or set `updateManifest.allowSigningKeyOutsideTrustList: true` for a deliberate cutover release |
+| [Signed update manifests are required](#signed-update-manifests-are-required) | Fails when publishing (or with `forceCodeSigning`) | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY` to the base64-encoded PEM file, or set `updateManifestSigning: false` to keep publishing unsigned manifests |
+| [Signing key must be in `updateManifestSigning.publicKey`](#signing-key-must-be-in-updatemanifestpublickey) | Fails when publishing | Only if you set `updateManifestSigning.publicKey`: list a key the build signs with, or set `updateManifestSigning.allowSigningKeyOutsideTrustList: true` for a deliberate cutover release |
 | [`app-update.yml` feed follows the update-writing targets](#app-updateyml-feed-follows-the-update-writing-targets) | Silent (conflicts fail) | Only with target-level `publish` (e.g. `nsis.publish`), targets of one app with different feeds, or a first provider with `publishAutoUpdate: false`: check which feed installs will poll |
+| [A target's `publish` replaces the platform's](#target-publish-replaces-platform-publish) | Warns, advisory | Only if a target section and its platform (or `nsis` for `nsisWeb`) both set a `publish` list or object: list every provider and option the target should keep in its own `publish`, the update feed first |
 | [Suffixed channels expand to lower channels](#suffixed-update-channels-now-expand-to-lower-channels) | Warns | Only with `generateUpdatesFilesForAllChannels`: a `beta-*`/`latest-*` channel now writes 2–3 yml files instead of 1 |
 | [`latest*.yml` drops legacy top-level `path`/`sha512`](#latestyml-drops-legacy-top-level-pathsha512) | Silent | None for electron-updater >=2.16 (all modern clients); set `electronUpdaterCompatibility` to a legacy-inclusive range only if you still ship apps embedding electron-updater 1.x–2.15 |
 | [Block map format follows `electronUpdaterCompatibility` (default `>=7`)](#block-map-format-follows-electronupdatercompatibility) | Fails build / warns | Apps on electron-updater 6 fail the build: upgrade electron-updater to 7, or set `electronUpdaterCompatibility` to a range that includes them (e.g. `">=6"`), which keeps the JSON `.blockmap` and warns. Installs still on electron-updater 6 download the first release with a binary map in full once |
@@ -431,12 +432,12 @@ In v26, `forceCodeSigning` only failed the build when no code signing identity o
 
 - **macOS notarization is required.** Without notarization credentials (`APPLE_API_KEY` + `APPLE_API_KEY_ID` + `APPLE_API_ISSUER`, `APPLE_ID` + `APPLE_APP_SPECIFIC_PASSWORD` + `APPLE_TEAM_ID`, or `APPLE_KEYCHAIN_PROFILE`) the build fails at build start, before anything is packed — also a `--dir` build, which signs and notarizes the app. The credentials must be in the environment when the build starts. After notarizing, `stapler validate` checks the stapled ticket.
 - **macOS signing must be possible.** A build on a host other than macOS, or a pull-request build (where electron-builder skips signing unless `CSC_FOR_PULL_REQUEST=true`), now fails instead of producing an unsigned app.
-- **Update manifests must be signed**, also by a build that does not publish — including pull-request builds, and Linux builds, where this is the only effect of `forceCodeSigning`. A missing signing key fails at build start, and so does a signing key outside `updateManifest.publicKey` (unless `allowSigningKeyOutsideTrustList` is set).
-- **Signatures are verified.** Every file a Windows signing step reports as signed is read back and must carry a valid Authenticode signature, so a custom `win.sign.sign` hook that signs another path now fails the build. The output of a custom `mac.sign` signer is checked with `codesign --verify --deep --strict` (and a custom signer without a keychain identity is now called, as in v26, instead of being skipped silently). Signed `pkg` and MAS installers are checked with `pkgutil --check-signature`, and a DMG with `dmg.sign: true` must be signed.
+- **Update manifests must be signed**, also by a build that does not publish — including pull-request builds, and Linux builds, where this is the only effect of `forceCodeSigning`. A missing signing key fails at build start, and so does a signing key outside `updateManifestSigning.publicKey` (unless `allowSigningKeyOutsideTrustList` is set).
+- **Signatures are verified.** Every file a Windows signing step reports as signed is read back and must carry a valid Authenticode signature, so a custom `win.sign.sign` hook that signs another path now fails the build. The output of a custom `mac.sign.sign` signer is checked with `codesign --verify --deep --strict` (and a custom signer without a keychain identity is now called, as in v26, instead of being skipped silently). Signed `pkg` and MAS installers are checked with `pkgutil --check-signature`, and a DMG with `dmg.sign: true` must be signed.
 - **A prepackaged app must already be signed** (and, on macOS, notarized), since electron-builder does not sign it. `win.sign: false` with a prepackaged app now fails too.
 - **Squirrel.Windows `msi: true` fails.** Squirrel.Windows builds that MSI around `Setup.exe` before electron-builder signs it, so the installer inside it is unsigned; use the `msi` target for a signed MSI. Without `forceCodeSigning` it warns.
 
-Explicit opt-outs are honored with a warning: `mac.notarize: false` (for an ad-hoc or development-signed app, or one you notarize yourself, e.g. in an `afterSign` hook), `updateManifest: false`, `win.signExts` exclusions, and a custom `nsis.script` (whose uninstaller electron-builder does not sign). An HSM/KMS signer that signs `latest*.yml` in a later step publishes with `publishAutoUpdate: false` on every provider (see [Key storage](../features/key-rotation.md#key-storage)), or builds without `forceCodeSigning`. Any valid signature counts, including ad-hoc and self-signed ones.
+Explicit opt-outs are honored with a warning: `mac.notarize: false` (for an ad-hoc or development-signed app, or one you notarize yourself, e.g. in an `afterSign` hook), `updateManifestSigning: false`, `win.signExts` exclusions, and a custom `nsis.script` (whose uninstaller electron-builder does not sign). An HSM/KMS signer that signs `latest*.yml` in a later step publishes with `publishAutoUpdate: false` on every provider (see [Key storage](../features/key-rotation.md#key-storage)), or builds without `forceCodeSigning`. Any valid signature counts, including ad-hoc and self-signed ones.
 
 Every signed `latest*.yml` is also read back before it is written, with or without `forceCodeSigning`, so a manifest that would not verify is never written or uploaded.
 
@@ -455,7 +456,7 @@ Run [`electron-builder verify`](../cli.md#verify) after a build to check the sig
 
 **How you'll find out:** **Fails the build** (only with `mac.notarize: true`), at build start on a macOS host, with a link here.
 
-`mac.notarize: true` now means that notarization is required: a build without notarization credentials (`APPLE_API_KEY` + `APPLE_API_KEY_ID` + `APPLE_API_ISSUER`, `APPLE_ID` + `APPLE_APP_SPECIFIC_PASSWORD` + `APPLE_TEAM_ID`, or `APPLE_KEYCHAIN_PROFILE`) fails with an `InvalidConfigurationError`, at build start and again when notarizing — wherever notarization would run: on a macOS host, outside a pull-request build, and, for the app, unless the configuration turns its signing off (`mac.sign: null`, `sign.identity: null`, or `CSC_IDENTITY_AUTO_DISCOVERY=false` without an identity or custom signer); a `pkg` installer is notarized whenever it is built. Elsewhere missing credentials only warn. Previously `true` behaved like leaving `notarize` unset, which notarizes when the credentials are set and skips notarization with a warning otherwise; that is still the default.
+`mac.notarize: true` now means that notarization is required: a build without notarization credentials (`APPLE_API_KEY` + `APPLE_API_KEY_ID` + `APPLE_API_ISSUER`, `APPLE_ID` + `APPLE_APP_SPECIFIC_PASSWORD` + `APPLE_TEAM_ID`, or `APPLE_KEYCHAIN_PROFILE`) fails with an `InvalidConfigurationError`, at build start and again when notarizing — wherever notarization would run: on a macOS host, outside a pull-request build, and, for the app, unless the configuration turns its signing off (`mac.sign: false` / `null`, `sign.identity: null`, or `CSC_IDENTITY_AUTO_DISCOVERY=false` without an identity or a custom `sign.sign` signer); a `pkg` installer is notarized whenever it is built. Elsewhere missing credentials only warn. Previously `true` behaved like leaving `notarize` unset, which notarizes when the credentials are set and skips notarization with a warning otherwise; that is still the default.
 
 **Action:** if you set `mac.notarize: true` only because the docs showed it, remove it: notarization still runs whenever the credentials are set. Keep it where a build without notarization must fail, and make sure the credentials are in the environment when the build starts.
 
@@ -472,9 +473,9 @@ Ed25519 signing of `latest*.yml` is new in v27 and **required by default**. A bu
 ```
 auto-update manifests must be signed when publishing, but no Ed25519 signing key was found for mac. Generate
 one with `electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded
-PEM file) or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey /
-updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out
-explicitly with `updateManifest: false`. See https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required
+PEM file) or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifestSigning.signingKey /
+updateManifestSigning.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out
+explicitly with `updateManifestSigning: false`. See https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required
 ```
 
 Only a **publishing** build fails — or any build with [`forceCodeSigning`](#forcecodesigning-covers-notarization-and-update-manifests). A build without a publish policy warns instead, so local builds keep working — which matters because `app-update.yml` is generated whenever a publish configuration exists *or* can be inferred from your `repository` field.
@@ -486,20 +487,22 @@ npx electron-builder create-update-key          # once; store the base64-encoded
 ELECTRON_BUILDER_UPDATE_SIGN_KEY="$(base64 < update-private-key.pem | tr -d '\n')" electron-builder --publish always
 ```
 
-`ELECTRON_BUILDER_UPDATE_SIGN_KEY` holds the PEM file **base64-encoded on one line**, so masked CI variables can hold it; for several keys, concatenate the PEM files and encode them once (`cat old.pem new.pem | base64 | tr -d '\n'`). `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` and `updateManifest.signingKey` / `signingKeyFile` keep taking PEM. See [Providing the key in CI](../features/signed-update-manifests.md#ci-secrets) for the encode command on each OS.
+`ELECTRON_BUILDER_UPDATE_SIGN_KEY` holds the PEM file **base64-encoded on one line**, so masked CI variables can hold it; for several keys, concatenate the PEM files and encode them once (`cat old.pem new.pem | base64 | tr -d '\n'`). `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` and `updateManifestSigning.signingKey` / `signingKeyFile` keep taking PEM. See [Providing the key in CI](../features/signed-update-manifests.md#ci-secrets) for the encode command on each OS.
 
 :::note[Changed during the v27 pre-releases]
-27.0.0-alpha.9 to alpha.11 read `ELECTRON_BUILDER_UPDATE_SIGN_KEY` as raw PEM text. A raw PEM — or any value that is not the base64 of complete PEM private keys — now fails the build with an `InvalidConfigurationError` that names the variable and gives the encode command without printing the value. Re-encode the secret, or point `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` at the PEM file. A build script that sets the variable from a PEM string can pass `Buffer.from(pem).toString("base64")`, or set `updateManifest.signingKey` instead.
+27.0.0-alpha.9 to alpha.11 read `ELECTRON_BUILDER_UPDATE_SIGN_KEY` as raw PEM text. A raw PEM — or any value that is not the base64 of complete PEM private keys — now fails the build with an `InvalidConfigurationError` that names the variable and gives the encode command without printing the value. Re-encode the secret, or point `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` at the PEM file. A build script that sets the variable from a PEM string can pass `Buffer.from(pem).toString("base64")`, or set `updateManifestSigning.signingKey` instead.
+
+27.0.0-alpha.9 and the later alphas named the option `updateManifest`; it is now [`updateManifestSigning`](./v27-config-changes.md#updatemanifest-updatemanifestsigning), with the same values.
 :::
 
-`electron-builder publish -f` checks every update manifest it is given before it uploads anything: an unsigned manifest is refused, and with `updateManifest.publicKey` set the manifest must be signed by one of those keys (another key is allowed, with a warning, under `allowSigningKeyOutsideTrustList`). Without `publicKey` the signature cannot be checked against a trust list, which warns, and fails under `forceCodeSigning`. Only public keys are used.
+`electron-builder publish -f` checks every update manifest it is given before it uploads anything: an unsigned manifest is refused, and with `updateManifestSigning.publicKey` set the manifest must be signed by one of those keys (another key is allowed, with a warning, under `allowSigningKeyOutsideTrustList`). Without `publicKey` the signature cannot be checked against a trust list, which warns, and fails under `forceCodeSigning`. Only public keys are used.
 
-**To opt out**, set `updateManifest: false` at the top level or under a platform key. Every build that emits a manifest then logs a warning. `false` also short-circuits the environment variables, so a leftover `ELECTRON_BUILDER_UPDATE_SIGN_KEY` cannot silently re-enable signing. A platform value of `null` is **not** an opt-out — it falls back to the top-level value.
+**To opt out**, set `updateManifestSigning: false` at the top level or under a platform key. Every build that emits a manifest then logs a warning. `false` also short-circuits the environment variables, so a leftover `ELECTRON_BUILDER_UPDATE_SIGN_KEY` cannot silently re-enable signing. A platform value of `null` is **not** an opt-out — it falls back to the top-level value.
 
 A publishing build whose targets write no update info (for example only snap, flatpak, MSI/MSIX, portable, mas/pkg or plain archives) needs no key. Two more cases need no configuration at all: when every publish provider sets `publishAutoUpdate: false` no manifest is emitted, so the requirement is waived; and a `publicKey` with no private key does **not** satisfy it, since electron-builder still has nothing to sign with (that HSM/KMS workflow either builds without a publish policy, or publishes with `publishAutoUpdate: false` and generates the manifest itself — see [Key storage](../features/key-rotation.md#key-storage)).
 
 :::danger[Opting out is not reversible for a release line]
-Once a release embeds a public key, its installs are **fail-closed**: an unsigned manifest is rejected with `ERR_UPDATER_MANIFEST_NOT_SIGNED` and those installs stop updating entirely. Do not switch to `updateManifest: false` after shipping signed manifests, and make sure every pipeline that can publish a release — including a hotfix built from a laptop — has the key.
+Once a release embeds a public key, its installs are **fail-closed**: an unsigned manifest is rejected with `ERR_UPDATER_MANIFEST_NOT_SIGNED` and those installs stop updating entirely. Do not switch to `updateManifestSigning: false` after shipping signed manifests, and make sure every pipeline that can publish a release — including a hotfix built from a laptop — has the key.
 :::
 
 Note that installs already in the field are unaffected but also unprotected: they carry whatever `app-update.yml` they shipped with, so those built before you adopted signing keep accepting unsigned manifests. Full protection begins with the installs built after the public key was embedded.
@@ -508,19 +511,19 @@ If you run [staged rollouts](../features/auto-update.md#staged-rollouts) by edit
 
 See [Signed Update Manifests](../features/signed-update-manifests.md) and [Key Rotation](../features/key-rotation.md).
 
-### Signing key must be in `updateManifest.publicKey` {#signing-key-must-be-in-updatemanifestpublickey}
+### Signing key must be in `updateManifestSigning.publicKey` {#signing-key-must-be-in-updatemanifestpublickey}
 
 **How you'll find out:** **Fails the build** when publishing. **Warns** otherwise.
 
-When `updateManifest.publicKey` is set explicitly, it is the whole trust list embedded in `app-update.yml`. If none of the keys the build signs `latest*.yml` with is in that list, installs of the release reject manifests signed with the current key(s), and every later release has to be signed by a listed key. Earlier v27 pre-releases only warned about this; a **publishing** build now fails at build start, before anything is packed or uploaded, with an `InvalidConfigurationError` that names the key ids of the signing keys and of the listed keys (never key material). A build without a publish policy still only warns.
+When `updateManifestSigning.publicKey` is set explicitly, it is the whole trust list embedded in `app-update.yml`. If none of the keys the build signs `latest*.yml` with is in that list, installs of the release reject manifests signed with the current key(s), and every later release has to be signed by a listed key. Earlier v27 pre-releases only warned about this; a **publishing** build now fails at build start, before anything is packed or uploaded, with an `InvalidConfigurationError` that names the key ids of the signing keys and of the listed keys (never key material). A build without a publish policy still only warns.
 
 **Action:**
 
-- **Unintended mismatch** (a stale `publicKey`, or a CI secret that was regenerated): add the signing key's public key to `updateManifest.publicKey` (`electron-builder create-update-key` prints it with its key id), or sign with a key that is listed.
+- **Unintended mismatch** (a stale `publicKey`, or a CI secret that was regenerated): add the signing key's public key to `updateManifestSigning.publicKey` (`electron-builder create-update-key` prints it with its key id), or sign with a key that is listed.
 - **Deliberate cutover release** (signed with the old key, which the installs in the field trust, while embedding only the new key): set `allowSigningKeyOutsideTrustList: true` for that release. The build then publishes and logs a warning. Remove it again once you sign with the new key.
 
 ```yaml
-updateManifest:
+updateManifestSigning:
   publicKey: "-----BEGIN PUBLIC KEY-----\n…" # the NEW key only
   allowSigningKeyOutsideTrustList: true     # this release is still signed with the OLD key
 ```
@@ -538,6 +541,42 @@ The feed an installed app polls — the first provider embedded in its `app-upda
 - **Targets of one app must agree.** One packaged app holds a single `app-update.yml`, so two update-writing targets built from it (for example `dmg` and `zip`, or `nsis` and an updater-aware `appx`) whose feeds differ fail a publishing build at build start with an `InvalidConfigurationError`; a build without a publish policy warns that publishing will fail and writes no `app-update.yml` for that app. Only feed-identifying options are compared — upload-only ones such as `publishAutoUpdate` or `timeout` may differ.
 
 Builds with no update-writing target, or whose only such target opts out (`publish: null`), keep the platform/top-level feed and the GitHub fallback as before. **Action:** only if you use target-level `publish`, per-target feeds within one app, or a disabled first provider — configure `publish` once at the platform level, or check that the embedded feed is the one you publish `latest*.yml` to. See [which settings become the auto-update feed](../publish.md#app-update-yml-feed).
+
+### A target's `publish` replaces the platform's {#target-publish-replaces-platform-publish}
+
+**How you'll find out:** **Warns** during the build, once per target section, with a link here, when the target's `publish` leaves out a provider or an option that electron-builder 26 merged in from the platform (or, for `nsisWeb`, from `nsis`), or starts with another provider. `migrate-schema` prints an advisory for such a configuration. If the update-writing targets of one app now resolve different feeds, a publishing build fails ([see above](#app-updateyml-feed-follows-the-update-writing-targets)).
+
+A target uses its own `publish`, else its platform's (`linux.publish`, `win.publish`, `mac.publish`), else the top-level one, and the levels are never merged: `deb.publish` replaces `linux.publish`, and `nsisWeb.publish` replaces `nsis.publish` (an `nsisWeb` without `publish` still uses `nsis.publish`). This was already the rule for `nsis`, `portable`, `squirrelWindows`, `pkg`, `dmg` and the archive targets (`zip`, `7z`, `tar.*`). electron-builder 26 instead merged the two values when both were lists (the inherited providers first) or both were objects (key by key), for these target sections:
+
+| Target section | Merged with | In electron-builder 26 |
+|---|---|---|
+| `appImage`, `deb`, `rpm`, `pacman`, `freebsd`, `p5p`, `apk`, `flatpak` | `linux.publish` | 26.12.1 and later |
+| `snapcraft` (or `snap`), unless its `publish` names a `snapStore` provider | `linux.publish` | 26.12.0 and later |
+| `nsisWeb` | `nsis.publish` | 26.12.1 and later |
+| `appx`, `msi`, `msiWrapped` | `win.publish` | every release |
+
+A string, `null`, or a list next to an object was never merged, so such configurations build as before. Where both values are lists or both are objects:
+
+- **Uploads** go only to the target's own providers. `linux.publish: [github]` with `deb.publish: [s3]` uploaded the deb to GitHub and S3; it now goes to S3 only. A `snapcraft.publish` without a `snapStore` provider no longer reaches the Snap Store through a `snapStore` provider in `linux.publish`.
+- **The update feed** is the target's first provider. The `app-update.yml` of AppImage, deb, rpm, pacman, nsis-web and an updater-aware AppX embeds it, where v26 embedded the inherited first provider. For nsis-web without `nsisWeb.appPackageUrl`, the package download URL comes from that provider too.
+- **Options** of an inherited publish object no longer fill in the target's: a `region` in a `linux.publish` object does not reach an `appImage.publish` object.
+- **An empty list** (`deb.publish: []`) no longer means the inherited providers. To publish nothing for a target, set its `publish` to `null`. For the snap, use `snapcraft.publish: []` instead: with `null`, the snap still goes to a `snapStore` provider of `linux.publish` or the top-level `publish`, else to the Snap Store.
+
+The 27.0.0 alphas also merged the `publish` of `pkg`, `squirrelWindows` and `msix` (new in v27) with the platform's; it now replaces the platform's, as it did for `pkg` and `squirrelWindows` in v26.
+
+**Action:** in each target section that sets `publish`, list every provider and option the target should keep, the update feed first, or remove the target's `publish` to use the platform's. To keep what v26 built for `linux.publish: [github]` with `deb.publish: [s3]`:
+
+```yaml
+linux:
+  publish: [github]
+deb:
+  publish:
+    - github # first, as v26 merged it: installed apps poll this feed
+    - provider: s3
+      bucket: my-bucket
+      awsCredentials:
+        source: env
+```
 
 ### Suffixed update channels now expand to lower channels {#suffixed-update-channels-now-expand-to-lower-channels}
 
@@ -658,10 +697,10 @@ The Bitbucket publisher now selects its authentication scheme by whether a usern
 
 electron-builder merges options in cascades: `extends` presets, then the configuration file, then `build({ config })` / `-c`; `mac` → `mas` → `masDev`; a platform into each of its targets (`linux` → `deb`, `win` → `appx`, …); `nsis` → `nsisWeb`; `linux` → the snap core. Before this change, a merge wrote the later layer *into* the earlier layer's nested objects, and treated functions as objects to merge into. v27 merges every cascade into new objects. What changes:
 
-- **A `mac` + `mas` build signs the macOS app with `mac.sign` as written.** The Mac App Store flavor is built first, and its merge used to write the `mas.sign` values (identity, entitlements, provisioning profile, `hardenedRuntime: false`) into `mac.sign`, so the Developer ID app and its DMG were signed with them. The same applied to `mac.extendInfo`, `mac.universal`, `mac.asar` and `mac.updateManifest`.
+- **A `mac` + `mas` build signs the macOS app with `mac.sign` as written.** The Mac App Store flavor is built first, and its merge used to write the `mas.sign` values (identity, entitlements, provisioning profile, `hardenedRuntime: false`) into `mac.sign`, so the Developer ID app and its DMG were signed with them. The same applied to `mac.extendInfo`, `mac.universal` and `mac.asar`.
 - **`mas.extendInfo` reaches the Mac App Store app on its own.** It is merged over `mac.extendInfo` for the `mas` / `mas-dev` flavors, also when `mac.extendInfo` is not set (before, it was ignored in that case).
-- **Each target keeps its own nested options.** A `deb.desktop` entry or a `deb.publish` object no longer reaches the AppImage or the `linux` options, an `msi.publish` object no longer rewrites `win.publish`, and `nsisWeb.publish` no longer rewrites `nsis.publish`. The values a target merges from its platform are unchanged.
-- **A later layer's function replaces the earlier one.** An `afterSign` (or any hook, or a `win.sign.sign` / `mac.sign` signer) set in the configuration file now wins over one from an `extends` preset, and one passed to `build({ config })` wins over the file's. Before, the earlier function was kept. A `RegExp` or other class instance is replaced the same way.
+- **Each target keeps its own nested options.** A `deb.desktop` entry or a `deb.publish` object no longer reaches the AppImage or the `linux` options, an `msi.publish` object no longer rewrites `win.publish`, and `nsisWeb.publish` no longer rewrites `nsis.publish`. The other values a target merges from its platform are unchanged; its `publish` now replaces the platform's ([a target's `publish` replaces the platform's](#target-publish-replaces-platform-publish)).
+- **A later layer's function replaces the earlier one.** An `afterSign` (or any hook, or a `win.sign.sign` / `mac.sign.sign` signer) set in the configuration file now wins over one from an `extends` preset, and one passed to `build({ config })` wins over the file's. Before, the earlier function was kept. A `RegExp` or other class instance is replaced the same way.
 - **No layer is changed by the merge**, so a configuration object passed to `build()` (or a JS `extends` preset reused by a second build in the same process) keeps its own values.
 
 No configuration change is needed. If a build relied on a leaked value, set it where it applies (for example in `mas.sign` *and* `mac.sign`).

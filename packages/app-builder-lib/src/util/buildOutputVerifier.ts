@@ -12,6 +12,8 @@ import {
   readAuthenticodeSigner,
 } from "../codeSign/win/authenticodeSignature.js"
 import type { Configuration } from "../configuration.js"
+import { isMacSigningDisabled } from "../options/macOptions.js"
+import { resolveUpdateManifestSigning } from "../options/PlatformSpecificBuildOptions.js"
 import { shouldSignWindowsFile } from "../options/winOptions.js"
 import { compareListedFilesInOutput, mayBeUpdateInfo, readUpdateInfo, updateManifestPlatform, verifyUpdateManifestContent } from "../publish/updateManifestVerifier.js"
 
@@ -83,7 +85,7 @@ interface Manifest {
  * - Windows: every installer, package and app executable carries a valid Authenticode signature (whose hash only Windows
  *   can validate), and the update installers match the `publisherName` electron-updater verifies them against.
  *
- * Opt-outs in `config` (`updateManifest: false`, `mac.notarize: false`, `win.sign: false`, `signExts` exclusions, ...)
+ * Opt-outs in `config` (`updateManifestSigning: false`, `mac.sign: false`, `mac.notarize: false`, `win.sign: false`, `signExts` exclusions, ...)
  * turn the affected checks into `skipped` results, whatever the host.
  */
 export async function verifyBuildOutput(options: VerifyBuildOutputOptions): Promise<Array<VerificationResult>> {
@@ -256,26 +258,21 @@ async function readApp(platform: PlatformKey, appPath: string, isMas: boolean, m
   }
 }
 
-/** A platform-level value wins over the root one, as in the build (`PlatformPackager.updateManifestOptions`). */
-function platformOption(config: Configuration, platform: PlatformKey, key: string): any {
-  return (config as any)[platform]?.[key] ?? (config as any)[key]
-}
-
 // ─── update manifests ─────────────────────────────────────────────────────────
 
 function verifyManifestSignature(manifest: Manifest, apps: Array<PackagedApp>, options: VerifyBuildOutputOptions): Array<VerificationResult> {
   const check = "update manifest signature"
   const result = (status: VerificationStatus, message: string): VerificationResult => ({ status, check, file: manifest.file, message })
-  const updateManifest = platformOption(options.config, manifest.platform, "updateManifest")
-  if (updateManifest === false) {
-    return [result("skipped", "updateManifest is false in the configuration, so the manifest is not signed")]
+  const signing = resolveUpdateManifestSigning(options.config, options.config[manifest.platform])
+  if (signing === false) {
+    return [result("skipped", "updateManifestSigning is false in the configuration, so the manifest is not signed")]
   }
 
   // Only public keys are used: verify never loads a signing (private) key, from the configuration or the environment.
-  // A deliberate cutover release is signed with a key outside the trust list it embeds (updateManifest.allowSigningKeyOutsideTrustList),
+  // A deliberate cutover release is signed with a key outside the trust list it embeds (updateManifestSigning.allowSigningKeyOutsideTrustList),
   // whose public key verify does not have.
   const cutover = (reason: string): VerificationResult =>
-    result("skipped", `${reason}, which updateManifest.allowSigningKeyOutsideTrustList allows for a cutover release signed with a key outside the trust list`)
+    result("skipped", `${reason}, which updateManifestSigning.allowSigningKeyOutsideTrustList allows for a cutover release signed with a key outside the trust list`)
 
   const trustingApps: Array<{ app: PackagedApp; trustedKeys: Array<string> }> = []
   for (const app of apps) {
@@ -284,12 +281,12 @@ function verifyManifestSignature(manifest: Manifest, apps: Array<PackagedApp>, o
     }
   }
   if (trustingApps.length === 0) {
-    const keys = updateManifest?.publicKey == null ? [] : normalizePublicKeyList(updateManifest.publicKey)
+    const keys = signing?.publicKey == null ? [] : normalizePublicKeyList(signing.publicKey)
     if (keys.length === 0) {
       return [
         result(
           "unverifiable",
-          "no packaged app embeds a trust list (app-update.yml), and updateManifest.publicKey is not set in the configuration: set it to the public keys to verify the manifest with"
+          "no packaged app embeds a trust list (app-update.yml), and updateManifestSigning.publicKey is not set in the configuration: set it to the public keys to verify the manifest with"
         ),
       ]
     }
@@ -298,8 +295,8 @@ function verifyManifestSignature(manifest: Manifest, apps: Array<PackagedApp>, o
       return [result("verified", `signed by ${verification.keyId}, a key in the configuration (no packaged app was found to read the trust list from)`)]
     }
     return [
-      updateManifest?.allowSigningKeyOutsideTrustList === true
-        ? cutover(`not signed by a key of updateManifest.publicKey (${verification.reason})`)
+      signing?.allowSigningKeyOutsideTrustList === true
+        ? cutover(`not signed by a key of updateManifestSigning.publicKey (${verification.reason})`)
         : result("failed", verification.reason),
     ]
   }
@@ -313,7 +310,7 @@ function verifyManifestSignature(manifest: Manifest, apps: Array<PackagedApp>, o
       return result("verified", `signed by ${verification.keyId}, which ${path.relative(options.outDir, app.updateConfigFile)} trusts`)
     }
     const reason = `not accepted by the trust list of ${path.relative(options.outDir, app.updateConfigFile)} (${verification.reason})`
-    return updateManifest?.allowSigningKeyOutsideTrustList === true ? cutover(reason) : result("failed", reason)
+    return signing?.allowSigningKeyOutsideTrustList === true ? cutover(reason) : result("failed", reason)
   })
 }
 
@@ -351,7 +348,7 @@ async function verifyManifestFiles(
 
 /**
  * The `sign` option of a macOS app, cascaded over its configuration blocks as the build does (a later block wins, and sign objects
- * are merged): whether it opts out of signing (`sign: null` or `sign.identity: null`), and its `strictVerify`.
+ * are merged): whether it opts out of signing (`sign: false` / `null` or `sign.identity: null`), and its `strictVerify`.
  */
 function macSigning(config: Configuration, keys: ReadonlyArray<MacConfigKey>): { signingOptOut: string | null; strict: boolean | string | null | undefined } {
   let sign: unknown = undefined
@@ -364,8 +361,9 @@ function macSigning(config: Configuration, keys: ReadonlyArray<MacConfigKey>): {
     where = `${key}.sign`
     sign = isPlainSignObject(value) && isPlainSignObject(sign) ? { ...sign, ...value } : value
   }
-  if (sign === null || (isPlainSignObject(sign) && sign.identity === null)) {
-    return { signingOptOut: `${where} (or its identity) is null in the configuration`, strict: undefined }
+  // schema validation turns `sign: null` into `false`, so both opt out
+  if (isMacSigningDisabled(sign) || (isPlainSignObject(sign) && sign.identity === null)) {
+    return { signingOptOut: `${where} is false or null (or its identity is null) in the configuration`, strict: undefined }
   }
   const strict = isPlainSignObject(sign) ? sign.strictVerify : undefined
   return { signingOptOut: null, strict: typeof strict === "boolean" || typeof strict === "string" ? strict : undefined }

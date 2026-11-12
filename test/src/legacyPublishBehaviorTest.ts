@@ -44,11 +44,12 @@ describe("Bitbucket auth scheme", () => {
   })
 })
 
-describe("mac.sign: null semantics", () => {
-  test("skipping signing warns and explains the v26 meaning", async () => {
+describe("mac.sign: false / null semantics", () => {
+  test("skipping signing warns once per process and explains the v26 meaning", async () => {
     const source = await read("app-builder-lib", "src", "targets", "mac", "MacTargetHelper.ts")
     expect(source).toContain("skipped macOS code signing")
-    expect(source).toContain("log.warn(")
+    expect(source).toContain('log.once("mac-signing-disabled").warn(')
+    expect(source).toContain("`mac.sign: false` / `null`")
     expect(source).toContain("macos-signing-macsign")
   })
 })

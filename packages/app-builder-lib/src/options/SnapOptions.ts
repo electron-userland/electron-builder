@@ -252,6 +252,7 @@ export interface SnapOptionsLegacy extends CommonSnapOptions {
 /**
  * Configuration for a remote snap build on [Launchpad](https://launchpad.net/).
  * Remote builds run on Canonical's infrastructure without requiring native hardware or nested virtualisation.
+ * Read only when `snapcraft.core24.buildEnvironment` is `"remote"`.
  *
  * A single remote build can target one or more architectures. Set `buildFor` to a string for one
  * arch, or to an array (e.g. `["amd64", "arm64"]`) to build several architectures in a single
@@ -260,7 +261,7 @@ export interface SnapOptionsLegacy extends CommonSnapOptions {
  * remote-build job per architecture — do not combine that with a `buildFor` array (mutually exclusive).
  *
  * Authentication is resolved in this order:
- * 1. `cscLink` config field — base64-encoded credentials or a file path
+ * 1. `snapcraft.cscLink` — base64-encoded credentials or a file path
  * 2. `SNAP_CSC_LINK` environment variable — same format as `cscLink`
  *    (CI-recommended; follows the same pattern as `WIN_CSC_LINK` for Windows code signing)
  * 3. `SNAPCRAFT_STORE_CREDENTIALS` environment variable (read directly by snapcraft)
@@ -274,11 +275,6 @@ export interface SnapOptionsLegacy extends CommonSnapOptions {
  * environment and never exposed through `process.env`.
  */
 export interface RemoteBuildOptions {
-  /**
-   * Whether to enable remote build on Launchpad. Must be set explicitly to `true` to opt in.
-   */
-  enabled: boolean
-
   /**
    * Your Launchpad username. Used to select the correct Launchpad account when more than
    * one set of credentials is available.
@@ -341,43 +337,27 @@ export interface RemoteBuildOptions {
  * bases are documented on {@link CommonSnapOptions}.
  */
 export interface SnapOptions24 extends CommonSnapOptions {
-  // ─── Build environment (mutually exclusive) ─────────────────────────────────
+  // ─── Build environment ──────────────────────────────────────────────────────
 
   /**
-   * Use [LXD](https://canonical.com/lxd) as the isolated build environment.
-   * Preferred over Multipass on most Linux CI systems where nested virtualisation is unavailable.
-   * Mutually exclusive with `useMultipass` and `useDestructiveMode`.
-   */
-  readonly useLXD?: boolean | null
-
-  /**
-   * Use [Multipass](https://multipass.run/) as the isolated build environment.
-   * Mutually exclusive with `useLXD` and `useDestructiveMode`.
-   */
-  readonly useMultipass?: boolean | null
-
-  /**
-   * Build directly on the host without an isolated VM or container (snapcraft `--destructive-mode`).
-   * Equivalent to setting `SNAPCRAFT_BUILD_ENVIRONMENT=host`.
+   * Where snapcraft builds the snap:
+   * - `"lxd"`: in an [LXD](https://canonical.com/lxd) container (`snapcraft pack --use-lxd`). Linux only; preferred on Linux CI without nested virtualisation.
+   * - `"multipass"`: in a [Multipass](https://multipass.run/) VM (`SNAPCRAFT_BUILD_ENVIRONMENT=multipass`). Linux, macOS and Windows.
+   * - `"host"`: on the build machine itself, snapcraft destructive mode (`SNAPCRAFT_BUILD_ENVIRONMENT=host`). Linux only (an Ubuntu 24.04 host for core24).
+   *   Not recommended: anything installed on the host can end up in the snap. The `gnome` extension cannot be used, so {@link extensions} defaults to `[]`.
+   * - `"remote"`: on [Launchpad](https://launchpad.net/) (`snapcraft remote-build`), configured by {@link remoteBuild}. Any platform; needs Snap Store
+   *   credentials (`snapcraft.cscLink`, `SNAP_CSC_LINK`, `SNAPCRAFT_STORE_CREDENTIALS` or a `snapcraft login` session).
    *
-   * **Not recommended for most use cases.** Destructive mode pollutes the host environment
-   * and produces builds that are difficult to reproduce — any library or tool present on the
-   * host at build time can silently end up in the snap. Prefer `useLXD` or `useMultipass`
-   * for clean, reproducible builds; use `remoteBuild` for multi-architecture CI.
-   *
-   * Valid reasons to enable this option:
-   * - Building inside a Docker container where nested virtualisation (LXD / Multipass) is
-   *   unavailable and a remote Launchpad build is not acceptable.
-   * - Running test suites in CI where the environment is already fully controlled.
-   *
-   * The `gnome` extension is incompatible with this mode enabled — do not include it in `extensions`.
+   * Unset: snapcraft's default provider (LXD on Linux); macOS and Windows need `"multipass"` or `"remote"`.
+   * One value, so a later configuration layer (`extends`, `-c.snapcraft.core24.buildEnvironment=multipass`) replaces the choice.
+   * Not the `build-environment` of a snapcraft.yaml part (environment variables).
    * @see https://snapcraft.io/docs/build-options
    */
-  readonly useDestructiveMode?: boolean | null
+  readonly buildEnvironment?: "lxd" | "multipass" | "host" | "remote" | null
 
   /**
-   * Configuration for a remote build on [Launchpad](https://launchpad.net/).
-   * Enables cross-architecture builds in CI without native hardware or nested virtualisation.
+   * [Launchpad](https://launchpad.net/) options, read only when {@link buildEnvironment} is `"remote"`, so they can stay in the configuration
+   * while another environment is selected.
    * Set `remoteBuild.buildFor: ["amd64", "arm64"]` to build several architectures in one Launchpad
    * job, or the top-level `arch: ["x64", "arm64"]` option to spawn a separate job per architecture
    * (the two are mutually exclusive).
@@ -388,9 +368,8 @@ export interface SnapOptions24 extends CommonSnapOptions {
 
   /**
    * [Snapcraft extensions](https://snapcraft.io/docs/snapcraft-extensions) to apply to the app.
-   * Defaults to `["gnome"]` in normal builds (recommended for Electron apps on Ubuntu 24.04+).
-   * Automatically set to `[]` in `useDestructiveMode` builds, where the gnome extension is
-   * incompatible. Explicitly including `"gnome"` while `useDestructiveMode` is set will throw.
+   * Defaults to `["gnome"]` (recommended for Electron apps on Ubuntu 24.04+), or to `[]` when {@link buildEnvironment} is `"host"`,
+   * where the gnome extension cannot be used (listing it there throws).
    * See: https://documentation.ubuntu.com/snapcraft/stable/reference/extensions/gnome-extension/
    */
   readonly extensions?: Array<string> | null
@@ -402,7 +381,7 @@ export interface SnapOptions24 extends CommonSnapOptions {
    * `allow-sandbox`, so the app is launched with `--no-sandbox`), plus — unless the `gnome` extension
    * supplies them — the app-level plugs `["desktop", "desktop-legacy", "home", "x11", "wayland",
    * "unity7", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]` and, for strict builds
-   * that are not host/destructive-mode, the content-snap plugs `gtk-3-themes`, `icon-themes`,
+   * that are not built on the host (`buildEnvironment: "host"`), the content-snap plugs `gtk-3-themes`, `icon-themes`,
    * `sound-themes`, `gnome-46-2404` and `gpu-2404`.
    *
    * Include `"default"` to add to that set instead of replacing it: the result is the full default

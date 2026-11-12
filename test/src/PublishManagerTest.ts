@@ -54,7 +54,7 @@ test.ifNotWindows("r2 as first publisher writes provider r2 to app-update.yml", 
 )
 
 // ── the update-manifest signing requirement, end to end ──────────────────────
-// `updateManifest: null` rather than omitting the key: assertPack defaults an ABSENT updateManifest to `false`
+// `updateManifestSigning: null` rather than omitting the key: assertPack defaults an ABSENT updateManifestSigning to `false`
 // so the fixture suites keep asserting unsigned manifests, and `null` is explicitly not an opt-out.
 // A generic provider needs no credentials, so getPublishConfigs cannot fail first and mask the real error.
 const genericPublish = { provider: "generic", url: "https://example.com/updates" } as const
@@ -80,13 +80,13 @@ test.ifNotWindows("publishing without a signing key fails with an actionable err
     expect,
     {
       targets: Platform.MAC.createTarget("zip", Arch.x64),
-      config: { updateManifest: null, publish: [genericPublish] },
+      config: { updateManifestSigning: null, publish: [genericPublish] },
     },
     { publish: "always", afterPackTestHook: async () => true },
     error => {
       expect(error.message).toContain("auto-update manifests must be signed")
       expect(error.message).toContain("electron-builder create-update-key")
-      expect(error.message).toContain("`updateManifest: false`")
+      expect(error.message).toContain("`updateManifestSigning: false`")
     }
   )
 })
@@ -98,7 +98,7 @@ test.ifNotWindows("a configured signing key embeds the derived public key into a
     expect,
     {
       targets: Platform.MAC.createTarget("zip", Arch.x64),
-      config: { updateManifest: { signingKey: privateKeyPem }, publish: [genericPublish] },
+      config: { updateManifestSigning: { signingKey: privateKeyPem }, publish: [genericPublish] },
     },
     {
       publish: "always",
@@ -121,7 +121,7 @@ test.ifNotWindows("a base64 ELECTRON_BUILDER_UPDATE_SIGN_KEY bundle embeds every
     expect,
     {
       targets: Platform.MAC.createTarget("zip", Arch.x64),
-      config: { updateManifest: null, publish: [genericPublish] },
+      config: { updateManifestSigning: null, publish: [genericPublish] },
     },
     {
       publish: "always",
@@ -134,13 +134,13 @@ test.ifNotWindows("a base64 ELECTRON_BUILDER_UPDATE_SIGN_KEY bundle embeds every
   )
 })
 
-test.ifNotWindows("updateManifest: false publishes unsigned manifests without failing", ({ expect }) => {
+test.ifNotWindows("updateManifestSigning: false publishes unsigned manifests without failing", ({ expect }) => {
   stubPublishingBuildEnv()
   return app(
     expect,
     {
       targets: Platform.MAC.createTarget("zip", Arch.x64),
-      config: { updateManifest: false, publish: [genericPublish] },
+      config: { updateManifestSigning: false, publish: [genericPublish] },
     },
     {
       publish: "always",

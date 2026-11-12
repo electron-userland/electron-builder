@@ -186,7 +186,10 @@ describe("mac.notarize: true without forceCodeSigning", () => {
   test("is not required at build start when the configuration turns signing of the app off, unless a pkg is built", ({ expect }) => {
     for (const macConfig of [
       { notarize: true, sign: null },
+      { notarize: true, sign: false },
       { notarize: true, sign: { identity: null } },
+      // sign() checks identity: null before it looks for a custom signer, which it then does not call
+      { notarize: true, sign: { sign: vi.fn(), identity: null } },
     ]) {
       const packager = makeMacPackager(macConfig, false)
       expect(() => preflight(packager, "dmg"), JSON.stringify(macConfig)).not.toThrow()
@@ -199,7 +202,10 @@ describe("mac.notarize: true without forceCodeSigning", () => {
     vi.stubEnv("CSC_NAME", undefined)
     expect(() => preflight(makeMacPackager({ notarize: true }, false), "dmg")).not.toThrow()
     expect(() => preflight(makeMacPackager({ notarize: true, sign: { identity: "Foo Inc (TEAM123456)" } }, false), "dmg")).toThrow("mac.notarize is true")
-    expect(() => preflight(makeMacPackager({ notarize: true, sign: vi.fn() }, false), "dmg")).toThrow("mac.notarize is true")
+    expect(() => preflight(makeMacPackager({ notarize: true, sign: { sign: vi.fn() } }, false), "dmg")).toThrow("mac.notarize is true")
+    expect(() => preflight(makeMacPackager({ notarize: true, sign: { sign: "./customSign.js" } }, false), "dmg")).toThrow("mac.notarize is true")
+    // sign.sign: null removes a signer, so there is none here
+    expect(() => preflight(makeMacPackager({ notarize: true, sign: { sign: null } }, false), "dmg")).not.toThrow()
     vi.stubEnv("CSC_NAME", "Foo Inc (TEAM123456)")
     expect(() => preflight(makeMacPackager({ notarize: true }, false), "dmg")).toThrow("mac.notarize is true")
   })
@@ -263,24 +269,54 @@ describe("MacPackager.sign under forceCodeSigning", () => {
     vi.stubEnv("CSC_FOR_PULL_REQUEST", "true")
     vi.spyOn(log, "warn").mockImplementation(() => undefined)
     // past the pull-request check, `sign: null` is the existing configuration error
-    await expect(sign(makeMacPackager({ sign: null }))).rejects.toThrow("identity explicitly is set to null, but forceCodeSigning is set to true")
+    await expect(sign(makeMacPackager({ sign: null }))).rejects.toThrow(
+      "signing is turned off (`sign` is false or null, or `sign.identity` is null), but forceCodeSigning is set to true"
+    )
+  })
+
+  test("sign: false skips signing, without calling a signer, and contradicts forceCodeSigning", async ({ expect }) => {
+    vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    const packager = makeMacPackager({ sign: false }, false)
+    packager.helper.buildSignOptions = vi.fn(() => Promise.resolve({ app: "/out/mac/My.app" }))
+    packager.doSign = vi.fn(() => Promise.resolve())
+    await expect(sign(packager)).resolves.toBe("skipped:disabled")
+    expect(packager.doSign).not.toHaveBeenCalled()
+
+    const error = await errorOf(sign(makeMacPackager({ sign: false })))
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toContain("signing is turned off (`sign` is false or null, or `sign.identity` is null), but forceCodeSigning is set to true")
+    expect(error.message).toContain("v27-config-changes#macos-signing-macsign")
+  })
+
+  test("a custom signer in sign.sign is called with the options built from the sign object around it", async ({ expect }) => {
+    const identity = { name: "Developer ID Application: Foo (TEAM123456)", hash: "0123456789ABCDEF0123456789ABCDEF01234567" }
+    vi.mocked(findIdentity).mockResolvedValue(identity)
+    const customSign = vi.fn()
+    const signConfig = { sign: customSign, provisioningProfile: "embedded.provisionprofile", entitlements: "e.plist" }
+    const packager = makeMacPackager({ sign: signConfig, notarize: false }, false)
+    packager.helper.buildSignOptions = vi.fn(() => Promise.resolve({ app: "/out/mac/My.app" }))
+    packager.doSign = vi.fn(() => Promise.resolve())
+
+    await expect(sign(packager)).resolves.toBe("signed:custom")
+    expect(packager.helper.buildSignOptions).toHaveBeenCalledWith("/out/mac/My.app", identity, signConfig, null, Arch.x64, "mac", true)
+    expect(packager.doSign).toHaveBeenCalledWith({ app: "/out/mac/My.app" }, signConfig, identity)
   })
 
   test("a custom signer without a keychain identity is called, and its signature is verified", async ({ expect }) => {
     vi.spyOn(log, "warn").mockImplementation(() => undefined)
     const customSign = vi.fn()
-    const packager = makeMacPackager({ sign: customSign, notarize: false })
+    const packager = makeMacPackager({ sign: { sign: customSign }, notarize: false })
     packager.helper.buildSignOptions = vi.fn(() => Promise.resolve({ app: "/out/mac/My.app" }))
     packager.doSign = vi.fn(() => Promise.resolve())
 
     await expect(sign(packager)).resolves.toBe("signed:custom")
-    expect(packager.doSign).toHaveBeenCalledWith({ app: "/out/mac/My.app" }, customSign, null)
+    expect(packager.doSign).toHaveBeenCalledWith({ app: "/out/mac/My.app" }, { sign: customSign }, null)
     expect(verifyMacCodeSignature).toHaveBeenCalledWith("/out/mac/My.app", { deep: true })
   })
 
   test("fails when the custom signer leaves the app without a valid signature", async ({ expect }) => {
     vi.mocked(verifyMacCodeSignature).mockResolvedValue("code object is not signed at all")
-    const packager = makeMacPackager({ sign: vi.fn(), notarize: false })
+    const packager = makeMacPackager({ sign: { sign: vi.fn() }, notarize: false })
     packager.helper.buildSignOptions = vi.fn(() => Promise.resolve({ app: "/out/mac/My.app" }))
     packager.doSign = vi.fn(() => Promise.resolve())
 
@@ -288,36 +324,52 @@ describe("MacPackager.sign under forceCodeSigning", () => {
     expect(error).toBeInstanceOf(InvalidConfigurationError)
     expect(error.code).toBe("ERR_ELECTRON_BUILDER_VERIFICATION_FAILED")
     expect(error.message).toMatch(
-      /the custom mac\.sign signer left .*My\.app without a valid code signature \(codesign --verify --deep --strict: code object is not signed at all\)/
+      /the custom mac\.sign\.sign signer left .*My\.app without a valid code signature \(codesign --verify --deep --strict: code object is not signed at all\)/
     )
   })
 
   test("without forceCodeSigning, a custom signer without a keychain identity is called too, saying so, and its output is not verified", async ({ expect }) => {
     const info = vi.spyOn(log, "info").mockImplementation(() => undefined)
     const customSign = vi.fn()
-    const packager = makeMacPackager({ sign: customSign, notarize: false }, false)
+    const packager = makeMacPackager({ sign: { sign: customSign }, notarize: false }, false)
     packager.helper.buildSignOptions = vi.fn(() => Promise.resolve({ app: "/out/mac/My.app" }))
     packager.doSign = vi.fn(() => Promise.resolve())
     await expect(sign(packager)).resolves.toBe("signed:custom")
-    expect(packager.doSign).toHaveBeenCalledWith({ app: "/out/mac/My.app" }, customSign, null)
-    expect(info).toHaveBeenCalledWith(expect.objectContaining({ reason: "no keychain identity was found" }), "calling the custom mac.sign signer without an identity")
+    expect(packager.doSign).toHaveBeenCalledWith({ app: "/out/mac/My.app" }, { sign: customSign }, null)
+    expect(info).toHaveBeenCalledWith(expect.objectContaining({ reason: "no keychain identity was found" }), "calling the custom mac.sign.sign signer without an identity")
     expect(verifyMacCodeSignature).not.toHaveBeenCalled()
+  })
+
+  test("a custom signer module path in sign.sign is called without a keychain identity too, and under forceCodeSigning its output is verified", async ({ expect }) => {
+    vi.spyOn(log, "info").mockImplementation(() => undefined)
+    vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    for (const forceCodeSigning of [false, true]) {
+      vi.mocked(verifyMacCodeSignature).mockClear()
+      const signConfig = { sign: "./customSign.js" }
+      const packager = makeMacPackager({ sign: signConfig, notarize: false }, forceCodeSigning)
+      packager.helper.buildSignOptions = vi.fn(() => Promise.resolve({ app: "/out/mac/My.app" }))
+      packager.doSign = vi.fn(() => Promise.resolve())
+      await expect(sign(packager)).resolves.toBe("signed:custom")
+      expect(packager.helper.buildSignOptions).toHaveBeenCalledWith("/out/mac/My.app", null, signConfig, null, Arch.x64, "mac", true)
+      expect(packager.doSign).toHaveBeenCalledWith({ app: "/out/mac/My.app" }, signConfig, null)
+      expect(vi.mocked(verifyMacCodeSignature).mock.calls).toEqual(forceCodeSigning ? [["/out/mac/My.app", { deep: true }]] : [])
+    }
   })
 
   test("without forceCodeSigning, a mas-dev app, which builds no installer, is signed by a custom signer without a keychain identity", async ({ expect }) => {
     vi.spyOn(log, "info").mockImplementation(() => undefined)
     const customSign = vi.fn()
-    const packager = makeMacPackager({ sign: customSign }, false)
+    const packager = makeMacPackager({ sign: { sign: customSign } }, false)
     packager.forceCodeSigningFor = () => false
     packager.helper.buildSignOptions = vi.fn(() => Promise.resolve({ app: "/out/mas-dev/My.app" }))
     packager.doSign = vi.fn(() => Promise.resolve())
     await expect(packager.sign("/out/mas-dev/My.app", Arch.x64, "mas-dev")).resolves.toBe("signed:custom")
-    expect(packager.doSign).toHaveBeenCalledWith({ app: "/out/mas-dev/My.app" }, customSign, null)
+    expect(packager.doSign).toHaveBeenCalledWith({ app: "/out/mas-dev/My.app" }, { sign: customSign }, null)
   })
 
   test("without forceCodeSigning, a MAS app is not signed by a custom signer without a keychain identity, which warns", async ({ expect }) => {
     const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
-    const packager = makeMacPackager({ sign: vi.fn() }, false)
+    const packager = makeMacPackager({ sign: { sign: vi.fn() } }, false)
     packager.forceCodeSigningFor = () => false
     packager.doSign = vi.fn(() => Promise.resolve())
     await expect(packager.sign("/out/mas/My.app", Arch.x64, "mas")).resolves.toBe("skipped:no-certificate")
@@ -368,6 +420,26 @@ describe("forceCodeSigning of the Mac App Store flavors", () => {
     expect((await errorOf(signFlavor(packagerWith({ masDev: { forceCodeSigning: true } }), "mas-dev"))).message).toContain("-c.masDev.forceCodeSigning=false")
     // mas: false turns off what mac enables, for the MAS app only
     await expect(signFlavor(packagerWith({ mas: { forceCodeSigning: false } }, { forceCodeSigning: true }), "mas")).resolves.toBe("skipped:unsupported")
+  })
+
+  test("the mac custom signer signs the MAS app with the merged mas sign options, as in v26, unless mas.sign.sign is null", async ({ expect }) => {
+    vi.mocked(findIdentity).mockResolvedValue({ name: "Apple Distribution: Foo (TEAM123456)", hash: "ABC" })
+    const customSign = vi.fn()
+    const signWith = async (root: any) => {
+      const packager = packagerWith(root, { sign: { sign: customSign } })
+      packager.helper.buildSignOptions = vi.fn(() => Promise.resolve({ app: "/out/mas/My.app" }))
+      packager.doSign = vi.fn(() => Promise.resolve())
+      packager.helper.warnAboutForeignSignedBinaries = vi.fn(() => Promise.resolve())
+      return { packager, result: await signFlavor(packager, "mas") }
+    }
+
+    const inherited = await signWith({ mas: { sign: { identity: "Foo (TEAM123456)" } } })
+    expect(inherited.result).toBe("signed:custom")
+    expect(inherited.packager.helper.buildSignOptions.mock.calls[0][2]).toEqual({ sign: customSign, identity: "Foo (TEAM123456)" })
+
+    const removed = await signWith({ mas: { sign: { sign: null, identity: "Foo (TEAM123456)" } } })
+    expect(removed.result).toBe("signed")
+    expect(removed.packager.helper.buildSignOptions.mock.calls[0][2]).toEqual({ sign: null, identity: "Foo (TEAM123456)" })
   })
 
   test("the build-start preflight checks the flavors that are built, each with its own value", ({ expect }) => {

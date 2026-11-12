@@ -52,7 +52,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
   }
 
   private isHostMode(): boolean {
-    return this.options.useDestructiveMode === true
+    return this.options.buildEnvironment === "host"
   }
 
   /** Writes the snapcraft.yaml, stages app files, then invokes `buildSnap()` to run the actual snapcraft build. */
@@ -151,15 +151,12 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       log.warn({ error: e.message }, "failed to generate and update organize mapping")
     }
 
-    const buildMode = {
-      useLXD: this.options.useLXD === true,
-      useMultipass: this.options.useMultipass === true,
-      useDestructiveMode: this.options.useDestructiveMode === true,
-      remoteBuild: this.options.remoteBuild || undefined,
-    }
+    // the Launchpad options are read only for a remote build
+    const { buildEnvironment } = this.options
+    const remoteBuild = buildEnvironment === "remote" ? (this.options.remoteBuild ?? {}) : undefined
 
     if (this.packager.packagerOptions.effectiveOptionComputed != null) {
-      const shouldSkip = await this.packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile: desktopFilePath, ...buildMode })
+      const shouldSkip = await this.packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile: desktopFilePath, buildEnvironment, remoteBuild })
       if (shouldSkip) {
         return [artifactPath]
       }
@@ -172,7 +169,8 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       stageDir,
       packager: this.packager,
       cscLink: rootOptions?.cscLink,
-      ...buildMode,
+      buildEnvironment,
+      remoteBuild,
     })
     return snaps
   }
@@ -183,20 +181,19 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     const appName = this.packager.executableName.toLowerCase()
     const options = this.options
 
-    // Default to ["gnome"] in normal builds; no extensions in host/destructive-mode (where the
-    // gnome extension is incompatible). Throw if the user explicitly includes "gnome" in host mode.
+    // Default to ["gnome"] in normal builds; no extensions in a host build (snapcraft.core24.buildEnvironment: "host"), where the
+    // gnome extension is incompatible. Throw if the user explicitly includes "gnome" in host mode.
     const hostMode = this.isHostMode()
     const extensionsList: string[] = options.extensions != null ? [...options.extensions] : hostMode ? [] : ["gnome"]
     if (hostMode && extensionsList.includes("gnome")) {
       throw new InvalidConfigurationError(
-        `The "gnome" snapcraft extension is incompatible with host/destructive-mode builds.\n` +
+        `The "gnome" snapcraft extension is incompatible with a host build (snapcraft.core24.buildEnvironment: "host").\n` +
           `In this mode snapcraft cannot resolve the extension's command-chain source ` +
           `(/usr/share/snapcraft/extensions/desktop/command-chain) and will fail.\n\n` +
           `To resolve this, choose one of:\n` +
           `  1. Remove "gnome" from snapcraft.core24.extensions (or set it to []) and add any\n` +
           `     required stage-packages manually.\n` +
-          `  2. Switch to an isolated build environment by setting snapcraft.core24.useLXD: true\n` +
-          `     or snapcraft.core24.useMultipass: true instead of useDestructiveMode.\n\n` +
+          `  2. Switch to an isolated build environment: set snapcraft.core24.buildEnvironment to "lxd" or "multipass".\n\n` +
           `See: https://documentation.ubuntu.com/snapcraft/stable/reference/extensions/gnome-extension/`
       )
     }
@@ -329,7 +326,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       assumes: this.normalizeAssumesList(options.assumes),
 
       // Environment
-      environment: this.buildEnvironment(options),
+      environment: this.runtimeEnvironment(options),
 
       // Layout (see resolveLayout for the per-build-flavor rules)
       layout: this.resolveLayout(options, isClassic, hostMode, useGnomeExtension),
@@ -370,9 +367,9 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
   }
 
   /**
-   * Build environment variables with proper defaults
+   * The snap's runtime environment variables (`environment` in snapcraft.yaml), with proper defaults
    */
-  private buildEnvironment(options: SnapOptions24): Record<string, string | null> | undefined {
+  private runtimeEnvironment(options: SnapOptions24): Record<string, string | null> | undefined {
     const env: Record<string, string | null> = {}
 
     // Add default TMPDIR for Electron/Chromium apps

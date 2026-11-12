@@ -383,15 +383,15 @@ test("a manifest signed under a target-level publish ships with app-update.yml c
   expect(appUpdate).not.toContain("updateManifestPublicKey")
 })
 
-// ── signing key outside an explicit updateManifest.publicKey trust list ──────────────────────────────────────
+// ── signing key outside an explicit updateManifestSigning.publicKey trust list ──────────────────────────────────────
 
-const outsideTrustListWarning = "none of the update-manifest signing keys is in updateManifest.publicKey"
+const outsideTrustListWarning = "none of the update-manifest signing keys is in updateManifestSigning.publicKey"
 
-function makeTrustListPackager(signingKeyPem: string, updateManifest: any) {
+function makeTrustListPackager(signingKeyPem: string, updateManifestSigning: any) {
   const keys = [parsePrivateKey(signingKeyPem)]
   return {
     ...makePlatformPackager({ provider: "generic", url: "https://example.com/updates" }, () => Promise.resolve(keys)),
-    updateManifestOptions: updateManifest,
+    updateManifestOptions: updateManifestSigning,
     updateSigningKeys: { value: Promise.resolve(keys) },
     getResourcesDir: (dir: string) => path.join(dir, "resources"),
   }
@@ -404,7 +404,7 @@ function spyOutsideTrustListWarnings() {
   return { warn, count: () => warn.mock.calls.filter(c => String(c[1] ?? c[0]).includes(outsideTrustListWarning)).length }
 }
 
-test("build-start preflight: a publishing build signed by a key outside updateManifest.publicKey fails before anything is packed", async ({ expect }) => {
+test("build-start preflight: a publishing build signed by a key outside updateManifestSigning.publicKey fails before anything is packed", async ({ expect }) => {
   const { targetsCreated, scheduleUpload } = createManager()
   const signing = generateUpdateSigningKeypair()
   const trusted = generateUpdateSigningKeypair()
@@ -419,7 +419,7 @@ test("build-start preflight: a publishing build signed by a key outside updateMa
   // names both sides by key id, says how to proceed, and links the migration note
   expect(message).toContain(computeUpdateManifestKeyId(signing.publicKeyPem))
   expect(message).toContain(computeUpdateManifestKeyId(trusted.publicKeyPem))
-  expect(message).toContain("updateManifest.allowSigningKeyOutsideTrustList: true")
+  expect(message).toContain("updateManifestSigning.allowSigningKeyOutsideTrustList: true")
   expect(message).toContain("https://www.electron.build/docs/migration/v27-build-changes#signing-key-must-be-in-updatemanifestpublickey")
   // never key material
   expect(message).not.toContain("-----BEGIN")
@@ -448,7 +448,7 @@ test("allowSigningKeyOutsideTrustList: a deliberate cutover release publishes an
   }
 })
 
-test("a build without a publish policy only warns about a signing key outside updateManifest.publicKey", async ({ expect, tmpDir }) => {
+test("a build without a publish policy only warns about a signing key outside updateManifestSigning.publicKey", async ({ expect, tmpDir }) => {
   const { warn, count } = spyOutsideTrustListWarnings()
   try {
     const packager = makeTrustListPackager(generateUpdateSigningKeypair().privateKeyPem, { publicKey: generateUpdateSigningKeypair().publicKeyPem })
@@ -459,7 +459,7 @@ test("a build without a publish policy only warns about a signing key outside up
   }
 })
 
-test("a signing key in updateManifest.publicKey, or no publicKey at all, neither fails nor warns", async ({ expect, tmpDir }) => {
+test("a signing key in updateManifestSigning.publicKey, or no publicKey at all, neither fails nor warns", async ({ expect, tmpDir }) => {
   const { warn, count } = spyOutsideTrustListWarnings()
   try {
     const current = generateUpdateSigningKeypair()
@@ -528,11 +528,11 @@ test("build-start preflight: forceCodeSigning needs no key when the planned targ
   expect(forced.requireUpdateSigningKeys).not.toHaveBeenCalled()
 })
 
-test("build-start preflight: forceCodeSigning fails a build that does not publish when the signing key is outside updateManifest.publicKey", async ({ expect }) => {
+test("build-start preflight: forceCodeSigning fails a build that does not publish when the signing key is outside updateManifestSigning.publicKey", async ({ expect }) => {
   const { targetsCreated } = createManager("never")
   const packager: any = makeTrustListPackager(generateUpdateSigningKeypair().privateKeyPem, { publicKey: generateUpdateSigningKeypair().publicKeyPem })
   packager.forceCodeSigning = true
   await expect(targetsCreated([{ packager, arch: Arch.x64, targets: [makeTarget("nsis", true)] }])).rejects.toThrow(
-    /none of the update-manifest signing keys \(key id\(s\) .*\) is in updateManifest\.publicKey/
+    /none of the update-manifest signing keys \(key id\(s\) .*\) is in updateManifestSigning\.publicKey/
   )
 })

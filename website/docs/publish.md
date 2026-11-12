@@ -2,7 +2,7 @@
 
 The [publish](./configuration.md#publish) key contains a set of options instructing electron-builder on how it should publish artifacts and build update info files for [auto update](./features/auto-update.md).
 
-`String | Object | Array<Object | String>` where `Object` it is [Keygen](#keygen), [Generic Server](#byo-generic-create-your-own), [GitHub](#github), [S3](#s3), [Spaces](#spaces), [R2](#r2) or [Snap Store](#snap-store) options. Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](./configuration.md) or any platform- ([mac](mac.md), [linux](linux.md), [win](win.md)) or target- (e.g. [nsis](nsis.md)) specific configuration.
+`String | Object | Array<Object | String>` where `Object` it is [Keygen](#keygen), [Generic Server](#byo-generic-create-your-own), [GitHub](#github), [S3](#s3), [Spaces](#spaces), [R2](#r2) or [Snap Store](#snap-store) options. Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](./configuration.md) or any platform- ([mac](mac.md), [linux](linux.md), [win](win.md)) or target- (e.g. [nsis](nsis.md)) specific configuration. The most specific level that sets `publish` is used as a whole: a target-level value replaces the platform-level one (and `nsisWeb.publish` replaces `nsis.publish`), which replaces the top-level one; they are never merged. The snap is the exception: a `snapcraft.publish` that names a `snapStore` provider sends the snap only to the first one, and a `snapcraft.publish` without one is used as a whole (`[]` uploads the snap nowhere); with `snapcraft.publish` unset or `null`, the snap goes only to the first `snapStore` provider of `linux.publish`, else of the top-level `publish`, else to the Snap Store with the default options (see [Publishing to the Snap Store](./snap.md#publishing-to-the-snap-store)).
 
 Note that when using a generic server, you have to upload the built application and metadata files yourself.
 
@@ -29,7 +29,7 @@ Explicitly specify your publish intent with the `--publish` CLI flag (e.g. `--pu
 :::
 
 :::info[Snap store]
-`snap` target by default publishes to the Snap Store (the app store for Linux). To force publishing to another provider, explicitly specify publish configuration for the snap in `snapcraft.publish`.
+`snap` target by default publishes to the Snap Store (the app store for Linux). To force publishing to another provider, explicitly specify publish configuration for the snap in `snapcraft.publish` (a `snapcraft.publish` without a `snapStore` provider replaces `linux.publish` for the snap).
 :::
 
 You can publish to multiple providers. For example, to publish Windows artifacts to both GitHub and Bitbucket (order is important — first item will be used as a default auto-update server, so in this example the app will use GitHub as the auto-update provider):
@@ -58,7 +58,7 @@ win:
 
 The auto-update feed an installed app polls is the **first** provider written to `app-update.yml` inside the packaged app. One packaged app (for example `win-unpacked`, `linux-unpacked` or the `.app` bundle) holds a single `app-update.yml`, shared by every target built from it. Every option of that provider except `awsCredentials` is written to it in plain text, together with the fields electron-builder computes (`updaterCacheDirName`, the update-manifest trust list `updateManifestPublicKey`, and on Windows `publisherName` or `verifyUpdateCodeSignature: false`; see `AppUpdateConfiguration`), so never put a token in the `publish` configuration: use `private: true` with a `GH_TOKEN` provided at runtime, or a per-user token passed to `setFeedURL` — a token hard-coded in the app's code is just as easy to extract (see [Private GitHub Update Repo](./features/auto-update.md#private-github-update-repo)). The feed is resolved like this:
 
-1. The targets of that app that write update info — NSIS/NSIS web installer, AppX with `electronUpdaterAware`, macOS dmg/zip, AppImage, deb/rpm/pacman — each resolve their own `publish`: the target-level value (e.g. `nsis.publish`) first, then the platform level (`win.publish`), then the top level.
+1. The targets of that app that write update info — NSIS/NSIS web installer, AppX with `electronUpdaterAware`, macOS dmg/zip, AppImage, deb/rpm/pacman — each resolve their own `publish`: the target-level value (e.g. `nsis.publish`; for the web installer `nsisWeb.publish`, then `nsis.publish`) first, then the platform level (`win.publish`), then the top level; the first level that sets it is used as a whole and never merged with the next.
 2. If one or more of them emit a manifest under those settings, their first provider that receives the manifest becomes the feed — a provider with `publishAutoUpdate: false` gets no `latest*.yml`, so it is skipped (with `publish: [{ provider: "s3", …, publishAutoUpdate: false }, "github"]` the feed is GitHub). They must agree: two such targets whose first providers differ (for example `nsis.publish` pointing at S3 while an AppX inherits `win.publish: github`, or `dmg.publish` differing from `zip.publish`) would leave some installs polling a feed that never receives their manifest. A publishing build then fails at build start with an `InvalidConfigurationError`; a build without a publish policy logs a warning that publishing will fail, and writes no `app-update.yml` for that app. Configure `publish` once at the platform level, or give the targets the same first provider (later providers may differ). Only what decides the feed is compared — the provider and options such as `url`, `bucket`, `region`, `path`, `owner`, `repo` or `channel`; options that only affect the upload (`publishAutoUpdate`, `timeout`, and for S3-compatible providers `acl`, `storageClass`, `encryption`) may differ.
 3. If none of them emits a manifest — only non-updating targets such as snap or portable, or a target with `publish: null` or `publishAutoUpdate: false` on every provider — the platform/top-level `publish` is used, as before.
 4. If no level configures `publish` at all, the feed falls back to GitHub when the `repository` field points there (see [GitHub Repository](#github-repository-and-bintray-package)).
@@ -190,12 +190,17 @@ If your CI sets `BITBUCKET_TOKEN` to an app password / API token **without** a u
 ## Github
 
 :::note[v27: tagNamePrefix replaces vPrefixedTagName]
-The GitHub `vPrefixedTagName` boolean was removed — use `tagNamePrefix` to control the tag prefix (defaults to `"v"`; set `tagNamePrefix: ""` for no prefix). `electron-builder migrate-schema` rewrites it. Note that v26 ignored an empty `tagNamePrefix` and still tagged `v<version>`; v27 honors it, so the migrator rewrites a v26 `tagNamePrefix: ""` to `"v"` (with a warning) to keep your existing tag names. (On **GitLab**, `vPrefixedTagName` is unchanged and still works.)
+The GitHub `vPrefixedTagName` boolean was removed — use `tagNamePrefix` to control the tag prefix (defaults to `"v"`; set `tagNamePrefix: ""` for no prefix). `electron-builder migrate-schema` rewrites it. Note that v26 ignored an empty `tagNamePrefix` and still tagged `v<version>`; v27 honors it, so the migrator rewrites a v26 `tagNamePrefix: ""` to `"v"` (with a warning) to keep your existing tag names.
 :::
 
   {!./builder-util-runtime.Interface.GithubOptions.md!}
 
 ## GitLab
+
+:::note[v27: tagNamePrefix replaces vPrefixedTagName]
+The GitLab `vPrefixedTagName` boolean was removed — use `tagNamePrefix`, as on GitHub (defaults to `"v"`; set `tagNamePrefix: ""` for no prefix). A release without `releaseInfo.releaseName` is named after its tag. `electron-builder migrate-schema` rewrites it. With `uploadTarget: "project_upload"`, a prefix other than `"v"` or `""` makes electron-updater download updates in full instead of differentially: it cannot look up the installed version's release. See [v27 Config Changes](./migration/v27-config-changes.md#githuboptions-gitlaboptions-vprefixedtagname).
+:::
+
   {!./builder-util-runtime.Interface.GitlabOptions.md!}
 
 ## Keygen

@@ -43,7 +43,7 @@ export class WebInstallerTarget extends NsisTarget {
 
 /**
  * Sets the web installer's `APP_PACKAGE_URL` define. An explicit `nsisWeb.appPackageUrl` is used verbatim; otherwise the base
- * URL of the first publish configuration (`nsisWeb.publish` → `win.publish` → `publish`) is used and `APP_PACKAGE_URL_IS_INCOMPLETE`
+ * URL of the first publish configuration (`nsisWeb.publish`, else `nsis.publish`, then `win.publish`, then `publish`) is used and `APP_PACKAGE_URL_IS_INCOMPLETE`
  * is defined so the NSIS script appends the arch-specific package file name at install time. Also sets `ALLOW_UNVERIFIED_APP_PACKAGE`
  * for `nsisWeb.allowUnverifiedAppPackage`.
  * @internal exported for tests

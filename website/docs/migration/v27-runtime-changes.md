@@ -63,7 +63,7 @@ A web update cached by a previous launch, or pending an install on next launch, 
 
 A local package — passed via `--package-file` (electron-updater does this for updates) or found next to the installer — is first copied into the installer's own temporary directory, and the installer verifies and installs that copy. The local package file is now left in place (the installer's copy is moved into the app's update cache instead; electron-updater removes the package it passed from its `pending` directory once the updated app starts), and a `--package-file` package that cannot be copied aborts the installation (exit code `2`), also before the installed version is removed; a package next to the installer that cannot be copied is ignored and downloaded instead, as when its checksum doesn't match.
 
-Because the manifest vouches for the web package, don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](../features/signed-update-manifests.md) cover its path, SHA-512 and size.
+Because the manifest vouches for the web package, don't set `updateManifestSigning: false` for `nsis-web` apps: [signed update manifests](../features/signed-update-manifests.md) cover its path, SHA-512 and size.
 
 **Action:** if you publish and rely on an NSIS web installer and your installs lack the marker, or you are switching from `nsis` to `nsis-web`, opt in by setting `disableWebInstaller: false` in your main process:
 

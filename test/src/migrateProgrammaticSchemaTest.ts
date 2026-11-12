@@ -2,17 +2,26 @@ import { MAS_CERTIFICATE_WARNING } from "app-builder-lib/internal"
 import * as vm from "node:vm"
 import { describe, expect, test } from "vitest"
 import {
+  core24BuildEnvironmentKeptWarning,
+  core24BuildSwitchesConflictWarning,
+  core24BuildSwitchesUnreadWarning,
   FEED_QUERY_ADVISORY,
+  gitlabTagNamePrefixKeptWarning,
   INCLUDE_PDB_CHANGES,
   INSECURE_FEED_ADVISORY,
   includePdbManualStep,
   MAC_ENTITLEMENTS_ADVISORY,
+  macSignerOverMasOptionsWarning,
+  macSignerOverOptionsWarning,
+  macSignOptOutNextToOptionsWarning,
   migrateConfig,
   NSIS_PER_MACHINE_UPDATE_ADVISORY,
   NSIS_WEB_ADVISORY,
   pdbFilesPatternsAdvisory,
   PORTABLE_DEBUG_LOGGING_DROPPED,
   snapNextToSnapcraftWarning,
+  TARGET_PUBLISH_REPLACES_ADVISORY,
+  updateManifestBothSetWarning,
   WIN_MISSING_PUBLISHER_NAME_ADVISORY,
   WIN_PUBLISHER_NAME_DN_ADVISORY,
   WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
@@ -642,15 +651,26 @@ describe("migrateProgrammaticSource — per-rule coverage (CJS, drift-checked vs
     macSign: `module.exports = { mac: { identity: "Dev", hardenedRuntime: true, signIgnore: "foo" } }\n`,
     macUniversal: `module.exports = { mac: { mergeASARs: true, x64ArchFiles: "*" } }\n`,
     macSignNull: `module.exports = { mac: { sign: null, identity: "Dev" } }\n`,
+    macSignerString: `module.exports = { mac: { sign: "./customSign.js" } }\n`,
+    macSignerWithFlatFields: `module.exports = { mac: { sign: "./customSign.js", identity: "X", hardenedRuntime: true, signIgnore: ["a"], type: null } }\n`,
+    masSignNullUnderMacSigner: `module.exports = { mac: { sign: "./a.js" }, mas: { sign: null, provisioningProfile: "p" }, masDev: { sign: null } }\n`,
+    // the merge skips a null mas, so the mac signer still reaches masDev
+    masDevSignNullAfterNullMas: `module.exports = { mac: { sign: "./a.js" }, mas: null, masDev: { sign: null } }\n`,
+    masSignerOverMacOptions: `module.exports = { mac: { sign: { identity: "X" } }, mas: { sign: "./b.js", entitlements: "e.plist" } }\n`,
+    macSignIdentityValidation: `module.exports = { mac: { sign: { sign: "./s.js", identityValidation: true } }, mas: { sign: { identityValidation: false } } }\n`,
     winSigntool: `module.exports = { win: { signtoolOptions: { certificateFile: "c.pfx", publisherName: "Me" } } }\n`,
     winAzure: `module.exports = { win: { azureSignOptions: { endpoint: "https://x", customField: "v" } } }\n`,
     snapBase: `module.exports = { snap: { base: "core22", confinement: "strict" } }\n`,
     snapNoBase: `module.exports = { snap: { confinement: "strict" } }\n`,
     publishGithub: `module.exports = { publish: [{ provider: "github", vPrefixedTagName: false }] }\n`,
     publishGithubGitlab: `module.exports = { publish: [{ provider: "github", vPrefixedTagName: false }, { provider: "gitlab", vPrefixedTagName: false }] }\n`,
+    // values v26 coerced: "false", 0 and null read as false, 1 as true
+    publishGitlabCoerced: `module.exports = { publish: [{ provider: "gitlab", vPrefixedTagName: "false" }, { provider: "gitlab", vPrefixedTagName: null }, { provider: "gitlab", vPrefixedTagName: 1 }] }\n`,
+    publishGithubCoerced: `module.exports = { publish: [{ provider: "github", vPrefixedTagName: "false" }, { provider: "github", vPrefixedTagName: 0 }, { provider: "github", vPrefixedTagName: null }] }\n`,
     electronDownload: `module.exports = { electronDownload: { mirror: "https://m", isVerifyChecksum: false, cache: "/tmp" } }\n`,
     electronDownloadForce: `module.exports = { electronDownload: { force: true, mirrorOptions: { mirror: "https://m" } } }\n`,
     electronGetLegacy: `module.exports = { electronGet: { mirror: "https://m", isVerifyChecksum: false } }\n`,
+    updateManifestSigning: `module.exports = { updateManifest: false, mac: { updateManifest: { signingKeyFile: "k.pem", publicKey: ["A", "B"] } }, win: { updateManifest: null }, linux: { "updateManifest": { allowSigningKeyOutsideTrustList: true } }, mas: { updateManifest: false } }\n`,
     platformAsarUnpack: `module.exports = { mac: { asarUnpack: ["**/*.node"] }, win: { asar: true, asarUnpack: "x.dll" }, masDev: { asar: { smartUnpack: false }, asarUnpack: "y" } }\n`,
     platformAsarDisabled: `module.exports = { linux: { asar: false, asarUnpack: "x" }, win: { asarUnpack: "y" }, asar: false }\n`,
     rootAsarFalse: `module.exports = { asar: false, asarUnpack: "x", disableSanityCheckAsar: true }\n`,
@@ -663,6 +683,15 @@ describe("migrateProgrammaticSource — per-rule coverage (CJS, drift-checked vs
     publishTagPrefixEmpty: `module.exports = { publish: [{ provider: "github", tagNamePrefix: "" }, { provider: "github", tagNamePrefix: "", vPrefixedTagName: false }] }\n`,
     publishInTargetSection: `module.exports = { nsis: { publish: { provider: "github", vPrefixedTagName: false } }, dmg: { publish: [{ provider: "github", vPrefixedTagName: true }] } }\n`,
     snapCore24: `module.exports = { snap: { base: "core24", allowNativeWayland: true, grade: "stable" } }\n`,
+    snapCore24BuildSwitch: `module.exports = { snapcraft: { base: "core24", core24: { useMultipass: false, useLXD: true, grade: "stable" } } }\n`,
+    snapCore24Remote: `module.exports = { snapcraft: { base: "core24", core24: { grade: "stable", remoteBuild: { enabled: true, buildFor: ["amd64", "arm64"] } } } }\n`,
+    snapCore24RemoteOnly: `module.exports = { snapcraft: { base: "core24", core24: { remoteBuild: { enabled: true }, grade: "stable" } } }\n`,
+    snapCore24Off: `module.exports = { snapcraft: { base: "core24", core24: { useDestructiveMode: null, remoteBuild: { enabled: false }, useLXD: false } } }\n`,
+    snapCore24OffRemoteKept: `module.exports = { snapcraft: { base: "core24", core24: { remoteBuild: { buildFor: "arm64", enabled: false }, useLXD: true } } }\n`,
+    snapCore24KeepsBuildEnvironment: `module.exports = { snapcraft: { base: "core24", core24: { buildEnvironment: "multipass", useLXD: true } } }\n`,
+    // three rules edit one core24 (the never-read publish, the synopsis without effect, the build switch): their edits must not overlap
+    snapCore24WithStep2Keys: `module.exports = { snapcraft: { base: "core24", core24: { publish: "github", synopsis: "s", useLXD: true } } }\n`,
+    snapCore24RemoteWithStep2Keys: `module.exports = { snapcraft: { base: "core24", core24: { synopsis: "s", remoteBuild: { enabled: true, buildFor: "arm64" }, artifactName: "a.snap" } } }\n`,
     winSignAndEditFalse: `module.exports = { win: { signAndEditExecutable: false } }\n`,
     winSignDisabledLegacy: `module.exports = { win: { signExecutable: false, signtoolOptions: { certificateFile: "c.pfx" } } }\n`,
     winSignNullSigntool: `module.exports = { win: { sign: null, signtoolOptions: { certificateFile: "c.pfx" } } }\n`,
@@ -728,10 +757,115 @@ describe("migrateProgrammaticSource — toolsets", () => {
 })
 
 describe("migrateProgrammaticSource — warnings", () => {
-  test("custom mac.sign function warns instead of clobbering", () => {
+  test("a custom mac.sign function moves into sign.sign, with the signing options next to it", () => {
     const result = run(`export default {\n  mac: {\n    sign: configuration => {},\n    identity: "Dev",\n  },\n}\n`)
-    expect(result.warnings.some(w => w.includes("custom signing"))).toBe(true)
-    expect(result.code).toContain("identity") // not moved
+    expect(result.code).toMatch(/sign: \{\s*sign: configuration => \{\},\s*identity: "Dev",/)
+    expect(result.warnings).toEqual([])
+  })
+
+  test("a method or a template literal signer is moved too, in place", () => {
+    const method = run(`export default {\n  mac: {\n    target: "dmg",\n    async sign(configuration) {\n      await signIt(configuration)\n    },\n  },\n}\n`)
+    expect(method.code).toBe(
+      `export default {\n  mac: {\n    target: "dmg",\n    sign: {\n      async sign(configuration) {\n        await signIt(configuration)\n      },\n    },\n  },\n}\n`
+    )
+    const template = run("module.exports = { mac: { sign: `./sign-${process.platform}.js` } }\n")
+    expect(template.code).toContain("sign: `./sign-${process.platform}.js`,")
+    expect(template.changes).toEqual([{ key: "mac.sign", description: "moved the custom signer mac.sign → mac.sign.sign" }])
+    const fn = run(`module.exports = { mac: { sign: async function (c) {}, identity: "X" } }\n`, "electron-builder.cjs")
+    expect(fn.code).toMatch(/sign: \{\s*sign: async function \(c\) \{\},\s*identity: "X",/)
+    expect(fn.warnings).toEqual([])
+  })
+
+  test("a sign value the AST cannot read is left as it is, with a warning naming sign.sign", () => {
+    const src = `const mySigner = require("./sign")\nmodule.exports = { mac: { sign: mySigner } }\n`
+    const result = run(src, "electron-builder.cjs")
+    expect(result.status).toBe("no-op")
+    expect(result.code).toBe(src)
+    expect(result.warnings).toHaveLength(1)
+    expect(result.warnings[0]).toContain("mac.sign is not a literal migrate-schema can read")
+    expect(result.warnings[0]).toContain("a custom signer is mac.sign.sign")
+    expect(result.warnings[0]).toContain("set mas.sign.sign: null")
+    expect(result.warnings[0]).toContain("v27-config-changes#macos-signing-macsign")
+    // the v26 signing options next to it stay too, for the build to name
+    expect(run(`module.exports = { masDev: { sign: getSigner(), identity: "X" } }\n`, "electron-builder.cjs").code).toContain(`identity: "X"`)
+  })
+
+  test.each([
+    ["alone", `{ mac: { sign: undefined } }`],
+    ["next to v26 signing options", `{ mac: { sign: undefined, identity: "X", signIgnore: ["a"] } }`],
+    ["on mas under a mac signer", `{ mac: { sign: "./a.js" }, mas: { sign: undefined, provisioningProfile: "p" } }`],
+    ["next to a dropped null", `{ mac: { sign: undefined, type: null } }`],
+  ])("a literal sign: undefined is no sign, as in migrateConfig (%s)", (_name, body) => {
+    const src = `module.exports = ${body}\n`
+    const result = run(src, "electron-builder.cjs")
+    const expected = migrateConfig(JSON.parse(JSON.stringify(evaluateCjs(src))))
+    expect(evaluateCjs(result.code)).toEqual(expected.migrated)
+    expect(result.changes).toEqual(expected.changes)
+    expect(result.warnings).toEqual(expected.warnings)
+    expect(result.advisories).toEqual(expected.advisories)
+  })
+
+  test("a lone literal sign: undefined is a no-op without a warning", () => {
+    const src = "module.exports = { mac: { sign: undefined } }\n"
+    const result = run(src, "electron-builder.cjs")
+    expect(result.status).toBe("no-op")
+    expect(result.code).toBe(src)
+    expect(result.warnings).toEqual([])
+  })
+
+  test("the signer cascade warnings match migrateConfig's, for function signers too", () => {
+    const masInherits = run(`module.exports = { mac: { sign: async c => {} }, mas: { sign: { identity: "X" } } }\n`, "electron-builder.cjs")
+    expect(masInherits.warnings).toEqual([macSignerOverMasOptionsWarning("mas", "mac.sign.sign")])
+    const masReceivesOptions = run(`module.exports = { mac: { sign: { identity: "X" } }, mas: { sign: async c => {} } }\n`, "electron-builder.cjs")
+    expect(masReceivesOptions.warnings).toEqual([macSignerOverOptionsWarning("mas", "mac.sign")])
+    for (const config of [
+      { mac: { sign: "./a.js" }, mas: { sign: { identity: "X" } }, masDev: { sign: { type: "development" } } },
+      { mac: { sign: { identity: "X" } }, mas: { sign: "./b.js" } },
+      { mac: { sign: { sign: "./a.js" } }, mas: { sign: { identity: "X" } } },
+      { mac: { sign: { identity: "X" } }, mas: { sign: false }, masDev: { sign: "./b.js" } },
+    ]) {
+      expect(run(`module.exports = ${JSON.stringify(config)}\n`, "electron-builder.cjs").warnings).toEqual(migrateConfig(config).warnings)
+    }
+  })
+
+  test("after a mac section the AST cannot read, a mas sign: null becomes sign.sign: null, which signs like the bare null whatever that section sets", () => {
+    const unknown = run(`const shared = {}\nmodule.exports = { mac: shared, mas: { sign: null } }\n`, "electron-builder.cjs")
+    expect(evaluateCjs(unknown.code)).toEqual({ mac: {}, mas: { sign: { sign: null } } })
+    expect(unknown.changes).toEqual([
+      {
+        key: "mas.sign",
+        description:
+          "replaced mas.sign: null with mas.sign.sign: null (in v26 it kept any signer an earlier section sets, which migrate-schema cannot read, from signing the mas app; " +
+          "a bare sign: null now means skip signing)",
+      },
+    ])
+    const known = run(`const shared = {}\nmodule.exports = { mac: shared, mas: { sign: "./b.js" }, masDev: { sign: null } }\n`, "electron-builder.cjs")
+    expect(known.changes.find(c => c.key === "masDev.sign")?.description).toContain("replaced masDev.sign: null with masDev.sign.sign: null (in v26 it kept mas.sign.sign from")
+  })
+
+  test("a spread after the mac signer, which the AST cannot read, keeps a mas sign: null as sign.sign: null, as migrateConfig does", () => {
+    const result = run(`const t = { target: ["dmg"] }\nmodule.exports = { mac: { sign: "./a.js", ...t }, mas: { sign: null } }\n`, "electron-builder.cjs")
+    const expected = migrateConfig({ mac: { sign: "./a.js", target: ["dmg"] }, mas: { sign: null } })
+    expect(expected.migrated.mas).toEqual({ sign: { sign: null } })
+    expect(evaluateCjs(result.code)).toEqual(expected.migrated)
+    expect(result.changes.map(c => c.key)).toEqual(expected.changes.map(c => c.key))
+    expect(result.warnings).toEqual(expected.warnings)
+  })
+
+  test.each([
+    ["mas: null, masDev: { sign: null }", `{ mac: { sign: "./a.js" }, mas: null, masDev: { sign: null } }`],
+    ["mas: undefined, masDev: { sign: null }", `{ mac: { sign: "./a.js" }, mas: undefined, masDev: { sign: null } }`],
+    ["mas: null, a masDev sign object without a signer", `{ mac: { sign: "./a.js" }, mas: null, masDev: { sign: { identity: "X" } } }`],
+    ["mas: undefined, a bare masDev signer", `{ mac: { sign: { identity: "X" } }, mas: undefined, masDev: { sign: "./b.js" } }`],
+  ])("a null or undefined mas section, which the merge skips, hands the mac signer and options on to masDev as in migrateConfig: %s", (_name, body) => {
+    const src = `module.exports = ${body}\n`
+    const result = run(src, "electron-builder.cjs")
+    const expected = migrateConfig(JSON.parse(JSON.stringify(evaluateCjs(src))))
+    // each case reaches masDev: a kept sign.sign: null or a cascade warning
+    expect(expected.changes.some(c => c.key === "masDev.sign" && c.description.startsWith("replaced")) || expected.warnings.length > 0).toBe(true)
+    expect(evaluateCjs(result.code)).toEqual(expected.migrated)
+    expect(result.changes).toEqual(expected.changes)
+    expect(result.warnings).toEqual(expected.warnings)
   })
 
   test("electronDownload dropped fields warn", () => {
@@ -739,6 +873,36 @@ describe("migrateProgrammaticSource — warnings", () => {
     expect(result.warnings.some(w => w.includes("cache"))).toBe(true)
     expect(result.code).toContain("electronGet")
     expect(result.code).toContain("mirrorOptions")
+  })
+})
+
+describe('migrateProgrammaticSource — a mac / mas / masDev sign of "false" or "" (the v27 opt-out)', () => {
+  // the v27 schema reads them as false and null (skip signing): both migrators leave them in place, never wrap them into a sign.sign module path
+  test.each([
+    ['mac.sign: "false"', `{ mac: { sign: "false" } }`],
+    ['mas.sign and masDev.sign: "", as a string and a template literal', '{ mas: { sign: "" }, masDev: { sign: `` } }'],
+    ['a mas "false" replaces the mac signer, so a masDev sign: null is dropped', `{ mac: { sign: "./a.js" }, mas: { sign: "false" }, masDev: { sign: null } }`],
+    ['a mas "" replaces the mac signer, so a masDev sign object inherits none', `{ mac: { sign: "./a.js" }, mas: { sign: "" }, masDev: { sign: { identity: "X" } } }`],
+    ["next to v26 signing options, which stay too", `{ mac: { sign: "false", identity: "X", signIgnore: ["a"], type: null }, masDev: { sign: \`\`, entitlements: "e.plist" } }`],
+  ])("%s: the same output, changes, warnings and advisories as migrateConfig", (_name, body) => {
+    const src = `module.exports = ${body}\n`
+    const result = run(src, "electron-builder.cjs")
+    const expected = migrateConfig(evaluateCjs(src))
+    expect(evaluateCjs(result.code)).toEqual(expected.migrated)
+    expect(result.changes).toEqual(expected.changes)
+    expect(result.warnings).toEqual(expected.warnings)
+    expect(result.advisories).toEqual(expected.advisories)
+  })
+
+  test("left in place: a lone opt-out is a no-op without an entitlements advisory, one next to v26 signing options is named in a warning", () => {
+    const src = `module.exports = { mac: { sign: "false" }, mas: { sign: "" } }\n`
+    const alone = run(src, "electron-builder.cjs")
+    expect(alone.status).toBe("no-op")
+    expect(alone.code).toBe(src)
+    expect([...alone.changes, ...alone.warnings, ...alone.advisories]).toEqual([])
+    const withOptions = run(`module.exports = { mac: { sign: "false", identity: "X" }, masDev: { sign: \`\`, signIgnore: ["a"] } }\n`, "electron-builder.cjs")
+    expect(withOptions.status).toBe("no-op")
+    expect(withOptions.warnings).toEqual([macSignOptOutNextToOptionsWarning("mac", "false"), macSignOptOutNextToOptionsWarning("masDev", "")])
   })
 })
 
@@ -776,6 +940,8 @@ describe("migrateProgrammaticSource — v27 audit rules that stay manual", () =>
     expect(run(`module.exports = { mac: { entitlements: "build/e.plist" } }\n`).advisories).toHaveLength(0)
     expect(run(`module.exports = { mac: { sign: "./customSign.js" } }\n`).advisories).toHaveLength(0)
     expect(run(`module.exports = { mac: { identity: null } }\n`).advisories).toHaveLength(0)
+    // a method signer bypasses the defaults too
+    expect(run(`module.exports = { mac: { sign(c) {} } }\n`).advisories).toHaveLength(0)
   })
 })
 
@@ -851,11 +1017,46 @@ describe("migrateProgrammaticSource — plain http feed advisory", () => {
   ])("%s emits nothing", body => expectAdvisories(body, [], "const isProduction = true\n"))
 })
 
+describe("migrateProgrammaticSource — a target's publish replaces the inherited one", () => {
+  test("a literal publish that leaves out what v26 merged in emits the advisory, one without publish none", () => {
+    expectAdvisories(`{ linux: { publish: ["github"] }, deb: { publish: ["s3"] } }`, [TARGET_PUBLISH_REPLACES_ADVISORY])
+    expectAdvisories(`{ linux: { publish: ["github"] }, deb: { depends: ["libfoo"] } }`, [])
+    // an `undefined` property is dropped, as in migrateConfig's JSON copy
+    expectAdvisories(
+      `{ linux: { publish: [{ provider: "generic", url: "https://u.example.com/app" }] }, deb: { publish: [{ provider: "generic", url: "https://u.example.com/app", channel: undefined }] } }`,
+      []
+    )
+  })
+
+  test.each<[string, string, string[]]>([
+    ["an identifier next to a list", `{ linux: { publish: base }, deb: { publish: ["s3"] } }`, [TARGET_PUBLISH_REPLACES_ADVISORY]],
+    ["a shorthand property next to a list", `{ linux: { publish }, deb: { publish: ["s3"] } }`, [TARGET_PUBLISH_REPLACES_ADVISORY]],
+    ["an entry option that is not a literal", `{ linux: { publish: [{ provider: "s3", bucket: process.env.B }] }, deb: { publish: ["s3"] } }`, [TARGET_PUBLISH_REPLACES_ADVISORY]],
+    // an entry member without an initializer is unread, not read as one
+    ["a spread inside a publish entry", `{ linux: { publish: [{ ...base, provider: "s3" }] }, deb: { publish: ["s3"] } }`, [TARGET_PUBLISH_REPLACES_ADVISORY]],
+    ["a shorthand inside a publish entry", `{ linux: { publish: [{ provider: "s3", base }] }, deb: { publish: ["s3"] } }`, [TARGET_PUBLISH_REPLACES_ADVISORY]],
+    ["a method inside a publish entry", `{ linux: { publish: [{ provider: "s3", f() {} }] }, deb: { publish: ["s3"] } }`, [TARGET_PUBLISH_REPLACES_ADVISORY]],
+    ["a spread after the target's publish", `{ deb: { publish: ["s3"], ...base }, linux: { publish: ["s3"] } }`, [TARGET_PUBLISH_REPLACES_ADVISORY]],
+    ["an identifier next to a string, which was never merged", `{ linux: { publish: "github" }, deb: { publish: base } }`, []],
+    // a list next to an object was never merged, even when an option of either cannot be read
+    [
+      "an object literal with an option the AST cannot read next to a list",
+      `{ linux: { publish: { provider: "github", token: process.env.GH_TOKEN } }, deb: { publish: ["s3"] } }`,
+      [],
+    ],
+    ["a list next to an object literal with an option the AST cannot read", `{ linux: { publish: ["github"] }, deb: { publish: { provider: "s3", bucket: process.env.B } } }`, []],
+    ["a platform section the AST cannot read", `{ linux: sharedLinux, deb: { publish: ["s3"] } }`, []],
+  ])("a value the AST cannot read: %s", (_name, body, expected) => {
+    expectAdvisories(body, expected, `const base = {}\nconst publish = ["github"]\nconst sharedLinux = { publish: ["github"] }\n`)
+  })
+})
+
 describe("migrateProgrammaticSource — updater advisories", () => {
   test.each<[string, string[]]>([
     [`module.exports = { nsis: { perMachine: true } }\n`, [NSIS_PER_MACHINE_UPDATE_ADVISORY]],
     [`export default {\n  win: { sign: { type: "signtool", sign: "./sign.js" } },\n}\n`, [WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY]],
     [`export default {\n  publish: { provider: "generic", url: "https://u.example.com/?t=1" },\n}\n`, [FEED_QUERY_ADVISORY]],
+    [`module.exports = {\n  linux: { publish: ["github"] },\n  deb: { publish: ["s3"] },\n}\n`, [TARGET_PUBLISH_REPLACES_ADVISORY]],
   ])("an advisory-only config is a no-op and the code is unchanged: %s", (src, expected) => {
     const result = run(src)
     expect(result.status).toBe("no-op")
@@ -1090,6 +1291,14 @@ describe("migrateProgrammaticSource — advisories match migrateConfig (parity)"
     macV26Entitlements: { mac: { entitlements: "build/e.plist" } },
     macV27Entitlements: { mas: { sign: { entitlements: "build/e.plist" } } },
     macIdentityNull: { masDev: { identity: null } },
+    macSignerBare: { mac: { sign: "./s.js" } },
+    macSignHook: { mac: { sign: { sign: "./s.js" } } },
+    macSignFalse: { mac: { sign: false } },
+    macSignHookNull: { mac: { sign: { sign: null } } },
+    // the opt-out the schema reads as false / null, left in place
+    macSignFalseString: { mac: { sign: "false" } },
+    masSignEmptyString: { mas: { sign: "" } },
+    masSignNullUnderMacSigner: { mac: { sign: "./s.js" }, mas: { sign: null } },
     nsisPerMachine: { win: { target: "nsis" }, nsis: { perMachine: true } },
     nsisWebPerMachine: { nsisWeb: { perMachine: true } },
     perMachineFalse: { nsis: { perMachine: false }, nsisWeb: { perMachine: false } },
@@ -1206,6 +1415,34 @@ describe("migrateProgrammaticSource — advisories match migrateConfig (parity)"
     pdbFilesNotNamed: { files: ["**/*", "!**/*.pdb", "**/*.pdbx", "**/*.d.ts"], mas: { files: [{ from: "native", filter: "*.pdb" }], fileOptions: { extraFiles: ["*.pdb"] } } },
     pdbFilesFlatDropped: { files: ["native/*.pdb"], fileOptions: { files: ["**/*"] } },
     pdbFilesFileOptionsNotObject: { files: ["native/*.pdb"], fileOptions: ["x"] },
+    targetPublishDrops: { linux: { publish: ["github", "s3"] }, deb: { publish: ["s3"] } },
+    targetPublishReorders: { linux: { publish: ["github"] }, appImage: { publish: ["s3", "github"] } },
+    targetPublishObjectDropsOption: {
+      win: { publish: { provider: "generic", url: "https://u.example.com/app", channel: "beta" } },
+      appx: { publish: { provider: "generic", url: "https://u.example.com/app" } },
+    },
+    targetPublishObjectKeepsOptions: {
+      nsis: { publish: { provider: "generic", url: "https://u.example.com/a" } },
+      nsisWeb: { publish: { provider: "generic", url: "https://u.example.com/b", channel: "beta" } },
+    },
+    targetPublishStrings: { linux: { publish: "github" }, deb: { publish: "s3" } },
+    targetPublishNeverMerged: { mac: { publish: ["github"] }, pkg: { publish: ["s3"] }, win: { publish: ["github"] }, squirrelWindows: { publish: ["s3"] } },
+    targetPublishSnapStore: { linux: { publish: ["github"] }, snapcraft: { publish: [{ provider: "snapStore" }] } },
+    targetPublishV26Snap: { snap: { base: "core22", publish: ["github"] }, linux: { publish: ["github", "s3"] } },
+    targetPublishSnapNextToSnapcraft: { snap: { publish: ["github"] }, snapcraft: { base: "core22" }, linux: { publish: ["github", "s3"] } },
+    targetPublishSnapcraftNull: { snapcraft: null, snap: { publish: ["github"] }, linux: { publish: ["github", "s3"] } },
+    targetPublishNull: { linux: { publish: ["github"] }, deb: { publish: null } },
+    targetPublishUndefinedOption: {
+      linux: { publish: [{ provider: "generic", url: "https://u.example.com/app" }] },
+      deb: { publish: [{ provider: "generic", url: "https://u.example.com/app", channel: undefined }] },
+    },
+    targetPublishStringEntryAsObject: { win: { publish: ["github"] }, msi: { publish: [{ provider: "github" }, "s3"] } },
+    targetPublishGitlabV26: { linux: { publish: [{ provider: "gitlab", projectId: 1, vPrefixedTagName: false }] }, deb: { publish: [{ provider: "gitlab", projectId: 1 }] } },
+    // as written: migrateConfig's step 7 removes updaterCacheDirName, which would make the two entries equal
+    targetPublishManagedField: {
+      linux: { publish: [{ provider: "generic", url: "https://u.example.com/app", updaterCacheDirName: "app" }] },
+      deb: { publish: [{ provider: "generic", url: "https://u.example.com/app" }] },
+    },
     v26AllButEntitlements: {
       snap: { base: "custom", publish: feed },
       win: { signtoolOptions: { sign: "./sign.js" }, target: "nsis-web:x64", signExecutable: true },
@@ -1247,6 +1484,7 @@ describe("migrateProgrammaticSource — advisories match migrateConfig (parity)"
       WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
       WIN_PUBLISHER_NAME_DN_ADVISORY,
       FEED_QUERY_ADVISORY,
+      TARGET_PUBLISH_REPLACES_ADVISORY,
     ]) {
       expect(results.some(it => it.includes(advisory))).toBe(true)
       expect(results.some(it => !it.includes(advisory))).toBe(true)
@@ -1484,6 +1722,111 @@ describe("migrateProgrammaticSource — publish options electron-builder writes 
   })
 })
 
+describe("migrateProgrammaticSource — GitHub / GitLab vPrefixedTagName", () => {
+  test("a GitLab vPrefixedTagName is replaced in place or removed as migrateConfig does, also next to a removed app-update.yml field", () => {
+    const gitlab = { provider: "gitlab", projectId: 1 }
+    const config = {
+      publish: [
+        { ...gitlab, updaterCacheDirName: "x", vPrefixedTagName: false },
+        { ...gitlab, vPrefixedTagName: true },
+      ],
+      nsis: { publish: { ...gitlab, vPrefixedTagName: "false", tagNamePrefix: "release-" } },
+      win: { publish: { ...gitlab, vPrefixedTagName: null } },
+    }
+    const result = run(`module.exports = ${JSON.stringify(config, null, 2)}\n`, "electron-builder.cjs")
+    const expected = migrateConfig(config)
+    expect(evaluateCjs(result.code)).toEqual({
+      publish: [{ ...gitlab, tagNamePrefix: "" }, gitlab],
+      nsis: { publish: { ...gitlab, tagNamePrefix: "release-" } },
+      win: { publish: { ...gitlab, tagNamePrefix: "" } },
+    })
+    expect(evaluateCjs(result.code)).toEqual(expected.migrated)
+    expect(result.changes.map(it => it.key).sort()).toEqual(expected.changes.map(it => it.key).sort())
+    expect(result.warnings).toEqual([gitlabTagNamePrefixKeptWarning("nsis.publish")])
+    expect(expected.warnings).toEqual(result.warnings)
+  })
+
+  test.each<[string, string, string]>([
+    ["a GitHub condition", "GitHub", `module.exports = { publish: { provider: "github", owner: "o", repo: "r", vPrefixedTagName: process.env.V !== "0" } }\n`],
+    ["a GitLab condition", "GitLab", `module.exports = { publish: { provider: "gitlab", projectId: 1, vPrefixedTagName: process.env.V !== "0" } }\n`],
+    ["a GitLab shorthand property", "GitLab", `const vPrefixedTagName = false\nmodule.exports = { publish: { provider: "gitlab", projectId: 1, vPrefixedTagName } }\n`],
+  ])("%s is left for the build-time check, with a warning", (_name, provider, src) => {
+    const result = run(src, "electron-builder.cjs")
+    expect(result.code).toBe(src)
+    expect(result.warnings).toEqual([
+      `The ${provider} vPrefixedTagName in publish is not a literal, so it was left in place: replace it with tagNamePrefix: "" where it is false (no prefix), and remove it where it is true (tagNamePrefix defaults to "v").`,
+    ])
+  })
+
+  test('a GitHub vPrefixedTagName that is not a literal next to tagNamePrefix: "" is left in place, with a warning to replace both keys', () => {
+    // v26 ignored the empty prefix; removing only vPrefixedTagName where it is true would leave the "" that v27 honors
+    const src = `module.exports = { publish: { provider: "github", owner: "o", repo: "r", tagNamePrefix: "", vPrefixedTagName: process.env.V !== "0" } }\n`
+    const result = run(src, "electron-builder.cjs")
+    expect(result.code).toBe(src)
+    expect(result.warnings).toEqual([
+      'The GitHub vPrefixedTagName in publish is not a literal, so it was left in place next to tagNamePrefix: "" (which v26 ignored): replace both keys with tagNamePrefix: "" where it is false and with tagNamePrefix: "v" where it is true.',
+    ])
+  })
+
+  test("a GitLab vPrefixedTagName that is not a literal next to a tagNamePrefix is removed and the tagNamePrefix kept, as migrateConfig does", () => {
+    const result = run(`module.exports = { publish: { provider: "gitlab", projectId: 1, vPrefixedTagName: process.env.V === "1", tagNamePrefix: "x" } }\n`, "electron-builder.cjs")
+    const expected = migrateConfig({ publish: { provider: "gitlab", projectId: 1, vPrefixedTagName: true, tagNamePrefix: "x" } })
+    expect(evaluateCjs(result.code)).toEqual({ publish: { provider: "gitlab", projectId: 1, tagNamePrefix: "x" } })
+    expect(evaluateCjs(result.code)).toEqual(expected.migrated)
+    expect(result.changes.map(it => it.key)).toEqual(["publish[].vPrefixedTagName"])
+    expect(expected.changes.map(it => it.key)).toEqual(["publish[].vPrefixedTagName"])
+    expect(result.warnings).toEqual([gitlabTagNamePrefixKeptWarning("publish")])
+    expect(expected.warnings).toEqual(result.warnings)
+  })
+
+  test("a GitHub vPrefixedTagName that is not a literal next to a non-empty tagNamePrefix is removed: the tagNamePrefix won in v26", () => {
+    const result = run(
+      `module.exports = { publish: { provider: "github", owner: "o", repo: "r", vPrefixedTagName: process.env.V === "1", tagNamePrefix: "rel-" } }\n`,
+      "electron-builder.cjs"
+    )
+    expect(evaluateCjs(result.code)).toEqual({ publish: { provider: "github", owner: "o", repo: "r", tagNamePrefix: "rel-" } })
+    expect(result.warnings).toEqual([])
+    expect(result.changes.map(it => it.key)).toEqual(["publish[].vPrefixedTagName"])
+  })
+
+  test('a GitLab true becomes tagNamePrefix: "v" in the publish object of a target v26 merged over the inherited one, and is removed elsewhere, as migrateConfig does', () => {
+    const gitlab = { provider: "gitlab", projectId: 1 }
+    const entry = { ...gitlab, vPrefixedTagName: true }
+    const config = {
+      publish: entry,
+      linux: { publish: { ...gitlab, vPrefixedTagName: false } },
+      deb: { publish: entry },
+      rpm: { publish: [entry] },
+      nsis: { publish: entry },
+      nsisWeb: { publish: entry },
+    }
+    const result = run(`module.exports = ${JSON.stringify(config, null, 2)}\n`, "electron-builder.cjs")
+    const expected = migrateConfig(config)
+    const vPrefixed = { ...gitlab, tagNamePrefix: "v" }
+    expect(evaluateCjs(result.code)).toEqual({
+      publish: gitlab,
+      linux: { publish: { ...gitlab, tagNamePrefix: "" } },
+      deb: { publish: vPrefixed },
+      rpm: { publish: [gitlab] },
+      nsis: { publish: gitlab },
+      nsisWeb: { publish: vPrefixed },
+    })
+    expect(evaluateCjs(result.code)).toEqual(expected.migrated)
+    expect(result.changes.map(it => it.key)).toEqual(expected.changes.map(it => it.key))
+    expect(result.warnings).toEqual(expected.warnings)
+  })
+
+  test("a GitLab vPrefixedTagName: undefined in a target's publish object is removed: v26's merge skipped it, and migrateConfig's JSON copy drops it", () => {
+    const linux = { publish: { provider: "gitlab", projectId: 1, vPrefixedTagName: false } }
+    const result = run(
+      `module.exports = { linux: ${JSON.stringify(linux)}, deb: { publish: { provider: "gitlab", projectId: 1, vPrefixedTagName: undefined } } }\n`,
+      "electron-builder.cjs"
+    )
+    expect(evaluateCjs(result.code).deb).toEqual({ publish: { provider: "gitlab", projectId: 1 } })
+    expect(evaluateCjs(result.code)).toEqual(migrateConfig({ linux, deb: { publish: { provider: "gitlab", projectId: 1, vPrefixedTagName: undefined } } }).migrated)
+  })
+})
+
 describe("migrateProgrammaticSource — Linux target options that never had an effect", () => {
   test.each<[string, Record<string, any>]>([
     [
@@ -1501,6 +1844,90 @@ describe("migrateProgrammaticSource — Linux target options that never had an e
     const expected = migrateConfig(config)
     expect(evaluateCjs(result.code)).toEqual(expected.migrated)
     expect(result.changes.map(it => it.key)).toEqual(expected.changes.map(it => it.key))
+  })
+})
+
+describe("migrateProgrammaticSource — snapcraft.core24 build switches → buildEnvironment", () => {
+  const core24 = (options: Record<string, any>) => ({ snapcraft: { base: "core24", core24: options } })
+
+  /** Runs `config` through both migrators as a CJS module, expecting the same object, change keys and warnings. */
+  function migrateBoth(config: Record<string, any>): ReturnType<typeof run> {
+    const result = run(`module.exports = ${JSON.stringify(config, null, 2)}\n`, "electron-builder.cjs")
+    const expected = migrateConfig(config)
+    expect(evaluateCjs(result.code)).toEqual(expected.migrated)
+    expect(result.changes.map(it => it.key)).toEqual(expected.changes.map(it => it.key))
+    expect(result.warnings).toEqual(expected.warnings)
+    return result
+  }
+
+  test("more than one switch on is left in place with the migrateConfig warning", () => {
+    const result = migrateBoth(core24({ useLXD: true, remoteBuild: { enabled: true, buildFor: "arm64" } }))
+    expect(result.status).toBe("no-op")
+    expect(result.warnings).toEqual([core24BuildSwitchesConflictWarning(["remoteBuild.enabled", "useLXD"])])
+  })
+
+  test("a remote build next to useDestructiveMode is left in place with the migrateConfig warning", () => {
+    const result = migrateBoth(core24({ useDestructiveMode: true, remoteBuild: { enabled: true } }))
+    expect(result.status).toBe("no-op")
+    expect(result.warnings).toEqual([core24BuildSwitchesConflictWarning(["remoteBuild.enabled", "useDestructiveMode"])])
+  })
+
+  test("an existing buildEnvironment is kept, with the migrateConfig warning when the switch selected another one", () => {
+    const result = migrateBoth(core24({ buildEnvironment: "multipass", useLXD: true }))
+    expect(result.warnings).toEqual([core24BuildEnvironmentKeptWarning('"multipass"', "useLXD", "lxd")])
+    expect(migrateBoth(core24({ buildEnvironment: "lxd", useLXD: true })).warnings).toEqual([])
+
+    // a single-quoted literal reads as the string migrateConfig compares, and a value the AST cannot read is named as written
+    expect(run(`export default { snapcraft: { base: "core24", core24: { buildEnvironment: 'multipass', useLXD: true } } }\n`).warnings).toEqual(result.warnings)
+    const expression = run(`export default { snapcraft: { base: "core24", core24: { buildEnvironment: process.env.SNAP_ENVIRONMENT, useLXD: true } } }\n`)
+    expect(expression.warnings).toEqual([core24BuildEnvironmentKeptWarning("process.env.SNAP_ENVIRONMENT", "useLXD", "lxd")])
+    expect(expression.code).not.toContain("useLXD")
+  })
+
+  test('a switch set to "true" is left in place with the migrateConfig warning', () => {
+    const result = migrateBoth(core24({ useLXD: "true" }))
+    expect(result.status).toBe("no-op")
+    expect(result.warnings).toEqual([core24BuildSwitchesUnreadWarning(["useLXD"])])
+  })
+
+  test.each<[string, string, string[]]>([
+    ["a condition", `core24: { useMultipass: process.platform === "darwin" }`, ["useMultipass"]],
+    ["a shorthand property", `core24: { useLXD }`, ["useLXD"]],
+    ["a spread next to a switch", `core24: { ...shared, useLXD: true }`, ["useLXD"]],
+    ["a remoteBuild variable next to a switch", `core24: { useLXD: true, remoteBuild: shared }`, ["useLXD", "remoteBuild.enabled"]],
+    ["a spread in remoteBuild next to a switch", `core24: { useLXD: true, remoteBuild: { ...shared, buildFor: "arm64" } }`, ["useLXD", "remoteBuild.enabled"]],
+    ["a spread in remoteBuild with a visible enabled", `core24: { useLXD: true, remoteBuild: { ...shared, enabled: true } }`, ["remoteBuild.enabled", "useLXD"]],
+  ])("%s is left for the guard, with a warning", (_name, core24Source, paths) => {
+    const src = `const useLXD = true\nconst shared = { enabled: true }\nmodule.exports = { snapcraft: { base: "core24", ${core24Source} } }\n`
+    const result = run(src, "electron-builder.cjs")
+    expect(result.code).toBe(src)
+    expect(result.warnings).toEqual([core24BuildSwitchesUnreadWarning(paths)])
+  })
+
+  test("the selected switch is rewritten in place, keeping its comment", () => {
+    const src = `export default {\n  snapcraft: {\n    base: "core24",\n    core24: {\n      // build in LXD\n      useLXD: true,\n      grade: "stable",\n    },\n  },\n}\n`
+    expect(run(src).code).toBe(src.replace("useLXD: true", 'buildEnvironment: "lxd"'))
+  })
+
+  test("a switch set to undefined is removed: the guard rejects it too", () => {
+    const result = run(`module.exports = { snapcraft: { base: "core24", core24: { useLXD: undefined, grade: "stable" } } }\n`, "electron-builder.cjs")
+    expect(result.code).not.toContain("useLXD")
+    expect(evaluateCjs(result.code)).toEqual(core24({ grade: "stable" }))
+    expect(result.changes.map(it => it.description)).toEqual(["removed snapcraft.core24.useLXD: undefined (it had no effect)"])
+  })
+
+  test("a null remoteBuild next to a switch is rewritten as migrateConfig does", () => {
+    const result = migrateBoth(core24({ remoteBuild: null, useLXD: true }))
+    expect(evaluateCjs(result.code)).toEqual(core24({ remoteBuild: null, buildEnvironment: "lxd" }))
+  })
+
+  // hand-written sources: JSON.stringify drops undefined
+  test.each(["undefined", "false"])("a remoteBuild set to %s next to a switch is rewritten like a null one", value => {
+    const result = run(`module.exports = { snapcraft: { base: "core24", core24: { remoteBuild: ${value}, useLXD: true } } }\n`, "electron-builder.cjs")
+    expect(result.status).toBe("migrated")
+    expect(result.code).toContain('buildEnvironment: "lxd"')
+    expect(result.warnings).toEqual([])
+    expect(result.changes.map(it => it.key)).toEqual(["snapcraft.core24.useLXD"])
   })
 })
 
@@ -1568,7 +1995,7 @@ describe("migrateProgrammaticSource — review follow-ups", () => {
   test("a moved snapcraft.<base>.publish that sets vPrefixedTagName gets the manual-rewrite warning", () => {
     const result = run(`module.exports = { snapcraft: { base: "core22", core22: { publish: { provider: "github", vPrefixedTagName: false } } } }\n`, "electron-builder.cjs")
     expect(result.warnings).toContain(
-      "snapcraft.core22.publish sets vPrefixedTagName or an empty tagNamePrefix; after the move, apply the GitHub tagNamePrefix change under snapcraft.publish manually."
+      "snapcraft.core22.publish sets vPrefixedTagName or an empty tagNamePrefix; after the move, apply the GitHub / GitLab tagNamePrefix change under snapcraft.publish manually."
     )
   })
 
@@ -1638,5 +2065,59 @@ describe("migrateProgrammaticSource — second review follow-ups", () => {
     const result = run(src, "electron-builder.cjs")
     expect(result.status).toBe("migrated")
     expect(evaluateCjs(result.code)).toEqual({ appId: "a" })
+  })
+})
+
+describe("migrateProgrammaticSource — updateManifest → updateManifestSigning", () => {
+  const src = `import type { Configuration } from "electron-builder"
+
+const config: Configuration = {
+  appId: "com.example.app",
+  // sign the update manifests
+  updateManifest: {
+    signingKeyFile: "keys/update.pem", // kept out of git
+  },
+  linux: {
+    "updateManifest": false, // Linux ships unsigned
+  },
+}
+
+export default config
+`
+
+  test("renames the key in place, a quoted one too, keeping the value and the comments", () => {
+    const result = run(src)
+    expect(result.status).toBe("migrated")
+    expect(result.code).toBe(src.replace("  updateManifest: {", "  updateManifestSigning: {").replace(`"updateManifest": false`, "updateManifestSigning: false"))
+    expect(result.changes.map(it => it.key)).toEqual(["updateManifest", "linux.updateManifest"])
+    expect(result.warnings).toEqual([])
+  })
+
+  test("a second run changes nothing", () => {
+    const again = run(run(src).code)
+    expect(again.status).toBe("no-op")
+    expect(again.changes).toEqual([])
+  })
+
+  test("a shorthand property keeps its variable as the value", () => {
+    const result = run(`const updateManifest = { signingKeyFile: "k.pem" }\nmodule.exports = { updateManifest, linux: { updateManifest } }\n`, "electron-builder.cjs")
+    expect(result.code).toContain("updateManifestSigning: updateManifest")
+    expect(evaluateCjs(result.code)).toEqual({ updateManifestSigning: { signingKeyFile: "k.pem" }, linux: { updateManifestSigning: { signingKeyFile: "k.pem" } } })
+  })
+
+  test("a section that sets both names is left unchanged with a warning", () => {
+    const both = `module.exports = { updateManifest: false, updateManifestSigning: { signingKeyFile: "k.pem" } }\n`
+    const result = run(both, "electron-builder.cjs")
+    expect(result.status).toBe("no-op")
+    expect(result.code).toBe(both)
+    expect(result.warnings).toEqual([updateManifestBothSetWarning("")])
+  })
+
+  test("a shorthand moved under a renamed key keeps its variable as the value", () => {
+    const result = run(
+      `const nativeRebuilder = "parallel"\nconst signIgnore = ["**/*.txt"]\nconst asarUnpack = ["**/*.node"]\nmodule.exports = { nativeRebuilder, mac: { signIgnore, asarUnpack } }\n`,
+      "electron-builder.cjs"
+    )
+    expect(evaluateCjs(result.code)).toEqual({ nativeModules: { rebuildMode: "parallel" }, mac: { sign: { ignore: ["**/*.txt"] }, asar: { unpack: ["**/*.node"] } } })
   })
 })

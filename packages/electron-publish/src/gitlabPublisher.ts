@@ -49,8 +49,8 @@ export class GitlabPublisher extends HttpPublisher {
 
     assertVersionHasNoVPrefix(version)
 
-    // By default, we prefix the version with "v"
-    this.tag = info.vPrefixedTagName === false ? version : `v${version}`
+    // tagNamePrefix (default "v") + version
+    this.tag = (info.tagNamePrefix ?? "v") + version
   }
 
   private async getOrCreateRelease(): Promise<GitlabReleaseInfo | null> {
@@ -107,8 +107,7 @@ export class GitlabPublisher extends HttpPublisher {
   }
 
   private async createRelease(): Promise<GitlabReleaseInfo> {
-    const defaultName = this.info.vPrefixedTagName === false ? this.version : `v${this.version}`
-    const releaseName = this.releaseName || defaultName
+    const releaseName = this.releaseName || this.tag
     const branchName = await this.getDefaultBranch()
 
     const description = this.releaseBody ? trimStringWithWarn(this.releaseBody, 100000, "release body exceeds GitLab limit, truncating") : `Release ${releaseName}`
@@ -202,7 +201,7 @@ export class GitlabPublisher extends HttpPublisher {
         link_type: "other",
       }
 
-      const url = this.buildProjectUrl(`/releases/${this.tag}/assets/links`)
+      const url = this.buildProjectUrl(`/releases/${encodeURIComponent(this.tag)}/assets/links`)
       await this.gitlabRequest(url, linkData, "POST")
 
       log.debug({ fileName, assetUrl }, "Successfully linked asset to GitLab release")

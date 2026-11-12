@@ -298,7 +298,7 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
     // shape is the same whether one or several keys are configured.
     const signingKeys = await task.packager.requireUpdateSigningKeys(isPublish)
     let info: UpdateInfo = task.info
-    // empty only when signing is opted out of with `updateManifest: false`, or on a build without a publish
+    // empty only when signing is opted out of with `updateManifestSigning: false`, or on a build without a publish
     // policy or forceCodeSigning that has no key configured - both of which have already warned
     if (signingKeys.length > 0) {
       const signatures = createUpdateManifestSignatures(task.info, signingKeys)
@@ -332,7 +332,7 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
 
 /**
  * Reads a signed manifest back from the bytes about to be written, the way electron-updater parses it, and checks that
- * every signing key verifies it. It is checked against the signing keys' own public keys, not `updateManifest.publicKey`,
+ * every signing key verifies it. It is checked against the signing keys' own public keys, not `updateManifestSigning.publicKey`,
  * so a deliberate `allowSigningKeyOutsideTrustList` cutover keeps working. A failure means serialization changed what
  * was signed, which is a bug: every install would reject the manifest.
  */

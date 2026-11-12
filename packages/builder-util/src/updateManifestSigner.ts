@@ -140,10 +140,10 @@ export function loadUpdateSigningKeys(config?: UpdateSigningKeySources | null, b
   const envKey = process.env.ELECTRON_BUILDER_UPDATE_SIGN_KEY
   const envFile = process.env.ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE
   if (configKeys.length > 0) {
-    source = "updateManifest.signingKey"
+    source = "updateManifestSigning.signingKey"
     pems = configKeys.flatMap(splitPemBlocks)
   } else if (configFiles.length > 0) {
-    source = "updateManifest.signingKeyFile"
+    source = "updateManifestSigning.signingKeyFile"
     pems = configFiles.flatMap((file, index) => splitPemBlocks(readKeyFile(baseDir == null ? file : path.resolve(baseDir, file), source, index, configFiles.length)))
   } else if (envKey != null && envKey.trim().length > 0) {
     source = "ELECTRON_BUILDER_UPDATE_SIGN_KEY"

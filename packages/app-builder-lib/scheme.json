@@ -170,7 +170,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         }
       },
       "type": "object"
@@ -333,7 +333,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "publisher": {
           "description": "The package publisher (`Identity/@Publisher`). It must match the subject of the signing certificate exactly. Defaults to that\nsubject (`CN=ms` for an unsigned build, such as one for the Store); with `win.sign.type: \"azure\"`, `win.sign.publisherName` is used.",
@@ -813,7 +813,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "recommends": {
           "anyOf": [
@@ -1040,7 +1040,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "shrink": {
           "default": true,
@@ -1143,132 +1143,6 @@
         "unsafelyDisableChecksums": {
           "description": "When set to `true`, disables checking that the artifact download completed successfully\nwith the correct payload.",
           "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
-    "ElectronSignOptions": {
-      "additionalProperties": false,
-      "description": "Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control\nitself — `app`, `keychain`, `platform`, `version`, and `optionsForFile` — and forwards everything else.\n\nAdditionally exposes a small set of per-file convenience fields that electron-builder maps\ninternally through `optionsForFile`.",
-      "properties": {
-        "additionalArguments": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Extra arguments passed to each `codesign` invocation."
-        },
-        "batchCodesignCalls": {
-          "description": "Combine all files with identical CLI arguments in a single `codesign` call instead of running\n`codesign` once for each of those files. This minimizes the number of child processes that need\nto be spawned and reduces the time it takes to sign all files.",
-          "type": "boolean"
-        },
-        "binaries": {
-          "description": "Array of paths to additional binaries that will be signed along with built-ins of Electron.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "entitlements": {
-          "description": "Path to the main app entitlements file. Resolved relative to the build resources directory, then the project directory.\nFalls back to `build/entitlements.mac.plist` (or `build/entitlements.mas.plist` for MAS targets) if it exists.\nOtherwise `mac` builds use the bundled default, which grants only `com.apple.security.cs.allow-jit`\n(ad-hoc builds use a bundled ad-hoc template that also disables library validation), and MAS builds use\n`@electron/osx-sign`'s built-in sandboxed `default.mas.plist`.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "entitlementsInherit": {
-          "description": "Path to child entitlements inherited by embedded frameworks and bundles. Resolved relative to the build resources directory, then the project directory.\nFalls back to `build/entitlements.mac.inherit.plist` (or `build/entitlements.mas.inherit.plist` for MAS targets) if it exists.\nOtherwise nested binaries receive `@electron/osx-sign`'s per-file defaults (renderer/GPU helpers: `allow-jit`;\nplugin helper: Chromium's looser set; everything else: `default.darwin.plist`); ad-hoc `mac` builds use the\nbundled ad-hoc template instead.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "entitlementsLoginHelper": {
-          "description": "Path to entitlements for the Login Helper.\nRequired when using App Sandbox, because the Login Helper cannot inherit entitlements.\nDefaults to the value of `entitlements`.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "hardenedRuntime": {
-          "description": "Whether to enable [Hardened Runtime](https://developer.apple.com/documentation/security/hardened_runtime).\n\nHardened Runtime is a prerequisite for notarization (mandatory on macOS 10.15+).\nDefaults to `true` for `darwin` builds and `false` for MAS builds (`mas` and `mas-dev`).",
-          "type": "boolean"
-        },
-        "identity": {
-          "description": "The signing identity (certificate name or SHA-1 hash). Applies to both app signing and DMG signing.\nPrefer the environment variables `CSC_LINK` / `CSC_NAME` over hardcoding this value.\n\n- **Not set** (default): electron-builder searches the keychain for a valid certificate.\n- **`null`**: skip signing entirely.\n- **`\"-\"`**: ad-hoc signing (requires disabling library validation — see `hardenedRuntime`).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "identityValidation": {
-          "description": "Flag to enable/disable validation for the signing identity.\nIf enabled, the {@link SignOptions.identityidentity} provided\nwill be validated in the {@link BaseSignOptions.keychainkeychain} specified.",
-          "type": "boolean"
-        },
-        "ignore": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "typeof": "function"
-            },
-            {
-              "type": "string"
-            }
-          ],
-          "description": "Defines files that will be skipped during the code signing process.\nThis property accepts a regex, function or an array of regexes and functions.\nElements of other types are treated as `RegExp`.\n\nFile paths matching a regex or returning a `true` value from a function will be ignored."
-        },
-        "preAutoEntitlements": {
-          "description": "Flag to enable/disable entitlements automation tasks necessary for code signing most Electron apps.\nThe automation runs when the app's entitlements enable `com.apple.security.app-sandbox`, or when a\n{@link OnlySignOptions.provisioningProfileprovisioning profile} is supplied (a profile only grants\nits restricted entitlements to code carrying the matching identifier entitlements below).\n* Fills in the `ElectronTeamID` property in `Info.plist` with the provisioning profile's Team Identifier or by parsing the identity name.\n* Adds `com.apple.application-identifier` and `com.apple.developer.team-identifier` to the entitlements file.\n* For sandboxed apps, also adds [`com.apple.security.application-groups`](https://developer.apple.com/documentation/bundleresources/entitlements/com_apple_security_application-groups) to the entitlements file.",
-          "type": "boolean"
-        },
-        "preEmbedProvisioningProfile": {
-          "description": "Flag to enable/disable the embedding of a provisioning profile into the app's `Contents` folder.\nWill use the profile from {@link OnlySignOptions.provisioningProfile} if provided. Otherwise, it\nsearches for a `.provisionprofile` file in the current working directory.",
-          "type": "boolean"
-        },
-        "provisioningProfile": {
-          "description": "Path to a provisioning profile, which can be used to grant restricted entitlements to your app.\n\nSee [Apple Documentation](https://developer.apple.com/documentation/technotes/tn3125-inside-code-signing-provisioning-profiles) for more details.",
-          "type": "string"
-        },
-        "requirements": {
-          "description": "Path to a [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html).\nNot applicable for MAS.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "strictVerify": {
-          "description": "Flag to enable/disable the `--strict` flag when verifying the signed application bundle.\nAlso supports string values to specify which strict restrictions to use, see codesign man page for supported values.",
-          "type": [
-            "string",
-            "boolean"
-          ]
-        },
-        "timestamp": {
-          "description": "URL of the timestamp authority server. Passed per-file to `codesign --timestamp=<url>`.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "type": {
-          "description": "The type of certificate to use when signing: `development` or `distribution`.\n\nDefaults to a value derived from the build flavor: `mas-dev` → `development`, otherwise `distribution`.\nSet it explicitly to override — e.g. `development` on a darwin build signs with a `Mac Developer` or\n`Apple Development` certificate instead of `Developer ID Application` and embeds a matching\ndevelopment provisioning profile.\n\nDevelopment-signed apps are blocked by Gatekeeper on other machines; users must use the\nright-click → Open workaround documented at https://support.apple.com/en-us/guide/mac-help/mh40616/mac.\nSuch builds are not suitable for production distribution and cannot be notarized.",
-          "enum": [
-            "development",
-            "distribution"
-          ],
-          "type": "string"
         }
       },
       "type": "object"
@@ -2103,7 +1977,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "runtime": {
           "description": "The name of the runtime that the application uses. Defaults to `org.freedesktop.Platform`.\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
@@ -2417,6 +2291,11 @@
           "$ref": "#/definitions/OutgoingHttpHeaders",
           "description": "Any custom request headers"
         },
+        "tagNamePrefix": {
+          "default": "v",
+          "description": "The prefix of the tag name before the version, e.g. `v` in `v1.2.3`, or `\"\"` for no prefix. A release without\n`releaseInfo.releaseName` is named after the tag.",
+          "type": "string"
+        },
         "timeout": {
           "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
@@ -2447,11 +2326,6 @@
           ],
           "default": "project_upload",
           "description": "Upload target method. Can be \"project_upload\" for GitLab project uploads or \"generic_package\" for GitLab generic packages."
-        },
-        "vPrefixedTagName": {
-          "default": true,
-          "description": "Whether to use `v`-prefixed tag name.",
-          "type": "boolean"
         }
       },
       "required": [
@@ -2792,7 +2666,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
@@ -2833,7 +2707,7 @@
           "default": "AppImage",
           "description": "Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\n\nelectron-builder [docker image](https://www.electron.build/docs/features/multi-platform-build#docker) can be used to build Linux targets on any platform.\n\nPlease [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz."
         },
-        "updateManifest": {
+        "updateManifestSigning": {
           "anyOf": [
             {
               "$ref": "#/definitions/UpdateManifestSigningOptions"
@@ -2845,7 +2719,7 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+          "description": "Ed25519 signing of the auto-update manifests (`latest*.yml`) and the trust list embedded in `app-update.yml`: each manifest is\nsigned, and its public keys are embedded so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests: they are still written (`publishAutoUpdate: false` on every\npublish provider is what stops writing them), and every build that produces one logs a warning. `false` also short-circuits\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`, so a leftover key in CI cannot re-enable signing by accident.\n\nA platform value (`mac`, `win`, `linux`), `false` included, replaces the root value as a whole; a platform `null` falls back to the\nroot. `mas` / `masDev` do not have this option: Mac App Store builds write no update manifest.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         },
         "vendor": {
           "description": "The vendor. Defaults to the maintainer.",
@@ -3064,7 +2938,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "synopsis": {
           "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description): the first line of the package\ndescription, and the rpm `Summary`.",
@@ -3392,7 +3266,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
@@ -3401,19 +3275,17 @@
         "sign": {
           "anyOf": [
             {
-              "$ref": "#/definitions/ElectronSignOptions"
+              "$ref": "#/definitions/MacSignConfiguration"
             },
             {
-              "typeof": "function"
+              "const": false,
+              "type": "boolean"
             },
             {
-              "type": [
-                "null",
-                "string"
-              ]
+              "type": "null"
             }
           ],
-          "description": "Codesigning configuration. The signing certificate is selected via `sign.identity` (or the\n`CSC_LINK` / `CSC_NAME` environment variables).\n\n- **Not set** (default): electron-builder auto-discovers a valid certificate in the keychain. If none is found, signing is skipped.\n- **`null`**: skip signing entirely.\n- **`string`**: path or module ID of a file that exports a {@link CustomMacSign} function.\n- **{@link CustomMacSign}**: inline custom signing function (JS/TS config only).\n- **{@link ElectronSignOptions}**: options forwarded directly to `@electron/osx-sign`."
+          "description": "Code signing configuration. The signing certificate is selected via `sign.identity` (or the\n`CSC_LINK` / `CSC_NAME` environment variables).\n\n- **Not set** (default): electron-builder auto-discovers a valid certificate in the keychain. If none is found, signing is skipped.\n- **`false`** (or `null`): skip signing, like `win.sign: false`.\n- **{@link MacSignConfiguration}**: options forwarded to `@electron/osx-sign`, with an optional custom signer in `sign`\n  (`mac.sign.sign`) that replaces it."
         },
         "target": {
           "anyOf": [
@@ -3482,7 +3354,7 @@
           ],
           "description": "Options forwarded to `@electron/universal` when building a universal (multi-arch) app.\nHas no effect unless the target arch is `universal`."
         },
-        "updateManifest": {
+        "updateManifestSigning": {
           "anyOf": [
             {
               "$ref": "#/definitions/UpdateManifestSigningOptions"
@@ -3494,7 +3366,143 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+          "description": "Ed25519 signing of the auto-update manifests (`latest*.yml`) and the trust list embedded in `app-update.yml`: each manifest is\nsigned, and its public keys are embedded so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests: they are still written (`publishAutoUpdate: false` on every\npublish provider is what stops writing them), and every build that produces one logs a warning. `false` also short-circuits\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`, so a leftover key in CI cannot re-enable signing by accident.\n\nA platform value (`mac`, `win`, `linux`), `false` included, replaces the root value as a whole; a platform `null` falls back to the\nroot. `mas` / `masDev` do not have this option: Mac App Store builds write no update manifest.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+        }
+      },
+      "type": "object"
+    },
+    "MacSignConfiguration": {
+      "additionalProperties": false,
+      "description": "The macOS signing configuration (`mac.sign`, `mas.sign`, `masDev.sign`): options forwarded to `@electron/osx-sign`, and optionally a\ncustom signer that replaces it.",
+      "properties": {
+        "additionalArguments": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Extra arguments passed to each `codesign` invocation."
+        },
+        "batchCodesignCalls": {
+          "description": "Combine all files with identical CLI arguments in a single `codesign` call instead of running\n`codesign` once for each of those files. This minimizes the number of child processes that need\nto be spawned and reduces the time it takes to sign all files.",
+          "type": "boolean"
+        },
+        "binaries": {
+          "description": "Array of paths to additional binaries that will be signed along with built-ins of Electron.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "entitlements": {
+          "description": "Path to the main app entitlements file. Resolved relative to the build resources directory, then the project directory.\nFalls back to `build/entitlements.mac.plist` (or `build/entitlements.mas.plist` for MAS targets) if it exists.\nOtherwise `mac` builds use the bundled default, which grants only `com.apple.security.cs.allow-jit`\n(ad-hoc builds use a bundled ad-hoc template that also disables library validation), and MAS builds use\n`@electron/osx-sign`'s built-in sandboxed `default.mas.plist`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "entitlementsInherit": {
+          "description": "Path to child entitlements inherited by embedded frameworks and bundles. Resolved relative to the build resources directory, then the project directory.\nFalls back to `build/entitlements.mac.inherit.plist` (or `build/entitlements.mas.inherit.plist` for MAS targets) if it exists.\nOtherwise nested binaries receive `@electron/osx-sign`'s per-file defaults (renderer/GPU helpers: `allow-jit`;\nplugin helper: Chromium's looser set; everything else: `default.darwin.plist`); ad-hoc `mac` builds use the\nbundled ad-hoc template instead.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "entitlementsLoginHelper": {
+          "description": "Path to entitlements for the Login Helper.\nRequired when using App Sandbox, because the Login Helper cannot inherit entitlements.\nDefaults to the value of `entitlements`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "hardenedRuntime": {
+          "description": "Whether to enable [Hardened Runtime](https://developer.apple.com/documentation/security/hardened_runtime).\n\nHardened Runtime is a prerequisite for notarization (mandatory on macOS 10.15+).\nDefaults to `true` for `darwin` builds and `false` for MAS builds (`mas` and `mas-dev`).",
+          "type": "boolean"
+        },
+        "identity": {
+          "description": "The signing identity (certificate name or SHA-1 hash). Applies to both app signing and DMG signing.\nPrefer the environment variables `CSC_LINK` / `CSC_NAME` over hardcoding this value.\n\n- **Not set** (default): electron-builder searches the keychain for a valid certificate.\n- **`null`**: skip signing entirely.\n- **`\"-\"`**: ad-hoc signing (requires disabling library validation — see `hardenedRuntime`).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "ignore": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "typeof": "function"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Defines files that will be skipped during the code signing process.\nThis property accepts a regex, function or an array of regexes and functions.\nElements of other types are treated as `RegExp`.\n\nFile paths matching a regex or returning a `true` value from a function will be ignored."
+        },
+        "preAutoEntitlements": {
+          "description": "Flag to enable/disable entitlements automation tasks necessary for code signing most Electron apps.\nThe automation runs when the app's entitlements enable `com.apple.security.app-sandbox`, or when a\n{@link OnlySignOptions.provisioningProfileprovisioning profile} is supplied (a profile only grants\nits restricted entitlements to code carrying the matching identifier entitlements below).\n* Fills in the `ElectronTeamID` property in `Info.plist` with the provisioning profile's Team Identifier or by parsing the identity name.\n* Adds `com.apple.application-identifier` and `com.apple.developer.team-identifier` to the entitlements file.\n* For sandboxed apps, also adds [`com.apple.security.application-groups`](https://developer.apple.com/documentation/bundleresources/entitlements/com_apple_security_application-groups) to the entitlements file.",
+          "type": "boolean"
+        },
+        "preEmbedProvisioningProfile": {
+          "description": "Flag to enable/disable the embedding of a provisioning profile into the app's `Contents` folder.\nWill use the profile from {@link OnlySignOptions.provisioningProfile} if provided. Otherwise, it\nsearches for a `.provisionprofile` file in the current working directory.",
+          "type": "boolean"
+        },
+        "provisioningProfile": {
+          "description": "Path to a provisioning profile, which can be used to grant restricted entitlements to your app.\n\nSee [Apple Documentation](https://developer.apple.com/documentation/technotes/tn3125-inside-code-signing-provisioning-profiles) for more details.",
+          "type": "string"
+        },
+        "requirements": {
+          "description": "Path to a [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html).\nNot applicable for MAS.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "sign": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "A custom signer that replaces `@electron/osx-sign`: a function (JS/TS config only), or the path or module id of a file exporting one\n(named export `sign`, else the default export). It is called with the `@electron/osx-sign` options built from this object\n(`CustomMacSignOptions`: `app`; `identity`, the SHA-1 hash of the keychain identity (`-` for ad-hoc signing), unset when none is\nfound; `keychain`; `platform`; `type`; `provisioningProfile`; `binaries`; `ignore`; `strictVerify`; `preAutoEntitlements`;\n`preEmbedProvisioningProfile`; `batchCodesignCalls`; and, per file through `optionsForFile`, `entitlements`, `hardenedRuntime`,\n`timestamp`, `requirements` and `additionalArguments`) and the `MacPackager`, and must sign the app at `app` in place. `identity` set\nnext to it selects the keychain identity whose hash the signer receives; a signer that needs a certificate name (a remote or HSM\nsigner) reads it itself. The DMG (`dmg.sign`) and the Mac App Store installer are signed from the keychain, never by this signer.\n\nIt reaches the Mac App Store apps through the `mac` → `mas` → `masDev` merge, called with their options; `null` removes a signer set\nby an earlier layer, e.g. `mas.sign.sign: null` over `mac.sign.sign` signs the Mac App Store app with `@electron/osx-sign`."
+        },
+        "strictVerify": {
+          "description": "Flag to enable/disable the `--strict` flag when verifying the signed application bundle.\nAlso supports string values to specify which strict restrictions to use, see codesign man page for supported values.",
+          "type": [
+            "string",
+            "boolean"
+          ]
+        },
+        "timestamp": {
+          "description": "URL of the timestamp authority server. Passed per-file to `codesign --timestamp=<url>`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "type": {
+          "description": "The type of certificate to use when signing: `development` or `distribution`.\n\nDefaults to a value derived from the build flavor: `mas-dev` → `development`, otherwise `distribution`.\nSet it explicitly to override — e.g. `development` on a darwin build signs with a `Mac Developer` or\n`Apple Development` certificate instead of `Developer ID Application` and embeds a matching\ndevelopment provisioning profile.\n\nDevelopment-signed apps are blocked by Gatekeeper on other machines; users must use the\nright-click → Open workaround documented at https://support.apple.com/en-us/guide/mac-help/mh40616/mac.\nSuch builds are not suitable for production distribution and cannot be notarized.",
+          "enum": [
+            "development",
+            "distribution"
+          ],
+          "type": "string"
         }
       },
       "type": "object"
@@ -3619,19 +3627,17 @@
         "sign": {
           "anyOf": [
             {
-              "$ref": "#/definitions/ElectronSignOptions"
+              "$ref": "#/definitions/MacSignConfiguration"
             },
             {
-              "typeof": "function"
+              "const": false,
+              "type": "boolean"
             },
             {
-              "type": [
-                "null",
-                "string"
-              ]
+              "type": "null"
             }
           ],
-          "description": "Codesigning configuration. The signing certificate is selected via `sign.identity` (or the\n`CSC_LINK` / `CSC_NAME` environment variables).\n\n- **Not set** (default): electron-builder auto-discovers a valid certificate in the keychain. If none is found, signing is skipped.\n- **`null`**: skip signing entirely.\n- **`string`**: path or module ID of a file that exports a {@link CustomMacSign} function.\n- **{@link CustomMacSign}**: inline custom signing function (JS/TS config only).\n- **{@link ElectronSignOptions}**: options forwarded directly to `@electron/osx-sign`."
+          "description": "Code signing configuration. The signing certificate is selected via `sign.identity` (or the\n`CSC_LINK` / `CSC_NAME` environment variables).\n\n- **Not set** (default): electron-builder auto-discovers a valid certificate in the keychain. If none is found, signing is skipped.\n- **`false`** (or `null`): skip signing, like `win.sign: false`.\n- **{@link MacSignConfiguration}**: options forwarded to `@electron/osx-sign`, with an optional custom signer in `sign`\n  (`mac.sign.sign`) that replaces it."
         },
         "universal": {
           "anyOf": [
@@ -3792,7 +3798,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "runAfterFinish": {
           "default": true,
@@ -3910,7 +3916,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "upgradeCode": {
           "description": "The [upgrade code](https://learn.microsoft.com/en-us/windows/win32/msi/upgradecode). Optional, by default generated using app id.",
@@ -4104,7 +4110,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "publisher": {
           "description": "The package publisher (`Identity/@Publisher`). It must match the subject of the signing certificate exactly. Defaults to that\nsubject (`CN=ms` for an unsigned build, such as one for the Store); with `win.sign.type: \"azure\"`, `win.sign.publisherName` is used.",
@@ -4483,7 +4489,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "removeDefaultUninstallWelcomePage": {
           "default": false,
@@ -4844,7 +4850,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "removeDefaultUninstallWelcomePage": {
           "default": false,
@@ -5570,7 +5576,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "synopsis": {
           "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description): the first line of the package\ndescription, and the rpm `Summary`.",
@@ -5835,7 +5841,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "scripts": {
           "default": "build/pkg-scripts",
@@ -5954,7 +5960,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "requestExecutionLevel": {
           "default": "user",
@@ -6211,7 +6217,7 @@
     },
     "RemoteBuildOptions": {
       "additionalProperties": false,
-      "description": "Configuration for a remote snap build on [Launchpad](https://launchpad.net/).\nRemote builds run on Canonical's infrastructure without requiring native hardware or nested virtualisation.\n\nA single remote build can target one or more architectures. Set `buildFor` to a string for one\narch, or to an array (e.g. `[\"amd64\", \"arm64\"]`) to build several architectures in a single\n`snapcraft remote-build` job on Launchpad that emits a separate snap artifact per arch.\nAlternatively, the top-level `arch` option (e.g. `arch: [\"x64\", \"arm64\"]`) spawns a separate\nremote-build job per architecture — do not combine that with a `buildFor` array (mutually exclusive).\n\nAuthentication is resolved in this order:\n1. `cscLink` config field — base64-encoded credentials or a file path\n2. `SNAP_CSC_LINK` environment variable — same format as `cscLink`\n   (CI-recommended; follows the same pattern as `WIN_CSC_LINK` for Windows code signing)\n3. `SNAPCRAFT_STORE_CREDENTIALS` environment variable (read directly by snapcraft)\n4. An active interactive `snapcraft login` session\n\n**CI setup** (set once as a CI secret):\n```sh\nexport SNAP_CSC_LINK=$(snapcraft export-login - | base64 -w0)\n```\nThe resolved credentials are injected only into the spawned `snapcraft` subprocess\nenvironment and never exposed through `process.env`.",
+      "description": "Configuration for a remote snap build on [Launchpad](https://launchpad.net/).\nRemote builds run on Canonical's infrastructure without requiring native hardware or nested virtualisation.\nRead only when `snapcraft.core24.buildEnvironment` is `\"remote\"`.\n\nA single remote build can target one or more architectures. Set `buildFor` to a string for one\narch, or to an array (e.g. `[\"amd64\", \"arm64\"]`) to build several architectures in a single\n`snapcraft remote-build` job on Launchpad that emits a separate snap artifact per arch.\nAlternatively, the top-level `arch` option (e.g. `arch: [\"x64\", \"arm64\"]`) spawns a separate\nremote-build job per architecture — do not combine that with a `buildFor` array (mutually exclusive).\n\nAuthentication is resolved in this order:\n1. `snapcraft.cscLink` — base64-encoded credentials or a file path\n2. `SNAP_CSC_LINK` environment variable — same format as `cscLink`\n   (CI-recommended; follows the same pattern as `WIN_CSC_LINK` for Windows code signing)\n3. `SNAPCRAFT_STORE_CREDENTIALS` environment variable (read directly by snapcraft)\n4. An active interactive `snapcraft login` session\n\n**CI setup** (set once as a CI secret):\n```sh\nexport SNAP_CSC_LINK=$(snapcraft export-login - | base64 -w0)\n```\nThe resolved credentials are injected only into the spawned `snapcraft` subprocess\nenvironment and never exposed through `process.env`.",
       "properties": {
         "acceptPublicUpload": {
           "description": "Suppress the Launchpad public-upload consent prompt by automatically accepting it.\nYour source code will be uploaded to a **public** Launchpad repository.\nSet to `true` in CI once you understand the implications.",
@@ -6230,10 +6236,6 @@
             }
           ],
           "description": "Target architecture (or architectures) for the remote build.\n\n- **Single string** (e.g. `\"amd64\"`): one Launchpad job, one output snap.\n- **Array** (e.g. `[\"amd64\", \"arm64\"]`): one Launchpad job that builds all listed\n  architectures and downloads each resulting snap. All produced snaps are emitted as\n  separate build artifacts.\n\nUsing an array here is mutually exclusive with setting `arch: [\"x64\", \"arm64\"]` at the\nelectron-builder top level — the top-level `arch` option spawns a separate remote-build\njob per architecture, which would duplicate work."
-        },
-        "enabled": {
-          "description": "Whether to enable remote build on Launchpad. Must be set explicitly to `true` to opt in.",
-          "type": "boolean"
         },
         "launchpadUsername": {
           "description": "Your Launchpad username. Used to select the correct Launchpad account when more than\none set of credentials is available.",
@@ -6260,9 +6262,6 @@
           "type": "number"
         }
       },
-      "required": [
-        "enabled"
-      ],
       "type": "object"
     },
     "RpmOptions": {
@@ -6461,7 +6460,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "synopsis": {
           "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description): the first line of the package\ndescription, and the rpm `Summary`.",
@@ -6769,6 +6768,23 @@
           "description": "Whether the snap should automatically start on login (creates an autostart desktop entry).",
           "type": "boolean"
         },
+        "buildEnvironment": {
+          "anyOf": [
+            {
+              "enum": [
+                "host",
+                "lxd",
+                "multipass",
+                "remote"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Where snapcraft builds the snap:\n- `\"lxd\"`: in an [LXD](https://canonical.com/lxd) container (`snapcraft pack --use-lxd`). Linux only; preferred on Linux CI without nested virtualisation.\n- `\"multipass\"`: in a [Multipass](https://multipass.run/) VM (`SNAPCRAFT_BUILD_ENVIRONMENT=multipass`). Linux, macOS and Windows.\n- `\"host\"`: on the build machine itself, snapcraft destructive mode (`SNAPCRAFT_BUILD_ENVIRONMENT=host`). Linux only (an Ubuntu 24.04 host for core24).\n  Not recommended: anything installed on the host can end up in the snap. The `gnome` extension cannot be used, so {@link extensions} defaults to `[]`.\n- `\"remote\"`: on [Launchpad](https://launchpad.net/) (`snapcraft remote-build`), configured by {@link remoteBuild}. Any platform; needs Snap Store\n  credentials (`snapcraft.cscLink`, `SNAP_CSC_LINK`, `SNAPCRAFT_STORE_CREDENTIALS` or a `snapcraft login` session).\n\nUnset: snapcraft's default provider (LXD on Linux); macOS and Windows need `\"multipass\"` or `\"remote\"`.\nOne value, so a later configuration layer (`extends`, `-c.snapcraft.core24.buildEnvironment=multipass`) replaces the choice.\nNot the `build-environment` of a snapcraft.yaml part (environment variables)."
+        },
         "buildPackages": {
           "anyOf": [
             {
@@ -6880,7 +6896,7 @@
               "type": "null"
             }
           ],
-          "description": "[Snapcraft extensions](https://snapcraft.io/docs/snapcraft-extensions) to apply to the app.\nDefaults to `[\"gnome\"]` in normal builds (recommended for Electron apps on Ubuntu 24.04+).\nAutomatically set to `[]` in `useDestructiveMode` builds, where the gnome extension is\nincompatible. Explicitly including `\"gnome\"` while `useDestructiveMode` is set will throw.\nSee: https://documentation.ubuntu.com/snapcraft/stable/reference/extensions/gnome-extension/"
+          "description": "[Snapcraft extensions](https://snapcraft.io/docs/snapcraft-extensions) to apply to the app.\nDefaults to `[\"gnome\"]` (recommended for Electron apps on Ubuntu 24.04+), or to `[]` when {@link buildEnvironment} is `\"host\"`,\nwhere the gnome extension cannot be used (listing it there throws).\nSee: https://documentation.ubuntu.com/snapcraft/stable/reference/extensions/gnome-extension/"
         },
         "forceX11": {
           "description": "Set to `true` to force X11 by injecting `--ozone-platform=x11` into the snap command line.\nWhen unset or `false`, no flag is injected and native Wayland is allowed.\nUnlike the legacy `snap.allowNativeWayland`, there is no electron-version-based default here —\ncore24 always allows Wayland unless this is explicitly `true`.",
@@ -6959,7 +6975,7 @@
               "type": "null"
             }
           ],
-          "description": "[Plugs](https://snapcraft.io/docs/reference/interfaces) (consumed interfaces) for the app.\n\nWhen unset, electron-builder declares its default plug set: `browser-support` (without\n`allow-sandbox`, so the app is launched with `--no-sandbox`), plus — unless the `gnome` extension\nsupplies them — the app-level plugs `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"wayland\",\n\"unity7\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]` and, for strict builds\nthat are not host/destructive-mode, the content-snap plugs `gtk-3-themes`, `icon-themes`,\n`sound-themes`, `gnome-46-2404` and `gpu-2404`.\n\nInclude `\"default\"` to add to that set instead of replacing it: the result is the full default\nset (the app-level plugs above plus everything the build flavor declares on its own) together with\nyour other entries, deduplicated by plug name. A descriptor object named like a default plug\noverrides that plug's attributes. A `null` descriptor resets a default plug named like its interface\n(`browser-support`) to the snapd defaults, and removes a default content-snap plug (`gtk-3-themes`,\n`icon-themes`, `sound-themes`, `gnome-46-2404`, `gpu-2404`) from the snap; the default `layout`\nbinds into `gnome-46-2404` and `gpu-2404`, so set `layout` too when removing those.\nWithout `\"default\"`, the list replaces the defaults entirely.\n```json\n[\"default\", \"camera\", { \"home\": { \"read\": \"all\" } }]\n```\n\nSupports descriptor objects for plugs with attributes:\n```json\n[{ \"dot-config-app\": { \"interface\": \"personal-files\", \"write\": [\"$HOME/.config/app\"] } }]\n```\nThe Snap Store reserves `browser-support`'s `allow-sandbox` attribute for vetted publishers and\nrejects other uploads that request it; electron-builder warns when it is set."
+          "description": "[Plugs](https://snapcraft.io/docs/reference/interfaces) (consumed interfaces) for the app.\n\nWhen unset, electron-builder declares its default plug set: `browser-support` (without\n`allow-sandbox`, so the app is launched with `--no-sandbox`), plus — unless the `gnome` extension\nsupplies them — the app-level plugs `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"wayland\",\n\"unity7\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]` and, for strict builds\nthat are not built on the host (`buildEnvironment: \"host\"`), the content-snap plugs `gtk-3-themes`, `icon-themes`,\n`sound-themes`, `gnome-46-2404` and `gpu-2404`.\n\nInclude `\"default\"` to add to that set instead of replacing it: the result is the full default\nset (the app-level plugs above plus everything the build flavor declares on its own) together with\nyour other entries, deduplicated by plug name. A descriptor object named like a default plug\noverrides that plug's attributes. A `null` descriptor resets a default plug named like its interface\n(`browser-support`) to the snapd defaults, and removes a default content-snap plug (`gtk-3-themes`,\n`icon-themes`, `sound-themes`, `gnome-46-2404`, `gpu-2404`) from the snap; the default `layout`\nbinds into `gnome-46-2404` and `gpu-2404`, so set `layout` too when removing those.\nWithout `\"default\"`, the list replaces the defaults entirely.\n```json\n[\"default\", \"camera\", { \"home\": { \"read\": \"all\" } }]\n```\n\nSupports descriptor objects for plugs with attributes:\n```json\n[{ \"dot-config-app\": { \"interface\": \"personal-files\", \"write\": [\"$HOME/.config/app\"] } }]\n```\nThe Snap Store reserves `browser-support`'s `allow-sandbox` attribute for vetted publishers and\nrejects other uploads that request it; electron-builder warns when it is set."
         },
         "remoteBuild": {
           "anyOf": [
@@ -6970,7 +6986,7 @@
               "type": "null"
             }
           ],
-          "description": "Configuration for a remote build on [Launchpad](https://launchpad.net/).\nEnables cross-architecture builds in CI without native hardware or nested virtualisation.\nSet `remoteBuild.buildFor: [\"amd64\", \"arm64\"]` to build several architectures in one Launchpad\njob, or the top-level `arch: [\"x64\", \"arm64\"]` option to spawn a separate job per architecture\n(the two are mutually exclusive)."
+          "description": "[Launchpad](https://launchpad.net/) options, read only when {@link buildEnvironment} is `\"remote\"`, so they can stay in the configuration\nwhile another environment is selected.\nSet `remoteBuild.buildFor: [\"amd64\", \"arm64\"]` to build several architectures in one Launchpad\njob, or the top-level `arch: [\"x64\", \"arm64\"]` option to spawn a separate job per architecture\n(the two are mutually exclusive)."
         },
         "slots": {
           "anyOf": [
@@ -7022,27 +7038,6 @@
           "type": [
             "null",
             "string"
-          ]
-        },
-        "useDestructiveMode": {
-          "description": "Build directly on the host without an isolated VM or container (snapcraft `--destructive-mode`).\nEquivalent to setting `SNAPCRAFT_BUILD_ENVIRONMENT=host`.\n\n**Not recommended for most use cases.** Destructive mode pollutes the host environment\nand produces builds that are difficult to reproduce — any library or tool present on the\nhost at build time can silently end up in the snap. Prefer `useLXD` or `useMultipass`\nfor clean, reproducible builds; use `remoteBuild` for multi-architecture CI.\n\nValid reasons to enable this option:\n- Building inside a Docker container where nested virtualisation (LXD / Multipass) is\n  unavailable and a remote Launchpad build is not acceptable.\n- Running test suites in CI where the environment is already fully controlled.\n\nThe `gnome` extension is incompatible with this mode enabled — do not include it in `extensions`.",
-          "type": [
-            "null",
-            "boolean"
-          ]
-        },
-        "useLXD": {
-          "description": "Use [LXD](https://canonical.com/lxd) as the isolated build environment.\nPreferred over Multipass on most Linux CI systems where nested virtualisation is unavailable.\nMutually exclusive with `useMultipass` and `useDestructiveMode`.",
-          "type": [
-            "null",
-            "boolean"
-          ]
-        },
-        "useMultipass": {
-          "description": "Use [Multipass](https://multipass.run/) as the isolated build environment.\nMutually exclusive with `useLXD` and `useDestructiveMode`.",
-          "type": [
-            "null",
-            "boolean"
           ]
         }
       },
@@ -7549,7 +7544,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         }
       },
       "required": [
@@ -7969,7 +7964,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "remoteReleases": {
           "description": "A URL to your existing updates. Or `true` to automatically set to your GitHub repository. If given, these will be downloaded to create delta updates.",
@@ -8250,6 +8245,7 @@
     },
     "UpdateManifestSigningOptions": {
       "additionalProperties": false,
+      "description": "The signing keys and trust list of `updateManifestSigning`.",
       "properties": {
         "allowSigningKeyOutsideTrustList": {
           "default": false,
@@ -8582,7 +8578,7 @@
               ]
             }
           ],
-          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+          "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
@@ -8672,7 +8668,7 @@
           "default": "nsis",
           "description": "The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable app](https://www.electron.build/nsis#portable) without installation), `appx`, `msix`, `msi`, `msiWrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nAppX and MSIX packages can be built on Windows 10 or Windows Server 2012 R2 (version 6.3+) or later, and on macOS via Parallels Desktop.\n\nTo use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency."
         },
-        "updateManifest": {
+        "updateManifestSigning": {
           "anyOf": [
             {
               "$ref": "#/definitions/UpdateManifestSigningOptions"
@@ -8684,7 +8680,7 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+          "description": "Ed25519 signing of the auto-update manifests (`latest*.yml`) and the trust list embedded in `app-update.yml`: each manifest is\nsigned, and its public keys are embedded so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests: they are still written (`publishAutoUpdate: false` on every\npublish provider is what stops writing them), and every build that produces one logs a warning. `false` also short-circuits\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`, so a leftover key in CI cannot re-enable signing by accident.\n\nA platform value (`mac`, `win`, `linux`), `false` included, replaces the root value as a whole; a platform `null` falls back to the\nroot. `mas` / `masDev` do not have this option: Mac App Store builds write no update manifest.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         },
         "verifyUpdateCodeSignature": {
           "default": true,
@@ -9489,7 +9485,7 @@
     },
     "forceCodeSigning": {
       "default": false,
-      "description": "Whether to throw an error and abort the build if the app could not be code-signed, notarized, or have its\nauto-update manifests signed - and to verify the signatures the build produces.\n\nSet to `true` in release pipelines to catch missing or misconfigured signing credentials\nbefore producing unsigned artifacts. When `false` (the default), missing signing credentials\nproduce a warning and the build continues unsigned.\n\nWith `true`:\n- macOS: the app must be signed, which needs a macOS host, also in pull-request builds (set `CSC_FOR_PULL_REQUEST=true` to sign\n  them, or pass `-c.forceCodeSigning=false` there), and notarized: notarization credentials must be set when the build starts.\n  The output of a custom `mac.sign` signer is checked with `codesign --verify --deep --strict`, the stapled ticket with\n  `stapler validate`, a signed pkg with `pkgutil --check-signature`, and a DMG with `dmg.sign: true` must be signed.\n- Windows: every signed file is read back and must carry a valid Authenticode signature.\n- Every platform (the only effect on Linux): auto-update manifests must be signed, also by a build that does not publish.\n- A prepackaged app, which electron-builder does not sign, must already be signed (and, on macOS, notarized).\n\nExplicit opt-outs are honored with a warning: `mac.notarize: false`, `updateManifest: false`, `win.signExts` exclusions and a\ncustom `nsis.script` (whose uninstaller electron-builder does not sign). `win.sign: false` and `mac.sign: null` contradict it\nand fail the build. `electron-builder verify` checks the build output afterwards.",
+      "description": "Whether to throw an error and abort the build if the app could not be code-signed, notarized, or have its\nauto-update manifests signed - and to verify the signatures the build produces.\n\nSet to `true` in release pipelines to catch missing or misconfigured signing credentials\nbefore producing unsigned artifacts. When `false` (the default), missing signing credentials\nproduce a warning and the build continues unsigned.\n\nWith `true`:\n- macOS: the app must be signed, which needs a macOS host, also in pull-request builds (set `CSC_FOR_PULL_REQUEST=true` to sign\n  them, or pass `-c.forceCodeSigning=false` there), and notarized: notarization credentials must be set when the build starts.\n  The output of a custom `mac.sign.sign` signer is checked with `codesign --verify --deep --strict`, the stapled ticket with\n  `stapler validate`, a signed pkg with `pkgutil --check-signature`, and a DMG with `dmg.sign: true` must be signed.\n- Windows: every signed file is read back and must carry a valid Authenticode signature.\n- Every platform (the only effect on Linux): auto-update manifests must be signed, also by a build that does not publish.\n- A prepackaged app, which electron-builder does not sign, must already be signed (and, on macOS, notarized).\n\nExplicit opt-outs are honored with a warning: `mac.notarize: false`, `updateManifestSigning: false`, `win.signExts` exclusions and a\ncustom `nsis.script` (whose uninstaller electron-builder does not sign). `win.sign: false` and `mac.sign: false` / `null` contradict\nit and fail the build. `electron-builder verify` checks the build output afterwards.",
       "type": "boolean"
     },
     "freebsd": {
@@ -9811,7 +9807,7 @@
           ]
         }
       ],
-      "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns\npublishing off unless a more specific level sets its own. How the levels combine:\n[Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
+      "description": "Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.\nSee [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level\nthat sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and\n`nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the\nexception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is\nused as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`\nprovider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`\n(see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).\nHow the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed)."
     },
     "releaseInfo": {
       "$ref": "#/definitions/ReleaseInfo",
@@ -9871,7 +9867,7 @@
       ],
       "description": "Pinned versions of the binary toolsets electron-builder downloads and uses internally.\n\nEach property selects a specific release of the corresponding tool bundle. Set a property to\n`\"0.0.0\"` to force the legacy bundle (pre-v27 behaviour). Leave a property unset (or set it to\n`\"latest\"`) to use the modern default (newest bundle) for that toolset.\n\nNote: Toolset versioning can drop intermediate releases (such as if a problem is discovered in a bundle). If you need to pin to a specific release, check the release notes for the toolset to ensure the version you specify is valid.\nToolsets, the versions offered for each, and what `latest` resolves to can be added, changed or removed in any electron-builder release (minor or patch), not only in a major release. (To address toolset stability, reported issues, adopt latest tooling versions, etc.)"
     },
-    "updateManifest": {
+    "updateManifestSigning": {
       "anyOf": [
         {
           "$ref": "#/definitions/UpdateManifestSigningOptions"
@@ -9883,7 +9879,7 @@
           "type": "null"
         }
       ],
-      "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+      "description": "Ed25519 signing of the auto-update manifests (`latest*.yml`) and the trust list embedded in `app-update.yml`: each manifest is\nsigned, and its public keys are embedded so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests: they are still written (`publishAutoUpdate: false` on every\npublish provider is what stops writing them), and every build that produces one logs a warning. `false` also short-circuits\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`, so a leftover key in CI cannot re-enable signing by accident.\n\nA platform value (`mac`, `win`, `linux`), `false` included, replaces the root value as a whole; a platform `null` falls back to the\nroot. `mas` / `masDev` do not have this option: Mac App Store builds write no update manifest.\n\nThe requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other\nbuild warns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing (or `forceCodeSigning`) build checks for the key at build start, before\nanything is packed or uploaded. Every signed manifest is read back and verified before it is written.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
     },
     "win": {
       "anyOf": [

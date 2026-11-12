@@ -36,7 +36,7 @@ import { combineSignResults, isSignResultSigned, SigningResult } from "./codeSig
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { AfterPackContext, ElectronPlatformName } from "./index.js"
 import { MacTargetHelper, MasPlatformType, PlatformType } from "./targets/mac/MacTargetHelper.js"
-import { ElectronSignOptions, MacConfiguration, MasConfiguration } from "./options/macOptions.js"
+import { isMacSigningDisabled, MacConfiguration, MacSignConfiguration, MasConfiguration } from "./options/macOptions.js"
 import { AsarOptions } from "./options/PlatformSpecificBuildOptions.js"
 import { Packager } from "./packager.js"
 import type { PlannedTargets } from "./packagerApi.js"
@@ -55,7 +55,7 @@ import { makeUniversalApp } from "@electron/universal"
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
 
-function isElectronSignOptions(sign: MacConfiguration["sign"]): sign is ElectronSignOptions {
+function isElectronSignOptions(sign: MacConfiguration["sign"]): sign is MacSignConfiguration {
   return typeof sign === "object" && sign !== null
 }
 
@@ -208,23 +208,21 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   /**
-   * Whether sign() skips the macOS app because of the configuration, before it would notarize it: `sign: null`, `sign.identity: null`,
-   * or `CSC_IDENTITY_AUTO_DISCOVERY=false` without an identity (`sign.identity` or `CSC_NAME`) or a custom signer.
+   * Whether sign() skips the macOS app because of the configuration, before it would notarize it: `sign: false` / `null`,
+   * `sign.identity: null`, or `CSC_IDENTITY_AUTO_DISCOVERY=false` without an identity (`sign.identity` or `CSC_NAME`) or a custom signer
+   * (`sign.sign`). Checked in sign()'s order: `sign.identity: null` skips a custom signer too.
    */
   private isMacSigningSkippedByConfiguration(): boolean {
     const signConfig = this.platformSpecificBuildOptions.sign
-    if (signConfig === null) {
+    if (isMacSigningDisabled(signConfig) || signConfig?.identity === null) {
       return true
     }
-    const signOpts = isElectronSignOptions(signConfig) ? signConfig : undefined
-    if (signConfig != null && signOpts == null) {
+    const hook = signConfig?.sign
+    if (typeof hook === "string" || typeof hook === "function") {
       // a custom signer is called without an identity too
       return false
     }
-    if (signOpts?.identity === null) {
-      return true
-    }
-    return isEmptyOrSpaces(signOpts?.identity ?? process.env.CSC_NAME) && !isAutoDiscoveryCodeSignIdentity()
+    return isEmptyOrSpaces(signConfig?.identity ?? process.env.CSC_NAME) && !isAutoDiscoveryCodeSignIdentity()
   }
 
   /** Whether `pack` builds the non-MAS app: unless every target is a MAS one. No target at all is a dir build. */
@@ -690,8 +688,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     // getPlatformConfig cascades mac → mas → masDev, so `sign` (and `sign.identity`) is already merged for this flavor.
     const config = this.getPlatformConfig(targetPlatform).config.sign
 
-    // sign: null → user explicitly disabled signing
-    if (config === null) {
+    // sign: false / null → user explicitly disabled signing (validation turns null into false)
+    if (isMacSigningDisabled(config)) {
       return this.helper.handleNullIdentity(targetPlatform)
     }
 
@@ -703,8 +701,9 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     }
 
     const keychainFile = (await this.codeSigningInfo.value).keychainFile
-    // `config` is a custom fn/string module path when it's non-null and not an options object
-    const hasCustomSign = config != null && !signOpts
+    // a custom signer (sign.sign) is a function or a module path; null removes one an earlier layer set
+    const hook = signOpts?.sign
+    const hasCustomSign = typeof hook === "string" || typeof hook === "function"
     const isMas = MacTargetHelper.isMasTarget(targetPlatform)
 
     const identity = await this.helper.findSigningIdentity(targetPlatform, qualifier, keychainFile, hasCustomSign, signOpts)
@@ -720,11 +719,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       if (!forceCodeSigning && MacTargetHelper.shouldCreateMasInstaller(targetPlatform, undefined)) {
         log.warn(
           { file: log.filePath(appPath), reason: "no keychain identity was found, and the MAS installer needs one" },
-          "the custom mac.sign signer is not called for the MAS app, which is left unsigned"
+          "the custom mac.sign.sign signer is not called for the MAS app, which is left unsigned"
         )
         return "skipped:no-certificate"
       }
-      log.info({ file: log.filePath(appPath), reason: "no keychain identity was found" }, "calling the custom mac.sign signer without an identity")
+      log.info({ file: log.filePath(appPath), reason: "no keychain identity was found" }, "calling the custom mac.sign.sign signer without an identity")
     }
 
     if (!isMacOsHighSierra()) {
@@ -739,7 +738,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       const problem = await verifyMacCodeSignature(appPath, { deep: true })
       if (problem != null) {
         throw forceCodeSigningError(
-          `forceCodeSigning is enabled, but the custom mac.sign signer left ${log.filePath(appPath)} without a valid code signature (codesign --verify --deep --strict: ${problem}). ` +
+          `forceCodeSigning is enabled, but the custom mac.sign.sign signer left ${log.filePath(appPath)} without a valid code signature (codesign --verify --deep --strict: ${problem}). ` +
             "The signer must sign the app at configuration.app in place.",
           VERIFICATION_FAILED_ERROR_CODE
         )
@@ -762,10 +761,9 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
   //noinspection JSMethodCanBeStatic
   protected async doSign(opts: SignOptions, signConfig: MacConfiguration["sign"], identity: Identity | null): Promise<void> {
-    // Resolve a custom signer only when signConfig is a function or string module path.
-    // ElectronSignOptions objects and undefined use @electron/osx-sign directly.
-    const customSign =
-      signConfig == null || isElectronSignOptions(signConfig) ? null : await resolveFunction(this.appInfo.type, signConfig, "sign", await this.info.getWorkspaceRoot())
+    // a custom signer (sign.sign: a function or a module path) replaces @electron/osx-sign; otherwise osx-sign signs with `opts`
+    const hook = isElectronSignOptions(signConfig) ? signConfig.sign : null
+    const customSign = typeof hook === "string" || typeof hook === "function" ? await resolveFunction(this.appInfo.type, hook, "sign", await this.info.getWorkspaceRoot()) : null
 
     const { app, platform, type, provisioningProfile } = opts
     log.info(

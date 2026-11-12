@@ -124,3 +124,19 @@ test("static config with only a kept key: warns, is not rewritten, and is not 'a
     vi.restoreAllMocks()
   }
 })
+
+test("YAML config whose only finding is a mac.sign opt-out next to v26 signing options: warns and keeps the file, comments included", async ({ expect, tmpDir }) => {
+  const projectDir = await tmpDir.createTempDir({ prefix: "migrate-schema-cli" })
+  const configPath = path.join(projectDir, "electron-builder.yml")
+  const source = `# signing is configured per machine\nappId: com.example.app\nmac:\n  # turn signing off for now\n  sign: "false"\n  identity: X # keep for later\n`
+  await fs.writeFile(configPath, source)
+  const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+  vi.spyOn(log, "info").mockImplementation(() => undefined)
+  try {
+    await migrateSchema({ "project-dir": projectDir })
+    expect(messagesOf(warn).some(m => m.includes('mac.sign is "false"'))).toBe(true)
+    expect(await fs.readFile(configPath, "utf8")).toBe(source)
+  } finally {
+    vi.restoreAllMocks()
+  }
+})

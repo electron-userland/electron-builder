@@ -8,11 +8,11 @@ import {
   FILE_OPTION_KEYS,
   FILE_OPTIONS_ANCHOR,
   formatLegacyOptionMessage,
-  MAC_SIGN_FIELDS,
-  MAC_SIGN_REMOVED_FIELDS,
+  MAC_PLATFORM_KEYS,
   PUBLISH_MANAGED_OPTIONS,
   PUBLISH_MANAGED_OPTIONS_ANCHOR,
   RESOLVED_LEGACY_CONFIG_OPTIONS,
+  v26Boolean,
 } from "./legacyOptions.js"
 
 /**
@@ -27,9 +27,6 @@ import {
  * Nothing here rejects a value a valid v27 config can contain — every guarded path is covered by a
  * test asserting the v27 schema rejects it too.
  */
-
-/** The v26 signing options of `mac` / `mas` / `masDev`, reported next to a custom signer. */
-const MAC_SIGN_SIBLING_KEYS: ReadonlySet<string> = new Set<string>([...MAC_SIGN_FIELDS, ...MAC_SIGN_REMOVED_FIELDS, "signIgnore"])
 
 /** v26 `snap` options that belong under the base-named sub-key in v27, not directly on `snapcraft`. */
 const SNAPCRAFT_BASE_LEVEL_KEYS = new Set([
@@ -62,7 +59,7 @@ const REMOVED_PUBLISH_PATHS: ReadonlySet<string> = new Set(RESOLVED_LEGACY_CONFI
 const PUBLISH_MANAGED_OPTION_DETAILS: Record<keyof typeof PUBLISH_MANAGED_OPTIONS, (value: unknown) => string> = {
   updaterCacheDirName: () => "It never had an effect: electron-builder always writes `<sanitized package name>-updater`.",
   verifyUpdateCodeSignature: () => "It never had an effect (the build rejected it). To opt out of update signature verification, set `win.verifyUpdateCodeSignature: false`.",
-  updateManifestPublicKey: () => "It never had an effect (the build rejected it). To pin the update-manifest trust list, set `updateManifest.publicKey`.",
+  updateManifestPublicKey: () => "It never had an effect (the build rejected it). To pin the update-manifest trust list, set `updateManifestSigning.publicKey`.",
   publisherName: value =>
     `It no longer overrides the Windows publisher name: set \`win.sign.publisherName: ${JSON.stringify(value)}\` (adding \`type: "signtool"\` when \`win.sign\` is unset), ` +
     "or `win.verifyUpdateCodeSignature: false` only if your updates are not Authenticode-signed. In a macOS or Linux section it never had an effect: remove it.",
@@ -102,31 +99,22 @@ function collectLegacyKeys(config: Record<string, any>, errors: string[], warnin
 }
 
 /**
- * `mac.sign` is a single union in v27, so a custom signer and an options bag can no longer coexist.
- * The sibling fields are already reported by `collectLegacyKeys`; this adds the union explanation so
- * the user knows the two forms are mutually exclusive rather than assuming a mechanical move works.
+ * A custom signer is `sign.sign` in v27, inside the options it receives (as in `win.sign.sign`). The schema rejects a string (other than
+ * "false" and "") or function `sign` too, but without saying where it moved. The v26 signing options next to it are reported by
+ * `collectLegacyKeys`.
  */
 function checkMacCustomSigner(config: Record<string, any>, errors: string[]): void {
-  for (const platform of ["mac", "mas", "masDev"] as const) {
-    const platformConfig = config[platform]
-    if (!isPlainObject(platformConfig)) {
-      continue
-    }
-    const sign = platformConfig.sign
-    if (typeof sign !== "string" && typeof sign !== "function") {
-      continue
-    }
-    // only the signing options: other legacy keys of the platform (universal fields, mas removals, ...) are not signer siblings
-    const legacySiblings = RESOLVED_LEGACY_CONFIG_OPTIONS.filter(
-      o => o.parentPath.length === 1 && o.parentPath[0] === platform && MAC_SIGN_SIBLING_KEYS.has(o.key) && o.key in platformConfig
-    ).map(o => o.key)
-    if (legacySiblings.length === 0) {
+  for (const platform of MAC_PLATFORM_KEYS) {
+    const sign = isPlainObject(config[platform]) ? config[platform].sign : undefined
+    // ajv coerceTypes reads "false" as false and "" as null, the opt-out the schema accepts, not a module path
+    if ((typeof sign !== "string" && typeof sign !== "function") || sign === "false" || sign === "") {
       continue
     }
     errors.push(
-      `\`${platform}.sign\` is a custom signing function or module path, and \`${platform}\` also sets [${legacySiblings.join(", ")}].\n` +
-        `  In v27 \`${platform}.sign\` is a single union — a custom signer cannot carry signing options alongside it.\n` +
-        `  Either keep the custom signer and read those options inside it, or drop it and use an ElectronSignOptions object.\n` +
+      `\`${platform}.sign\` is a custom signer (${typeof sign === "string" ? "a module path" : "a function"}). In electron-builder v27 it is \`${platform}.sign.sign\`, ` +
+        "inside the sign object, where it receives the signing options next to it (identity, entitlements, provisioningProfile, …): " +
+        `\`${platform}: { sign: { sign: … } }\` (on the command line \`-c.${platform}.sign.sign=…\`).\n` +
+        "  Run `electron-builder migrate-schema` to update your configuration automatically.\n" +
         docLink("macos-signing-macsign")
     )
   }
@@ -179,8 +167,8 @@ function checkSnapcraftShape(config: Record<string, any>, errors: string[]): voi
 }
 
 /**
- * `vPrefixedTagName` was removed from GitHub publish options only — GitLab still supports it, so the
- * check has to discriminate on `provider` rather than on the key name. The fields electron-builder writes into app-update.yml itself
+ * `vPrefixedTagName` was replaced by `tagNamePrefix` on the GitHub and GitLab publish options. No other provider had it, and a `custom`
+ * provider's options are its own, so the check is keyed on `provider`. The fields electron-builder writes into app-update.yml itself
  * are rejected on every provider but `custom`, whose options are not validated (the app-update.yml writer rejects them there).
  */
 function checkPublishEntries(config: Record<string, any>, errors: string[]): void {
@@ -203,14 +191,14 @@ function checkPublishEntries(config: Record<string, any>, errors: string[]): voi
             docLink(PUBLISH_MANAGED_OPTIONS_ANCHOR)
         )
       }
-      if (entry.provider !== "github" || !("vPrefixedTagName" in entry)) {
+      if ((entry.provider !== "github" && entry.provider !== "gitlab") || !("vPrefixedTagName" in entry)) {
         continue
       }
-      const suggested = entry.vPrefixedTagName === false ? '""' : '"v"'
+      // v26 read "false" (as -c passes it), 0 and null as false too (ajv coerceTypes)
+      const replacement = v26Boolean(entry.vPrefixedTagName) === false ? 'Replace it with `tagNamePrefix: ""` (no prefix).' : 'Remove it to keep the default `tagNamePrefix: "v"`.'
       errors.push(
-        `\`${label}.vPrefixedTagName\` was removed from the GitHub publish options in v27.\n` +
-          `  Use \`tagNamePrefix: ${suggested}\` instead (it defaults to "v", so you can drop the key entirely to keep the default).\n` +
-          "  This applies to GitHub only — GitLab's `vPrefixedTagName` is unchanged.\n" +
+        `\`${label}.vPrefixedTagName\` was removed from the ${entry.provider === "github" ? "GitHub" : "GitLab"} publish options in electron-builder v27.\n` +
+          `  ${replacement}\n` +
           "  Run `electron-builder migrate-schema` to update your configuration automatically.\n" +
           docLink("githuboptions-gitlaboptions-vprefixedtagname")
       )

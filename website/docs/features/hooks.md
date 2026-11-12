@@ -275,20 +275,26 @@ afterPack: async (context) => {
 
 ### Custom Code Signing
 
-```js
+A custom macOS signer replaces `@electron/osx-sign`. It is `mac.sign.sign`, inside the `mac.sign` options it receives (v26 set it as `mac.sign` itself):
+
+```yaml
 mac:
-  sign: "./scripts/sign.js"
+  sign:
+    sign: "./scripts/sign.js"
 ```
 
 ```js
 // scripts/sign.js
-exports.default = async function(configuration) {
-  // configuration: CustomMacSign
-  // { path, packager, entitlements, ... }
-  const { execSync } = require("child_process")
-  execSync(`codesign --deep --sign "${configuration.identity}" "${configuration.path}"`)
+exports.default = async function (configuration, packager) {
+  // configuration: CustomMacSignOptions (@electron/osx-sign SignOptions: app, identity, keychain, platform, type,
+  // provisioningProfile, binaries, optionsForFile, …), built from mac.sign; identity is the SHA-1 hash of the keychain
+  // identity, unset when none is found
+  const { execFileSync } = require("child_process")
+  execFileSync("/usr/bin/codesign", ["--force", "--deep", "--sign", configuration.identity, configuration.app])
 }
 ```
+
+The signer also signs the Mac App Store apps, with the merged `mas` / `masDev` options; `mas.sign.sign: null` signs them with `@electron/osx-sign` instead.
 
 ### Uploading Symbols to Sentry
 

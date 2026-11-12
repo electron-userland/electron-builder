@@ -1,9 +1,11 @@
+import type { MacSignConfiguration as AppBuilderLibMacSignConfiguration, UpdateManifestSigningOptions as AppBuilderLibUpdateManifestSigningOptions } from "app-builder-lib"
 import { getConfig, validateConfiguration } from "app-builder-lib/internal"
 import { Arch, DebugLogger } from "builder-util"
-import { CliOptions, Configuration, DIR_TARGET, Platform } from "electron-builder"
+import { CliOptions, Configuration, DIR_TARGET, MacConfiguration, MacSignConfiguration, Platform, UpdateManifestSigningOptions } from "electron-builder"
 import { configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/src/builder"
 import { writeFile } from "fs/promises"
 import * as path from "path"
+import { expectTypeOf } from "vitest"
 import { app, appThrows, linuxDirTarget } from "./helpers/packTester.js"
 import { ElectronSignOptions } from "app-builder-lib/src/options/macOptions.js"
 
@@ -90,6 +92,55 @@ test.ifNotWindows("null string as null", async ({ expect }) => {
   expect((config.mac!.sign as ElectronSignOptions).hardenedRuntime).toBe(false)
 })
 
+test("`-c.mas.sign.identity=null`, `-c.masDev.sign.sign=null` and `-c.mac.sign=false` are coerced like `-c.mac.sign.identity=null`", async ({ expect }) => {
+  const yargs = configureBuildCommand(createYargs())
+  const options = normalizeOptions(yargs.parse(["-c.mas.sign.identity=null", "-c.masDev.sign.sign=null", "-c.mac.sign=false"]) as CliOptions)
+  const config = options.config as Configuration
+  await validateConfiguration(config, new DebugLogger())
+  // without coercion they stay the string "null", an identity name or a module path, and "false" fails validation
+  expect((config.mas!.sign as MacSignConfiguration).identity).toBeNull()
+  expect((config.masDev!.sign as MacSignConfiguration).sign).toBeNull()
+  expect(config.mac!.sign).toBe(false)
+})
+
+test("`-c.mas.sign=null` skips signing the MAS app: validation turns null into the `false` opt-out", async ({ expect }) => {
+  const yargs = configureBuildCommand(createYargs())
+  const config = normalizeOptions(yargs.parse(["-c.mas.sign=null"]) as CliOptions).config as Configuration
+  await validateConfiguration(config, new DebugLogger())
+  expect(config.mas!.sign).toBe(false)
+})
+
+test("an unknown mac.sign option fails validation and names the v27 mac.sign shape", async ({ expect }) => {
+  const error = await validateConfiguration({ mac: { sign: { identty: "Acme (TEAM1234AB)" } } } as any, new DebugLogger()).then(
+    () => null,
+    (e: Error) => e
+  )
+  expect(error?.message).toContain("configuration.mac.sign has an unknown property 'identty'")
+  expect(error?.message).toContain("a custom signer is `mac.sign.sign`")
+  expect(error?.message).toContain("v27-config-changes#macos-signing-macsign")
+})
+
+test.for<[string, any]>([
+  ["mas", { mas: { sign: { identty: "Acme (TEAM1234AB)" } } }],
+  ["masDev", { masDev: { sign: { hardenedRuntime: "yes" } } }],
+])("an invalid %s.sign fails validation and names the v27 sign shape of that section", async ([section, config], { expect }) => {
+  const error = await validateConfiguration(config, new DebugLogger()).then(
+    () => null,
+    (e: Error) => e
+  )
+  expect(error?.message).toContain(`a custom signer is \`${section}.sign.sign\``)
+  expect(error?.message).toContain("v27-config-changes#macos-signing-macsign")
+})
+
+// Type-level: `pnpm typecheck:test` fails when the shape or the exports change (the @ts-expect-error is then unused).
+test("mac.sign is typed MacSignConfiguration | false | null, exported by electron-builder and app-builder-lib, and a bare signer is gone", ({ expect }) => {
+  expectTypeOf<MacConfiguration["sign"]>().toEqualTypeOf<MacSignConfiguration | false | null | undefined>()
+  expectTypeOf<MacSignConfiguration>().toEqualTypeOf<AppBuilderLibMacSignConfiguration>()
+  // @ts-expect-error a custom signer is mac.sign.sign
+  const old: MacConfiguration = { sign: "./customSign.js" }
+  expect(Object.keys(old)).toEqual(["sign"])
+})
+
 test("`-c.mac.asarIntegrityDigest=false` turns the ASAR integrity digest off from the command line", async ({ expect }) => {
   const yargs = configureBuildCommand(createYargs())
   const options = normalizeOptions(yargs.parse(["-c.mac.asarIntegrityDigest=false", "-c.mas.asarIntegrityDigest=false"]) as CliOptions)
@@ -164,42 +215,57 @@ test("an electron-builder.toml config is parsed by the toml package and passes s
   await validateConfiguration(config, new DebugLogger())
 })
 
-test("`-c.updateManifest=false` is coerced to a boolean and passes schema validation", async ({ expect }) => {
+test("`-c.updateManifestSigning=false` is coerced to a boolean and passes schema validation", async ({ expect }) => {
   const yargs = configureBuildCommand(createYargs())
-  const options = normalizeOptions(yargs.parse(["-c.updateManifest=false", "-c.linux.updateManifest=false"]) as CliOptions)
+  const options = normalizeOptions(yargs.parse(["-c.updateManifestSigning=false", "-c.linux.updateManifestSigning=false"]) as CliOptions)
   const config = options.config as Configuration
   // without coercion these stay the string "false", which is neither the `=== false` opt-out nor schema-valid
-  expect(config.updateManifest).toBe(false)
-  expect(config.linux!.updateManifest).toBe(false)
+  expect(config.updateManifestSigning).toBe(false)
+  expect(config.linux!.updateManifestSigning).toBe(false)
   await validateConfiguration(config, new DebugLogger())
 })
 
-test("schema validation does not coerce `updateManifest: null` into the `false` opt-out", async ({ expect }) => {
+test("schema validation does not coerce `updateManifestSigning: null` into the `false` opt-out", async ({ expect }) => {
   // ajv runs with coerceTypes: true and mutates data on the first matching anyOf branch. scripts/fix-schema.js
   // drops `type` from the `const: false` branch precisely so `null` survives (reordering would coerce `false` into
   // `null` instead); without that, `null` ("signing still required") silently becomes `false` (ship unsigned manifests).
-  const config: Configuration = { updateManifest: null, linux: { updateManifest: null } }
+  const config: Configuration = { updateManifestSigning: null, linux: { updateManifestSigning: null } }
   await validateConfiguration(config, new DebugLogger())
-  expect(config.updateManifest).toBeNull()
-  expect(config.linux!.updateManifest).toBeNull()
+  expect(config.updateManifestSigning).toBeNull()
+  expect(config.linux!.updateManifestSigning).toBeNull()
 
-  const optedOut: Configuration = { updateManifest: false, linux: { updateManifest: false } }
+  const optedOut: Configuration = { updateManifestSigning: false, linux: { updateManifestSigning: false } }
   await validateConfiguration(optedOut, new DebugLogger())
-  expect(optedOut.updateManifest).toBe(false)
-  expect(optedOut.linux!.updateManifest).toBe(false)
+  expect(optedOut.updateManifestSigning).toBe(false)
+  expect(optedOut.linux!.updateManifestSigning).toBe(false)
 })
 
-test("a wrong `updateManifest` value names `false` as the opt-out, not just `null`", async ({ expect }) => {
-  // `updateManifest: true` is the likely mistake for someone who reads "required by default, disable with false".
+test("a wrong `updateManifestSigning` value names `false` as the opt-out, not just `null`", async ({ expect }) => {
+  // `updateManifestSigning: true` is the likely mistake for someone who reads "required by default, disable with false".
   // It fails schema validation, so the actionable runtime error from requireUpdateSigningKeys never runs - this
   // message is the only thing the user sees, and it must not advertise `null` (which is NOT the opt-out) alone.
-  const error = await validateConfiguration({ updateManifest: true } as any, new DebugLogger()).then(
+  const error = await validateConfiguration({ updateManifestSigning: true } as any, new DebugLogger()).then(
     () => null,
     (e: Error) => e
   )
   expect(error).not.toBeNull()
-  expect(error!.message).toContain("configuration.updateManifest should be one of these")
+  expect(error!.message).toContain("configuration.updateManifestSigning should be one of these")
   expect(error!.message).toContain("false")
+})
+
+test("a `-c.updateManifest` override of a 27.0.0 alpha is reported as renamed, not as an unknown property", async ({ expect }) => {
+  const yargs = configureBuildCommand(createYargs())
+  const config = normalizeOptions(yargs.parse(["-c.updateManifest=false"]) as CliOptions).config as Configuration
+  await expect(validateConfiguration(config, new DebugLogger())).rejects.toThrow("`updateManifest` was replaced by `updateManifestSigning`")
+})
+
+// Type-level: `pnpm typecheck:test` fails when the option or its exported type is renamed back (the @ts-expect-error is then unused).
+test("the option is typed UpdateManifestSigningOptions | false | null, exported by electron-builder and app-builder-lib, and updateManifest is gone", ({ expect }) => {
+  expectTypeOf<Configuration["updateManifestSigning"]>().toEqualTypeOf<UpdateManifestSigningOptions | false | null | undefined>()
+  expectTypeOf<UpdateManifestSigningOptions>().toEqualTypeOf<AppBuilderLibUpdateManifestSigningOptions>()
+  // @ts-expect-error renamed to updateManifestSigning
+  const old: Configuration = { updateManifest: false }
+  expect(Object.keys(old)).toEqual(["updateManifest"])
 })
 
 test.ifNotWindows("unknown mac property reports correct path", ({ expect }) =>

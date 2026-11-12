@@ -76,15 +76,37 @@ describe("checkLegacyConfiguration — never rejects a valid v27 config", () => 
     ["asar false", { asar: false }],
     ["electronGet", { electronGet: { mirrorOptions: { mirror: "https://my-mirror/" }, unsafelyDisableChecksums: true } }],
     ["snapcraft", { snapcraft: { base: "core22", core22: { confinement: "strict" } } }],
+    [
+      "snapcraft.core24 remote build",
+      { snapcraft: { base: "core24", core24: { buildEnvironment: "remote", remoteBuild: { buildFor: ["amd64", "arm64"], acceptPublicUpload: true } } } },
+    ],
     ["github publish with tagNamePrefix", { publish: { provider: "github", owner: "o", repo: "r", tagNamePrefix: "" } }],
-    ["gitlab publish keeps vPrefixedTagName", { publish: { provider: "gitlab", projectId: 1, vPrefixedTagName: false } }],
+    ["gitlab publish with tagNamePrefix", { publish: { provider: "gitlab", projectId: 1, tagNamePrefix: "" } }],
+    // the options of a custom provider are its own
+    ["custom publish with vPrefixedTagName", { publish: { provider: "custom", vPrefixedTagName: false } }],
     ["fileOptions", { fileOptions: { files: ["dist/**"], extraResources: [{ from: "a", to: "b" }] }, mac: { fileOptions: null }, win: { fileOptions: { extraFiles: "x" } } }],
     ["flat files keys (applied as fileOptions)", { files: ["dist/**"], linux: { extraResources: ["r"] } }],
     ["fileOptions.allowExternalLinks", { fileOptions: { allowExternalLinks: ["../shared-lib"] }, linux: { fileOptions: { allowExternalLinks: true } } }],
     ["fileOptions.excludedExts", { fileOptions: { excludedExts: ["default", "!pdb"] }, linux: { fileOptions: { excludedExts: ["map"] } } }],
     ["fileOptions.excludedExts null and empty", { fileOptions: { excludedExts: null }, win: { fileOptions: { excludedExts: [] } } }],
+    ["custom mac signer in sign.sign", { mac: { sign: { sign: "./s.js", identity: "Acme (TEAM1234AB)" } }, mas: { sign: { sign: null } }, masDev: { sign: false } }],
+    // the schema reads them as the opt-out (see below), not as a module path
+    ['mac sign: "false"', { mac: { sign: "false" } }],
+    ['mas sign: ""', { mas: { sign: "" } }],
   ])("%s passes the guard", (_name, config) => {
     expect(() => checkLegacyConfiguration({ appId: "com.example.app", ...config } as any)).not.toThrow()
+  })
+
+  test("the v27 mac signing shapes pass the schema too: a signer in sign.sign, sign.sign: null and sign: false", () => {
+    const config = { mac: { sign: { sign: "./s.js", identity: "Acme (TEAM1234AB)" } }, mas: { sign: { sign: null } }, masDev: { sign: false } }
+    expect(() => validateSchema(generatedScheme, config)).not.toThrow()
+  })
+
+  test('the schema reads a sign of "false" as false and "" as null (ajv coerceTypes), the opt-out', () => {
+    const config: Record<string, any> = { mac: { sign: "false" }, mas: { sign: "" } }
+    expect(() => validateSchema(generatedScheme, config)).not.toThrow()
+    expect(config.mac.sign).toBe(false)
+    expect(config.mas.sign).toBeNull()
   })
 })
 
@@ -118,25 +140,31 @@ describe("checkLegacyConfiguration — inverted-polarity options spell out the i
 })
 
 describe("checkLegacyConfiguration — structural checks", () => {
-  test("mac.sign as a custom signer alongside legacy options explains the union", () => {
-    const message = expectRejected({ mac: { sign: "./customSign.js", identity: "Developer ID Application: Acme (TEAM)", hardenedRuntime: true } })
-    expect(message).toContain("single union")
-    expect(message).toContain("identity")
-    expect(message).toContain("hardenedRuntime")
+  test.each<[string, unknown]>([
+    ["mac", "./customSign.js"],
+    ["mas", () => Promise.resolve()],
+    ["masDev", "./s.js"],
+  ])("a custom signer in %s.sign names where it moved: sign.sign", (platform, signer) => {
+    const message = expectRejected({ [platform]: { sign: signer } })
+    expect(message).toContain(`\`${platform}.sign\` is a custom signer (${typeof signer === "string" ? "a module path" : "a function"})`)
+    expect(message).toContain(`In electron-builder v27 it is \`${platform}.sign.sign\``)
+    expect(message).toContain(`-c.${platform}.sign.sign=`)
+    expect(message).toContain("v27-config-changes#macos-signing-macsign")
   })
 
-  test("mac.sign as a custom signer with no legacy siblings is fine", () => {
-    expect(() => checkLegacyConfiguration({ mac: { sign: "./customSign.js" } } as any)).not.toThrow()
-  })
-
-  test("a custom signer's union explanation names only the signing options, not other legacy keys of the platform", () => {
+  test("a custom signer next to v26 signing options: each option is named with the signer's new place", () => {
     const message = expectRejected({ mac: { sign: "./customSign.js", identity: "Acme (TEAM)", signIgnore: ["x"], mergeASARs: false } })
-    expect(message).toContain("single union")
-    const unionLine = message.split("\n").find(line => line.includes("is a custom signing function or module path"))
-    // signIgnore is neither a moved nor a removed sign field, and still a signing option
-    expect(unionLine).toContain("[identity, signIgnore]")
-    // mergeASARs is still reported, as a moved universal option
-    expect(message).toContain("mac.universal.mergeASARs")
+    for (const fullPath of ["mac.sign.sign", "mac.sign.identity", "mac.sign.ignore", "mac.universal.mergeASARs"]) {
+      expect(message).toContain(fullPath)
+    }
+    const doc = readFileSync(path.join(import.meta.dirname, "../../website/docs/migration/v27-config-changes.md"), "utf8")
+    expect(doc).toContain("{#macos-signing-macsign}")
+    expect(doc).toContain("{#custom-signers-move-to-macsignsign}")
+  })
+
+  test("the v27 schema rejects a bare mac signer and a sign value that is neither false, null nor an object", () => {
+    expect(() => validateSchema(generatedScheme, { mac: { sign: "./s.js" } })).toThrow("configuration.mac.sign")
+    expect(() => validateSchema(generatedScheme, { mas: { sign: true } })).toThrow("configuration.mas.sign")
   })
 
   test("win.sign without a type discriminator names the discriminator", () => {
@@ -164,10 +192,37 @@ describe("checkLegacyConfiguration — structural checks", () => {
     expect(message).toContain("snapcraft.core22")
   })
 
-  test("github vPrefixedTagName is reported, gitlab is not", () => {
-    const message = expectRejected({ publish: { provider: "github", owner: "o", repo: "r", vPrefixedTagName: false } })
-    expect(message).toContain('tagNamePrefix: ""')
-    expect(() => checkLegacyConfiguration({ publish: { provider: "gitlab", projectId: 1, vPrefixedTagName: false } } as any)).not.toThrow()
+  describe.each([
+    ["GitHub", { provider: "github", owner: "o", repo: "r" }],
+    ["GitLab", { provider: "gitlab", projectId: 1 }],
+  ])("%s vPrefixedTagName", (name, entry) => {
+    // v26 validated with ajv coerceTypes, which read "false" (what -c passes), 0 and null as false
+    test.each([false, "false", 0, null])("%j is replaced with an empty tagNamePrefix", value => {
+      const message = expectRejected({ publish: { ...entry, vPrefixedTagName: value } })
+      expect(message).toContain(`\`publish.vPrefixedTagName\` was removed from the ${name} publish options in electron-builder v27.`)
+      expect(message).toContain('Replace it with `tagNamePrefix: ""`')
+      expect(message).toContain("electron-builder migrate-schema")
+      expect(message).toContain("v27-config-changes#githuboptions-gitlaboptions-vprefixedtagname")
+      expect(message).not.toContain("GitHub only")
+    })
+
+    test.each([true, "true"])('%j is removed, as tagNamePrefix defaults to "v"', value => {
+      const message = expectRejected({ publish: { ...entry, vPrefixedTagName: value } })
+      expect(message).toContain('Remove it to keep the default `tagNamePrefix: "v"`')
+      expect(message).not.toContain('tagNamePrefix: ""')
+    })
+  })
+
+  test("scheme.json accepts a GitLab tagNamePrefix and rejects vPrefixedTagName", () => {
+    const gitlab = { provider: "gitlab", projectId: 1 }
+    expect(() => validateSchema(generatedScheme, { publish: { ...gitlab, tagNamePrefix: "" } })).not.toThrow()
+    expect(() => validateSchema(generatedScheme, { nsis: { publish: [{ ...gitlab, tagNamePrefix: "release/" }] } })).not.toThrow()
+    expect(() => validateSchema(generatedScheme, { publish: { ...gitlab, vPrefixedTagName: false } })).toThrow("unknown property 'vPrefixedTagName'")
+  })
+
+  test("the config-changes page has the linked vPrefixedTagName section", () => {
+    const doc = readFileSync(path.join(import.meta.dirname, "../../website/docs/migration/v27-config-changes.md"), "utf8")
+    expect(doc).toContain("{#githuboptions-gitlaboptions-vprefixedtagname}")
   })
 
   test("vPrefixedTagName is found in publish arrays and under platform keys", () => {
@@ -184,8 +239,13 @@ describe("checkLegacyConfiguration — structural checks", () => {
 
   test("vPrefixedTagName is found under every section that holds a publish, as migrate-schema rewrites them", () => {
     for (const section of ["nsis", "nsisWeb", "dmg", "appImage", "snapcraft"]) {
-      const config = { [section]: { publish: { provider: "github", owner: "o", repo: "r", vPrefixedTagName: false } } }
-      expect(expectRejected(config), section).toContain(`${section}.publish.vPrefixedTagName`)
+      for (const entry of [
+        { provider: "github", owner: "o", repo: "r" },
+        { provider: "gitlab", projectId: 1 },
+      ]) {
+        const config = { [section]: { publish: { ...entry, vPrefixedTagName: false } } }
+        expect(expectRejected(config), `${section} ${entry.provider}`).toContain(`${section}.publish.vPrefixedTagName`)
+      }
     }
   })
 
@@ -490,11 +550,11 @@ describe("options Mac App Store builds never read, and the Helper EH / NP bundle
     expect(message).not.toContain("s3cr3t")
   })
 
-  test("a removed mas option next to a custom signer is not called a signing option", () => {
+  test("a removed mas option next to a custom signer is reported with it", () => {
     const message = expectRejected({ mas: { sign: "./customSign.js", target: "mas" } })
     expect(message).toContain("mas.target")
     expect(message).toContain("mac.target")
-    expect(message).not.toContain("single union")
+    expect(message).toContain("mas.sign.sign")
   })
 
   test("helperEHBundleId names the Electron version that dropped the helper, and the other helper ids are kept", () => {
@@ -551,7 +611,7 @@ describe("publish options electron-builder writes into app-update.yml itself", (
   test.each<[string, unknown, string]>([
     ["updaterCacheDirName", "x", "<sanitized package name>-updater"],
     ["verifyUpdateCodeSignature", false, "win.verifyUpdateCodeSignature: false"],
-    ["updateManifestPublicKey", "k", "updateManifest.publicKey"],
+    ["updateManifestPublicKey", "k", "updateManifestSigning.publicKey"],
     ["publisherName", ["CN=Acme"], 'win.sign.publisherName: ["CN=Acme"]'],
   ])("%s is reported in every section and array entry, with what replaces it", (key, value, replacement) => {
     for (const [config, label] of [
@@ -609,5 +669,68 @@ describe("Linux target options that never had an effect", () => {
     expect(message).toContain("`deb.icon` was removed in electron-builder v27.")
     expect(message).toContain("`linux.icon`")
     expect(message).toContain("v27-config-changes#linux-target-options-without-effect")
+  })
+})
+
+describe("updateManifest → updateManifestSigning", () => {
+  test("names the new key at the root and on a platform, says the value is unchanged, and links the section", () => {
+    const message = expectRejected({ updateManifest: false, linux: { updateManifest: null } })
+    expect(message).toContain("`updateManifest` was replaced by `updateManifestSigning` in electron-builder v27.")
+    expect(message).toContain("`linux.updateManifest` was replaced by `linux.updateManifestSigning`")
+    expect(message).toContain("The value is unchanged")
+    expect(message).toContain("v27-config-changes#updatemanifest-updatemanifestsigning")
+    const doc = readFileSync(path.join(import.meta.dirname, "../../website/docs/migration/v27-config-changes.md"), "utf8")
+    expect(doc).toContain("{#updatemanifest-updatemanifestsigning}")
+  })
+
+  test("mas.updateManifest is removed, and names the macOS option by its new name", () => {
+    expect(expectRejected({ mas: { updateManifest: false } })).toContain("`mac.updateManifestSigning`")
+  })
+
+  test("updateManifestSigning is accepted at the root and on mac / win / linux, not on mas", () => {
+    const config = {
+      updateManifestSigning: false,
+      mac: { updateManifestSigning: { publicKey: "k" } },
+      win: { updateManifestSigning: null },
+      linux: { updateManifestSigning: { signingKeyFile: "k.pem", allowSigningKeyOutsideTrustList: true } },
+    }
+    expect(() => checkLegacyConfiguration(config as any)).not.toThrow()
+    expect(() => validateSchema(generatedScheme, config)).not.toThrow()
+    expect(() => validateSchema(generatedScheme, { mas: { updateManifestSigning: false } })).toThrow("updateManifestSigning")
+  })
+})
+
+describe("snapcraft.core24 build switches → buildEnvironment", () => {
+  const core24 = (options: Record<string, any>) => ({ snapcraft: { base: "core24", core24: options } })
+
+  test.each([
+    ["useLXD", "lxd"],
+    ["useMultipass", "multipass"],
+    ["useDestructiveMode", "host"],
+  ])("%s names the buildEnvironment value it selects, and links the section", (flag, environment) => {
+    const message = expectRejected(core24({ [flag]: true }))
+    expect(message).toContain(`\`snapcraft.core24.${flag}\` was replaced by \`snapcraft.core24.buildEnvironment: "${environment}"\` in electron-builder v27.`)
+    expect(message).toContain("electron-builder migrate-schema")
+    expect(message).toContain("v27-config-changes#snapcraftcore24-buildenvironment")
+  })
+
+  test("remoteBuild.enabled is reported when it is false too, and the section is on the config-changes page", () => {
+    expect(expectRejected(core24({ remoteBuild: { enabled: false, buildFor: "arm64" } }))).toContain(
+      '`snapcraft.core24.remoteBuild.enabled` was replaced by `snapcraft.core24.buildEnvironment: "remote"`'
+    )
+    const doc = readFileSync(path.join(import.meta.dirname, "../../website/docs/migration/v27-config-changes.md"), "utf8")
+    expect(doc).toContain("{#snapcraftcore24-buildenvironment}")
+  })
+
+  test("remoteBuild options are accepted next to any buildEnvironment, which accepts only the four environments", () => {
+    for (const config of [
+      core24({ buildEnvironment: "remote", remoteBuild: { buildFor: ["amd64"] } }),
+      core24({ buildEnvironment: "lxd", remoteBuild: {} }),
+      core24({ buildEnvironment: null }),
+    ]) {
+      expect(() => checkLegacyConfiguration(config as any)).not.toThrow()
+      expect(() => validateSchema(generatedScheme, config)).not.toThrow()
+    }
+    expect(() => validateSchema(generatedScheme, core24({ buildEnvironment: "docker" }))).toThrow("buildEnvironment")
   })
 })

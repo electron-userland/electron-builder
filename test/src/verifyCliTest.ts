@@ -75,11 +75,11 @@ test("configureVerifyCommand parses the directory, --allow-unverified, --project
   expect(parsed.config).toEqual({ mac: { notarize: "false" } })
 })
 
-test("-c overrides apply as in a build: -c.linux.updateManifest=false skips the signature check", async ({ expect, tmpDir }) => {
+test("-c overrides apply as in a build: -c.linux.updateManifestSigning=false skips the signature check", async ({ expect, tmpDir }) => {
   const projectDir = await tmpDir.createTempDir()
   await createProject(projectDir)
   await writeLinuxOutput(path.join(projectDir, "dist"), { signed: false })
-  const results = await verify({ projectDir, config: { linux: { updateManifest: "false" } } })
+  const results = await verify({ projectDir, config: { linux: { updateManifestSigning: "false" } } })
   expect(results.map(it => [it.check, it.status])).toEqual([
     ["update manifest signature", "skipped"],
     ["update manifest file", "verified"],
@@ -98,6 +98,17 @@ test("checks in an Executables.run scope of toolsets.executables, so codesign, s
   await verify({ projectDir })
   expect(run).toHaveBeenCalledTimes(1)
   expect(scopes).toEqual([{ codesign: "file:///opt/tools/codesign", stapler: "file:///opt/tools/stapler" }])
+})
+
+test("mac.sign: null in the project configuration skips the macOS app checks, though validation turns it into false", async ({ expect, tmpDir }) => {
+  const projectDir = await tmpDir.createTempDir()
+  await createProject(projectDir, "mac:\n  sign: null\n")
+  await write(path.join(projectDir, "dist", "mac", "My.app", "Contents", "Info.plist"), "<plist/>")
+  const results = await verify({ projectDir })
+  expect(results.map(it => [it.check, it.status, it.message])).toEqual([
+    ["code signature", "skipped", "mac.sign is false or null (or its identity is null) in the configuration"],
+    ["notarization ticket", "skipped", "mac.sign is false or null (or its identity is null) in the configuration"],
+  ])
 })
 
 test("verifies the output directory of the project configuration", async ({ expect, tmpDir }) => {

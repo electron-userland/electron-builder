@@ -1,18 +1,28 @@
 import { WinPackager } from "app-builder-lib"
 import { configureWebInstallerAppPackageUrl } from "app-builder-lib/internal"
 import type { Defines } from "app-builder-lib/internal"
+import { AppPackageHelper, CopyElevateHelper } from "app-builder-lib/src/targets/win/nsis/nsisUtil"
+import { WebInstallerTarget } from "app-builder-lib/src/targets/win/nsis/WebInstallerTarget"
 import { Configuration, NsisWebOptions } from "electron-builder"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 
 // APP_PACKAGE_URL define resolution for the nsis-web installer, offline and on every OS. A real `WinPackager` is built over a
 // minimal fake `Packager` (metadata + config, the pattern of squirrelWindowsOptionsTest.ts), so publish-config resolution
-// (nsisWeb.publish → win.publish → publish), macro expansion and the GitHub/S3/generic URL computation are the production
-// ones. The tests that build the web installer and its *.nsis.7z packages live in webInstaller.e2e.ts.
+// (nsisWeb.publish, else nsis.publish → win.publish → publish), macro expansion and the GitHub/S3/generic URL computation are the
+// production ones. The tests that build the web installer and its *.nsis.7z packages live in webInstaller.e2e.ts.
 
 type AppPackageUrlDefines = Pick<Defines, "APP_PACKAGE_URL" | "APP_PACKAGE_URL_IS_INCOMPLETE" | "ALLOW_UNVERIFIED_APP_PACKAGE">
 
 async function computeDefines(tmpDir: TmpDir, config: Configuration): Promise<AppPackageUrlDefines> {
+  const packager = await createPackager(tmpDir, config)
+  // NsisTarget layers the `nsisWeb` options over `nsis`, so this is what WebInstallerTarget.configureDefines sees as `this.options`
+  const defines: AppPackageUrlDefines = {}
+  await configureWebInstallerAppPackageUrl(packager, { ...config.nsis, ...config.nsisWeb } as NsisWebOptions, defines)
+  return defines
+}
+
+async function createPackager(tmpDir: TmpDir, config: Configuration): Promise<WinPackager> {
   const projectDir = await tmpDir.getTempDir({ prefix: "web-installer-url" })
   // mirrors test/fixtures/test-app-one/package.json (author already normalized to an object, as Packager does)
   const metadata = {
@@ -34,11 +44,7 @@ async function computeDefines(tmpDir: TmpDir, config: Configuration): Promise<Ap
     tempDirManager: tmpDir,
     framework: { defaultAppIdPrefix: "com.electron." },
   }
-  const packager = new WinPackager(fakePackagerInfo as any)
-  // NsisTarget layers the `nsisWeb` options over `nsis`, so this is what WebInstallerTarget.configureDefines sees as `this.options`
-  const defines: AppPackageUrlDefines = {}
-  await configureWebInstallerAppPackageUrl(packager, { ...config.nsis, ...config.nsisWeb } as NsisWebOptions, defines)
-  return defines
+  return new WinPackager(fakePackagerInfo as any)
 }
 
 test("web installer, appPackageUrl is complete URL (no arch paths appended)", async ({ expect, tmpDir }) => {
@@ -115,6 +121,18 @@ test("web installer, win.publish used when nsisWeb.publish is absent", async ({ 
     },
   })
   expect(defines).toStrictEqual({ APP_PACKAGE_URL: "https://win-level.example.com", APP_PACKAGE_URL_IS_INCOMPLETE: null })
+})
+
+// With the options of a real WebInstallerTarget: computeDefines' spread cannot show that the two lists are no longer merged.
+test("web installer, nsisWeb.publish replaces nsis.publish: the package URL comes from nsisWeb's first provider", async ({ expect, tmpDir }) => {
+  const packager = await createPackager(tmpDir, {
+    nsis: { publish: [{ provider: "generic", url: "https://example.com/nsis" }] },
+    nsisWeb: { publish: [{ provider: "generic", url: "https://example.com/web" }] },
+  })
+  const target = new WebInstallerTarget(packager, packager.projectDir, "nsis-web", new AppPackageHelper(new CopyElevateHelper()))
+  const defines: AppPackageUrlDefines = {}
+  await configureWebInstallerAppPackageUrl(packager, target.options as NsisWebOptions, defines)
+  expect(defines).toStrictEqual({ APP_PACKAGE_URL: "https://example.com/web", APP_PACKAGE_URL_IS_INCOMPLETE: null })
 })
 
 // Explicit appPackageUrl must be used verbatim — no trailing-slash stripping or other normalization.

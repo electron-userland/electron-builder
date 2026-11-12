@@ -53,13 +53,31 @@ export {
   PacmanOptions,
   RpmOptions,
 } from "./options/linuxOptions.js"
-export type { DmgContent, DmgOptions, DmgWindow, ElectronSignOptions, ElectronUniversalOptions, MacConfiguration, MacOsTargetName, MasConfiguration } from "./options/macOptions.js"
+export type {
+  DmgContent,
+  DmgOptions,
+  DmgWindow,
+  ElectronSignOptions,
+  ElectronUniversalOptions,
+  MacConfiguration,
+  MacOsTargetName,
+  MacSignConfiguration,
+  MasConfiguration,
+} from "./options/macOptions.js"
 export { AuthorMetadata, Metadata, RepositoryInfo } from "./options/metadata.js"
 export { CommonWixOptions, MsiOptions } from "./options/MsiOptions.js"
 export { MsiWrappedOptions } from "./options/MsiWrappedOptions.js"
 export { MsixOptions, MsixWindowsService } from "./options/MsixOptions.js"
 export { BackgroundAlignment, BackgroundScaling, PkgBackgroundOptions, PkgOptions } from "./options/pkgOptions.js"
-export { AsarOptions, FileSet, FilesBuildOptions, PlatformSpecificBuildOptions, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions.js"
+export {
+  AsarOptions,
+  FileSet,
+  FilesBuildOptions,
+  PlatformSpecificBuildOptions,
+  Protocol,
+  ReleaseInfo,
+  UpdateManifestSigningOptions,
+} from "./options/PlatformSpecificBuildOptions.js"
 export {
   CommonSnapOptions,
   PlugDescriptor,

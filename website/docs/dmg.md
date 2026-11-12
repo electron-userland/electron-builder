@@ -159,7 +159,7 @@ dmg:
 ```
 
 :::note
-The app bundle inside the DMG is always signed (when signing is configured). The `sign` option here refers to signing the DMG container file itself. Signing the DMG is not required for Gatekeeper but may be requested in some enterprise environments.
+The app bundle inside the DMG is always signed (when signing is configured). The `sign` option here refers to signing the DMG container file itself. Signing the DMG is not required for Gatekeeper but may be requested in some enterprise environments. The DMG is signed with the keychain identity (never by a custom `mac.sign.sign` signer), and not at all when `mac.sign` is `false` or `mac.sign.identity` is `null`.
 :::
 
 ## Internet-Enabled DMGs

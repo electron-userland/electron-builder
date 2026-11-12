@@ -28,14 +28,15 @@ import { Minimatch } from "minimatch"
 import * as path from "path"
 import * as fs from "fs/promises"
 import type { TmpDir } from "temp-file"
+import { isDeepStrictEqual } from "util"
 import type { Metadata } from "./options/metadata.js"
-// not re-exported from ./index.js, and a type-only import keeps the barrel-cycle guard below intact
-import type { UpdateManifestSigningOptions } from "./options/PlatformSpecificBuildOptions.js"
+import { resolveUpdateManifestSigning, UpdateManifestSigningOptions } from "./options/PlatformSpecificBuildOptions.js"
 import type { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
 import { AppInfo } from "./appInfo.js"
 import { isSignResultSigned, SigningResult } from "./codeSign/signResult.js"
 import { FORCE_CODE_SIGNING_DOCS, forceCodeSigningOverrideHint } from "./codeSign/forceCodeSigning.js"
-import { BUILD_CHANGES_URL } from "./util/config/legacyOptions.js"
+import { isPlainObject } from "./util/config/fileOptions.js"
+import { BUILD_CHANGES_URL, V26_MERGED_TARGET_PUBLISH } from "./util/config/legacyOptions.js"
 import { mergeConfigLayers } from "./util/config/mergeConfigLayers.js"
 import { checkFileInArchive } from "./asar/asarFileChecker.js"
 import { AsarPackager } from "./asar/asarUtil.js"
@@ -119,10 +120,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
    *
    * The platform `compression` is a level (`store` / `normal` / `maximum`, read as {@link compression}), while a target's own
    * `compression` is an algorithm (`deb.compression: "xz"`), so the platform value is not merged into the target options.
+   *
+   * Nor is the platform `publish`: a target's own `publish` replaces it (two lists or two objects are not merged), and without one the
+   * options carry none, so the publish resolution falls back to the platform, then the root value (see `getPublishConfigs`).
    */
   getOptionsForTarget<T>(key: string): T {
-    const { compression: _level, ...platformOptions } = this.platformSpecificBuildOptions
-    return mergeConfigLayers<T>(platformOptions, (this.config as any)[key])
+    const { compression: _level, publish: inheritedPublish, ...platformOptions } = this.platformSpecificBuildOptions
+    const targetOptions = (this.config as any)[key]
+    warnAboutReplacedPublish(key, inheritedPublish, targetOptions?.publish)
+    return mergeConfigLayers<T>(platformOptions, targetOptions)
   }
 
   private externalLinkPolicy: Promise<ExternalLinkPolicy> | null = null
@@ -146,16 +152,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   private readonly _resourceList = new Lazy<Array<string>>(() => orIfFileNotExist(readdir(this.info.buildResourcesDir), []))
 
   /**
-   * The effective `updateManifest` option: a platform-level value (`config.mac.updateManifest`, ...) shadows the
-   * root one, and so does `false` - the explicit opt-out - because `??` only falls through on null/undefined.
-   * A platform-level `null` therefore still falls back to the root rather than disabling signing.
-   *
-   * Note that `mas` / `masDev` are not consulted: `platformOptions` is `config[platform.buildConfigurationKey]`,
-   * which is `mac` for every macOS flavor. MAS builds produce no auto-update metadata, so the opt-out belongs on
-   * `mac` or at the root.
+   * The effective `updateManifestSigning` ({@link resolveUpdateManifestSigning}). `platformOptions` is `config[platform.buildConfigurationKey]`,
+   * which is `mac` for every macOS flavor, so `mas` / `masDev` are not consulted: MAS builds produce no auto-update metadata.
    */
   get updateManifestOptions(): UpdateManifestSigningOptions | false | null {
-    return this.platformOptions.updateManifest ?? this.config.updateManifest ?? null
+    return resolveUpdateManifestSigning(this.config, this.platformOptions)
   }
 
   /**
@@ -164,7 +165,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
    * and PublishManager (embedding the derived public keys in `app-update.yml`) - so the two can no longer
    * disagree about whether signing is on or which keys are in play. Several keys mean every manifest is
    * signed by each of them (dual-signing during key rotation); the first key is the one written to the
-   * legacy single `signature` field. MemoLazy rather than Lazy so a hook mutating `updateManifest`
+   * legacy single `signature` field. MemoLazy rather than Lazy so a hook mutating `updateManifestSigning`
    * between packs re-resolves, while a normal build parses the PEMs once.
    *
    * Deliberately non-throwing: callers about to emit auto-update metadata go through
@@ -198,7 +199,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
    * `required` is the publish gate - a build with a publish policy fails - and `forceCodeSigning` enforces it for every
    * build, publishing or not (pull-request builds included). Any other build that merely writes a manifest (which
    * includes any GitHub-hosted project, since the publish config is inferred from `repository`) gets an advisory
-   * warning instead, so local builds and external-signer pipelines keep working. `updateManifest: false` stays an
+   * warning instead, so local builds and external-signer pipelines keep working. `updateManifestSigning: false` stays an
    * explicit opt-out that only warns, also under `forceCodeSigning`. The warning is emitted at most once per packager;
    * the throw stays re-derivable, since the call sites run per arch and per manifest task.
    */
@@ -215,8 +216,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         `auto-update manifests must be signed ${forced ? "because forceCodeSigning is enabled (also for builds that do not publish, including pull-request builds)" : "when publishing"}, ` +
           `but no Ed25519 signing key was found for ${this.platform.name}. ` +
           "Generate one with `electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded PEM file) " +
-          "or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey / " +
-          "updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out explicitly with `updateManifest: false`" +
+          "or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifestSigning.signingKey / " +
+          "updateManifestSigning.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out explicitly with `updateManifestSigning: false`" +
           (forced
             ? `, or pass ${forceCodeSigningOverrideHint(this)} to build without forceCodeSigning. See ${FORCE_CODE_SIGNING_DOCS}`
             : `. See ${BUILD_CHANGES_URL}#signed-update-manifests-are-required`)
@@ -227,16 +228,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       {
         platform: this.platform.name,
         reason: optedOut
-          ? `updateManifest is set to false${this.forceCodeSigning ? " (forceCodeSigning does not cover update manifests while updateManifest is false)" : ""}`
+          ? `updateManifestSigning is set to false${this.forceCodeSigning ? " (forceCodeSigning does not cover update manifests while updateManifestSigning is false)" : ""}`
           : "no Ed25519 signing key is configured",
       },
       "auto-update manifests will be unsigned: anyone who can overwrite latest*.yml on your update server can point installs at an arbitrary payload. " +
         "Note that installs which already embed a public key reject unsigned manifests (ERR_UPDATER_MANIFEST_NOT_SIGNED). " +
         (optedOut
-          ? "Remove `updateManifest: false` and provide a key with `electron-builder create-update-key` to enable signing. " +
+          ? "Remove `updateManifestSigning: false` and provide a key with `electron-builder create-update-key` to enable signing. " +
             "See https://www.electron.build/docs/features/signed-update-manifests"
           : "Publishing this configuration will fail (and so will a build with forceCodeSigning) until you provide a key with `electron-builder create-update-key`, " +
-            `or opt out explicitly with \`updateManifest: false\`. See ${BUILD_CHANGES_URL}#signed-update-manifests-are-required`)
+            `or opt out explicitly with \`updateManifestSigning: false\`. See ${BUILD_CHANGES_URL}#signed-update-manifests-are-required`)
     )
     return keys
   }
@@ -1199,6 +1200,47 @@ export function normalizeExt(ext: string) {
 
 export function chooseNotNull<T>(v1: T | Nullish, v2: T | Nullish): T | Nullish {
   return v1 == null ? v2 : v1
+}
+
+/**
+ * Whether the `publish` of the target section `targetKey`, which replaces the `inherited` one since v27, leaves out what electron-builder 26
+ * merged in for the sections of V26_MERGED_TARGET_PUBLISH: an inherited provider or a different first provider (two lists; the first is the
+ * app-update.yml feed), or an inherited option (two objects). A string, `null`, or a list next to an object was never merged, and a
+ * `snapcraft.publish` naming a snapStore provider is the snap's only upload target. `undefined` values are ignored, as the merge drops them.
+ */
+export function isInheritedPublishDropped(targetKey: string, inherited: unknown, own: unknown): boolean {
+  if (!Object.prototype.hasOwnProperty.call(V26_MERGED_TARGET_PUBLISH, targetKey)) {
+    return false
+  }
+  if (targetKey === "snapcraft" && asArray<unknown>(own).some(it => isPlainObject(it) && it.provider === "snapStore")) {
+    return false
+  }
+  // a string entry is that provider without options
+  const entry = (it: unknown) => mergeConfigLayers<Record<string, unknown>>(typeof it === "string" ? { provider: it } : isPlainObject(it) ? it : null)
+  if (Array.isArray(inherited) && Array.isArray(own)) {
+    const parent = inherited.map(entry)
+    const target = own.map(entry)
+    return parent.some(it => !target.some(o => isDeepStrictEqual(o, it))) || (parent.length > 0 && !isDeepStrictEqual(target[0], parent[0]))
+  }
+  return isPlainObject(inherited) && isPlainObject(own) && !isDeepStrictEqual(mergeConfigLayers(inherited, own), mergeConfigLayers(own))
+}
+
+/** Warns once per process and target key when the target's own `publish` leaves out what electron-builder 26 merged in (see isInheritedPublishDropped). */
+export function warnAboutReplacedPublish(targetKey: string, inherited: unknown, own: unknown): void {
+  if (!isInheritedPublishDropped(targetKey, inherited, own)) {
+    return
+  }
+  const inheritedKey = V26_MERGED_TARGET_PUBLISH[targetKey]
+  // provider names only: the options may hold credentials
+  const providers = (publish: unknown) => asArray<unknown>(publish).map(it => (typeof it === "string" ? it : isPlainObject(it) ? it.provider : null))
+  log
+    .once(`target-publish-replaces:${targetKey}`)
+    .warn(
+      { [`${targetKey}.publish`]: providers(own), [`${inheritedKey}.publish`]: providers(inherited) },
+      `since v27, \`${targetKey}.publish\` replaces \`${inheritedKey}.publish\` instead of being merged with it (the publish of nsis, portable, dmg and the other targets already replaced the inherited one): ` +
+        `the ${targetKey} artifacts are uploaded only to the providers of \`${targetKey}.publish\`, and an app-update.yml written for them embeds its first provider. ` +
+        `To keep a provider or option of \`${inheritedKey}.publish\`, add it to \`${targetKey}.publish\` (the update feed first). ${BUILD_CHANGES_URL}#target-publish-replaces-platform-publish`
+    )
 }
 
 function capitalizeFirstLetter(text: string) {

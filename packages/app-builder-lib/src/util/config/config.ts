@@ -266,7 +266,15 @@ export async function validateConfiguration(config: Configuration, debugLogger: 
         url = `${site}/${firstSegment}`
       }
 
-      return `${formattedError}\n  How to fix:
+      // the schema accepted any mac / mas / masDev `sign` value before v27, so an error there names the new shape
+      const signSection = /^\/(mac|mas|masDev)\/sign(\/|$)/.exec(error.instancePath ?? "")?.[1]
+      const signHint =
+        signSection == null
+          ? ""
+          : `\n  In electron-builder v27 \`${signSection}.sign\` is false, null or an object of the signing options (a custom signer is \`${signSection}.sign.sign\`); ` +
+            "before, the schema accepted any value there and ignored unknown options. See https://www.electron.build/docs/migration/v27-config-changes#macos-signing-macsign"
+
+      return `${formattedError}${signHint}\n  How to fix:
   1. Open ${url}
   2. Search the option name on the page (or type in into Search to find across the docs).
     * Not found? The option was deprecated or not exists (check spelling).

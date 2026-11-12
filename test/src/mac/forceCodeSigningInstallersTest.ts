@@ -74,7 +74,8 @@ describe("DMG signing (dmg.sign: true) under forceCodeSigning", () => {
     await expect(signDmg(makeDmgPackager({}))).rejects.toThrow("this is a pull-request build")
     vi.stubEnv("GITHUB_BASE_REF", undefined)
 
-    await expect(signDmg(makeDmgPackager({ sign: null }))).rejects.toThrow(/dmg\.sign is true, but the DMG .*My-1\.0\.0\.dmg cannot be signed: mac\.sign is null/)
+    await expect(signDmg(makeDmgPackager({ sign: null }))).rejects.toThrow(/dmg\.sign is true, but the DMG .*My-1\.0\.0\.dmg cannot be signed: mac\.sign is false or null/)
+    await expect(signDmg(makeDmgPackager({ sign: false }))).rejects.toThrow("cannot be signed: mac.sign is false or null")
     await expect(signDmg(makeDmgPackager({ sign: { identity: null } }))).rejects.toThrow("cannot be signed: mac.sign.identity is null")
 
     vi.mocked(findIdentity).mockResolvedValue(null)
@@ -110,6 +111,12 @@ describe("DMG signing (dmg.sign: true) under forceCodeSigning", () => {
     await signDmg(makeDmgPackager({}, false))
     expect(vi.mocked(exec)).toHaveBeenCalledTimes(1)
     expect(verifyMacCodeSignature).not.toHaveBeenCalled()
+  })
+
+  test("mac.sign: false leaves the DMG unsigned, like mac.sign: null (which validation turns into false)", async ({ expect }) => {
+    await expect(signDmg(makeDmgPackager({ sign: false }, false))).resolves.toBeUndefined()
+    expect(findIdentity).not.toHaveBeenCalled()
+    expect(vi.mocked(exec)).not.toHaveBeenCalled()
   })
 })
 

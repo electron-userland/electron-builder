@@ -1,3 +1,5 @@
+import { mkdir, writeFile } from "fs/promises"
+import * as path from "path"
 import { beforeEach, expect, vi } from "vitest"
 import { MacPackager, type CustomMacSignOptions, type MacPackager as MacPackagerType } from "app-builder-lib"
 import type { Identity } from "app-builder-lib/internal"
@@ -34,6 +36,8 @@ describe("MacPackager.doSign", () => {
   test.for<[string, any]>([
     ["no sign config", undefined],
     ["an ElectronSignOptions object", { type: "distribution" }],
+    // sign.sign: null removes a custom signer an earlier layer set (mas.sign.sign: null over mac.sign.sign)
+    ["an object whose sign is null", { sign: null, type: "distribution" }],
   ])("forwards opts to @electron/osx-sign verbatim with %s", async ([, signConfig]) => {
     const opts = signOptions()
     await invokeDoSign({}, opts, signConfig)
@@ -43,15 +47,35 @@ describe("MacPackager.doSign", () => {
     expect(vi.mocked(sign).mock.calls[0][0].identity).toBe(HASH)
   })
 
-  test("a custom signer receives the same opts and osx-sign is not called", async () => {
+  test("a custom signer in sign.sign receives the same opts and osx-sign is not called", async () => {
     const opts = signOptions()
     const customSign = vi.fn<(o: CustomMacSignOptions, p: MacPackagerType) => Promise<void>>().mockResolvedValue(undefined)
     const self = { appInfo: { type: "module" }, info: { getWorkspaceRoot: () => Promise.resolve("/project") } } as unknown as MacPackagerType
-    await invokeDoSign(self, opts, customSign)
+    await invokeDoSign(self, opts, { sign: customSign, identity: "Foo (TEAM123)" })
     expect(customSign).toHaveBeenCalledTimes(1)
     expect(customSign.mock.calls[0][0]).toBe(opts)
     expect(customSign.mock.calls[0][0].identity).toBe(HASH)
     expect(customSign.mock.calls[0][1]).toBe(self)
     expect(vi.mocked(sign)).not.toHaveBeenCalled()
+  })
+
+  test("a custom signer module path in sign.sign is loaded, and its `sign` export is called", async ({ tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "mac-custom-signer" })
+    await mkdir(dir, { recursive: true })
+    const signer = path.join(dir, "signer.cjs")
+    await writeFile(signer, "exports.sign = async (configuration, packager) => { globalThis.__macCustomSignerCalls.push([configuration, packager]) }\n")
+    const calls: Array<[unknown, unknown]> = []
+    ;(globalThis as any).__macCustomSignerCalls = calls
+    try {
+      const opts = signOptions()
+      const self = { appInfo: { type: "module" }, info: { getWorkspaceRoot: () => Promise.resolve(dir) } } as unknown as MacPackagerType
+      await invokeDoSign(self, opts, { sign: signer })
+      expect(calls).toHaveLength(1)
+      expect(calls[0][0]).toBe(opts)
+      expect(calls[0][1]).toBe(self)
+      expect(vi.mocked(sign)).not.toHaveBeenCalled()
+    } finally {
+      delete (globalThis as any).__macCustomSignerCalls
+    }
   })
 })

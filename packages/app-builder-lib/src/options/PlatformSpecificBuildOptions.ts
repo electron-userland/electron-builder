@@ -351,8 +351,8 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly generateUpdatesFilesForAllChannels?: boolean
 
   /**
-   * Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is
-   * embedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.
+   * Ed25519 signing of the auto-update manifests (`latest*.yml`) and the trust list embedded in `app-update.yml`: each manifest is
+   * signed, and its public keys are embedded so electron-updater verifies the signature before downloading an update.
    *
    * **Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key
    * resolves. Generate one once with `electron-builder create-update-key`, then supply it via
@@ -360,9 +360,12 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
    * preferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and
    * resolves the key from the environment; `null` is not an opt-out.
    *
-   * Set to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then
-   * logs a warning. `false` also short-circuits the environment variables, so a leftover
-   * `ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.
+   * Set to `false`, the only opt-out, to ship **unsigned** manifests: they are still written (`publishAutoUpdate: false` on every
+   * publish provider is what stops writing them), and every build that produces one logs a warning. `false` also short-circuits
+   * `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`, so a leftover key in CI cannot re-enable signing by accident.
+   *
+   * A platform value (`mac`, `win`, `linux`), `false` included, replaces the root value as a whole; a platform `null` falls back to the
+   * root. `mas` / `masDev` do not have this option: Mac App Store builds write no update manifest.
    *
    * The requirement is enforced when a publish policy is in effect (`--publish`) or `forceCodeSigning` is set; any other
    * build warns instead, so local builds and pipelines that sign the manifest in a later step of their own are
@@ -373,7 +376,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
    *
    * See [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests).
    */
-  readonly updateManifest?: UpdateManifestSigningOptions | false | null
+  readonly updateManifestSigning?: UpdateManifestSigningOptions | false | null
 
   /**
    * The release info. Intended for command line usage:
@@ -391,6 +394,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly defaultArch?: string
 }
 
+/** The signing keys and trust list of `updateManifestSigning`. */
 export interface UpdateManifestSigningOptions {
   /**
    * Ed25519 private key(s) in PEM (PKCS#8) format used to sign the update manifest. A single PEM string may
@@ -433,6 +437,21 @@ export interface UpdateManifestSigningOptions {
    * @default false
    */
   readonly allowSigningKeyOutsideTrustList?: boolean | null
+}
+
+type UpdateManifestSigningHolder = Pick<PlatformSpecificBuildOptions, "updateManifestSigning">
+
+/**
+ * The `updateManifestSigning` a platform's update manifests use: the platform value, `false` included, replaces the root one as a whole,
+ * and a platform `null` falls back to the root. The build (PlatformPackager.updateManifestOptions), `publish -f`, `verify` and
+ * `sign-update-manifest` all resolve it here.
+ * @internal
+ */
+export function resolveUpdateManifestSigning(
+  config: UpdateManifestSigningHolder,
+  platformOptions: UpdateManifestSigningHolder | null | undefined
+): UpdateManifestSigningOptions | false | null {
+  return platformOptions?.updateManifestSigning ?? config.updateManifestSigning ?? null
 }
 
 export interface ReleaseInfo {

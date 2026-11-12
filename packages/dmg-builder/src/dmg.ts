@@ -4,6 +4,7 @@ import {
   findIdentity,
   forceCodeSigningError,
   forceCodeSigningOverrideHint,
+  isMacSigningDisabled,
   isSignAllowed,
   macSigningUnavailableError,
   VERIFICATION_FAILED_ERROR_CODE,
@@ -138,10 +139,11 @@ export class DmgTarget extends Target {
     }
 
     const signConfig = packager.platformOptions.sign
-    // explicitly disabled if `sign` (or its identity) is set to null — macPackager already handles this, so just return
-    if (signConfig === null) {
+    // explicitly disabled if `sign` is false / null (validation turns null into false) or its identity is null — macPackager already
+    // handles this, so just return
+    if (isMacSigningDisabled(signConfig)) {
       if (forceCodeSigning) {
-        throw cannotSign("mac.sign is null")
+        throw cannotSign("mac.sign is false or null")
       }
       return
     }

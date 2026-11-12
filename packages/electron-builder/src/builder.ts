@@ -152,23 +152,28 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       coerceTypes(config.extraMetadata)
     }
 
-    // mac.sign / mac.universal are nested option bags holding booleans and the signing identity
-    // (e.g. sign.identity, sign.hardenedRuntime, universal.mergeASARs). coerceValue recurses into the
-    // objects (so `-c.mac.sign.identity=null` disables code signing) and also handles `-c.mac.sign=null`.
-    if (config.mac != null) {
-      coerceValue(config.mac, "sign")
-      coerceValue(config.mac, "universal")
+    // mac / mas / masDev `sign` and `universal` are nested option bags holding booleans and the signing identity
+    // (e.g. sign.identity, sign.hardenedRuntime, universal.mergeASARs). coerceValue recurses into the objects
+    // (`-c.mas.sign.identity=null` skips signing the MAS app, where "null" would be an identity name; `-c.mas.sign.sign=null`
+    // drops an inherited custom signer) and handles `-c.mac.sign=false` / `=null`.
+    for (const platform of ["mac", "mas", "masDev"]) {
+      const platformConfig = config[platform]
+      if (platformConfig != null && typeof platformConfig === "object") {
+        coerceValue(platformConfig, "sign")
+        coerceValue(platformConfig, "universal")
+      }
     }
 
-    // `-c.updateManifest=false` is the signing opt-out and arrives as the string "false"; ajv does not write a
+    // `-c.updateManifestSigning=false` is the signing opt-out and arrives as the string "false"; ajv does not write a
     // coerced value back out of an `anyOf` branch, so without this the opt-out is silently ignored and the build
-    // fails demanding a signing key. coerceValue recurses into objects, so `-c.updateManifest.signingKeyFile=...`
-    // still works. (`mas` / `masDev` are omitted on purpose - PlatformPackager never reads updateManifest there.)
-    coerceValue(config, "updateManifest")
+    // fails demanding a signing key. coerceValue recurses into objects, so `-c.updateManifestSigning.signingKeyFile=...`
+    // still works. (`mas` / `masDev` do not have the option.) An old `-c.updateManifest…` is left as it is, for the
+    // configuration check to report the rename.
+    coerceValue(config, "updateManifestSigning")
     for (const platform of ["mac", "win", "linux"]) {
       const platformConfig = config[platform]
       if (platformConfig != null && typeof platformConfig === "object") {
-        coerceValue(platformConfig, "updateManifest")
+        coerceValue(platformConfig, "updateManifestSigning")
       }
     }
 

@@ -37,7 +37,8 @@ describe.heavy.ifEnv(isEnabled)("snap parallels vm", vitestOptions, () => {
             snapcraft: {
               base: "core24",
               core24: {
-                useMultipass: process.platform === "darwin", // Multipass is required on macOS to build snaps for Linux, but on Linux we can build directly without it
+                // Multipass is required on macOS to build snaps for Linux; on Linux snapcraft's default provider builds it
+                buildEnvironment: process.platform === "darwin" ? "multipass" : undefined,
               },
             },
           },

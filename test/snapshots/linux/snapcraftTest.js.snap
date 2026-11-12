@@ -1765,7 +1765,7 @@ exports[`snapcraft > core22: per-core description overrides linux.description 1`
 }
 `;
 
-exports[`snapcraft > core24 Multipass real build > core24 useMultipass full build 1`] = `
+exports[`snapcraft > core24 Multipass real build > core24 buildEnvironment multipass full build 1`] = `
 {
   "linux": [
     {
@@ -1776,7 +1776,73 @@ exports[`snapcraft > core24 Multipass real build > core24 useMultipass full buil
 }
 `;
 
-exports[`snapcraft > core24 Multipass real build > core24 useMultipass full build with launcher script + no-sandbox 1`] = `
+exports[`snapcraft > core24 Multipass real build > core24 buildEnvironment multipass full build with launcher script + no-sandbox 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 buildEnvironment host builds without the gnome extension 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 buildEnvironment lxd ignores remoteBuild 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 buildEnvironment multipass 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 buildEnvironment remote passes remoteBuild 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 buildEnvironment remote without remoteBuild options 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
+exports[`snapcraft > core24 buildEnvironment remote: buildFor array is forwarded correctly 1`] = `
 {
   "linux": [
     {
@@ -1973,8 +2039,6 @@ exports[`snapcraft > core24 default plugs launch with --no-sandbox and drop chro
 }
 `;
 
-exports[`snapcraft > core24 gnome extension throws in destructive-mode 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
-
 exports[`snapcraft > core24 keeps chrome-sandbox when plugs explicitly allow the browser sandbox 1`] = `
 {
   "linux": [
@@ -2117,56 +2181,12 @@ exports[`snapcraft > core24 omits the app desktop mapping (single desktop entry)
 }
 `;
 
-exports[`snapcraft > core24 remoteBuild build mode 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "TestApp_1.1.0_amd64.snap",
-    },
-  ],
-}
-`;
-
-exports[`snapcraft > core24 remoteBuild: buildFor array is forwarded correctly 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "TestApp_1.1.0_amd64.snap",
-    },
-  ],
-}
-`;
-
 exports[`snapcraft > core24 removes chrome-sandbox when launching with --no-sandbox 1`] = `
 {
   "linux": [
     {
       "arch": "x64",
       "file": "sep_1.1.0_amd64.snap",
-    },
-  ],
-}
-`;
-
-exports[`snapcraft > core24 useLXD build mode 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "TestApp_1.1.0_amd64.snap",
-    },
-  ],
-}
-`;
-
-exports[`snapcraft > core24 useMultipass build mode 1`] = `
-{
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "TestApp_1.1.0_amd64.snap",
     },
   ],
 }

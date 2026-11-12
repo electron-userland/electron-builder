@@ -472,7 +472,13 @@ describe("fileOptions.excludedExts: a later layer replaces an earlier one", () =
     test("a mas custom signer function replaces the mac one", ({ expect }) => {
       const macSigner = () => Promise.resolve()
       const masSigner = () => Promise.resolve()
-      expect(platformConfig("mas", { sign: macSigner }, { sign: masSigner }).sign).toBe(masSigner)
+      expect(platformConfig("mas", { sign: { sign: macSigner } }, { sign: { sign: masSigner } }).sign.sign).toBe(masSigner)
+    })
+
+    test("mas.sign.sign: null removes the mac signer for the MAS app, keeping the merged options, and mac keeps its signer", ({ expect }) => {
+      const mac = { sign: { sign: "./a.js", hardenedRuntime: true } }
+      expect(platformConfig("mas", mac, { sign: { sign: null, identity: "X" } }).sign).toEqual({ sign: null, identity: "X", hardenedRuntime: true })
+      expect(mac).toEqual({ sign: { sign: "./a.js", hardenedRuntime: true } })
     })
   })
 })

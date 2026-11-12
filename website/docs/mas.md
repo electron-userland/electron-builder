@@ -4,7 +4,7 @@ title: "Mac App Store"
 
 {!./partials/_upgrading-from-v26.md!}
 
-The top-level [mas](configuration.md) key contains a set of options instructing electron-builder on how it should build the MAS (Mac Application Store) target. A Mac App Store build merges `mac` → `mas` (→ `masDev` for `mas-dev`), so `mas` overrides these [macOS options](mac.md) for the Mac App Store app: `appId`, `artifactName`, `asar`, `asarIntegrityDigest`, `bundleShortVersion`, `bundleVersion`, `category`, `extendInfo`, `fileOptions`, `forceCodeSigning`, `helperBundleId`, `helperGPUBundleId`, `helperPluginBundleId`, `helperRendererBundleId`, `minimumSystemVersion`, `sign` and `universal`. The other macOS options apply to Mac App Store builds as set on `mac` (`target`, `icon`, `publish`, the certificates, …), except `notarize`, `extraDistFiles` and the update-info options (`releaseInfo`, `detectUpdateChannel`, `generateUpdatesFilesForAllChannels`, `electronUpdaterCompatibility`, `updateManifest`), which Mac App Store builds do not use.
+The top-level [mas](configuration.md) key contains a set of options instructing electron-builder on how it should build the MAS (Mac Application Store) target. A Mac App Store build merges `mac` → `mas` (→ `masDev` for `mas-dev`), so `mas` overrides these [macOS options](mac.md) for the Mac App Store app: `appId`, `artifactName`, `asar`, `asarIntegrityDigest`, `bundleShortVersion`, `bundleVersion`, `category`, `extendInfo`, `fileOptions`, `forceCodeSigning`, `helperBundleId`, `helperGPUBundleId`, `helperPluginBundleId`, `helperRendererBundleId`, `minimumSystemVersion`, `sign` and `universal`. The other macOS options apply to Mac App Store builds as set on `mac` (`target`, `icon`, `publish`, the certificates, …), except `notarize`, `extraDistFiles` and the update-info options (`releaseInfo`, `detectUpdateChannel`, `generateUpdatesFilesForAllChannels`, `electronUpdaterCompatibility`, `updateManifestSigning`), which Mac App Store builds do not use.
 
 Use the `mas-dev` target (configured via the top-level `masDev` key) for local testing of MAS builds with a development provisioning profile.
 
@@ -46,7 +46,7 @@ mas:
 ```
 
 :::note[v27: signing options are under mas.sign]
-Like `mac`, all signing options on `mas` and `masDev` moved into a `sign` object in v27 (`sign.provisioningProfile`, `sign.entitlements`, `sign.entitlementsInherit`, …). `electron-builder migrate-schema` rewrites the old flat keys. See [v27 Breaking Changes → macOS signing](./migration/v27-config-changes.md#macos-signing-macsign).
+Like `mac`, all signing options on `mas` and `masDev` moved into a `sign` object in v27 (`sign.provisioningProfile`, `sign.entitlements`, `sign.entitlementsInherit`, …). `electron-builder migrate-schema` rewrites the old flat keys. A custom `mac.sign.sign` signer also signs the Mac App Store apps, with their merged `sign` options; set `mas.sign.sign: null` to sign them with `@electron/osx-sign` instead. See [v27 Breaking Changes → macOS signing](./migration/v27-config-changes.md#macos-signing-macsign).
 :::
 
 ### App Sandbox

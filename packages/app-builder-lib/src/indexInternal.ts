@@ -35,7 +35,9 @@ export {
 } from "./node-module-collector/index.js"
 export { PM } from "./node-module-collector/packageManager.js"
 export type { NodeModuleInfo } from "./node-module-collector/types.js"
-export { computeSafeArtifactNameIfNeeded, DoPackOptions, trackPackWork, waitForPackWork } from "./platformPackager.js"
+export { isMacSigningDisabled } from "./options/macOptions.js"
+export { resolveUpdateManifestSigning } from "./options/PlatformSpecificBuildOptions.js"
+export { computeSafeArtifactNameIfNeeded, DoPackOptions, isInheritedPublishDropped, trackPackWork, waitForPackWork } from "./platformPackager.js"
 export { checkUpdateSigningKeysTrusted, createPublisher, normalizeExplicitPublicKeys } from "./publish/PublishManager.js"
 export { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./publish/updateInfoBuilder.js"
 export { buildBlockMap } from "./targets/blockmap/blockmap.js"
@@ -62,6 +64,7 @@ export {
   ALL_PLATFORM_KEYS,
   AZURE_KNOWN_FIELDS,
   BREAKING_CHANGES_URL,
+  CORE24_BUILD_ENVIRONMENT_FLAGS,
   ELECTRON_DOWNLOAD_DROPPED,
   FILE_OPTION_KEYS,
   FILE_OPTIONS_ANCHOR,
@@ -71,6 +74,7 @@ export {
   MAC_PLATFORM_KEYS,
   MAC_SIGN_FIELDS,
   MAC_SIGN_REMOVED_FIELDS,
+  MAC_SIGN_UNREAD_FIELDS,
   MAC_UNIVERSAL_FIELDS,
   MAS_CERTIFICATE_WARNING,
   MAS_REMOVED_CERTIFICATE_FIELDS,
@@ -83,7 +87,10 @@ export {
   RESOLVED_LEGACY_CONFIG_OPTIONS,
   SNAP_CORE_KEYS,
   SNAP_CORE_TARGET_OPTION_KEYS,
+  UPDATE_MANIFEST_PLATFORM_KEYS,
+  V26_MERGED_TARGET_PUBLISH,
   formatLegacyOptionMessage,
+  v26Boolean,
 } from "./util/config/legacyOptions.js"
 export type { LegacyConfigOption, ResolvedLegacyConfigOption } from "./util/config/legacyOptions.js"
 export { checkLegacyConfiguration } from "./util/config/legacyConfigGuard.js"

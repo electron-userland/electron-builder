@@ -165,13 +165,13 @@ exports[`r2 as first publisher writes provider r2 to app-update.yml 2`] = `
 }
 `;
 
-exports[`updateManifest: false publishes unsigned manifests without failing 1`] = `
+exports[`updateManifestSigning: false publishes unsigned manifests without failing 1`] = `
 {
   "mac": [],
 }
 `;
 
-exports[`updateManifest: false publishes unsigned manifests without failing 2`] = `
+exports[`updateManifestSigning: false publishes unsigned manifests without failing 2`] = `
 {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",

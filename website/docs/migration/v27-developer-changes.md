@@ -17,6 +17,7 @@ Changes that only matter if you write code that plugs into electron-builder: bui
 | [`electron-forge-maker-*` are now ESM](#electron-forge-maker-plugins) | — | None — same API, same export shape |
 | [`devMetadata` / `extraMetadata` in `PackagerOptions` removed](#devmetadata-extrametadata-programmatic-packageroptions) | Fails build | Use `config` / `config.extraMetadata` |
 | [`PlatformPackager.info` & `platformSpecificBuildOptions` now `protected`](#programmatic-plugin-author-api-changes) | TS error | Plugin authors: hard break — `.info` no longer compiles externally; use the new pass-through getters |
+| [A target's options carry only its own `publish`](#target-options-publish) | Silent | Hooks and custom targets that read `target.options.publish`: when it is unset, read `packager.platformOptions.publish`, then `packager.config.publish` |
 | [ProtonFramework & LibUiFramework removed](#removed-exports) | Import / TS error | Migrate to an Electron-based build setup |
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | TS error | Import the new names — no compat aliases |
 | [`SnapOptions`, `ProtonFramework`, `LibUiFramework` exports removed](#removed-exports) | Import / TS error | Use the `snapcraft` config shape / Electron framework |
@@ -128,7 +129,13 @@ External consumers should use the two new public helpers instead:
 | `packager.platformSpecificBuildOptions` (direct read) | `packager.platformOptions` |
 | `deepAssign({}, packager.platformSpecificBuildOptions, config.X)` | `packager.getOptionsForTarget<T>("X")` |
 
-`platformOptions` is a typed getter returning the same platform-level config object. `getOptionsForTarget<T>(key)` performs the standard merge of platform options with the named per-target key (e.g. `"appx"`, `"msi"`) and returns the result as `T`. All built-in targets have been migrated; custom targets extending `PlatformPackager` must update any direct `.platformSpecificBuildOptions` access.
+`platformOptions` is a typed getter returning the same platform-level config object. `getOptionsForTarget<T>(key)` merges the platform options with the named per-target key (e.g. `"appx"`, `"msi"`) into a new object, leaving out the platform `compression` and `publish`, and returns the result as `T`. All built-in targets have been migrated; custom targets extending `PlatformPackager` must update any direct `.platformSpecificBuildOptions` access.
+
+### A target's options carry only its own `publish` {#target-options-publish}
+
+**How you'll find out:** **Silent.**
+
+`getOptionsForTarget(key)` no longer merges the platform's `publish` into the target options, and neither do the built-in targets whose `options` hooks see (`context.targets` in `beforePack`, `afterPack` and the other pack hooks, `context.target` in `artifactBuildCompleted`). A target's own `publish` [replaces the platform's](./v27-build-changes.md#target-publish-replaces-platform-publish), and a target without one has no `options.publish`. The value a target publishes with is `options.publish`, else `packager.platformOptions.publish`, else `packager.config.publish`: the first level that sets it, `null` included, decides. The snap target is the exception: a `snapcraft.publish` that names a `snapStore` provider sends the snap only to the first one, so `options.publish` is then not what it publishes with; with `snapcraft.publish` unset or `null`, it goes only to the first `snapStore` provider of `linux.publish`, else of the top-level `publish`, else to the Snap Store, even if `linux.publish` or the top-level `publish` is `null` ([Publishing to the Snap Store](../snap.md#publishing-to-the-snap-store)). For the nsis-web target, `options.publish` is `nsisWeb.publish`, else `nsis.publish`.
 
 ---
 
@@ -219,7 +226,9 @@ These are documented on other pages:
 
 - **`afterPack` hooks on macOS:** with Electron 41+, the Electron Framework is patched and signed again ad hoc after `afterPack`. If you sign the app in `afterPack`, or change `app.asar` / `Info.plist` after it, see [the ASAR integrity digest](./v27-runtime-changes.md#macos-asar-integrity-digest).
 - **Custom Windows signing hooks** move to `win.sign.sign` ([config change](./v27-config-changes.md#custom-windows-signing-hooks-move-to-winsignsign)) and now need `win.sign.publisherName` ([build check](./v27-build-changes.md#windows-publishername-is-validated-against-the-signing-certificate)).
-- **Custom macOS signing functions** (`mac.sign: "./customSign.js"`) can no longer sit next to sibling signing options: see [macOS signing → `mac.sign`](./v27-config-changes.md#macos-signing-macsign).
+- **Custom macOS signing functions** move from `mac.sign` to `mac.sign.sign` (`mas` / `masDev` too), where they receive the signing options next to them, built into the `CustomMacSignOptions` (`@electron/osx-sign` `SignOptions`) they are called with: the app is `configuration.app` (not `path`), and `configuration.identity` is the SHA-1 hash of the keychain identity, unset when none is found. See [custom signers move to `mac.sign.sign`](./v27-config-changes.md#custom-signers-move-to-macsignsign).
+- **Hooks and plugins written for a 27.0.0 alpha that read `updateManifest`** (`context.packager.config.updateManifest`, `packager.platformOptions.updateManifest`) now get `undefined`: the option is [`updateManifestSigning`](./v27-config-changes.md#updatemanifest-updatemanifestsigning). `PlatformPackager.updateManifestOptions` keeps its name and returns the value a platform's manifests use.
+- **Hooks that read a target's `options.publish`** (`context.targets` in `afterPack`, `context.target` in `artifactBuildCompleted`) get only the target's own `publish`, and `undefined` when it sets none ([above](#target-options-publish)), because a [target's `publish` replaces the platform's](./v27-build-changes.md#target-publish-replaces-platform-publish).
 
 ---
 

@@ -23,16 +23,16 @@ Building Snap packages requires a Linux environment (or [Docker](features/multi-
 
 ### Build Environments
 
-Choose one build environment. They are mutually exclusive.
+Choose where snapcraft builds the snap with `snapcraft.core24.buildEnvironment`:
 
-| Option | Platform | Recommended for |
+| `buildEnvironment` | Platform | Recommended for |
 |---|---|---|
-| `useLXD: true` | Linux | Linux CI where nested virtualisation is unavailable |
-| `useMultipass: true` | macOS / Windows / Linux | Local development |
-| `useDestructiveMode: true` | Linux only | Docker CI containers without any virtualisation |
-| `remoteBuild.enabled: true` | Any | Multi-arch CI (amd64, arm64, armhf) via Launchpad |
+| `"lxd"` | Linux | Linux CI where nested virtualisation is unavailable |
+| `"multipass"` | macOS / Windows / Linux | Local development |
+| `"host"` | Linux only | Docker CI containers without any virtualisation |
+| `"remote"` | Any | Multi-arch CI (amd64, arm64, armhf) via Launchpad |
 
-If none is set and you are on Linux, snapcraft's own default (Multipass) is used. On non-Linux platforms you must choose `useMultipass` or `remoteBuild`.
+Unset on Linux, snapcraft uses its default provider (LXD, or the one the `SNAPCRAFT_BUILD_ENVIRONMENT` environment variable selects); on macOS and Windows set `"multipass"` or `"remote"`. It is a single value, so a later configuration layer replaces it, e.g. `-c.snapcraft.core24.buildEnvironment=multipass` on the command line. Before v27 the environment was chosen with the `useLXD`, `useMultipass`, `useDestructiveMode` and `remoteBuild.enabled` switches (see [the migration guide](./migration/v27-config-changes.md#snapcraftcore24-buildenvironment)).
 
 #### LXD
 
@@ -43,7 +43,7 @@ Container-based isolation. Preferred on most Linux CI systems because it does no
   "snapcraft": {
     "base": "core24",
     "core24": {
-      "useLXD": true
+      "buildEnvironment": "lxd"
     }
   }
 }
@@ -66,7 +66,7 @@ VM-based isolation. The default choice for local development on macOS and Window
   "snapcraft": {
     "base": "core24",
     "core24": {
-      "useMultipass": true
+      "buildEnvironment": "multipass"
     }
   }
 }
@@ -77,20 +77,20 @@ VM-based isolation. The default choice for local development on macOS and Window
 Builds directly on the host without any VM or container (`snapcraft --destructive-mode`).
 
 !!! warning
-    **Not recommended for production builds.** Destructive mode pollutes the host environment — any library present on the host at build time can end up in the snap, making builds difficult to reproduce. Prefer `useLXD` or `useMultipass` for clean builds.
+    **Not recommended for production builds.** Destructive mode pollutes the host environment — any library present on the host at build time can end up in the snap, making builds difficult to reproduce. Prefer `"lxd"` or `"multipass"` for clean builds.
 
 Valid reason(s) to use this mode:
 
 - CI test suites where the environment is already fully controlled.
 
-The `gnome` extension is **incompatible** with destructive mode. electron-builder automatically clears `extensions` when `useDestructiveMode` is set; explicitly including `"gnome"` alongside it will throw an error.
+The `gnome` extension is **incompatible** with destructive mode. electron-builder automatically clears `extensions` when `buildEnvironment` is `"host"`; explicitly including `"gnome"` there will throw an error.
 
 ```json
 {
   "snapcraft": {
     "base": "core24",
     "core24": {
-      "useDestructiveMode": true,
+      "buildEnvironment": "host",
       "extensions": []
     }
   }
@@ -106,8 +106,8 @@ Builds on [Canonical's Launchpad](https://launchpad.net/) infrastructure. Works 
   "snapcraft": {
     "base": "core24",
     "core24": {
+      "buildEnvironment": "remote",
       "remoteBuild": {
-        "enabled": true,
         "buildFor": ["amd64", "arm64"],
         "acceptPublicUpload": true
       }
@@ -116,6 +116,8 @@ Builds on [Canonical's Launchpad](https://launchpad.net/) infrastructure. Works 
 }
 ```
 
+The `remoteBuild` options are read only when `buildEnvironment` is `"remote"`, so they can stay in the configuration while another environment is selected.
+
 !!! note
     Unless `privateProject` is set, your source code is uploaded to a **public** Launchpad repository. Set `acceptPublicUpload: true` to suppress the interactive consent prompt in CI.
 
@@ -123,7 +125,7 @@ Builds on [Canonical's Launchpad](https://launchpad.net/) infrastructure. Works 
 
 Remote builds require Snapcraft Store credentials. electron-builder resolves them in this order:
 
-1. `remoteBuild.cscLink` — base64-encoded credentials or a file path in the build config.
+1. `snapcraft.cscLink` — base64-encoded credentials or a file path in the build config.
 2. `SNAP_CSC_LINK` — environment variable, same format (CI-recommended).
 3. `SNAPCRAFT_STORE_CREDENTIALS` — plain-text macaroon, read directly by snapcraft.
 4. An active interactive `snapcraft login` session.
@@ -161,11 +163,9 @@ To reference credentials file directly via the config (useful for monorepos wher
 {
   "snapcraft": {
     "base": "core24",
+    "cscLink": "file://...",
     "core24": {
-      "remoteBuild": {
-        "enabled": true,
-        "cscLink": "file://..."
-      }
+      "buildEnvironment": "remote"
     }
   }
 }
@@ -203,7 +203,7 @@ Start with only the plugs you actually need. Unnecessary plugs may slow Snap Sto
 
 ### Plugs
 
-When `plugs` is unset, core24 declares `browser-support`. Without the `gnome` extension it also declares the app-level desktop plugs (`desktop`, `x11`, `wayland`, `home`, `network`, `audio-playback`, …) and, outside destructive mode, the content-snap plugs the extension would otherwise provide (`gnome-46-2404`, `gtk-3-themes`, `icon-themes`, `sound-themes`, `gpu-2404`). Include `"default"` to add plugs to the full default set (the app-level desktop plugs are always part of it); without `"default"`, your list replaces the defaults:
+When `plugs` is unset, core24 declares `browser-support`. Without the `gnome` extension it also declares the app-level desktop plugs (`desktop`, `x11`, `wayland`, `home`, `network`, `audio-playback`, …) and, outside host builds (`buildEnvironment: "host"`), the content-snap plugs the extension would otherwise provide (`gnome-46-2404`, `gtk-3-themes`, `icon-themes`, `sound-themes`, `gpu-2404`). Include `"default"` to add plugs to the full default set (the app-level desktop plugs are always part of it); without `"default"`, your list replaces the defaults:
 
 ```json
 {
@@ -400,6 +400,8 @@ publish:
   channels:
     - stable
 ```
+
+The snap goes to the first `snapStore` provider of `snapcraft.publish`. Without a `snapcraft.publish`, or with `snapcraft.publish: null`, it goes to the first `snapStore` provider of `linux.publish`, else of the top-level `publish`, else to the Snap Store with the default options, even if `linux.publish` or the top-level `publish` is `null`. A `snapcraft.publish` without a `snapStore` provider uploads the snap only to its own providers (none for `[]`): it replaces `linux.publish` instead of being merged with it.
 
 3. Build and publish: `electron-builder --linux snap --publish always`
 

@@ -353,21 +353,21 @@ const publicKeysOf = (keys: Array<KeyObject>) => keys.map(derivePublicKeyPem)
 
 test("updateSigningKeys resolves the key from the root config", async ({ expect }) => {
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
-  const keys = await new TestPackager({ updateManifest: { signingKey: privateKeyPem } }).updateSigningKeys.value
+  const keys = await new TestPackager({ updateManifestSigning: { signingKey: privateKeyPem } }).updateSigningKeys.value
   expect(publicKeysOf(keys)).toEqual([publicKeyPem])
 })
 
-test("updateSigningKeys prefers platform-specific updateManifest over the root config", async ({ expect }) => {
+test("updateSigningKeys prefers platform-specific updateManifestSigning over the root config", async ({ expect }) => {
   const root = generateUpdateSigningKeypair()
   const platform = generateUpdateSigningKeypair()
   const packager = new TestPackager({
-    updateManifest: { signingKey: root.privateKeyPem },
-    linux: { updateManifest: { signingKey: platform.privateKeyPem } },
+    updateManifestSigning: { signingKey: root.privateKeyPem },
+    linux: { updateManifestSigning: { signingKey: platform.privateKeyPem } },
   })
   expect(publicKeysOf(await packager.updateSigningKeys.value)).toEqual([platform.publicKeyPem])
 })
 
-test("updateSigningKeys falls back to ELECTRON_BUILDER_UPDATE_SIGN_KEY when no updateManifest config block exists", async ({ expect }) => {
+test("updateSigningKeys falls back to ELECTRON_BUILDER_UPDATE_SIGN_KEY when no updateManifestSigning config block exists", async ({ expect }) => {
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
   stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: encodeSigningKeys(privateKeyPem) })
   expect(publicKeysOf(await new TestPackager({}).updateSigningKeys.value)).toEqual([publicKeyPem])
@@ -379,7 +379,7 @@ test("updateSigningKeys reads a PEM file from signingKeyFile and from ELECTRON_B
     const keyFile = path.join(dir, "update-key.pem")
     await fsp.writeFile(keyFile, privateKeyPem)
 
-    expect(publicKeysOf(await new TestPackager({ updateManifest: { signingKeyFile: keyFile } }).updateSigningKeys.value)).toEqual([publicKeyPem])
+    expect(publicKeysOf(await new TestPackager({ updateManifestSigning: { signingKeyFile: keyFile } }).updateSigningKeys.value)).toEqual([publicKeyPem])
 
     stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE: keyFile })
     expect(publicKeysOf(await new TestPackager({}).updateSigningKeys.value)).toEqual([publicKeyPem])
@@ -396,7 +396,7 @@ test("a relative signingKeyFile resolves against the project directory, a relati
     stubSigningEnv({})
     // the config path is project-relative like every other path in the build configuration...
     expect(loadUpdateSigningKeys({ signingKeyFile: relativeKeyFile }, dir).map(derivePublicKeyPem)).toEqual([publicKeyPem])
-    expect(publicKeysOf(await new TestPackager({ updateManifest: { signingKeyFile: relativeKeyFile } }, dir).updateSigningKeys.value)).toEqual([publicKeyPem])
+    expect(publicKeysOf(await new TestPackager({ updateManifestSigning: { signingKeyFile: relativeKeyFile } }, dir).updateSigningKeys.value)).toEqual([publicKeyPem])
     // ...so it is NOT looked up relative to the current working directory (where it does not exist)
     expect(() => loadUpdateSigningKeys({ signingKeyFile: relativeKeyFile })).toThrow(/ENOENT/)
     // the env var keeps ordinary environment-variable semantics: baseDir does not apply to it
@@ -410,16 +410,16 @@ test("updateSigningKeys stays empty and does not throw when nothing is configure
   expect(await new TestPackager({}).updateSigningKeys.value).toEqual([])
 })
 
-// ── the signing requirement (updateManifest is required unless explicitly set to false) ──────────────
+// ── the signing requirement (updateManifestSigning is required unless explicitly set to false) ──────────────
 
-test("updateManifest: false short-circuits the env-var ladder", async ({ expect }) => {
+test("updateManifestSigning: false short-circuits the env-var ladder", async ({ expect }) => {
   // security-critical: a leftover CI secret must not re-enable signing (and re-embed a public key)
   // behind the back of an explicit opt-out - and as the value is never read, a stale one in the
   // pre-base64 format (a raw PEM) does not fail the build either
   const { privateKeyPem } = generateUpdateSigningKeypair()
   for (const leftover of [encodeSigningKeys(privateKeyPem), privateKeyPem]) {
     stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: leftover })
-    const packager = new TestPackager({ updateManifest: false })
+    const packager = new TestPackager({ updateManifestSigning: false })
     expect(packager.updateManifestOptions).toBe(false)
     expect(await packager.updateSigningKeys.value).toEqual([])
     expect(await packager.requireUpdateSigningKeys(true)).toEqual([])
@@ -436,10 +436,10 @@ test("requireUpdateSigningKeys throws when publishing and no key resolves", asyn
   // the message has to name both the fix and the opt-out, or the user has nowhere to go
   expect(error!.message).toContain("electron-builder create-update-key")
   expect(error!.message).toContain("ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded PEM file)")
-  expect(error!.message).toContain("`updateManifest: false`")
+  expect(error!.message).toContain("`updateManifestSigning: false`")
   // the error states the requirement and links its migration section
   expect(error!.message).toMatch(/^auto-update manifests must be signed when publishing, /)
-  expect(error!.message).toContain("`updateManifest: false`. See https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required")
+  expect(error!.message).toContain("`updateManifestSigning: false`. See https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required")
 })
 
 test("requireUpdateSigningKeys only warns when the build is not publishing", async ({ expect }) => {
@@ -451,7 +451,7 @@ test("requireUpdateSigningKeys only warns when the build is not publishing", asy
     // the advisory must say that publishing WILL fail, so it works as a fail-fast preview
     expect(warn.mock.calls[0][1]).toContain("Publishing this configuration will fail")
     // it names the opt-out and links the migration section, not the features page the opted-out warning links
-    expect(warn.mock.calls[0][1]).toContain("opt out explicitly with `updateManifest: false`.")
+    expect(warn.mock.calls[0][1]).toContain("opt out explicitly with `updateManifestSigning: false`.")
     expect(warn.mock.calls[0][1]).toContain("See https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required")
     expect(warn.mock.calls[0][1]).not.toContain("https://www.electron.build/docs/features/signed-update-manifests")
   } finally {
@@ -459,29 +459,29 @@ test("requireUpdateSigningKeys only warns when the build is not publishing", asy
   }
 })
 
-test("requireUpdateSigningKeys warns once per packager for updateManifest: false", async ({ expect }) => {
+test("requireUpdateSigningKeys warns once per packager for updateManifestSigning: false", async ({ expect }) => {
   stubSigningEnv({})
   const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
   try {
-    const packager = new TestPackager({ updateManifest: false })
+    const packager = new TestPackager({ updateManifestSigning: false })
     for (let i = 0; i < 3; i++) {
       expect(await packager.requireUpdateSigningKeys(true)).toEqual([])
     }
     expect(warn).toHaveBeenCalledTimes(1)
     expect(warn.mock.calls[0][1]).toContain("auto-update manifests will be unsigned")
     // an explicit opt-out is not a migration step: it links the features page, not the migration section
-    expect(warn.mock.calls[0][1]).toContain("Remove `updateManifest: false`")
+    expect(warn.mock.calls[0][1]).toContain("Remove `updateManifestSigning: false`")
     expect(warn.mock.calls[0][1]).toContain("See https://www.electron.build/docs/features/signed-update-manifests")
     expect(warn.mock.calls[0][1]).not.toContain("v27-build-changes")
     // one-shot is per packager, not per process: a second platform warns on its own line
-    expect(await new TestPackager({ updateManifest: false }).requireUpdateSigningKeys(true)).toEqual([])
+    expect(await new TestPackager({ updateManifestSigning: false }).requireUpdateSigningKeys(true)).toEqual([])
     expect(warn).toHaveBeenCalledTimes(2)
   } finally {
     warn.mockRestore()
   }
 })
 
-test("an environment-variable key satisfies the requirement with no updateManifest config block", async ({ expect }) => {
+test("an environment-variable key satisfies the requirement with no updateManifestSigning config block", async ({ expect }) => {
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
   stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: encodeSigningKeys(privateKeyPem) })
   const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
@@ -493,23 +493,23 @@ test("an environment-variable key satisfies the requirement with no updateManife
   }
 })
 
-test("a platform-level updateManifest: false shadows a root signing key, and a platform-level key block shadows a root false", async ({ expect }) => {
+test("a platform-level updateManifestSigning: false shadows a root signing key, and a platform-level key block shadows a root false", async ({ expect }) => {
   stubSigningEnv({})
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
 
-  const optedOut = new TestPackager({ updateManifest: { signingKey: privateKeyPem }, linux: { updateManifest: false } })
+  const optedOut = new TestPackager({ updateManifestSigning: { signingKey: privateKeyPem }, linux: { updateManifestSigning: false } })
   expect(optedOut.updateManifestOptions).toBe(false)
   expect(await optedOut.requireUpdateSigningKeys(true)).toEqual([])
 
   // the converse, which the packTester harness default relies on: a root `false` does not disable a platform key
-  const signed = new TestPackager({ updateManifest: false, linux: { updateManifest: { signingKey: privateKeyPem } } })
+  const signed = new TestPackager({ updateManifestSigning: false, linux: { updateManifestSigning: { signingKey: privateKeyPem } } })
   expect(publicKeysOf(await signed.requireUpdateSigningKeys(true))).toEqual([publicKeyPem])
 })
 
-test("a platform-level updateManifest: null is not an opt-out - it falls back to the root", async ({ expect }) => {
+test("a platform-level updateManifestSigning: null is not an opt-out - it falls back to the root", async ({ expect }) => {
   stubSigningEnv({})
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
-  const packager = new TestPackager({ updateManifest: { signingKey: privateKeyPem }, linux: { updateManifest: null } })
+  const packager = new TestPackager({ updateManifestSigning: { signingKey: privateKeyPem }, linux: { updateManifestSigning: null } })
   expect(publicKeysOf(await packager.requireUpdateSigningKeys(true))).toEqual([publicKeyPem])
 })
 
@@ -523,7 +523,7 @@ test("requireUpdateSigningKeys enforces the key under forceCodeSigning even when
   // says why a build that does not publish fails, how to fix it, and how to turn forceCodeSigning off
   expect(error!.message).toContain("because forceCodeSigning is enabled")
   expect(error!.message).toContain("electron-builder create-update-key")
-  expect(error!.message).toContain("`updateManifest: false`")
+  expect(error!.message).toContain("`updateManifestSigning: false`")
   expect(error!.message).toContain("-c.forceCodeSigning=false")
   expect(error!.message).toContain("https://www.electron.build/docs/migration/v27-build-changes#forcecodesigning-covers-notarization-and-update-manifests")
 })
@@ -541,14 +541,14 @@ test("a platform-level forceCodeSigning enforces the key for that platform only,
   }
 })
 
-test("updateManifest: false stays an honored opt-out under forceCodeSigning, with a warning", async ({ expect }) => {
+test("updateManifestSigning: false stays an honored opt-out under forceCodeSigning, with a warning", async ({ expect }) => {
   stubSigningEnv({})
   const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
   try {
-    expect(await new TestPackager({ forceCodeSigning: true, updateManifest: false }).requireUpdateSigningKeys(false)).toEqual([])
-    expect(await new TestPackager({ forceCodeSigning: true, updateManifest: false }).requireUpdateSigningKeys(true)).toEqual([])
+    expect(await new TestPackager({ forceCodeSigning: true, updateManifestSigning: false }).requireUpdateSigningKeys(false)).toEqual([])
+    expect(await new TestPackager({ forceCodeSigning: true, updateManifestSigning: false }).requireUpdateSigningKeys(true)).toEqual([])
     expect(warn).toHaveBeenCalledTimes(2)
-    expect(warn.mock.calls[0][0]).toMatchObject({ reason: expect.stringContaining("forceCodeSigning does not cover update manifests while updateManifest is false") })
+    expect(warn.mock.calls[0][0]).toMatchObject({ reason: expect.stringContaining("forceCodeSigning does not cover update manifests while updateManifestSigning is false") })
   } finally {
     warn.mockRestore()
   }
@@ -557,14 +557,14 @@ test("updateManifest: false stays an honored opt-out under forceCodeSigning, wit
 test("a publicKey-only block does not satisfy the requirement", async ({ expect }) => {
   stubSigningEnv({})
   const { publicKeyPem } = generateUpdateSigningKeypair()
-  await expect(new TestPackager({ updateManifest: { publicKey: publicKeyPem } }).requireUpdateSigningKeys(true)).rejects.toThrow(InvalidConfigurationError)
+  await expect(new TestPackager({ updateManifestSigning: { publicKey: publicKeyPem } }).requireUpdateSigningKeys(true)).rejects.toThrow(InvalidConfigurationError)
   // ...but the external-signer workflow stays viable on a build without a publish policy
-  expect(await new TestPackager({ updateManifest: { publicKey: publicKeyPem } }).requireUpdateSigningKeys(false)).toEqual([])
+  expect(await new TestPackager({ updateManifestSigning: { publicKey: publicKeyPem } }).requireUpdateSigningKeys(false)).toEqual([])
 })
 
 test("updateSigningKeys parses the PEMs once and memoizes the result", async ({ expect }) => {
   const { privateKeyPem } = generateUpdateSigningKeypair()
-  const packager = new TestPackager({ updateManifest: { signingKey: privateKeyPem } })
+  const packager = new TestPackager({ updateManifestSigning: { signingKey: privateKeyPem } })
   // same array identity across reads => the creator ran only once
   expect(await packager.updateSigningKeys.value).toBe(await packager.updateSigningKeys.value)
 })
@@ -576,7 +576,7 @@ test("loadUpdateSigningKeys: array config yields every key in order", async ({ e
   const b = generateUpdateSigningKeypair()
   stubSigningEnv({})
   expect(loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, b.privateKeyPem] }).map(derivePublicKeyPem)).toEqual([a.publicKeyPem, b.publicKeyPem])
-  const keys = await new TestPackager({ updateManifest: { signingKey: [a.privateKeyPem, b.privateKeyPem] } }).updateSigningKeys.value
+  const keys = await new TestPackager({ updateManifestSigning: { signingKey: [a.privateKeyPem, b.privateKeyPem] } }).updateSigningKeys.value
   expect(publicKeysOf(keys)).toEqual([a.publicKeyPem, b.publicKeyPem])
 })
 
@@ -624,7 +624,7 @@ test("loadUpdateSigningKeys rejects duplicate keys and non-Ed25519 keys with a c
   expect(() => loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, a.privateKeyPem] })).toThrow(/duplicates key #1/)
   expect(() => loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, a.privateKeyPem] })).toThrow(InvalidConfigurationError)
   const rsa = generateKeyPairSync("rsa", { modulusLength: 2048 }).privateKey.export({ type: "pkcs8", format: "pem" }).toString()
-  expect(() => loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, rsa] })).toThrow(/key #2 from updateManifest\.signingKey is not a valid Ed25519/)
+  expect(() => loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, rsa] })).toThrow(/key #2 from updateManifestSigning\.signingKey is not a valid Ed25519/)
   expect(() => loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, rsa] })).toThrow(InvalidConfigurationError)
   expect(() => loadUpdateSigningKeys({ signingKey: "garbage" })).toThrow(/not a valid Ed25519/)
   // the same checks run on the decoded environment variable
@@ -699,7 +699,7 @@ test("config signingKey and signingKeyFile win over an invalid ELECTRON_BUILDER_
     stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: generateUpdateSigningKeypair().privateKeyPem })
     expect(loadUpdateSigningKeys({ signingKey: a.privateKeyPem }).map(derivePublicKeyPem)).toEqual([a.publicKeyPem])
     expect(loadUpdateSigningKeys({ signingKeyFile: keyFile }).map(derivePublicKeyPem)).toEqual([a.publicKeyPem])
-    expect(publicKeysOf(await new TestPackager({ updateManifest: { signingKey: a.privateKeyPem } }).requireUpdateSigningKeys(true))).toEqual([a.publicKeyPem])
+    expect(publicKeysOf(await new TestPackager({ updateManifestSigning: { signingKey: a.privateKeyPem } }).requireUpdateSigningKeys(true))).toEqual([a.publicKeyPem])
   })
 })
 
@@ -720,26 +720,26 @@ test("a valid ELECTRON_BUILDER_UPDATE_SIGN_KEY wins over ELECTRON_BUILDER_UPDATE
   })
 })
 
-test("a platform-level updateManifest: false ignores an invalid ELECTRON_BUILDER_UPDATE_SIGN_KEY, a platform publicKey block under a root false still reads it", async ({
+test("a platform-level updateManifestSigning: false ignores an invalid ELECTRON_BUILDER_UPDATE_SIGN_KEY, a platform publicKey block under a root false still reads it", async ({
   expect,
 }) => {
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
   stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: privateKeyPem })
-  expect(await new TestPackager({ updateManifest: { signingKey: privateKeyPem }, linux: { updateManifest: false } }).requireUpdateSigningKeys(true)).toEqual([])
-  await expect(new TestPackager({ updateManifest: false, linux: { updateManifest: { publicKey: publicKeyPem } } }).requireUpdateSigningKeys(false)).rejects.toBeInstanceOf(
-    InvalidConfigurationError
-  )
+  expect(await new TestPackager({ updateManifestSigning: { signingKey: privateKeyPem }, linux: { updateManifestSigning: false } }).requireUpdateSigningKeys(true)).toEqual([])
+  await expect(
+    new TestPackager({ updateManifestSigning: false, linux: { updateManifestSigning: { publicKey: publicKeyPem } } }).requireUpdateSigningKeys(false)
+  ).rejects.toBeInstanceOf(InvalidConfigurationError)
 })
 
 // ── A1: app-update.yml public key embedding ──────────────────────────────────
 
 // minimal PlatformPackager stub for getAppUpdatePublishConfiguration (generic provider avoids any network/token resolution)
-function makeAppUpdateConfigPackager(signingKeys: Array<KeyObject> = [], updateManifest?: any, publishConfig?: any): any {
+function makeAppUpdateConfigPackager(signingKeys: Array<KeyObject> = [], updateManifestSigning?: any, publishConfig?: any): any {
   return {
     platform: Platform.LINUX,
-    platformOptions: updateManifest == null ? {} : { updateManifest },
+    platformOptions: updateManifestSigning == null ? {} : { updateManifestSigning },
     // the accessor PublishManager actually reads; `false ?? null` is `false`, so the opt-out survives
-    updateManifestOptions: updateManifest ?? null,
+    updateManifestOptions: updateManifestSigning ?? null,
     config: { publish: publishConfig ?? { provider: "generic", url: "https://example.com/updates" } },
     appInfo: { updaterCacheDirName: "test-app", channel: null, version: "1.0.0" },
     expandMacro: (value: string) => value,
@@ -783,7 +783,7 @@ test("app-update.yml: an explicit publicKey LIST wins as-is over derivation, and
     const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
     expect(publishConfig?.updateManifestPublicKey).toEqual([current.publicKeyPem, next.publicKeyPem])
     // oxlint-disable-next-line typescript/no-base-to-string -- substring check over log.warn args; an object fallback stringifying to "[object Object]" simply does not match
-    expect(warn.mock.calls.some(c => String(c[1] ?? c[0]).includes("updateManifest.publicKey"))).toBe(false)
+    expect(warn.mock.calls.some(c => String(c[1] ?? c[0]).includes("updateManifestSigning.publicKey"))).toBe(false)
   } finally {
     warn.mockRestore()
   }
@@ -841,7 +841,7 @@ test("app-update.yml prefers an explicitly configured publicKey over the derived
   }
 })
 
-test("app-update.yml carries no public key when signing is opted out of with updateManifest: false", async ({ expect }) => {
+test("app-update.yml carries no public key when signing is opted out of with updateManifestSigning: false", async ({ expect }) => {
   const publishConfig = await getAppUpdatePublishConfiguration(makeAppUpdateConfigPackager([], false), null, Arch.x64, false)
   expect(publishConfig?.updateManifestPublicKey).toBeUndefined()
 })
@@ -932,7 +932,7 @@ test("writeUpdateInfoFiles writes nothing when a manifest that must be signed ha
 
 test("app-update.yml rejects a manually configured publish.updateManifestPublicKey", async ({ expect }) => {
   // the trust list is owned by electron-builder (derived from the signing keys or taken from
-  // updateManifest.publicKey); a hand-set value would bypass validation and could silently shadow the derived one
+  // updateManifestSigning.publicKey); a hand-set value would bypass validation and could silently shadow the derived one
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
   const packager = makeAppUpdateConfigPackager([parsePrivateKey(privateKeyPem)])
   packager.config.publish.updateManifestPublicKey = publicKeyPem
@@ -942,7 +942,7 @@ test("app-update.yml rejects a manually configured publish.updateManifestPublicK
   )
   expect(error).toBeInstanceOf(InvalidConfigurationError)
   expect(error!.message).toContain("publish updateManifestPublicKey (provider generic): removed from the publish options in electron-builder v27")
-  expect(error!.message).toContain("updateManifestPublicKey from updateManifest.publicKey")
+  expect(error!.message).toContain("updateManifestPublicKey from updateManifestSigning.publicKey")
   expect(error!.message).toContain("v27-config-changes#publish-options-managed-by-electron-builder")
 })
 

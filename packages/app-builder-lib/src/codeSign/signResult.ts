@@ -12,7 +12,7 @@ export type SignFileResult = "signed" | "signed:custom" | "skipped:no-certificat
  * ({@link SignFileResult} extended with the skip reasons that are decided before any signing
  * tooling is invoked). Failures are always thrown, never returned:
  * - `skipped:filtered` — the file does not match the signing filters (e.g. the Windows `signExts` filter)
- * - `skipped:disabled` — signing is explicitly disabled (`win.sign: false`/`null`, or macOS `sign`/`sign.identity` set to `null`)
+ * - `skipped:disabled` — signing is explicitly disabled (`win.sign` or macOS `sign` set to `false` / `null`, or macOS `sign.identity: null`)
  * - `skipped:unsupported` — signing is not possible in this build environment (e.g. macOS signing on a non-mac host,
  *   or the pull-request CI guard) or is not implemented by this platform packager (the base `PlatformPackager.signApp`, e.g. Linux)
  */

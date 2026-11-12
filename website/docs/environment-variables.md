@@ -66,7 +66,7 @@ For notarizing macOS apps distributed outside the Mac App Store. Provide **one**
 
 ## Update-manifest signing
 
-The Ed25519 private key that signs `latest*.yml`, required on publishing builds unless `updateManifest: false`. `updateManifest.signingKey` / `signingKeyFile` in the configuration take precedence, and `updateManifest: false` ignores both variables. Full setup is in [Signed Update Manifests](./features/signed-update-manifests.md#ci-secrets).
+The Ed25519 private key that signs `latest*.yml`, required on publishing builds unless `updateManifestSigning: false`. `updateManifestSigning.signingKey` / `signingKeyFile` in the configuration take precedence, and `updateManifestSigning: false` ignores both variables. Full setup is in [Signed Update Manifests](./features/signed-update-manifests.md#ci-secrets).
 
 | Variable | Description |
 |---|---|

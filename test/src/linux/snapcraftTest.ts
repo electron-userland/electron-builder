@@ -213,14 +213,22 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       },
     }))
 
-  test("core24 gnome extension throws in destructive-mode", ({ expect }) =>
-    appThrows(expect, {
-      targets: snapTarget,
-      config: {
-        productName: "Sep",
-        snapcraft: { base: "core24", core24: { useDestructiveMode: true, extensions: ["gnome"] } },
+  test("core24 gnome extension throws in a host build", ({ expect }) =>
+    appThrows(
+      expect,
+      {
+        targets: snapTarget,
+        config: {
+          productName: "Sep",
+          snapcraft: { base: "core24", core24: { buildEnvironment: "host", extensions: ["gnome"] } },
+        },
       },
-    }))
+      {},
+      error => {
+        expect(error.message).toContain('incompatible with a host build (snapcraft.core24.buildEnvironment: "host")')
+        expect(error.message).toContain('set snapcraft.core24.buildEnvironment to "lxd" or "multipass"')
+      }
+    ))
 
   test("core24 no gnome extension", ({ expect }) =>
     app(expect, {
@@ -414,67 +422,94 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       },
     }))
 
-  test("core24 useMultipass build mode", ({ expect }) =>
+  test("core24 buildEnvironment multipass", ({ expect }) =>
     app(expect, {
       targets: snapTarget,
       config: {
         productName: "Sep",
-        snapcraft: { base: "core24", core24: { useMultipass: true } },
+        snapcraft: { base: "core24", core24: { buildEnvironment: "multipass" } },
       },
-      effectiveOptionComputed: async ({ useMultipass, useLXD, useDestructiveMode }) => {
-        expect(useMultipass).toBe(true)
-        expect(useLXD).toBe(false)
-        expect(useDestructiveMode).toBe(false)
+      effectiveOptionComputed: async options => {
+        expect(options.buildEnvironment).toBe("multipass")
+        expect(options.remoteBuild).toBeUndefined()
+        expect(options).not.toHaveProperty("useMultipass")
         return Promise.resolve(true)
       },
     }))
 
-  test("core24 useLXD build mode", ({ expect }) =>
+  test("core24 buildEnvironment lxd ignores remoteBuild", ({ expect }) =>
     app(expect, {
       targets: snapTarget,
       config: {
         productName: "Sep",
-        snapcraft: { base: "core24", core24: { useLXD: true } },
+        snapcraft: { base: "core24", core24: { buildEnvironment: "lxd", remoteBuild: { buildFor: "arm64" } } },
       },
-      effectiveOptionComputed: async ({ useLXD, useMultipass, useDestructiveMode }) => {
-        expect(useLXD).toBe(true)
-        expect(useMultipass).toBe(false)
-        expect(useDestructiveMode).toBe(false)
+      effectiveOptionComputed: async ({ buildEnvironment, remoteBuild }) => {
+        expect(buildEnvironment).toBe("lxd")
+        expect(remoteBuild).toBeUndefined()
         return Promise.resolve(true)
       },
     }))
 
-  test("core24 remoteBuild build mode", ({ expect }) =>
+  test("core24 buildEnvironment host builds without the gnome extension", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        productName: "Sep",
+        snapcraft: { base: "core24", core24: { buildEnvironment: "host" } },
+      },
+      effectiveOptionComputed: async ({ snap, buildEnvironment }) => {
+        expect(buildEnvironment).toBe("host")
+        expect(snap.apps?.testapp).toBeDefined()
+        expect(snap.apps?.testapp?.extensions).toBeUndefined()
+        expect(snap.layout).toBeUndefined()
+        expect(snap.plugs?.["gnome-46-2404"]).toBeUndefined()
+        return Promise.resolve(true)
+      },
+    }))
+
+  test("core24 buildEnvironment remote passes remoteBuild", ({ expect }) =>
     app(expect, {
       targets: snapTarget,
       config: {
         productName: "Sep",
         snapcraft: {
           base: "core24",
-          core24: { remoteBuild: { enabled: true, acceptPublicUpload: true } },
+          core24: { buildEnvironment: "remote", remoteBuild: { acceptPublicUpload: true } },
         },
       },
-      effectiveOptionComputed: async ({ remoteBuild, useLXD, useMultipass }) => {
-        expect(remoteBuild?.enabled).toBe(true)
-        expect(remoteBuild?.acceptPublicUpload).toBe(true)
-        expect(useLXD).toBe(false)
-        expect(useMultipass).toBe(false)
+      effectiveOptionComputed: async ({ buildEnvironment, remoteBuild }) => {
+        expect(buildEnvironment).toBe("remote")
+        expect(remoteBuild).toEqual({ acceptPublicUpload: true })
         return Promise.resolve(true)
       },
     }))
 
-  test("core24 remoteBuild: buildFor array is forwarded correctly", ({ expect }) =>
+  test("core24 buildEnvironment remote: buildFor array is forwarded correctly", ({ expect }) =>
     app(expect, {
       targets: snapTarget,
       config: {
         productName: "Sep",
         snapcraft: {
           base: "core24",
-          core24: { remoteBuild: { enabled: true, acceptPublicUpload: true, buildFor: ["amd64", "arm64"] } },
+          core24: { buildEnvironment: "remote", remoteBuild: { acceptPublicUpload: true, buildFor: ["amd64", "arm64"] } },
         },
       },
       effectiveOptionComputed: async ({ remoteBuild }) => {
         expect(remoteBuild?.buildFor).toEqual(["amd64", "arm64"])
+        return Promise.resolve(true)
+      },
+    }))
+
+  test("core24 buildEnvironment remote without remoteBuild options", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        productName: "Sep",
+        snapcraft: { base: "core24", core24: { buildEnvironment: "remote" } },
+      },
+      effectiveOptionComputed: async ({ remoteBuild }) => {
+        expect(remoteBuild).toEqual({})
         return Promise.resolve(true)
       },
     }))
@@ -789,18 +824,18 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
   // Runs only when Multipass is available (local macOS dev machines).
   // Skipped on GitHub Actions macOS runners (nested VMs not supported).
   // LXD cannot run on macOS — its config path is validated by the
-  // "core24 useLXD build mode" effectiveOptionComputed test above.
+  // "core24 buildEnvironment lxd ignores remoteBuild" effectiveOptionComputed test above.
   const hasMultipassInstalled = () => which.sync("multipass", { nothrow: true }) != null
 
   describe.skipIf(!hasMultipassInstalled())("core24 Multipass real build", { concurrent: false, timeout: EXTENDED_TIMEOUT }, () => {
-    test("core24 useMultipass full build", async ({ expect }) => {
+    test("core24 buildEnvironment multipass full build", async ({ expect }) => {
       await app(expect, {
         targets: snapTarget,
         config: {
           productName: "Sep",
           snapcraft: {
             base: "core24",
-            core24: { useMultipass: true },
+            core24: { buildEnvironment: "multipass" },
           },
         },
       })
@@ -809,14 +844,14 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
     // End-to-end check that snapcraft accepts the generated launcher-script command and the
     // chrome-sandbox removal: forceX11 produces a "=" arg (forbidden inline) and the custom
     // string plugs force --no-sandbox (which strips chrome-sandbox).
-    test("core24 useMultipass full build with launcher script + no-sandbox", async ({ expect }) => {
+    test("core24 buildEnvironment multipass full build with launcher script + no-sandbox", async ({ expect }) => {
       await app(expect, {
         targets: snapTarget,
         config: {
           productName: "Sep",
           snapcraft: {
             base: "core24",
-            core24: { useMultipass: true, forceX11: true, plugs: ["network"] },
+            core24: { buildEnvironment: "multipass", forceX11: true, plugs: ["network"] },
           },
         },
       })

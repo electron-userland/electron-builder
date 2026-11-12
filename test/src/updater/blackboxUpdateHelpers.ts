@@ -54,7 +54,7 @@ export const THIRD_VERSION_NUMBER = "1.0.2"
 export const FOURTH_VERSION_NUMBER = "1.0.3"
 
 /**
- * A version to build, optionally with configuration that applies to that build only (e.g. its `updateManifest` keys) and a
+ * A version to build, optionally with configuration that applies to that build only (e.g. its `updateManifestSigning` keys) and a
  * target other than the one of the scenario (e.g. an nsis-web update of an nsis install).
  */
 export type VersionBuild = {
@@ -241,7 +241,7 @@ export async function doBuild(
     let isFirstBuild = true
     for (const entry of versions) {
       const { version, extraConfig, target: entryTarget, electronUpdater }: VersionBuild = typeof entry === "string" ? { version: entry, extraConfig: null } : entry
-      // shallow merge on purpose: a per-version block (e.g. `updateManifest`) replaces the shared one wholesale
+      // shallow merge on purpose: a per-version block (e.g. `updateManifestSigning`) replaces the shared one wholesale
       // (deepAssign would union arrays such as signingKey lists)
       await build(version, { ...extraConfiguration, ...extraConfig, compression: isFirstBuild ? "store" : "maximum" }, entryTarget ?? target, electronUpdater)
       isFirstBuild = false
@@ -1145,7 +1145,7 @@ async function assertEmbeddedTrustList(expect: ExpectStatic, dist: ApplicationUp
  */
 export async function runSignedManifestTest(context: TestContext, target: string, packageManager: string, arch: Arch = Arch.x64, toolsets: ToolsetConfig = {}): Promise<void> {
   const keyA = generateUpdateSigningKeypair()
-  const signedByA: Partial<Configuration> = { updateManifest: { signingKey: keyA.privateKeyPem } }
+  const signedByA: Partial<Configuration> = { updateManifestSigning: { signingKey: keyA.privateKeyPem } }
 
   await runUpdateScenario(context, {
     target,
@@ -1203,10 +1203,10 @@ export async function runKeyRotationTest(context: TestContext, target: string, p
     toolsets,
     tmpDirPrefix: "key-rotation",
     builds: [
-      { version: OLD_VERSION_NUMBER, extraConfig: { updateManifest: { signingKey: keyA.privateKeyPem } } },
+      { version: OLD_VERSION_NUMBER, extraConfig: { updateManifestSigning: { signingKey: keyA.privateKeyPem } } },
       // bridge release: dual-signed, old key first so it also fills the legacy `signature`; trust list derived → [A, B]
-      { version: NEW_VERSION_NUMBER, extraConfig: { updateManifest: { signingKey: [keyA.privateKeyPem, keyB.privateKeyPem] } } },
-      { version: THIRD_VERSION_NUMBER, extraConfig: { updateManifest: { signingKey: keyB.privateKeyPem } } },
+      { version: NEW_VERSION_NUMBER, extraConfig: { updateManifestSigning: { signingKey: [keyA.privateKeyPem, keyB.privateKeyPem] } } },
+      { version: THIRD_VERSION_NUMBER, extraConfig: { updateManifestSigning: { signingKey: keyB.privateKeyPem } } },
     ],
     initialUpdateConfig: async outDirs => {
       const { expect } = context
@@ -1651,7 +1651,7 @@ export async function runWebInstallerInstallOnNextLaunchTest(context: TestContex
  */
 export async function runWebInstallerRejectedTest(context: TestContext, toolsets: ToolsetConfig): Promise<void> {
   const keyA = generateUpdateSigningKeypair()
-  const signedByA: Partial<Configuration> = { updateManifest: { signingKey: keyA.privateKeyPem } }
+  const signedByA: Partial<Configuration> = { updateManifestSigning: { signingKey: keyA.privateKeyPem } }
   await withEmptyUpdaterCaches(() =>
     runUpdateScenario(context, {
       target: "nsis",

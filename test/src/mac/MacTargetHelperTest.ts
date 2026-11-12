@@ -139,6 +139,16 @@ describe("MacTargetHelper", () => {
       expect(signOptions.type).toBe(expected)
       expect(signOptions.platform).toBe(targetPlatform === "mac" ? "darwin" : "mas")
     })
+
+    test("forwards batchCodesignCalls and preEmbedProvisioningProfile, and never the custom signer itself", async () => {
+      const config = { batchCodesignCalls: true, preEmbedProvisioningProfile: false, sign: () => Promise.resolve() }
+      const signOptions = await makeHelper().buildSignOptions("/project/My.app", identity, config, null, Arch.x64, "mac", true)
+      expect(signOptions.batchCodesignCalls).toBe(true)
+      expect(signOptions.preEmbedProvisioningProfile).toBe(false)
+      expect("sign" in signOptions).toBe(false)
+      // electron-builder resolves the identity itself
+      expect(signOptions.identityValidation).toBe(false)
+    })
   })
 
   // `codesign --sign` needs the unique hash (a common name can match several valid certs), while
@@ -393,8 +403,18 @@ ${body}
       return new MacTargetHelper({ forceCodeSigningFor: (platformType: PlatformType) => forced[platformType] ?? false } as any)
     }
 
+    const TURNED_OFF = "signing is turned off (`sign` is false or null, or `sign.identity` is null), but forceCodeSigning is set to true"
+
+    beforeEach(() => {
+      log.resetLimits("mac-signing-disabled")
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
     test("throws when forceCodeSigning is true", () => {
-      expect(() => makeHelper({ mac: true }).handleNullIdentity("mac")).toThrow("identity explicitly is set to null")
+      expect(() => makeHelper({ mac: true }).handleNullIdentity("mac")).toThrow(TURNED_OFF)
     })
 
     test(`returns "skipped:disabled" when forceCodeSigning is false`, () => {
@@ -402,8 +422,18 @@ ${body}
     })
 
     test("reads the forceCodeSigning of the flavor being signed", () => {
-      expect(() => makeHelper({ mas: true }).handleNullIdentity("mas")).toThrow("identity explicitly is set to null")
+      expect(() => makeHelper({ mas: true }).handleNullIdentity("mas")).toThrow(TURNED_OFF)
       expect(makeHelper({ mas: true }).handleNullIdentity("mac")).toBe("skipped:disabled")
+    })
+
+    test("announces the v27 meaning of sign: false / null once per process, as each app of a build is signed", () => {
+      const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+      const helper = makeHelper({})
+      helper.handleNullIdentity("mac")
+      helper.handleNullIdentity("mas")
+      expect(warn).toHaveBeenCalledTimes(1)
+      expect(warn.mock.calls[0][1]).toContain('changed in electron-builder v27: `mac.sign: false` / `null` now mean "do not sign"')
+      expect(warn.mock.calls[0][1]).toContain("https://www.electron.build/docs/migration/v27-config-changes#macos-signing-macsign")
     })
   })
 

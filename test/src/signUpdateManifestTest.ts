@@ -111,7 +111,7 @@ const current = generateUpdateSigningKeypair()
 const next = generateUpdateSigningKeypair()
 const currentId = computeUpdateManifestKeyId(current.publicKeyPem)
 /** `-c` override that sets the trust list `--verify` checks against. */
-const trust = (...publicKeys: Array<string>) => `-c.updateManifest.publicKey=${publicKeys.join("\n")}`
+const trust = (...publicKeys: Array<string>) => `-c.updateManifestSigning.publicKey=${publicKeys.join("\n")}`
 const nextId = computeUpdateManifestKeyId(next.publicKeyPem)
 
 beforeEach(() => {
@@ -129,10 +129,10 @@ test("the CLI takes manifest paths, -c / --config (a path, inline overrides or b
   expect(parseCli(["latest.yml", "latest-mac.yml"])).toEqual({ files: ["latest.yml", "latest-mac.yml"], config: undefined, verify: undefined })
   expect(parseCli(["-c", "custom.yml", "latest.yml", "--verify"])).toEqual({ files: ["latest.yml"], config: "custom.yml", verify: true })
   expect(parseCli(["latest.yml", "--config", "custom.yml"])).toMatchObject({ files: ["latest.yml"], config: "custom.yml" })
-  expect(parseCli(["latest.yml", "-c.updateManifest.signingKeyFile=k.pem"])).toMatchObject({ config: { updateManifest: { signingKeyFile: "k.pem" } } })
-  expect(parseCli(["-c", "custom.yml", "-c.updateManifest.signingKeyFile=k.pem", "latest.yml"])).toMatchObject({
+  expect(parseCli(["latest.yml", "-c.updateManifestSigning.signingKeyFile=k.pem"])).toMatchObject({ config: { updateManifestSigning: { signingKeyFile: "k.pem" } } })
+  expect(parseCli(["-c", "custom.yml", "-c.updateManifestSigning.signingKeyFile=k.pem", "latest.yml"])).toMatchObject({
     files: ["latest.yml"],
-    config: ["custom.yml", { updateManifest: { signingKeyFile: "k.pem" } }],
+    config: ["custom.yml", { updateManifestSigning: { signingKeyFile: "k.pem" } }],
   })
   // key-material flags do not exist: keys only come from the configuration and the environment
   expect(() => parseCli(["latest.yml", "--key-file", "k.pem"])).toThrow(/Unknown argument/)
@@ -195,36 +195,59 @@ test("throws InvalidConfigurationError and leaves the file untouched when no sig
   const error = await rejection(run(dir, [file]))
   expect(error).toBeInstanceOf(InvalidConfigurationError)
   expect(error!.message).toContain(`Cannot sign ${file}: no Ed25519 signing key was found for linux`)
-  expect(error!.message).toContain("updateManifest.signingKeyFile")
+  expect(error!.message).toContain("updateManifestSigning.signingKeyFile")
   expect(error!.message).toContain("ELECTRON_BUILDER_UPDATE_SIGN_KEY")
   expect(await fsp.readFile(file, "utf8")).toBe(before)
 
-  // verifying needs the trust list in updateManifest.publicKey: like electron-builder verify, it never derives one from a signing key
+  // verifying needs the trust list in updateManifestSigning.publicKey: like electron-builder verify, it never derives one from a signing key
   await writeKey(dir, "current.pem", current.privateKeyPem)
-  const verifyError = await rejection(run(dir, [file, "--verify", "-c.updateManifest.signingKeyFile=keys/current.pem"]))
+  const verifyError = await rejection(run(dir, [file, "--verify", "-c.updateManifestSigning.signingKeyFile=keys/current.pem"]))
   expect(verifyError).toBeInstanceOf(InvalidConfigurationError)
-  expect(verifyError!.message).toContain(`Cannot verify ${file}: updateManifest.publicKey is not set`)
+  expect(verifyError!.message).toContain(`Cannot verify ${file}: updateManifestSigning.publicKey is not set`)
   // ...and never loads one either: a broken signing key configuration does not get in the way
   vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", "not even base64")
-  const tampered = await rejection(run(dir, [file, "--verify", trust(current.publicKeyPem), "-c.updateManifest.signingKeyFile=keys/missing.pem"]))
+  const tampered = await rejection(run(dir, [file, "--verify", trust(current.publicKeyPem), "-c.updateManifestSigning.signingKeyFile=keys/missing.pem"]))
   expect(tampered!.message).toBe(`1 of 1 update manifest(s) failed signature verification: ${file} (no trusted key validates any of its signatures)`)
   vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", undefined)
 
   // the explicit opt-out is honored, even with a key in the environment (as in the build)
   vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", Buffer.from(current.privateKeyPem + "\n").toString("base64"))
-  const optOutError = await rejection(run(dir, [file, "-c.updateManifest=false"]))
+  const optOutError = await rejection(run(dir, [file, "-c.updateManifestSigning=false"]))
   expect(optOutError).toBeInstanceOf(InvalidConfigurationError)
-  expect(optOutError!.message).toContain("updateManifest is false")
+  expect(optOutError!.message).toContain("updateManifestSigning is false")
   expect(await fsp.readFile(file, "utf8")).toBe(before)
   // ...and --verify skips an opted-out manifest, as electron-builder verify does
-  expect(await run(dir, [file, "--verify", "-c.updateManifest=false"])).toEqual([
-    { file, version: "2.0.1", status: "skipped", reason: "updateManifest is false in the configuration, so the manifest is not signed" },
+  expect(await run(dir, [file, "--verify", "-c.updateManifestSigning=false"])).toEqual([
+    { file, version: "2.0.1", status: "skipped", reason: "updateManifestSigning is false in the configuration, so the manifest is not signed" },
   ])
+})
+
+test("a configuration or -c override that still sets updateManifest (27.0.0-alpha.9) is rejected with the rename, as the build rejects it", async ({ expect, tmpDir }) => {
+  captureOutput()
+  // the signing key it names would otherwise be ignored: "no Ed25519 signing key was found"
+  const dir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }), { updateManifest: { signingKeyFile: "keys/current.pem" } })
+  await writeKey(dir, "current.pem", current.privateKeyPem)
+  const file = path.join(dir, "latest.yml")
+  await writeSigned(file, manifest("3.0.0", "App-Setup-3.0.0.exe"), [current.privateKeyPem])
+  const before = await fsp.readFile(file, "utf8")
+  const error = await rejection(run(dir, [file]))
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  expect(error!.message).toContain("`updateManifest` was replaced by `updateManifestSigning`")
+  expect(await fsp.readFile(file, "utf8")).toBe(before)
+
+  // the trust list given with the old name would otherwise be ignored, and the manifest verified against the configured keys instead
+  const verifyDir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }), { updateManifestSigning: { publicKey: current.publicKeyPem } })
+  const verifyFile = path.join(verifyDir, "latest.yml")
+  await writeSigned(verifyFile, manifest("3.0.0", "App-Setup-3.0.0.exe"), [current.privateKeyPem])
+  expect(await run(verifyDir, [verifyFile, "--verify"])).toMatchObject([{ status: "verified", keyId: currentId }])
+  const verifyError = await rejection(run(verifyDir, [verifyFile, "--verify", `-c.updateManifest.publicKey=${next.publicKeyPem}`]))
+  expect(verifyError).toBeInstanceOf(InvalidConfigurationError)
+  expect(verifyError!.message).toContain("`updateManifest` was replaced by `updateManifestSigning`")
 })
 
 test("rejects a missing file list, a file that is not a YAML mapping, and an empty command-line trust list, writing nothing", async ({ expect, tmpDir }) => {
   captureOutput()
-  const dir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }), { updateManifest: { signingKeyFile: "keys/current.pem" } })
+  const dir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }), { updateManifestSigning: { signingKeyFile: "keys/current.pem" } })
   await writeKey(dir, "current.pem", current.privateKeyPem)
 
   // no manifest at all (the CLI's positional is required, so this is the API): nothing would be signed, which is an error, not success
@@ -255,16 +278,16 @@ test("rejects a missing file list, a file that is not a YAML mapping, and an emp
   // an empty trust list on the command line is a mistake to report, not a list that trusts nothing (or the configured keys)
   const file = path.join(dir, "latest-linux.yml")
   await writeSigned(file, manifest("1.0.0", "App-1.0.0.AppImage"), [current.privateKeyPem])
-  const emptyTrust = await rejection(run(dir, [file, "--verify", "-c.updateManifest.publicKey="]))
+  const emptyTrust = await rejection(run(dir, [file, "--verify", "-c.updateManifestSigning.publicKey="]))
   expect(emptyTrust).toBeInstanceOf(InvalidConfigurationError)
-  expect(emptyTrust!.message).toContain(`Cannot verify ${file}: -c.updateManifest.publicKey holds no key.`)
+  expect(emptyTrust!.message).toContain(`Cannot verify ${file}: -c.updateManifestSigning.publicKey holds no key.`)
 })
 
 test("signs several manifests with the configured key files, and writes none when one cannot be signed", async ({ expect, tmpDir }) => {
   captureOutput()
   const dir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }), {
     // project-relative key files, like every path in the configuration; both sign (dual-signing for a rotation)
-    updateManifest: { signingKeyFile: ["keys/current.pem", "keys/next.pem"] },
+    updateManifestSigning: { signingKeyFile: ["keys/current.pem", "keys/next.pem"] },
   })
   await writeKey(dir, "current.pem", current.privateKeyPem)
   await writeKey(dir, "next.pem", next.privateKeyPem)
@@ -300,28 +323,28 @@ test("signs several manifests with the configured key files, and writes none whe
   expect((await readManifest(mac)).files[0].url).toBe("App-3.1.0-universal-mac.zip")
 
   // a -c override replaces the file's key list: sign with the next key only
-  await run(dir, [win, "-c.updateManifest.signingKeyFile=keys/next.pem"])
+  await run(dir, [win, "-c.updateManifestSigning.signingKeyFile=keys/next.pem"])
   expect((await readManifest(win)).signatures).toEqual([{ keyId: nextId, signature: (await readManifest(win)).signature }])
 
-  // the trust list is updateManifest.publicKey when set (a multi-PEM string, split like the build and the updater do)
+  // the trust list is updateManifestSigning.publicKey when set (a multi-PEM string, split like the build and the updater do)
   const unsigned = path.join(dir, "beta.yml")
   await fsp.writeFile(unsigned, serializeToYaml(manifest("3.2.0-beta.1", "App-Setup-3.2.0-beta.1.exe")))
   const trusted = path.join(dir, "trusted.yml")
-  await fsp.writeFile(trusted, serializeToYaml({ updateManifest: { signingKeyFile: "keys/current.pem", publicKey: `${current.publicKeyPem}\n${next.publicKeyPem}` } }))
+  await fsp.writeFile(trusted, serializeToYaml({ updateManifestSigning: { signingKeyFile: "keys/current.pem", publicKey: `${current.publicKeyPem}\n${next.publicKeyPem}` } }))
   expect(await run(dir, [win, mac, "--verify", "-c", "trusted.yml"])).toMatchObject([{ status: "verified", keyId: nextId }, { status: "verified" }])
   const untrusted = generateUpdateSigningKeypair().publicKeyPem
-  const verifyError = await rejection(run(dir, [win, unsigned, "--verify", "-c", "trusted.yml", `-c.updateManifest.publicKey=${untrusted}`]))
+  const verifyError = await rejection(run(dir, [win, unsigned, "--verify", "-c", "trusted.yml", `-c.updateManifestSigning.publicKey=${untrusted}`]))
   expect(verifyError).toBeInstanceOf(InvalidConfigurationError)
   expect(verifyError!.message).toBe(
     `2 of 2 update manifest(s) failed signature verification: ${win} (no trusted key validates any of its signatures), ${unsigned} (the manifest is not signed)`
   )
 })
 
-test("each manifest uses its platform's updateManifest settings, like the build", async ({ expect, tmpDir }) => {
+test("each manifest uses its platform's updateManifestSigning settings, like the build", async ({ expect, tmpDir }) => {
   captureOutput()
   const dir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }), {
-    updateManifest: { signingKeyFile: "keys/current.pem", publicKey: current.publicKeyPem },
-    mac: { updateManifest: { signingKeyFile: "keys/next.pem", publicKey: next.publicKeyPem } },
+    updateManifestSigning: { signingKeyFile: "keys/current.pem", publicKey: current.publicKeyPem },
+    mac: { updateManifestSigning: { signingKeyFile: "keys/next.pem", publicKey: next.publicKeyPem } },
   })
   await writeKey(dir, "current.pem", current.privateKeyPem)
   await writeKey(dir, "next.pem", next.privateKeyPem)
@@ -346,7 +369,7 @@ test("each manifest uses its platform's updateManifest settings, like the build"
 
 test("re-signs a manifest with allowCatalogSignature: true over the shared EBUM1 payload, which signs that flag", async ({ expect, tmpDir }) => {
   captureOutput()
-  const dir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }), { updateManifest: { signingKeyFile: "keys/current.pem" } })
+  const dir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }), { updateManifestSigning: { signingKeyFile: "keys/current.pem" } })
   await writeKey(dir, "current.pem", current.privateKeyPem)
   const file = path.join(dir, "latest.yml")
   const info: WindowsUpdateInfo = { ...manifest("4.0.0", "App-Setup-4.0.0.exe"), allowCatalogSignature: true }
@@ -380,10 +403,10 @@ test("bad key configuration fails with an InvalidConfigurationError naming its s
   const file = path.join(dir, "latest.yml")
   await writeSigned(file, manifest("6.0.0", "App-Setup-6.0.0.exe"), [current.privateKeyPem])
 
-  const missingError = await rejection(run(dir, [file, "-c.updateManifest.signingKeyFile=keys/missing.pem"]))
+  const missingError = await rejection(run(dir, [file, "-c.updateManifestSigning.signingKeyFile=keys/missing.pem"]))
   expect(missingError).toBeInstanceOf(InvalidConfigurationError)
   expect(missingError!.message).toBe(
-    "Update manifest signing key file from updateManifest.signingKeyFile cannot be read (ENOENT); check that it points to a readable PEM file (the value is not shown)"
+    "Update manifest signing key file from updateManifestSigning.signingKeyFile cannot be read (ENOENT); check that it points to a readable PEM file (the value is not shown)"
   )
 
   // with several entries, the failing one is identified by its position, still without its value
@@ -399,18 +422,18 @@ test("bad key configuration fails with an InvalidConfigurationError naming its s
 
   // a public key where the private key belongs
   await writeKey(dir, "public.pem", current.publicKeyPem)
-  const wrongError = await rejection(run(dir, [file, "-c.updateManifest.signingKeyFile=keys/public.pem"]))
+  const wrongError = await rejection(run(dir, [file, "-c.updateManifestSigning.signingKeyFile=keys/public.pem"]))
   expect(wrongError).toBeInstanceOf(InvalidConfigurationError)
-  expect(wrongError!.message).toMatch(/^Update manifest signing key #1 from updateManifest.signingKeyFile is not a valid Ed25519 private key/)
+  expect(wrongError!.message).toMatch(/^Update manifest signing key #1 from updateManifestSigning.signingKeyFile is not a valid Ed25519 private key/)
 
   // the CI secret (a base64 private key) or a bare key body configured as the trust list: rejected without printing it
   const secret = Buffer.from(current.privateKeyPem + "\n").toString("base64")
   const body = current.privateKeyPem.split("\n")[1]
   for (const value of [secret, body]) {
-    await fsp.writeFile(path.join(dir, "electron-builder.yml"), serializeToYaml({ mac: { updateManifest: { publicKey: [next.publicKeyPem, value] } } }))
+    await fsp.writeFile(path.join(dir, "electron-builder.yml"), serializeToYaml({ mac: { updateManifestSigning: { publicKey: [next.publicKeyPem, value] } } }))
     const error = await rejection(run(dir, [path.join(dir, "latest-mac.yml"), "--verify"]))
     expect(error).toBeInstanceOf(InvalidConfigurationError)
-    expect(error!.message).toMatch(/^mac\.updateManifest\.publicKey #2 is not a valid Ed25519 public key \(the value is not shown\)/)
+    expect(error!.message).toMatch(/^mac\.updateManifestSigning\.publicKey #2 is not a valid Ed25519 public key \(the value is not shown\)/)
     expect(error!.message).not.toContain(value)
     expect(error!.message).not.toContain(body)
   }
@@ -453,10 +476,10 @@ test("a signing key file value is never echoed, whatever key material was put wh
     vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", undefined)
 
     // ...or pasted into signingKeyFile, in the config file or as a -c override
-    await fsp.writeFile(path.join(dir, "electron-builder.yml"), serializeToYaml({ updateManifest: { signingKeyFile: secret } }))
-    expectRedacted(await rejection(run(dir, [file])), "updateManifest.signingKeyFile", secret)
+    await fsp.writeFile(path.join(dir, "electron-builder.yml"), serializeToYaml({ updateManifestSigning: { signingKeyFile: secret } }))
+    expectRedacted(await rejection(run(dir, [file])), "updateManifestSigning.signingKeyFile", secret)
     await fsp.rm(path.join(dir, "electron-builder.yml"))
-    expectRedacted(await rejection(run(dir, [file, `-c.updateManifest.signingKeyFile=${secret}`])), "updateManifest.signingKeyFile", secret)
+    expectRedacted(await rejection(run(dir, [file, `-c.updateManifestSigning.signingKeyFile=${secret}`])), "updateManifestSigning.signingKeyFile", secret)
   }
   expect(await fsp.readFile(file, "utf8")).toBe(before)
   const printed = output()
@@ -464,37 +487,37 @@ test("a signing key file value is never echoed, whatever key material was put wh
   expect(printed).not.toContain(canonical.slice(0, 40))
 
   // an ordinary missing path gets the same source-only message
-  const missing = await rejection(run(dir, [file, "-c.updateManifest.signingKeyFile=keys/update-key.pem"]))
-  expectRedacted(missing, "updateManifest.signingKeyFile", "keys/update-key.pem")
+  const missing = await rejection(run(dir, [file, "-c.updateManifestSigning.signingKeyFile=keys/update-key.pem"]))
+  expectRedacted(missing, "updateManifestSigning.signingKeyFile", "keys/update-key.pem")
 })
 
-test("--verify allows a cutover release signed outside the trust list only with updateManifest.allowSigningKeyOutsideTrustList", async ({ expect, tmpDir }) => {
+test("--verify allows a cutover release signed outside the trust list only with updateManifestSigning.allowSigningKeyOutsideTrustList", async ({ expect, tmpDir }) => {
   captureOutput()
   // the cutover release of a rotation: signed with the OLD key while its trust list holds only the NEW one
   const dir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }), {
-    updateManifest: { signingKeyFile: "keys/current.pem", publicKey: next.publicKeyPem },
+    updateManifestSigning: { signingKeyFile: "keys/current.pem", publicKey: next.publicKeyPem },
   })
   await writeKey(dir, "current.pem", current.privateKeyPem)
   const file = path.join(dir, "latest.yml")
   await fsp.writeFile(file, serializeToYaml({ ...manifest("9.0.0", "App-Setup-9.0.0.exe"), stagingPercentage: 10 }))
   // re-signing it with the old key needs the same cutover allowance its build needed
-  expect(await run(dir, [file, "-c.updateManifest.allowSigningKeyOutsideTrustList=true"])).toEqual([{ file, version: "9.0.0", keyIds: [currentId], rehashed: [] }])
+  expect(await run(dir, [file, "-c.updateManifestSigning.allowSigningKeyOutsideTrustList=true"])).toEqual([{ file, version: "9.0.0", keyIds: [currentId], rehashed: [] }])
 
   const error = await rejection(run(dir, [file, "--verify"]))
   expect(error).toBeInstanceOf(InvalidConfigurationError)
   expect(error!.message).toBe(`1 of 1 update manifest(s) failed signature verification: ${file} (no trusted key validates any of its signatures)`)
 
-  expect(await run(dir, [file, "--verify", "-c.updateManifest.allowSigningKeyOutsideTrustList=true"])).toEqual([
+  expect(await run(dir, [file, "--verify", "-c.updateManifestSigning.allowSigningKeyOutsideTrustList=true"])).toEqual([
     {
       file,
       version: "9.0.0",
       status: "skipped",
       reason:
-        "not signed by a key of updateManifest.publicKey (no trusted key validates any of its signatures), which updateManifest.allowSigningKeyOutsideTrustList allows for a cutover release signed with a key outside the trust list",
+        "not signed by a key of updateManifestSigning.publicKey (no trusted key validates any of its signatures), which updateManifestSigning.allowSigningKeyOutsideTrustList allows for a cutover release signed with a key outside the trust list",
     },
   ])
   // a manifest that does verify is still reported as verified
-  expect(await run(dir, [file, "--verify", "-c.updateManifest.allowSigningKeyOutsideTrustList=true", trust(current.publicKeyPem)])).toMatchObject([
+  expect(await run(dir, [file, "--verify", "-c.updateManifestSigning.allowSigningKeyOutsideTrustList=true", trust(current.publicKeyPem)])).toMatchObject([
     { status: "verified", keyId: currentId },
   ])
 })
@@ -502,11 +525,11 @@ test("--verify allows a cutover release signed outside the trust list only with 
 test("--verify agrees with electron-builder verify (verifyBuildOutput) on the same manifests and configuration", async ({ expect, tmpDir }) => {
   captureOutput()
   const dir = await tmpDir.getTempDir({ prefix: "sign-update-manifest" })
-  // no packaged app in the output, so electron-builder verify also checks against updateManifest.publicKey
+  // no packaged app in the output, so electron-builder verify also checks against updateManifestSigning.publicKey
   const config = {
-    updateManifest: { publicKey: [current.publicKeyPem] },
-    mac: { updateManifest: { publicKey: next.publicKeyPem, allowSigningKeyOutsideTrustList: true } },
-    linux: { updateManifest: false as const },
+    updateManifestSigning: { publicKey: [current.publicKeyPem] },
+    mac: { updateManifestSigning: { publicKey: next.publicKeyPem, allowSigningKeyOutsideTrustList: true } },
+    linux: { updateManifestSigning: false as const },
   }
   await createProject(dir, config)
   const cases: Record<string, () => Promise<void>> = {
@@ -555,10 +578,10 @@ test("--verify agrees with electron-builder verify (verifyBuildOutput) on the sa
   expect(new Set([...reference.values()].map(it => it.status))).toEqual(new Set(["verified", "failed", "skipped"]))
 })
 
-test("re-signing refuses a signing key outside updateManifest.publicKey exactly as a publishing build does", async ({ expect, tmpDir }) => {
+test("re-signing refuses a signing key outside updateManifestSigning.publicKey exactly as a publishing build does", async ({ expect, tmpDir }) => {
   captureOutput()
   const dir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }), {
-    updateManifest: { signingKeyFile: "keys/current.pem", publicKey: next.publicKeyPem },
+    updateManifestSigning: { signingKeyFile: "keys/current.pem", publicKey: next.publicKeyPem },
   })
   await writeKey(dir, "current.pem", current.privateKeyPem)
   const file = path.join(dir, "latest.yml")
@@ -573,9 +596,9 @@ test("re-signing refuses a signing key outside updateManifest.publicKey exactly 
   const error = await rejection(run(dir, [mac, file]))
   expect(error).toBeInstanceOf(InvalidConfigurationError)
   expect(error!.message).toMatch(
-    new RegExp(`^none of the update-manifest signing keys \\(key id\\(s\\) ${currentId}\\) is in updateManifest\\.publicKey \\(key id\\(s\\) ${nextId}\\) for mac\\. `)
+    new RegExp(`^none of the update-manifest signing keys \\(key id\\(s\\) ${currentId}\\) is in updateManifestSigning\\.publicKey \\(key id\\(s\\) ${nextId}\\) for mac\\. `)
   )
-  expect(error!.message).toContain("set updateManifest.allowSigningKeyOutsideTrustList: true")
+  expect(error!.message).toContain("set updateManifestSigning.allowSigningKeyOutsideTrustList: true")
   // checked before anything is written, for every file of the batch
   expect(await fsp.readFile(file, "utf8")).toBe(before)
   expect(await fsp.readFile(mac, "utf8")).toBe(macBefore)
@@ -583,18 +606,18 @@ test("re-signing refuses a signing key outside updateManifest.publicKey exactly 
   expect(winError!.message).toContain(`for windows. `)
 
   // a deliberate cutover release: allowed (the build only warns, once per process)
-  expect(await run(dir, [file, "-c.updateManifest.allowSigningKeyOutsideTrustList=true"])).toEqual([{ file, version: "10.0.0", keyIds: [currentId], rehashed: [] }])
+  expect(await run(dir, [file, "-c.updateManifestSigning.allowSigningKeyOutsideTrustList=true"])).toEqual([{ file, version: "10.0.0", keyIds: [currentId], rehashed: [] }])
 
   // a trusted signing key (one of the listed keys is enough, as in the build)
   expect(await run(dir, [file, trust(next.publicKeyPem, current.publicKeyPem)])).toEqual([{ file, version: "10.0.0", keyIds: [currentId], rehashed: [] }])
 
-  // no updateManifest.publicKey: the build derives the trust list from the signing keys, so there is nothing to refuse
-  await fsp.writeFile(path.join(dir, "electron-builder.yml"), serializeToYaml({ updateManifest: { signingKeyFile: "keys/current.pem" } }))
+  // no updateManifestSigning.publicKey: the build derives the trust list from the signing keys, so there is nothing to refuse
+  await fsp.writeFile(path.join(dir, "electron-builder.yml"), serializeToYaml({ updateManifestSigning: { signingKeyFile: "keys/current.pem" } }))
   expect(await run(dir, [file, mac])).toMatchObject([{ keyIds: [currentId] }, { keyIds: [currentId] }])
 
   // an invalid publicKey entry is the build's configuration error too
   const invalid = await rejection(run(dir, [file, trust(current.publicKeyPem, current.publicKeyPem)]))
-  expect(invalid!.message).toBe("updateManifest.publicKey #2 duplicates entry #1 (key id " + currentId + "). List each trusted key once.")
+  expect(invalid!.message).toBe("updateManifestSigning.publicKey #2 duplicates entry #1 (key id " + currentId + "). List each trusted key once.")
 })
 
 test("--verify with a trust list given on the command line fails a wrong signature even in a cutover configuration", async ({ expect, tmpDir }) => {
@@ -603,7 +626,7 @@ test("--verify with a trust list given on the command line fails a wrong signatu
   const wrong = generateUpdateSigningKeypair()
   // the cutover release configuration: trusts only the NEW key and allows signing outside that trust list
   const dir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }), {
-    updateManifest: { signingKeyFile: "keys/wrong.pem", publicKey: next.publicKeyPem, allowSigningKeyOutsideTrustList: true },
+    updateManifestSigning: { signingKeyFile: "keys/wrong.pem", publicKey: next.publicKeyPem, allowSigningKeyOutsideTrustList: true },
   })
   await writeKey(dir, "wrong.pem", wrong.privateKeyPem)
   const file = path.join(dir, "latest.yml")
@@ -620,17 +643,17 @@ test("--verify with a trust list given on the command line fails a wrong signatu
   expect(error).toBeInstanceOf(InvalidConfigurationError)
   expect(error!.message).toBe(`1 of 1 update manifest(s) failed signature verification: ${file} (no trusted key validates any of its signatures)`)
   // ...also when the override is set for the platform
-  const platformError = await rejection(run(dir, [file, "--verify", `-c.win.updateManifest.publicKey=${old.publicKeyPem}`]))
+  const platformError = await rejection(run(dir, [file, "--verify", `-c.win.updateManifestSigning.publicKey=${old.publicKeyPem}`]))
   expect(platformError).toBeInstanceOf(InvalidConfigurationError)
 
   // re-signed with the right key, the same check passes
   await writeKey(dir, "old.pem", old.privateKeyPem)
-  await run(dir, [file, "-c.updateManifest.signingKeyFile=keys/old.pem"])
+  await run(dir, [file, "-c.updateManifestSigning.signingKeyFile=keys/old.pem"])
   expect(await run(dir, [file, "--verify", trust(old.publicKeyPem)])).toMatchObject([{ status: "verified", keyId: currentId }])
 
   // an allowance given on the command line together with the trust list still applies
   await run(dir, [file])
-  expect(await run(dir, [file, "--verify", trust(old.publicKeyPem), "-c.updateManifest.allowSigningKeyOutsideTrustList=true"])).toMatchObject([{ status: "skipped" }])
+  expect(await run(dir, [file, "--verify", trust(old.publicKeyPem), "-c.updateManifestSigning.allowSigningKeyOutsideTrustList=true"])).toMatchObject([{ status: "skipped" }])
 })
 
 test("--verify uses a command-line trust list exactly as passed, never merged with the configured keys", async ({ expect, tmpDir }) => {
@@ -646,8 +669,8 @@ test("--verify uses a command-line trust list exactly as passed, never merged wi
   }
   // configured: a YAML list at the root, and a mac block of its own; both trust `next` and `other`, with the cutover allowance
   const dir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }), {
-    updateManifest: { publicKey: [next.publicKeyPem, other.publicKeyPem], allowSigningKeyOutsideTrustList: true },
-    mac: { updateManifest: { publicKey: [next.publicKeyPem, other.publicKeyPem], allowSigningKeyOutsideTrustList: true } },
+    updateManifestSigning: { publicKey: [next.publicKeyPem, other.publicKeyPem], allowSigningKeyOutsideTrustList: true },
+    mac: { updateManifestSigning: { publicKey: [next.publicKeyPem, other.publicKeyPem], allowSigningKeyOutsideTrustList: true } },
   })
   // each manifest is signed only by a configured key the overrides below do not pass
   const win = path.join(dir, "latest.yml")
@@ -667,20 +690,22 @@ test("--verify uses a command-line trust list exactly as passed, never merged wi
   // ...also when they come with a config file path
   await expectFailure(win, ["-c", "electron-builder.yml", trust(old.publicKeyPem), trust(generateUpdateSigningKeypair().publicKeyPem)])
   // a platform override beats a root override, even one that would accept the manifest
-  await expectFailure(mac, [trust(other.publicKeyPem), `-c.mac.updateManifest.publicKey=${old.publicKeyPem}`])
-  await expectFailure(win, [trust(next.publicKeyPem), `-c.win.updateManifest.publicKey=${old.publicKeyPem}`])
+  await expectFailure(mac, [trust(other.publicKeyPem), `-c.mac.updateManifestSigning.publicKey=${old.publicKeyPem}`])
+  await expectFailure(win, [trust(next.publicKeyPem), `-c.win.updateManifestSigning.publicKey=${old.publicKeyPem}`])
 
   // the overrides are honored when they do hold the signing key
   expect(await run(dir, [mac, "--verify", trust(old.publicKeyPem), trust(other.publicKeyPem)])).toMatchObject([{ status: "verified", keyId: otherId }])
-  expect(await run(dir, [win, "--verify", trust(old.publicKeyPem), `-c.win.updateManifest.publicKey=${next.publicKeyPem}`])).toMatchObject([{ status: "verified", keyId: nextId }])
+  expect(await run(dir, [win, "--verify", trust(old.publicKeyPem), `-c.win.updateManifestSigning.publicKey=${next.publicKeyPem}`])).toMatchObject([
+    { status: "verified", keyId: nextId },
+  ])
 })
 
-test("--verify with a config file and repeated -c.updateManifest.publicKey flags trusts every one of them, and only them", async ({ expect, tmpDir }) => {
+test("--verify with a config file and repeated -c.updateManifestSigning.publicKey flags trusts every one of them, and only them", async ({ expect, tmpDir }) => {
   captureOutput()
   const keyA = generateUpdateSigningKeypair()
   const keyB = generateUpdateSigningKeypair()
-  const dir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }), { updateManifest: { publicKey: [next.publicKeyPem] } })
-  await fsp.writeFile(path.join(dir, "release.yml"), serializeToYaml({ updateManifest: { publicKey: [next.publicKeyPem] } }))
+  const dir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }), { updateManifestSigning: { publicKey: [next.publicKeyPem] } })
+  await fsp.writeFile(path.join(dir, "release.yml"), serializeToYaml({ updateManifestSigning: { publicKey: [next.publicKeyPem] } }))
   const signedByA = path.join(dir, "latest.yml")
   const signedByConfiguredKey = path.join(dir, "beta.yml")
   await writeSigned(signedByA, manifest("13.0.0", "App-Setup-13.0.0.exe"), [keyA.privateKeyPem])
@@ -699,7 +724,7 @@ test("--verify with a config file and repeated -c.updateManifest.publicKey flags
 /** A project whose config signs with `current` and trusts it, with `App-Setup-1.0.0.exe` and a manifest built for it, signed. */
 async function createReleaseOutput(tmpDir: TmpDir) {
   const dir = await tmpDir.getTempDir({ prefix: "sign-update-manifest" })
-  const config = { updateManifest: { signingKeyFile: "keys/update.pem", publicKey: current.publicKeyPem } }
+  const config = { updateManifestSigning: { signingKeyFile: "keys/update.pem", publicKey: current.publicKeyPem } }
   await createProject(dir, config)
   await writeKey(dir, "update.pem", current.privateKeyPem)
   const installer = path.join(dir, "App-Setup-1.0.0.exe")
@@ -757,7 +782,7 @@ test("re-signing refuses a manifest that does not describe a listed file next to
  */
 async function createDistOutput(tmpDir: TmpDir, artifactName: string, manifest: string, url: string) {
   const dir = await tmpDir.getTempDir({ prefix: "sign-update-manifest" })
-  const config = { updateManifest: { signingKeyFile: "keys/update.pem", publicKey: current.publicKeyPem } }
+  const config = { updateManifestSigning: { signingKeyFile: "keys/update.pem", publicKey: current.publicKeyPem } }
   await createProject(dir, config)
   await writeKey(dir, "update.pem", current.privateKeyPem)
   const outDir = path.join(dir, "dist")

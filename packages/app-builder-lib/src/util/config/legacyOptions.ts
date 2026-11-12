@@ -12,6 +12,8 @@
  * validation on the next build.
  */
 
+import type { SnapOptions24 } from "../../options/SnapOptions.js"
+
 /** macOS signing fields that moved from the platform root into the `sign` (ElectronSignOptions) bag. */
 export const MAC_SIGN_FIELDS = [
   "identity",
@@ -35,6 +37,12 @@ export const MAC_SIGN_FIELDS = [
  * to migrate to — `ElectronSignOptions` omits it and the schema rejects it.
  */
 export const MAC_SIGN_REMOVED_FIELDS = ["gatekeeperAssess"] as const
+
+/**
+ * `mac.sign` (`mas.sign`, `masDev.sign`) options a 27.0.0 alpha accepted but never read: electron-builder always passes
+ * `identityValidation: false` to `@electron/osx-sign`, as it resolves the signing identity itself.
+ */
+export const MAC_SIGN_UNREAD_FIELDS = ["identityValidation"] as const
 
 /** Universal-build fields that moved from the platform root into the `universal` bag. */
 export const MAC_UNIVERSAL_FIELDS = ["mergeASARs", "singleArchFiles", "x64ArchFiles"] as const
@@ -99,7 +107,8 @@ export const MAS_REMOVED_FIELDS: Readonly<Record<string, string>> = {
   detectUpdateChannel: MAS_NO_UPDATE_INFO,
   generateUpdatesFilesForAllChannels: MAS_NO_UPDATE_INFO,
   electronUpdaterCompatibility: MAS_NO_UPDATE_INFO,
-  updateManifest: MAS_NO_UPDATE_INFO,
+  updateManifest:
+    "Mac App Store builds write no update information; `mac.updateManifestSigning` or the root `updateManifestSigning` (the new name of `updateManifest`) applies to the macOS app.",
 }
 
 /** Certificate options among {@link MAS_REMOVED_FIELDS}: the migrators warn when they remove one. */
@@ -117,18 +126,42 @@ export const MAS_CERTIFICATE_WARNING =
 export const PUBLISH_MANAGED_OPTIONS = {
   publisherName: "win.sign.publisherName",
   verifyUpdateCodeSignature: "win.verifyUpdateCodeSignature",
-  updateManifestPublicKey: "updateManifest.publicKey",
+  updateManifestPublicKey: "updateManifestSigning.publicKey",
   updaterCacheDirName: null,
 } as const
 
 /** Anchor of the managed publish options within the config-changes page. */
 export const PUBLISH_MANAGED_OPTIONS_ANCHOR = "publish-options-managed-by-electron-builder"
 
+/**
+ * The boolean v26 built with for the value of a boolean option (`includePdb`, `vPrefixedTagName`): it validated the configuration with ajv
+ * `coerceTypes: true`, which turns "true" / 1 into true and "false" / 0 / null into false, and rejected any other value (undefined here).
+ * Shared by the guard and both migrators.
+ */
+export function v26Boolean(value: unknown): boolean | undefined {
+  if (value === true || value === "true" || value === 1) {
+    return true
+  }
+  if (value === false || value === "false" || value === 0 || value === null) {
+    return false
+  }
+  return undefined
+}
+
 /** The per-base `snapcraft` keys typed `SnapOptionsLegacy` / `SnapOptions24`. */
 export const SNAP_CORE_KEYS = ["core18", "core20", "core22", "core24"] as const
 
 /** Target options the per-base snap options accepted without reading them: only `snapcraft.publish` / `snapcraft.artifactName` are read. */
 export const SNAP_CORE_TARGET_OPTION_KEYS = ["publish", "artifactName"] as const
+
+/**
+ * The `snapcraft.core24` build switches replaced by `buildEnvironment`, with the value each selects, in the order v26 resolved them when several were
+ * on (after `remoteBuild.enabled`, which won over all of them). Shared by the guard and both migrators.
+ */
+export const CORE24_BUILD_ENVIRONMENT_FLAGS = { useDestructiveMode: "host", useLXD: "lxd", useMultipass: "multipass" } as const satisfies Record<
+  string,
+  NonNullable<SnapOptions24["buildEnvironment"]>
+>
 
 /** Linux target options that were accepted but never read, with why. Shared by the guard and both migrators, which delete them. */
 export const LINUX_UNREAD_TARGET_OPTIONS: ReadonlyArray<{ readonly parent: readonly string[]; readonly key: string; readonly detail: string }> = [
@@ -149,6 +182,28 @@ export const LINUX_UNREAD_TARGET_OPTIONS: ReadonlyArray<{ readonly parent: reado
   })),
 ]
 
+/**
+ * The target sections whose `publish` electron-builder 26 merged with the one they inherit (two lists, the inherited providers first, or two
+ * objects), by the section they inherit from: the fpm targets, AppImage and Flatpak from 26.12.1, the snap from 26.12.0 (unless its publish
+ * names a snapStore provider), nsisWeb from 26.12.1, appx / msi / msiWrapped in every release. Since v27 a target's publish replaces it.
+ * Shared by the build warning and both migrate-schema advisories.
+ */
+export const V26_MERGED_TARGET_PUBLISH: Readonly<Record<string, string>> = {
+  appImage: "linux",
+  deb: "linux",
+  rpm: "linux",
+  pacman: "linux",
+  freebsd: "linux",
+  p5p: "linux",
+  apk: "linux",
+  flatpak: "linux",
+  snapcraft: "linux",
+  appx: "win",
+  msi: "win",
+  msiWrapped: "win",
+  nsisWeb: "nsis",
+}
+
 /** Platform keys that accept the macOS signing/universal options. */
 export const MAC_PLATFORM_KEYS = ["mac", "mas", "masDev"] as const
 
@@ -157,6 +212,9 @@ export const NSIS_CONFIG_KEYS = ["nsis", "nsisWeb", "portable"] as const
 
 /** Every platform key that accepted the shared per-platform options in v26. */
 export const ALL_PLATFORM_KEYS = ["mac", "mas", "masDev", "win", "linux"] as const
+
+/** The platform keys that hold `updateManifestSigning` (Mac App Store builds write no update manifest). Feeds the guard and both migrators. */
+export const UPDATE_MANIFEST_PLATFORM_KEYS = ["mac", "win", "linux"] as const
 
 /** Overview of the v27 breaking changes. Each change is documented on one of the category pages below. */
 export const BREAKING_CHANGES_URL = "https://www.electron.build/docs/migration/v27-breaking-changes"
@@ -208,6 +266,16 @@ const ELECTRON_GET_ANCHOR = "electrondownload-electronget"
 const WIN_SIGN_ANCHOR = "windows-signing-winsign"
 const CUSTOM_NSIS_ANCHOR = "customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis"
 const CSC_ANCHOR = "signing-certificates-csclink"
+const UPDATE_MANIFEST_SIGNING_ANCHOR = "updatemanifest-updatemanifestsigning"
+const UPDATE_MANIFEST_SIGNING_DETAIL =
+  "Renamed during the v27 pre-releases: 27.0.0-alpha.9 added it as `updateManifest`, which reads as if `false` wrote no update manifest. " +
+  "The value is unchanged: `false` still ships unsigned manifests, which are still written (`publishAutoUpdate: false` on the publish providers " +
+  "stops writing them), and unset or `null` still requires a signing key. Rename a `-c.updateManifest…` command-line override the same way."
+const CORE24_BUILD_ENVIRONMENT_ANCHOR = "snapcraftcore24-buildenvironment"
+const CORE24_BUILD_ENVIRONMENT_DETAIL =
+  "The build environment is a single value now, so a later configuration layer (`extends`, `-c.snapcraft.core24.buildEnvironment=multipass`) replaces the choice. " +
+  "With several switches on, v26 built remotely, else on the host, else with LXD, else with Multipass; a switch set to `false` or `null` had no effect. " +
+  'The other `remoteBuild` options are unchanged and are read only when `buildEnvironment` is `"remote"`.'
 const TOOLSETS_NSIS_DETAIL =
   "Set a custom NSIS bundle via `toolsets.nsis: { url, checksum, version }`. " +
   "This is not a rename. The artifacts provided by `.customNsisBinary` & `.customNsisResources` have been merged into one toolset. " +
@@ -428,6 +496,26 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
     anchor: "electrongetoptionsforce-removed",
   },
 
+  // ── Renamed during the v27 pre-releases ───────────────────────────────────
+  // Explicit parents, not `scope: "all"`: mas / masDev never read it, and MAS_REMOVED_FIELDS removes it there.
+  {
+    key: "updateManifest",
+    replacement: "updateManifestSigning",
+    autoMigrated: true,
+    severity: "error",
+    detail: UPDATE_MANIFEST_SIGNING_DETAIL,
+    anchor: UPDATE_MANIFEST_SIGNING_ANCHOR,
+  },
+  ...UPDATE_MANIFEST_PLATFORM_KEYS.map((platform): LegacyConfigOption => ({
+    key: "updateManifest",
+    parent: [platform],
+    replacement: `${platform}.updateManifestSigning`,
+    autoMigrated: true,
+    severity: "error",
+    detail: UPDATE_MANIFEST_SIGNING_DETAIL,
+    anchor: UPDATE_MANIFEST_SIGNING_ANCHOR,
+  })),
+
   // ── Windows signing ───────────────────────────────────────────────────────
   {
     key: "signtoolOptions",
@@ -555,6 +643,18 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
     detail: "@electron/osx-sign 2.x removed the `spctl --assess` step entirely, so there is no `sign.gatekeeperAssess` to move it to.",
     anchor: MAC_SIGN_ANCHOR,
   })),
+  // accepted by the 27.0.0 alphas inside the sign object, never read
+  ...MAC_PLATFORM_KEYS.flatMap(platform =>
+    MAC_SIGN_UNREAD_FIELDS.map((key): LegacyConfigOption => ({
+      key,
+      parent: [platform, "sign"],
+      replacement: null,
+      autoMigrated: true,
+      severity: "error",
+      detail: "It never had an effect: electron-builder always passes `identityValidation: false` to @electron/osx-sign, as it resolves the signing identity itself.",
+      anchor: MAC_SIGN_ANCHOR,
+    }))
+  ),
   ...MAC_UNIVERSAL_FIELDS.map((field): LegacyConfigOption => ({
     key: field,
     scope: "mac",
@@ -576,6 +676,26 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
       anchor: "snapcraft-base-publish-artifactname",
     }))
   ),
+
+  // ── Snap core24: one build environment instead of four switches ───────
+  ...Object.entries(CORE24_BUILD_ENVIRONMENT_FLAGS).map(([key, environment]): LegacyConfigOption => ({
+    key,
+    parent: ["snapcraft", "core24"],
+    replacement: `\`snapcraft.core24.buildEnvironment: "${environment}"\``,
+    autoMigrated: true,
+    severity: "error",
+    detail: CORE24_BUILD_ENVIRONMENT_DETAIL,
+    anchor: CORE24_BUILD_ENVIRONMENT_ANCHOR,
+  })),
+  {
+    key: "enabled",
+    parent: ["snapcraft", "core24", "remoteBuild"],
+    replacement: '`snapcraft.core24.buildEnvironment: "remote"`',
+    autoMigrated: true,
+    severity: "error",
+    detail: CORE24_BUILD_ENVIRONMENT_DETAIL,
+    anchor: CORE24_BUILD_ENVIRONMENT_ANCHOR,
+  },
 
   // ── Linux: target options that never had an effect ──────────────────────
   ...LINUX_UNREAD_TARGET_OPTIONS.map(({ parent, key, detail }): LegacyConfigOption => ({

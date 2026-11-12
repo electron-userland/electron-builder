@@ -195,6 +195,27 @@ test("a publishing build fails on conflicting feeds at build start, before anyth
   expect(agreeing.requireUpdateSigningKeys).toHaveBeenCalledWith(true)
 })
 
+// The options of the real targets: a target-level publish replaces linux.publish instead of being merged after it (where the inherited
+// first provider stayed the feed).
+const linuxFeed = { provider: "generic", url: "https://example.com/linux" }
+const linuxTargetOptions = (key: string, sections: Record<string, any>) =>
+  LinuxPackager.prototype.getOptionsForTarget.call({ platformSpecificBuildOptions: { publish: [linuxFeed] }, config: sections }, key)
+
+test("a deb.publish list replaces linux.publish: app-update.yml embeds deb's first provider", async ({ expect, tmpDir }) => {
+  const debFeed = { provider: "generic", url: "https://example.com/deb" }
+  const options = linuxTargetOptions("deb", { deb: { publish: [debFeed] } })
+  const appUpdate = await afterPackAppUpdate(tmpDir, makePackager({ platform: Platform.LINUX, platformPublish: [linuxFeed] }), [target("deb", options)])
+  expect(appUpdate).toMatchObject(debFeed)
+})
+
+test("an appImage.publish that replaces linux.publish while deb inherits it fails a publishing build at build start", async ({ expect }) => {
+  const { targetsCreated } = createManagerHooks("always")
+  const sections = { appImage: { publish: [{ provider: "generic", url: "https://example.com/appimage" }] } }
+  const targets = [target("appimage", linuxTargetOptions("appImage", sections)), target("deb", linuxTargetOptions("deb", sections))]
+  const packager = makePackager({ platform: Platform.LINUX, platformPublish: [linuxFeed] })
+  await expect(targetsCreated([{ packager, arch: Arch.x64, targets }])).rejects.toThrow(/different auto-update feeds/)
+})
+
 test("targets of one pack with the same feed (in any key order) are fine; later providers may differ", async ({ expect, tmpDir }) => {
   const targets = [target("nsis", { publish: [{ awsCredentials: { source: "env" }, bucket: "nsis-updates", provider: "s3" }, "github"] }), target("nsis-web", { publish: s3 })]
   const appUpdate = await afterPackAppUpdate(tmpDir, makePackager({ repositoryInfo: githubRepository }), targets)

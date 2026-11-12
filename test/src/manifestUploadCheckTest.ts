@@ -59,67 +59,67 @@ describe("checkUpdateManifestBeforeUpload", () => {
     }
   })
 
-  test("refuses an unsigned manifest, unless updateManifest is false (also at the platform level)", async ({ expect, tmpDir }) => {
+  test("refuses an unsigned manifest, unless updateManifestSigning is false (also at the platform level)", async ({ expect, tmpDir }) => {
     const file = await write(path.join(await tmpDir.getTempDir({ prefix: "manifest-upload" }), "latest-linux.yml"), manifest([]))
-    const error = await errorOf(check(file, { updateManifest: { publicKey: keyA.publicKeyPem } }))
+    const error = await errorOf(check(file, { updateManifestSigning: { publicKey: keyA.publicKeyPem } }))
     expect(error).toBeInstanceOf(InvalidConfigurationError)
     expect(error.message).toContain("is an unsigned update manifest")
-    expect(error.message).toContain("updateManifest: false")
-    await expect(check(file, { updateManifest: false })).resolves.toBeUndefined()
-    await expect(check(file, { linux: { updateManifest: false } })).resolves.toBeUndefined()
+    expect(error.message).toContain("updateManifestSigning: false")
+    await expect(check(file, { updateManifestSigning: false })).resolves.toBeUndefined()
+    await expect(check(file, { linux: { updateManifestSigning: false } })).resolves.toBeUndefined()
     // another platform's opt-out does not apply
-    await expect(check(file, { mac: { updateManifest: false } })).rejects.toThrow("is an unsigned update manifest")
+    await expect(check(file, { mac: { updateManifestSigning: false } })).rejects.toThrow("is an unsigned update manifest")
   })
 
   test("accepts the legacy single signature field, as electron-updater does, and treats a malformed list as no signatures", async ({ expect, tmpDir }) => {
     const dir = await tmpDir.getTempDir({ prefix: "manifest-upload" })
     const signed: any = load(manifest())
     const legacyOnly = await write(path.join(dir, "latest.yml"), serializeToYaml({ ...signed, signatures: undefined }, false, true))
-    await expect(check(legacyOnly, { updateManifest: { publicKey: keyA.publicKeyPem } })).resolves.toBeUndefined()
+    await expect(check(legacyOnly, { updateManifestSigning: { publicKey: keyA.publicKeyPem } })).resolves.toBeUndefined()
     const malformed = await write(path.join(dir, "beta.yml"), serializeToYaml({ ...signed, signature: undefined, signatures: 42 }, false, true))
-    await expect(check(malformed, { updateManifest: { publicKey: keyA.publicKeyPem } })).rejects.toThrow("is an unsigned update manifest")
+    await expect(check(malformed, { updateManifestSigning: { publicKey: keyA.publicKeyPem } })).rejects.toThrow("is an unsigned update manifest")
   })
 
-  test("verifies the manifest against updateManifest.publicKey", async ({ expect, tmpDir }) => {
+  test("verifies the manifest against updateManifestSigning.publicKey", async ({ expect, tmpDir }) => {
     const dir = await tmpDir.getTempDir({ prefix: "manifest-upload" })
     const file = await write(path.join(dir, "latest.yml"), manifest())
     const info = vi.spyOn(log, "info").mockImplementation(() => undefined)
-    await check(file, { updateManifest: { publicKey: [keyB.publicKeyPem, keyA.publicKeyPem] } })
+    await check(file, { updateManifestSigning: { publicKey: [keyB.publicKeyPem, keyA.publicKeyPem] } })
     expect(info).toHaveBeenCalledWith(expect.objectContaining({ keyId: expect.any(String) }), "update manifest verified before upload")
 
     // signed by a key the trust list does not have
-    const error = await errorOf(check(file, { win: { updateManifest: { publicKey: keyB.publicKeyPem } } }))
+    const error = await errorOf(check(file, { win: { updateManifestSigning: { publicKey: keyB.publicKeyPem } } }))
     expect(error).toBeInstanceOf(InvalidConfigurationError)
-    expect(error.message).toContain("is not signed by a key of updateManifest.publicKey")
+    expect(error.message).toContain("is not signed by a key of updateManifestSigning.publicKey")
     expect(error.message).toContain("Nothing was uploaded")
 
     // changed after it was signed
     const tampered = await write(path.join(dir, "beta.yml"), (await readFile(file, "utf8")).replace("version: 1.0.0", "version: 9.9.9"))
-    await expect(check(tampered, { updateManifest: { publicKey: keyA.publicKeyPem } })).rejects.toThrow("is not signed by a key of updateManifest.publicKey")
+    await expect(check(tampered, { updateManifestSigning: { publicKey: keyA.publicKeyPem } })).rejects.toThrow("is not signed by a key of updateManifestSigning.publicKey")
   })
 
   test("a cutover release signed outside the trust list is uploaded with a warning when allowSigningKeyOutsideTrustList is set", async ({ expect, tmpDir }) => {
     const file = await write(path.join(await tmpDir.getTempDir({ prefix: "manifest-upload" }), "latest-mac.yml"), manifest())
     const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
-    await check(file, { mac: { updateManifest: { publicKey: keyB.publicKeyPem, allowSigningKeyOutsideTrustList: true } } })
+    await check(file, { mac: { updateManifestSigning: { publicKey: keyB.publicKeyPem, allowSigningKeyOutsideTrustList: true } } })
     expect(warn).toHaveBeenCalledWith(expect.anything(), expect.stringContaining("allowSigningKeyOutsideTrustList allows for a cutover release"))
   })
 
-  test("without updateManifest.publicKey a signed manifest is uploaded with a warning, and refused under forceCodeSigning", async ({ expect, tmpDir }) => {
+  test("without updateManifestSigning.publicKey a signed manifest is uploaded with a warning, and refused under forceCodeSigning", async ({ expect, tmpDir }) => {
     const file = await write(path.join(await tmpDir.getTempDir({ prefix: "manifest-upload" }), "latest-linux.yml"), manifest())
     // the signing key where a build would find it: never used as a trust list
     vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", Buffer.from(keyA.privateKeyPem).toString("base64"))
     const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
     await check(file, {})
     expect(warn).toHaveBeenCalledWith(
-      expect.objectContaining({ reason: expect.stringContaining("updateManifest.publicKey is not set") }),
+      expect.objectContaining({ reason: expect.stringContaining("updateManifestSigning.publicKey is not set") }),
       "update manifest not verified before upload"
     )
 
     for (const config of [{ forceCodeSigning: true }, { linux: { forceCodeSigning: true } }]) {
       const error = await errorOf(check(file, config))
       expect(error).toBeInstanceOf(InvalidConfigurationError)
-      expect(error.message).toContain("forceCodeSigning is enabled, but updateManifest.publicKey is not set")
+      expect(error.message).toContain("forceCodeSigning is enabled, but updateManifestSigning.publicKey is not set")
     }
     // the platform value wins over the root one
     await expect(check(file, { forceCodeSigning: true, linux: { forceCodeSigning: false } })).resolves.toBeUndefined()

@@ -61,17 +61,17 @@ const record = {
 o = schema.definitions.SnapOptions24.properties.environment.anyOf[0] = record
 o = schema.definitions.SnapOptionsLegacy.properties.environment.anyOf[0] = record
 
-// Fix `updateManifest`: ajv runs with `coerceTypes: true`, which coerces on the `type` keyword and MUTATES the
+// Fix `updateManifestSigning`: ajv runs with `coerceTypes: true`, which coerces on the `type` keyword and MUTATES the
 // data on the first matching `anyOf` branch. With a `{ const: false, type: "boolean" }` branch, `null` coerces
-// into `false` - silently turning `updateManifest: null` ("signing still required, resolve the key from the
-// environment") into the `updateManifest: false` opt-out that ships unsigned manifests. Reordering does not help:
+// into `false` - silently turning `updateManifestSigning: null` ("signing still required, resolve the key from the
+// environment") into the `updateManifestSigning: false` opt-out that ships unsigned manifests. Reordering does not help:
 // putting the `{ type: "null" }` branch first coerces `false` into `null` instead. Dropping `type` from the
 // literal branch removes coercion in both directions - `const: false` then matches only a real `false`, and
 // `null` falls through to the null branch untouched.
-// Only `updateManifest` is touched: elsewhere (e.g. `win.sign`) `null` and `false` mean the same thing, so the
-// coercion is harmless there and changing it could alter behaviour that has not been checked.
+// Only `updateManifestSigning` is touched: elsewhere (e.g. `win.sign`, and `mac.sign` / `mas.sign` / `masDev.sign`) `null` and
+// `false` mean the same thing, so the coercion is harmless there and changing it could alter behaviour that has not been checked.
 function untypeFalseBranch(host) {
-  const property = host == null ? null : host.updateManifest
+  const property = host == null ? null : host.updateManifestSigning
   if (property == null || !Array.isArray(property.anyOf)) {
     return false
   }
@@ -83,9 +83,9 @@ function untypeFalseBranch(host) {
   return true
 }
 
-const patchedUpdateManifest = [schema.properties, ...Object.values(schema.definitions).map(it => it.properties)].filter(untypeFalseBranch).length
-if (patchedUpdateManifest === 0) {
-  throw new Error("fix-schema: no `updateManifest` false-branch was patched - did the option or its union change?")
+const patchedUpdateManifestSigning = [schema.properties, ...Object.values(schema.definitions).map(it => it.properties)].filter(untypeFalseBranch).length
+if (patchedUpdateManifestSigning === 0) {
+  throw new Error("fix-schema: no `updateManifestSigning` false-branch was patched - did the option or its union change?")
 }
 
 // toolsets.executables: the entries of the mapped type over ExecutableName get no description; give each the one of ExecutableLocation

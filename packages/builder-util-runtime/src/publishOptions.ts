@@ -90,7 +90,7 @@ export type AppUpdateConfiguration<T extends PublishConfiguration = PublishConfi
 
   /**
    * The install's update-manifest trust list: Ed25519 public key(s) (PEM or base64 SPKI) electron-updater verifies the signed update
-   * manifest with before downloading; a manifest is accepted when any listed key validates one of its signatures. `updateManifest.publicKey`,
+   * manifest with before downloading; a manifest is accepted when any listed key validates one of its signatures. `updateManifestSigning.publicKey`,
    * else the public keys of the signing keys: a single string for one key, a list for several.
    */
   updateManifestPublicKey?: string | Array<string> | null
@@ -235,10 +235,11 @@ export interface GitlabOptions extends PublishConfiguration {
   readonly token?: string | null
 
   /**
-   * Whether to use `v`-prefixed tag name.
-   * @default true
+   * The prefix of the tag name before the version, e.g. `v` in `v1.2.3`, or `""` for no prefix. A release without
+   * `releaseInfo.releaseName` is named after the tag.
+   * @default "v"
    */
-  readonly vPrefixedTagName?: boolean
+  readonly tagNamePrefix?: string
 
   /**
    * Upload target method. Can be "project_upload" for GitLab project uploads or "generic_package" for GitLab generic packages.

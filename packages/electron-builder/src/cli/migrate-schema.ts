@@ -3,15 +3,18 @@ import {
   ALL_PLATFORM_KEYS,
   AZURE_KNOWN_FIELDS,
   collectExplicitReincludes,
+  CORE24_BUILD_ENVIRONMENT_FLAGS,
   DEFAULT_EXCLUDED_EXTENSIONS,
   ELECTRON_DOWNLOAD_DROPPED,
   FILE_OPTION_KEYS,
   formatLegacyOptionMessage,
+  isInheritedPublishDropped,
   LINUX_UNREAD_TARGET_OPTIONS,
   MAC_HELPER_REMOVED_FIELDS,
   MAC_PLATFORM_KEYS,
   MAC_SIGN_FIELDS,
   MAC_SIGN_REMOVED_FIELDS,
+  MAC_SIGN_UNREAD_FIELDS,
   MAC_UNIVERSAL_FIELDS,
   MAS_CERTIFICATE_WARNING,
   MAS_REMOVED_CERTIFICATE_FIELDS,
@@ -23,6 +26,9 @@ import {
   RESOLVED_LEGACY_CONFIG_OPTIONS,
   SNAP_CORE_KEYS,
   SNAP_CORE_TARGET_OPTION_KEYS,
+  UPDATE_MANIFEST_PLATFORM_KEYS,
+  V26_MERGED_TARGET_PUBLISH,
+  v26Boolean,
 } from "app-builder-lib/internal"
 import { log, orNullIfFileNotExist } from "builder-util"
 import { asArray, isLoopbackHostname, isValidPublisherNameDn } from "builder-util-runtime"
@@ -121,7 +127,7 @@ export const MAC_ENTITLEMENTS_ADVISORY =
 export const FORCE_CODE_SIGNING_ADVISORY =
   "forceCodeSigning detected. In v27 it also fails the build when macOS notarization (no APPLE_* credentials) or update-manifest signing (no ELECTRON_BUILDER_UPDATE_SIGN_KEY) is skipped, " +
   "also in builds that do not publish, and fails macOS builds on hosts other than macOS and in pull-request builds; it also verifies the signatures the build produces. " +
-  "Provide the credentials wherever it is set, opt out explicitly with mac.notarize: false / updateManifest: false, or pass -c.forceCodeSigning=false to builds that cannot sign. " +
+  "Provide the credentials wherever it is set, opt out explicitly with mac.notarize: false / updateManifestSigning: false, or pass -c.forceCodeSigning=false to builds that cannot sign. " +
   "See https://www.electron.build/docs/migration/v27-build-changes#forcecodesigning-covers-notarization-and-update-manifests"
 
 // Advisory surfaced when a generic publish url carries a query string (typically a token). Same rule and solution as the build warning
@@ -143,6 +149,19 @@ export const INSECURE_FEED_ADVISORY =
   "electron-updater rejects every update request over http to a host that is not loopback (localhost, 127.0.0.0/8, ::1) with ERR_UPDATER_INSECURE_FEED, " +
   "unless the app sets autoUpdater.allowInsecureFeed (meant for dev runs: autoUpdater.allowInsecureFeed = !app.isPackaged). Serve the updates over https. " +
   "See https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https"
+
+// Advisory surfaced when a target section's publish leaves out what electron-builder 26 merged in from the publish it inherits (see
+// isInheritedPublishDropped). No rewrite is lossless: writing the merged value would add providers and move the feed for configs written for
+// 26.12.0 or earlier, which did not merge.
+export const TARGET_PUBLISH_REPLACES_ADVISORY =
+  "target-level publish that leaves out a provider or option of the publish it inherits, or starts with another provider, detected " +
+  "(e.g. deb.publish next to linux.publish, or nsisWeb.publish next to nsis.publish). " +
+  "In v27 a target's publish replaces the inherited one instead of being merged with it: the target's artifacts are uploaded only to its own providers, " +
+  "and the first of them is the update feed of a target that writes update info. " +
+  "electron-builder 26 merged two lists (the inherited providers first) or two objects for appImage, deb, rpm, pacman, freebsd, p5p, apk and flatpak (26.12.1 and later), " +
+  "snapcraft or snap without a snapStore provider (26.12.0 and later), nsisWeb (26.12.1 and later), and appx, msi and msiWrapped. " +
+  "Add every provider and option the target should keep to its own publish, the inherited first provider first if installed apps poll it. " +
+  "See https://www.electron.build/docs/migration/v27-build-changes#target-publish-replaces-platform-publish"
 
 /**
  * Whether electron-updater requests the feed of the publish entry `entry` over plain http to a host that is not loopback, as the build
@@ -181,6 +200,51 @@ export function isInsecureFeedEntry(entry: unknown): boolean {
  * this list — it means "skip signing" and `sign.identity` still accepts it.
  */
 export const MAC_NULL_MEANS_UNSET_FIELDS: ReadonlySet<string> = new Set(["type", "provisioningProfile", "binaries", "signIgnore", "singleArchFiles", "x64ArchFiles"])
+
+/**
+ * What the mac → mas → masDev merge hands a later section's signing, after the migration of the earlier sections: a custom signer reaches
+ * the Mac App Store apps, merged with their `sign` options, as in v26.
+ */
+export interface MacSignCascade {
+  /** The custom signer the later sections inherit (`<section>.sign.sign`), or null. */
+  readonly signer: string | null
+  /** Whether that signer was a bare v26 `sign: "<module>"` the migration moved into `sign.sign`, which a 27.0.0 alpha did not merge. */
+  readonly signerWasBare: boolean
+  /** The latest earlier `<section>.sign` that held signing options in the configuration as written (a 27.0.0 alpha shape), or null. */
+  readonly options: string | null
+}
+
+/** A section whose sign options object sets no signer now inherits one this run moved into `sign.sign`. */
+export function macSignerOverMasOptionsWarning(name: string, signer: string): string {
+  return (
+    `${name}.sign sets no custom signer of its own, so in electron-builder v27 the ${name} app is signed by ${signer} (moved there from a bare sign value), ` +
+    `which receives the ${name}.sign options, as in v26; a 27.0.0 alpha signed it with @electron/osx-sign. To keep @electron/osx-sign for it, set ${name}.sign.sign: null. ` +
+    "See https://www.electron.build/docs/migration/v27-config-changes#macos-signing-macsign"
+  )
+}
+
+/** A bare signer moved into `sign.sign` now receives the sign options of an earlier section, which a 27.0.0 alpha replaced with it. */
+export function macSignerOverOptionsWarning(name: string, options: string): string {
+  return (
+    `${name}.sign is a custom signer, moved to ${name}.sign.sign. In electron-builder v27 it receives the ${options} options (identity, entitlements, …) merged with ` +
+    `${name}.sign, as in v26; a 27.0.0 alpha replaced ${options} with it, so it received none of them. Check that it signs with them, or override them in ${name}.sign. ` +
+    "See https://www.electron.build/docs/migration/v27-config-changes#macos-signing-macsign"
+  )
+}
+
+/** A mac / mas / masDev `sign` string the v27 schema reads as the opt-out, not as a module path: ajv coerceTypes turns "false" into false and "" into null. */
+export function isMacSignOptOutString(value: unknown): value is "false" | "" {
+  return value === "false" || value === ""
+}
+
+/** A `sign` of "false" or "" next to v26 signing options: the opt-out cannot hold them, so both are left in place. */
+export function macSignOptOutNextToOptionsWarning(name: string, value: "false" | ""): string {
+  return (
+    `${name}.sign is ${JSON.stringify(value)}, which electron-builder v27 reads as ${value === "" ? "null" : "false"} (skip signing), not as a custom signer, so it and ` +
+    `the v26 signing options next to it were left in place. To sign with those options, replace ${name}.sign with an object of them; to skip signing, remove them. ` +
+    "See https://www.electron.build/docs/migration/v27-config-changes#macos-signing-macsign"
+  )
+}
 
 /** Platform keys that accepted a platform-level `asarUnpack` in v26. */
 export const ASAR_PLATFORM_KEYS = ["mac", "mas", "masDev", "win", "linux"] as const
@@ -255,7 +319,8 @@ function detectMissingPublisherName(config: Record<string, any>): boolean {
 
 /**
  * True when a mac/mas/masDev section signs with electron-builder's defaults without naming its own entitlements
- * file. A custom signer (string/function `sign`) or `sign.identity: null` (skip signing) bypasses the defaults.
+ * file. A custom signer (`sign.sign`), `sign: false` (or "false" / "", read as false / null) or `sign.identity: null` (skip signing)
+ * bypasses the defaults. Evaluated on the migrated config, so a bare v26 signer is already in `sign.sign`.
  */
 function detectDefaultMacEntitlements(config: Record<string, any>): boolean {
   return (["mac", "mas", "masDev"] as const).some(p => {
@@ -264,7 +329,7 @@ function detectDefaultMacEntitlements(config: Record<string, any>): boolean {
       return false
     }
     const sign = platform.sign
-    if (typeof sign === "string" || typeof sign === "function") {
+    if (sign === false || isMacSignOptOutString(sign) || (isPlainObject(sign) && (typeof sign.sign === "string" || typeof sign.sign === "function"))) {
       return false
     }
     return !(isPlainObject(sign) && (sign.entitlements != null || sign.identity === null))
@@ -306,6 +371,16 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   // Kept keys are reported only after `modified` is computed: a key that is merely kept must not re-serialize the file
   // (dropping YAML/JSON5 comments) when nothing else changed. The build then fails with the same targeted message.
   const keptKeyWarnings: string[] = []
+
+  // On the configuration as written, which is what v26 merged and what the programmatic migrator reads: step 7 rewrites publish entries.
+  // v26.12 and later read the snap section as `snapcraft ?? snap`.
+  const publishOf = (key: string) => {
+    const section = key === "snapcraft" ? (c.snapcraft ?? c.snap) : c[key]
+    return isPlainObject(section) ? section.publish : undefined
+  }
+  const replacesInheritedPublish = Object.entries(V26_MERGED_TARGET_PUBLISH).some(([target, inherited]) =>
+    isInheritedPublishDropped(target, publishOf(inherited), publishOf(target))
+  )
 
   // ── 1. electronCompile ────────────────────────────────────────────────────
   if ("electronCompile" in c) {
@@ -497,7 +572,12 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     }
   }
 
-  // ── 7. GithubOptions.vPrefixedTagName → tagNamePrefix; fields electron-builder writes into app-update.yml removed ──
+  // ── 6e. snapcraft.core24 build switches → buildEnvironment (after 6b: a v26 snap is under snapcraft.<base> by now) ──
+  if (isPlainObject(c.snapcraft) && isPlainObject(c.snapcraft.core24)) {
+    migrateCore24BuildEnvironment(c.snapcraft.core24, changes, warnings, keptKeyWarnings)
+  }
+
+  // ── 7. GitHub / GitLab vPrefixedTagName → tagNamePrefix; fields electron-builder writes into app-update.yml removed ──
   if (c.publish != null) {
     migratePublishEntries(c, "publish", changes, warnings, keptKeyWarnings)
   }
@@ -702,12 +782,30 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   }
 
   // ── 13. mac/mas/masDev signing + universal consolidation ──────────────────
-  // Signing fields (incl. identity) move into `sign`; mergeASARs/singleArchFiles/x64ArchFiles into `universal`.
-  for (const platform of ["mac", "mas", "masDev"] as const) {
-    if (c[platform] != null && typeof c[platform] === "object") {
-      migrateMacSigning(c[platform], platform, changes, warnings)
-      migrateMacUniversal(c[platform], platform, changes)
+  // Signing fields (incl. identity) move into `sign`, a custom signer into `sign.sign`; mergeASARs/singleArchFiles/x64ArchFiles into
+  // `universal`. A custom signer reaches the later sections through the mac → mas → masDev merge, which `cascade` follows.
+  let cascade: MacSignCascade = { signer: null, signerWasBare: false, options: null }
+  for (const platform of MAC_PLATFORM_KEYS) {
+    const section = c[platform]
+    if (section == null || typeof section !== "object") {
+      continue
     }
+    const wasBare = typeof section.sign === "string"
+    const hadOptions = isPlainObject(section.sign) && Object.keys(section.sign).some(key => key !== "sign")
+    migrateMacSigning(section, platform, cascade, changes, warnings, keptKeyWarnings)
+    // fold the migrated sign: false (or "false" / "", left in place) replaces the earlier ones, a set sign.sign replaces the inherited signer
+    const sign = section.sign
+    if (sign === false || sign === null || isMacSignOptOutString(sign)) {
+      cascade = { signer: null, signerWasBare: false, options: null }
+    } else {
+      if (isPlainObject(sign) && sign.sign !== undefined) {
+        cascade = { ...cascade, signer: typeof sign.sign === "string" ? `${platform}.sign.sign` : null, signerWasBare: wasBare }
+      }
+      if (hadOptions) {
+        cascade = { ...cascade, options: `${platform}.sign` }
+      }
+    }
+    migrateMacUniversal(section, platform, changes)
   }
 
   // ── 14. electronDownload → electronGet ────────────────────────────────────
@@ -716,6 +814,25 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   } else if (isPlainObject(c.electronGet) && Object.keys(c.electronGet).some(isLegacyElectronDownloadKey)) {
     // A hand-renamed `electronGet` that still carries the v26 shape.
     migrateElectronDownload(c, "electronGet", changes, warnings)
+  }
+
+  // ── 14b. updateManifest → updateManifestSigning (root, mac, win, linux; a 27.0.0-alpha key) ──
+  // The value is kept as it is: false is still the opt-out, and null must stay null, which keeps signing required. mas / masDev never read it
+  // (step 2f removes it there). A section that sets both is left for the user to merge; the build keeps rejecting the old key.
+  for (const [holder, prefix] of [[c, ""], ...UPDATE_MANIFEST_PLATFORM_KEYS.map(platform => [c[platform], `${platform}.`])] as Array<[unknown, string]>) {
+    if (!isPlainObject(holder) || !("updateManifest" in holder)) {
+      continue
+    }
+    if ("updateManifestSigning" in holder) {
+      const warning = updateManifestBothSetWarning(prefix)
+      if (!keptKeyWarnings.includes(warning)) {
+        keptKeyWarnings.push(warning)
+      }
+      continue
+    }
+    holder.updateManifestSigning = holder.updateManifest
+    delete holder.updateManifest
+    changes.push({ key: `${prefix}updateManifest`, description: `renamed ${prefix}updateManifest → ${prefix}updateManifestSigning (the value is unchanged)` })
   }
 
   // ── 15. toolsets ──────────────────────────────────────────────────────────
@@ -759,6 +876,9 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   }
   if ([c, ...publishSections(c).map(([, section]) => section)].some(section => asArray(section.publish).some(isInsecureFeedEntry))) {
     advisories.push(INSECURE_FEED_ADVISORY)
+  }
+  if (replacesInheritedPublish) {
+    advisories.push(TARGET_PUBLISH_REPLACES_ADVISORY)
   }
   const pdbPatterns = pdbFilesPatterns(c)
   if (pdbPatterns.length > 0) {
@@ -931,20 +1051,6 @@ function pdbFilesPatterns(c: Record<string, any>): Array<{ key: string; pattern:
 export const INCLUDE_PDB_NOT_BOOLEAN =
   'includePdb is not a boolean (v26 accepted true / false, "true" / "false", 1 / 0 and null), so it was left in place. In v27, .pdb files are excluded by default: remove includePdb, or set fileOptions.excludedExts: ["default", "!pdb"] to keep them.'
 
-/**
- * The boolean v26 built with for an `includePdb` value: it validated the config with ajv `coerceTypes: true`, which turns "true" / 1 into
- * true and "false" / 0 / null into false, and rejects any other value (undefined here). Shared with the JS/TS codemod.
- */
-export function v26IncludePdb(value: unknown): boolean | undefined {
-  if (value === true || value === "true" || value === 1) {
-    return true
-  }
-  if (value === false || value === "false" || value === 0 || value === null) {
-    return false
-  }
-  return undefined
-}
-
 /** The manual step for an `includePdb` whose root `fileOptions.excludedExts` cannot be migrated; shared with the JS/TS codemod. */
 export function includePdbManualStep(keepPdb: boolean): string {
   return keepPdb
@@ -981,7 +1087,7 @@ function migrateIncludePdb(c: Record<string, any>, changes: MigrationChange[], k
   if (!("includePdb" in c)) {
     return
   }
-  const includePdb = v26IncludePdb(c.includePdb)
+  const includePdb = v26Boolean(c.includePdb)
   if (includePdb == null) {
     keptKeyWarnings.push(INCLUDE_PDB_NOT_BOOLEAN)
     return
@@ -1110,15 +1216,14 @@ function migrateCustomNsis(c: Record<string, any>, changes: MigrationChange[], w
 
 /**
  * Moves macOS signing fields from a platform config (mac/mas/masDev) into the `sign` bag and
- * renames `signIgnore` → `sign.ignore`. In v26 `sign` was only a custom-signer (string path / module id),
- * so a non-object `sign` cannot absorb these options — that case is warned about, not clobbered.
- * A bare `sign: null` (v26 "no custom signer") is dropped so it does not flip to v27's "skip signing".
+ * renames `signIgnore` → `sign.ignore`. In v26 `sign` was only a custom signer (string path / module id): it moves
+ * into `sign.sign`, next to the options it receives. A bare `sign: null` (v26 "no custom signer") is dropped so it does
+ * not flip to v27's "skip signing", or becomes `sign.sign: null` where it removed a signer an earlier section set.
+ * A `sign` of "false" or "" stays: the v27 schema reads it as the opt-out (false / null), not as a module path.
  */
-function migrateMacSigning(platform: Record<string, any>, name: string, changes: MigrationChange[], warnings: string[]) {
+function migrateMacSigning(platform: Record<string, any>, name: string, cascade: MacSignCascade, changes: MigrationChange[], warnings: string[], keptKeyWarnings: string[]) {
   const present = MAC_SIGN_FIELDS.filter(f => f in platform)
   const hasSignIgnore = "signIgnore" in platform
-  const existingSign = platform.sign
-  const signIsCustom = typeof existingSign === "string" || typeof existingSign === "function"
 
   // Removed outright, not moved: ElectronSignOptions omits these and the schema rejects them, so
   // relocating them under `sign` would emit a config that fails validation on the next build.
@@ -1128,6 +1233,36 @@ function migrateMacSigning(platform: Record<string, any>, name: string, changes:
       changes.push({ key: `${name}.${field}`, description: `removed ${name}.${field} (@electron/osx-sign 2.x dropped the spctl --assess step; there is no ${name}.sign.${field})` })
     }
   }
+  if (isPlainObject(platform.sign)) {
+    for (const field of MAC_SIGN_UNREAD_FIELDS) {
+      if (field in platform.sign) {
+        delete platform.sign[field]
+        changes.push({
+          key: `${name}.sign.${field}`,
+          description: `removed ${name}.sign.${field} (it never had an effect: electron-builder always passes ${field}: false to @electron/osx-sign)`,
+        })
+      }
+    }
+  }
+
+  if (typeof platform.sign === "string" && !isMacSignOptOutString(platform.sign)) {
+    // the v26 custom signer moves into the sign object, where the signing options next to it reach it
+    if (cascade.options != null) {
+      warnings.push(macSignerOverOptionsWarning(name, cascade.options))
+    }
+    platform.sign = { sign: platform.sign }
+    changes.push({ key: `${name}.sign`, description: `moved the custom signer ${name}.sign → ${name}.sign.sign` })
+  } else if (platform.sign === null && cascade.signer != null) {
+    // in v26 it removed the signer of an earlier section for this one, which sign.sign: null does now
+    platform.sign = { sign: null }
+    changes.push({
+      key: `${name}.sign`,
+      description: `replaced ${name}.sign: null with ${name}.sign.sign: null (in v26 it kept ${cascade.signer} from signing the ${name} app; a bare sign: null now means skip signing)`,
+    })
+  } else if (isPlainObject(platform.sign) && !("sign" in platform.sign) && cascade.signer != null && cascade.signerWasBare) {
+    warnings.push(macSignerOverMasOptionsWarning(name, cascade.signer))
+  }
+  const existingSign = platform.sign
 
   if (present.length === 0 && !hasSignIgnore) {
     // Only thing to fix is a semantically-flipped bare null
@@ -1137,12 +1272,9 @@ function migrateMacSigning(platform: Record<string, any>, name: string, changes:
     }
     return
   }
-
-  if (signIsCustom) {
-    const fields = [...present, ...(hasSignIgnore ? ["signIgnore"] : [])].join(", ")
-    warnings.push(
-      `${name}.sign is a custom signing function/path, which cannot hold options. Move [${fields}] into an ElectronSignOptions object manually, or keep the custom signer and drop them.`
-    )
+  if (isMacSignOptOutString(existingSign)) {
+    // everything stays, so the warning alone must not rewrite the file
+    keptKeyWarnings.push(macSignOptOutNextToOptionsWarning(name, existingSign))
     return
   }
 
@@ -1386,6 +1518,14 @@ export function isLegacyElectronDownloadKey(key: string): boolean {
   return key === "mirror" || key === "isVerifyChecksum" || (ELECTRON_DOWNLOAD_DROPPED as readonly string[]).includes(key)
 }
 
+/** What both migrators tell a user whose section (`prefix`: "" for the root, or `mac.` / `win.` / `linux.`) sets both `updateManifest` and `updateManifestSigning`. */
+export function updateManifestBothSetWarning(prefix: string): string {
+  return (
+    `${prefix}updateManifest and ${prefix}updateManifestSigning are both set, so neither was changed: merge ${prefix}updateManifest into ` +
+    `${prefix}updateManifestSigning and remove it (the build rejects ${prefix}updateManifest). See https://www.electron.build/docs/migration/v27-config-changes#updatemanifest-updatemanifestsigning`
+  )
+}
+
 function mergeAsarUnpack(existing: string | string[] | undefined, incoming: string | string[]): string | string[] {
   if (existing == null) {
     return incoming
@@ -1395,9 +1535,9 @@ function mergeAsarUnpack(existing: string | string[] | undefined, incoming: stri
 }
 
 /**
- * Rewrites the publish entries at `label` (`publish` or `<section>.publish`): GitHub `vPrefixedTagName` → `tagNamePrefix`, and the fields
- * electron-builder writes into app-update.yml itself are removed on every provider. `publisherName` is kept with a warning: it was honored,
- * and only the user can tell which `win.sign.publisherName` it belongs in.
+ * Rewrites the publish entries at `label` (`publish` or `<section>.publish`): GitHub and GitLab `vPrefixedTagName` → `tagNamePrefix`, and the
+ * fields electron-builder writes into app-update.yml itself are removed on every provider. `publisherName` is kept with a warning: it was
+ * honored, and only the user can tell which `win.sign.publisherName` it belongs in.
  */
 function migratePublishEntries(parent: Record<string, any>, label: string, changes: MigrationChange[], warnings: string[], keptKeyWarnings: string[]) {
   const entries: any[] = Array.isArray(parent.publish) ? parent.publish : [parent.publish]
@@ -1425,12 +1565,34 @@ function migratePublishEntries(parent: Record<string, any>, label: string, chang
         warnings.push(warning)
       }
     }
+    if (entry.provider === "gitlab") {
+      if ("vPrefixedTagName" in entry) {
+        // v26 tagged "<version>" when vPrefixedTagName read as false (v26Boolean), else "v<version>": the tagNamePrefix default.
+        // v26 rejected a tagNamePrefix on GitLab, so one set next to it was written for v27 and is kept.
+        if ("tagNamePrefix" in entry) {
+          const warning = gitlabTagNamePrefixKeptWarning(label)
+          if (!warnings.includes(warning)) {
+            warnings.push(warning)
+          }
+        } else if (v26Boolean(entry.vPrefixedTagName) === false) {
+          entry.tagNamePrefix = ""
+        } else if (!Array.isArray(parent.publish) && Object.prototype.hasOwnProperty.call(V26_MERGED_TARGET_PUBLISH, label.slice(0, -".publish".length))) {
+          // v26 merged the publish object of such a target over the inherited one, so a true here overrode an inherited false: without the
+          // explicit default, the build's replaced-publish check reports the inherited tagNamePrefix as dropped. Two lists were concatenated
+          // instead, so a list entry is removed as elsewhere: an explicit "v" would no longer equal an inherited entry without one.
+          entry.tagNamePrefix = "v"
+        }
+        delete entry.vPrefixedTagName
+        changed = true
+      }
+      continue
+    }
     if (entry.provider !== "github") {
       continue
     }
     if ("vPrefixedTagName" in entry) {
-      // v26 githubTagPrefix(): a non-empty tagNamePrefix won; otherwise vPrefixedTagName (default true) chose "v" or "".
-      entry.tagNamePrefix = entry.tagNamePrefix ? entry.tagNamePrefix : entry.vPrefixedTagName === false ? "" : "v"
+      // v26 githubTagPrefix(): a non-empty tagNamePrefix won; otherwise vPrefixedTagName (default true, read as v26Boolean) chose "v" or "".
+      entry.tagNamePrefix = entry.tagNamePrefix ? entry.tagNamePrefix : v26Boolean(entry.vPrefixedTagName) === false ? "" : "v"
       delete entry.vPrefixedTagName
       changed = true
     } else if (entry.tagNamePrefix === "") {
@@ -1442,12 +1604,18 @@ function migratePublishEntries(parent: Record<string, any>, label: string, chang
           'It was rewritten to tagNamePrefix: "v" to keep your existing tag names — set it back to "" if you want unprefixed tags from now on.'
       )
     }
-    // GitLab keeps vPrefixedTagName in v27 — it remains in the type, scheme, and runtime
-    // (gitlabPublisher honors it) and has no tagNamePrefix equivalent, so leave it untouched.
   }
   if (changed) {
-    changes.push({ key: `${label}[].vPrefixedTagName`, description: "replaced vPrefixedTagName with tagNamePrefix on GitHub publish entries" })
+    changes.push({ key: `${label}[].vPrefixedTagName`, description: "replaced vPrefixedTagName with tagNamePrefix on GitHub and GitLab publish entries" })
   }
+}
+
+/** What both migrators tell a user whose GitLab publish entry at `label` sets both vPrefixedTagName and tagNamePrefix (valid in no version). */
+export function gitlabTagNamePrefixKeptWarning(label: string): string {
+  return (
+    `A GitLab publish entry in ${label} set both vPrefixedTagName and tagNamePrefix; vPrefixedTagName was removed and tagNamePrefix kept. ` +
+    'v26 tagged GitLab releases "<version>" with vPrefixedTagName: false and "v<version>" otherwise: check that tagNamePrefix gives the tags you want.'
+  )
 }
 
 /** What both migrators tell a user whose publish entry at `label` sets a field electron-builder writes into app-update.yml itself. */
@@ -1456,7 +1624,7 @@ export function managedPublishOptionWarning(label: string, field: string): strin
     case "verifyUpdateCodeSignature":
       return `${label}.verifyUpdateCodeSignature was removed: it never had an effect. To opt out of update signature verification, set win.verifyUpdateCodeSignature: false.`
     case "updateManifestPublicKey":
-      return `${label}.updateManifestPublicKey was removed: it never had an effect. To pin the update-manifest trust list, set updateManifest.publicKey.`
+      return `${label}.updateManifestPublicKey was removed: it never had an effect. To pin the update-manifest trust list, set updateManifestSigning.publicKey.`
     case "publisherName":
       return (
         `${label}.publisherName no longer overrides the Windows publisher name in v27, and the build rejects it (on a custom provider, when it is the first one): move it to win.sign.publisherName ` +
@@ -1587,6 +1755,101 @@ export function snapcraftCoreTargetOptionWarning(path: string, key: string, move
   return moved
     ? `${path} was never read; it was moved to snapcraft.${key}, where it now sets the snap's ${what}. Check that this is what you want.`
     : `${path} was never read and was removed: the snap's ${what} comes from snapcraft.${key}.`
+}
+
+/**
+ * Replaces the `snapcraft.core24` build switches (`useLXD`, `useMultipass`, `useDestructiveMode`, `remoteBuild.enabled`) with the `buildEnvironment`
+ * the switch that is on selects, and removes the switches that are off (`false` / `null` had no effect). An existing `buildEnvironment` is
+ * kept: it is the newer intent. More than one switch on, or a value other than `true`, `false` or `null`, leaves them all for the guard,
+ * with a warning that does not rewrite the file.
+ */
+function migrateCore24BuildEnvironment(core24: Record<string, any>, changes: MigrationChange[], warnings: string[], keptKeyWarnings: string[]): void {
+  const remoteBuild = isPlainObject(core24.remoteBuild) ? core24.remoteBuild : null
+  // in v26's order: a remote build won, then the host, LXD and Multipass
+  const switches = [
+    ...(remoteBuild != null && "enabled" in remoteBuild ? [{ path: "remoteBuild.enabled", value: remoteBuild.enabled, environment: "remote" }] : []),
+    ...Object.entries(CORE24_BUILD_ENVIRONMENT_FLAGS)
+      .filter(([key]) => key in core24)
+      .map(([key, environment]) => ({ path: key, value: core24[key], environment })),
+  ]
+  if (switches.length === 0) {
+    return
+  }
+  const unread = switches.filter(it => it.value !== true && it.value !== false && it.value !== null)
+  const on = switches.filter(it => it.value === true)
+  if (unread.length > 0 || on.length > 1) {
+    keptKeyWarnings.push(unread.length > 0 ? core24BuildSwitchesUnreadWarning(unread.map(it => it.path)) : core24BuildSwitchesConflictWarning(on.map(it => it.path)))
+    return
+  }
+
+  const selected = on.length === 1 ? on[0] : null
+  const written = selected != null && !("buildEnvironment" in core24)
+  if (selected != null && written) {
+    core24.buildEnvironment = selected.environment
+  } else if (selected != null && core24.buildEnvironment !== selected.environment) {
+    warnings.push(core24BuildEnvironmentKeptWarning(JSON.stringify(core24.buildEnvironment), selected.path, selected.environment))
+  }
+  for (const { path, value, environment } of switches) {
+    if (remoteBuild != null && path === "remoteBuild.enabled") {
+      delete remoteBuild.enabled
+    } else {
+      delete core24[path]
+    }
+    changes.push(core24BuildSwitchChange(path, String(value), value !== true ? "off" : written ? environment : "kept"))
+  }
+  if (remoteBuild != null && Object.keys(remoteBuild).length === 0) {
+    delete core24.remoteBuild
+  }
+}
+
+/**
+ * The change both migrators record for the `snapcraft.core24` build switch at `path` (below core24), set to `valueText`: `"off"` for a switch that
+ * had no effect, `"kept"` when it was on next to an existing `buildEnvironment`, or the `buildEnvironment` it was replaced by.
+ */
+export function core24BuildSwitchChange(path: string, valueText: string, outcome: string): MigrationChange {
+  const key = `snapcraft.core24.${path}`
+  switch (outcome) {
+    case "off":
+      return { key, description: `removed ${key}: ${valueText} (it had no effect)` }
+    case "kept":
+      return { key, description: `removed ${key} (snapcraft.core24.buildEnvironment is set)` }
+    default:
+      return { key, description: `replaced ${key}: true → snapcraft.core24.buildEnvironment: "${outcome}"` }
+  }
+}
+
+/** What both migrators tell a user whose `snapcraft.core24` turns on more than one build switch (`on`: their paths below core24, in v26's order). */
+export function core24BuildSwitchesConflictWarning(on: ReadonlyArray<string>): string {
+  const first = on[0] === "remoteBuild.enabled" ? "remote" : Object.entries(CORE24_BUILD_ENVIRONMENT_FLAGS).find(([key]) => key === on[0])?.[1]
+  return (
+    `snapcraft.core24 turns on more than one build switch ([${on.map(it => `snapcraft.core24.${it}`).join(", ")}]), so they were left in place: ` +
+    'set snapcraft.core24.buildEnvironment to one value ("lxd", "multipass", "host" or "remote") and remove them. ' +
+    (on.includes("remoteBuild.enabled") && on.includes("useDestructiveMode")
+      ? "On Linux, v26 ran a remote build with a snapcraft.yaml generated for a host build (without the gnome extension), which v27 cannot express. "
+      : `On Linux, v26 built with snapcraft.core24.${on[0]}, which is buildEnvironment "${first}". `) +
+    "See https://www.electron.build/docs/migration/v27-config-changes#snapcraftcore24-buildenvironment"
+  )
+}
+
+/**
+ * What both migrators tell a user whose `snapcraft.core24` sets `buildEnvironment` (`existing`: its value as JSON, or its source text) next to the
+ * build switch at `path` that selects another `environment`.
+ */
+export function core24BuildEnvironmentKeptWarning(existing: string, path: string, environment: string): string {
+  return (
+    `snapcraft.core24 sets both buildEnvironment: ${existing} and ${path}: true, which selects "${environment}"; buildEnvironment was kept and ${path} removed. ` +
+    `Check that ${existing} is the build environment you want.`
+  )
+}
+
+/** What both migrators tell a user whose `snapcraft.core24` build switches (`paths` below core24) they cannot read; the build rejects them. */
+export function core24BuildSwitchesUnreadWarning(paths: ReadonlyArray<string>): string {
+  return (
+    `[${paths.map(it => `snapcraft.core24.${it}`).join(", ")}] were left in place: the migrator cannot read which build environment they select ` +
+    "(a value other than true, false or null, or one set through a variable or a spread). " +
+    'Replace them with snapcraft.core24.buildEnvironment ("lxd", "multipass", "host" or "remote"). ' +
+    "See https://www.electron.build/docs/migration/v27-config-changes#snapcraftcore24-buildenvironment"
+  )
 }
 
 // ─── File I/O ─────────────────────────────────────────────────────────────────
@@ -1887,7 +2150,8 @@ function printManualSteps() {
     "• Remove linux.syncDesktopName (the installed .desktop filename is always synced from desktopName in v27)",
     "• Remove deb/rpm/pacman/freebsd/p5p/apk icon, freebsd/p5p/apk compression, and appImage/flatpak/snapcraft.<base> synopsis (they never had an effect)",
     "• Rename snap → snapcraft; nest options under a base-named sub-key (default base: core20), except publish / artifactName, which go on snapcraft itself; remove a snap next to an existing snapcraft (v26.12 and later ignored it); move snapcraft.<base>.publish / artifactName to snapcraft",
-    "• Replace vPrefixedTagName with tagNamePrefix on GitHub publish entries ('v' is the default prefix - just like before - but can now be customized with tagNamePrefix); an empty tagNamePrefix is now honored",
+    '• Replace snapcraft.core24 useLXD / useMultipass / useDestructiveMode / remoteBuild.enabled: true with snapcraft.core24.buildEnvironment: "lxd" / "multipass" / "host" / "remote" (one value; remove the switches set to false or null)',
+    "• Replace vPrefixedTagName with tagNamePrefix on GitHub and GitLab publish entries (false → tagNamePrefix: '', otherwise remove it: 'v' is the default prefix, or set tagNamePrefix: 'v' in a target's publish object that v26 merged over the inherited one, e.g. deb.publish); a GitHub empty tagNamePrefix is now honored",
     "• Remove updaterCacheDirName, verifyUpdateCodeSignature and updateManifestPublicKey from publish entries (electron-builder writes them into app-update.yml); move a publish publisherName to win.sign.publisherName",
     "• Move win.signtoolOptions → win.sign: { type: 'signtool', ...fields }",
     "• Move win.azureSignOptions → win.sign: { type: 'azure', ...fields }; move untyped extra keys into win.sign.additionalMetadata",
@@ -1896,12 +2160,14 @@ function printManualSteps() {
     "• Replace squirrelWindows.noMsi with squirrelWindows.msi (inverted)",
     "• Replace squirrelWindows.customSquirrelVendorDir with a toolsets.squirrel custom bundle (it must contain an electron-winstaller/vendor/ subtree)",
     "• Move nsis/nsisWeb customNsisBinary.debugLogging → installerDebugLogging (it needs a log-enabled NSIS: the default toolsets.nsis or a log-enabled custom bundle); remove customNsisBinary and customNsisResources, replacing a custom url/checksum with a toolsets.nsis custom bundle (the checksum carries over; the bundle must also contain the NSIS plugins)",
-    "• Move mac/mas/masDev signing fields (identity, entitlements, entitlementsInherit, entitlementsLoginHelper, hardenedRuntime, type, requirements, timestamp, binaries, strictVerify, preAutoEntitlements, provisioningProfile, additionalArguments) into the `sign` object; rename signIgnore → sign.ignore; remove gatekeeperAssess",
+    "• Move mac/mas/masDev signing fields (identity, entitlements, entitlementsInherit, entitlementsLoginHelper, hardenedRuntime, type, requirements, timestamp, binaries, strictVerify, preAutoEntitlements, provisioningProfile, additionalArguments) into the `sign` object; rename signIgnore → sign.ignore; remove gatekeeperAssess and sign.identityValidation",
+    "• Move a custom mac/mas/masDev signer (`sign: '<module>'` or a function) into `sign.sign`, next to the options it receives; where a v26 `mas.sign: null` (or masDev) kept a mac signer from signing that app, set `sign.sign: null` there instead",
     "• Move mac/mas/masDev mergeASARs / singleArchFiles / x64ArchFiles into the `universal` object",
     "• Move the root cscLink / cscKeyPassword into both mac and win (the root value applied to both); remove linux.cscLink / linux.cscKeyPassword",
     "• Remove mac/mas/masDev helperEHBundleId / helperNPBundleId (Electron 4 and later ship no such helper)",
     "• Remove from mas/masDev the options Mac App Store builds never read (target, icon, notarize, publish, cscLink, updateManifest, …); do not move them to mac",
     "• Rename electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum:false → unsafelyDisableChecksums:true; drop cache/customDir/customFilename/strictSSL/platform/arch/version/force)",
+    "• Rename updateManifest → updateManifestSigning at the root and in mac/win/linux (a 27.0.0-alpha key; the value is unchanged)",
     '• Remove toolsets.* entries set to null (unset resolves to "latest"); replace toolsets.appimage "1.0.2" with "1.0.3" and "1.2.0" with "1.2.1"',
     "• Move root-level package.json directories → build.directories",
     "• Move files / extraResources / extraFiles → fileOptions.files / fileOptions.extraResources / fileOptions.extraFiles, at the root and in mac/mas/masDev/win/linux",

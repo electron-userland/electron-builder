@@ -4,7 +4,7 @@ import { resolveSnapCredentials } from "electron-publish"
 
 import * as path from "path"
 import { LinuxPackager } from "../../../linuxPackager.js"
-import { RemoteBuildOptions } from "../../../options/SnapOptions.js"
+import { RemoteBuildOptions, SnapOptions24 } from "../../../options/SnapOptions.js"
 import { SnapcraftYAML } from "./snapcraft.js"
 import { deepAssign, sleep } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
@@ -18,14 +18,10 @@ interface BuildSnapOptions {
   snapcraftConfig: SnapcraftYAML
   /** Working directory where snapcraft.yaml is written and the build executes */
   stageDir: string
-  /** Whether to use remote build (builds on Launchpad) */
+  /** Where snapcraft builds the snap; unset: snapcraft's default provider, Linux only */
+  buildEnvironment?: SnapOptions24["buildEnvironment"]
+  /** The Launchpad options of a `"remote"` build */
   remoteBuild?: RemoteBuildOptions
-  /** Whether to use LXD for local builds */
-  useLXD?: boolean
-  /** Whether to use Multipass for local builds */
-  useMultipass?: boolean
-  /** Whether to use destructive mode (builds directly on host, Linux only) */
-  useDestructiveMode?: boolean
   /** The snap output path */
   artifactPath: string
   /** LinuxPackager instance, used to resolve workspace dir for remote build authentication */
@@ -224,21 +220,20 @@ async function copySnapToArtifactPath(workDir: string, outputBasename: string, o
  */
 export async function buildSnap(options: BuildSnapOptions): Promise<string[]> {
   const { SNAPCRAFT_NO_NETWORK } = process.env
-  const { snapcraftConfig, artifactPath, remoteBuild, stageDir, useLXD = false, useMultipass = false, useDestructiveMode = false, cscLink } = options
+  const { snapcraftConfig, artifactPath, remoteBuild, stageDir, buildEnvironment, cscLink } = options
+  const isRemote = buildEnvironment === "remote"
 
   const isolatedEnv: Record<string, string> = {
     ...(SNAPCRAFT_NO_NETWORK != null ? { SNAPCRAFT_NO_NETWORK } : {}),
   }
-  if (useDestructiveMode) {
+  if (buildEnvironment === "host") {
     isolatedEnv.SNAPCRAFT_BUILD_ENVIRONMENT = "host"
   }
 
-  if (useLXD && process.platform !== "linux") {
-    throw new InvalidConfigurationError(`useLXD is only supported on Linux. On ${process.platform}, use useMultipass or remoteBuild instead.`)
-  }
-  if (useDestructiveMode && process.platform !== "linux") {
+  if ((buildEnvironment === "lxd" || buildEnvironment === "host") && process.platform !== "linux") {
     throw new InvalidConfigurationError(
-      `useDestructiveMode is only supported on Linux (requires Ubuntu 24.04 host for core24). On ${process.platform}, use useMultipass or remoteBuild instead.`
+      `snapcraft.core24.buildEnvironment "${buildEnvironment}" builds only on Linux${buildEnvironment === "host" ? " (an Ubuntu 24.04 host for core24)" : ""}. ` +
+        `On ${process.platform}, set it to "multipass" or "remote".`
     )
   }
 
@@ -260,7 +255,7 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string[]> {
   const credEnv = await resolveSnapCredentials(cscLink, options.packager.buildResourcesDir)
   deepAssign(isolatedEnv, credEnv)
 
-  if (remoteBuild?.enabled) {
+  if (isRemote) {
     // Remote-build auth does additional checks (interactive session, throws on missing creds)
     // and overrides any credential already set above.
     const authEnv = await ensureRemoteBuildAuthentication(snapcraft, cscLink, options.packager.buildResourcesDir)
@@ -273,9 +268,9 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string[]> {
   }
   log.debug({ appFiles: (await readdir(projectAppDir)).slice(0, 20) }, "app directory contents (truncated)")
 
-  if (!remoteBuild?.enabled && !useLXD && !useMultipass && !useDestructiveMode && process.platform !== "linux") {
+  if (buildEnvironment == null && process.platform !== "linux") {
     throw new InvalidConfigurationError(
-      `No snap build environment specified for ${process.platform}. Set one of: useMultipass, useLXD (Linux only), useDestructiveMode (Linux only), or remoteBuild.enabled`
+      `No snap build environment is set for ${process.platform}: set snapcraft.core24.buildEnvironment to "multipass" or "remote" (a \`base: "custom"\` snap builds only on Linux).`
     )
   }
 
@@ -288,12 +283,10 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string[]> {
           workDir: stageDir,
           remoteBuild,
           outputSnap: artifactPath,
-          useLXD,
-          useMultipass,
-          useDestructiveMode,
+          buildEnvironment,
           isolatedEnv: isolatedEnv,
         }),
-      { maxRetries: remoteBuild?.enabled ? 3 : 1, retryDelay: 10000 }
+      { maxRetries: isRemote ? 3 : 1, retryDelay: 10000 }
     )
   } catch (error: any) {
     log.error({ error: error.message }, "snap build failed")
@@ -319,7 +312,7 @@ async function ensureSnapcraftInstalled(snapcraft: string): Promise<void> {
       log.error(null, "Install with: sudo snap install snapcraft --classic")
     } else if (platform === "darwin") {
       log.error(null, "Install snapcraft with: pip3 install snapcraft")
-      log.error(null, "On macOS, useMultipass or remoteBuild are the only supported build modes for core24")
+      log.error(null, 'On macOS, set snapcraft.core24.buildEnvironment to "multipass" or "remote" to build a core24 snap')
     } else if (platform === "win32") {
       log.error(null, "Install snapcraft via WSL2 or use remote-build")
       log.error(null, "See: https://snapcraft.io/docs/snapcraft-overview")
@@ -378,10 +371,8 @@ interface ExecuteSnapcraftOptions {
   snapcraft: string
   workDir: string
   outputSnap: string
+  buildEnvironment: SnapOptions24["buildEnvironment"]
   remoteBuild?: RemoteBuildOptions
-  useLXD: boolean
-  useMultipass: boolean
-  useDestructiveMode: boolean
   isolatedEnv: Record<string, string>
 }
 
@@ -389,21 +380,21 @@ interface ExecuteSnapcraftOptions {
  * Executes the snapcraft build command
  */
 async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<string[]> {
-  const { snapcraft, workDir, outputSnap: outputFileName, remoteBuild, useLXD, useMultipass, useDestructiveMode, isolatedEnv } = options
+  const { snapcraft, workDir, outputSnap: outputFileName, remoteBuild, buildEnvironment, isolatedEnv } = options
   let processedEnv: NodeJS.ProcessEnv = { ...stripSensitiveEnvVars(process.env), ...isolatedEnv }
 
   // Use a UUID-based temp name as the --output target so the copy below doesn't
   // depend on snapcraft's naming convention (which always uses underscores).
   const tmpSnap = `eb-snap-${randomUUID().replace(/-/g, "")}.snap`
 
-  if (useDestructiveMode && !remoteBuild?.enabled) {
+  if (buildEnvironment === "host") {
     return [await runDestructiveBuild(snapcraft, workDir, processedEnv, tmpSnap, outputFileName)]
   }
 
   const args: string[] = []
 
-  if (remoteBuild?.enabled) {
-    const remoteBuildArgs = generateRemoteBuildArgs(remoteBuild, workDir)
+  if (buildEnvironment === "remote") {
+    const remoteBuildArgs = generateRemoteBuildArgs(remoteBuild ?? {}, workDir)
     // Remote build on Launchpad (works from any platform)
     args.push(...remoteBuildArgs.args)
     processedEnv = { ...processedEnv, ...remoteBuildArgs.isolatedEnv }
@@ -413,10 +404,10 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
     // via the SNAPCRAFT_BUILD_ENVIRONMENT env var (or auto-selected on macOS).
     // --use-lxd remains a supported CLI flag on `pack`.
     args.push("pack")
-    if (useLXD) {
+    if (buildEnvironment === "lxd") {
       args.push("--use-lxd")
       log.debug(null, "using LXD for build")
-    } else if (useMultipass) {
+    } else if (buildEnvironment === "multipass") {
       processedEnv.SNAPCRAFT_BUILD_ENVIRONMENT = "multipass"
       log.debug(null, "using Multipass for build (via SNAPCRAFT_BUILD_ENVIRONMENT)")
     } else {
@@ -435,7 +426,8 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
     env: processedEnv,
   })
 
-  if (remoteBuild?.enabled || useLXD || useMultipass) {
+  // a provider or Launchpad names the snaps itself; host returned above
+  if (buildEnvironment != null) {
     // snapcraft names output snaps itself (e.g. <name>_<version>_<arch>.snap).
     // For multi-arch remote-builds (buildFor array), multiple snaps land in workDir.
     const files = await readdir(workDir)

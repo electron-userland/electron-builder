@@ -1,10 +1,13 @@
 import { createRequire } from "node:module"
 import {
   ALL_PLATFORM_KEYS,
+  CORE24_BUILD_ENVIRONMENT_FLAGS,
   FILE_OPTION_KEYS,
+  isInheritedPublishDropped,
   LINUX_UNREAD_TARGET_OPTIONS,
   MAC_HELPER_REMOVED_FIELDS,
   MAC_PLATFORM_KEYS,
+  MAC_SIGN_UNREAD_FIELDS,
   MAS_CERTIFICATE_WARNING,
   MAS_REMOVED_CERTIFICATE_FIELDS,
   MAS_REMOVED_FIELDS,
@@ -14,6 +17,9 @@ import {
   PUBLISH_MANAGED_OPTIONS,
   SNAP_CORE_KEYS,
   SNAP_CORE_TARGET_OPTION_KEYS,
+  UPDATE_MANIFEST_PLATFORM_KEYS,
+  V26_MERGED_TARGET_PUBLISH,
+  v26Boolean,
 } from "app-builder-lib/internal"
 import { isValidPublisherNameDn } from "builder-util-runtime"
 import * as path from "path"
@@ -21,6 +27,10 @@ import {
   ASAR_PLATFORM_KEYS,
   AZURE_KNOWN_FIELDS,
   CERTIFICATE_KEYS,
+  core24BuildEnvironmentKeptWarning,
+  core24BuildSwitchChange,
+  core24BuildSwitchesConflictWarning,
+  core24BuildSwitchesUnreadWarning,
   ELECTRON_DOWNLOAD_DROPPED,
   excludesPdb,
   FEED_QUERY_ADVISORY,
@@ -28,11 +38,13 @@ import {
   isInsecureFeedEntry,
   fileOptionsChange,
   fileOptionsConflictWarning,
+  gitlabTagNamePrefixKeptWarning,
   INCLUDE_PDB_CHANGES,
   INCLUDE_PDB_NOT_BOOLEAN,
   includePdbManualStep,
   isAppDirFrom,
   isLegacyElectronDownloadKey,
+  isMacSignOptOutString,
   legacyKeyMessage,
   managedPublishOptionWarning,
   MAC_ENTITLEMENTS_ADVISORY,
@@ -40,6 +52,9 @@ import {
   MAC_SIGN_FIELDS,
   MAC_SIGN_REMOVED_FIELDS,
   MAC_UNIVERSAL_FIELDS,
+  macSignerOverMasOptionsWarning,
+  macSignerOverOptionsWarning,
+  macSignOptOutNextToOptionsWarning,
   namesPdbFiles,
   normalizeTargetName,
   NSIS_PER_MACHINE_UPDATE_ADVISORY,
@@ -53,14 +68,18 @@ import {
   SNAP_CORE24_UNSUPPORTED,
   snapcraftCoreTargetOptionWarning,
   snapNextToSnapcraftWarning,
-  v26IncludePdb,
+  TARGET_PUBLISH_REPLACES_ADVISORY,
+  updateManifestBothSetWarning,
   WIN_MISSING_PUBLISHER_NAME_ADVISORY,
   WIN_PUBLISHER_NAME_DN_ADVISORY,
   WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
 } from "./migrate-schema.js"
-import type { MigrationChange } from "./migrate-schema.js"
+import type { MacSignCascade, MigrationChange } from "./migrate-schema.js"
 
 const _require = createRequire(import.meta.url)
+
+/** What `jsonLiteral` returns for a value the AST cannot read. */
+const UNREAD = Symbol("unread")
 
 // `typescript` is intentionally NOT a dependency of electron-builder — it is loaded lazily (same
 // pattern as js-yaml/json5/toml) and the feature degrades to manual steps when it is unavailable.
@@ -420,18 +439,23 @@ class ConfigCodemod {
     this.ruleSnap(root)
     this.ruleSnapcraftCoreTargetOptions(root)
     this.ruleLinuxUnreadTargetOptions(root)
+    this.ruleCore24BuildEnvironment(root)
     this.ruleHelperBundleId(root)
     this.ruleSquirrelNoMsi(root)
     this.ruleCustomNsis(root)
     this.ruleWinSign(root)
-    for (const platform of ["mac", "mas", "masDev"]) {
+    // a custom signer reaches the later sections through the mac → mas → masDev merge, which the cascade follows (see migrateConfig step 13)
+    let macSignCascade: MacSignCascade | "unknown" = { signer: null, signerWasBare: false, options: null }
+    for (const platform of MAC_PLATFORM_KEYS) {
       const p = this.getObjectProp(root, platform)
       if (p != null) {
-        this.ruleMacSigning(p, platform)
+        this.ruleMacSigning(p, platform, macSignCascade)
         this.ruleMacUniversal(p, platform)
       }
+      macSignCascade = this.macSignCascadeAfter(root, platform, macSignCascade)
     }
     this.ruleElectronDownload(root)
+    this.ruleUpdateManifestSigning(root)
     this.ruleToolsets(root)
     // ruleFileOptions adds the excludedExts entry ruleIncludePdb returns to the root fileOptions it may create for the flat keys.
     this.ruleFileOptions(root, "", this.ruleIncludePdb(root))
@@ -449,6 +473,7 @@ class ConfigCodemod {
     this.ruleWinMissingPublisherNameAdvisory(root)
     this.ruleFeedQueryAdvisory(root)
     this.ruleInsecureFeedAdvisory(root)
+    this.ruleTargetPublishReplacesAdvisory(root)
     this.rulePdbFilesPatternsAdvisory(root)
   }
 
@@ -470,11 +495,21 @@ class ConfigCodemod {
       const prop = obj == null ? null : this.getProp(obj, "entitlements")
       return prop != null && !isNullLiteral(prop)
     }
-    // Not signing with electron-builder's defaults at all: a custom signer, or identity: null (skip signing).
+    // Not signing with electron-builder's defaults at all: a custom signer, sign: false or identity: null (skip signing).
     const bypassesDefaults = (p: any, sign: any): boolean => {
       const signProp = this.getProp(p, "sign")
-      const custom = signProp != null && ts.isPropertyAssignment(signProp) && sign == null && !isNullLiteral(signProp)
-      return custom || isNullLiteral(this.getProp(p, "identity")) || (sign != null && isNullLiteral(this.getProp(sign, "identity")))
+      const value = signProp != null && ts.isPropertyAssignment(signProp) ? this.unwrap(signProp.initializer) : null
+      // a bare signer (moved to sign.sign), the opt-out "false" / "" (left in place), a method, false, or a value the AST cannot read; not
+      // null, undefined (no sign at all), true, a number or an array
+      const custom =
+        signProp != null &&
+        sign == null &&
+        !isNullLiteral(signProp) &&
+        !(value != null && ts.isIdentifier(value) && value.text === "undefined") &&
+        !(value != null && this.isLiteral(value) && !ts.isStringLiteralLike(value) && value.kind !== ts.SyntaxKind.FalseKeyword)
+      const hook = sign == null ? undefined : this.propValue(sign, "sign")
+      const hasHook = hook !== undefined && hook.kind !== ts.SyntaxKind.NullKeyword && !(this.isLiteral(hook) && !ts.isStringLiteralLike(hook))
+      return custom || hasHook || isNullLiteral(this.getProp(p, "identity")) || (sign != null && isNullLiteral(this.getProp(sign, "identity")))
     }
     for (const platform of ["mac", "mas", "masDev"]) {
       const p = this.getObjectProp(root, platform)
@@ -655,6 +690,37 @@ class ConfigCodemod {
     }
     if (this.publishEntries(root).some(isInsecure)) {
       this.advisories.push(INSECURE_FEED_ADVISORY)
+    }
+  }
+
+  // Advisory only. Mirrors migrateConfig, which reads the configuration as written. A publish value the AST cannot read counts when the other
+  // one may be merged with it (a string, null, or a list next to an object was never merged); a section it cannot read is skipped.
+  private ruleTargetPublishReplacesAdvisory(root: any): void {
+    const ts = this.ts
+    const isNullish = (node: any) => node === undefined || node.kind === ts.SyntaxKind.NullKeyword
+    // v26.12 and later read the snap section as `snapcraft ?? snap`
+    const publishOf = (key: string) => {
+      const section = this.propValue(root, key)
+      return this.propValue(this.objectLiteral(key === "snapcraft" && isNullish(section) ? this.propValue(root, "snap") : section), "publish")
+    }
+    const isContainer = (node: any) => ts.isArrayLiteralExpression(node) || ts.isObjectLiteralExpression(node)
+    const mayMerge = (node: any) => isContainer(node) || !this.isLiteral(node)
+    const replaces = Object.entries(V26_MERGED_TARGET_PUBLISH).some(([target, inherited]) => {
+      const own = publishOf(target)
+      const parent = publishOf(inherited)
+      if (own === undefined || parent === undefined) {
+        return false
+      }
+      const ownValue = this.jsonLiteral(own)
+      const parentValue = this.jsonLiteral(parent)
+      if (ownValue === UNREAD || parentValue === UNREAD) {
+        // a list next to an object was never merged, even when an option of either cannot be read
+        return isContainer(own) && isContainer(parent) ? ts.isArrayLiteralExpression(own) === ts.isArrayLiteralExpression(parent) : mayMerge(own) && mayMerge(parent)
+      }
+      return isInheritedPublishDropped(target, parentValue, ownValue)
+    })
+    if (replaces) {
+      this.advisories.push(TARGET_PUBLISH_REPLACES_ADVISORY)
     }
   }
 
@@ -1254,6 +1320,10 @@ class ConfigCodemod {
     const value = this.unwrap(prop.initializer)
     const entries: any[] = ts.isArrayLiteralExpression(value) ? value.elements : [value]
     const label = `${prefix}${key}`
+    // As in migratePublishEntries, a GitLab true here becomes an explicit "v": v26 merged the publish object of such a target over the inherited
+    // one, so the true overrode an inherited false, and without the default the build's replaced-publish check reports the inherited
+    // tagNamePrefix as dropped. Two lists were concatenated instead, so a list entry overrode nothing.
+    const mergedTargetObject = !ts.isArrayLiteralExpression(value) && Object.prototype.hasOwnProperty.call(V26_MERGED_TARGET_PUBLISH, prefix.slice(0, -1))
     let changed = false
     for (const entry of entries) {
       const obj = this.unwrap(entry)
@@ -1279,23 +1349,57 @@ class ConfigCodemod {
         }
       }
       const provider = this.stringLiteralValue(this.getProp(obj, "provider"))
-      // GitLab keeps vPrefixedTagName in v27 (no tagNamePrefix equivalent) — leave it untouched.
-      if (provider !== "github") {
+      if (provider !== "github" && provider !== "gitlab") {
         continue
       }
+      // Mirrors migratePublishEntries. These edits cannot overlap the removals above: removeProp cuts a property up to just after its comma
       const vPrefixed = this.getProp(obj, "vPrefixedTagName")
       const tagNamePrefix = this.getProp(obj, "tagNamePrefix")
-      const prefixText = this.stringLiteralValue(tagNamePrefix)
-      if (vPrefixed != null && ts.isPropertyAssignment(vPrefixed)) {
-        // v26 githubTagPrefix(): a non-empty tagNamePrefix won; otherwise vPrefixedTagName (default true) chose "v" or "".
-        const isFalse = vPrefixed.initializer.kind === ts.SyntaxKind.FalseKeyword
-        if (tagNamePrefix == null) {
-          this.replaceRange(this.start(vPrefixed), vPrefixed.end, `tagNamePrefix: ${isFalse ? '""' : '"v"'}`)
-        } else {
-          if (prefixText === "") {
-            this.replaceValue(tagNamePrefix.initializer, isFalse ? '""' : '"v"')
-          }
+      if (provider === "gitlab") {
+        if (vPrefixed == null) {
+          continue
+        }
+        // v26 rejected a tagNamePrefix on GitLab, so one set next to it was written for v27 and is kept
+        if (tagNamePrefix != null) {
           this.removeProp(vPrefixed)
+          const warning = gitlabTagNamePrefixKeptWarning(label)
+          if (!this.warnings.includes(warning)) {
+            this.warnings.push(warning)
+          }
+        } else {
+          const vPrefix = this.v26UsedVPrefix(vPrefixed, "GitLab", label)
+          if (vPrefix == null) {
+            continue
+          }
+          const initializer = this.unwrap(vPrefixed.initializer)
+          if (!vPrefix) {
+            this.replaceRange(this.start(vPrefixed), vPrefixed.end, 'tagNamePrefix: ""')
+          } else if (mergedTargetObject && !(ts.isIdentifier(initializer) && initializer.text === "undefined")) {
+            // an `undefined` is removed: v26's merge skipped it, so it overrode nothing (and migrateConfig's JSON copy drops it)
+            this.replaceRange(this.start(vPrefixed), vPrefixed.end, 'tagNamePrefix: "v"')
+          } else {
+            this.removeProp(vPrefixed)
+          }
+        }
+        changed = true
+        continue
+      }
+      const prefixText = this.stringLiteralValue(tagNamePrefix)
+      if (vPrefixed != null) {
+        // v26 githubTagPrefix(): a non-empty tagNamePrefix won; otherwise vPrefixedTagName (default true, read as v26Boolean) chose "v" or "".
+        if (tagNamePrefix != null && prefixText !== "") {
+          this.removeProp(vPrefixed)
+        } else {
+          const vPrefix = this.v26UsedVPrefix(vPrefixed, "GitHub", label, tagNamePrefix != null)
+          if (vPrefix == null) {
+            continue
+          }
+          if (tagNamePrefix == null) {
+            this.replaceRange(this.start(vPrefixed), vPrefixed.end, `tagNamePrefix: ${vPrefix ? '"v"' : '""'}`)
+          } else {
+            this.replaceValue(tagNamePrefix.initializer, vPrefix ? '"v"' : '""')
+            this.removeProp(vPrefixed)
+          }
         }
         changed = true
       } else if (prefixText === "") {
@@ -1311,9 +1415,31 @@ class ConfigCodemod {
     if (changed) {
       this.changes.push({
         key: `${label}[].vPrefixedTagName`,
-        description: "replaced vPrefixedTagName with tagNamePrefix on GitHub publish entries",
+        description: "replaced vPrefixedTagName with tagNamePrefix on GitHub and GitLab publish entries",
       })
     }
+  }
+
+  /**
+   * Whether v26 tagged with the "v" prefix for a GitHub / GitLab `vPrefixedTagName` property: false when its literal value read as false
+   * (`v26Boolean`), else true (`undefined` included). null for a value the AST cannot read, which is left in place with a warning, for the
+   * build-time check to reject. `nextToEmptyPrefix`: the entry also sets `tagNamePrefix: ""`, which v26 ignored, so both keys must be replaced.
+   */
+  private v26UsedVPrefix(prop: any, provider: "GitHub" | "GitLab", label: string, nextToEmptyPrefix = false): boolean | null {
+    const ts = this.ts
+    const value = ts.isPropertyAssignment(prop) ? this.unwrap(prop.initializer) : null
+    if (value == null || !(this.isLiteral(value) || (ts.isIdentifier(value) && value.text === "undefined"))) {
+      const warning = nextToEmptyPrefix
+        ? `The ${provider} vPrefixedTagName in ${label} is not a literal, so it was left in place next to tagNamePrefix: "" (which v26 ignored): ` +
+          'replace both keys with tagNamePrefix: "" where it is false and with tagNamePrefix: "v" where it is true.'
+        : `The ${provider} vPrefixedTagName in ${label} is not a literal, so it was left in place: replace it with tagNamePrefix: "" where it is false ` +
+          '(no prefix), and remove it where it is true (tagNamePrefix defaults to "v").'
+      if (!this.warnings.includes(warning)) {
+        this.warnings.push(warning)
+      }
+      return null
+    }
+    return v26Boolean(this.scalarLiteral(value)) !== false
   }
 
   private ruleSnap(root: any): void {
@@ -1361,8 +1487,10 @@ class ConfigCodemod {
 
     // snap's properties are re-emitted verbatim below, so rulePublish skipped it — flag what it would have rewritten.
     const snapPublish = this.getProp(snap, "publish")
-    if (snapPublish != null && this.setsGithubTagPrefix(snapPublish)) {
-      this.warnings.push("snap.publish sets vPrefixedTagName or an empty tagNamePrefix; after the move, apply the GitHub tagNamePrefix change under snapcraft.publish manually.")
+    if (snapPublish != null && this.setsTagNamePrefixRewrite(snapPublish)) {
+      this.warnings.push(
+        "snap.publish sets vPrefixedTagName or an empty tagNamePrefix; after the move, apply the GitHub / GitLab tagNamePrefix change under snapcraft.publish manually."
+      )
     }
 
     // A `snapcraft: null` / `undefined` is replaced in place: a second `snapcraft` property would be a TS error, and the last one wins in JS.
@@ -1542,8 +1670,10 @@ class ConfigCodemod {
         }
         this.changes.push({ key: path, description: `moved ${path} → snapcraft.${key}` })
         this.warnings.push(snapcraftCoreTargetOptionWarning(path, key, true))
-        if (key === "publish" && this.setsGithubTagPrefix(prop)) {
-          this.warnings.push(`${path} sets vPrefixedTagName or an empty tagNamePrefix; after the move, apply the GitHub tagNamePrefix change under snapcraft.publish manually.`)
+        if (key === "publish" && this.setsTagNamePrefixRewrite(prop)) {
+          this.warnings.push(
+            `${path} sets vPrefixedTagName or an empty tagNamePrefix; after the move, apply the GitHub / GitLab tagNamePrefix change under snapcraft.publish manually.`
+          )
         }
       } else {
         this.changes.push({ key: path, description: `removed ${path} (it was never read)` })
@@ -1571,8 +1701,87 @@ class ConfigCodemod {
     }
   }
 
-  /** Whether the source of a publish property sets what rulePublish rewrites on GitHub entries: vPrefixedTagName, or an empty tagNamePrefix. */
-  private setsGithubTagPrefix(publishProp: any): boolean {
+  // Mirrors migrateConfig step 6e: the snapcraft.core24 build switches → buildEnvironment. A switch is read only as a true, false or null literal; the
+  // identifier undefined counts as off (the guard rejects `useLXD: undefined` too). A value it cannot read, or a spread that may set a switch, leaves
+  // them all for the guard. Each property gets at most one edit, so the edits never overlap; the selected switch is rewritten in place, keeping its comments.
+  private ruleCore24BuildEnvironment(root: any): void {
+    const ts = this.ts
+    const snapcraft = this.getObjectProp(root, "snapcraft")
+    const core24 = snapcraft == null ? null : this.getObjectProp(snapcraft, "core24")
+    if (core24 == null) {
+      return
+    }
+    const remoteBuildProp = this.getProp(core24, "remoteBuild")
+    const remoteBuildValue = remoteBuildProp != null && ts.isPropertyAssignment(remoteBuildProp) ? this.unwrap(remoteBuildProp.initializer) : null
+    const remoteBuild = this.objectLiteral(remoteBuildValue)
+    const enabledProp = remoteBuild == null ? null : this.getProp(remoteBuild, "enabled")
+    const isOffLiteral = (node: any) => node.kind === ts.SyntaxKind.FalseKeyword || node.kind === ts.SyntaxKind.NullKeyword || (ts.isIdentifier(node) && node.text === "undefined")
+    // the source text of a true, false, null or undefined literal (the last three are off: they had no effect), or null for a value the AST cannot
+    // read (a string, an expression, a shorthand, a method)
+    const read = (prop: any): string | null => {
+      const value = ts.isPropertyAssignment(prop) ? this.unwrap(prop.initializer) : null
+      return value != null && (value.kind === ts.SyntaxKind.TrueKeyword || isOffLiteral(value)) ? this.text.slice(this.start(value), value.end) : null
+    }
+    // in v26's order: a remote build won, then the host, LXD and Multipass
+    const switches = [
+      ...(enabledProp == null ? [] : [{ path: "remoteBuild.enabled", prop: enabledProp, environment: "remote" }]),
+      ...Object.entries(CORE24_BUILD_ENVIRONMENT_FLAGS).flatMap(([key, environment]) => {
+        const prop = this.getProp(core24, key)
+        return prop == null ? [] : [{ path: key, prop, environment }]
+      }),
+    ].map(it => ({ ...it, value: read(it.prop) }))
+    if (switches.length === 0) {
+      return
+    }
+
+    // a remoteBuild the AST cannot read may hold an enabled: true that won over every other switch
+    const remoteBuildReadable =
+      remoteBuildProp == null || (remoteBuildValue != null && isOffLiteral(remoteBuildValue)) || (remoteBuild != null && !this.hasSpreadOrComputed(remoteBuild))
+    const unread = switches.filter(it => it.value == null)
+    if (unread.length > 0 || !remoteBuildReadable || this.hasSpreadOrComputed(core24)) {
+      const paths = (unread.length > 0 ? unread : switches).map(it => it.path)
+      if (!remoteBuildReadable && enabledProp == null) {
+        paths.push("remoteBuild.enabled")
+      }
+      this.warnings.push(core24BuildSwitchesUnreadWarning(paths))
+      return
+    }
+    const on = switches.filter(it => it.value === "true")
+    if (on.length > 1) {
+      this.warnings.push(core24BuildSwitchesConflictWarning(on.map(it => it.path)))
+      return
+    }
+
+    const selected = on.length === 1 ? on[0] : null
+    // an existing buildEnvironment is kept, whatever its value: it is the newer intent
+    const existingProp = this.getProp(core24, "buildEnvironment")
+    const written = selected != null && existingProp == null
+    if (selected != null && existingProp != null) {
+      const existing = this.stringLiteralValue(existingProp)
+      if (existing !== selected.environment) {
+        const existingNode = ts.isPropertyAssignment(existingProp) ? this.unwrap(existingProp.initializer) : existingProp
+        const existingText = existing == null ? this.text.slice(this.start(existingNode), existingNode.end) : JSON.stringify(existing)
+        this.warnings.push(core24BuildEnvironmentKeptWarning(existingText, selected.path, selected.environment))
+      }
+    }
+    // an enabled that is remoteBuild's only property goes with its remoteBuild (as migrateConfig removes the emptied object), never next to it
+    const remoteBuildGoes = remoteBuild != null && remoteBuild.properties.length === 1 && enabledProp != null
+    for (const it of switches) {
+      const target = it.prop === enabledProp && remoteBuildGoes ? remoteBuildProp : it.prop
+      if (it !== selected || !written) {
+        this.removeProp(target)
+      } else if (target === enabledProp) {
+        this.insertIntoObject(core24, ['buildEnvironment: "remote"'])
+        this.removeProp(enabledProp)
+      } else {
+        this.replaceRange(this.start(target), target.end, `buildEnvironment: "${it.environment}"`)
+      }
+      this.changes.push(core24BuildSwitchChange(it.path, it.value ?? "", it.value !== "true" ? "off" : written ? it.environment : "kept"))
+    }
+  }
+
+  /** Whether the source of a publish property sets what rulePublish rewrites: vPrefixedTagName (GitHub and GitLab), or an empty tagNamePrefix (GitHub). */
+  private setsTagNamePrefixRewrite(publishProp: any): boolean {
     return /\bvPrefixedTagName\b|\btagNamePrefix\s*:\s*(""|'')/.test(this.text.slice(this.start(publishProp), publishProp.end))
   }
 
@@ -1840,7 +2049,12 @@ class ConfigCodemod {
     this.createChild(win, "sign", signEntries)
   }
 
-  private ruleMacSigning(platform: any, name: string): void {
+  /**
+   * Mirrors migrateConfig's migrateMacSigning: the v26 signing fields move into `sign`, and a custom signer the AST can read (a string or
+   * template literal other than the opt-out "false" / "", a function, a method) into `sign.sign`, next to the options it receives. `cascade`
+   * is what the earlier sections hand this one through the mac → mas → masDev merge, "unknown" after a value the AST cannot read.
+   */
+  private ruleMacSigning(platform: any, name: string, cascade: MacSignCascade | "unknown"): void {
     const ts = this.ts
 
     // Removed outright, not moved: ElectronSignOptions omits these and the schema rejects them.
@@ -1859,24 +2073,67 @@ class ConfigCodemod {
     const signIgnore = this.getProp(platform, "signIgnore")
     const hasSignIgnore = signIgnore != null
     const existingSignProp = this.getProp(platform, "sign")
-    const existingSign = existingSignProp != null && ts.isPropertyAssignment(existingSignProp) ? this.unwrap(existingSignProp.initializer) : null
-    const signIsCustom =
-      existingSign != null && (ts.isStringLiteral(existingSign) || ts.isArrowFunction(existingSign) || ts.isFunctionExpression(existingSign) || ts.isIdentifier(existingSign))
+    // a method or shorthand property, which has no initializer, stands for itself
+    const existingSign = existingSignProp == null ? null : ts.isPropertyAssignment(existingSignProp) ? this.unwrap(existingSignProp.initializer) : existingSignProp
+    const existingSignObj = this.objectLiteral(existingSign)
+    for (const field of MAC_SIGN_UNREAD_FIELDS) {
+      const prop = existingSignObj == null ? null : this.getProp(existingSignObj, field)
+      if (prop != null) {
+        this.removeProp(prop)
+        this.changes.push({
+          key: `${name}.sign.${field}`,
+          description: `removed ${name}.sign.${field} (it never had an effect: electron-builder always passes ${field}: false to @electron/osx-sign)`,
+        })
+      }
+    }
+
+    // "false" and "" stay: the v27 schema reads them as the opt-out (false / null), not as a module path
+    const optOut = existingSign != null && ts.isStringLiteralLike(existingSign) && isMacSignOptOutString(existingSign.text) ? existingSign.text : null
+    const isSigner = existingSign != null && optOut == null && this.isMacSigner(existingSign)
+    // a literal undefined is no sign: the merge and migrateConfig's JSON copy skip it, as propValue and macSignCascadeAfter do
+    const signIsUndefined = existingSign != null && ts.isIdentifier(existingSign) && existingSign.text === "undefined"
+    if (existingSign != null && !isSigner && !signIsUndefined && !this.isLiteral(existingSign)) {
+      // an identifier, a call, a shorthand, a getter, …: a custom signer to move into sign.sign, or the signing options
+      const later =
+        name === "mac" ? "mas.sign.sign: null (or masDev.sign.sign: null) where a Mac App Store app" : name === "mas" ? "masDev.sign.sign: null if the mas-dev app" : null
+      this.warnings.push(
+        `${name}.sign is not a literal migrate-schema can read, so it was left as it is${present.length > 0 || hasSignIgnore ? ", with the v26 signing options next to it" : ""}. ` +
+          `In electron-builder v27 a custom signer is ${name}.sign.sign, inside the sign object, where it receives the signing options next to it: if ${name}.sign is one, move it there` +
+          (later == null ? "" : `. It then signs the later sections' apps too, as in v26: set ${later} must keep @electron/osx-sign`) +
+          ". See https://www.electron.build/docs/migration/v27-config-changes#macos-signing-macsign"
+      )
+      return
+    }
     const signIsNull = existingSign != null && existingSign.kind === ts.SyntaxKind.NullKeyword
 
-    if (present.length === 0 && !hasSignIgnore) {
+    // the same rules as migrateConfig, on the cascade as written. Over a cascade the AST cannot read (only mas / masDev: mac starts it), a
+    // sign: null is kept as sign.sign: null too, which signs like the bare null whether or not an earlier section sets a signer.
+    const inherited = cascade === "unknown" ? null : cascade
+    const keepsNoSigner = signIsNull && (cascade === "unknown" || cascade.signer != null)
+    if (isSigner) {
+      if (inherited?.options != null) {
+        this.warnings.push(macSignerOverOptionsWarning(name, inherited.options))
+      }
+      this.changes.push({ key: `${name}.sign`, description: `moved the custom signer ${name}.sign → ${name}.sign.sign` })
+    } else if (keepsNoSigner) {
+      const kept = inherited == null ? "any signer an earlier section sets, which migrate-schema cannot read," : inherited.signer
+      this.changes.push({
+        key: `${name}.sign`,
+        description: `replaced ${name}.sign: null with ${name}.sign.sign: null (in v26 it kept ${kept} from signing the ${name} app; a bare sign: null now means skip signing)`,
+      })
+    } else if (existingSignObj != null && this.propValue(existingSignObj, "sign") === undefined && inherited?.signer != null && inherited.signerWasBare) {
+      this.warnings.push(macSignerOverMasOptionsWarning(name, inherited.signer))
+    }
+
+    if (!isSigner && !keepsNoSigner && present.length === 0 && !hasSignIgnore) {
       if (signIsNull) {
         this.removeProp(existingSignProp)
         this.changes.push({ key: `${name}.sign`, description: `removed ${name}.sign: null (v26 "no custom signer" = v27 default; sign: null now means skip signing)` })
       }
       return
     }
-
-    if (signIsCustom) {
-      const fields = [...present, ...(hasSignIgnore ? ["signIgnore"] : [])].join(", ")
-      this.warnings.push(
-        `${name}.sign is a custom signing function/path, which cannot hold options. Move [${fields}] into an ElectronSignOptions object manually, or keep the custom signer and drop them.`
-      )
+    if (optOut != null) {
+      this.warnings.push(macSignOptOutNextToOptionsWarning(name, optOut))
       return
     }
 
@@ -1894,6 +2151,23 @@ class ConfigCodemod {
       this.changes.push({ key: `${name}.signIgnore`, description: `renamed ${name}.signIgnore → ${name}.sign.ignore` })
     }
 
+    if (isSigner || keepsNoSigner || (signIsUndefined && sources.length > 0)) {
+      // moveInto refuses a value that is not an object, so the sign object is written in place of it: it keeps its position, e.g. after
+      // a spread that may set sign too
+      const braceIndent = this.lineIndentAt(this.start(existingSignProp))
+      const childIndent = braceIndent + this.indentUnit
+      const entries = [
+        ...(isSigner ? [this.entryText(existingSignProp, childIndent)] : keepsNoSigner ? ["sign: null"] : []),
+        ...sources.map(s => this.entryText(s.prop, childIndent, s.renameTo)),
+      ]
+      for (const s of sources) {
+        this.removeProp(s.prop)
+      }
+      const key = this.text.slice(this.start(existingSignProp.name), existingSignProp.name.end)
+      this.replaceRange(this.start(existingSignProp), existingSignProp.end, `${key}: ${this.objectLiteralTextAt(entries, braceIndent)}`)
+      return
+    }
+
     // A bare `sign: null` should be dropped before we build the options object.
     if (signIsNull) {
       this.removeProp(existingSignProp)
@@ -1904,6 +2178,64 @@ class ConfigCodemod {
     if (sources.length > 0) {
       this.moveInto(platform, "sign", sources, [], /* treatNullAsAbsent */ true)
     }
+  }
+
+  /** A custom signer the AST can read: a module path (a string or template literal) or a function (an arrow, a function expression, a method). */
+  private isMacSigner(node: any): boolean {
+    const ts = this.ts
+    return ts.isStringLiteralLike(node) || ts.isTemplateExpression(node) || ts.isArrowFunction(node) || ts.isFunctionExpression(node) || ts.isMethodDeclaration(node)
+  }
+
+  /**
+   * The signer cascade after section `name`, read from the source as written (migrateConfig folds the migrated value instead). It turns
+   * "unknown" after a value the AST cannot read, until a section sets the signer again.
+   */
+  private macSignCascadeAfter(root: any, name: string, cascade: MacSignCascade | "unknown"): MacSignCascade | "unknown" {
+    const ts = this.ts
+    const sectionProp = this.getProp(root, name)
+    if (sectionProp == null) {
+      return cascade
+    }
+    const section = this.getObjectProp(root, name)
+    if (section == null) {
+      // the merge skips a null or undefined section, as migrateConfig's step 13 does
+      const value = ts.isPropertyAssignment(sectionProp) ? this.unwrap(sectionProp.initializer) : null
+      return value != null && (value.kind === ts.SyntaxKind.NullKeyword || (ts.isIdentifier(value) && value.text === "undefined")) ? cascade : "unknown"
+    }
+    // a spread after sign, or anywhere when sign is absent, is what propValue returns for it, which reads as unknown below
+    const value = this.propValue(section, "sign")
+    if (value === undefined) {
+      return cascade
+    }
+    // false, and the "false" / "" that stay, replace the earlier sections' sign
+    if (value.kind === ts.SyntaxKind.FalseKeyword || (ts.isStringLiteralLike(value) && isMacSignOptOutString(value.text))) {
+      return { signer: null, signerWasBare: false, options: null }
+    }
+    if (this.isMacSigner(value)) {
+      return { signer: `${name}.sign.sign`, signerWasBare: true, options: cascade === "unknown" ? null : cascade.options }
+    }
+    if (value.kind === ts.SyntaxKind.NullKeyword) {
+      // over an inherited signer it becomes sign.sign: null, otherwise it is dropped; over an unknown cascade (sign.sign: null too) the
+      // options stay unknown
+      return cascade !== "unknown" && cascade.signer != null ? { ...cascade, signer: null, signerWasBare: false } : cascade
+    }
+    const signObject = this.objectLiteral(value)
+    if (signObject == null) {
+      // the schema rejects another literal (true, a number, a list)
+      return this.isLiteral(value) ? cascade : "unknown"
+    }
+    if (this.hasSpreadOrComputed(signObject)) {
+      return "unknown"
+    }
+    const options = signObject.properties.some((p: any) => this.propName(p) !== "sign") ? `${name}.sign` : cascade === "unknown" ? null : cascade.options
+    const hook = this.propValue(signObject, "sign")
+    if (hook === undefined) {
+      return cascade === "unknown" ? cascade : { ...cascade, options }
+    }
+    if (this.isMacSigner(hook)) {
+      return { signer: `${name}.sign.sign`, signerWasBare: false, options }
+    }
+    return this.isLiteral(hook) ? { signer: null, signerWasBare: false, options } : "unknown"
   }
 
   /** Drops a v26 `null` ("unset") for a field whose v27 type has no null branch. Returns true when dropped. */
@@ -1998,7 +2330,7 @@ class ConfigCodemod {
       )
       return []
     }
-    const includePdb = v26IncludePdb(this.scalarLiteral(value))
+    const includePdb = v26Boolean(this.scalarLiteral(value))
     if (includePdb == null && !ts.isIdentifier(value)) {
       this.warnings.push(INCLUDE_PDB_NOT_BOOLEAN)
       return []
@@ -2234,6 +2566,24 @@ class ConfigCodemod {
     })
   }
 
+  // Mirrors migrateConfig step 14b: renamed in place at the root and on mac / win / linux, the value untouched (null keeps signing required).
+  // mas / masDev are left to ruleMasAndHelperIds, which removes it there.
+  private ruleUpdateManifestSigning(root: any): void {
+    const holders = [{ holder: root, prefix: "" }, ...UPDATE_MANIFEST_PLATFORM_KEYS.map(platform => ({ holder: this.getObjectProp(root, platform), prefix: `${platform}.` }))]
+    for (const { holder, prefix } of holders) {
+      const prop = holder == null ? null : this.getProp(holder, "updateManifest")
+      if (prop == null) {
+        continue
+      }
+      if (this.getProp(holder, "updateManifestSigning") != null) {
+        this.warnings.push(updateManifestBothSetWarning(prefix))
+        continue
+      }
+      this.renameKey(prop, "updateManifestSigning")
+      this.changes.push({ key: `${prefix}updateManifest`, description: `renamed ${prefix}updateManifest → ${prefix}updateManifestSigning (the value is unchanged)` })
+    }
+  }
+
   // ── Edit primitives ───────────────────────────────────────────────────────
 
   /**
@@ -2327,7 +2677,12 @@ class ConfigCodemod {
     this.replaceRange(prop.pos, this.endWithTrailingComma(prop), "")
   }
 
+  /** Renames a property in place; a shorthand `{ name }` keeps its variable as the value (`newName: name`), never a dangling `{ newName }`. */
   private renameKey(prop: any, newName: string): void {
+    if (this.ts.isShorthandPropertyAssignment(prop)) {
+      this.replaceRange(this.start(prop), prop.end, `${newName}: ${prop.name.text}`)
+      return
+    }
     this.replaceRange(this.start(prop.name), prop.name.end, newName)
   }
 
@@ -2346,7 +2701,8 @@ class ConfigCodemod {
       return `${keyText}: ${this.valueText(prop.initializer, targetIndent)}`
     }
     if (this.ts.isShorthandPropertyAssignment(prop)) {
-      return keyText
+      // renamed, a shorthand keeps its variable as the value: `{ signIgnore }` → `ignore: signIgnore`
+      return renameTo != null && renameTo !== prop.name.text ? `${renameTo}: ${prop.name.text}` : keyText
     }
     // Method / accessor — capture verbatim, re-indented.
     return this.reindent(this.text.slice(this.start(prop), prop.end), this.lineIndentAt(this.start(prop)), targetIndent)
@@ -2461,6 +2817,41 @@ class ConfigCodemod {
       return false
     }
     return node.kind === ts.SyntaxKind.NullKeyword ? null : undefined
+  }
+
+  /**
+   * The JSON value of a literal: a string, number, boolean or null, or an object / array literal of them, without its `undefined` properties
+   * (as in migrateConfig's JSON copy). UNREAD for anything else, such as an identifier, a call, a spread, a shorthand or method property, a
+   * computed key or a template with substitutions.
+   */
+  private jsonLiteral(node: any): unknown {
+    const ts = this.ts
+    const value = this.unwrap(node)
+    if (ts.isArrayLiteralExpression(value)) {
+      const items = value.elements.map((element: any) => this.jsonLiteral(element))
+      return items.includes(UNREAD) ? UNREAD : items
+    }
+    if (ts.isObjectLiteralExpression(value)) {
+      const result: Record<string, unknown> = {}
+      for (const prop of value.properties) {
+        const name = ts.isPropertyAssignment(prop) ? this.propName(prop) : undefined
+        if (name === undefined) {
+          return UNREAD
+        }
+        const initializer = this.unwrap(prop.initializer)
+        if (ts.isIdentifier(initializer) && initializer.text === "undefined") {
+          continue
+        }
+        const item = this.jsonLiteral(initializer)
+        if (item === UNREAD) {
+          return UNREAD
+        }
+        result[name] = item
+      }
+      return result
+    }
+    const scalar = this.scalarLiteral(value)
+    return scalar === undefined ? UNREAD : scalar
   }
 
   /** `node` when it is an object literal, else null. */

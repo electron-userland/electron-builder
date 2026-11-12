@@ -1,10 +1,12 @@
 import type { Configuration } from "app-builder-lib"
 import {
+  checkLegacyConfiguration,
   checkUpdateSigningKeysTrusted,
   compareListedFilesInOutput,
   getConfig,
   listedFileFolders,
   normalizeExplicitPublicKeys,
+  resolveUpdateManifestSigning,
   updateManifestPlatform,
   verifyUpdateManifestContent,
 } from "app-builder-lib/internal"
@@ -21,7 +23,7 @@ export const SIGN_UPDATE_MANIFEST_COMMAND = "sign-update-manifest <files..>"
 
 /**
  * Options of `sign-update-manifest`, configured like `publish`: the keys come from the project's electron-builder configuration
- * (`-c` / `--config` picks the file, and `-c.updateManifest.signingKeyFile=...` style overrides apply on top) and the
+ * (`-c` / `--config` picks the file, and `-c.updateManifestSigning.signingKeyFile=...` style overrides apply on top) and the
  * environment variables the build reads, never from a key-material flag.
  * @internal
  */
@@ -37,12 +39,12 @@ export function configureSignUpdateManifestCommand(yargs: Argv) {
       description:
         "The path to an electron-builder config. Defaults to `electron-builder.yml` (or `json`, or `json5`, or `js`, or `ts`), see " +
         chalk.underline("https://www.electron.build/configuration") +
-        ". Its updateManifest settings provide the signing key(s) and the trust list; override them with e.g. -c.updateManifest.signingKeyFile=<path>",
+        ". Its updateManifestSigning settings provide the signing key(s) and the trust list; override them with e.g. -c.updateManifestSigning.signingKeyFile=<path>",
     })
     .option("verify", {
       type: "boolean",
       description:
-        "Only verify the existing signatures against the trust list in updateManifest.publicKey, as electron-builder verify does; nothing is written and no signing key is loaded",
+        "Only verify the existing signatures against the trust list in updateManifestSigning.publicKey, as electron-builder verify does; nothing is written and no signing key is loaded",
     })
     .option("rehash", {
       type: "boolean",
@@ -57,7 +59,7 @@ export interface SignUpdateManifestOptions {
   readonly files: Array<string>
   /** `-c` / `--config`: a config file path, an inline configuration object, or both (an array), as for `build`. */
   readonly config?: string | Configuration | Array<string | Configuration> | null
-  /** Check the existing signatures against `updateManifest.publicKey` instead of re-signing; nothing is written and no signing key is loaded. */
+  /** Check the existing signatures against `updateManifestSigning.publicKey` instead of re-signing; nothing is written and no signing key is loaded. */
   readonly verify?: boolean
   /**
    * Before signing, take the sha512 and size of every `files` entry from the local file, found next to the manifest or in the build output
@@ -92,8 +94,8 @@ export interface VerifiedUpdateManifest {
   /** The manifest's version, or null when it cannot be parsed. */
   readonly version: string | null
   /**
-   * `verified`: signed by a key of the trust list. `failed`: not. `skipped`: not verified, but either `updateManifest` is `false`
-   * or `updateManifest.allowSigningKeyOutsideTrustList` allows it for a cutover release — the statuses `electron-builder verify`
+   * `verified`: signed by a key of the trust list. `failed`: not. `skipped`: not verified, but either `updateManifestSigning` is `false`
+   * or `updateManifestSigning.allowSigningKeyOutsideTrustList` allows it for a cutover release — the statuses `electron-builder verify`
    * reports for the same manifest.
    */
   readonly status: "verified" | "failed" | "skipped"
@@ -106,7 +108,7 @@ export interface VerifiedUpdateManifest {
 type ManifestPlatform = ReturnType<typeof updateManifestPlatform>
 const MANIFEST_PLATFORMS: ReadonlyArray<ManifestPlatform> = ["mac", "win", "linux"]
 
-/** A deep copy of an `updateManifest` value from the command line, which later configuration merging cannot change. */
+/** A deep copy of an `updateManifestSigning` value from the command line, which later configuration merging cannot change. */
 function snapshotOf(value: unknown): unknown {
   return value == null || typeof value !== "object" ? value : structuredClone(value)
 }
@@ -117,14 +119,14 @@ const BUILD_PLATFORM_NAMES: Record<ManifestPlatform, string> = { mac: "mac", win
 const RESIGN_DOCS = "https://www.electron.build/docs/features/signed-update-manifests#re-signing-a-published-manifest"
 
 const KEY_SOURCES_HINT =
-  "Set updateManifest.signingKeyFile (or updateManifest.signingKey) in the electron-builder configuration, override it with -c.updateManifest.signingKeyFile=<path>, " +
+  "Set updateManifestSigning.signingKeyFile (or updateManifestSigning.signingKey) in the electron-builder configuration, override it with -c.updateManifestSigning.signingKeyFile=<path>, " +
   "or set ELECTRON_BUILDER_UPDATE_SIGN_KEY (the PEM file, base64-encoded on one line) or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path to the PEM file) — the same key(s) the build signs with. " +
   `See ${RESIGN_DOCS}`
 
 /**
  * Backs `electron-builder sign-update-manifest`: re-signs existing `latest*.yml` files in place with the update signing
  * key(s), so a published manifest can be edited (`stagingPercentage`, a URL...) without rebuilding. With `verify` it only
- * checks the signatures already in the files against `updateManifest.publicKey`, exactly as `electron-builder verify` checks a
+ * checks the signatures already in the files against `updateManifestSigning.publicKey`, exactly as `electron-builder verify` checks a
  * manifest, and throws if any fails. Signing keys are resolved from the project configuration and the environment as the build resolves them;
  * key material is never logged.
  * @internal
@@ -144,7 +146,7 @@ export async function signUpdateManifest(options: SignUpdateManifestOptions): Pr
 
 /**
  * Resolves the configuration like `publish` and `build` do: the `-c` value is normalized by the build's own option
- * normalization (a file path, inline `-c.<key>=value` overrides, or both, with `"false"`/`"null"` coerced for `updateManifest`),
+ * normalization (a file path, inline `-c.<key>=value` overrides, or both, with `"false"`/`"null"` coerced for `updateManifestSigning`),
  * then a file path is loaded by `getConfig` with the inline overrides merged on top, as Packager.validateConfig does.
  */
 async function loadProjectConfig(projectDir: string, configOption: SignUpdateManifestOptions["config"]): Promise<Configuration> {
@@ -158,15 +160,19 @@ async function loadProjectConfig(projectDir: string, configOption: SignUpdateMan
     configPath = configFromOptions.extends as string
     delete configFromOptions.extends
   }
-  return getConfig(projectDir, configPath, configFromOptions ?? null)
+  const config = await getConfig(projectDir, configPath, configFromOptions ?? null)
+  // as build, publish -f and verify do: a key renamed in v27 (updateManifest, a -c.updateManifest.publicKey trust list) would otherwise be
+  // ignored here, and the trust list or opt-out set with it never applied
+  checkLegacyConfiguration(config)
+  return config
 }
 
 /**
- * The `updateManifest` values passed inline with `-c.<key>=value`, read from the raw `-c` value rather than the merged configuration:
+ * The `updateManifestSigning` values passed inline with `-c.<key>=value`, read from the raw `-c` value rather than the merged configuration:
  * merging lets a configured platform block shadow a root override and concatenates a repeated override with a configured list, so a
  * trust list given on the command line could otherwise end up holding keys the operator did not pass. Construct it before the `-c`
  * value is handed to normalizeOptions / getConfig: they deep-assign its objects into one another in place, so by then the first of
- * several `-c.updateManifest.publicKey=` objects already holds the last value. The `updateManifest` blocks are deep-copied here.
+ * several `-c.updateManifestSigning.publicKey=` objects already holds the last value. The `updateManifestSigning` blocks are deep-copied here.
  */
 class CommandLineOverrides {
   private readonly items: Array<Record<string, any>>
@@ -177,10 +183,10 @@ class CommandLineOverrides {
     this.items = values
       .filter((it): it is Record<string, any> => it != null && typeof it === "object" && !Array.isArray(it))
       .map(item => {
-        // only the updateManifest blocks are kept: plain data (strings, lists, booleans), unlike a programmatic config's hooks
-        const snapshot: Record<string, any> = { updateManifest: snapshotOf(item.updateManifest) }
+        // only the updateManifestSigning blocks are kept: plain data (strings, lists, booleans), unlike a programmatic config's hooks
+        const snapshot: Record<string, any> = { updateManifestSigning: snapshotOf(item.updateManifestSigning) }
         for (const platform of MANIFEST_PLATFORMS) {
-          snapshot[platform] = { updateManifest: snapshotOf(item[platform]?.updateManifest) }
+          snapshot[platform] = { updateManifestSigning: snapshotOf(item[platform]?.updateManifestSigning) }
         }
         return snapshot
       })
@@ -198,13 +204,13 @@ class CommandLineOverrides {
   }
 
   /**
-   * The trust list given on the command line for `platform`'s manifests: every `-c.<platform>.updateManifest.publicKey` when there is
-   * one, otherwise every `-c.updateManifest.publicKey` (also when the configuration has a platform block), or null when neither was passed.
+   * The trust list given on the command line for `platform`'s manifests: every `-c.<platform>.updateManifestSigning.publicKey` when there is
+   * one, otherwise every `-c.updateManifestSigning.publicKey` (also when the configuration has a platform block), or null when neither was passed.
    */
   trustList(platform: ManifestPlatform): { keys: Array<string>; field: string } | null {
     for (const [field, block] of [
-      [`${platform}.updateManifest`, (item: Record<string, any>) => item[platform]?.updateManifest],
-      ["updateManifest", (item: Record<string, any>) => item.updateManifest],
+      [`${platform}.updateManifestSigning`, (item: Record<string, any>) => item[platform]?.updateManifestSigning],
+      ["updateManifestSigning", (item: Record<string, any>) => item.updateManifestSigning],
     ] as const) {
       const values = this.values(block, "publicKey")
       if (values.length > 0) {
@@ -216,7 +222,7 @@ class CommandLineOverrides {
 
   /** `allowSigningKeyOutsideTrustList` given on the command line for `platform` (the platform override first), or null. */
   allowSigningKeyOutsideTrustList(platform: ManifestPlatform): boolean | null {
-    for (const block of [(item: Record<string, any>) => item[platform]?.updateManifest, (item: Record<string, any>) => item.updateManifest]) {
+    for (const block of [(item: Record<string, any>) => item[platform]?.updateManifestSigning, (item: Record<string, any>) => item.updateManifestSigning]) {
       const values = this.values(block, "allowSigningKeyOutsideTrustList")
       if (values.length > 0) {
         const last = values[values.length - 1]
@@ -227,7 +233,7 @@ class CommandLineOverrides {
   }
 }
 
-/** Per-platform signing keys and trust list, resolved from `<platform>.updateManifest ?? updateManifest` like PlatformPackager.updateManifestOptions. */
+/** Per-platform signing keys and trust list, resolved from `<platform>.updateManifestSigning ?? updateManifestSigning` like PlatformPackager.updateManifestOptions. */
 class ManifestSigningSettings {
   private readonly signingKeys = new Map<ManifestPlatform, Array<string>>()
 
@@ -255,9 +261,12 @@ class ManifestSigningSettings {
     return path.dirname(manifestFile)
   }
 
-  private options(platform: ManifestPlatform): { value: Configuration["updateManifest"]; field: string } {
-    const platformValue = (this.config as any)[platform]?.updateManifest
-    return platformValue != null ? { value: platformValue, field: `${platform}.updateManifest` } : { value: this.config.updateManifest ?? null, field: "updateManifest" }
+  private options(platform: ManifestPlatform): { value: Configuration["updateManifestSigning"]; field: string } {
+    const platformConfig = this.config[platform]
+    return {
+      value: resolveUpdateManifestSigning(this.config, platformConfig),
+      field: platformConfig?.updateManifestSigning != null ? `${platform}.updateManifestSigning` : "updateManifestSigning",
+    }
   }
 
   /** The configured signing key(s) (PEM) for `platform`; an InvalidConfigurationError when there are none or signing is opted out of. */
@@ -275,7 +284,7 @@ class ManifestSigningSettings {
       if (keys.length === 0) {
         throw new InvalidConfigurationError(`Cannot sign ${file}: no Ed25519 signing key was found for ${platform}. ${KEY_SOURCES_HINT}`)
       }
-      // the publishing build's own check: an explicit updateManifest.publicKey must hold one of the signing keys, unless
+      // the publishing build's own check: an explicit updateManifestSigning.publicKey must hold one of the signing keys, unless
       // allowSigningKeyOutsideTrustList marks a cutover release; without a publicKey the build derives the trust list from the keys
       checkUpdateSigningKeysTrusted(BUILD_PLATFORM_NAMES[platform], value ?? null, keys.map(parsePrivateKey), normalizeExplicitPublicKeys(value?.publicKey), true)
       this.signingKeys.set(platform, keys)
@@ -285,7 +294,7 @@ class ManifestSigningSettings {
 
   /**
    * What `--verify` checks `platform`'s manifests against, the same source `electron-builder verify` uses when no packaged app is at hand:
-   * the `publicKey` of `<platform>.updateManifest ?? updateManifest` (the platform block wins as a whole, as in the build). Like `verify`, it never loads a signing (private)
+   * the `publicKey` of `<platform>.updateManifestSigning ?? updateManifestSigning` (the platform block wins as a whole, as in the build). Like `verify`, it never loads a signing (private)
    * key, so a release whose trust list is derived from its signing keys needs the public keys set here to be verified.
    */
   verificationPolicy(platform: ManifestPlatform, file: string): { optedOut: true } | { optedOut: false; trustedKeys: Array<string>; allowCutover: boolean } {
@@ -300,8 +309,8 @@ class ManifestSigningSettings {
     const source = override == null ? `${field}.publicKey` : `-c.${override.field}.publicKey`
     if (trustedKeys.length === 0) {
       throw new InvalidConfigurationError(
-        `Cannot verify ${file}: ${source} ${override == null ? "is not set" : "holds no key"}. --verify checks against the public keys of updateManifest.publicKey (as electron-builder verify does) ` +
-          "and never loads a signing key: set it in the configuration or pass -c.updateManifest.publicKey=<PEM>"
+        `Cannot verify ${file}: ${source} ${override == null ? "is not set" : "holds no key"}. --verify checks against the public keys of updateManifestSigning.publicKey (as electron-builder verify does) ` +
+          "and never loads a signing key: set it in the configuration or pass -c.updateManifestSigning.publicKey=<PEM>"
       )
     }
     trustedKeys.forEach((key, index) => {
@@ -490,8 +499,8 @@ function readVersion(content: string, file: string): string | null {
 
 /**
  * Verifies each manifest with `verifyUpdateManifestContent`, the check `electron-builder verify` runs, and maps the outcome the same way:
- * `updateManifest: false` is skipped, and a manifest no trusted key validates is skipped rather than failed when
- * `updateManifest.allowSigningKeyOutsideTrustList` marks the release as a deliberate cutover.
+ * `updateManifestSigning: false` is skipped, and a manifest no trusted key validates is skipped rather than failed when
+ * `updateManifestSigning.allowSigningKeyOutsideTrustList` marks the release as a deliberate cutover.
  */
 async function verifyUpdateManifests(files: Array<string>, settings: ManifestSigningSettings): Promise<Array<VerifiedUpdateManifest>> {
   const results: Array<VerifiedUpdateManifest> = []
@@ -500,7 +509,7 @@ async function verifyUpdateManifests(files: Array<string>, settings: ManifestSig
     const content = await readFile(file, "utf8")
     const version = readVersion(content, file)
     if (policy.optedOut) {
-      results.push({ file, version, status: "skipped", reason: "updateManifest is false in the configuration, so the manifest is not signed" })
+      results.push({ file, version, status: "skipped", reason: "updateManifestSigning is false in the configuration, so the manifest is not signed" })
       continue
     }
     const verification = verifyUpdateManifestContent(content, policy.trustedKeys)
@@ -511,7 +520,7 @@ async function verifyUpdateManifests(files: Array<string>, settings: ManifestSig
         file,
         version,
         status: "skipped",
-        reason: `not signed by a key of updateManifest.publicKey (${verification.reason}), which updateManifest.allowSigningKeyOutsideTrustList allows for a cutover release signed with a key outside the trust list`,
+        reason: `not signed by a key of updateManifestSigning.publicKey (${verification.reason}), which updateManifestSigning.allowSigningKeyOutsideTrustList allows for a cutover release signed with a key outside the trust list`,
       })
     } else {
       results.push({ file, version, status: "failed", reason: verification.reason })

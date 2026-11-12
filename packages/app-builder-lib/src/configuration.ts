@@ -264,7 +264,7 @@ export interface CommonConfiguration {
    *
    * @example
    * ```json
-   * { "snapcraft": { "base": "core24", "core24": { "useLXD": true } } }
+   * { "snapcraft": { "base": "core24", "core24": { "buildEnvironment": "lxd" } } }
    * ```
    *
    * @see {@link SnapcraftOptions}
@@ -473,15 +473,15 @@ export interface CommonConfiguration {
    * With `true`:
    * - macOS: the app must be signed, which needs a macOS host, also in pull-request builds (set `CSC_FOR_PULL_REQUEST=true` to sign
    *   them, or pass `-c.forceCodeSigning=false` there), and notarized: notarization credentials must be set when the build starts.
-   *   The output of a custom `mac.sign` signer is checked with `codesign --verify --deep --strict`, the stapled ticket with
+   *   The output of a custom `mac.sign.sign` signer is checked with `codesign --verify --deep --strict`, the stapled ticket with
    *   `stapler validate`, a signed pkg with `pkgutil --check-signature`, and a DMG with `dmg.sign: true` must be signed.
    * - Windows: every signed file is read back and must carry a valid Authenticode signature.
    * - Every platform (the only effect on Linux): auto-update manifests must be signed, also by a build that does not publish.
    * - A prepackaged app, which electron-builder does not sign, must already be signed (and, on macOS, notarized).
    *
-   * Explicit opt-outs are honored with a warning: `mac.notarize: false`, `updateManifest: false`, `win.signExts` exclusions and a
-   * custom `nsis.script` (whose uninstaller electron-builder does not sign). `win.sign: false` and `mac.sign: null` contradict it
-   * and fail the build. `electron-builder verify` checks the build output afterwards.
+   * Explicit opt-outs are honored with a warning: `mac.notarize: false`, `updateManifestSigning: false`, `win.signExts` exclusions and a
+   * custom `nsis.script` (whose uninstaller electron-builder does not sign). `win.sign: false` and `mac.sign: false` / `null` contradict
+   * it and fail the build. `electron-builder verify` checks the build output afterwards.
    *
    * @default false
    */

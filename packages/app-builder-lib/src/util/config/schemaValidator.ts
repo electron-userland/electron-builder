@@ -17,8 +17,10 @@ const ajv = new Ajv({
 // KNOWN GAP — `typeof` is an ajv-keywords keyword and ajv-keywords is not installed. Under
 // `strict: false` an unregistered keyword is silently ignored, so every `{ "typeof": "function" }`
 // branch behaves as an empty schema that matches ANYTHING. Those branches sit inside `anyOf`s, so
-// the enclosing union accepts any value: most consequentially `mac.sign` / `mas.sign`, where an
-// unsupported or typo'd key validates here and is then dropped at build time with no error.
+// the enclosing union accepts any value: the hook options (`afterPack`, …) and the custom signers
+// `mac.sign.sign` / `win.sign.sign` (where `true` or an object validates and is then ignored). The
+// `mac.sign` / `mas.sign` / `masDev.sign` objects themselves have no such branch, so an unsupported
+// or typo'd key in them is rejected.
 //
 // Registering the keyword is NOT a safe drop-in fix. scheme.json currently emits
 // `anyOf: [{ "typeof": "function" }, { "type": "null" }]` for several object-valued options —
@@ -196,7 +198,7 @@ function formatSchemaType(schema: Record<string, unknown> | undefined): string {
         if (typeof s.type === "string") {
           return s.type
         }
-        // A branch carrying `const` but no `type` is a literal member of the union - `updateManifest: false`, the
+        // A branch carrying `const` but no `type` is a literal member of the union - `updateManifestSigning: false`, the
         // update-manifest signing opt-out, is the only one in scheme.json (the `type` is stripped by
         // scripts/fix-schema.js so ajv's `coerceTypes` cannot turn `null` into `false`). Dropping it would leave the
         // message advertising `null` as the sole legal value, when `null` specifically is NOT the opt-out.

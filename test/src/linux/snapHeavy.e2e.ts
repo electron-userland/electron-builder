@@ -134,7 +134,7 @@ async function runInstallLaunchTest(expect: any, core: "core18" | "core20" | "co
         snapcraft: {
           base: core,
           // core24 gnome extension requires LXD/multipass; destructive-mode works on bare runners
-          ...(core === "core24" ? { core24: { useDestructiveMode: true } } : {}),
+          ...(core === "core24" ? { core24: { buildEnvironment: "host" } } : {}),
         },
       },
       effectiveOptionComputed,
@@ -199,7 +199,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snap heavy", options, () => {
           snapcraft: {
             base: core,
             // core24 gnome extension is incompatible with SNAPCRAFT_BUILD_ENVIRONMENT=host (set in Docker)
-            ...(core === "core24" ? { core24: { useDestructiveMode: true } } : {}),
+            ...(core === "core24" ? { core24: { buildEnvironment: "host" } } : {}),
           },
           electronFuses: {
             runAsNode: true,
@@ -262,7 +262,7 @@ describe.heavy.ifLinux.ifEnv(hasSnapInstalled() && canRunInstallTests())("snap c
           snapcraft: {
             base: "core24",
             core24: {
-              useDestructiveMode: true,
+              buildEnvironment: "host",
               // gnome extension is incompatible with destructive-mode — must not be set
               extensions: [],
             },
@@ -307,7 +307,7 @@ describe.heavy.ifLinux.ifEnv(hasSnapInstalled() && canRunInstallTests())("snap c
           snapcraft: {
             base: "core24",
             core24: {
-              useDestructiveMode: true,
+              buildEnvironment: "host",
               stagePackages: ["default", "libdrm2"],
             },
           },

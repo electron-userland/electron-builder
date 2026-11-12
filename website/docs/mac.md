@@ -79,17 +79,17 @@ While cross-compilation is possible, the most reliable approach is to build `arm
 macOS apps must be signed to avoid Gatekeeper warnings. See [Code Signing](features/code-signing/code-signing.md) for full setup.
 
 :::note[v27: signing options moved under mac.sign]
-In v27 every macOS signing option (`identity`, `entitlements`, `hardenedRuntime`, `type`, `provisioningProfile`, `binaries`, `requirements`, `timestamp`, …) lives inside a single `mac.sign` object (`sign.identity`, `sign.hardenedRuntime`, …); `signIgnore` is now `sign.ignore`. `electron-builder migrate-schema` rewrites the old flat keys automatically. The same structure applies to `mas` and `masDev`. See [v27 Breaking Changes → macOS signing](./migration/v27-config-changes.md#macos-signing-macsign).
+In v27 every macOS signing option (`identity`, `entitlements`, `hardenedRuntime`, `type`, `provisioningProfile`, `binaries`, `requirements`, `timestamp`, …) lives inside a single `mac.sign` object (`sign.identity`, `sign.hardenedRuntime`, …); `signIgnore` is now `sign.ignore`, a custom signer is `sign.sign`, and `mac.sign: false` skips signing. `electron-builder migrate-schema` rewrites the old flat keys and a custom signer automatically. The same structure applies to `mas` and `masDev`. See [v27 Breaking Changes → macOS signing](./migration/v27-config-changes.md#macos-signing-macsign).
 :::
 
 ### Certificate Identity
 
-Use `mac.sign.identity` to specify the signing certificate by name:
+Use `mac.sign.identity` to specify the signing certificate by name, without the certificate type prefix such as `Developer ID Application:` (the type is chosen automatically):
 
 ```yaml
 mac:
   sign:
-    identity: "Developer ID Application: My Company (TEAM1234AB)"
+    identity: "My Company (TEAM1234AB)"
 ```
 
 Or use environment variables — the recommended approach for CI:
@@ -99,7 +99,7 @@ export CSC_LINK=/path/to/certificate.p12
 export CSC_KEY_PASSWORD=yourpassword
 ```
 
-Set `mac.sign.identity: null` (or `mac.sign: null`) to skip signing entirely. Set `mac.sign.identity: "-"` to use an ad-hoc signature (app will only run on the machine that built it).
+Set `mac.sign: false` (or `mac.sign.identity: null`) to skip signing entirely. Set `mac.sign.identity: "-"` to use an ad-hoc signature (app will only run on the machine that built it).
 
 :::warning[Ad-hoc signing and Hardened Runtime]
 If you disable code signing, you should also disable Hardened Runtime (`mac.sign.hardenedRuntime: false`), as the combination of no signing and enabled Hardened Runtime may prevent the app from launching.

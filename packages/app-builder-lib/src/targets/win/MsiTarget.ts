@@ -25,7 +25,8 @@ const ROOT_DIR_ID = "APPLICATIONFOLDER"
 export default class MsiTarget extends Target {
   protected readonly vm = process.platform === "win32" ? new VmManager() : new WineVmManager(this.packager.config.toolsets?.wine, this.packager.buildResourcesDir)
 
-  readonly options: MsiOptions = this.packager.getOptionsForTarget<MsiOptions>("msi")
+  // this.name: an msiWrapped target replaces the value with its own msiWrapped options, and must not check msi.publish
+  readonly options: MsiOptions = this.packager.getOptionsForTarget<MsiOptions>(this.name)
 
   constructor(
     protected readonly packager: WinPackager,

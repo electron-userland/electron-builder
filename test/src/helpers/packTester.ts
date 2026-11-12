@@ -308,9 +308,9 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   // snapshots, so opt out unless the test configures signing itself. This also makes those snapshots hermetic: a
   // developer with ELECTRON_BUILDER_UPDATE_SIGN_KEY exported would otherwise sign every fixture build and rewrite
   // every manifest snapshot. Set before the reassignments below so it survives them.
-  // `=== undefined` on purpose - a test writes `updateManifest: null` to exercise the required path.
-  if (configuration.updateManifest === undefined) {
-    ;(configuration as any).updateManifest = false
+  // `=== undefined` on purpose - a test writes `updateManifestSigning: null` to exercise the required path.
+  if (configuration.updateManifestSigning === undefined) {
+    ;(configuration as any).updateManifestSigning = false
   }
   // The same for Windows update signature verification: fixture builds are unsigned unless the test signs them (signedWin), and since
   // v27 a build that writes app-update.yml without a publisherName fails. Opt them out explicitly - app-update.yml then carries

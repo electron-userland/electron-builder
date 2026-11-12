@@ -94,55 +94,55 @@ async function writeKeyFiles(dir: string, files: Record<string, string>) {
 // every accepted way to hand the same key(s) to the builder
 const inputFormats: Array<InputFormat> = [
   {
-    name: "updateManifest.signingKey PEM string",
+    name: "updateManifestSigning.signingKey PEM string",
     keys: "single",
     setup: () =>
       Promise.resolve({
-        config: { updateManifest: { signingKey: oldKey.privateKeyFile } },
+        config: { updateManifestSigning: { signingKey: oldKey.privateKeyFile } },
       }),
   },
   {
-    name: "updateManifest.signingKey PEM string, CRLF",
+    name: "updateManifestSigning.signingKey PEM string, CRLF",
     keys: "single",
     setup: () =>
       Promise.resolve({
-        config: { updateManifest: { signingKey: crlf(oldKey.privateKeyFile) } },
+        config: { updateManifestSigning: { signingKey: crlf(oldKey.privateKeyFile) } },
       }),
   },
   {
-    name: "updateManifest.signingKey concatenated PEM bundle",
+    name: "updateManifestSigning.signingKey concatenated PEM bundle",
     keys: "dual",
     setup: () =>
       Promise.resolve({
         config: {
-          updateManifest: {
+          updateManifestSigning: {
             signingKey: oldKey.privateKeyFile + newKey.privateKeyFile,
           },
         },
       }),
   },
   {
-    name: "updateManifest.signingKey array",
+    name: "updateManifestSigning.signingKey array",
     keys: "dual",
     setup: () =>
       Promise.resolve({
         config: {
-          updateManifest: {
+          updateManifestSigning: {
             signingKey: [oldKey.privateKeyFile, newKey.privateKeyFile],
           },
         },
       }),
   },
   {
-    name: "updateManifest.signingKeyFile relative path",
+    name: "updateManifestSigning.signingKeyFile relative path",
     keys: "single",
     setup: async dir => {
       await writeKeyFiles(dir, { "old.pem": oldKey.privateKeyFile })
-      return { config: { updateManifest: { signingKeyFile: "keys/old.pem" } } }
+      return { config: { updateManifestSigning: { signingKeyFile: "keys/old.pem" } } }
     },
   },
   {
-    name: "updateManifest.signingKeyFile array",
+    name: "updateManifestSigning.signingKeyFile array",
     keys: "dual",
     setup: async dir => {
       await writeKeyFiles(dir, {
@@ -151,7 +151,7 @@ const inputFormats: Array<InputFormat> = [
       })
       return {
         config: {
-          updateManifest: {
+          updateManifestSigning: {
             signingKeyFile: ["keys/old.pem", path.join(dir, "keys", "new.pem")],
           },
         },
@@ -325,7 +325,7 @@ test("the current updater verifies the frozen manifests with every frozen trust 
   const trustLists: Array<[string, string]> = [
     ["frozen single-key app-update.yml", frozen.appUpdateYml.single],
     ["frozen dual-key app-update.yml", frozen.appUpdateYml.dual],
-    // an explicit updateManifest.publicKey is embedded as-is, so a raw base64 SPKI value may be what an install holds
+    // an explicit updateManifestSigning.publicKey is embedded as-is, so a raw base64 SPKI value may be what an install holds
     ["explicit base64 SPKI publicKey", feedYml(spkiBase64(oldKey.publicKeyPem))],
     ["explicit [old, new] PEM list", feedYml([oldKey.publicKeyPem, newKey.publicKeyPem])],
   ]
@@ -352,7 +352,7 @@ test("control: tampered and foreign-key manifests are rejected, so the checks ab
   const projectDir = await tmpDir.getTempDir({
     prefix: "signed-manifest-compat-control",
   })
-  const currentSigned = await signWithCurrentBuilder(tmpDir, await resolveKeys({ updateManifest: { signingKey: oldKey.privateKeyFile } }, projectDir), "latest.yml")
+  const currentSigned = await signWithCurrentBuilder(tmpDir, await resolveKeys({ updateManifestSigning: { signingKey: oldKey.privateKeyFile } }, projectDir), "latest.yml")
   expect(updaterVerify(newKeyOnly, original).ok).toBe(false)
   expect(updaterVerify(newKeyOnly, currentSigned).ok).toBe(false)
 })

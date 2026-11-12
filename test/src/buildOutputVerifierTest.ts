@@ -152,48 +152,48 @@ describe("update manifests", () => {
     )
   })
 
-  test("updateManifest: false skips the signature check", async ({ expect, tmpDir }) => {
+  test("updateManifestSigning: false skips the signature check", async ({ expect, tmpDir }) => {
     const outDir = await tmpDir.createTempDir()
     await writeLinuxApp(outDir, [])
     await writeManifest(path.join(outDir, "latest-linux.yml"), [await writeArtifact(outDir, "My-1.0.0.AppImage")], [])
-    expect(resultsOf(await run(outDir, { linux: { updateManifest: false } }), "update manifest signature")).toEqual(["skipped"])
+    expect(resultsOf(await run(outDir, { linux: { updateManifestSigning: false } }), "update manifest signature")).toEqual(["skipped"])
   })
 
-  test("without a packaged app, updateManifest.publicKey provides the trust list, or the manifest cannot be verified", async ({ expect, tmpDir }) => {
+  test("without a packaged app, updateManifestSigning.publicKey provides the trust list, or the manifest cannot be verified", async ({ expect, tmpDir }) => {
     const outDir = await tmpDir.createTempDir()
     await writeManifest(path.join(outDir, "latest-mac.yml"), [await writeArtifact(outDir, "My-1.0.0-mac.zip")])
-    expect(resultsOf(await run(outDir, { updateManifest: { publicKey: keyA.publicKeyPem } }), "update manifest signature")).toEqual(["verified"])
-    expect(resultsOf(await run(outDir, { updateManifest: { publicKey: keyB.publicKeyPem } }), "update manifest signature")).toEqual(["failed"])
+    expect(resultsOf(await run(outDir, { updateManifestSigning: { publicKey: keyA.publicKeyPem } }), "update manifest signature")).toEqual(["verified"])
+    expect(resultsOf(await run(outDir, { updateManifestSigning: { publicKey: keyB.publicKeyPem } }), "update manifest signature")).toEqual(["failed"])
     const results = await run(outDir)
     expect(resultsOf(results, "update manifest signature")).toEqual(["unverifiable"])
-    expect(results.find(it => it.check === "update manifest signature")?.message).toContain("updateManifest.publicKey is not set")
+    expect(results.find(it => it.check === "update manifest signature")?.message).toContain("updateManifestSigning.publicKey is not set")
   })
 
   // verify needs public keys only: a signing (private) key is never loaded, from the configuration or the environment
-  test("a signing key is never used as the trust list: without updateManifest.publicKey the manifest is unverifiable", async ({ expect, tmpDir }) => {
+  test("a signing key is never used as the trust list: without updateManifestSigning.publicKey the manifest is unverifiable", async ({ expect, tmpDir }) => {
     const outDir = await tmpDir.createTempDir()
     await writeManifest(path.join(outDir, "latest-mac.yml"), [await writeArtifact(outDir, "My-1.0.0-mac.zip")])
     // the key that signed the manifest, where electron-builder would find it to sign with
     vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", Buffer.from(keyA.privateKeyPem).toString("base64"))
     expect(resultsOf(await run(outDir), "update manifest signature")).toEqual(["unverifiable"])
-    expect(resultsOf(await run(outDir, { updateManifest: { signingKey: keyA.privateKeyPem } }), "update manifest signature")).toEqual(["unverifiable"])
+    expect(resultsOf(await run(outDir, { updateManifestSigning: { signingKey: keyA.privateKeyPem } }), "update manifest signature")).toEqual(["unverifiable"])
     // a key file that would fail the read if verify tried to load it
     vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", undefined)
     vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", path.join(outDir, "missing-key.pem"))
-    expect(resultsOf(await run(outDir, { updateManifest: { signingKeyFile: path.join(outDir, "missing-key.pem") } }), "update manifest signature")).toEqual(["unverifiable"])
+    expect(resultsOf(await run(outDir, { updateManifestSigning: { signingKeyFile: path.join(outDir, "missing-key.pem") } }), "update manifest signature")).toEqual(["unverifiable"])
   })
 
   test("a cutover release signed outside its embedded trust list is skipped, since its signing key is not in any trust list", async ({ expect, tmpDir }) => {
     const outDir = await tmpDir.createTempDir()
-    // the release is signed with the old key A but embeds only the new key B (updateManifest.allowSigningKeyOutsideTrustList)
+    // the release is signed with the old key A but embeds only the new key B (updateManifestSigning.allowSigningKeyOutsideTrustList)
     await writeLinuxApp(outDir, [keyB.publicKeyPem])
     await writeManifest(path.join(outDir, "latest-linux.yml"), [await writeArtifact(outDir, "My-1.0.0.AppImage")])
     const cutover = { publicKey: keyB.publicKeyPem, allowSigningKeyOutsideTrustList: true }
-    expect(resultsOf(await run(outDir, { updateManifest: cutover }), "update manifest signature")).toEqual(["skipped"])
+    expect(resultsOf(await run(outDir, { updateManifestSigning: cutover }), "update manifest signature")).toEqual(["skipped"])
     // the signing key is not loaded to verify it with either
-    expect(resultsOf(await run(outDir, { updateManifest: { ...cutover, signingKey: keyA.privateKeyPem } }), "update manifest signature")).toEqual(["skipped"])
+    expect(resultsOf(await run(outDir, { updateManifestSigning: { ...cutover, signingKey: keyA.privateKeyPem } }), "update manifest signature")).toEqual(["skipped"])
     // without the opt-in it is a failure
-    expect(resultsOf(await run(outDir, { updateManifest: { publicKey: keyB.publicKeyPem } }), "update manifest signature")).toEqual(["failed"])
+    expect(resultsOf(await run(outDir, { updateManifestSigning: { publicKey: keyB.publicKeyPem } }), "update manifest signature")).toEqual(["failed"])
   })
 
   test("manifests are found by their shape, also those of a second provider in a subdirectory", async ({ expect, tmpDir }) => {
@@ -451,6 +451,8 @@ describe("macOS artifacts", () => {
 
     // mac.sign: null opts out of the app signature and notarization checks
     expect(resultsOf(await run(outDir, { mac: { sign: null } }), "code signature")).toEqual(["skipped", "skipped"])
+    // so does mac.sign: false, which validation also turns a null into
+    expect(resultsOf(await run(outDir, { mac: { sign: false } }), "code signature")).toEqual(["skipped", "skipped"])
   })
 
   test("a MAS app follows its mas (and masDev) sign configuration, which cascades over mac", async ({ expect, tmpDir }) => {
@@ -465,7 +467,7 @@ describe("macOS artifacts", () => {
     // mas.sign: null opts the MAS apps out, not the mac app
     const masOff = await run(outDir, { mas: { sign: null } })
     expect(statusOf(masOff)).toEqual({ mac: "verified", "mas-arm64": "skipped", "mas-dev": "skipped" })
-    expect(masOff.find(it => it.file.includes("mas-arm64"))?.message).toBe("mas.sign (or its identity) is null in the configuration")
+    expect(masOff.find(it => it.file.includes("mas-arm64"))?.message).toBe("mas.sign is false or null (or its identity is null) in the configuration")
     // masDev only affects mas-dev; an identity of null in a sign object opts out too
     expect(statusOf(await run(outDir, { masDev: { sign: { identity: null } } }))).toEqual({ mac: "verified", "mas-arm64": "verified", "mas-dev": "skipped" })
     // mac.sign: null cascades to the MAS apps, unless mas signs them again

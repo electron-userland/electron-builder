@@ -36,20 +36,25 @@ export class MacTargetHelper {
     return identity?.name === "-"
   }
 
+  /** Signing is turned off by the configuration: `sign: false` / `null`, or `sign.identity: null`. */
   handleNullIdentity(targetPlatform: PlatformType): SigningResult {
     if (this.packager.forceCodeSigningFor(targetPlatform)) {
-      throw new InvalidConfigurationError("identity explicitly is set to null, but forceCodeSigning is set to true")
+      throw new InvalidConfigurationError(
+        "signing is turned off (`sign` is false or null, or `sign.identity` is null), but forceCodeSigning is set to true. " +
+          "See https://www.electron.build/docs/migration/v27-config-changes#macos-signing-macsign"
+      )
     }
-    // The meaning of `mac.sign: null` flipped in v27. In v26 `sign` was only a custom-signer hook, so
+    // The meaning of `mac.sign: null` (and `false`) flipped in v27. In v26 `sign` was only a custom-signer hook, so
     // null meant "no custom signer" and the app was still signed normally; now it means "do not sign".
     // A v26 config carried over unchanged therefore ships an UNSIGNED app with no other signal.
-    log.warn(
+    // Once per process: sign() runs for every app of a build (the macOS app, each MAS flavor).
+    log.once("mac-signing-disabled").warn(
       {
-        reason: "identity explicitly is set to null",
-        solution: "remove `sign: null` to sign normally, or set `mac.sign.identity` — keep it only if you intend to ship an unsigned app",
+        reason: "`sign` is false or null, or `sign.identity` is null",
+        solution: "remove it to sign normally (a custom signer is `sign.sign`); keep it only if you intend to ship an unsigned app",
       },
-      'skipped macOS code signing. Note this changed in v27: `mac.sign: null` now means "do not sign", whereas in v26 it only meant "no custom signer" and the app was still signed. ' +
-        "See https://www.electron.build/docs/migration/v27-config-changes#macos-signing-macsign"
+      'skipped macOS code signing. Note this changed in electron-builder v27: `mac.sign: false` / `null` now mean "do not sign", whereas in v26 they ' +
+        'only meant "no custom signer" and the app was still signed. See https://www.electron.build/docs/migration/v27-config-changes#macos-signing-macsign'
     )
     return "skipped:disabled"
   }
@@ -214,7 +219,7 @@ export class MacTargetHelper {
    * with no `(TEAMID)`, an unreadable `Info.plist`), which leaves the previous behavior — and the previous error
    * message — untouched for those cases.
    *
-   * All of this is osx-sign-specific, so a custom signer (`sign` as a function or module path) gets the bare hash
+   * All of this is osx-sign-specific, so a custom signer (`sign.sign`, a function or module path) gets the bare hash
    * and an untouched `Info.plist`: `@electron/osx-sign` never runs, so there is no automation to feed.
    */
   async resolveSignIdentity(appPath: string, identity: Identity, signOpts: ElectronSignOptions | Nullish, targetPlatform: PlatformType, hasCustomSign = false): Promise<string> {
@@ -382,6 +387,8 @@ export class MacTargetHelper {
       // https://github.com/electron-userland/electron-builder/issues/1480
       strictVerify: config?.strictVerify,
       preAutoEntitlements: config?.preAutoEntitlements,
+      preEmbedProvisioningProfile: config?.preEmbedProvisioningProfile,
+      batchCodesignCalls: config?.batchCodesignCalls,
       optionsForFile: await this.getOptionsForFile(appPath, targetPlatform, config, identity),
       provisioningProfile: config?.provisioningProfile || undefined,
     }

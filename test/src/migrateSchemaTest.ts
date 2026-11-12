@@ -1,15 +1,22 @@
-import { doMergeConfigs, MAS_CERTIFICATE_WARNING } from "app-builder-lib/internal"
+import { doMergeConfigs, isInheritedPublishDropped, MAS_CERTIFICATE_WARNING } from "app-builder-lib/internal"
 import { Configuration } from "electron-builder"
 import { readFileSync } from "fs"
 import * as path from "path"
 import { describe, expect, test } from "vitest"
 import {
+  core24BuildEnvironmentKeptWarning,
+  core24BuildSwitchesConflictWarning,
+  core24BuildSwitchesUnreadWarning,
   FEED_QUERY_ADVISORY,
   FORCE_CODE_SIGNING_ADVISORY,
+  gitlabTagNamePrefixKeptWarning,
   INSECURE_FEED_ADVISORY,
   INCLUDE_PDB_CHANGES,
   includePdbManualStep,
   MAC_ENTITLEMENTS_ADVISORY,
+  macSignerOverMasOptionsWarning,
+  macSignerOverOptionsWarning,
+  macSignOptOutNextToOptionsWarning,
   managedPublishOptionWarning,
   migrateConfig,
   NSIS_PER_MACHINE_UPDATE_ADVISORY,
@@ -19,6 +26,8 @@ import {
   PORTABLE_DEBUG_LOGGING_DROPPED,
   snapcraftCoreTargetOptionWarning,
   snapNextToSnapcraftWarning,
+  TARGET_PUBLISH_REPLACES_ADVISORY,
+  updateManifestBothSetWarning,
   WIN_MISSING_PUBLISHER_NAME_ADVISORY,
   WIN_PUBLISHER_NAME_DN_ADVISORY,
   WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
@@ -584,6 +593,96 @@ describe("migrateConfig — snapcraft.<base>.publish / artifactName", () => {
     const result = migrateConfig({ snapcraft: { base: "core22", core22: { publish: { provider: "github", vPrefixedTagName: false } } } })
     expect(result.migrated.snapcraft).toEqual({ base: "core22", publish: { provider: "github", tagNamePrefix: "" }, core22: {} })
   })
+
+  test("a moved publish gets the GitLab tagNamePrefix rewrite", () => {
+    const result = migrateConfig({ snapcraft: { base: "core22", core22: { publish: { provider: "gitlab", projectId: 1, vPrefixedTagName: false } } } })
+    expect(result.migrated.snapcraft).toEqual({ base: "core22", publish: { provider: "gitlab", projectId: 1, tagNamePrefix: "" }, core22: {} })
+  })
+})
+
+describe("migrateConfig — snapcraft.core24 build switches → buildEnvironment", () => {
+  const core24 = (options: Record<string, any>) => ({ snapcraft: { base: "core24", core24: options } })
+
+  test.each([
+    ["useLXD", "lxd"],
+    ["useMultipass", "multipass"],
+    ["useDestructiveMode", "host"],
+  ])("%s: true becomes buildEnvironment: %j", (flag, environment) => {
+    const result = migrateConfig(core24({ [flag]: true, grade: "stable" }))
+    expect(result.migrated).toEqual(core24({ buildEnvironment: environment, grade: "stable" }))
+    expect(result.changes).toEqual([
+      { key: `snapcraft.core24.${flag}`, description: `replaced snapcraft.core24.${flag}: true → snapcraft.core24.buildEnvironment: "${environment}"` },
+    ])
+    expect(result.warnings).toEqual([])
+    expect(migrateConfig(result.migrated).modified).toBe(false)
+  })
+
+  test("a switch set to false or null is removed: it had no effect", () => {
+    const result = migrateConfig(core24({ useLXD: false, useMultipass: null }))
+    expect(result.migrated).toEqual(core24({}))
+    expect(result.changes.map(it => it.description)).toEqual([
+      "removed snapcraft.core24.useLXD: false (it had no effect)",
+      "removed snapcraft.core24.useMultipass: null (it had no effect)",
+    ])
+  })
+
+  test('remoteBuild.enabled: true becomes buildEnvironment: "remote", keeping the other remoteBuild options and dropping an emptied remoteBuild', () => {
+    expect(migrateConfig(core24({ remoteBuild: { enabled: true, buildFor: ["amd64", "arm64"] } })).migrated).toEqual(
+      core24({ buildEnvironment: "remote", remoteBuild: { buildFor: ["amd64", "arm64"] } })
+    )
+    const result = migrateConfig(core24({ remoteBuild: { enabled: true } }))
+    expect(result.migrated).toEqual(core24({ buildEnvironment: "remote" }))
+    expect(result.changes.map(it => it.key)).toEqual(["snapcraft.core24.remoteBuild.enabled"])
+  })
+
+  test("the remoteBuild options of a switched-off remote build stay, as they are read only for a remote build", () => {
+    const result = migrateConfig(core24({ useLXD: true, remoteBuild: { enabled: false, buildFor: "arm64" } }))
+    expect(result.migrated).toEqual(core24({ buildEnvironment: "lxd", remoteBuild: { buildFor: "arm64" } }))
+    expect(result.changes.map(it => it.key)).toEqual(["snapcraft.core24.remoteBuild.enabled", "snapcraft.core24.useLXD"])
+    expect(result.warnings).toEqual([])
+  })
+
+  test("more than one switch on is left in place with a warning naming the one v26 built with, and the file is not rewritten", () => {
+    const input = core24({ useLXD: true, remoteBuild: { enabled: true } })
+    const result = migrateConfig(input)
+    expect(result.migrated).toEqual(input)
+    expect(result.changes).toEqual([])
+    expect(result.modified).toBe(false)
+    expect(result.warnings).toEqual([core24BuildSwitchesConflictWarning(["remoteBuild.enabled", "useLXD"])])
+    expect(result.warnings[0]).toContain('v26 built with snapcraft.core24.remoteBuild.enabled, which is buildEnvironment "remote"')
+    expect(result.warnings[0]).toContain("v27-config-changes#snapcraftcore24-buildenvironment")
+
+    expect(migrateConfig(core24({ useMultipass: true, useDestructiveMode: true })).warnings[0]).toContain('which is buildEnvironment "host"')
+  })
+
+  test("a remote build next to useDestructiveMode, which v27 cannot express, is left in place with a warning", () => {
+    const input = core24({ useDestructiveMode: true, remoteBuild: { enabled: true, buildFor: "arm64" } })
+    const result = migrateConfig(input)
+    expect(result.migrated).toEqual(input)
+    expect(result.warnings).toEqual([core24BuildSwitchesConflictWarning(["remoteBuild.enabled", "useDestructiveMode"])])
+    expect(result.warnings[0]).toContain("a snapcraft.yaml generated for a host build (without the gnome extension), which v27 cannot express")
+  })
+
+  test("an existing buildEnvironment is kept, with a warning when the switch selected another one", () => {
+    const result = migrateConfig(core24({ buildEnvironment: "multipass", useLXD: true }))
+    expect(result.migrated).toEqual(core24({ buildEnvironment: "multipass" }))
+    expect(result.changes).toEqual([{ key: "snapcraft.core24.useLXD", description: "removed snapcraft.core24.useLXD (snapcraft.core24.buildEnvironment is set)" }])
+    expect(result.warnings).toEqual([core24BuildEnvironmentKeptWarning('"multipass"', "useLXD", "lxd")])
+
+    const same = migrateConfig(core24({ buildEnvironment: "lxd", useLXD: true }))
+    expect(same.migrated).toEqual(core24({ buildEnvironment: "lxd" }))
+    expect(same.warnings).toEqual([])
+  })
+
+  test.each<[string, Record<string, any>, string[]]>([
+    ['"true"', { useLXD: "true", useMultipass: false }, ["useLXD"]],
+    ["1", { remoteBuild: { enabled: 1 } }, ["remoteBuild.enabled"]],
+  ])("a switch set to %s is left in place with a warning, and the file is not rewritten", (_name, options, paths) => {
+    const result = migrateConfig(core24(options))
+    expect(result.migrated).toEqual(core24(options))
+    expect(result.modified).toBe(false)
+    expect(result.warnings).toEqual([core24BuildSwitchesUnreadWarning(paths)])
+  })
 })
 
 describe("migrateConfig — helper-bundle-id", () => {
@@ -636,13 +735,9 @@ describe("migrateConfig — GitHub vPrefixedTagName", () => {
     expect(result.migrated.publish).toEqual({ provider: "github", tagNamePrefix: "v" })
   })
 
-  test("preserves vPrefixedTagName on gitlab entries (still functional in v27)", () => {
-    const result = migrateConfig({
-      publish: { provider: "gitlab", vPrefixedTagName: false },
-    })
-    // GitLab keeps vPrefixedTagName — it must not be stripped (no tagNamePrefix equivalent on GitLab),
-    // otherwise the migrator would silently flip tags from "1.2.3" to "v1.2.3".
-    expect(result.migrated.publish).toEqual({ provider: "gitlab", vPrefixedTagName: false })
+  // v26 validated with ajv coerceTypes, which read these as false
+  test.each(["false", 0, null])("replaces vPrefixedTagName: %j with tagNamePrefix: ''", value => {
+    expect(migrateConfig({ publish: { provider: "github", vPrefixedTagName: value } }).migrated.publish).toEqual({ provider: "github", tagNamePrefix: "" })
   })
 
   test("handles publish as array", () => {
@@ -668,6 +763,53 @@ describe("migrateConfig — GitHub vPrefixedTagName", () => {
       publish: { provider: "github", owner: "me", repo: "myapp" },
     })
     expect(result.modified).toBe(false)
+  })
+})
+
+describe("migrateConfig — GitLab vPrefixedTagName", () => {
+  // v26 validated with ajv coerceTypes, which read "false" (what -c passes), 0 and null as false: tags without a prefix
+  test.each([false, "false", 0, null])("vPrefixedTagName: %j becomes tagNamePrefix: '' in every section", value => {
+    const entry = () => ({ provider: "gitlab", projectId: 1, vPrefixedTagName: value })
+    const result = migrateConfig({ publish: entry(), win: { publish: ["github", entry()] }, nsis: { publish: entry() } })
+    const migrated = { provider: "gitlab", projectId: 1, tagNamePrefix: "" }
+    expect(result.migrated).toEqual({ publish: migrated, win: { publish: ["github", migrated] }, nsis: { publish: migrated } })
+    expect(result.changes.map(it => it.key)).toEqual(["publish[].vPrefixedTagName", "win.publish[].vPrefixedTagName", "nsis.publish[].vPrefixedTagName"])
+    expect(result.warnings).toEqual([])
+  })
+
+  test.each([true, "true", 1])('vPrefixedTagName: %j is removed, as tagNamePrefix defaults to "v"', value => {
+    const result = migrateConfig({ publish: { provider: "gitlab", projectId: 1, vPrefixedTagName: value } })
+    expect(result.migrated.publish).toEqual({ provider: "gitlab", projectId: 1 })
+    expect(result.modified).toBe(true)
+  })
+
+  // v26 merged a target's publish object over the inherited one, so the target's true overrode the inherited false
+  test.each<[string, string]>([
+    ["deb", "linux"],
+    ["appx", "win"],
+    ["nsisWeb", "nsis"],
+  ])('vPrefixedTagName: true in the publish object of %s, which v26 merged over %s.publish, becomes tagNamePrefix: "v"', (target, inherited) => {
+    const gitlab = { provider: "gitlab", projectId: 1 }
+    const result = migrateConfig({ [inherited]: { publish: { ...gitlab, vPrefixedTagName: false } }, [target]: { publish: { ...gitlab, vPrefixedTagName: true } } })
+    expect(result.migrated).toEqual({ [inherited]: { publish: { ...gitlab, tagNamePrefix: "" } }, [target]: { publish: { ...gitlab, tagNamePrefix: "v" } } })
+    expect(result.advisories).not.toContain(TARGET_PUBLISH_REPLACES_ADVISORY)
+    // without the explicit default, the build would warn that the target leaves out the inherited tagNamePrefix: ""
+    expect(isInheritedPublishDropped(target, result.migrated[inherited].publish, result.migrated[target].publish)).toBe(false)
+  })
+
+  test("vPrefixedTagName: true is removed from the root publish, a platform, nsis and a target's list (v26 concatenated two lists)", () => {
+    const gitlab = { provider: "gitlab", projectId: 1 }
+    const entry = { ...gitlab, vPrefixedTagName: true }
+    const result = migrateConfig({ publish: entry, win: { publish: entry }, nsis: { publish: entry }, linux: { publish: [entry] }, deb: { publish: [entry] } })
+    expect(result.migrated).toEqual({ publish: gitlab, win: { publish: gitlab }, nsis: { publish: gitlab }, linux: { publish: [gitlab] }, deb: { publish: [gitlab] } })
+    // an explicit "v" in deb's list would no longer equal the inherited entry, and the build would warn
+    expect(isInheritedPublishDropped("deb", result.migrated.linux.publish, result.migrated.deb.publish)).toBe(false)
+  })
+
+  test("a tagNamePrefix next to it was written for v27 (v26 rejected it on GitLab), so it is kept with a warning", () => {
+    const result = migrateConfig({ publish: { provider: "gitlab", projectId: 1, vPrefixedTagName: false, tagNamePrefix: "release-" } })
+    expect(result.migrated.publish).toEqual({ provider: "gitlab", projectId: 1, tagNamePrefix: "release-" })
+    expect(result.warnings).toEqual([gitlabTagNamePrefixKeptWarning("publish")])
   })
 })
 
@@ -915,23 +1057,91 @@ describe("migrateConfig — mac signing consolidation", () => {
     expect(result.migrated.masDev.sign).toEqual({ hardenedRuntime: false })
   })
 
-  test("warns and does not clobber a custom-signer string sign", () => {
-    const result = migrateConfig({ mac: { sign: "./customSign.js", identity: "X" } })
-    expect(result.migrated.mac.sign).toBe("./customSign.js")
-    expect("identity" in result.migrated.mac).toBe(true) // left for manual resolution
-    expect(result.warnings.some(w => w.includes("custom signing"))).toBe(true)
+  test("moves a custom-signer string sign into sign.sign", () => {
+    const result = migrateConfig({ mac: { sign: "./customSign.js" } })
+    expect(result.migrated.mac).toEqual({ sign: { sign: "./customSign.js" } })
+    expect(result.changes).toEqual([{ key: "mac.sign", description: "moved the custom signer mac.sign → mac.sign.sign" }])
+    expect(result.warnings).toEqual([])
+  })
+
+  test("moves a custom signer and the v26 signing options next to it into one sign object", () => {
+    const result = migrateConfig({ mac: { sign: "./customSign.js", identity: "X", hardenedRuntime: true, signIgnore: ["a"], type: null } })
+    expect(result.migrated.mac).toEqual({ sign: { sign: "./customSign.js", identity: "X", hardenedRuntime: true, ignore: ["a"] } })
+    expect(result.warnings).toEqual([])
   })
 
   test("drops a bare sign: null so it does not flip to skip-signing", () => {
     const result = migrateConfig({ mac: { sign: null, target: "dmg" } })
     expect("sign" in result.migrated.mac).toBe(false)
     expect(result.changes.some(c => c.key === "mac.sign")).toBe(true)
+    expect(migrateConfig({ mas: { sign: null } }).migrated).toEqual({ mas: {} })
+  })
+
+  test("a mas / masDev sign: null that kept the mac signer from signing that app becomes sign.sign: null", () => {
+    const result = migrateConfig({ mac: { sign: "./a.js" }, mas: { sign: null, provisioningProfile: "p" }, masDev: { sign: null } })
+    expect(result.migrated.mas.sign).toEqual({ sign: null, provisioningProfile: "p" })
+    // mas.sign.sign: null already removes the signer for mas-dev, which merges mac → mas → masDev
+    expect(result.migrated.masDev).toEqual({})
+    expect(result.changes.find(c => c.key === "mas.sign")?.description).toContain("replaced mas.sign: null with mas.sign.sign: null")
+    expect(result.warnings).toEqual([])
+  })
+
+  test("a mas sign object without a signer of its own warns that it now inherits the mac signer this run moved", () => {
+    const result = migrateConfig({ mac: { sign: "./a.js" }, mas: { sign: { identity: "X" } } })
+    expect(result.migrated.mas).toEqual({ sign: { identity: "X" } })
+    expect(result.warnings).toEqual([macSignerOverMasOptionsWarning("mas", "mac.sign.sign")])
+    expect(result.warnings[0]).toContain("set mas.sign.sign: null")
+    // v26 flat mas options were always signed by the mac signer
+    expect(migrateConfig({ mac: { sign: "./a.js" }, mas: { provisioningProfile: "p" } }).warnings).toEqual([])
+    // a signer already in sign.sign reached mas before this run
+    expect(migrateConfig({ mac: { sign: { sign: "./a.js" } }, mas: { sign: { identity: "X" } } }).warnings).toEqual([])
+  })
+
+  test("a bare mas signer over a mac sign options object warns that it now receives those options", () => {
+    const result = migrateConfig({ mac: { sign: { identity: "X" } }, mas: { sign: "./b.js" } })
+    expect(result.migrated.mas).toEqual({ sign: { sign: "./b.js" } })
+    expect(result.warnings).toEqual([macSignerOverOptionsWarning("mas", "mac.sign")])
+    // v26 merged the flat mac options into the mas signing too
+    expect(migrateConfig({ mac: { identity: "X" }, mas: { sign: "./b.js" } }).warnings).toEqual([])
+    // mas.sign: false replaces the mac options, so masDev receives none of them
+    expect(migrateConfig({ mac: { sign: { identity: "X" } }, mas: { sign: false }, masDev: { sign: "./b.js" } }).warnings).toEqual([])
+  })
+
+  test("removes sign.identityValidation, which never had an effect", () => {
+    const result = migrateConfig({ mac: { sign: { sign: "./s.js", identityValidation: true } }, mas: { sign: { identityValidation: false } } })
+    expect(result.migrated).toEqual({ mac: { sign: { sign: "./s.js" } }, mas: { sign: {} } })
+    expect(result.changes.map(c => c.key)).toEqual(["mac.sign.identityValidation", "mas.sign.identityValidation"])
   })
 
   test("does not touch a config that already uses sign object", () => {
     const result = migrateConfig({ mac: { sign: { identity: "X", hardenedRuntime: true } } })
     expect(result.migrated.mac.sign).toEqual({ identity: "X", hardenedRuntime: true })
     expect(result.changes.filter(c => c.key.startsWith("mac.")).length).toBe(0)
+    expect(migrateConfig({ mac: { sign: { sign: "./s.js" } }, mas: { sign: { sign: null } }, masDev: { sign: false } }).modified).toBe(false)
+  })
+
+  test('leaves a sign of "false" or "" in place: the v27 schema reads them as false and null (skip signing), not as a module path', () => {
+    const config = { mac: { sign: "false" }, mas: { sign: "" }, masDev: { sign: "" } }
+    const result = migrateConfig(config)
+    expect(result.modified).toBe(false)
+    expect(result.migrated).toEqual(config)
+    expect(result.warnings).toEqual([])
+    // like false, they replace the signer of an earlier section
+    expect(migrateConfig({ mac: { sign: "./a.js" }, mas: { sign: "false" }, masDev: { sign: null } }).migrated.masDev).toEqual({})
+    expect(migrateConfig({ mac: { sign: "./a.js" }, mas: { sign: "" }, masDev: { sign: { identity: "X" } } }).warnings).toEqual([])
+  })
+
+  test('a sign of "false" or "" next to v26 signing options is left in place with them, with a warning', () => {
+    const config = { mac: { sign: "false", identity: "X", signIgnore: ["a"] }, masDev: { sign: "", type: null } }
+    const result = migrateConfig(config)
+    // a kept-key warning: the file is not rewritten (which would drop YAML / JSON5 comments) for it alone
+    expect(result.modified).toBe(false)
+    expect(result.migrated).toEqual(config)
+    expect(result.changes).toEqual([])
+    expect(result.warnings).toEqual([macSignOptOutNextToOptionsWarning("mac", "false"), macSignOptOutNextToOptionsWarning("masDev", "")])
+    expect(result.warnings[0]).toContain('mac.sign is "false", which electron-builder v27 reads as false (skip signing)')
+    expect(result.warnings[1]).toContain('masDev.sign is "", which electron-builder v27 reads as null (skip signing)')
+    expect(migrateConfig({ mas: { sign: "", provisioningProfile: "p" } }).modified).toBe(false)
   })
 })
 
@@ -1035,6 +1245,7 @@ describe("migrateConfig — updater advisories", () => {
     ["WIN_PUBLISHER_NAME_DN_ADVISORY", WIN_PUBLISHER_NAME_DN_ADVISORY, "v27-build-changes", "windows-publishername-must-be-a-distinguished-name"],
     ["WIN_MISSING_PUBLISHER_NAME_ADVISORY", WIN_MISSING_PUBLISHER_NAME_ADVISORY, "v27-build-changes", "missing-publishername-fails-update-verification"],
     ["FORCE_CODE_SIGNING_ADVISORY", FORCE_CODE_SIGNING_ADVISORY, "v27-build-changes", "forcecodesigning-covers-notarization-and-update-manifests"],
+    ["TARGET_PUBLISH_REPLACES_ADVISORY", TARGET_PUBLISH_REPLACES_ADVISORY, "v27-build-changes", "target-publish-replaces-platform-publish"],
   ])("%s links its v27 breaking-changes section", (_name, advisory, page, anchor) => {
     expect(advisory.endsWith(` See https://www.electron.build/docs/migration/${page}#${anchor}`)).toBe(true)
     const doc = readFileSync(path.join(import.meta.dirname, `../../website/docs/migration/${page}.md`), "utf8")
@@ -1334,6 +1545,66 @@ describe("migrateConfig — plain http feed advisory", () => {
   })
 })
 
+describe("migrateConfig — a target's publish replaces the inherited one", () => {
+  const targetPublishAdvisories = (config: Record<string, any>) => migrateConfig(config).advisories.filter(it => it === TARGET_PUBLISH_REPLACES_ADVISORY)
+
+  test.each<[string, Record<string, any>]>([
+    ["deb drops a linux provider", { linux: { publish: ["github", "s3"] }, deb: { publish: ["s3"] } }],
+    ["appImage reorders the list, which moves the update feed", { linux: { publish: ["github"] }, appImage: { publish: ["s3", "github"] } }],
+    [
+      "an appx object drops a win option",
+      {
+        win: { publish: { provider: "generic", url: "https://u.example.com/app", channel: "beta" } },
+        appx: { publish: { provider: "generic", url: "https://u.example.com/app" } },
+      },
+    ],
+    ["nsisWeb drops an nsis provider", { nsis: { publish: ["github", "s3"] }, nsisWeb: { publish: ["s3"] } }],
+    ["snapcraft without a snapStore provider drops a linux provider", { linux: { publish: [{ provider: "snapStore" }, "github"] }, snapcraft: { publish: ["github"] } }],
+  ])("%s: the advisory, without changing the config", (_name, input) => {
+    const result = migrateConfig(input)
+    expect(result.advisories).toEqual([TARGET_PUBLISH_REPLACES_ADVISORY])
+    expect(result.modified).toBe(false)
+    expect(result.migrated).toEqual(input)
+  })
+
+  test("reads the configuration as written: a v26 snap, a managed publish field, and a GitLab entry before vPrefixedTagName is rewritten", () => {
+    // v26.12 read the snap section as `snapcraft ?? snap`, and merged linux.publish into it
+    expect(targetPublishAdvisories({ snap: { base: "core22", publish: ["github"] }, linux: { publish: ["github", "s3"] } })).toEqual([TARGET_PUBLISH_REPLACES_ADVISORY])
+    expect(targetPublishAdvisories({ snapcraft: null, snap: { publish: ["github"] }, linux: { publish: ["github", "s3"] } })).toEqual([TARGET_PUBLISH_REPLACES_ADVISORY])
+
+    // the programmatic migrator reads the source as written, so step 7 removing updaterCacheDirName must not hide what v26 merged
+    const feed = { provider: "generic", url: "https://u.example.com/app" }
+    expect(targetPublishAdvisories({ linux: { publish: [{ ...feed, updaterCacheDirName: "app" }] }, deb: { publish: [feed] } })).toEqual([TARGET_PUBLISH_REPLACES_ADVISORY])
+
+    // v26 merged the `vPrefixedTagName: false` entry into deb's; the migrated linux entry has `tagNamePrefix: ""`, which deb's lacks
+    const result = migrateConfig({ linux: { publish: [{ provider: "gitlab", projectId: 1, vPrefixedTagName: false }] }, deb: { publish: [{ provider: "gitlab", projectId: 1 }] } })
+    expect(result.advisories).toEqual([TARGET_PUBLISH_REPLACES_ADVISORY])
+    expect(result.migrated.linux.publish).toEqual([{ provider: "gitlab", projectId: 1, tagNamePrefix: "" }])
+  })
+
+  test.each<[string, Record<string, any>]>([
+    ["two strings, which were never merged", { linux: { publish: "github" }, deb: { publish: "s3" } }],
+    ["a list that keeps the inherited providers first", { linux: { publish: ["github"] }, deb: { publish: ["github", "s3"] } }],
+    ["an empty inherited list, which v26 merged into the target's own", { linux: { publish: [] }, deb: { publish: ["s3"] } }],
+    [
+      "an object that holds every inherited option",
+      {
+        nsis: { publish: { provider: "generic", url: "https://u.example.com/a" } },
+        nsisWeb: { publish: { provider: "generic", url: "https://u.example.com/b", channel: "beta" } },
+      },
+    ],
+    ["deb.publish: null", { linux: { publish: ["github"] }, deb: { publish: null } }],
+    ["a list next to an object, which were never merged", { win: { publish: ["github"] }, msi: { publish: { provider: "s3", bucket: "b" } } }],
+    ["pkg, whose publish always replaced mac's", { mac: { publish: ["github"] }, pkg: { publish: ["s3"] } }],
+    ["squirrelWindows and nsis, whose publish always replaced win's", { win: { publish: ["github"] }, squirrelWindows: { publish: ["s3"] }, nsis: { publish: ["s3"] } }],
+    ["a snapcraft.publish naming a snapStore provider", { linux: { publish: ["github"] }, snapcraft: { publish: [{ provider: "snapStore" }] } }],
+    ["a v26 snap next to a snapcraft, which v26.12 read instead", { linux: { publish: ["github", "s3"] }, snapcraft: { base: "core22" }, snap: { publish: ["github"] } }],
+    ["a target without publish", { linux: { publish: ["github"] }, deb: { depends: ["libfoo"] } }],
+  ])("%s: no advisory", (_name, input) => {
+    expect(targetPublishAdvisories(input)).toEqual([])
+  })
+})
+
 describe("migrateConfig — mac.gatekeeperAssess is removed, not moved", () => {
   // @electron/osx-sign 2.x dropped the spctl --assess step; ElectronSignOptions omits the field and
   // the schema rejects it, so moving it under `sign` produced a config that failed the next build.
@@ -1492,7 +1763,7 @@ describe("migrateConfig — GitHub tag prefix semantics", () => {
     expect(result.migrated.snapcraft.publish).toEqual([{ provider: "github", tagNamePrefix: "v" }])
   })
 
-  test("GitLab entries are untouched", () => {
+  test('a GitLab tagNamePrefix: "" is kept (GitLab had no tagNamePrefix in v26)', () => {
     expect(migrateConfig({ publish: { provider: "gitlab", tagNamePrefix: "" } }).modified).toBe(false)
   })
 })
@@ -1596,9 +1867,16 @@ describe("migrateConfig — mac default entitlements advisory", () => {
     expect(migrateConfig({ win: { target: "nsis" } }).advisories).toHaveLength(0)
   })
 
-  test("no advisory when electron-builder's default signing is bypassed (custom signer, identity: null)", () => {
+  test("no advisory when electron-builder's default signing is bypassed (custom signer, sign: false, identity: null)", () => {
     expect(migrateConfig({ mac: { sign: "./customSign.js" } }).advisories).toHaveLength(0)
+    expect(migrateConfig({ mac: { sign: { sign: "./customSign.js" } } }).advisories).toHaveLength(0)
+    expect(migrateConfig({ mac: { sign: false } }).advisories).toHaveLength(0)
     expect(migrateConfig({ mac: { identity: null } }).advisories).toHaveLength(0)
+    // "false" and "" are read as false and null, and left in place
+    expect(migrateConfig({ mac: { sign: "false" } }).advisories).toHaveLength(0)
+    expect(migrateConfig({ masDev: { sign: "" } }).advisories).toHaveLength(0)
+    // sign.sign: null signs with @electron/osx-sign and its default entitlements
+    expect(migrateConfig({ mac: { sign: { sign: null } } }).advisories).toEqual([MAC_ENTITLEMENTS_ADVISORY])
   })
 })
 
@@ -1607,6 +1885,10 @@ describe("migrateConfig — round-trip: migrator output passes v27 schema valida
   // test that would have caught gatekeeperAssess being relocated into a bag that rejects it.
   const v26Configs: Array<[string, Record<string, any>]> = [
     ["mac signing", { mac: { identity: "Developer ID Application: Acme (TEAM)", hardenedRuntime: true, gatekeeperAssess: false, signIgnore: ["**/*.txt"] } }],
+    ["mac custom signer", { mac: { sign: "./customSign.js", identity: "Acme (TEAM1234AB)", signIgnore: ["**/*.txt"] }, mas: { sign: null, entitlements: "e.plist" } }],
+    // a v27 configuration migrate-schema runs on again: the opt-out the schema reads as false / null stays
+    ["mac sign opt-out strings", { mac: { sign: "false" }, mas: { sign: "" } }],
+    ["mac sign options of a 27.0.0 alpha", { mac: { sign: { identity: "Acme (TEAM1234AB)", identityValidation: false } } }],
     ["mac universal", { mac: { mergeASARs: true, singleArchFiles: "*.node", x64ArchFiles: "*.node" } }],
     ["root target", { target: "zip" }],
     [
@@ -1676,6 +1958,10 @@ describe("migrateConfig — round-trip: migrator output passes v27 schema valida
     ["appImage.systemIntegration", { appImage: { systemIntegration: "doNotAsk" } }],
     ["github publish", { publish: { provider: "github", owner: "o", repo: "r", vPrefixedTagName: false } }],
     [
+      "gitlab publish",
+      { publish: { provider: "gitlab", projectId: 1, vPrefixedTagName: false }, nsis: { publish: [{ provider: "gitlab", projectId: 1, vPrefixedTagName: true }] } },
+    ],
+    [
       "platform asarUnpack",
       { asarUnpack: "root/**", mac: { asarUnpack: ["m/**"] }, win: { asar: { smartUnpack: false }, asarUnpack: "w/**" }, linux: { asar: false, asarUnpack: "x" } },
     ],
@@ -1685,8 +1971,11 @@ describe("migrateConfig — round-trip: migrator output passes v27 schema valida
     ["nativeRebuilder legacy", { nativeRebuilder: "legacy", npmRebuild: false }],
     ["mac null fields", { mac: { type: null, provisioningProfile: null, binaries: null, signIgnore: null, singleArchFiles: null, x64ArchFiles: null, identity: null } }],
     ["electronDownload force", { electronDownload: { force: true, mirrorOptions: { mirror: "https://m/" } } }],
+    ["updateManifest (27.0.0 alpha)", { updateManifest: null, mac: { updateManifest: { signingKeyFile: "k.pem", publicKey: ["k1"] } }, win: { updateManifest: false } }],
     ["publish in a target section", { nsis: { publish: { provider: "github", vPrefixedTagName: false } }, dmg: { publish: [{ provider: "github", tagNamePrefix: "" }] } }],
     ["snap core24", { snap: { base: "core24", allowNativeWayland: true, useTemplateApp: false, grade: "stable" } }],
+    ["snapcraft.core24 build switches", { snapcraft: { base: "core24", core24: { useLXD: true, useMultipass: false, remoteBuild: { enabled: false, buildFor: "arm64" } } } }],
+    ["snapcraft.core24 remote build", { snapcraft: { base: "core24", core24: { remoteBuild: { enabled: true, acceptPublicUpload: true }, useDestructiveMode: null } } }],
     ["file options", { files: ["dist/**"], extraResources: [{ from: "a", to: "b" }], mac: { extraFiles: "x", files: ["!m/**"] }, masDev: { extraResources: null } }],
     ["file options next to fileOptions", { files: ["flat/**"], fileOptions: { files: ["nested/**"], extraFiles: ["e"] }, win: { extraResources: ["r"], fileOptions: null } }],
     ["includePdb: true", { includePdb: true, files: ["dist/**"], win: { fileOptions: { excludedExts: ["default", "map"] } } }],
@@ -2053,5 +2342,48 @@ describe("migrateConfig — Linux target options that never had an effect", () =
     const result = migrateConfig({ snap: { base: "core22", synopsis: "s", summary: "x" } })
     expect(result.migrated).toEqual({ snapcraft: { base: "core22", core22: { summary: "x" } } })
     expect(result.changes.map(it => it.key)).toEqual(["snap", "snapcraft.core22.synopsis"])
+  })
+})
+
+describe("migrateConfig — updateManifest → updateManifestSigning", () => {
+  test("renames it at the root and on mac / win / linux with the value unchanged (null included), and removes it from mas", () => {
+    const result = migrateConfig({
+      updateManifest: false,
+      mac: { updateManifest: { signingKeyFile: "keys/mac.pem", publicKey: ["A", "B"] } },
+      win: { updateManifest: null, target: "nsis" },
+      linux: { updateManifest: { allowSigningKeyOutsideTrustList: true } },
+      mas: { updateManifest: false },
+    })
+    expect(result.migrated).toEqual({
+      updateManifestSigning: false,
+      mac: { updateManifestSigning: { signingKeyFile: "keys/mac.pem", publicKey: ["A", "B"] } },
+      win: { updateManifestSigning: null, target: "nsis" },
+      linux: { updateManifestSigning: { allowSigningKeyOutsideTrustList: true } },
+      mas: {},
+    })
+    expect(result.changes.map(it => it.key)).toEqual(["mas.updateManifest", "updateManifest", "mac.updateManifest", "win.updateManifest", "linux.updateManifest"])
+    expect(result.warnings).toEqual([])
+
+    const again = migrateConfig(result.migrated)
+    expect(again.changes).toEqual([])
+    expect(again.modified).toBe(false)
+  })
+
+  test("a section that sets both names is left unchanged with a warning, and is not rewritten for it", () => {
+    const input = {
+      updateManifest: { signingKeyFile: "old.pem" },
+      updateManifestSigning: { signingKeyFile: "new.pem" },
+      linux: { updateManifest: null, updateManifestSigning: false },
+    }
+    const result = migrateConfig(input)
+    expect(result.migrated).toEqual(input)
+    expect(result.changes).toEqual([])
+    expect(result.modified).toBe(false)
+    expect(result.warnings).toEqual([updateManifestBothSetWarning(""), updateManifestBothSetWarning("linux.")])
+    expect(result.warnings[1]).toContain("merge linux.updateManifest into linux.updateManifestSigning")
+  })
+
+  test("a removed publish updateManifestPublicKey points to updateManifestSigning.publicKey", () => {
+    expect(managedPublishOptionWarning("publish", "updateManifestPublicKey")).toContain("set updateManifestSigning.publicKey")
   })
 })

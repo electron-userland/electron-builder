@@ -314,7 +314,7 @@ Update metadata validated only by the legacy SHA-256 `sha2` checksum is deprecat
 
 The `AppUpdater` settings below protect the update path. See the [Security & Hardening](./security.md#update-security-electron-updater) page for the full rationale.
 
-The update manifest (`latest*.yml`) itself **is** cryptographically signed and verified before any download. Publishing a build that emits update metadata fails unless an Ed25519 signing key resolves; `updateManifest: false` is the only opt-out — see [Signed Update Manifests](./signed-update-manifests.md).
+The update manifest (`latest*.yml`) itself **is** cryptographically signed and verified before any download. Publishing a build that emits update metadata fails unless an Ed25519 signing key resolves; `updateManifestSigning: false` is the only opt-out — see [Signed Update Manifests](./signed-update-manifests.md).
 
 A channel file (`latest*.yml`) larger than 10 MiB fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`: it is read into memory and parsed before the manifest signature is verified. Release feeds and provider API responses (such as the GitHub releases feed or a list of releases) are not limited, since their size grows with the release history. To allow larger channel files, set `maxUpdateInfoSize` (in bytes) in the `publish` configuration, which electron-builder writes into `app-update.yml` so installed apps use it, or `autoUpdater.maxUpdateInfoSize` in the app, which overrides it. Both take a positive integer, or `0` for no limit.
 
@@ -342,7 +342,7 @@ updater.disableWebInstaller = false // only if you intentionally ship a web inst
 
 Set it before the app is `ready`, e.g. right after creating the updater, or synchronously in a `ready` handler: a web-installer update marked for [install on next launch](#install-on-next-launch-windowslinux) is checked against the flag right after the app is ready, once your own `ready` handlers have run, and rejected (its pending-install marker cleared) while the flag is `true`.
 
-A web update cached by a previous launch, or pending an install on next launch, is used only if its web package still matches the freshly fetched manifest; otherwise it is discarded. The `nsis-web` installer itself verifies the package electron-updater passes to it and installs its own copy — see [Web Installer](../nsis.md#web-installer). Once the app runs the version of that update, `NsisUpdater` removes the package from its `pending` cache directory at startup (app `ready`); the package of an update that is not installed yet, or whose install failed, is kept for the install or a retry. Because the manifest vouches for the web package, don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./signed-update-manifests.md) cover its path, SHA-512 and size.
+A web update cached by a previous launch, or pending an install on next launch, is used only if its web package still matches the freshly fetched manifest; otherwise it is discarded. The `nsis-web` installer itself verifies the package electron-updater passes to it and installs its own copy — see [Web Installer](../nsis.md#web-installer). Once the app runs the version of that update, `NsisUpdater` removes the package from its `pending` cache directory at startup (app `ready`); the package of an update that is not installed yet, or whose install failed, is kept for the install or a retry. Because the manifest vouches for the web package, don't set `updateManifestSigning: false` for `nsis-web` apps: [signed update manifests](./signed-update-manifests.md) cover its path, SHA-512 and size.
 
 ### `allowInsecureFeed` (defaults to `false`) {#allowinsecurefeed}
 
@@ -375,7 +375,7 @@ electron-builder does not sign rpm packages, so with `false` sign them yourself 
 
 ### Linux update authenticity
 
-electron-updater installs what `latest-linux.yml` describes once the download matches its `sha512`. When the app embeds an update manifest public key (`updateManifestPublicKey` in `app-update.yml`, or set at runtime), that key is the trust anchor: a manifest it does not verify is rejected. Without a key (an app built with `updateManifest: false`, or an older build), verification is skipped with a warning and the feed — the first provider in `app-update.yml`, or the URL passed to `setFeedURL` — is the trust anchor; the `sha512` comes from the same feed, so whoever can change the files on the feed can serve an update with a matching checksum. Signed update manifests are required by default at build time, and electron-updater enforces them whenever the app embeds a key. What makes a Linux update authentic is a [signed update manifest](./signed-update-manifests.md), not a package-manager flag:
+electron-updater installs what `latest-linux.yml` describes once the download matches its `sha512`. When the app embeds an update manifest public key (`updateManifestPublicKey` in `app-update.yml`, or set at runtime), that key is the trust anchor: a manifest it does not verify is rejected. Without a key (an app built with `updateManifestSigning: false`, or an older build), verification is skipped with a warning and the feed — the first provider in `app-update.yml`, or the URL passed to `setFeedURL` — is the trust anchor; the `sha512` comes from the same feed, so whoever can change the files on the feed can serve an update with a matching checksum. Signed update manifests are required by default at build time, and electron-updater enforces them whenever the app embeds a key. What makes a Linux update authentic is a [signed update manifest](./signed-update-manifests.md), not a package-manager flag:
 
 - **AppImage** has no package signature check at all.
 - **deb** gets no package-level signature check, whatever `allowUnverifiedLinuxPackages` is set to (see above).
@@ -384,7 +384,7 @@ electron-updater installs what `latest-linux.yml` describes once the download ma
 
 To add a package-level check of your own for AppImage, deb or pacman updates, verify the downloaded file in [`verifyUpdateFile`](#custom-downloaded-file-verification).
 
-Keep signed update manifests on for Linux apps (don't set `updateManifest: false`), and serve the feed over `https`: electron-updater rejects plain `http` update requests unless [`allowInsecureFeed`](#allowinsecurefeed) is set, and over `http` only a signed manifest protects the update.
+Keep signed update manifests on for Linux apps (don't set `updateManifestSigning: false`), and serve the feed over `https`: electron-updater rejects plain `http` update requests unless [`allowInsecureFeed`](#allowinsecurefeed) is set, and over `http` only a signed manifest protects the update.
 
 Don't pre-authorize the update install. deb, rpm and pacman updates are installed as root through an elevation helper such as `pkexec` or `sudo`, which asks the user to authenticate. A polkit rule or a sudoers `NOPASSWD` entry that skips that prompt for the package manager lets any process running as the user install any package as root, not only electron-updater with your update.
 
@@ -462,7 +462,7 @@ stagingPercentage: 10
 Update will be shipped to 10% of userbase.
 
 :::warning[Sign `latest.yml` again after changing `stagingPercentage`]
-electron-builder [signs update manifests](./signed-update-manifests.md) by default, and `stagingPercentage` is [covered by the signature](./signed-update-manifests.md#what-is-signed). Adding or changing it in a signed `latest.yml` by hand, without signing the file again, makes every install that embeds the public key reject the manifest with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`: the release then reaches none of your users instead of 10% of them. The same applies to every later change, such as raising the percentage or setting it to `0` to pause the rollout. Only an unsigned manifest (`updateManifest: false`) can be edited by hand.
+electron-builder [signs update manifests](./signed-update-manifests.md) by default, and `stagingPercentage` is [covered by the signature](./signed-update-manifests.md#what-is-signed). Adding or changing it in a signed `latest.yml` by hand, without signing the file again, makes every install that embeds the public key reject the manifest with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`: the release then reaches none of your users instead of 10% of them. The same applies to every later change, such as raising the percentage or setting it to `0` to pause the rollout. Only an unsigned manifest (`updateManifestSigning: false`) can be edited by hand.
 :::
 
 To set or change the percentage of a signed release, sign `latest.yml` again with the key(s) the release was signed with before you upload it. Edit `stagingPercentage`, then run [`electron-builder sign-update-manifest`](./signed-update-manifests.md#re-signing-a-published-manifest) from the project directory; it takes the key(s) from the same configuration and environment variables as the build:

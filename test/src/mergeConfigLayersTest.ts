@@ -68,7 +68,9 @@ describe("configuration cascades", () => {
 
     expect(getOptionsForTarget(linux, config, "deb").desktop.entry).toEqual({ Name: "App", Comment: "deb only" })
     expect(getOptionsForTarget(linux, config, "appImage").desktop.entry).toEqual({ Name: "App" })
-    expect(getOptionsForTarget(linux, config, "appImage").publish).toEqual({ provider: "github", owner: "o", repo: "r" })
+    // a target's publish replaces the platform's, and without one its options carry none (the publish resolution falls back to linux.publish)
+    expect(getOptionsForTarget(linux, config, "deb").publish).toEqual({ provider: "generic", url: "https://example.com/deb" })
+    expect(getOptionsForTarget(linux, config, "appImage").publish).toBeUndefined()
     expect(linux).toEqual({ desktop: { entry: { Name: "App" } }, publish: { provider: "github", owner: "o", repo: "r" } })
   })
 
@@ -85,6 +87,7 @@ describe("configuration cascades", () => {
 
     const web = new WebInstallerTarget(packager, packager.projectDir, "nsis-web", new AppPackageHelper(new CopyElevateHelper()))
     expect(web.options.oneClick).toBe(false)
+    expect(web.options.publish).toEqual({ provider: "s3", bucket: "bucket" })
     expect(nsis.publish).toEqual({ provider: "generic", url: "https://example.com/nsis" })
 
     const installer = new NsisTarget(packager, packager.projectDir, "nsis", new AppPackageHelper(new CopyElevateHelper()))

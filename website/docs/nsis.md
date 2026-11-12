@@ -27,7 +27,7 @@ The same applied to web installer (`nsis-web` [target](win.md#target)). The same
 
 To build web installer, set [target](win.md#target) to `nsis-web`. Web Installer automatically detects OS architecture and downloads corresponding package file. So, the user doesn't need to guess what installer to download and at the same time you don't bundle package files for all architectures in one installer (as in case of default `nsis` target). It doesn't matter for common Electron application (due to superb LZMA compression, size difference is acceptable), but if your application is huge, Web Installer is a solution.
 
-To customize web installer, use the top-level `nsisWeb` key (not `nsis`).
+To customize web installer, use the top-level `nsisWeb` key (not `nsis`). `nsisWeb` inherits the `nsis` options and its own values are merged over them, except `publish`: an `nsisWeb.publish` replaces `nsis.publish` instead of being merged with it.
 
 If for some reasons web installer cannot download (antivirus, offline):
 
@@ -46,7 +46,7 @@ A mismatch, a `--package-file` package that cannot be copied, or a package that 
 
 An update run (`--updated`, as electron-updater starts the installer) must pass `--package-file`: without it the installer aborts (exit code `2`), and neither looks for a package next to it nor downloads one. electron-updater passes it whenever `latest.yml` lists the web installer's `packages`, as the one electron-builder writes does, and rejects an update whose `packages` have none for the app's arch or `ia32` (`ERR_UPDATER_NO_WEB_PACKAGE_FOR_ARCH`).
 
-For auto-update, electron-updater installs web-installer updates only when `disableWebInstaller` is `false`; installs made by an `nsis-web` installer (which carries a `resources/package-type` marker) default to `false` automatically — see [Auto Update](./features/auto-update.md#disablewebinstaller). Don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./features/signed-update-manifests.md) cover the web package's path, SHA-512 and size.
+For auto-update, electron-updater installs web-installer updates only when `disableWebInstaller` is `false`; installs made by an `nsis-web` installer (which carries a `resources/package-type` marker) default to `false` automatically — see [Auto Update](./features/auto-update.md#disablewebinstaller). Don't set `updateManifestSigning: false` for `nsis-web` apps: [signed update manifests](./features/signed-update-manifests.md) cover the web package's path, SHA-512 and size.
 
 ## Custom NSIS script
 

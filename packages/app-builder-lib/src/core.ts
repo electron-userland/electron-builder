@@ -116,9 +116,14 @@ export interface TargetSpecificOptions {
 
   /**
    * Publisher configuration: where the artifacts are uploaded, and which feed the app's auto-update metadata points to.
-   * See [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target; `null` turns
-   * publishing off unless a more specific level sets its own. How the levels combine:
-   * [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed).
+   * See [Publish](https://www.electron.build/docs/publish). Can be set at the root, per platform and per target. The most specific level
+   * that sets it is used as a whole and is never merged with a less specific one (`deb.publish` replaces `linux.publish`, and
+   * `nsisWeb.publish` replaces `nsis.publish`); `null` turns publishing off unless a more specific level sets its own. The snap is the
+   * exception: a `snapcraft.publish` that names a `snapStore` provider sends it only to the first one, one without a `snapStore` provider is
+   * used as a whole (`[]` uploads it nowhere), and with `snapcraft.publish` unset or `null` the snap goes only to the first `snapStore`
+   * provider of `linux.publish`, else of the root `publish`, else to the Snap Store, even if `linux.publish` or the root `publish` is `null`
+   * (see [Publishing to the Snap Store](https://www.electron.build/docs/snap#publishing-to-the-snap-store)).
+   * How the levels combine: [Which settings become the auto-update feed](https://www.electron.build/docs/publish#app-update-yml-feed).
    */
   publish?: Publish
 }

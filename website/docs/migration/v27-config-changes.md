@@ -20,6 +20,7 @@ It rewrites every change marked **Auto ✓** below. See the [walkthrough](./v26-
 - Flat `files` / `extraResources` / `extraFiles` keys only **warn**; they are applied as their [`fileOptions`](#file-options-fileoptions) counterparts.
 - A GitHub [`tagNamePrefix: ""`](#githuboptions-gitlaboptions-vprefixedtagname) is now honored **silently** at build time; only `migrate-schema` warns about it.
 - A `toolsets.*: null` entry fails [schema validation](#toolsets-null-rejected) with a generic message instead of the combined error.
+- An unknown option in [`mac.sign`](#macos-signing-macsign) (`mas.sign`, `masDev.sign`) fails schema validation, with a note on the v27 `sign` shape; skipping signing with `mac.sign: false` / `null` only **warns** during the build.
 
 ## At a glance {#at-a-glance}
 
@@ -40,9 +41,8 @@ It rewrites every change marked **Auto ✓** below. See the [walkthrough](./v26-
 | [Linux target options that never had an effect removed](#linux-target-options-without-effect) | ✓ | Removed automatically: `deb`/`rpm`/`pacman`/`freebsd`/`p5p`/`apk` `icon`, `freebsd`/`p5p`/`apk` `compression`, `appImage`/`flatpak`/`snapcraft.<base>` `synopsis` |
 | [`helperEHBundleId` / `helperNPBundleId` removed](#machelperehbundleid-machelpernpbundleid) | ✓ | Removed automatically from `mac` / `mas` / `masDev` (Electron 4 and later ship no such helper) |
 | [`mas` / `masDev` accept only the options Mac App Store builds read](#mas-masdev-options) | ✓ | Removed automatically. Mac App Store builds already take `target`, `icon`, `publish` and the certificates from `mac`, and do not use `notarize`, `extraDistFiles` or the update-info options; do not move them to `mac`, which would change the macOS build |
-| [`GithubOptions.vPrefixedTagName` removed](#githuboptions-gitlaboptions-vprefixedtagname) | ✓ | Use `tagNamePrefix`; an empty `tagNamePrefix: ""` is now honored (v26 ignored it) |
-| [`GitlabOptions.vPrefixedTagName` retained](#githuboptions-gitlaboptions-vprefixedtagname) | — | None — still functional; the migrator leaves GitLab entries untouched |
-| [`publish` `updaterCacheDirName` / `verifyUpdateCodeSignature` / `updateManifestPublicKey` removed](#publish-options-managed-by-electron-builder) | ✓ | Removed automatically (they never had an effect); the settings are `win.verifyUpdateCodeSignature` and `updateManifest.publicKey` |
+| [`GithubOptions` / `GitlabOptions` `vPrefixedTagName` removed](#githuboptions-gitlaboptions-vprefixedtagname) | ✓ | Use `tagNamePrefix` (`"v"` by default; `false` → `""`); a GitHub `tagNamePrefix: ""` is now honored (v26 ignored it) |
+| [`publish` `updaterCacheDirName` / `verifyUpdateCodeSignature` / `updateManifestPublicKey` removed](#publish-options-managed-by-electron-builder) | ✓ | Removed automatically (they never had an effect); the settings are `win.verifyUpdateCodeSignature` and `updateManifestSigning.publicKey` |
 | [`publish.publisherName` removed](#publish-options-managed-by-electron-builder) | — | Move it to `win.sign.publisherName` (`migrate-schema` warns): it no longer overrides the Windows publisher name |
 | [`squirrelWindows.customSquirrelVendorDir` removed](#squirrelwindowscustomsquirrelvendordir) | — | Supply a custom Squirrel bundle via `toolsets.squirrel` (a `ToolsetCustom` object); `migrate-schema` warns but cannot rewrite it (different bundle layout) |
 | [`.customNsisBinary` / `.customNsisResources` removed](#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis) | partial | Originally avail on nsis, nsisWeb, portable. Now combined and moved to a [NSIS Toolset Bundle](../toolsets#custom-nsis-bundle-layout) configured under `toolsets.nsis`. **Manual action required** - [A complete migration guide is available](./v26-to-v27#step-4-custom-nsis-migration-guide). A config that still sets removed key(s) fails the build with a message naming the replacement. (`migrate-schema` warns, cannot convert it). |
@@ -51,15 +51,17 @@ It rewrites every change marked **Auto ✓** below. See the [walkthrough](./v26-
 | [ASAR options consolidated under `asar`](#asar-options-asar) | ✓ | `asarUnpack` → `asar.unpack`, etc., including platform-level `mac.asarUnpack` → `mac.asar.unpack` (`asar: true` is still valid, just redundant) |
 | [`files` / `extraResources` / `extraFiles` nested under `fileOptions`](#file-options-fileoptions) | ✓ | `files` → `fileOptions.files`, etc., at the root and per platform (`mac.extraResources` → `mac.fileOptions.extraResources`) |
 | [`includePdb` replaced by `fileOptions.excludedExts`](#includepdb-fileoptionsexcludedexts) | ✓ | `.pdb` files are now excluded by default; `includePdb: true` → `fileOptions.excludedExts: ["default", "!pdb"]`, `includePdb: false` → `["default"]` (the v27 default, written out so that it keeps overriding an `includePdb: true` of another config layer) |
-| [macOS signing consolidated under `mac.sign`](#macos-signing-macsign) | ✓ | `identity`/`entitlements`/`hardenedRuntime`/… → `mac.sign.*`; `signIgnore` → `sign.ignore` |
+| [macOS signing consolidated under `mac.sign`](#macos-signing-macsign) | ✓ | `identity`/`entitlements`/`hardenedRuntime`/… → `mac.sign.*`; `signIgnore` → `sign.ignore`; a custom signer → `mac.sign.sign`; `mac.sign: false` skips signing |
 | [`mac.universal` options consolidated](#macuniversal) | ✓ | `mergeASARs`/`singleArchFiles`/`x64ArchFiles` → `mac.universal.*` |
 | [Windows signing unified under `win.sign`](#windows-signing-winsign) | ✓ | Discriminated union `type: "signtool" \| "hsm" \| "pkcs11" \| "azure"` |
 | [`win.signExecutable` / `win.signAndEditExecutable` removed](#winsignexecutable-winsignandeditexecutable-removed) | ✓ | `false` → `win.sign: false`; resource editing always runs |
 | [Custom Windows signing hook moved to `win.sign.sign`](#custom-windows-signing-hooks-move-to-winsignsign) | ✓ | `win.signtoolOptions.sign` moves with the rest of `signtoolOptions` to `win.sign.sign` |
 | [Root `cscLink` / `cscKeyPassword` moved to `mac` / `win`](#signing-certificates-csclink) | ✓ | Copied into both `mac` and `win` (the root value applied to both); `linux.cscLink` / `linux.cscKeyPassword` removed (they never had an effect) |
 | [`electronDownload` → `electronGet`](#electrondownload-electronget) | ✓ | Reshaped to `@electron/get` options; some legacy fields dropped (warned) |
+| [`updateManifest` → `updateManifestSigning`](#updatemanifest-updatemanifestsigning) | ✓ | Renamed at the root and on `mac` / `win` / `linux`; the value is unchanged (only configs written for a 27.0.0 alpha set it) |
 | [`snap` config key removed](#snap-snapcraft) | ✓ | Restructured to `snapcraft` with an explicit `base` |
 | [`snapcraft.<base>.publish` / `.artifactName` removed](#snapcraft-base-publish-artifactname) | ✓ | Set them on `snapcraft` itself; the selected base's values are moved there automatically |
+| [`snapcraft.core24` build switches → `buildEnvironment`](#snapcraftcore24-buildenvironment) | ✓ | `useLXD` / `useMultipass` / `useDestructiveMode` / `remoteBuild.enabled` → `buildEnvironment: "lxd" \| "multipass" \| "host" \| "remote"`; with more than one switch on, pick one (`migrate-schema` warns) |
 
 ---
 
@@ -227,24 +229,26 @@ The other options are removed from `mas` / `masDev`. A Mac App Store build takes
 | `extraDistFiles` | Not used: it adds files to the macOS `zip` / `7z` archives |
 | `releaseInfo`, `detectUpdateChannel`, `generateUpdatesFilesForAllChannels`, `electronUpdaterCompatibility`, `updateManifest` | Not used: Mac App Store builds write no update information |
 
-`migrate-schema` removes them and never moves them to `mac`, which would change the macOS build. For a certificate option it also warns: if the Mac App Store app or installer needs that certificate, set it on `mac` or in the environment. In a JS/TS config, a spread inside `mas` / `masDev` (`mas: { ...mac, … }`) is left in place with a warning: Mac App Store builds already inherit every `mac` option, so remove the spread. In v26, an object value set on both `mac` and `mas` (for example `publish` or `updateManifest`) was also merged into the `mac` one in a build of both; see [Cascaded options no longer leak](./v27-build-changes.md#cascaded-options-no-longer-leak).
+`migrate-schema` removes them and never moves them to `mac`, which would change the macOS build. For a certificate option it also warns: if the Mac App Store app or installer needs that certificate, set it on `mac` or in the environment. In a JS/TS config, a spread inside `mas` / `masDev` (`mas: { ...mac, … }`) is left in place with a warning: Mac App Store builds already inherit every `mac` option, so remove the spread. In v26, an object value set on both `mac` and `mas` (for example `publish`) was also merged into the `mac` one in a build of both; see [Cascaded options no longer leak](./v27-build-changes.md#cascaded-options-no-longer-leak).
 
 ### `GithubOptions` / `GitlabOptions` `vPrefixedTagName` {#githuboptions-gitlaboptions-vprefixedtagname}
 
-The `vPrefixedTagName` boolean on `GithubOptions` is removed. Use `tagNamePrefix` to control the tag prefix.
+The `vPrefixedTagName` boolean is removed from the GitHub and the GitLab publish options. Use `tagNamePrefix`, the text of the tag before the version: `"v"` by default (`v1.2.3`), `""` for no prefix (`1.2.3`).
 
 ```json5
-{ "publish": { "provider": "github", "vPrefixedTagName": false } }   // Before
-{ "publish": { "provider": "github", "tagNamePrefix": "" } }         // After (empty string = no prefix)
+{ "publish": { "provider": "github", "vPrefixedTagName": false } }                   // Before
+{ "publish": { "provider": "github", "tagNamePrefix": "" } }                         // After (empty string = no prefix)
+{ "publish": { "provider": "gitlab", "projectId": 123, "vPrefixedTagName": false } }  // Before
+{ "publish": { "provider": "gitlab", "projectId": 123, "tagNamePrefix": "" } }        // After
 ```
 
-To keep the default `v` prefix, simply remove `vPrefixedTagName` — `tagNamePrefix` defaults to `"v"`.
+To keep the default `v` prefix, remove `vPrefixedTagName`: `tagNamePrefix` defaults to `"v"`.
 
-**An empty `tagNamePrefix` is now honored.** v26 ignored `tagNamePrefix: ""` and still tagged `v1.2.3` (unless `vPrefixedTagName: false`); v27 uses it as-is and tags `1.2.3`. `migrate-schema` rewrites a GitHub `tagNamePrefix: ""` without `vPrefixedTagName: false` to `"v"` — keeping your existing tag names — and warns so you can set it back if unprefixed tags are what you wanted. A non-empty `tagNamePrefix` always won in v26 and is kept. The migrator applies to GitHub publish entries anywhere in the config (root, `mac`/`win`/`linux`, and target sections such as `nsis.publish`).
+`migrate-schema` rewrites `vPrefixedTagName` on GitHub and GitLab publish entries anywhere in the config (root, `mac`/`win`/`linux`, and target sections such as `nsis.publish`). `false`, and the `"false"`, `0` and `null` that v26 also read as `false`, become `tagNamePrefix: ""`; any other value becomes `tagNamePrefix: "v"` on GitHub and is removed on GitLab, except in the `publish` object of a target section that v26 merged over the inherited one (such as `deb.publish` over `linux.publish`, or `nsisWeb.publish` over `nsis.publish`), where it becomes `tagNamePrefix: "v"` too: there it overrode an inherited `false`, if any, and without it the build would warn that the target leaves out the inherited `tagNamePrefix: ""` (see [a target's `publish` replaces the platform's](./v27-build-changes.md#target-publish-replaces-platform-publish)). A non-empty GitHub `tagNamePrefix` always won in v26 and is kept. A GitLab entry that sets both keys keeps its `tagNamePrefix`, with a warning: v26 rejected `tagNamePrefix` on GitLab, so it was written for v27. In a JS/TS config, a `vPrefixedTagName` that is not a literal (a condition or a variable) is left in place with a warning, and the build fails until you replace it.
 
-:::note[GitlabOptions.vPrefixedTagName is not removed]
-Only the **GitHub** field was removed. On **GitLab**, `vPrefixedTagName` is unchanged in v27 — it still exists in the type, the schema, and the runtime, and continues to control the tag prefix (`vPrefixedTagName: false` → `1.2.3`; omit it → `v1.2.3`). It has no `tagNamePrefix` equivalent, so `migrate-schema` leaves GitLab publish entries untouched. No action is required.
-:::
+On GitLab, a release without `releaseInfo.releaseName` is still named after its tag, and the prefix can be any text, such as `release/` (`release/1.2.3`). With `uploadTarget: "project_upload"` and a prefix other than `"v"` or `""`, electron-updater cannot look up the release of the installed version, so it finds no blockmap for it and downloads the update in full instead of differentially.
+
+**An empty GitHub `tagNamePrefix` is now honored.** v26 ignored `tagNamePrefix: ""` and still tagged `v1.2.3` (unless `vPrefixedTagName: false`); v27 uses it as-is and tags `1.2.3`. `migrate-schema` rewrites a GitHub `tagNamePrefix: ""` without `vPrefixedTagName: false` to `"v"` — keeping your existing tag names — and warns so you can set it back if unprefixed tags are what you wanted. GitLab had no `tagNamePrefix` in v26, so a GitLab `""` is left as is.
 
 ---
 
@@ -256,7 +260,7 @@ The publish options no longer accept the fields electron-builder writes into `ap
 |---|---|---|
 | `updaterCacheDirName` | Nothing: it was always replaced | The package name: `<package name>-updater` |
 | `verifyUpdateCodeSignature` | Nothing: the build rejected it | `win.verifyUpdateCodeSignature: false` opts out of update signature verification |
-| `updateManifestPublicKey` | Nothing: the build rejected it | `updateManifest.publicKey`, else the public keys of the signing keys |
+| `updateManifestPublicKey` | Nothing: the build rejected it | `updateManifestSigning.publicKey`, else the public keys of the signing keys |
 | `publisherName` | On Windows, it overrode the publisher name an update's signature must match, even `win.sign.publisherName` | `win.sign.publisherName`, else `CN=<common name>` of the signing certificate |
 
 `migrate-schema` removes the first three. It keeps a `publisherName` and warns: move it to `win.sign.publisherName` yourself (adding `type: "signtool"` when `win.sign` is unset), because only you can tell which publish entry a Windows build used. In a macOS or Linux section it never had an effect, so remove it.
@@ -543,7 +547,7 @@ The root-level `includePdb` boolean is **removed**. v26 excluded a fixed list of
 
 ### macOS signing → `mac.sign` {#macos-signing-macsign}
 
-All macOS code-signing options now live inside a single `sign` object on `mac` (and `mas` / `masDev`), mirroring the Windows `win.sign` grouping. `mac.sign` is typed as `CustomMacSign | ElectronSignOptions | string | null`, where `ElectronSignOptions` is a typed pass-through to [`@electron/osx-sign`](https://github.com/electron/osx-sign).
+All macOS code-signing options now live inside a single `sign` object on `mac` (and `mas` / `masDev`), mirroring the Windows `win.sign` grouping. `mac.sign` is typed as `MacSignConfiguration | false | null`, where `MacSignConfiguration` is a typed pass-through to [`@electron/osx-sign`](https://github.com/electron/osx-sign) plus `sign`, an optional [custom signer](#custom-signers-move-to-macsignsign).
 
 | Removed (`mac.*`) | Replacement (`mac.sign.*`) |
 |---|---|
@@ -565,24 +569,39 @@ All macOS code-signing options now live inside a single `sign` object on `mac` (
 
 ```json5
 // Before
-{ "mac": { "identity": "Developer ID Application: My Company (TEAMID)", "hardenedRuntime": true, "signIgnore": ["**/*.txt"] } }
+{ "mac": { "identity": "My Company (TEAMID)", "hardenedRuntime": true, "signIgnore": ["**/*.txt"] } }
 
 // After
-{ "mac": { "sign": { "identity": "Developer ID Application: My Company (TEAMID)", "hardenedRuntime": true, "ignore": ["**/*.txt"] } } }
+{ "mac": { "sign": { "identity": "My Company (TEAMID)", "hardenedRuntime": true, "ignore": ["**/*.txt"] } } }
 ```
 
-To skip signing, use `mac.sign.identity: null` (or `mac.sign: null`). The same structure applies to `mas` and `masDev`.
+To skip signing, use `mac.sign: false` (like `win.sign: false`) or `mac.sign.identity: null`. `mac.sign: null` means the same at build time, but `migrate-schema` reads a bare `null` as v26's "no custom signer" and removes it, so prefer `false`. In v26, `mac.sign: false` / `null` only meant "no custom signer" and the app was still signed; the build warns when it skips signing. The same structure applies to `mas` and `masDev`.
 
 A few of these accepted `null` in v26 as "unset" but do not in v27 (`type`, `provisioningProfile`, `binaries`, `signIgnore`, `singleArchFiles`, `x64ArchFiles`); `migrate-schema` drops those `null`s instead of moving them. `identity: null` is kept — it still means "skip signing".
 
-:::warning[Custom signing functions]
-If you used `mac.sign` as a **custom signing function or module path** (`sign: "./customSign.js"`) together with sibling fields like `identity`, the two can no longer coexist — `sign` is now a single union. `migrate-schema` leaves your custom signer untouched and prints a warning so you can decide whether to keep the custom function or switch to an `ElectronSignOptions` object.
-:::
+The `mac.sign` object (`mas.sign`, `masDev.sign`) is now validated: an unknown or misspelled option fails the build, where v26 and the 27.0.0 alphas accepted any value there and ignored it. `sign.identityValidation`, which the alphas accepted, is removed (`migrate-schema` removes it): it never had an effect, as electron-builder resolves the signing identity itself and always passes `identityValidation: false` to `@electron/osx-sign`. `sign.batchCodesignCalls` and `sign.preEmbedProvisioningProfile`, which the alphas accepted without passing them on, now reach `@electron/osx-sign`.
+
+#### Custom signers move to `mac.sign.sign` {#custom-signers-move-to-macsignsign}
+
+A custom signer (the path or module id of a file exporting one, or a function in a JS/TS config) moves from `mac.sign` into `mac.sign.sign`, inside the sign object, as `win.sign.sign` does on Windows. It receives the options next to it: they build the `@electron/osx-sign` options it is called with (`CustomMacSignOptions`: `app`, `identity`, `provisioningProfile`, `optionsForFile`, …), so a signer and signing options no longer exclude each other.
+
+```json5
+// Before (v26)
+{ "mac": { "sign": "./customSign.js", "identity": "My Company (TEAMID)", "signIgnore": ["**/*.txt"] } }
+
+// After
+{ "mac": { "sign": { "sign": "./customSign.js", "identity": "My Company (TEAMID)", "ignore": ["**/*.txt"] } } }
+```
+
+- `migrate-schema` performs this move and folds the v26 signing options next to the signer into the same object. In a JS/TS config it warns about a `sign` value that is not a literal (a variable, a call), which may be a signer or the options: move a signer into `sign.sign` by hand. It leaves a `sign` of `"false"` or `""` in place, which the schema reads as `false` / `null` (skip signing), not as a module path, and warns when v26 signing options are next to it.
+- A configuration that still sets a bare signer fails the build with a message naming `mac.sign.sign`. On the command line, use `-c.mac.sign.sign=./customSign.js`.
+- The signer also signs the Mac App Store apps (`mas`, `mas-dev`) through the `mac` → `mas` → `masDev` merge, called with their merged options, as in v26. Set `mas.sign.sign: null` (or `masDev.sign.sign: null`) to sign that app with `@electron/osx-sign` instead; `migrate-schema` rewrites a v26 `mas.sign: null` that did this. The 27.0.0 alphas signed a Mac App Store app whose `mas.sign` is an options object with `@electron/osx-sign`, and called a bare `mas.sign` signer without the `mac.sign` options; `migrate-schema` warns about both.
+- `sign.identity` next to a signer selects the keychain identity whose SHA-1 hash the signer receives as `identity`, unset when none is found in the keychain: a remote or HSM signer that needs a certificate name reads it itself. The DMG (`dmg.sign: true`) and the Mac App Store installer are signed from the keychain, never by the signer.
 
 <details>
 <summary>Why consolidate macOS signing under <code>mac.sign</code>?</summary>
 
-In v26, ~15 signing options were scattered across the root of `MacConfiguration` intermixed with unrelated packaging options. Grouping them under a single `sign` object makes the signing surface self-documenting and matches the Windows `win.sign` grouping. `sign` is now a typed pass-through (`ElectronSignOptions`) to `@electron/osx-sign`, so upstream options are forwarded directly. Note that `ElectronSignOptions` is a closed type (`additionalProperties: false`): a field added by a newer `@electron/osx-sign` is rejected until electron-builder regenerates its schema, so it is a pass-through of the options that exist, not an open bag. `signIgnore` was renamed to `sign.ignore` to match the osx-sign canonical name. The same grouping rationale produced `mac.universal` (a pass-through to `@electron/universal`).
+In v26, ~15 signing options were scattered across the root of `MacConfiguration` intermixed with unrelated packaging options. Grouping them under a single `sign` object makes the signing surface self-documenting and matches the Windows `win.sign` grouping, with the custom signer inside it (`sign.sign`) next to the options it receives. `sign` is now a typed pass-through (`MacSignConfiguration`) to `@electron/osx-sign`, so upstream options are forwarded directly. Note that `MacSignConfiguration` is a closed type (`additionalProperties: false`): a field added by a newer `@electron/osx-sign` is rejected until electron-builder regenerates its schema, so it is a pass-through of the options that exist, not an open bag. `signIgnore` was renamed to `sign.ignore` to match the osx-sign canonical name. The same grouping rationale produced `mac.universal` (a pass-through to `@electron/universal`).
 
 </details>
 
@@ -740,6 +759,24 @@ v27 upgrades to `@electron/get` v5, which downloads via `fetch` (replacing the `
 
 The `force` field has no equivalent in `@electron/get` v5 and was dropped from `ElectronGetOptions`. Clear the cache directory instead (or set `ELECTRON_BUILDER_CACHE` to a fresh path) to force a re-download. `migrate-schema` drops it with a warning.
 
+### `updateManifest` → `updateManifestSigning` {#updatemanifest-updatemanifestsigning}
+
+Only configurations written for a 27.0.0 alpha have this option (27.0.0-alpha.9 added it). It is renamed at the root and on `mac`, `win` and `linux`, because `updateManifest: false` read as "write no update manifest" while it ships them unsigned. The value is unchanged:
+
+- `false` still ships unsigned manifests. They are still written; `publishAutoUpdate: false` on every publish provider is what stops writing them.
+- `false` still short-circuits the `ELECTRON_BUILDER_UPDATE_SIGN_KEY(_FILE)` variables.
+- Unset or `null` still [requires a signing key](./v27-build-changes.md#signed-update-manifests-are-required).
+- A platform value still replaces the root one as a whole, and a platform `null` falls back to the root.
+
+```json5
+// Before
+{ "build": { "updateManifest": { "signingKeyFile": "keys/update.pem" }, "linux": { "updateManifest": false } } }
+// After
+{ "build": { "updateManifestSigning": { "signingKeyFile": "keys/update.pem" }, "linux": { "updateManifestSigning": false } } }
+```
+
+`migrate-schema` renames it as written, `null` included. When a section sets both names it changes neither and warns. On the command line, `-c.updateManifest.…` becomes `-c.updateManifestSigning.…`; `sign-update-manifest` and `verify` reject the old name too, as the build does. `mas.updateManifest` / `masDev.updateManifest` are removed instead (see [`mas` / `masDev` options](#mas-masdev-options)). The option's type is exported as `UpdateManifestSigningOptions`.
+
 ### `snap` → `snapcraft` {#snap-snapcraft}
 
 The top-level `snap` configuration key is removed. Use `snapcraft` with an explicit `base` field and per-base options nested under a sub-key named after the base.
@@ -773,3 +810,28 @@ The per-base snap options (`snapcraft.core18` … `snapcraft.core24`) no longer 
 ```
 
 `migrate-schema` moves the selected base's value to `snapcraft` when `snapcraft` does not set it, and warns that it now takes effect; it removes the other bases' values with a warning.
+
+### `snapcraft.core24` build environment → `buildEnvironment` {#snapcraftcore24-buildenvironment}
+
+electron-builder 26.12 added four switches that choose where a core24 snap is built (the v27 alphas have them too). One value, `snapcraft.core24.buildEnvironment`, replaces them:
+
+| Before | After |
+|---|---|
+| `"useLXD": true` | `"buildEnvironment": "lxd"` |
+| `"useMultipass": true` | `"buildEnvironment": "multipass"` |
+| `"useDestructiveMode": true` | `"buildEnvironment": "host"` |
+| `"remoteBuild": { "enabled": true, … }` | `"buildEnvironment": "remote", "remoteBuild": { … }` |
+
+```json5
+// Before
+{ "build": { "snapcraft": { "base": "core24", "core24": { "remoteBuild": { "enabled": true, "buildFor": ["amd64", "arm64"] } } } } }
+// After
+{ "build": { "snapcraft": { "base": "core24", "core24": { "buildEnvironment": "remote", "remoteBuild": { "buildFor": ["amd64", "arm64"] } } } } }
+```
+
+- A switch set to `false` or `null` had no effect: remove it.
+- The other `remoteBuild` options are unchanged. They are read only when `buildEnvironment` is `"remote"`, so they can stay in the configuration while another environment is selected.
+- Unset, snapcraft uses its default provider on Linux (LXD); macOS and Windows need `"multipass"` or `"remote"`, as before.
+- Being one value, the choice is replaced by a later configuration layer: an `extends` child, or `-c.snapcraft.core24.buildEnvironment=multipass` on the command line. A `-c.snapcraft.core24.useLXD=true` fails the build like the configuration key does; pass `-c.snapcraft.core24.buildEnvironment=lxd` instead.
+
+`migrate-schema` replaces the switch that is on and removes the ones that are off. It keeps a `buildEnvironment` that is already set, and warns when the switch selected another one. With more than one switch on it changes nothing and warns: on Linux, v26 built remotely first, then on the host, then with LXD, then with Multipass (on macOS and Windows, `useLXD` and `useDestructiveMode` failed the build). A remote build next to `useDestructiveMode` ran with a snapcraft.yaml generated for a host build, which v27 cannot express. It also leaves a switch set to any other value in place with a warning, e.g. `"true"` or, in a JS/TS config, `useMultipass: process.platform === "darwin"` (which becomes `buildEnvironment: process.platform === "darwin" ? "multipass" : undefined`).
