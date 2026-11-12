@@ -465,7 +465,20 @@ jobs:
           sudo apt-get install -y squashfs-tools xvfb
           # Pin to the 8.x track: snapcraft 9.0.0 (latest/stable) intermittently hangs while
           # apt-fetching destructive-mode stagePackages, causing the core24 test to time out.
-          sudo snap install snapcraft --classic --channel=8.x/stable
+          # Retry with backoff: the runner intermittently fails to reach the snap store.
+          delay=15
+          for attempt in 1 2 3 4 5; do
+            if sudo snap install snapcraft --classic --channel=8.x/stable; then
+              break
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              echo "::error::snap install snapcraft failed after $attempt attempts"
+              exit 1
+            fi
+            echo "snap install snapcraft failed (attempt $attempt/5); retrying in ${delay}s"
+            sleep "$delay"
+            delay=$((delay * 2))
+          done
 
       - name: Test snap core24 native (install + launch)
         if: matrix.core == 'core24'
