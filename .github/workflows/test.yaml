@@ -458,27 +458,93 @@ jobs:
             sleep 2
           done
 
-      - name: Install snapcraft natively
+      - name: Install native snap test dependencies
         if: matrix.core == 'core24'
         run: |
           sudo apt-get update
           sudo apt-get install -y squashfs-tools xvfb
-          # Pin to the 8.x track: snapcraft 9.0.0 (latest/stable) intermittently hangs while
-          # apt-fetching destructive-mode stagePackages, causing the core24 test to time out.
-          # Retry with backoff: the runner intermittently fails to reach the snap store.
-          delay=15
-          for attempt in 1 2 3 4 5; do
-            if sudo snap install snapcraft --classic --channel=8.x/stable; then
-              break
+
+      # The snap store is intermittently unreachable from runners for minutes at a time, so snapcraft and the snaps it
+      # needs are installed from files kept in actions/cache. The key rotates weekly; only a cache miss contacts the store.
+      # Each .snap is checked by snapd against its store-signed .assert, so a tampered cache entry fails to install.
+      - name: Compute snap cache week
+        if: matrix.core == 'core24'
+        id: snap-cache-week
+        run: echo "week=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore snap cache
+        if: matrix.core == 'core24'
+        id: snap-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/snap-cache
+          key: snapcraft-8.x-${{ runner.arch }}-${{ steps.snap-cache-week.outputs.week }}
+          restore-keys: |
+            snapcraft-8.x-${{ runner.arch }}-
+
+      - name: Download snaps
+        if: matrix.core == 'core24' && steps.snap-cache.outputs.cache-hit != 'true'
+        id: snap-download
+        run: |
+          retry() {
+            delay=15
+            for attempt in 1 2 3 4 5; do
+              if "$@"; then
+                return 0
+              fi
+              if [ "$attempt" -eq 5 ]; then
+                return 1
+              fi
+              echo "'$*' failed (attempt $attempt/5); retrying in ${delay}s"
+              sleep "$delay"
+              delay=$((delay * 2))
+            done
+          }
+          download() {
+            dir="$RUNNER_TEMP/snap-download"
+            rm -rf "$dir"
+            mkdir -p "$dir"
+            # Pin to the 8.x track: snapcraft 9.0.0 (latest/stable) intermittently hangs while
+            # apt-fetching destructive-mode stagePackages, causing the core24 test to time out.
+            retry snap download snapcraft --channel=8.x/stable --basename=snapcraft --target-directory="$dir" || return 1
+            retry snap download snapd --basename=snapd --target-directory="$dir" || return 1
+            # snapcraft runs on its own base snap; read it from the snap rather than hardcoding it.
+            base=$(unsquashfs -cat "$dir/snapcraft.snap" meta/snap.yaml | sed -n 's/^base: *//p')
+            if [ -z "$base" ]; then
+              echo "::error::cannot read the base of the snapcraft snap"
+              return 1
             fi
-            if [ "$attempt" -eq 5 ]; then
-              echo "::error::snap install snapcraft failed after $attempt attempts"
-              exit 1
-            fi
-            echo "snap install snapcraft failed (attempt $attempt/5); retrying in ${delay}s"
-            sleep "$delay"
-            delay=$((delay * 2))
+            retry snap download "$base" --basename=base --target-directory="$dir" || return 1
+            rm -rf "$HOME/snap-cache"
+            mv "$dir" "$HOME/snap-cache"
+          }
+          if download; then
+            echo "downloaded=true" >> "$GITHUB_OUTPUT"
+          elif [ -f "$HOME/snap-cache/snapcraft.snap" ]; then
+            echo "::warning::snap download failed; installing from the older cached snaps"
+          else
+            echo "::error::snap download failed and no cached snaps were restored"
+            exit 1
+          fi
+
+      - name: Save snap cache
+        if: matrix.core == 'core24' && steps.snap-download.outputs.downloaded == 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/snap-cache
+          key: ${{ steps.snap-cache.outputs.cache-primary-key }}
+
+      - name: Install snapcraft natively
+        if: matrix.core == 'core24'
+        run: |
+          cd "$HOME/snap-cache"
+          # snapd and the base first, so installing snapcraft has no prerequisites left to fetch from the store.
+          for name in snapd base snapcraft; do
+            sudo snap ack "$name.assert"
           done
+          sudo snap install ./snapd.snap
+          sudo snap install ./base.snap
+          sudo snap install --classic ./snapcraft.snap
 
       - name: Test snap core24 native (install + launch)
         if: matrix.core == 'core24'
