@@ -59,7 +59,7 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
   }
   checkNotEmpty("version", metadata.version)
 
-  checkDependencies(metadata.dependencies, errors)
+  checkDependencies(metadata.dependencies, errors, path.dirname(appPackageFile))
   if (metadata !== devMetadata) {
     if (metadata.build != null) {
       errors.push(
@@ -106,7 +106,19 @@ function lowestVersion(versionOrRange: string): semver.SemVer | null {
   }
 }
 
-function checkDependencies(dependencies: Record<string, string> | Nullish, errors: Array<string>) {
+/** The version of the electron-updater installed for the app in `appDir` (or a parent directory), null if none can be resolved. */
+function installedElectronUpdaterVersion(appDir: string): semver.SemVer | null {
+  try {
+    const packageJsonFile = require.resolve("electron-updater/package.json", { paths: [appDir] })
+    return semver.parse(readJsonSync(packageJsonFile).version)
+  } catch (_ignored) {
+    // electron-updater is not installed (MODULE_NOT_FOUND), or the installed version's `exports` map
+    // does not expose "./package.json" (ERR_PACKAGE_PATH_NOT_EXPORTED) — fall back to the declared specifier
+    return null
+  }
+}
+
+function checkDependencies(dependencies: Record<string, string> | Nullish, errors: Array<string>, appDir: string) {
   if (dependencies == null) {
     return
   }
@@ -142,11 +154,13 @@ function checkDependencies(dependencies: Record<string, string> | Nullish, error
       )
     } else {
       // electron-updater 7 rejects the app-update.yml electron-builder 26 writes (e.g. the Windows publisherName), so the installed app could never update.
-      // Checked against the lowest version the declared range allows: the 7.0.0 prereleases (e.g. "^7.0.0-alpha.13") count as 7, a range such as ">=6" does not.
-      const lowest = lowestVersion(updaterVersion)
+      // The installed version decides, as a loose range (">=6", "*") installs electron-updater 7 once it is npm `latest`. When none is installed,
+      // the lowest version the declared range allows: the 7.0.0 prereleases (e.g. "^7.0.0-alpha.13") count as 7, a range such as ">=6" does not.
+      const installed = installedElectronUpdaterVersion(appDir)
+      const lowest = installed ?? lowestVersion(updaterVersion)
       if (lowest != null && lowest.major >= 7) {
         errors.push(
-          `electron-updater ${updaterVersion} requires an app built with electron-builder 27: electron-updater 7 rejects the update configuration that electron-builder 26 writes ` +
+          `electron-updater ${installed == null ? updaterVersion : `${installed.version} (installed for "${updaterVersion}")`} requires an app built with electron-builder 27: electron-updater 7 rejects the update configuration that electron-builder 26 writes ` +
             `(on Windows, every update is rejected), so installed apps could never update. Build with electron-builder 27, or keep electron-updater 6 (e.g. "^6.8.12"). ` +
             `See https://www.electron.build/docs/migration/v26-to-v27`
         )
