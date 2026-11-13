@@ -79,7 +79,7 @@
     "debug": "^4.3.4",
     "dotenv": "^17.4.2",
     "dotenv-expand": "^13.0.0",
-    "ejs": "^3.1.8",
+    "ejs": "^7.0.2",
     "electron-publish": "workspace:*",
     "fs-extra": "^11.3.0",
     "hosted-git-info": "^4.1.0",

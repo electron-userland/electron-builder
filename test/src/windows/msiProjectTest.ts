@@ -1,6 +1,7 @@
 import { Arch, Configuration, WinPackager } from "app-builder-lib"
 import { getEffectiveOptions } from "app-builder-lib/src/options/CommonWindowsInstallerConfiguration"
 import MsiTarget from "app-builder-lib/src/targets/win/MsiTarget"
+import MsiWrappedTarget from "app-builder-lib/src/targets/win/MsiWrappedTarget"
 import { WixSchema } from "app-builder-lib/src/toolsets/wix"
 import { createHash } from "crypto"
 import { InvalidConfigurationError } from "builder-util"
@@ -21,13 +22,15 @@ const INSTALL_DIR_NAME = "TestApp"
 interface ProjectOptions {
   readonly schema: WixSchema
   readonly msi?: Configuration["msi"]
+  // renders the msiWrapped target (msiWrapped/template.xml) instead of msi
+  readonly msiWrapped?: Configuration["msiWrapped"]
   // relative paths (with "/") of the files in the app dir; defaults to the main executable and two subdirectories
   readonly files?: Array<string>
   // runs as the msiProjectCreated hook, with the project file
   readonly msiProjectCreated?: (projectFile: string) => Promise<void>
 }
 
-async function createTarget(tmpDir: TmpDir, { schema, msi, files, msiProjectCreated }: ProjectOptions) {
+async function createTarget(tmpDir: TmpDir, { schema, msi, msiWrapped, files, msiProjectCreated }: ProjectOptions) {
   const projectDir = await tmpDir.getTempDir({ prefix: "eb-msi-project-test" })
   const buildResourcesDir = path.join(projectDir, "build")
   await mkdir(buildResourcesDir, { recursive: true })
@@ -38,7 +41,7 @@ async function createTarget(tmpDir: TmpDir, { schema, msi, files, msiProjectCrea
     await writeFile(filePath, file)
   }
 
-  const config: Configuration = { appId: "org.electron-builder.testMsi", productName: PRODUCT_NAME, msi }
+  const config: Configuration = { appId: "org.electron-builder.testMsi", productName: PRODUCT_NAME, msi, msiWrapped }
   const fakePackagerInfo = {
     config,
     metadata: { name: "TestApp", version: "1.1.0", description: "Test Application", author: { name: "Foo Bar", email: "foo@example.com" } },
@@ -57,7 +60,8 @@ async function createTarget(tmpDir: TmpDir, { schema, msi, files, msiProjectCrea
   const packager = new WinPackager(fakePackagerInfo as any)
   // the default icon would be converted with the icons toolset; the .wxs only references it when there is one
   vi.spyOn(packager, "getIconPath").mockResolvedValue(null)
-  const target = new MsiTarget(packager, path.join(projectDir, "dist"))
+  const outDir = path.join(projectDir, "dist")
+  const target = msiWrapped == null ? new MsiTarget(packager, outDir) : new MsiWrappedTarget(packager, outDir)
   // `toolsets.wix` only picks the bundle; resolving it would download it
   ;(target as any).wixToolset = { value: Promise.resolve({ path: path.join(projectDir, "wix"), schema }) }
   return { target, packager, appOutDir }
@@ -193,6 +197,56 @@ describe("MSI project (.wxs)", () => {
       `<Directory Id="APPLICATIONFOLDER" Name="${INSTALL_DIR_NAME}"/>`,
     ])
     expect(project).not.toContain("<DirectoryRef")
+  })
+
+  // the templates are ejs: `${value}` is XML-escaped, `{{-value}}` is inserted as is and `{{ code }}` runs
+  describe("template rendering", () => {
+    test("${} values are XML-escaped in both bundles", async ({ expect, tmpDir }) => {
+      for (const schema of ["v3", "v4-preview"] as const) {
+        const project = await renderProject(tmpDir, { schema, msi: { menuCategory: "R&D Tools'" } })
+        expect(XMLValidator.validate(project), schema).toBe(true)
+        expect(project, schema).toContain(`<Directory Id="COMPANYDIR" Name="R&amp;D Tools&#39;">`)
+        expect(project, schema).toContain(`<Product Id="*" Name="${PRODUCT_NAME}" UpgradeCode="`)
+        expect(project, schema).toContain(`Manufacturer="Foo Bar">`)
+      }
+    })
+
+    test("{{ }} conditions keep or drop their block, {{- }} inserts markup as is", async ({ expect, tmpDir }) => {
+      const oneClick = await renderProject(tmpDir, { schema: "v3", msi: { oneClick: true, perMachine: false, runAfterFinish: false, createDesktopShortcut: false } })
+      expect(oneClick).not.toContain(`<CustomAction Id="runAfterFinish"`)
+      expect(oneClick).not.toContain(`<Directory Id="DesktopFolder"`)
+      expect(oneClick).not.toContain("WixUISupportPerUser")
+      expect(oneClick).toContain(`<Property Id="ALLUSERS" Secure="yes" Value="2"/>`)
+      // no icon is configured
+      expect(oneClick).not.toContain("<Icon ")
+
+      const assisted = await renderProject(tmpDir, { schema: "v3", msi: { oneClick: false, perMachine: true, runAfterFinish: true, createDesktopShortcut: true } })
+      expect(assisted).toContain(`<CustomAction Id="runAfterFinish"`)
+      expect(assisted).toContain(`<Directory Id="DesktopFolder" Name="Desktop"/>`)
+      expect(assisted).toContain(`<Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Run ${PRODUCT_NAME}"/>`)
+      expect(assisted).toContain(`<Property Id="ALLUSERS" Secure="yes" Value="1"/>`)
+
+      for (const project of [oneClick, assisted]) {
+        // dirs and files are markup built by MsiTarget
+        expect(project).toContain(`<File Name="${PRODUCT_NAME}.exe"`)
+        expect(project).not.toContain("&lt;")
+        expect(project).not.toMatch(/\$\{|\{\{|<%/)
+      }
+    })
+
+    test("msiWrapped renders its template with escaped values", async ({ expect, tmpDir }) => {
+      for (const schema of ["v3", "v4-preview"] as const) {
+        const project = await renderProject(tmpDir, { schema, msiWrapped: { wrappedInstallerArgs: `/S /D="C:\\R&D"`, impersonate: true } })
+        expect(XMLValidator.validate(project), schema).toBe(true)
+        expect(lines(project), schema).toContain(`HideTarget="no" Impersonate="yes" BinaryKey="WrappedExe" ExeCommand="/S /D=&#34;C:\\R&amp;D&#34;" />`)
+        expect(project, schema).toMatch(/<Product Id="[0-9A-F-]{36}" Name="Test MSI" UpgradeCode="[0-9A-F-]{36}" Version="1\.1\.0\.0" /)
+        // the NSIS installer next to the msi
+        expect(project, schema).toContain(`<Binary Id="WrappedExe" SourceFile="`)
+        expect(project, schema).toContain(`${path.sep}dist${path.sep}${PRODUCT_NAME} Setup 1.1.0.exe" />`)
+        expect(project, schema).not.toContain("<Icon ")
+        expect(project, schema).not.toMatch(/\$\{|\{\{|<%/)
+      }
+    })
   })
 
   describe("assisted installer (oneClick: false)", () => {
