@@ -1,3 +1,21 @@
+## [26.18.2](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.18.1...electron-builder@26.18.2) (2026-11-13)
+
+
+### Bug Fixes
+
+* **builder-util-runtime:** reject failed downloads with HttpError and drop the URL query (v26 backport of [#10549](https://github.com/electron-userland/electron-builder/issues/10549)) ([#10553](https://github.com/electron-userland/electron-builder/issues/10553)) ([d0a7644](https://github.com/electron-userland/electron-builder/commit/d0a7644d2a72f70e42f7503cd125726ddc614a33))
+* **builder-util:** handle EPIPE on child stdin in spawnAndWriteWithOutput (v26 backport of [#10275](https://github.com/electron-userland/electron-builder/issues/10275)) ([#10456](https://github.com/electron-userland/electron-builder/issues/10456)) ([8348b16](https://github.com/electron-userland/electron-builder/commit/8348b165b05273e8fa0d07763180d39017ddfbff))
+* **dmg:** honor dmg.window when a background image is set (v26 backport of [#10571](https://github.com/electron-userland/electron-builder/issues/10571)) ([#10574](https://github.com/electron-userland/electron-builder/issues/10574)) ([86a6010](https://github.com/electron-userland/electron-builder/commit/86a6010a956106ef65a60e148d2b6bac2ed9e5ee))
+* log secrets as a keyed fingerprint instead of plain sha256 (v26 backport of [#10441](https://github.com/electron-userland/electron-builder/issues/10441)) ([#10457](https://github.com/electron-userland/electron-builder/issues/10457)) ([f3c7077](https://github.com/electron-userland/electron-builder/commit/f3c7077c6e86c63ac27898a10fbfab319d87c1b6))
+* prevent duplicate GitHub draft releases from concurrent artifact uploads (v26 backport of [#10028](https://github.com/electron-userland/electron-builder/issues/10028)) ([#10606](https://github.com/electron-userland/electron-builder/issues/10606)) ([4055f92](https://github.com/electron-userland/electron-builder/commit/4055f921fd51f3a728578b7e789580448797391a))
+* **publish:** createPublisher debug output names the provider instead of dumping the publish configuration (v26 backport of [#10534](https://github.com/electron-userland/electron-builder/issues/10534)) ([#10540](https://github.com/electron-userland/electron-builder/issues/10540)) ([a4e36e7](https://github.com/electron-userland/electron-builder/commit/a4e36e714346dc41d91f91de7da00d1f0b89c157))
+* **rpm:** disable build-id links and pin rpm v4 format for host-independent output (v26 backport of [#10472](https://github.com/electron-userland/electron-builder/issues/10472)) ([#10476](https://github.com/electron-userland/electron-builder/issues/10476)) ([7f293a9](https://github.com/electron-userland/electron-builder/commit/7f293a90f31ed020ee6bea26fd87b03e2ee21f2b))
+* **runtime:** drop the request auth option on a cross-origin redirect (v26 backport of [#10562](https://github.com/electron-userland/electron-builder/issues/10562)) ([#10573](https://github.com/electron-userland/electron-builder/issues/10573)) ([406725d](https://github.com/electron-userland/electron-builder/commit/406725dd3cf6d2d7768334f27d9dfd4f09f7b685))
+* **runtime:** follow a download Location only on 3xx and fail unfollowable redirects (v26 backport of [#10505](https://github.com/electron-userland/electron-builder/issues/10505), [#10510](https://github.com/electron-userland/electron-builder/issues/10510)) ([#10541](https://github.com/electron-userland/electron-builder/issues/10541)) ([2d1dc9e](https://github.com/electron-userland/electron-builder/commit/2d1dc9e9e1bd7382931cc3aa78f5867d74b121f3))
+* **updater:** replace lodash.isequal with util.isDeepStrictEqual (v26 backport of [#10484](https://github.com/electron-userland/electron-builder/issues/10484)) ([#10502](https://github.com/electron-userland/electron-builder/issues/10502)) ([ea56437](https://github.com/electron-userland/electron-builder/commit/ea56437d4f6cc1f2ef2db4ac4a34d605dbf6ace6))
+
+
+
 ## [26.18.1](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.18.0...electron-builder@26.18.1) (2026-10-25)
 
 

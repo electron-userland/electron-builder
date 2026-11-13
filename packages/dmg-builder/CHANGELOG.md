@@ -1,5 +1,24 @@
 # dmg-builder
 
+## 26.18.2
+
+### Patch Changes
+
+- Fix(dmg): honor `dmg.window` when a background image is set. Before, the window position and size were always taken from the background image and `dmg.window` was silently ignored. After, any `x`, `y`, `width` or `height` you set overrides the background-derived default. This lets you make the window taller than the background to account for the Finder title bar, which is included in the window frame and otherwise crops the bottom of the image. _[`#10574`](https://github.com/electron-userland/electron-builder/pull/10574) [`86a6010`](https://github.com/electron-userland/electron-builder/commit/86a6010a956106ef65a60e148d2b6bac2ed9e5ee) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`8348b16`](https://github.com/electron-userland/electron-builder/commit/8348b165b05273e8fa0d07763180d39017ddfbff) [`a4e36e7`](https://github.com/electron-userland/electron-builder/commit/a4e36e714346dc41d91f91de7da00d1f0b89c157) [`f3c7077`](https://github.com/electron-userland/electron-builder/commit/f3c7077c6e86c63ac27898a10fbfab319d87c1b6) [`7f293a9`](https://github.com/electron-userland/electron-builder/commit/7f293a90f31ed020ee6bea26fd87b03e2ee21f2b) [`4055f92`](https://github.com/electron-userland/electron-builder/commit/4055f921fd51f3a728578b7e789580448797391a)
+
+</small>
+
+- `builder-util@26.18.2`
+- `app-builder-lib@26.18.2`
+
+</details>
+
 ## 26.18.1
 
 ### Patch Changes
