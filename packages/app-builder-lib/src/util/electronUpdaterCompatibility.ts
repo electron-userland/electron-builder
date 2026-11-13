@@ -1,6 +1,7 @@
 import * as semver from "semver"
 import { DEFAULT_TARGET, type Platform } from "../core.js"
 import type { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
+import type { AppElectronUpdater } from "./packageMetadata.js"
 
 /** Default `electronUpdaterCompatibility`: the electron-updater versions the installed apps are assumed to ship. */
 export const DEFAULT_ELECTRON_UPDATER_COMPATIBILITY = ">=7"
@@ -16,6 +17,40 @@ export const BINARY_BLOCK_MAP_MIN_UPDATER = "7.0.0"
  * cannot, though a range such as `>=7` reads as electron-updater 7.
  */
 export const BINARY_BLOCK_MAP_MIN_UPDATER_RELEASE = "7.0.0-alpha.13"
+
+/**
+ * The first electron-updater release that rejects update checks and downloads until the app sets `autoUpdater.crossOriginHeaders`:
+ * the releases up to 7.0.0-alpha.13 (npm `next`) have no such property.
+ */
+export const CROSS_ORIGIN_HEADERS_MIN_UPDATER_RELEASE = "7.0.0-alpha.14"
+
+/**
+ * Whether the app's electron-updater (an installed version or a declared range) may reject update checks until the app sets
+ * `autoUpdater.crossOriginHeaders`: one whose version cannot be read (`catalog:`, a dist-tag) may.
+ */
+export function mayRequireCrossOriginHeaders(updater: Pick<AppElectronUpdater, "version" | "isUnresolvable">): boolean {
+  return mayBeAtLeast(updater, CROSS_ORIGIN_HEADERS_MIN_UPDATER_RELEASE)
+}
+
+/**
+ * The first electron-updater release with `autoUpdater.allowUnverifiedLinuxPackages`: before it, the property does nothing and rpm
+ * updates install with the package manager's signature check bypassed.
+ */
+export const ALLOW_UNVERIFIED_LINUX_PACKAGES_MIN_UPDATER_RELEASE = "7.0.0-alpha.5"
+
+/**
+ * Whether the app's electron-updater (an installed version or a declared range) may honor `autoUpdater.allowUnverifiedLinuxPackages`:
+ * one whose version cannot be read (`catalog:`, a dist-tag) may.
+ */
+export function maySupportAllowUnverifiedLinuxPackages(updater: Pick<AppElectronUpdater, "version" | "isUnresolvable">): boolean {
+  return mayBeAtLeast(updater, ALLOW_UNVERIFIED_LINUX_PACKAGES_MIN_UPDATER_RELEASE)
+}
+
+/** Whether the version or range of `updater` may include `release` or a later one; true when it cannot be read. */
+function mayBeAtLeast(updater: Pick<AppElectronUpdater, "version" | "isUnresolvable">, release: string): boolean {
+  const range = updater.isUnresolvable ? null : semver.validRange(updater.version, { includePrerelease: true })
+  return range == null || !semver.gtr(release, range, { includePrerelease: true })
+}
 
 /** Whether the `electronUpdaterCompatibility` range includes only electron-updater versions that read the binary block map. */
 export function isBinaryBlockMapSupported(range: string): boolean {

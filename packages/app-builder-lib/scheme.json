@@ -1170,23 +1170,22 @@
     },
     "DmgWindow": {
       "additionalProperties": false,
+      "description": "With a background image (the default), each unset value is derived from the image. With `backgroundColor`, the unset values of a set\n`window` use fixed defaults; without `window`, dmgbuild's own window defaults apply.",
       "properties": {
         "height": {
-          "description": "The height. Defaults to background image height or 380.",
+          "description": "The height. Defaults to the background image height (380 for the default background), or 300 with `backgroundColor`.",
           "type": "number"
         },
         "width": {
-          "description": "The width. Defaults to background image width or 540.",
+          "description": "The width. Defaults to the background image width (540 for the default background), or 540 with `backgroundColor`.",
           "type": "number"
         },
         "x": {
-          "default": 400,
-          "description": "The X position relative to left of the screen.",
+          "description": "The X position relative to left of the screen. Defaults to 400 with a background image, or 100 with `backgroundColor`.",
           "type": "number"
         },
         "y": {
-          "default": 100,
-          "description": "The Y position relative to bottom of the screen.",
+          "description": "The Y position relative to bottom of the screen. Defaults to (1440 - background image height) / 2, rounded, with a background image,\nor 400 with `backgroundColor`.",
           "type": "number"
         }
       },
@@ -1740,7 +1739,7 @@
       "description": "File associations.\n\nmacOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)), NSIS, and MSI only.\n\nOn Windows (NSIS) works only if [nsis.perMachine](https://www.electron.build/nsis) is set to `true`.",
       "properties": {
         "description": {
-          "description": "*windows-only.* The description.",
+          "description": "The description. On Windows, the file type description. On Linux, the `<comment>` of the MIME type declared for `mimeType`: deb, rpm and pacman write it only when set, while AppImage and Flatpak fall back to `<productName> document`.",
           "type": [
             "null",
             "string"
@@ -2445,7 +2444,7 @@
             }
           ],
           "default": "https",
-          "description": "The protocol. GitHub Publisher supports only `https`."
+          "description": "The protocol. GitHub Publisher supports only `https`. electron-updater rejects an `http` feed to a host that is not loopback unless the app sets `autoUpdater.allowInsecureFeed` (meant for dev runs: `autoUpdater.allowInsecureFeed = !app.isPackaged`)."
         },
         "provider": {
           "const": "github",
@@ -8017,7 +8016,7 @@
               "type": "null"
             }
           ],
-          "description": "Environment variables injected into the snap's runtime environment.\nMerged with the electron-builder default `{ TMPDIR: \"$XDG_RUNTIME_DIR\" }`.\nUser-supplied values take precedence."
+          "description": "Environment variables injected into the snap's runtime environment (the app's `environment` in the snap YAML).\nMerged over the electron-builder defaults `PATH` (the snap's `bin`/`sbin` directories, then `$PATH`) and\n`SNAP_DESKTOP_RUNTIME` (`$SNAP/gnome-platform`); user-supplied values take precedence.\n`DISABLE_WAYLAND=1` is always added when native Wayland is disabled (see `allowNativeWayland`).\n\nThe snap's library path goes into the snap YAML as `ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH`, not `LD_LIBRARY_PATH`\n(snapd expands it as usual), and the snap's `command.sh` launcher exports it as `LD_LIBRARY_PATH` without empty\nentries, such as the one an unset `$SNAP_LIBRARY_PATH` or `$LD_LIBRARY_PATH` reference leaves, because the dynamic\nlinker searches the current directory for an empty entry. By default the library path is `$SNAP_LIBRARY_PATH`, the\nsnap's library directories, the caller's `$LD_LIBRARY_PATH`, then the snap's library directories again.\nSetting `LD_LIBRARY_PATH` here replaces that default library path, so include every directory the app needs.\n\nIgnored with `confinement: \"classic\"`, where no environment is written and the launcher does not set `LD_LIBRARY_PATH`."
         },
         "executableArgs": {
           "anyOf": [
@@ -8752,7 +8751,7 @@
           ]
         },
         "name": {
-          "description": "The space name.",
+          "description": "The space name: 3-63 letters, digits and dashes, starting with a letter or digit.",
           "type": "string"
         },
         "path": {
@@ -8787,7 +8786,7 @@
           ]
         },
         "region": {
-          "description": "The region (e.g. `nyc3`).",
+          "description": "The DigitalOcean region slug (e.g. `nyc3`): three letters followed by one or two digits.",
           "type": "string"
         },
         "requestHeaders": {
@@ -9702,7 +9701,7 @@
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"
@@ -9743,7 +9742,7 @@
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"
@@ -9807,7 +9806,7 @@
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"
@@ -9848,7 +9847,7 @@
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"
@@ -9925,7 +9924,7 @@
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"
@@ -9966,7 +9965,7 @@
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"

@@ -192,7 +192,7 @@ interface WindowsSigningSharedOptions {
    * The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for
    * SHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*
    * the file was signed so the signature stays valid after the signing certificate expires.
-   * Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.
+   * Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.
    *
    * @default http://timestamp.digicert.com
    */
@@ -202,7 +202,7 @@ interface WindowsSigningSharedOptions {
    * The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's
    * `/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on
    * macOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested
-   * signatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.
+   * signatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.
    *
    * @default http://timestamp.digicert.com
    */

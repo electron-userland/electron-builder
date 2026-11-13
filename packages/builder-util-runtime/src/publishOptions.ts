@@ -141,7 +141,7 @@ export interface GithubOptions extends PublishConfiguration {
   readonly host?: string | null
 
   /**
-   * The protocol. GitHub Publisher supports only `https`.
+   * The protocol. GitHub Publisher supports only `https`. electron-updater rejects an `http` feed to a host that is not loopback unless the app sets `autoUpdater.allowInsecureFeed` (meant for dev runs: `autoUpdater.allowInsecureFeed = !app.isPackaged`).
    * @default https
    */
   readonly protocol?: "https" | "http" | null
@@ -583,12 +583,12 @@ export interface SpacesOptions extends BaseS3Options {
   readonly provider: "spaces"
 
   /**
-   * The space name.
+   * The space name: 3-63 letters, digits and dashes, starting with a letter or digit.
    */
   readonly name: string
 
   /**
-   * The region (e.g. `nyc3`).
+   * The DigitalOcean region slug (e.g. `nyc3`): three letters followed by one or two digits.
    */
   readonly region: string
 }

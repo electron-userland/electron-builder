@@ -5,7 +5,6 @@ import fsExtra from "fs-extra"
 import { access, chmod, link, lstat, mkdir, readdir, readlink, stat, symlink, unlink, writeFile } from "fs/promises"
 import { platform } from "os"
 import * as path from "path"
-import statMode from "stat-mode"
 import asyncPool from "tiny-async-pool"
 import { log } from "./log.js"
 import { ERR_PATH_OUTSIDE_ROOT, ExternalLinkPolicy, isPathWithin, resolvePhysicalPath, SYMLINK_CONTAINMENT_DOCS_URL, WriteContainment } from "./pathContainment.js"
@@ -67,10 +66,23 @@ export interface FileConsumer {
   isIncludeDir?: boolean
 }
 
+/** Where {@link walk} reads the tree from: the file system by default, or another tree with the same shape, such as the files of an asar archive. */
+export interface WalkSource {
+  /** The names of the entries of `dir`; empty when `dir` does not exist. */
+  readdir(dir: string): Promise<Array<string>>
+  /** The stats of `file`, not following a symlink. */
+  lstat(file: string): Promise<Stats>
+}
+
+const fileSystemWalkSource: WalkSource = {
+  readdir: dir => orIfFileNotExist(readdir(dir), []),
+  lstat,
+}
+
 /**
  * Returns list of file paths (system-dependent file separator)
  */
-export async function walk(initialDirPath: string, filter?: Filter | null, consumer?: FileConsumer): Promise<Array<string>> {
+export async function walk(initialDirPath: string, filter?: Filter | null, consumer?: FileConsumer, source: WalkSource = fileSystemWalkSource): Promise<Array<string>> {
   let result: Array<string> = []
   const queue: Array<string> = [initialDirPath]
   let addDirToResult = false
@@ -85,7 +97,7 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
       }
     }
 
-    const childNames = await orIfFileNotExist(readdir(dirPath), [])
+    const childNames = await source.readdir(dirPath)
     childNames.sort()
 
     let nodeModuleContent: Array<string> | null = null
@@ -98,7 +110,7 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
       }
 
       const filePath = dirPath + path.sep + name
-      return lstat(filePath).then(stat => {
+      return source.lstat(filePath).then(stat => {
         if (filter != null && !filter(filePath, stat)) {
           return null
         }
@@ -173,22 +185,16 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
 
   if (stats != null) {
     const originalModeNumber = stats.mode
-    const mode = new statMode.Mode(stats)
-    if (mode.owner.execute) {
-      mode.group.execute = true
-      mode.others.execute = true
+    if ((stats.mode & 0o100) !== 0) {
+      stats.mode |= 0o011
     }
 
-    mode.group.read = true
-    mode.others.read = true
-
-    mode.setuid = false
-    mode.setgid = false
+    // Allow group/others to read, and clear setuid/setgid while preserving the remaining mode bits.
+    stats.mode = (stats.mode | 0o044) & ~0o6000
 
     if (originalModeNumber !== stats.mode) {
       if (log.isDebugEnabled) {
-        const oldMode = new statMode.Mode({ mode: originalModeNumber })
-        log.debug({ file: dest, oldMode, mode }, "permissions fixed from")
+        log.debug({ file: dest, oldMode: originalModeNumber.toString(8), mode: stats.mode.toString(8) }, "permissions fixed from")
       }
 
       // https://helgeklein.com/blog/2009/05/hard-links-and-permissions-acls/

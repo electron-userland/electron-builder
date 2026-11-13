@@ -2,6 +2,7 @@ import {
   ApiRequestOptions,
   CancellationToken,
   configureRequestUrl,
+  CrossOriginHeaderPolicy,
   DEFAULT_MAX_UPDATE_INFO_SIZE,
   HttpExecutor,
   newError,
@@ -10,6 +11,7 @@ import {
   UpdateInfo,
   WindowsUpdateInfo,
 } from "builder-util-runtime"
+import { urlWithoutQuery } from "builder-util-runtime/internal"
 import { OutgoingHttpHeaders } from "http"
 import { EventType, load, State } from "js-yaml"
 import { URL } from "url"
@@ -27,15 +29,34 @@ export interface ProviderRuntimeOptions {
   executor: ElectronHttpExecutor
 
   /**
-   * Called when an update info request (e.g. a channel file) goes to another origin than `Provider.feedBaseUrl` and so is sent
-   * without the credential headers `headerNames` (names only, never values). The updater warns about it once.
+   * Chooses the request headers each update info request (e.g. a channel file) on another origin than `Provider.feedBaseUrl` sends: the
+   * updater's, which asks the app's `crossOriginHeaders`. Set by electron-updater; code that constructs a built-in provider passes on the
+   * runtime options it was given. Without a function, the provider's constructor throws `ERR_UPDATER_CROSS_ORIGIN_HEADER_POLICY_MISSING`.
    */
-  onCrossOriginHeadersRemoved?: (url: URL, feedBaseUrl: URL, headerNames: Array<string>) => void
+  crossOriginHeaderPolicy: CrossOriginHeaderPolicy
+}
+
+/**
+ * The `feedBaseUrl` of `provider`, checked at run time: a custom provider written in plain JavaScript, or built on another copy of
+ * electron-updater, may return something else. Anything but a URL fails with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, before any request
+ * header is handed to the provider or sent.
+ */
+export function feedBaseUrlOf(provider: Provider<any>): URL {
+  const url: unknown = provider.feedBaseUrl
+  if (url instanceof URL) {
+    return url
+  }
+  const value = url === null ? "null, which does not send the request headers to every origin" : url === undefined ? "undefined" : `a ${typeof url}`
+  throw newError(
+    `The feedBaseUrl of the update provider ${provider.constructor.name} is ${value}: every provider returns the URL of its update feed there, the only origin that gets every request header. ` +
+      `Return the base URL of the update files, e.g. of the channel file. https://www.electron.build/docs/migration/v27-developer-changes#custom-provider-feed-base-url`,
+    "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED"
+  )
 }
 
 // Shared by the GitHub/GitLab/PrivateGitHub providers when a release channel file (e.g. latest.yml) 404s.
 export function channelFileNotFoundError(channelFile: string, channelFileUrl: URL | string, e: any): Error {
-  return newError(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
+  return newError(`Cannot find ${channelFile} in the latest release artifacts (${urlWithoutQuery(channelFileUrl)}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
 }
 
 export abstract class Provider<T extends UpdateInfo> {
@@ -45,6 +66,15 @@ export abstract class Provider<T extends UpdateInfo> {
   protected readonly executor: ElectronHttpExecutor
 
   protected constructor(private readonly runtimeOptions: ProviderRuntimeOptions) {
+    // plain JavaScript, or runtime options built by hand, can leave it out: without it no request to another origin could choose its headers
+    const policy: unknown = runtimeOptions.crossOriginHeaderPolicy
+    if (typeof policy !== "function") {
+      throw newError(
+        `The runtime options of the update provider ${new.target.name} have no crossOriginHeaderPolicy (got ${policy === null ? "null" : typeof policy}): ` +
+          `pass on the runtime options electron-updater gave your code, spreading them to change another field. https://www.electron.build/docs/migration/v27-developer-changes#custom-provider-feed-base-url`,
+        "ERR_UPDATER_CROSS_ORIGIN_HEADER_POLICY_MISSING"
+      )
+    }
     this.executor = runtimeOptions.executor
   }
 
@@ -88,15 +118,11 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 
   /**
-   * Base URL of the update feed: the credential-bearing request headers (the ones stripped on a cross-origin redirect) are only sent to
-   * download URLs, and to the URLs of the provider's own update info requests (e.g. the channel file), on its origin. `null` sends the
-   * request headers to every URL.
-   * The default, `undefined`, means not declared: a download with credential headers (from `requestHeaders` / `addAuthHeader`) then fails
-   * with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, so a custom provider used with credentials must override this getter.
+   * Required. Base URL of the update feed: download URLs, and the URLs of the provider's own update info requests (e.g. the channel file),
+   * on its origin get every request header. Any other origin gets only the headers the app's `crossOriginHeaders` keeps, with this URL as
+   * the hop's `from`. Anything but a URL fails the update check with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`.
    */
-  get feedBaseUrl(): URL | null | undefined {
-    return undefined
-  }
+  abstract get feedBaseUrl(): URL
 
   setRequestHeaders(value: OutgoingHttpHeaders | null): void {
     this.requestHeaders = value
@@ -138,7 +164,7 @@ export abstract class Provider<T extends UpdateInfo> {
       // names the options that raise the limit
       if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
         throw newError(
-          `${e.message}: raise the limit with maxUpdateInfoSize in the publish configuration (app-update.yml) or autoUpdater.maxUpdateInfoSize`,
+          `${e.message}: raise the limit with maxUpdateInfoSize in the publish configuration (app-update.yml) or autoUpdater.maxUpdateInfoSize. See https://www.electron.build/docs/migration/v27-runtime-changes#channel-files-are-limited-to-10-mib`,
           "ERR_HTTP_RESPONSE_TOO_LARGE"
         )
       }
@@ -146,29 +172,36 @@ export abstract class Provider<T extends UpdateInfo> {
     }
   }
 
+  /**
+   * Options for an update info request to `url`, with the updater's request headers and `headers`, the provider's own for this request (an
+   * `Accept`, a token). On another origin than {@link feedBaseUrl} all of them go through the app's `crossOriginHeaders`, and the `Accept` of
+   * `headers` is added back (see `ApiRequestOptions.ownHeaders`), also on a redirect to another origin.
+   */
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): ApiRequestOptions {
     const result: ApiRequestOptions = {}
-    // the same feed-origin rule as for downloads: e.g. a channel file on another origin gets no credential headers
-    const feedBaseUrl = this.feedBaseUrl
-    let requestHeaders = this.requestHeaders
-    if (requestHeaders != null && feedBaseUrl != null && HttpExecutor.isCrossOrigin(feedBaseUrl, url)) {
-      const headerNames = HttpExecutor.sensitiveHeaderNames(requestHeaders)
-      requestHeaders = HttpExecutor.removeCrossOriginSensitiveHeaders(requestHeaders, feedBaseUrl, url)
-      if (headerNames.length !== 0) {
-        this.runtimeOptions.onCrossOriginHeadersRemoved?.(url, feedBaseUrl, headerNames)
-      }
+    const requestHeaders = this.requestHeaders
+    const merged = requestHeaders == null || headers == null ? (requestHeaders ?? headers) : { ...requestHeaders, ...headers }
+    const ownHeaders = acceptHeaderOf(headers)
+    if (merged != null) {
+      result.headers = HttpExecutor.crossOriginHeaders(merged, ownHeaders, { from: feedBaseUrlOf(this), to: url }, this.runtimeOptions.crossOriginHeaderPolicy)
     }
-    if (requestHeaders == null) {
-      if (headers != null) {
-        result.headers = headers
-      }
-    } else {
-      result.headers = headers == null ? requestHeaders : { ...requestHeaders, ...headers }
+    if (ownHeaders != null) {
+      result.ownHeaders = ownHeaders
     }
 
     configureRequestUrl(url, result)
     return result
   }
+}
+
+/** The `Accept` of `headers` (any case), which the updater or the provider builds for a request: added back after the app's crossOriginHeaders. */
+export function acceptHeaderOf(headers: OutgoingHttpHeaders | null | undefined): OutgoingHttpHeaders | null {
+  for (const [name, value] of Object.entries(headers ?? {})) {
+    if (value != null && name.toLowerCase() === "accept") {
+      return { [name]: value }
+    }
+  }
+  return null
 }
 
 export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>): ResolvedUpdateFileInfo | null | undefined {
@@ -243,30 +276,14 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
   return result
 }
 
-/** @internal */
-export const YAML_ALIAS_BUDGET_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-manifest-yaml-aliases-are-limited"
-
-// the errors parseUpdateInfo throws for the alias budget, so that AppUpdater can announce the v27 change without matching the message
-const yamlAliasBudgetErrors = new WeakSet<Error>()
-
 // location: the channel file URL without its query (describeChannelFileUrl)
 function yamlAliasBudgetError(channelFile: string, location: string, budget: number): Error {
-  const error = newError(
+  return newError(
     `Cannot parse update info from ${channelFile} in the latest release artifacts (${location}): YAML aliases expand to more than ${budget} values and string characters. ` +
       `electron-updater 7 (electron-builder v27) rejects such a manifest: publish it without YAML aliases (js-yaml \`dump\` with \`noRefs: true\`, as electron-builder writes it) ` +
-      `or with the shared values repeated inline. ${YAML_ALIAS_BUDGET_DOCS}`,
+      `or with the shared values repeated inline. https://www.electron.build/docs/migration/v27-runtime-changes#update-manifest-yaml-aliases-are-limited`,
     "ERR_UPDATER_INVALID_UPDATE_INFO"
   )
-  yamlAliasBudgetErrors.add(error)
-  return error
-}
-
-/**
- * Whether `error` is the `ERR_UPDATER_INVALID_UPDATE_INFO` that {@link parseUpdateInfo} throws for YAML aliases that expand past the budget.
- * @internal
- */
-export function isYamlAliasBudgetError(error: unknown): boolean {
-  return error instanceof Error && yamlAliasBudgetErrors.has(error)
 }
 
 // adds to total every value reachable from root, root included and an aliased one each time it is referenced:
@@ -361,13 +378,24 @@ export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransform
     }
   })
 
-  const packages = (updateInfo as WindowsUpdateInfo).packages
+  return attachPackageInfo(result, updateInfo, packagePath => newUrlFromBase(pathTransformer(packagePath), baseUrl))
+}
+
+/**
+ * Sets the `packageInfo` of the first of `files` (the web installer) to the nsis-web package of `updateInfo` for `process.arch`, else
+ * `ia32`, with its `path` resolved by `resolvePackageUrl` the way the provider resolves the installer's: NsisUpdater passes this package
+ * to the web installer with `--package-file`. Returns `files`.
+ */
+export function attachPackageInfo(
+  files: Array<ResolvedUpdateFileInfo>,
+  updateInfo: WindowsUpdateInfo,
+  resolvePackageUrl: (packagePath: string) => URL
+): Array<ResolvedUpdateFileInfo> {
+  const packages = updateInfo.packages
   const packageInfo = packages == null ? null : packages[process.arch] || packages.ia32
-  if (packageInfo != null) {
-    ;(result[0] as any).packageInfo = {
-      ...packageInfo,
-      path: newUrlFromBase(pathTransformer(packageInfo.path), baseUrl).href,
-    }
+  const installer = files[0]
+  if (packageInfo != null && installer != null) {
+    installer.packageInfo = { ...packageInfo, path: resolvePackageUrl(packageInfo.path).href }
   }
-  return result
+  return files
 }

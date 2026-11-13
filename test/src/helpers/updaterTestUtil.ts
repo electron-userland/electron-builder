@@ -1,13 +1,14 @@
 import { NodeHttpExecutor, serializeToYaml, TmpDir } from "builder-util"
 import { AllPublishOptions, BlockMap, DownloadOptions } from "builder-util-runtime"
 import { AppUpdater, NsisUpdater, type NonThrowableLogger, type VerifyUpdateFile, type VerifyUpdateFileResult } from "electron-updater"
-import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/src/AppUpdater"
-import { ElectronHttpExecutor } from "electron-updater/src/electronHttpExecutor"
+import { createCrossOriginHeaderPolicy, NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/src/AppUpdater"
+import { ElectronHttpExecutor, type ElectronHttpExecutorOptions } from "electron-updater/src/electronHttpExecutor"
 import { createHash } from "crypto"
 import { EventEmitter } from "events"
 import fsExtra from "fs-extra"
 import type { OutgoingHttpHeaders, RequestOptions } from "http"
 import * as path from "path"
+import { NtExecutable, NtExecutableResource, Resource } from "resedit"
 import { PassThrough } from "stream"
 import { gzipSync } from "zlib"
 import { assertThat } from "./fileAssert.js"
@@ -15,6 +16,27 @@ import { TestAppAdapter } from "./TestAppAdapter.js"
 import { type ExpectStatic, type Mock, vi } from "vitest"
 
 const tmpDir = new TmpDir("updater-test-util")
+
+/**
+ * A minimal Windows executable (PE) whose version resource has one string table per entry of `productVersions` with that ProductVersion
+ * (none when an entry is null), like the installer electron-builder writes for an app version. No version resource for an empty list.
+ */
+export function windowsExecutable(productVersions: Array<string | null>, options: { is32Bit?: boolean } = {}): Buffer {
+  const exe = NtExecutable.createEmpty(options.is32Bit ?? false, false)
+  if (productVersions.length > 0) {
+    const res = NtExecutableResource.from(exe)
+    const stringTables = productVersions.map((productVersion, index) => {
+      const values: Record<string, string> = { ProductName: "Test App" }
+      if (productVersion != null) {
+        values.ProductVersion = productVersion
+      }
+      return { lang: 0x0409 + index, codepage: 1200, values }
+    })
+    Resource.VersionInfo.create(0x0409, {}, stringTables).outputToResourceEntries(res.entries)
+    res.outputResource(exe)
+  }
+  return Buffer.from(exe.generate())
+}
 
 export async function createTestAppAdapter(version = "0.0.1") {
   return new TestAppAdapter(version, await tmpDir.getTempDir())
@@ -183,6 +205,7 @@ export function tuneTestUpdater(updater: AppUpdater, options?: TestOnlyUpdaterOp
     ...options,
   }
   updater.logger = new NoOpLogger()
+  updater.crossOriginHeaders = () => []
 }
 
 export function trackEvents(updater: AppUpdater) {
@@ -312,18 +335,25 @@ export class FakeNetRequest extends EventEmitter {
   }
 }
 
-/** An ElectronHttpExecutor whose requests are {@link FakeNetRequest}s answered by `answer`; `sent` lists what they sent. */
+/**
+ * An ElectronHttpExecutor whose requests, once ElectronHttpExecutor.createRequest has checked them, are {@link FakeNetRequest}s
+ * answered by `answer`; `sent` lists what they sent.
+ */
 export class FakeElectronHttpExecutor extends ElectronHttpExecutor {
   readonly sent: Array<FakeNetSentRequest> = []
   /** createRequest throws for these URLs, as net.request does for options it cannot make a request of */
   readonly unrequestableUrls = new Set<string>()
 
-  constructor(private readonly answer: (url: string, headers: OutgoingHttpHeaders) => FakeNetAnswer) {
-    super()
+  constructor(
+    private readonly answer: (url: string, headers: OutgoingHttpHeaders) => FakeNetAnswer,
+    // by default the updater's policy with the minimal crossOriginHeaders: none of the app's headers go to another origin
+    options: Partial<ElectronHttpExecutorOptions> = {}
+  ) {
+    super(undefined, { ...options, crossOriginHeaderPolicy: options.crossOriginHeaderPolicy ?? createCrossOriginHeaderPolicy(() => () => []) })
   }
 
   // the return type of the overridden method is Electron's ClientRequest, which the fake does not implement
-  createRequest(options: RequestOptions, callback: (response: any) => void): any {
+  protected createNetRequest(options: RequestOptions, callback: (response: any) => void): any {
     // like net.request: `host` (with its port) wins over `hostname` and `port`
     const host = options.host ?? `${options.hostname}${options.port == null ? "" : `:${options.port}`}`
     const redirect = "redirect" in options && typeof options.redirect === "string" ? options.redirect : undefined

@@ -295,7 +295,11 @@ describe("install on next launch", { concurrent: false }, () => {
       const download = (updater as any).executeDownload({
         fileExtension: "deb",
         fileInfo,
-        downloadUpdateOptions: { updateInfoAndProvider: { info: updateInfo, provider: { feedBaseUrl: null } }, cancellationToken: new CancellationToken(), requestHeaders: {} },
+        downloadUpdateOptions: {
+          updateInfoAndProvider: { info: updateInfo, provider: { feedBaseUrl: new URL("https://example.com/") } },
+          cancellationToken: new CancellationToken(),
+          requestHeaders: {},
+        },
         task: () => Promise.reject(new Error("the cached update must not be downloaded again")),
       })
       await isVerifying
@@ -446,6 +450,23 @@ describe("install on next launch", { concurrent: false }, () => {
       await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
       expect(doInstall).not.toHaveBeenCalled()
       expect(errors.some(it => it.message.includes("unknown error"))).toBe(true)
+    })
+
+    test("clears the pending update and reports the error when the launch-time signature re-verification throws", async () => {
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1", fileName: "TestApp-Setup.exe" })
+      const { updater, app, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
+      helper.markInstallOnNextLaunchSync(log)
+      // a packaged app whose update config file is missing, without autoUpdater.publisherName
+      ;(app as any).isPackaged = true
+      updater.updateConfigPath = "/nonexistent/dir/app-update.yml"
+      const errors: Error[] = []
+      updater.on("error", error => errors.push(error))
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(errors).toEqual([expect.objectContaining({ code: "ERR_UPDATER_NO_PUBLISHER_NAME" })])
+      expect(await helper.getPendingInstallInfo()).toBeNull()
+      expect(await pathExists(seeded.installerPath)).toBe(false)
     })
 
     test("does not install when verifyUpdateFile rejects the pending installer", async () => {
@@ -649,7 +670,14 @@ describe("install on next launch", { concurrent: false }, () => {
       expect(updater.disableWebInstaller).toBe(true)
 
       await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
-      expect(errors).toEqual([expect.objectContaining({ code: "ERR_UPDATER_WEB_INSTALLER_DISABLED" })])
+      expect(errors).toEqual([
+        expect.objectContaining({
+          code: "ERR_UPDATER_WEB_INSTALLER_DISABLED",
+          message:
+            "Unable to install pending update 1.0.1. Web Installers are disabled. Set autoUpdater.disableWebInstaller to false to allow web-installer updates. " +
+            "See https://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true",
+        }),
+      ])
       expect(doInstall).not.toHaveBeenCalled()
       expect(await helper.getPendingInstallInfo()).toBeNull()
     })

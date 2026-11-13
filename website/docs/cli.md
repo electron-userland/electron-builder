@@ -21,6 +21,8 @@ Commands:
                                   tory
   electron-builder create-update-key        Generate an Ed25519 keypair for signing auto-u
                                   pdate manifests
+  electron-builder sign-update-manifest <files..>  Re-sign edited auto-update manifests (l
+                                  atest*.yml) in place, or verify them
   electron-builder migrate-schema           Migrate build config from v26 to v27 format
   electron-builder verify [dir]             Verify code signatures, notarization and updat
                                   e-manifest signatures of built artifacts
@@ -78,6 +80,24 @@ For other commands please see help using `--help` arg, e.g. `./node_modules/.bin
 electron-builder v27 requires **Node.js >=22.12.0**. Upgrading from v26? Review the [v27 breaking changes](./migration/v27-breaking-changes), then follow the [migration walkthrough](./migration/v26-to-v27).
 :::
 
+## `sign-update-manifest`
+
+Re-signs one or more existing `latest*.yml` files in place with the [update signing key](./features/signed-update-manifests.md), so a published manifest can be edited — for example to change `stagingPercentage` — without rebuilding. Like `publish`, it reads the project configuration from the current directory; the keys come from its `updateManifest` settings or the `ELECTRON_BUILDER_UPDATE_SIGN_KEY(_FILE)` environment variables, as in a build.
+
+```bash
+electron-builder sign-update-manifest latest.yml latest-mac.yml                       # keys from the config or the environment
+electron-builder sign-update-manifest latest.yml -c electron-builder.release.yml      # a different config file
+electron-builder sign-update-manifest latest.yml -c.updateManifest.signingKeyFile=k.pem # override one setting
+electron-builder sign-update-manifest latest.yml --verify                             # check against updateManifest.publicKey; nothing is written
+electron-builder sign-update-manifest dist/latest-linux.yml --rehash                  # take sha512 and size from the listed files, then sign
+```
+
+A listed file whose `sha512` or `size` does not match its entry makes the command fail (files are looked for next to the manifest and in the build output folder, as `verify` looks for them); `--rehash` takes both from the file, for an artifact a release step changed after the build. See [Re-signing after a file changed](./features/signed-update-manifests.md#re-signing-after-a-file-changed).
+
+`--verify` runs the manifest check of [`verify`](#verify) on the given files only, against `updateManifest.publicKey`, and never loads a signing key; use `verify` for the whole build output.
+
+See [Re-signing a published manifest](./features/signed-update-manifests.md#re-signing-a-published-manifest).
+
 ## `migrate-schema`
 
 New in v27. Rewrites your build configuration from the v26 shape to the v27 shape **in place**, applying every config-level breaking change (see the [walkthrough](./migration/v26-to-v27#step-1-run-the-automated-migrator)).
@@ -90,7 +110,7 @@ electron-builder migrate-schema --dry-run  # preview without writing (alias: -n)
 - Auto-detects your config: the `package.json` `build` key, or `electron-builder.{yml,yaml,json,json5,toml,js,cjs,mjs,ts}`. Pass `--config <path>` for a non-default file and `--project-dir <dir>` for the project root.
 - Rewrites **static** configs (`json`/`json5`/`yaml`/`package.json`) and **programmatic** ones (`.js`/`.ts`/`.cjs`/`.mjs`, via an AST codemod that preserves comments and formatting when the config reduces to a single object literal).
 - **TOML** is detected but not rewritten (the `toml` library is read-only) — it prints the required changes for you to apply. **JSON5** is re-serialized as JSON (comments are not preserved).
-- Prints a **warning** for anything it cannot rewrite mechanically (e.g. `squirrelWindows.customSquirrelVendorDir`) and an **advisory** for runtime defaults and behavior changes worth checking (an `nsis-web` target, a per-machine `nsis` / `nsisWeb` installer, a custom `win.sign.sign` hook without a publisher name, a `generic` publish `url` with a query string, macOS configs relying on the default entitlements, `forceCodeSigning`). Advisories never change the file. See [what it does and does not do](./migration/v27-breaking-changes.md#new-command-migrate-schema).
+- Prints a **warning** for anything it cannot rewrite mechanically (e.g. `squirrelWindows.customSquirrelVendorDir`) and an **advisory** for runtime defaults and behavior changes worth checking (an `nsis-web` target, a per-machine `nsis` / `nsisWeb` installer, a custom `win.sign.sign` hook without a publisher name, a `generic` publish `url` with a query string, a publish feed over plain `http` to a host that is not loopback ([update requests require https](./migration/v27-runtime-changes.md#update-requests-require-https)), macOS configs relying on the default entitlements, `forceCodeSigning`). Advisories never change the file. See [what it does and does not do](./migration/v27-breaking-changes.md#new-command-migrate-schema).
 
 :::note[Removed CLI flags]
 The v22-era `--em.build` / `--em.directories` flags were removed — pass build config inline with `-c` (e.g. `-c.directories.output=dist`). Implicit publishing was also removed: pass [`--publish`](./publish) explicitly.
@@ -108,7 +128,7 @@ electron-builder verify --allow-unverified # only warn about checks that cannot 
 
 What it checks:
 
-- **Update manifests** — every `latest*.yml` (found by its content, also a further provider's in a subdirectory, such as `nsis-web/<provider>/latest.yml`; symlinks in the output are not followed) must be signed by a key in the trust list (`updateManifestPublicKey`) that each packaged app of its platform embeds in `app-update.yml`, the check electron-updater makes. Without a packaged app in the directory, it uses `updateManifest.publicKey` instead, and without that the manifest cannot be verified. `verify` uses public keys only: it never loads a signing key, from the configuration or `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`, so a cutover release signed outside its embedded trust list (`allowSigningKeyOutsideTrustList`) is reported as skipped. Every file a manifest lists must match an artifact by sha512 and size, which catches an artifact changed after the manifest was written.
+- **Update manifests** — every `latest*.yml` (found by its content, also a further provider's in a subdirectory, such as `nsis-web/<provider>/latest.yml`; symlinks in the output are not followed) must be signed by a key in the trust list (`updateManifestPublicKey`) that each packaged app of its platform embeds in `app-update.yml`, the check electron-updater makes. Without a packaged app in the directory, it uses `updateManifest.publicKey` instead, and without that the manifest cannot be verified. `verify` uses public keys only: it never loads a signing key, from the configuration or `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`, so a cutover release signed outside its embedded trust list (`allowSigningKeyOutsideTrustList`) is reported as skipped. Every file a manifest lists, `nsis-web` packages included, must match an artifact by sha512 and size, which catches an artifact changed after the manifest was written; when a file of the listed name is there, the result says whether only its size is stale or the file itself changed. A manifest that uses YAML aliases, and a `.yml` that is not valid YAML, fail, as electron-updater rejects them. `electron-builder publish -f` shares these file checks, but only warns.
 - **macOS** — every `.app` must have a valid code signature (`codesign --verify --deep --strict`) and, outside the Mac App Store, a stapled notarization ticket (`stapler validate`). A `.pkg` must be signed (`pkgutil --check-signature`) and notarized, and a DMG with `dmg.sign: true` must be signed. Any valid signature counts.
 - **Windows** — installers, `.msi` / AppX / MSIX packages and the app executable must carry a valid Authenticode signature, and the update installers must match the `publisherName` electron-updater verifies them against.
 
@@ -127,6 +147,8 @@ electron-builder publish -f dist/*.dmg dist/*.zip dist/*.blockmap dist/latest-ma
 ```
 
 `electron-builder publish -f` checks an update manifest before it uploads anything: it must be signed, and, when `updateManifest.publicKey` is set, signed by one of those keys. See [Signed update manifests are required](./migration/v27-build-changes.md#signed-update-manifests-are-required).
+
+When it uploads update info (`latest*.yml` or a channel's `.yml`) or a file that update info lists (an installer or package, a macOS zip, an `nsis-web` package or a `.blockmap`), it also warns, without failing the upload: once with the rules electron-updater applies to these files, then for each uploaded file whose `size` or `sha512` differs from what the uploaded update info declares for it (matched by file name), and for update info that uses YAML aliases. A file changed after the build, for example an installer signed again by a release script, needs update info regenerated with it and signed again; see [Full downloads stop at the declared size](./migration/v27-runtime-changes.md#full-downloads-stop-at-the-declared-size) and [Update manifests whose YAML aliases expand too far are rejected](./migration/v27-runtime-changes.md#update-manifest-yaml-aliases-are-limited).
 
 Prepend `npx` to sample commands below if you run them from Terminal and not from `package.json` scripts.
 

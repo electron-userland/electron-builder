@@ -136,7 +136,7 @@ function lowestVersion(versionOrRange: string): semver.SemVer | null {
   }
 }
 
-interface AppElectronUpdater {
+export interface AppElectronUpdater {
   /** the installed version, or the declared specifier when electron-updater is not installed */
   readonly version: string
   /** where a bundler takes it from (null: the app's `dependencies`, which are packaged) */
@@ -149,7 +149,7 @@ interface AppElectronUpdater {
  * The electron-updater the app ships: from the app's `dependencies`, else bundled (by webpack, vite, ...) from its `devDependencies`,
  * or from the `dependencies` or `devDependencies` of the development package.json (two package.json layout).
  */
-function findAppElectronUpdater(metadata: Metadata, devMetadata: any | null, projectDir: string): AppElectronUpdater | null {
+export function findAppElectronUpdater(metadata: Metadata, devMetadata: any | null, projectDir: string): AppElectronUpdater | null {
   let declared: { specifier: string; bundledFrom: string | null } | null = null
   const dev = devMetadata === metadata ? null : devMetadata
   const candidates: Array<[unknown, string | null]> = [
@@ -237,7 +237,7 @@ function checkElectronUpdater(metadata: Metadata, devMetadata: any | null, error
     const ranges = [...new Set(unsatisfied.map(it => `"${it.range}"`))].join(", ")
     const platforms = unsatisfied.map(it => it.platform).join(", ")
     errors.push(
-      `electron-updater ${version}${source} does not satisfy electronUpdaterCompatibility ${ranges} of ${platforms} (the default is "${DEFAULT_ELECTRON_UPDATER_COMPATIBILITY}" since electron-builder 27). ` +
+      `electron-updater ${version}${source} does not satisfy electronUpdaterCompatibility ${ranges} of ${platforms} (the default is "${DEFAULT_ELECTRON_UPDATER_COMPATIBILITY}"). ` +
         `Upgrade electron-updater to 7, or set electronUpdaterCompatibility to a range that includes "<7" (e.g. ">=6"), which switches the build to the JSON block map. ` +
         `See ${BLOCK_MAP_FORMAT_DOCS_URL}`
     )

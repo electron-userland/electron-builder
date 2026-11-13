@@ -8,6 +8,8 @@ import {
   ELECTRON_DOWNLOAD_DROPPED,
   excludesPdb,
   FEED_QUERY_ADVISORY,
+  INSECURE_FEED_ADVISORY,
+  isInsecureFeedEntry,
   fileOptionsChange,
   fileOptionsConflictWarning,
   INCLUDE_PDB_CHANGES,
@@ -28,6 +30,8 @@ import {
   pdbFilesPatternsAdvisory,
   platformExcludedExtsPdbChange,
   PORTABLE_DEBUG_LOGGING_DROPPED,
+  RETIRED_APPIMAGE_PINS,
+  retiredAppImagePinDescription,
   SNAP_BASES,
   SNAP_CORE24_UNSUPPORTED,
   v26IncludePdb,
@@ -416,6 +420,7 @@ class ConfigCodemod {
     this.ruleWinPublisherNameDnAdvisory(root)
     this.ruleWinMissingPublisherNameAdvisory(root)
     this.ruleFeedQueryAdvisory(root)
+    this.ruleInsecureFeedAdvisory(root)
     this.rulePdbFilesPatternsAdvisory(root)
   }
 
@@ -576,9 +581,58 @@ class ConfigCodemod {
     }
   }
 
-  // Advisory only. Mirrors migrateConfig, which walks the publish of the root and of each top-level section of the migrated config:
-  // a v26 `snap` moves under snapcraft.<base> (not walked) unless its base is "custom", when its keys replace snapcraft's.
+  // Advisory only, for the publish entries migrateConfig walks (see publishEntries).
   private ruleFeedQueryAdvisory(root: any): void {
+    const ts = this.ts
+    // A non-literal url is not read, but a template's static text is: a "?" there is in every url the template produces.
+    const urlHasQuery = (url: any): boolean =>
+      url !== undefined &&
+      (ts.isStringLiteralLike(url)
+        ? url.text.includes("?")
+        : ts.isTemplateExpression(url) && [url.head, ...url.templateSpans.map((s: any) => s.literal)].some((part: any) => part.text.includes("?")))
+    const isGenericWithQuery = (entry: any): boolean => {
+      const obj = this.objectLiteral(this.unwrap(entry))
+      const provider = this.propValue(obj, "provider")
+      return provider !== undefined && ts.isStringLiteralLike(provider) && provider.text === "generic" && urlHasQuery(this.propValue(obj, "url"))
+    }
+    if (this.publishEntries(root).some(isGenericWithQuery)) {
+      this.advisories.push(FEED_QUERY_ADVISORY)
+    }
+  }
+
+  // Advisory only. The same publish entries as ruleFeedQueryAdvisory, read like migrateConfig's isInsecureFeedEntry: only literal values (a
+  // property the AST cannot read makes the entry unread, so a non-literal `accelerate` never reports an endpoint it may replace).
+  private ruleInsecureFeedAdvisory(root: any): void {
+    const ts = this.ts
+    const isInsecure = (entry: any): boolean => {
+      const obj = this.objectLiteral(this.unwrap(entry))
+      if (obj == null) {
+        return false
+      }
+      const fields: Record<string, string | boolean> = {}
+      for (const name of ["provider", "url", "protocol", "host", "endpoint", "accelerate"]) {
+        const value = this.propValue(obj, name)
+        if (value === undefined) {
+          continue
+        }
+        if (ts.isStringLiteralLike(value)) {
+          fields[name] = value.text
+        } else if (value.kind === ts.SyntaxKind.TrueKeyword || value.kind === ts.SyntaxKind.FalseKeyword) {
+          fields[name] = value.kind === ts.SyntaxKind.TrueKeyword
+        } else {
+          return false
+        }
+      }
+      return isInsecureFeedEntry(fields)
+    }
+    if (this.publishEntries(root).some(isInsecure)) {
+      this.advisories.push(INSECURE_FEED_ADVISORY)
+    }
+  }
+
+  // Mirrors migrateConfig, which walks the publish of the root and of each top-level section of the migrated config: a v26 `snap` moves
+  // under snapcraft.<base> (not walked) unless its base is "custom", when its keys replace snapcraft's.
+  private publishEntries(root: any): any[] {
     const ts = this.ts
     const snap = this.objectLiteral(this.propValue(root, "snap"))
     const snapBase = this.propValue(snap, "base")
@@ -596,25 +650,10 @@ class ConfigCodemod {
     if (snapIsCustom) {
       sections.push(snap)
     }
-    // A non-literal url is not read, but a template's static text is: a "?" there is in every url the template produces.
-    const urlHasQuery = (url: any): boolean =>
-      url !== undefined &&
-      (ts.isStringLiteralLike(url)
-        ? url.text.includes("?")
-        : ts.isTemplateExpression(url) && [url.head, ...url.templateSpans.map((s: any) => s.literal)].some((part: any) => part.text.includes("?")))
-    const isGenericWithQuery = (entry: any): boolean => {
-      const obj = this.objectLiteral(this.unwrap(entry))
-      const provider = this.propValue(obj, "provider")
-      return provider !== undefined && ts.isStringLiteralLike(provider) && provider.text === "generic" && urlHasQuery(this.propValue(obj, "url"))
-    }
-    for (const section of sections) {
+    return sections.flatMap(section => {
       const publish = this.propValue(section, "publish")
-      const entries = publish === undefined ? [] : ts.isArrayLiteralExpression(publish) ? publish.elements : [publish]
-      if (entries.some(isGenericWithQuery)) {
-        this.advisories.push(FEED_QUERY_ADVISORY)
-        return
-      }
-    }
+      return publish === undefined ? [] : ts.isArrayLiteralExpression(publish) ? [...publish.elements] : [publish]
+    })
   }
 
   // Advisory only. Mirrors migrateConfig, which reads the root and platform `fileOptions.files` after the flat keys moved into them: the
@@ -686,12 +725,12 @@ class ConfigCodemod {
           key: `toolsets.${name}`,
           description: `removed toolsets.${name}: null (v27 rejects null; unset resolves to "latest", the newest bundle — pin "0.0.0" to keep the legacy bundle v26 used)`,
         })
-      } else if (name === "appimage" && ts.isStringLiteral(value) && value.text === "1.0.2") {
-        this.replaceValue(prop.initializer, '"1.0.3"')
-        this.changes.push({
-          key: "toolsets.appimage",
-          description: 'replaced toolsets.appimage: "1.0.2" with "1.0.3" (1.0.2 is no longer offered; 1.0.3 is the same runtime with the #9598 fix)',
-        })
+      } else if (name === "appimage" && ts.isStringLiteral(value)) {
+        const retired = RETIRED_APPIMAGE_PINS.get(value.text)
+        if (retired != null) {
+          this.replaceValue(prop.initializer, JSON.stringify(retired.replacement))
+          this.changes.push({ key: "toolsets.appimage", description: retiredAppImagePinDescription(value.text, retired) })
+        }
       }
     }
   }

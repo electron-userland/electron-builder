@@ -36,7 +36,7 @@ export {
 export { PM } from "./node-module-collector/packageManager.js"
 export type { NodeModuleInfo } from "./node-module-collector/types.js"
 export { computeSafeArtifactNameIfNeeded, DoPackOptions, trackPackWork, waitForPackWork } from "./platformPackager.js"
-export { createPublisher } from "./publish/PublishManager.js"
+export { checkUpdateSigningKeysTrusted, createPublisher, normalizeExplicitPublicKeys } from "./publish/PublishManager.js"
 export { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./publish/updateInfoBuilder.js"
 export { buildBlockMap } from "./targets/blockmap/blockmap.js"
 export { createBlockmap } from "./targets/differentialUpdateInfoBuilder.js"
@@ -92,8 +92,10 @@ export {
   getCacheDirectoryInternal,
   resolveBuilderBinaryUrl,
 } from "./util/electronGet.js"
-export { checkUpdateManifestBeforeUpload } from "./publish/manifestUploadCheck.js"
+export { checkUpdateManifestBeforeUpload, warnAboutUpdateFilesBeforeUpload } from "./publish/manifestUploadCheck.js"
 export { verifyBuildOutput } from "./util/buildOutputVerifier.js"
+export { compareListedFilesInOutput, listedFileFolders, updateManifestPlatform, verifyUpdateManifestContent } from "./publish/updateManifestVerifier.js"
+export type { UpdateManifestVerification } from "./publish/updateManifestVerifier.js"
 export type { VerificationResult, VerificationStatus, VerifyBuildOutputOptions } from "./util/buildOutputVerifier.js"
 export { buildSourceCandidates, convertIcon, getPngSize } from "./util/iconConverter.js"
 export { getLicenseAssets, getLicenseFiles } from "./util/license.js"

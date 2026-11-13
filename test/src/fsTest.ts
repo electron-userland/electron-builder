@@ -1,9 +1,41 @@
-import { ensureDir, ensureNotBusy } from "builder-util/src/fs"
+import { copyOrLinkFile, ensureDir, ensureNotBusy, walk, WalkSource } from "builder-util/src/fs"
+import type { Stats } from "fs"
 import { vi } from "vitest"
 import * as fs from "fs/promises"
 import * as path from "path"
 
 const codeError = (code: string) => Object.assign(new Error(`${code}: simulated`), { code })
+
+describe("copyOrLinkFile permissions", () => {
+  for (const [sourceMode, expectedMode] of [
+    [0o640, 0o644],
+    [0o740, 0o755],
+    [0o6750, 0o755],
+    [0o1710, 0o1755],
+    [0o620, 0o664],
+    [0o644, 0o644],
+    [0o755, 0o755],
+  ]) {
+    test.ifNotWindows(`${sourceMode.toString(8)} → ${expectedMode.toString(8)}`, async ({ expect, tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const source = path.join(dir, "source")
+      const destination = path.join(dir, "destination")
+      await fs.writeFile(source, "contents")
+      await fs.chmod(source, sourceMode)
+      const stats = await fs.stat(source)
+
+      await copyOrLinkFile(source, destination, stats, true)
+
+      const sourceStats = await fs.stat(source)
+      const destinationStats = await fs.stat(destination)
+      expect(destinationStats.mode & 0o7777).toBe(expectedMode)
+      expect(sourceStats.mode & 0o7777).toBe(sourceMode)
+      expect(stats.mode).toBe(destinationStats.mode)
+      expect(destinationStats.ino === sourceStats.ino).toBe(sourceMode === expectedMode)
+      expect(await fs.readFile(destination, "utf8")).toBe("contents")
+    })
+  }
+})
 
 describe("ensureDir", () => {
   test("creates the directory (recursive) on the happy path", async ({ expect, tmpDir }) => {
@@ -71,5 +103,42 @@ describe("ensureNotBusy", () => {
     const open = vi.fn().mockRejectedValue(codeError("EBUSY"))
     await expect(ensureNotBusy("C:/kit/forever-locked.exe", 1, 3, open)).resolves.toBeUndefined()
     expect(open).toHaveBeenCalledTimes(3)
+  })
+})
+
+describe("walk", () => {
+  /** A source over an in-memory tree: a string is a file with that content, an object a directory. */
+  function treeSource(root: string, tree: Record<string, any>): WalkSource {
+    const entryOf = (file: string) =>
+      path
+        .relative(root, file)
+        .split(path.sep)
+        .filter(it => it !== "")
+        .reduce((dir, name) => dir?.[name], tree)
+    return {
+      readdir: async dir => Object.keys(entryOf(dir) ?? {}),
+      lstat: async file => {
+        const entry = entryOf(file)
+        return { isDirectory: () => typeof entry === "object", isFile: () => typeof entry === "string", isSymbolicLink: () => false, size: entry?.length ?? 0 } as Stats
+      },
+    }
+  }
+
+  test("reads the tree from the given source, with the filter and the consumer", async ({ expect }) => {
+    const root = path.join(path.sep, "virtual")
+    const source = treeSource(root, { "b.js": "b", "a.js": "a", lib: { "c.js": "c" }, skipped: { "d.js": "d" } })
+    const consumed: Array<string> = []
+    const files = await walk(root, (file, stat) => !stat.isDirectory() || path.basename(file) !== "skipped", { consume: file => void consumed.push(file) }, source)
+    expect(files).toEqual([path.join(root, "a.js"), path.join(root, "b.js"), path.join(root, "lib", "c.js")])
+    expect(consumed.sort()).toEqual([path.join(root, "a.js"), path.join(root, "b.js"), path.join(root, "lib"), path.join(root, "lib", "c.js")])
+  })
+
+  test("reads the file system without a source", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir({ prefix: "walk" })
+    await fs.mkdir(path.join(dir, "lib"))
+    await fs.writeFile(path.join(dir, "a.js"), "a")
+    await fs.writeFile(path.join(dir, "lib", "b.js"), "b")
+    expect(await walk(dir)).toEqual([path.join(dir, "a.js"), path.join(dir, "lib", "b.js")])
+    expect(await walk(path.join(dir, "missing"))).toEqual([])
   })
 })

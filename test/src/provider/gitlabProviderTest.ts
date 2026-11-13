@@ -1,6 +1,7 @@
-import { GitlabOptions, GitlabReleaseInfo, HttpError } from "builder-util-runtime"
+import { type CrossOriginHop, GitlabOptions, GitlabReleaseInfo, HttpError } from "builder-util-runtime"
+import { vi } from "vitest"
 import { GitLabProvider } from "electron-updater/internal"
-import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil.js"
+import { assertDownloadNotTriggered, getProvider, mockWebInstallerYaml, mockWebPackageName, mockYaml } from "../helpers/providerTestUtil.js"
 import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
 const MOCK_PROJECT_ID = 99999999
@@ -184,6 +185,29 @@ test("token is not forwarded to an off-host direct_asset_url", async ({ expect }
   expect(secondCallHeaders["authorization"]).toBeUndefined()
 })
 
+// the app decides with autoUpdater.crossOriginHeaders: a direct_asset_url on its own asset host gets the token when the app keeps it there
+test("the token goes to an off-host direct_asset_url only when crossOriginHeaders keeps it for that origin", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy, "0.0.1", { token: "glpat-abc123" })
+  const crossOriginHeaders = vi.fn((headerNames: string[], hop: CrossOriginHop) =>
+    hop.to.origin === "https://assets.example" ? headerNames.filter(it => it === "private-token") : []
+  )
+  updater.crossOriginHeaders = crossOriginHeaders
+
+  const release = mockGitlabRelease(STABLE_VERSION)
+  release.assets.links.find(l => l.name === "latest.yml")!.direct_asset_url = "https://assets.example/uploads/latest.yml"
+
+  requestSpy.mockResolvedValueOnce(JSON.stringify(release)).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+  await updater.checkForUpdates()
+
+  expect(crossOriginHeaders).toHaveBeenCalledExactlyOnceWith(expect.arrayContaining(["private-token"]), {
+    from: new URL("https://gitlab.com/api/v4/"),
+    to: new URL("https://assets.example/uploads/latest.yml"),
+  })
+  expect((requestSpy.mock.calls[1][0].headers as Record<string, string>)["PRIVATE-TOKEN"]).toBe("glpat-abc123")
+})
+
 // SECURITY: an http:// downgrade of direct_asset_url (even on the same host) must NOT receive the token
 test("token is not forwarded when direct_asset_url downgrades to http", async ({ expect }) => {
   const requestSpy = createMockRequest()
@@ -323,6 +347,53 @@ test("resolveFiles - normalizes underscores in asset names to match YAML filenam
 
   const resolvedFiles = provider.resolveFiles(result?.updateInfo as any)
   expect(resolvedFiles).toHaveLength(1)
+})
+
+describe("nsis-web package", () => {
+  const PACKAGE_ASSET_URL = `${ASSET_BASE}/${mockWebPackageName(STABLE_VERSION)}`
+  // the release of an nsis-web build: its package uploaded next to the web installer
+  const webRelease = () => mockGitlabRelease(STABLE_VERSION, { extraLinks: [{ name: mockWebPackageName(STABLE_VERSION), url: PACKAGE_ASSET_URL }] })
+
+  test("resolveFiles - attaches the package of the app's arch as packageInfo, at its release asset URL", async ({ expect }) => {
+    const requestSpy = createMockRequest()
+    const updater = await createGitlabUpdater(requestSpy)
+    requestSpy.mockResolvedValueOnce(JSON.stringify(webRelease())).mockResolvedValueOnce(mockWebInstallerYaml(STABLE_VERSION))
+
+    const result = await updater.checkForUpdates()
+    const [installer] = getProvider<GitLabProvider>(updater).resolveFiles(result?.updateInfo as any)
+
+    expect(installer.url.href).toBe(`${ASSET_BASE}/my-app-Setup-${STABLE_VERSION}.exe`)
+    expect(installer.packageInfo).toMatchObject({ path: PACKAGE_ASSET_URL, size: 1234 })
+  })
+
+  test("resolveFiles - throws ERR_UPDATER_ASSET_NOT_FOUND when the package is missing from the release", async ({ expect }) => {
+    const requestSpy = createMockRequest()
+    const updater = await createGitlabUpdater(requestSpy)
+    requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockWebInstallerYaml(STABLE_VERSION))
+
+    const result = await updater.checkForUpdates()
+
+    expect(() => getProvider<GitLabProvider>(updater).resolveFiles(result?.updateInfo as any)).toThrow(
+      expect.objectContaining({ code: "ERR_UPDATER_ASSET_NOT_FOUND", message: expect.stringContaining(mockWebPackageName(STABLE_VERSION)) })
+    )
+  })
+
+  test("downloadUpdate - a web-installer update with a package for the app's arch is downloaded", async ({ expect }) => {
+    const requestSpy = createMockRequest()
+    const updater = await createGitlabUpdater(requestSpy)
+    const stop = new Error("installer download requested")
+    const downloadSpy = vi.fn().mockRejectedValue(stop)
+    ;(updater as any).httpExecutor = { request: requestSpy, download: downloadSpy }
+    updater.disableWebInstaller = false
+    updater.disableDifferentialDownload = true
+    requestSpy.mockResolvedValueOnce(JSON.stringify(webRelease())).mockResolvedValueOnce(mockWebInstallerYaml(STABLE_VERSION))
+
+    await updater.checkForUpdates()
+
+    // rejected by the installer download, not before it with ERR_UPDATER_NO_WEB_PACKAGE_FOR_ARCH
+    await expect(updater.downloadUpdate()).rejects.toBe(stop)
+    expect(downloadSpy.mock.calls[0][0].href).toBe(`${ASSET_BASE}/my-app-Setup-${STABLE_VERSION}.exe`)
+  })
 })
 
 // releaseName pulled from GitLab release when absent from YAML
