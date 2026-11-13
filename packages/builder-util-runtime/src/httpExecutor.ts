@@ -439,6 +439,9 @@ Please double check that your authentication token is correct. Due to security r
   }
 
   protected doDownload(requestOptions: ApiRequestOptions, options: DownloadCallOptions, redirectCount: number) {
+    // a failure of the request (a lost connection, a timeout) goes to whoever reports the failures of the download: the callback, until
+    // configurePipes takes the response over and reports them once the destination is closed (see there)
+    let reportFailure: (error: Error) => void = options.callback
     const request = this.createRequest(requestOptions, (response: IncomingMessage) => {
       const code = response.statusCode ?? 0
       if (code >= 400) {
@@ -479,13 +482,13 @@ Please double check that your authentication token is correct. Due to security r
         return
       }
 
-      if (options.responseHandler == null) {
-        configurePipes(options, response, () => request.abort())
-      } else {
+      if (options.responseHandler != null) {
         options.responseHandler(response, options.callback, () => request.abort())
+        return
       }
+      reportFailure = configurePipes(options, response, () => request.abort())
     })
-    this.addErrorAndTimeoutHandlers(request, options.callback, requestOptions.timeout)
+    this.addErrorAndTimeoutHandlers(request, error => reportFailure(error), requestOptions.timeout)
     this.addRedirectHandlers(request, requestOptions, options.callback, redirectCount, requestOptions => {
       this.doDownload(requestOptions, options, redirectCount + 1)
     })
@@ -800,9 +803,19 @@ export function detectSha512Encoding(sha512: string): BinaryToTextEncoding {
   return "base64"
 }
 
-function configurePipes(options: DownloadCallOptions, response: IncomingMessage, abort: () => void) {
+/**
+ * Writes `response` into `options.destination`, taking the response over from doDownload: its failures, which doDownload reports to
+ * `options.callback`, are reported once the destination is closed. Returns the function that reports a failure of the download from now
+ * on: that one, or `options.callback` when the download has already failed without taking the response over.
+ */
+function configurePipes(options: DownloadCallOptions, response: IncomingMessage, abort: () => void): (error: Error) => void {
   if (!checkSha2(safeGetHeader(response, "X-Checksum-Sha2"), options.options.sha2, options.callback)) {
-    return
+    return options.callback
+  }
+  const destination = options.destination
+  if (destination == null) {
+    options.callback(new Error("Cannot download into a file: no destination"))
+    return options.callback
   }
 
   const streams: Array<any> = []
@@ -843,17 +856,30 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage,
     streams.push(new DigestTransform(options.options.sha2, "sha256", "hex"))
   }
 
-  const fileOut = createWriteStream(options.destination!)
+  const fileOut = createWriteStream(destination)
   streams.push(fileOut)
 
-  let lastStream = response
-  for (const stream of streams) {
-    stream.on("error", (error: Error) => {
-      fileOut.close()
+  // A failure is reported once the destination is closed. createWriteStream opens the file asynchronously: reported before, a caller
+  // that removes the partly written file (electron-updater empties pending/) can run before that open creates it and leave it behind,
+  // and on Windows a file that is still open cannot be removed. The first failure is the download's: the abort that a failed stream
+  // leads to (the size limit's) fails the response and the request too.
+  let failure: Error | null = null
+  const fail = (error: Error) => {
+    if (failure != null) {
+      return
+    }
+    failure = error
+    fileOut.close(() => {
       if (!options.options.cancellationToken.cancelled) {
         options.callback(error)
       }
     })
+  }
+  response.removeListener("error", options.callback)
+  response.on("error", fail)
+  let lastStream = response
+  for (const stream of streams) {
+    stream.on("error", fail)
     lastStream = lastStream.pipe(stream)
   }
 
@@ -876,8 +902,14 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage,
   response.on("close", destroyStreams)
 
   fileOut.on("finish", () => {
-    ;(fileOut.close as any)(options.callback)
+    fileOut.close(() => {
+      // a failure of fileOut after "finish" (its close) is reported by `fail`
+      if (failure == null) {
+        options.callback(null)
+      }
+    })
   })
+  return fail
 }
 
 export function configureRequestOptions(options: RequestOptions, token?: string | null, method?: "GET" | "DELETE" | "PUT" | "POST"): RequestOptions {
