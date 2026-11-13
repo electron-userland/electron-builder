@@ -23,6 +23,8 @@ const GUARD_TIMEOUT = 10_000
 // ElectronHttpExecutor aborts the request and sends a new one), a URL in `responses` is answered with that status and headers, and
 // anything else with a 200; every response has BODY.
 class FakeNetRequest extends EventEmitter {
+  aborted = false
+
   constructor(
     private readonly url: string,
     private readonly redirects: Record<string, string>,
@@ -46,6 +48,7 @@ class FakeNetRequest extends EventEmitter {
   }
 
   abort(): void {
+    this.aborted = true
     this.emit("abort")
   }
 }
@@ -201,4 +204,51 @@ describe("ElectronHttpExecutor Location on a response", () => {
       GUARD_TIMEOUT
     )
   }
+})
+
+// A cancel aborts the request in flight: after a redirect event, that is the request sent to the redirect's target, not the first one.
+describe("ElectronHttpExecutor cancel after a redirect", () => {
+  const tmpDir = new TmpDir("electron-http-executor-cancel")
+  afterEach(() => tmpDir.cleanup())
+
+  // a request that is never answered
+  class StalledNetRequest extends FakeNetRequest {
+    end(): void {}
+  }
+
+  // redirects FILE_URL to TARGET_URL, whose request it never answers
+  class StallingTargetExecutor extends FakeElectronHttpExecutor {
+    private onTargetRequest: (request: FakeNetRequest) => void = () => {}
+    // settles once the request to the target is created, sent and given its cancel handler (all synchronous in doDownload)
+    readonly targetRequest = new Promise<FakeNetRequest>(resolve => {
+      this.onTargetRequest = resolve
+    })
+
+    constructor() {
+      super({ [FILE_URL]: TARGET_URL })
+    }
+
+    createRequest(options: RequestOptions, callback: (response: any) => void): any {
+      if (`${options.protocol}//${options.hostname}${options.path}` !== TARGET_URL) {
+        return super.createRequest(options, callback)
+      }
+      const request = new StalledNetRequest(TARGET_URL, {}, {})
+      request.on("response", callback)
+      this.onTargetRequest(request)
+      return request
+    }
+  }
+
+  test("a cancel aborts the request of the redirect", async () => {
+    const destination = path.join(await tmpDir.createTempDir({ prefix: "electron-http-executor-redirect" }), "app.exe")
+    const executor = new StallingTargetExecutor()
+    const cancellationToken = new CancellationToken()
+    const download = executor.download(new URL(FILE_URL), destination, { cancellationToken })
+    const targetRequest = await executor.targetRequest
+    expect(targetRequest.aborted).toBe(false)
+
+    cancellationToken.cancel()
+    await expect(download).rejects.toThrow("cancelled")
+    expect(targetRequest.aborted).toBe(true)
+  })
 })
