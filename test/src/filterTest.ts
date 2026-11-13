@@ -80,8 +80,9 @@ describe("createFilter – build/app/**/* partial directory matching (test-app-b
 
 /**
  * GHSA-g3hv-75wg-m249 is only patched in minimatch 11.0.1+, whose dependency tree declares a
- * Node 20 engine floor. v26 keeps resolving minimatch 10.x, but app-builder-lib's range also admits
- * 11.x so consumers can override to the patched line. FileMatcher must behave the same on both.
+ * Node 20 engine floor. app-builder-lib accepts minimatch 10 or 11: fresh installs typically resolve
+ * 11.x, while existing lockfiles (including this workspace's) can stay on 10.x or be overridden.
+ * FileMatcher must behave the same on both.
  */
 
 /**
