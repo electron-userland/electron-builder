@@ -5,7 +5,6 @@ import { computeUpdateManifestKeyId, GenericServerOptions, hashFile, Nullish, Up
 import { BLOCK_MAP_V3_MAGIC } from "builder-util-runtime/internal"
 import { archFromString, deepAssign, DebugLogger, generateUpdateSigningKeypair, log, serializeToYaml, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
-import { getAppCacheDir } from "electron-updater/src/AppAdapter"
 import { copy, emptyDir, existsSync, move, outputFile, readdir, readFile, readJson, readJsonSync, remove, stat } from "fs-extra"
 import { open } from "fs/promises"
 import { homedir } from "os"
@@ -29,6 +28,7 @@ import {
   windowsLocalAppData,
 } from "./blackboxInstallWindows"
 import { cleanupLinux, installLinux } from "./blackboxInstallLinux"
+import { pendingUpdateDir } from "./blackboxFixtureEnv"
 import { installMac } from "./blackboxInstallMac"
 import { readEmbeddedUpdateConfig, readUpdateManifest, resignManifest, rewriteServedManifests } from "./signedManifestTestUtil"
 
@@ -413,11 +413,14 @@ export async function runTestWithinServer(
   const feed = await createLocalServer(root, serverHost)
   const { server, port } = feed
   const origins: Array<LocalServer> = []
+  // rejects the scenario on an error of a server, set once the scenario runs (before it can create an origin)
+  let failScenario: ((error: Error) => void) | null = null
   const servers: BlackboxServers = {
     feed,
     origins,
     createOrigin: async () => {
       const origin = await createLocalServer(root, serverHost)
+      origin.server.on("error", error => failScenario?.(error))
       origins.push(origin)
       return origin
     },
@@ -455,6 +458,7 @@ export async function runTestWithinServer(
   }
 
   return await new Promise<void>((resolve, reject) => {
+    failScenario = reject
     server.on("error", reject)
     doTest(root, updateConfig, serverConfig, servers).then(resolve).catch(reject)
   }).then(
@@ -764,16 +768,7 @@ export async function runInstallOnNextLaunchTest(
         })
 
         // 2. The installer must NOT have run — the installed binary still reports the old version.
-        const probe = await launchAndWaitForQuit({
-          appPath,
-          vm,
-          timeoutMs: 60 * 1000,
-          updateConfigPath,
-          packageManagerToTest: packageManager,
-          env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
-          waitForExit: true,
-        })
-        await probe.assert(() => expect(probe.version).toMatch(OLD_VERSION_NUMBER))
+        await expectInstalledVersion({ expect, appPath, vm, updateConfigPath, packageManager }, OLD_VERSION_NUMBER)
         await options.afterQueued?.(outDirs)
 
         // 3. Relaunch — the pending update is re-validated against the update server and installed.
@@ -1154,16 +1149,24 @@ export async function expectRejectedUpdate(
   })
 
   // nothing may have been installed
+  await expectInstalledVersion({ expect, appPath, vm, updateConfigPath, packageManager }, installedVersion)
+}
+
+/** One probe launch of the installed app (its updater disabled: it prints its version and quits), which must report `version`. */
+export async function expectInstalledVersion(
+  { expect, appPath, vm, updateConfigPath, packageManager }: Pick<ScenarioContext, "expect" | "appPath" | "vm" | "updateConfigPath" | "packageManager">,
+  version: string
+): Promise<void> {
   const probe = await launchAndWaitForQuit({
     appPath,
     vm,
     timeoutMs: 60 * 1000,
     updateConfigPath,
     packageManagerToTest: packageManager,
-    env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
+    env: { AUTO_UPDATER_TEST: "" },
     waitForExit: true,
   })
-  await probe.assert(() => expect(probe.version).toMatch(installedVersion))
+  await probe.assert(() => expect(probe.version).toMatch(version))
 }
 
 /** Asserts the manifest of a build is signed by exactly `publicKeyPems` (in order), legacy `signature` included. */
@@ -1503,15 +1506,7 @@ export async function runCorruptedPendingUpdateTest(
       })
 
       // 4. The installed app is untouched.
-      const probe = await launchAndWaitForQuit({
-        appPath,
-        timeoutMs: 60 * 1000,
-        updateConfigPath,
-        packageManagerToTest: packageManager,
-        env: { AUTO_UPDATER_TEST: "" },
-        waitForExit: true,
-      })
-      await probe.assert(() => expect(probe.version).toMatch(OLD_VERSION_NUMBER))
+      await expectInstalledVersion(ctx, OLD_VERSION_NUMBER)
 
       // 5. The next update check downloads the update again and installs it.
       await updateHop(expect, { ...ctx, fromVersion: OLD_VERSION_NUMBER, toVersion: NEW_VERSION_NUMBER })
@@ -1567,9 +1562,12 @@ export async function withEmptyUpdaterCaches(test: () => Promise<void>): Promise
 }
 
 async function clearUpdaterCaches(): Promise<void> {
-  await clearWindowsUpdaterCaches()
-  // on mac and Linux (on Windows, clearWindowsUpdaterCaches has removed it already)
-  await remove(path.join(getAppCacheDir(), UPDATER_STORE_DIR_NAME))
+  if (process.platform === "win32") {
+    await clearWindowsUpdaterCaches()
+  } else {
+    // the updater cache that holds the pending directory
+    await remove(path.dirname(pendingUpdateDir(UPDATER_STORE_DIR_NAME)))
+  }
 }
 
 /**

@@ -16,20 +16,20 @@ export const NOT_LOOPBACK_LOCALHOST_NAME = "eb-e2e.localhost"
 
 /** The updater settings of one launch of the fixture app: each one left out keeps the fixture's own. */
 export interface FixtureUpdaterKnobs {
-  /** "unset": autoUpdater.crossOriginHeaders stays null (the fixture sets `() => []` otherwise) */
-  readonly crossOriginHeaders?: "unset"
+  /** autoUpdater.crossOriginHeaders stays null (the fixture sets `() => []` otherwise) */
+  readonly unsetCrossOriginHeaders?: boolean
   readonly requestHeaders?: Readonly<Record<string, string>>
   /** autoUpdater.addAuthHeader(authHeader), after requestHeaders */
   readonly authHeader?: string
-  /** false is passed on, so that it overrides the allowInsecureFeed that launchAndWaitForQuit passes for a feed that is not loopback */
+  /** false is passed on, so that it overrides the allowInsecureFeed that launchAndWaitForQuit passes to a launch in the Parallels VM */
   readonly allowInsecureFeed?: boolean
   /** autoUpdater.publisherName (NSIS) */
   readonly publisherName?: string
-  /** "accept": a verifyUpdateFileAuthenticodeSignature that accepts every update and logs the publisher names it got (see authenticodeStubCalls) */
-  readonly authenticodeStub?: "accept"
+  /** a verifyUpdateFileAuthenticodeSignature that accepts every update and logs the publisher names it got (see authenticodeStubCalls) */
+  readonly authenticodeStub?: boolean
   readonly autoInstallEvent?: "onQuit" | "onNextLaunch" | "manual"
-  /** no update check: the launch only runs the install at launch of a pending update, and quits after quitAfterMs when it does not install one */
-  readonly pendingOnly?: { readonly quitAfterMs: number }
+  /** no update check: the launch only runs the install at launch of a pending update, and quits after this many ms when it does not install one */
+  readonly pendingOnlyQuitAfterMs?: number
   /** the downloaded update is queued with quitAndInstall({ waitUntilNextLaunch: true }) instead of installed */
   readonly nextLaunch?: boolean
   /** the updater's debug lines are printed as `[updater debug] …` */
@@ -39,14 +39,14 @@ export interface FixtureUpdaterKnobs {
 /** The env of a launch of the fixture app with `knobs`, for the `env` of a launch (launchAndWaitForQuit, updateHop, expectRejectedUpdate). */
 export function fixtureEnv(knobs: FixtureUpdaterKnobs): Record<string, string> {
   const values: Record<string, string | undefined> = {
-    CROSS_ORIGIN_HEADERS: knobs.crossOriginHeaders,
+    UNSET_CROSS_ORIGIN_HEADERS: knobs.unsetCrossOriginHeaders === true ? "true" : undefined,
     REQUEST_HEADERS: knobs.requestHeaders == null ? undefined : JSON.stringify(knobs.requestHeaders),
     AUTH_HEADER: knobs.authHeader,
     ALLOW_INSECURE_FEED: knobs.allowInsecureFeed?.toString(),
     PUBLISHER_NAME: knobs.publisherName,
-    AUTHENTICODE_STUB: knobs.authenticodeStub,
+    AUTHENTICODE_STUB: knobs.authenticodeStub === true ? "true" : undefined,
     AUTO_INSTALL_EVENT: knobs.autoInstallEvent,
-    PENDING_ONLY_QUIT_AFTER_MS: knobs.pendingOnly?.quitAfterMs.toString(),
+    PENDING_ONLY_QUIT_AFTER_MS: knobs.pendingOnlyQuitAfterMs?.toString(),
     NEXT_LAUNCH: knobs.nextLaunch === true ? "true" : undefined,
     DEBUG_LOG: knobs.debugLog === true ? "true" : undefined,
   }
@@ -61,7 +61,7 @@ export function fixtureEnv(knobs: FixtureUpdaterKnobs): Record<string, string> {
 
 const AUTHENTICODE_STUB_MARKER = "AUTHENTICODE_STUB_CALLED:"
 
-/** Every call of the `authenticodeStub: "accept"` verifier during one launch, in order. */
+/** Every call of the `authenticodeStub` verifier during one launch, in order. */
 export function authenticodeStubCalls(stdout: string): Array<{ publisherNames: Array<string> }> {
   return stdout.split(/\r?\n/).flatMap(line => {
     const index = line.indexOf(AUTHENTICODE_STUB_MARKER)

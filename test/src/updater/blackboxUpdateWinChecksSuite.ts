@@ -10,39 +10,29 @@ import { runNsisAuthenticodeTest, runNsisInstallerChecksTest, runNsisNextLaunchM
 
 type WinChecksToolsets = Required<Pick<ToolsetConfig, "winCodeSign" | "nsis" | "wine">>
 
-const options = { ...optionsForFlakyE2E, retry: 1 }
+/** Registers the single test `name`, skipped without native Windows or a Parallels VM when `runsInVm`, else left to `run` (and its file). */
+function registerNsisCheck(name: string, runsInVm: boolean, run: (context: TestContext) => Promise<void>): void {
+  describe.heavy("windows", optionsForFlakyE2E, () => {
+    test(name, { ...optionsForFlakyE2E, retry: 1 }, async (context: TestContext) => {
+      if (runsInVm && process.platform !== "win32" && (await windowsVmPromise) == null) {
+        context.skip()
+      }
+      await run(context)
+    })
+  })
+}
 
 /** Native Windows or a Parallels VM: a verifier stub stands in for the Authenticode verification of the untrusted test certificate. */
 export function registerBlackboxNsisInstallerChecksTests(toolsets: WinChecksToolsets): void {
-  describe.heavy("windows", optionsForFlakyE2E, () => {
-    test("nsis - installer version and autoUpdater.publisherName (custom verifier)", options, async (context: TestContext) => {
-      const vm = await windowsVmPromise
-      if (process.platform !== "win32" && vm == null) {
-        context.skip()
-      }
-      await runNsisInstallerChecksTest(context, toolsets)
-    })
-  })
+  registerNsisCheck("nsis - installer version and autoUpdater.publisherName (custom verifier)", true, context => runNsisInstallerChecksTest(context, toolsets))
 }
 
 /** Native Windows or a Parallels VM. */
 export function registerBlackboxNsisNextLaunchModesTests(toolsets: WinChecksToolsets): void {
-  describe.heavy("windows", optionsForFlakyE2E, () => {
-    test("nsis - install on next launch: manual, then the default autoInstallEvent", options, async (context: TestContext) => {
-      const vm = await windowsVmPromise
-      if (process.platform !== "win32" && vm == null) {
-        context.skip()
-      }
-      await runNsisNextLaunchModesTest(context, toolsets)
-    })
-  })
+  registerNsisCheck("nsis - install on next launch: manual, then the default autoInstallEvent", true, context => runNsisNextLaunchModesTest(context, toolsets))
 }
 
 /** Native Windows (a `.win.` file), elevated: the test certificate is trusted in LocalMachine\Root (skipped when it cannot be). */
 export function registerBlackboxNsisAuthenticodeTests(toolsets: WinChecksToolsets): void {
-  describe.heavy("windows", optionsForFlakyE2E, () => {
-    test("nsis - Authenticode verification against a trusted certificate", options, async (context: TestContext) => {
-      await runNsisAuthenticodeTest(context, toolsets)
-    })
-  })
+  registerNsisCheck("nsis - Authenticode verification against a trusted certificate", false, context => runNsisAuthenticodeTest(context, toolsets))
 }

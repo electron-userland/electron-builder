@@ -43,25 +43,27 @@ function readUpdaterKnobs() {
     }
     return value
   }
+  // "true", or unset
+  const flag = name => oneOf(name, ["true"]) != null
   const requestHeaders = read("REQUEST_HEADERS")
   const pendingOnlyQuitAfterMs = read("PENDING_ONLY_QUIT_AFTER_MS")
   if (pendingOnlyQuitAfterMs != null && !/^[1-9][0-9]*$/.test(pendingOnlyQuitAfterMs)) {
     throw new Error(`AUTO_UPDATER_TEST_PENDING_ONLY_QUIT_AFTER_MS is ${JSON.stringify(pendingOnlyQuitAfterMs)}, not a number of milliseconds`)
   }
   return {
-    // "unset" leaves autoUpdater.crossOriginHeaders null: the update check fails with ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED
-    unsetCrossOriginHeaders: oneOf("CROSS_ORIGIN_HEADERS", ["unset"]) != null,
+    // autoUpdater.crossOriginHeaders stays null: the update check fails with ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED
+    unsetCrossOriginHeaders: flag("UNSET_CROSS_ORIGIN_HEADERS"),
     requestHeaders: requestHeaders == null ? null : parseRequestHeaders(requestHeaders),
     authHeader: read("AUTH_HEADER"),
-    // "false" changes nothing: it overrides the "true" that the harness passes for a served feed that is not loopback (insecureFeedEnv)
+    // "false" changes nothing: it overrides the "true" that the harness passes to a launch in the Parallels VM (launchAndWaitForQuit)
     allowInsecureFeed: oneOf("ALLOW_INSECURE_FEED", ["true", "false"]) === "true",
     publisherName: read("PUBLISHER_NAME"),
-    // "accept": a verifyUpdateFileAuthenticodeSignature that accepts every update, e.g. one signed with the untrusted test certificate
-    authenticodeStub: oneOf("AUTHENTICODE_STUB", ["accept"]) != null,
+    // a verifyUpdateFileAuthenticodeSignature that accepts every update, e.g. one signed with the untrusted test certificate
+    authenticodeStub: flag("AUTHENTICODE_STUB"),
     autoInstallEvent: oneOf("AUTO_INSTALL_EVENT", ["onQuit", "onNextLaunch", "manual"]),
     // no update check: the launch only runs the install at launch of a pending update, and quits after this many milliseconds otherwise
     pendingOnlyQuitAfterMs: pendingOnlyQuitAfterMs == null ? null : Number(pendingOnlyQuitAfterMs),
-    debugLog: oneOf("DEBUG_LOG", ["true"]) != null,
+    debugLog: flag("DEBUG_LOG"),
   }
 }
 

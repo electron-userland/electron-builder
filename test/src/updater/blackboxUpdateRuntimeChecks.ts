@@ -1,4 +1,5 @@
 import { ToolsetConfig } from "app-builder-lib"
+import { log } from "builder-util"
 import { Arch } from "electron-builder"
 import { readdir, readJson } from "fs-extra"
 import path from "path"
@@ -12,6 +13,7 @@ import { authenticodeStubCalls, countOf, FixtureUpdaterKnobs, fixtureEnv, leftov
 import { NSIS_INSTALLER_IMAGE_NAME, readInstalledPackageType, UPDATER_STORE_DIR_NAME, waitForWindowsProcessExit } from "./blackboxInstallWindows"
 import {
   assertDifferentialDownload,
+  expectInstalledVersion,
   expectRejectedUpdate,
   pollUntilNewVersionInstalled,
   runUpdateScenario,
@@ -58,7 +60,7 @@ export async function expectCrossOriginHeadersRequired(ctx: ScenarioContext): Pr
   await expectRejectedUpdate(ctx, {
     installedVersion: OLD_VERSION_NUMBER,
     expectedErrorCode: "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED",
-    env: fixtureEnv({ crossOriginHeaders: "unset" }),
+    env: fixtureEnv({ unsetCrossOriginHeaders: true }),
     manifests: "unsigned",
     expectNoRequests: true,
     assertLaunch: stdout => {
@@ -83,8 +85,6 @@ export async function expectNonLoopbackFeedRules(ctx: ScenarioContext, other: Lo
     await expectRejectedUpdate(ctx, {
       installedVersion: OLD_VERSION_NUMBER,
       expectedErrorCode: "ERR_UPDATER_INSECURE_FEED",
-      // over the allowInsecureFeed that the harness passes for a feed that is not loopback (insecureFeedEnv)
-      env: fixtureEnv({ allowInsecureFeed: false }),
       manifests: "unsigned",
       expectNoRequests: true,
       assertLaunch: stdout => {
@@ -266,7 +266,7 @@ const FORGED_VERSION = THIRD_VERSION_NUMBER
  * The app's own publisherName and a verifier that accepts the installer signed with the untrusted test certificate: the update is then
  * verified against a publisherName, which runs the check of its ProductVersion, on native Windows and in the VM alike.
  */
-const VERIFIED_BY_STUB = { publisherName: WIN_SIGNING_PUBLISHER_NAME, authenticodeStub: "accept" } as const
+const VERIFIED_BY_STUB = { publisherName: WIN_SIGNING_PUBLISHER_NAME, authenticodeStub: true } as const
 
 /** Nothing of a failed download is left in the pending directory, which can only be read when the app runs on this machine (no VM). */
 async function expectNoPartialDownload({ expect, vm }: ScenarioContext): Promise<void> {
@@ -364,7 +364,7 @@ export async function runNsisInstallerChecksTest(context: TestContext, toolsets:
       await expectRejectedUpdate(ctx, {
         installedVersion: OLD_VERSION_NUMBER,
         expectedErrorCode: "ERR_UPDATER_INVALID_SIGNATURE",
-        env: fixtureEnv({ authenticodeStub: "accept" }),
+        env: fixtureEnv({ authenticodeStub: true }),
         manifests: "unsigned",
         assertLaunch: stdout => {
           expect(stdout).toContain(`New version ${NEW_VERSION_NUMBER} is not signed by the application owner: The update is rejected: app-update.yml has no publisherName`)
@@ -425,20 +425,6 @@ async function launchInstalled(ctx: ScenarioContext, knobs: FixtureUpdaterKnobs,
   })
 }
 
-async function expectInstalledVersion(ctx: ScenarioContext, version: string): Promise<void> {
-  const { expect, appPath, vm, updateConfigPath, packageManager } = ctx
-  const probe = await launchAndWaitForQuit({
-    appPath,
-    vm,
-    timeoutMs: 60 * 1000,
-    updateConfigPath,
-    packageManagerToTest: packageManager,
-    env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
-    waitForExit: true,
-  })
-  await probe.assert(() => expect(probe.version).toMatch(version))
-}
-
 /** The update is downloaded and queued with quitAndInstall({ waitUntilNextLaunch: true }); nothing is installed. */
 async function queueForNextLaunch(ctx: ScenarioContext, knobs: FixtureUpdaterKnobs, check?: (stdout: string) => void): Promise<void> {
   const { expect } = ctx
@@ -460,7 +446,7 @@ async function expectManualModeKeepsPendingUpdate(ctx: ScenarioContext, knobs: F
   for (const server of servers) {
     server.clearRequests()
   }
-  await launchInstalled(ctx, { ...knobs, pendingOnly: { quitAfterMs: 15_000 }, autoInstallEvent: "manual" }, stdout => {
+  await launchInstalled(ctx, { ...knobs, pendingOnlyQuitAfterMs: 15_000, autoInstallEvent: "manual" }, stdout => {
     expect(stdout).toContain("AUTO_INSTALL_ON_NEXT_LAUNCH_TIMEOUT")
   })
   expect(
@@ -485,7 +471,7 @@ export async function runNsisNextLaunchModesTest(context: TestContext, toolsets:
     await queueForNextLaunch(ctx, VERIFIED_BY_STUB)
 
     await withForgedVersion(rootDirectory, () =>
-      launchInstalled(ctx, { ...VERIFIED_BY_STUB, pendingOnly: { quitAfterMs: 20_000 } }, stdout => {
+      launchInstalled(ctx, { ...VERIFIED_BY_STUB, pendingOnlyQuitAfterMs: 20_000 }, stdout => {
         expect(stdout).toContain("Update is marked for install on next launch, validating it against the latest update info")
         expect(stdout).toContain("ERR_UPDATER_INSTALLER_VERSION_MISMATCH")
         expectForgedVersionMismatch(expect, stdout)
@@ -501,12 +487,12 @@ export async function runNsisNextLaunchModesTest(context: TestContext, toolsets:
     await expectManualModeKeepsPendingUpdate(ctx, VERIFIED_BY_STUB)
 
     // the quit timeout also ends the app that the installer starts again (--force-run), which inherits this env
-    await launchInstalled(ctx, { ...VERIFIED_BY_STUB, pendingOnly: { quitAfterMs: 20_000 } }, stdout => {
+    await launchInstalled(ctx, { ...VERIFIED_BY_STUB, pendingOnlyQuitAfterMs: 20_000 }, stdout => {
       expect(countOf(stdout, `Installing pending update ${NEW_VERSION_NUMBER} on launch`)).toBe(1)
       expect(authenticodeStubCalls(stdout)).toEqual([{ publisherNames: [WIN_SIGNING_PUBLISHER_NAME] }])
       expect(stdout).toMatch(/Executing: .*\\pending\\TestApp Setup\.exe with args: --updated,\/S,--force-run/i)
     })
-    await pollUntilNewVersionInstalled(expect, { ...ctx, packageManagerToTest: ctx.packageManager, expectedVersion: NEW_VERSION_NUMBER })
+    await pollUntilNewVersionInstalled(expect, { ...ctx, packageManagerToTest: ctx.packageManager })
     await expectInstalledNsis(ctx)
   })
 }
@@ -523,46 +509,49 @@ export async function runNsisAuthenticodeTest(context: TestContext, toolsets: Ns
     context.skip()
     return
   }
-  try {
-    await nsisScenario(context, toolsets, "nsis-authenticode", async ctx => {
-      const { expect, outDirs, rootDirectory, updateConfigPath, serverConfig } = ctx
+  // the certificate is removed whatever the outcome; when the scenario failed, a failed removal is logged and the scenario's error reported
+  await nsisScenario(context, toolsets, "nsis-authenticode", async ctx => {
+    const { expect, outDirs, rootDirectory, updateConfigPath, serverConfig } = ctx
 
-      await writeServedUpdateConfig(updateConfigPath, { ...serverConfig, publisherName: ["CN=Somebody Else"] })
-      await expectRejectedUpdate(ctx, {
+    await writeServedUpdateConfig(updateConfigPath, { ...serverConfig, publisherName: ["CN=Somebody Else"] })
+    await expectRejectedUpdate(ctx, {
+      installedVersion: OLD_VERSION_NUMBER,
+      expectedErrorCode: "ERR_UPDATER_INVALID_SIGNATURE",
+      manifests: "unsigned",
+      assertLaunch: stdout => {
+        expect(stdout).toContain("Sign verification failed, installer signed with incorrect certificate")
+        expect(stdout).toContain("publisherNames: CN=Somebody Else")
+      },
+    })
+    await expectNoPartialDownload(ctx)
+
+    // the publisherName that the build embedded: the signature verifies, the ProductVersion does not match
+    const { publisherName } = await readEmbeddedUpdateConfig(outDirs[0].dir)
+    await writeServedUpdateConfig(updateConfigPath, { ...serverConfig, publisherName })
+    await withForgedVersion(rootDirectory, () =>
+      expectRejectedUpdate(ctx, {
         installedVersion: OLD_VERSION_NUMBER,
-        expectedErrorCode: "ERR_UPDATER_INVALID_SIGNATURE",
+        expectedErrorCode: "ERR_UPDATER_INSTALLER_VERSION_MISMATCH",
         manifests: "unsigned",
         assertLaunch: stdout => {
-          expect(stdout).toContain("Sign verification failed, installer signed with incorrect certificate")
-          expect(stdout).toContain("publisherNames: CN=Somebody Else")
+          expect(stdout).toContain("Verifying signature")
+          expect(stdout).not.toContain("Sign verification failed")
+          expectForgedVersionMismatch(expect, stdout)
         },
       })
-      await expectNoPartialDownload(ctx)
+    )
 
-      // the publisherName that the build embedded: the signature verifies, the ProductVersion does not match
-      const { publisherName } = await readEmbeddedUpdateConfig(outDirs[0].dir)
-      await writeServedUpdateConfig(updateConfigPath, { ...serverConfig, publisherName })
-      await withForgedVersion(rootDirectory, () =>
-        expectRejectedUpdate(ctx, {
-          installedVersion: OLD_VERSION_NUMBER,
-          expectedErrorCode: "ERR_UPDATER_INSTALLER_VERSION_MISMATCH",
-          manifests: "unsigned",
-          assertLaunch: stdout => {
-            expect(stdout).toContain("Verifying signature")
-            expect(stdout).not.toContain("Sign verification failed")
-            expectForgedVersionMismatch(expect, stdout)
-          },
-        })
-      )
-
-      // neither publisherName nor the opt-out in the served config: verified against autoUpdater.publisherName
-      await writeRawServedUpdateConfig(updateConfigPath, serverConfig)
-      await updateHop(expect, { ...ctx, fromVersion: OLD_VERSION_NUMBER, toVersion: NEW_VERSION_NUMBER, env: fixtureEnv({ publisherName: WIN_SIGNING_PUBLISHER_NAME }) })
-      await expectInstalledNsis(ctx)
-    })
-  } finally {
-    await trusted.untrust()
-  }
+    // neither publisherName nor the opt-out in the served config: verified against autoUpdater.publisherName
+    await writeRawServedUpdateConfig(updateConfigPath, serverConfig)
+    await updateHop(expect, { ...ctx, fromVersion: OLD_VERSION_NUMBER, toVersion: NEW_VERSION_NUMBER, env: fixtureEnv({ publisherName: WIN_SIGNING_PUBLISHER_NAME }) })
+    await expectInstalledNsis(ctx)
+  }).then(
+    () => trusted.untrust(),
+    async (error: unknown) => {
+      await trusted.untrust().catch((untrustError: any) => log.warn({ error: untrustError.message }, "Failed to remove the signing identity from LocalMachine\\Root"))
+      throw error
+    }
+  )
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -622,11 +611,11 @@ export async function runAppImageRequestRulesTest(context: TestContext, arch: Ar
         await queueFromOtherOrigin(ctx, other)
         await expectManualModeKeepsPendingUpdate(ctx, {})
 
-        await launchInstalled(ctx, { pendingOnly: { quitAfterMs: 20_000 } }, stdout => {
+        await launchInstalled(ctx, { pendingOnlyQuitAfterMs: 20_000 }, stdout => {
           expect(countOf(stdout, `Installing pending update ${NEW_VERSION_NUMBER} on launch`)).toBe(1)
           expect(stdout).toMatch(/Executing: .*\.AppImage with args: /)
         })
-        await pollUntilNewVersionInstalled(expect, { ...ctx, packageManagerToTest: ctx.packageManager, expectedVersion: NEW_VERSION_NUMBER })
+        await pollUntilNewVersionInstalled(expect, { ...ctx, packageManagerToTest: ctx.packageManager })
       },
     })
   )

@@ -5,13 +5,11 @@ import * as fs from "fs"
 import { createReadStream } from "fs"
 import { outputFile, remove } from "fs-extra"
 import * as http from "http"
-import { load } from "js-yaml"
 import * as net from "net"
 import os, { homedir } from "os"
 import path from "path"
 import { pipeline } from "stream"
 import { retry } from "builder-util"
-import { GenericServerOptions, isLoopbackHostname } from "builder-util-runtime"
 
 /**
  * Returns the macOS host's IP address on the Parallels virtual network.
@@ -257,16 +255,6 @@ interface LaunchOptions {
   waitForExit?: boolean
 }
 
-/**
- * The fixture env that lets the updater use the feed of the served update config at `updateConfigPath`: AUTO_UPDATER_TEST_ALLOW_INSECURE_FEED
- * when that feed is not https and not on a loopback host (in VM mode, it is on the Parallels host IP), which electron-updater rejects
- * otherwise (ERR_UPDATER_INSECURE_FEED); nothing for an https or loopback feed.
- */
-export function insecureFeedEnv(updateConfigPath: string): Record<string, string> {
-  const { protocol, hostname } = new URL((load(fs.readFileSync(updateConfigPath, "utf8")) as GenericServerOptions).url)
-  return protocol !== "https:" && !isLoopbackHostname(hostname) ? { AUTO_UPDATER_TEST_ALLOW_INSECURE_FEED: "true" } : {}
-}
-
 export async function launchAndWaitForQuit({
   appPath,
   vm,
@@ -279,11 +267,9 @@ export async function launchAndWaitForQuit({
 }: LaunchOptions): Promise<LaunchResult> {
   let child: ChildProcess
   const versionRegex = /APP_VERSION:\s*([0-9]+\.[0-9]+\.[0-9]+)/
-  // the env of the launch wins, e.g. allowInsecureFeed: false for a launch that must be refused
-  const launchEnv = { ...insecureFeedEnv(updateConfigPath), ...env }
 
   const stdio: StdioOptions = ["ignore", "pipe", "pipe"]
-  function spawnApp(command: string, args: string[] = [], detached = true, localEnv = launchEnv) {
+  function spawnApp(command: string, args: string[] = [], detached = true, localEnv = env) {
     return spawn(command, args, {
       detached,
       shell: false,
@@ -306,7 +292,10 @@ export async function launchAndWaitForQuit({
       AUTO_UPDATER_TEST: "1",
       AUTO_UPDATER_TEST_CONFIG_PATH: vmConfigPath,
       ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER: packageManagerToTest,
-      ...launchEnv,
+      // the feed is served on the Parallels host IP, a plain http feed that is not loopback, which electron-updater rejects otherwise
+      // (ERR_UPDATER_INSECURE_FEED); the env of the launch wins, e.g. allowInsecureFeed: false for a launch that must be refused
+      AUTO_UPDATER_TEST_ALLOW_INSECURE_FEED: "true",
+      ...env,
     }
     const setters = Object.entries(envVars)
       .map(([k, v]) => `$env:${k}='${v.replace(/'/g, "''")}'`)
@@ -365,13 +354,13 @@ export async function launchAndWaitForQuit({
             ...process.env,
             AUTO_UPDATER_TEST: "1",
             AUTO_UPDATER_TEST_CONFIG_PATH: updateConfigPath,
-            ...launchEnv,
+            ...env,
             DISPLAY: display,
             APPIMAGE_EXTRACT_AND_RUN: "1",
           },
         })
       } else {
-        child = spawnApp(appPath, ["--no-sandbox"], true, { ...launchEnv, DISPLAY: display })
+        child = spawnApp(appPath, ["--no-sandbox"], true, { ...env, DISPLAY: display })
       }
       break
     }

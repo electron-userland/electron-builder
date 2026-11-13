@@ -1,22 +1,24 @@
 import { VmManager } from "app-builder-lib/internal"
 import { serializeToYaml } from "builder-util"
 import { execFile } from "child_process"
-import { outputFile } from "fs-extra"
+import { outputFile, pathExists } from "fs-extra"
 import * as http from "http"
 import path from "path"
 import type { TmpDir } from "temp-file"
 import { promisify } from "util"
-import { afterEach, describe, ExpectStatic, test } from "vitest"
-import { createLocalServer, insecureFeedEnv, launchAndWaitForQuit, LocalServer } from "../helpers/launchAppCrossPlatform"
+import { afterEach, describe, ExpectStatic, test, vi } from "vitest"
+import { createLocalServer, launchAndWaitForQuit, LocalServer } from "../helpers/launchAppCrossPlatform"
 import { trustSigningIdentityInMachineRoot } from "../helpers/windowsSignedFixture"
-import { authenticodeStubCalls, countOf, fixtureEnv, leftoverPartialDownloads, NOT_LOOPBACK_LOCALHOST_NAME } from "./blackboxFixtureEnv"
-import { BlackboxServers, expectRejectedUpdate, MANIFEST_VERIFICATION_DISABLED_MARKER, runTestWithinServer, ScenarioContext } from "./blackboxUpdateHelpers"
+import { authenticodeStubCalls, countOf, fixtureEnv, leftoverPartialDownloads, pendingUpdateDir } from "./blackboxFixtureEnv"
+import { UPDATER_STORE_DIR_NAME } from "./blackboxInstallWindows"
+import { BlackboxServers, expectRejectedUpdate, MANIFEST_VERIFICATION_DISABLED_MARKER, runTestWithinServer, ScenarioContext, withEmptyUpdaterCaches } from "./blackboxUpdateHelpers"
 
 // The pieces of the blackbox update harness that need no packaged app: the local update server, the env of a launch, the updater
 // knobs of the test app fixture, and the checks of a refused update launch.
 
 const localServers: Array<LocalServer> = []
 afterEach(() => {
+  vi.unstubAllEnvs()
   for (const { server } of localServers.splice(0)) {
     server.closeAllConnections()
     server.close()
@@ -156,33 +158,32 @@ describe("runTestWithinServer", () => {
     const [{ feed, origins }] = scenarioServers
     expect([feed, ...origins].map(it => it.server.listening)).toEqual([false, false])
   })
+
+  // a short timeout: without the error listener, the scenario never settles
+  test("an error of an origin server fails the scenario", { timeout: 10_000 }, async ({ expect }) => {
+    const scenario = runTestWithinServer(async (_rootDirectory, _updateConfigPath, _serverConfig, servers) => {
+      const origin = await servers.createOrigin()
+      // outside the scenario's own promise chain, like an error of the listening socket
+      setImmediate(() => origin.server.emit("error", new Error("origin failed")))
+      await new Promise(() => undefined)
+    })
+    await expect(scenario).rejects.toThrow("origin failed")
+  })
 })
 
-describe("insecureFeedEnv", () => {
-  test.for([
-    { url: "http://127.0.0.1:8080", isInsecure: false },
-    { url: "http://localhost:8080", isInsecure: false },
-    { url: "http://[::1]:8080", isInsecure: false },
-    { url: "https://updates.example.com", isInsecure: false },
-    { url: `http://${NOT_LOOPBACK_LOCALHOST_NAME}:8080`, isInsecure: true },
-    // the Parallels host IP of VM mode
-    { url: "http://10.211.55.2:8080", isInsecure: true },
-  ])("a feed at $url", async ({ url, isInsecure }, { expect, tmpDir }) => {
-    expect(insecureFeedEnv(await servedUpdateConfig(tmpDir, url))).toEqual(isInsecure ? { AUTO_UPDATER_TEST_ALLOW_INSECURE_FEED: "true" } : {})
-  })
-
-  test("is passed to every launch, under the launch's own env: a VM launch with a feed on the host IP", async ({ expect, tmpDir }) => {
+describe("launchAndWaitForQuit in the Parallels VM", () => {
+  test("allows the insecure feed on the host IP, under the launch's own env", async ({ expect, tmpDir }) => {
     const vm = new ScriptedVm()
-    const launch = async (url: string, env?: Record<string, string>): Promise<string> => {
-      await launchAndWaitForQuit({ appPath: "C:\\TestApp\\TestApp.exe", vm, updateConfigPath: await servedUpdateConfig(tmpDir, url), packageManagerToTest: "", env })
+    const updateConfigPath = await servedUpdateConfig(tmpDir, "http://10.211.55.2:8080")
+    const launch = async (env?: Record<string, string>): Promise<string> => {
+      await launchAndWaitForQuit({ appPath: "C:\\TestApp\\TestApp.exe", vm, updateConfigPath, packageManagerToTest: "", env })
       return vm.commands[vm.commands.length - 1]
     }
 
-    expect(await launch("http://10.211.55.2:8080")).toContain("$env:AUTO_UPDATER_TEST_ALLOW_INSECURE_FEED='true'")
-    const refused = await launch("http://10.211.55.2:8080", fixtureEnv({ allowInsecureFeed: false }))
+    expect(await launch()).toContain("$env:AUTO_UPDATER_TEST_ALLOW_INSECURE_FEED='true'")
+    const refused = await launch(fixtureEnv({ allowInsecureFeed: false }))
     expect(refused).toContain("$env:AUTO_UPDATER_TEST_ALLOW_INSECURE_FEED='false'")
     expect(refused).not.toContain("AUTO_UPDATER_TEST_ALLOW_INSECURE_FEED='true'")
-    expect(await launch("http://127.0.0.1:8080")).not.toContain("AUTO_UPDATER_TEST_ALLOW_INSECURE_FEED")
   })
 })
 
@@ -224,10 +225,10 @@ describe("expectRejectedUpdate", () => {
       }
       return REFUSED_LAUNCH
     })
-    const options = { ...REFUSAL, expectNoRequests: true, env: fixtureEnv({ crossOriginHeaders: "unset" }) }
+    const options = { ...REFUSAL, expectNoRequests: true, env: fixtureEnv({ unsetCrossOriginHeaders: true }) }
     await get(`${ctx.servers.feed.url}/latest.yml`)
     await expectRejectedUpdate(ctx, options)
-    expect(vm.commands[0]).toContain("$env:AUTO_UPDATER_TEST_CROSS_ORIGIN_HEADERS='unset'")
+    expect(vm.commands[0]).toContain("$env:AUTO_UPDATER_TEST_UNSET_CROSS_ORIGIN_HEADERS='true'")
 
     launchRequests.push(`${ctx.servers.origins[0].url}/TestApp.zip`)
     await expect(expectRejectedUpdate(ctx, options)).rejects.toThrow("/TestApp.zip")
@@ -283,12 +284,12 @@ describe("updater knobs of the test app fixture", () => {
   test("are all in place when the install at launch reads the updater", async ({ expect }) => {
     const { stdout, updater } = await runFixture(
       fixtureEnv({
-        crossOriginHeaders: "unset",
+        unsetCrossOriginHeaders: true,
         requestHeaders: { "X-Tenant": "acme" },
         authHeader: "Bearer e2e-secret",
         allowInsecureFeed: true,
         publisherName: "CN=EB Test Code Signing",
-        authenticodeStub: "accept",
+        authenticodeStub: true,
         autoInstallEvent: "manual",
         nextLaunch: true,
         debugLog: true,
@@ -308,19 +309,19 @@ describe("updater knobs of the test app fixture", () => {
     expect(countOf(stdout, "[updater debug] stub debug line")).toBe(1)
   })
 
-  test("pendingOnly checks for no update and quits after its timeout, with the default autoInstallEvent", async ({ expect }) => {
-    const { stdout, updater } = await runFixture(fixtureEnv({ pendingOnly: { quitAfterMs: 1 } }))
+  test("pendingOnlyQuitAfterMs checks for no update and quits after its timeout, with the default autoInstallEvent", async ({ expect }) => {
+    const { stdout, updater } = await runFixture(fixtureEnv({ pendingOnlyQuitAfterMs: 1 }))
     expect(updater).toEqual({ ...DEFAULT_UPDATER, checkedForUpdates: false })
     expect(stdout).toContain("AUTO_INSTALL_ON_NEXT_LAUNCH_TIMEOUT: automatic install did not quit the app\nFIXTURE_QUIT")
   })
 
   test.for([
-    { knob: "AUTO_UPDATER_TEST_CROSS_ORIGIN_HEADERS", value: "none" },
+    { knob: "AUTO_UPDATER_TEST_UNSET_CROSS_ORIGIN_HEADERS", value: "unset" },
     { knob: "AUTO_UPDATER_TEST_REQUEST_HEADERS", value: "{" },
     { knob: "AUTO_UPDATER_TEST_REQUEST_HEADERS", value: '["X-Tenant"]' },
     { knob: "AUTO_UPDATER_TEST_REQUEST_HEADERS", value: '{"X-Tenant":1}' },
     { knob: "AUTO_UPDATER_TEST_ALLOW_INSECURE_FEED", value: "yes" },
-    { knob: "AUTO_UPDATER_TEST_AUTHENTICODE_STUB", value: "reject" },
+    { knob: "AUTO_UPDATER_TEST_AUTHENTICODE_STUB", value: "accept" },
     { knob: "AUTO_UPDATER_TEST_AUTO_INSTALL_EVENT", value: "never" },
     { knob: "AUTO_UPDATER_TEST_PENDING_ONLY_QUIT_AFTER_MS", value: "15s" },
     { knob: "AUTO_UPDATER_TEST_DEBUG_LOG", value: "false" },
@@ -346,6 +347,24 @@ describe("leftoverPartialDownloads", () => {
     const notADirectory = path.join(await tmpDir.getTempDir({ prefix: "pending" }), "update-info.json")
     await outputFile(notADirectory, "")
     await expect(leftoverPartialDownloads(notADirectory)).rejects.toMatchObject({ code: "ENOTDIR" })
+  })
+})
+
+describe("withEmptyUpdaterCaches", () => {
+  // on Windows it ends the app's processes and empties %LOCALAPPDATA% (clearWindowsUpdaterCaches), which the e2e cases cover
+  test.skipIf(process.platform === "win32")("empties the updater cache before and after the test", async ({ expect, tmpDir }) => {
+    const home = await tmpDir.getTempDir({ prefix: "home" })
+    vi.stubEnv("HOME", home)
+    vi.stubEnv("XDG_CACHE_HOME", path.join(home, ".cache"))
+    const pendingDir = pendingUpdateDir(UPDATER_STORE_DIR_NAME)
+    expect(pendingDir.startsWith(home + path.sep)).toBe(true)
+    await outputFile(path.join(pendingDir, "temp-TestApp.zip"), "left by an earlier test")
+
+    await withEmptyUpdaterCaches(async () => {
+      expect(await pathExists(path.dirname(pendingDir))).toBe(false)
+      await outputFile(path.join(pendingDir, "update-info.json"), "{}")
+    })
+    expect(await pathExists(path.dirname(pendingDir))).toBe(false)
   })
 })
 
