@@ -1,4 +1,4 @@
-FROM node:24-alpine
+FROM node:26-alpine
 WORKDIR /app
 ENV CI=true
 # git + bash: needed by website/scripts/build-versioned-site.sh to materialize
