@@ -123,21 +123,25 @@ export interface TrustedRootCertificate {
 /**
  * Adds the certificate of `identity` (getWindowsSigningIdentity(), which the blackbox builds are signed with) to LocalMachine\Root, so that
  * the default verifier of electron-updater (Get-AuthenticodeSignature) reports their signature Valid. Null for a provided certificate
- * (CSC_LINK / WIN_CSC_LINK, whose subject the tests do not know), off Windows, and when the store cannot be written (not elevated).
+ * (CSC_LINK / WIN_CSC_LINK, whose subject the tests do not know), off Windows, and in a session that is not elevated; throws when an elevated
+ * session cannot add it.
  */
 export async function trustSigningIdentityInMachineRoot(identity: SelfSignedIdentity, tmpDir: TmpDir): Promise<TrustedRootCertificate | null> {
   if (identity.commonName === "provided" || process.platform !== "win32") {
     return null
   }
-  const pfxPath = path.join(await tmpDir.createTempDir({ prefix: "trusted-signing-identity" }), "identity.pfx")
-  await writeFile(pfxPath, Buffer.from(identity.p12Base64, "base64"))
-  let installed: { thumbprint: string; subject: string }
-  try {
-    installed = await installRootCertificate(pfxPath, identity.password)
-  } catch (error: any) {
-    console.warn(`cannot add the signing identity to LocalMachine\\Root (not elevated?): ${error.message ?? error}`)
+  // only a session that is not elevated skips: any other failure to add the certificate fails the test
+  const isElevated = await runPowerShell(
+    "([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)",
+    60_000
+  )
+  if (isElevated.trim() !== "True") {
+    console.warn("cannot add the signing identity to LocalMachine\\Root: the session is not elevated")
     return null
   }
+  const pfxPath = path.join(await tmpDir.createTempDir({ prefix: "trusted-signing-identity" }), "identity.pfx")
+  await writeFile(pfxPath, Buffer.from(identity.p12Base64, "base64"))
+  const installed = await installRootCertificate(pfxPath, identity.password)
   return { ...installed, untrust: () => removeRootCertificate(installed.thumbprint) }
 }
 
