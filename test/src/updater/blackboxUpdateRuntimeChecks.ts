@@ -141,12 +141,12 @@ async function expectDownloadLargerThanDeclared(ctx: ScenarioContext, declaredSi
     await restore()
   }
   // Strict on purpose, although it can fail intermittently with a temp-* file (more likely when the limit trips on the first chunk) until
-  // the fix of fix/download-size-cap-temp-file lands: the download reported the size error before the asynchronous open of its
-  // destination file, so emptying the pending directory could run before that open created the file.
+  // #10605 lands: the download reported the size error before the asynchronous open of its destination file, so emptying the pending
+  // directory could run before that open created the file.
   const pendingDir = pendingUpdateDir(UPDATER_STORE_DIR_NAME)
   expect(
     await leftoverPartialDownloads(pendingDir),
-    `the download declared as ${declaredSize} bytes left a partial file in ${pendingDir} (a known race until a failed download is reported once its destination file is closed, fix/download-size-cap-temp-file)`
+    `the download declared as ${declaredSize} bytes left a partial file in ${pendingDir} (a known race until a failed download is reported once its destination file is closed, #10605)`
   ).toEqual([])
 }
 
@@ -268,12 +268,9 @@ const FORGED_VERSION = THIRD_VERSION_NUMBER
  */
 const VERIFIED_BY_STUB = { publisherName: WIN_SIGNING_PUBLISHER_NAME, authenticodeStub: "accept" } as const
 
-/** The pending directory can only be read when the app runs on this machine, not in the Parallels VM. */
-const isNativeWindows = () => process.platform === "win32"
-
-/** Nothing of a failed download is left in the pending directory (native Windows only). */
-async function expectNoPartialDownload(expect: ExpectStatic): Promise<void> {
-  if (isNativeWindows()) {
+/** Nothing of a failed download is left in the pending directory, which can only be read when the app runs on this machine (no VM). */
+async function expectNoPartialDownload({ expect, vm }: ScenarioContext): Promise<void> {
+  if (vm == null) {
     expect(await leftoverPartialDownloads(pendingUpdateDir(UPDATER_STORE_DIR_NAME))).toEqual([])
   }
 }
@@ -312,9 +309,9 @@ function nsisScenario(context: TestContext, toolsets: NsisToolsets, tmpDirPrefix
   )
 }
 
-/** The update is installed and its installer has written the package type (native Windows only). */
+/** The update is installed and its installer has written the package type (native Windows only, not in the VM). */
 async function expectInstalledNsis(ctx: ScenarioContext): Promise<void> {
-  if (isNativeWindows()) {
+  if (ctx.vm == null) {
     await waitForWindowsProcessExit(NSIS_INSTALLER_IMAGE_NAME)
     ctx.expect(await readInstalledPackageType(ctx.appPath)).toBe("nsis")
   }
@@ -345,7 +342,7 @@ async function expectNsisDownloadSizeExceeded(ctx: ScenarioContext, variant: "de
     feed.setRouter(null)
     await restore?.()
   }
-  await expectNoPartialDownload(expect)
+  await expectNoPartialDownload(ctx)
 }
 
 /**
@@ -378,7 +375,7 @@ export async function runNsisInstallerChecksTest(context: TestContext, toolsets:
     } finally {
       await writeServedUpdateConfig(updateConfigPath, serverConfig)
     }
-    await expectNoPartialDownload(expect)
+    await expectNoPartialDownload(ctx)
 
     await expectNsisDownloadSizeExceeded(ctx, "declared size 1")
     await expectNsisDownloadSizeExceeded(ctx, "one extra byte served")
@@ -396,7 +393,7 @@ export async function runNsisInstallerChecksTest(context: TestContext, toolsets:
         },
       })
     )
-    await expectNoPartialDownload(expect)
+    await expectNoPartialDownload(ctx)
 
     await updateHop(expect, {
       ...ctx,
@@ -455,9 +452,9 @@ async function queueForNextLaunch(ctx: ScenarioContext, knobs: FixtureUpdaterKno
 
 /**
  * A pending-only launch with autoInstallEvent "manual" leaves a queued update alone (#10525): it sends no request and the update stays
- * marked for the next launch. `cacheDirName` is the updater cache of the app.
+ * marked for the next launch (read when the app runs on this machine, not in the VM).
  */
-async function expectManualModeKeepsPendingUpdate(ctx: ScenarioContext, knobs: FixtureUpdaterKnobs, cacheDirName: string, isNative: boolean): Promise<void> {
+async function expectManualModeKeepsPendingUpdate(ctx: ScenarioContext, knobs: FixtureUpdaterKnobs): Promise<void> {
   const { expect } = ctx
   const servers = [ctx.servers.feed, ...ctx.servers.origins]
   for (const server of servers) {
@@ -470,8 +467,8 @@ async function expectManualModeKeepsPendingUpdate(ctx: ScenarioContext, knobs: F
     servers.flatMap(server => server.requests),
     "the launch in manual mode sends no request"
   ).toEqual([])
-  if (isNative) {
-    expect(await readJson(path.join(pendingUpdateDir(cacheDirName), "update-info.json"))).toMatchObject({ installOnNextLaunch: true })
+  if (ctx.vm == null) {
+    expect(await readJson(path.join(pendingUpdateDir(UPDATER_STORE_DIR_NAME), "update-info.json"))).toMatchObject({ installOnNextLaunch: true })
   }
   await expectInstalledVersion(ctx, OLD_VERSION_NUMBER)
 }
@@ -485,7 +482,6 @@ async function expectManualModeKeepsPendingUpdate(ctx: ScenarioContext, knobs: F
 export async function runNsisNextLaunchModesTest(context: TestContext, toolsets: NsisToolsets): Promise<void> {
   await nsisScenario(context, toolsets, "nsis-next-launch-modes", async ctx => {
     const { expect, rootDirectory } = ctx
-    const pendingDir = pendingUpdateDir(UPDATER_STORE_DIR_NAME)
     await queueForNextLaunch(ctx, VERIFIED_BY_STUB)
 
     await withForgedVersion(rootDirectory, () =>
@@ -496,13 +492,13 @@ export async function runNsisNextLaunchModesTest(context: TestContext, toolsets:
         expect(stdout).not.toContain("Installing pending update")
       })
     )
-    if (isNativeWindows()) {
-      expect(await readdir(pendingDir), "the rejected pending update is cleared").toEqual([])
+    if (ctx.vm == null) {
+      expect(await readdir(pendingUpdateDir(UPDATER_STORE_DIR_NAME)), "the rejected pending update is cleared").toEqual([])
     }
     await expectInstalledVersion(ctx, OLD_VERSION_NUMBER)
 
     await queueForNextLaunch(ctx, VERIFIED_BY_STUB)
-    await expectManualModeKeepsPendingUpdate(ctx, VERIFIED_BY_STUB, UPDATER_STORE_DIR_NAME, isNativeWindows())
+    await expectManualModeKeepsPendingUpdate(ctx, VERIFIED_BY_STUB)
 
     // the quit timeout also ends the app that the installer starts again (--force-run), which inherits this env
     await launchInstalled(ctx, { ...VERIFIED_BY_STUB, pendingOnly: { quitAfterMs: 20_000 } }, stdout => {
@@ -541,7 +537,7 @@ export async function runNsisAuthenticodeTest(context: TestContext, toolsets: Ns
           expect(stdout).toContain("publisherNames: CN=Somebody Else")
         },
       })
-      await expectNoPartialDownload(expect)
+      await expectNoPartialDownload(ctx)
 
       // the publisherName that the build embedded: the signature verifies, the ProductVersion does not match
       const { publisherName } = await readEmbeddedUpdateConfig(outDirs[0].dir)
@@ -624,7 +620,7 @@ export async function runAppImageRequestRulesTest(context: TestContext, arch: Ar
         await expectCrossOriginHeadersRequired(ctx)
         await expectNonLoopbackFeedRules(ctx, other)
         await queueFromOtherOrigin(ctx, other)
-        await expectManualModeKeepsPendingUpdate(ctx, {}, UPDATER_STORE_DIR_NAME, true)
+        await expectManualModeKeepsPendingUpdate(ctx, {})
 
         await launchInstalled(ctx, { pendingOnly: { quitAfterMs: 20_000 } }, stdout => {
           expect(countOf(stdout, `Installing pending update ${NEW_VERSION_NUMBER} on launch`)).toBe(1)

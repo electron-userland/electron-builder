@@ -341,6 +341,12 @@ describe("leftoverPartialDownloads", () => {
     expect((await leftoverPartialDownloads(pendingDir)).sort()).toEqual(["0-temp-TestApp Setup.exe", "temp-TestApp.zip"])
     expect(await leftoverPartialDownloads(path.join(pendingDir, "missing"))).toEqual([])
   })
+
+  test("fails when the pending directory cannot be read for another reason than its absence", async ({ expect, tmpDir }) => {
+    const notADirectory = path.join(await tmpDir.getTempDir({ prefix: "pending" }), "update-info.json")
+    await outputFile(notADirectory, "")
+    await expect(leftoverPartialDownloads(notADirectory)).rejects.toMatchObject({ code: "ENOTDIR" })
+  })
 })
 
 describe("trustSigningIdentityInMachineRoot", () => {
