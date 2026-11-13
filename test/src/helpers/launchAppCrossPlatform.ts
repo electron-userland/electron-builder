@@ -8,6 +8,7 @@ import * as http from "http"
 import * as net from "net"
 import os, { homedir } from "os"
 import path from "path"
+import { pipeline } from "stream"
 import { retry } from "builder-util"
 
 /**
@@ -40,14 +41,70 @@ export function getParallelsHostIP(): string | undefined {
   return undefined
 }
 
+/** A request the local server got, recorded without the value of any header (an `Authorization` header holds a secret). */
+export interface ServedRequest {
+  /** decoded, without the query: `/TestApp Setup.exe` */
+  readonly pathname: string
+  /** lowercase and sorted */
+  readonly headerNames: ReadonlyArray<string>
+  /** the status of the response, 0 when it closed before its head was written; final once {@link LocalServer.settled} resolves */
+  status: number
+  /** the response closed before all of it was written: the client went away mid-body; final once {@link LocalServer.settled} resolves */
+  aborted: boolean
+}
+
+/**
+ * How the local server answers a request instead of with the file: `redirectTo`, a 302 redirect to that URL; `extraBytes`, the file
+ * followed by that many more bytes, all of them in the `Content-Length` (a range request is served as without the route).
+ */
+export type ServedRoute = { readonly redirectTo: string } | { readonly extraBytes: number }
+
+/** The route of a request by its {@link ServedRequest.pathname}, or nothing to serve the file. */
+export type ServedRouter = (pathname: string) => ServedRoute | null | undefined
+
+export interface LocalServer {
+  readonly server: http.Server
+  readonly port: number
+  /** `http://<bindAddress>:<port>` */
+  readonly url: string
+  /** every request since the server started or since {@link clearRequests}, oldest first */
+  readonly requests: ReadonlyArray<ServedRequest>
+  clearRequests(): void
+  /** answers the requests that `router` routes as it routes them, from the next request on; null serves the files again */
+  setRouter(router: ServedRouter | null): void
+  /** resolves once the response of every request in {@link requests} has closed */
+  settled(): Promise<void>
+}
+
 /** `onRequest` receives the URL of every request (e.g. to assert which files an installer downloaded). */
-export function createLocalServer(root: string, bindAddress = "127.0.0.1", onRequest?: (url: string) => void): Promise<{ server: http.Server; port: number }> {
+export function createLocalServer(root: string, bindAddress = "127.0.0.1", onRequest?: (url: string) => void): Promise<LocalServer> {
+  const requests: Array<ServedRequest> = []
+  const responsesClosed: Array<Promise<void>> = []
+  let router: ServedRouter | null = null
   const server = http.createServer((req, res) => {
     onRequest?.(req.url!)
-    const pathname = decodeURIComponent(new URL(req.url!, "http://localhost").pathname).replace(/^\/+/, "")
+    const requestPath = decodeURIComponent(new URL(req.url!, "http://localhost").pathname)
+    const request: ServedRequest = { pathname: requestPath, headerNames: Object.keys(req.headers).sort(), status: 0, aborted: false }
+    requests.push(request)
+    responsesClosed.push(
+      new Promise(resolve =>
+        res.once("close", () => {
+          request.status = res.headersSent ? res.statusCode : 0
+          request.aborted = !res.writableFinished
+          resolve()
+        })
+      )
+    )
+    const pathname = requestPath.replace(/^\/+/, "")
     const filePath = path.resolve(root, pathname)
     if (!filePath.startsWith(path.resolve(root) + path.sep) && filePath !== path.resolve(root)) {
       res.writeHead(403)
+      res.end()
+      return
+    }
+    const route = router?.(requestPath)
+    if (route != null && "redirectTo" in route) {
+      res.writeHead(302, { Location: route.redirectTo, "Content-Length": 0 })
       res.end()
       return
     }
@@ -63,8 +120,10 @@ export function createLocalServer(root: string, bindAddress = "127.0.0.1", onReq
 
       const rangeHeader = req.headers["range"]
       if (!rangeHeader) {
-        res.writeHead(200, { "Content-Length": size, "Content-Type": "application/octet-stream" })
-        fs.createReadStream(filePath).pipe(res)
+        const extraBytes = route != null && "extraBytes" in route ? route.extraBytes : 0
+        res.writeHead(200, { "Content-Length": size + extraBytes, "Content-Type": "application/octet-stream" })
+        // pipeline, not pipe: the file is closed when the client goes away mid-body too (the request is recorded as aborted)
+        pipeline(fileWithExtraBytes(filePath, extraBytes), res, () => undefined)
         return
       }
 
@@ -116,9 +175,31 @@ export function createLocalServer(root: string, bindAddress = "127.0.0.1", onReq
     server.once("error", reject)
     server.listen(0, bindAddress, () => {
       const { port } = server.address() as net.AddressInfo
-      resolve({ server, port })
+      resolve({
+        server,
+        port,
+        url: `http://${bindAddress}:${port}`,
+        requests,
+        clearRequests: () => {
+          requests.splice(0)
+          responsesClosed.splice(0)
+        },
+        setRouter: value => {
+          router = value
+        },
+        settled: async () => {
+          await Promise.all(responsesClosed)
+        },
+      })
     })
   })
+}
+
+async function* fileWithExtraBytes(filePath: string, extraBytes: number): AsyncGenerator<Buffer> {
+  yield* fs.createReadStream(filePath)
+  if (extraBytes > 0) {
+    yield Buffer.alloc(extraBytes)
+  }
 }
 
 function parseByteRanges(header: string, size: number): Array<[number, number]> | null {
@@ -211,6 +292,9 @@ export async function launchAndWaitForQuit({
       AUTO_UPDATER_TEST: "1",
       AUTO_UPDATER_TEST_CONFIG_PATH: vmConfigPath,
       ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER: packageManagerToTest,
+      // the feed is served on the Parallels host IP, a plain http feed that is not loopback, which electron-updater rejects otherwise
+      // (ERR_UPDATER_INSECURE_FEED); the env of the launch wins, e.g. allowInsecureFeed: false for a launch that must be refused
+      AUTO_UPDATER_TEST_ALLOW_INSECURE_FEED: "true",
       ...env,
     }
     const setters = Object.entries(envVars)

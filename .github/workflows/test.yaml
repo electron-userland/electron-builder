@@ -671,6 +671,12 @@ jobs:
             test_files: blackboxLinux__appimage
             env:
               RUN_APP_IMAGE_TEST: true
+          # its own job, so appimage-update stays under the 60-minute cap
+          - id: appimage-update-rules
+            stem: appimage
+            test_files: blackboxUpdateAppImageRules
+            env:
+              RUN_APP_IMAGE_TEST: true
     steps:
       - name: Checkout code repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

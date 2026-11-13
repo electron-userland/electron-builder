@@ -120,6 +120,7 @@ export const skipPerOSTests: Record<SupportedPlatforms, string[]> = {
     "blackboxUpdateLinuxSignedManifest",
     "blackboxUpdateLinuxKeyRotation",
     "blackboxLinux__appimage",
+    "blackboxUpdateAppImageRules",
   ],
   win32: [],
 }
