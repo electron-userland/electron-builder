@@ -52,14 +52,21 @@ const updater7Error = /requires an app built with electron-builder 27: electron-
 
 describe("checkMetadata electron-updater version", () => {
   describe("electron-updater not installed (declared specifier)", () => {
-    test.each(["6.8.12", "^6.8.12", "^6.3.9", "~6.0.0", "^4.0.0", "patch:electron-updater@npm%3A6.6.2#~/.yarn/patches/electron-updater-npm-6.6.2-abc.patch"])(
-      "accepts electron-updater %s",
-      async updaterVersion => {
-        await withProjectDir(null, projectDir => {
-          expect(() => checkUpdaterDependency(updaterVersion, projectDir)).not.toThrow()
-        })
-      }
-    )
+    test.each([
+      "6.8.12",
+      "^6.8.12",
+      "^6.3.9",
+      "~6.0.0",
+      "^4.0.0",
+      ">=6.0.0 <7.0.0",
+      ">=6 <7",
+      ">=6.0.0 <7.0.0-0",
+      "patch:electron-updater@npm%3A6.6.2#~/.yarn/patches/electron-updater-npm-6.6.2-abc.patch",
+    ])("accepts electron-updater %s", async updaterVersion => {
+      await withProjectDir(null, projectDir => {
+        expect(() => checkUpdaterDependency(updaterVersion, projectDir)).not.toThrow()
+      })
+    })
 
     test("rejects too-old electron-updater", async () => {
       await withProjectDir(null, projectDir => {
@@ -74,6 +81,9 @@ describe("checkMetadata electron-updater version", () => {
       ">=6",
       "^6 || ^7",
       ">=4.0.0",
+      ">=6.0.0 <7.0.0 || >=8",
+      ">=6 <7.0.0-alpha.1",
+      "^6.0.0 || 7.0.0-alpha.13",
       "7.0.0-alpha.13",
       "^7.0.0-alpha.5",
       "7.0.0",

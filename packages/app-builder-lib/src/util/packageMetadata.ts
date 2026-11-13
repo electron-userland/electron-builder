@@ -105,6 +105,32 @@ function installedElectronUpdaterVersion(appDir: string): semver.SemVer | null {
   }
 }
 
+/**
+ * Whether npm can resolve the declared `range` to an electron-updater 7 or later release or prerelease. Not `semver.intersects(range, ">=7.0.0-0")`:
+ * that also matches ">=6.0.0 <7.0.0", which npm never resolves to a 7.0.0 prerelease, because a range matches a prerelease only when a comparator
+ * of the same set names a prerelease of that version.
+ */
+function allowsElectronUpdater7(range: string): boolean {
+  if (semver.validRange(range) == null) {
+    return false
+  }
+  if (semver.intersects(range, ">=7.0.0")) {
+    return true
+  }
+  return new semver.Range(range).set.some(comparators =>
+    comparators.some(comparator => {
+      const version = comparator.semver
+      if (!(version instanceof semver.SemVer) || version.prerelease.length === 0 || version.major < 7) {
+        return false
+      }
+      // the prereleases of this version that the set allows, e.g. 7.0.0-alpha.13 for "7.0.0-alpha.13" or 7.0.0-alpha.0 for ">=6 <7.0.0-alpha.1"
+      const release = `${version.major}.${version.minor}.${version.patch}`
+      const set = comparators.map(it => it.value).join(" ") || "*"
+      return semver.intersects(set, `>=${release}-0 <${release}`, { includePrerelease: true })
+    })
+  )
+}
+
 function checkDependencies(dependencies: Record<string, string> | Nullish, errors: Array<string>, appDir: string) {
   if (dependencies == null) {
     return
@@ -152,7 +178,7 @@ function checkDependencies(dependencies: Record<string, string> | Nullish, error
             `electron-updater ${installed.version} (installed for "${updaterVersion}") ${updater7Error} Build with electron-builder 27, or keep electron-updater 6 (e.g. "^6.8.12"). ${docsLink}`
           )
         }
-      } else if (semver.validRange(updaterVersion) != null && semver.intersects(updaterVersion, ">=7.0.0-0")) {
+      } else if (allowsElectronUpdater7(updaterVersion)) {
         // Nothing is installed yet (this check runs before electron-builder installs the app's dependencies), so a declared range that allows 7
         // (">=6", "^6 || ^7", 7.0.0 prereleases) is rejected: the install that follows takes electron-updater 7 once it is npm `latest`.
         errors.push(
