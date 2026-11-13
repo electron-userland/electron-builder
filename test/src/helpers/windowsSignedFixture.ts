@@ -129,7 +129,7 @@ export async function trustSigningIdentityInMachineRoot(identity: SelfSignedIden
   if (identity.commonName === "provided" || process.platform !== "win32") {
     return null
   }
-  const pfxPath = path.join(await tmpDir.getTempDir({ prefix: "trusted-signing-identity" }), "identity.pfx")
+  const pfxPath = path.join(await tmpDir.createTempDir({ prefix: "trusted-signing-identity" }), "identity.pfx")
   await writeFile(pfxPath, Buffer.from(identity.p12Base64, "base64"))
   let installed: { thumbprint: string; subject: string }
   try {
