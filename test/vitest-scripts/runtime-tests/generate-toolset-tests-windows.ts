@@ -177,12 +177,38 @@ const SUITES: WindowsSuiteConfig[] = [
   // the web installer that is installed and updated is built with the NSIS toolset: once per NSIS version. The NSIS 0.0.0 run cases
   // of nsisWebPackageSelectionTest run the package selection and checks of a fixture installer; this runs the whole web installer
   // of that toolset (install from an adjacent package, then an update through electron-updater with --package-file).
-  blackboxNsisUpdateSuite("blackboxWebWinUpdate", namedFn("registerBlackboxWebWinUpdateTests" satisfies keyof typeof _BlackboxWebWinSuite), "updater/blackboxUpdateWebWinSuite", { name: "blackboxWebWin" }, NSIS_VERSIONS),
-  blackboxNsisUpdateSuite("blackboxWebWinNextLaunch", namedFn("registerBlackboxWebWinNextLaunchTests" satisfies keyof typeof _BlackboxWebWinSuite), "updater/blackboxUpdateWebWinSuite", { name: "blackboxWebWin" }),
+  blackboxNsisUpdateSuite(
+    "blackboxWebWinUpdate",
+    namedFn("registerBlackboxWebWinUpdateTests" satisfies keyof typeof _BlackboxWebWinSuite),
+    "updater/blackboxUpdateWebWinSuite",
+    { name: "blackboxWebWin" },
+    NSIS_VERSIONS
+  ),
+  blackboxNsisUpdateSuite(
+    "blackboxWebWinNextLaunch",
+    namedFn("registerBlackboxWebWinNextLaunchTests" satisfies keyof typeof _BlackboxWebWinSuite),
+    "updater/blackboxUpdateWebWinSuite",
+    { name: "blackboxWebWin" }
+  ),
   // installs plain nsis and never runs the web installer
-  blackboxNsisUpdateSuite("blackboxWebWinRejected", namedFn("registerBlackboxWebWinRejectedTests" satisfies keyof typeof _BlackboxWebWinSuite), "updater/blackboxUpdateWebWinSuite", { name: "blackboxWebWin" }),
-  blackboxNsisUpdateSuite("blackboxNsisInstallerChecks", namedFn("registerBlackboxNsisInstallerChecksTests" satisfies keyof typeof _BlackboxWinChecksSuite), "updater/blackboxUpdateWinChecksSuite", { name: "blackboxWin" }),
-  blackboxNsisUpdateSuite("blackboxNsisNextLaunchModes", namedFn("registerBlackboxNsisNextLaunchModesTests" satisfies keyof typeof _BlackboxWinChecksSuite), "updater/blackboxUpdateWinChecksSuite", { name: "blackboxWin" }),
+  blackboxNsisUpdateSuite(
+    "blackboxWebWinRejected",
+    namedFn("registerBlackboxWebWinRejectedTests" satisfies keyof typeof _BlackboxWebWinSuite),
+    "updater/blackboxUpdateWebWinSuite",
+    { name: "blackboxWebWin" }
+  ),
+  blackboxNsisUpdateSuite(
+    "blackboxNsisInstallerChecks",
+    namedFn("registerBlackboxNsisInstallerChecksTests" satisfies keyof typeof _BlackboxWinChecksSuite),
+    "updater/blackboxUpdateWinChecksSuite",
+    { name: "blackboxWin" }
+  ),
+  blackboxNsisUpdateSuite(
+    "blackboxNsisNextLaunchModes",
+    namedFn("registerBlackboxNsisNextLaunchModesTests" satisfies keyof typeof _BlackboxWinChecksSuite),
+    "updater/blackboxUpdateWinChecksSuite",
+    { name: "blackboxWin" }
+  ),
   // native Windows only: the .win. file is left out of the Linux and mac runs
   blackboxNsisUpdateSuite(
     "blackboxNsisAuthenticode",
