@@ -52,7 +52,7 @@ const updater7Error = /requires an app built with electron-builder 27: electron-
 
 describe("checkMetadata electron-updater version", () => {
   describe("electron-updater not installed (declared specifier)", () => {
-    test.each(["6.8.12", "^6.3.9", "~6.0.0", ">=6", "^4.0.0", "patch:electron-updater@npm%3A6.6.2#~/.yarn/patches/electron-updater-npm-6.6.2-abc.patch"])(
+    test.each(["6.8.12", "^6.8.12", "^6.3.9", "~6.0.0", "^4.0.0", "patch:electron-updater@npm%3A6.6.2#~/.yarn/patches/electron-updater-npm-6.6.2-abc.patch"])(
       "accepts electron-updater %s",
       async updaterVersion => {
         await withProjectDir(null, projectDir => {
@@ -67,8 +67,13 @@ describe("checkMetadata electron-updater version", () => {
       })
     })
 
-    // electron-updater 7 rejects the app-update.yml electron-builder 26 writes, so installs of such a build could never update
+    // electron-updater 7 rejects the app-update.yml electron-builder 26 writes, so installs of such a build could never update.
+    // A range that also allows 6 is rejected too: the check runs before electron-builder installs the app's dependencies,
+    // and the install takes electron-updater 7 once it is npm `latest`.
     test.each([
+      ">=6",
+      "^6 || ^7",
+      ">=4.0.0",
       "7.0.0-alpha.13",
       "^7.0.0-alpha.5",
       "7.0.0",
@@ -82,10 +87,10 @@ describe("checkMetadata electron-updater version", () => {
       })
     })
 
-    test("the electron-updater 7 error links the migration guide and names both fixes", async () => {
+    test("the declared-range error says the range allows electron-updater 7, names both fixes and links the migration guide", async () => {
       await withProjectDir(null, projectDir => {
-        expect(() => checkUpdaterDependency("7.0.0-alpha.13", projectDir)).toThrow(
-          /Build with electron-builder 27, or keep electron-updater 6 \(e\.g\. "\^6\.8\.12"\)\. See https:\/\/www\.electron\.build\/docs\/migration\/v26-to-v27/
+        expect(() => checkUpdaterDependency(">=6", projectDir)).toThrow(
+          /The declared electron-updater ">=6" allows electron-updater 7, which requires an app built with electron-builder 27: .* Pin electron-updater to "\^6" \(e\.g\. "\^6\.8\.12"\), or build with electron-builder 27\. See https:\/\/www\.electron\.build\/docs\/migration\/v26-to-v27/
         )
       })
     })
@@ -111,6 +116,14 @@ describe("checkMetadata electron-updater version", () => {
     ])("accepts declared %s with installed %s", async (declared, installed) => {
       await withProjectDir(installed, projectDir => {
         expect(() => checkUpdaterDependency(declared, projectDir)).not.toThrow()
+      })
+    })
+
+    test("the installed-version error names both fixes and links the migration guide", async () => {
+      await withProjectDir("7.0.0", projectDir => {
+        expect(() => checkUpdaterDependency(">=6", projectDir)).toThrow(
+          /Build with electron-builder 27, or keep electron-updater 6 \(e\.g\. "\^6\.8\.12"\)\. See https:\/\/www\.electron\.build\/docs\/migration\/v26-to-v27/
+        )
       })
     })
 

@@ -93,19 +93,6 @@ function versionSatisfies(version: string | semver.SemVer | null, range: string 
   return semver.satisfies(coerced, range, loose)
 }
 
-/** The lowest version `versionOrRange` (an exact version, or a declared range such as `^7.0.0-alpha.5`) allows. */
-function lowestVersion(versionOrRange: string): semver.SemVer | null {
-  const version = semver.parse(versionOrRange)
-  if (version != null) {
-    return version
-  }
-  try {
-    return semver.validRange(versionOrRange) == null ? null : semver.minVersion(versionOrRange)
-  } catch (_ignored) {
-    return null
-  }
-}
-
 /** The version of the electron-updater installed for the app in `appDir` (or a parent directory), null if none can be resolved. */
 function installedElectronUpdaterVersion(appDir: string): semver.SemVer | null {
   try {
@@ -154,15 +141,22 @@ function checkDependencies(dependencies: Record<string, string> | Nullish, error
       )
     } else {
       // electron-updater 7 rejects the app-update.yml electron-builder 26 writes (e.g. the Windows publisherName), so the installed app could never update.
-      // The installed version decides, as a loose range (">=6", "*") installs electron-updater 7 once it is npm `latest`. When none is installed,
-      // the lowest version the declared range allows: the 7.0.0 prereleases (e.g. "^7.0.0-alpha.13") count as 7, a range such as ">=6" does not.
+      const updater7Error =
+        "requires an app built with electron-builder 27: electron-updater 7 rejects the update configuration that electron-builder 26 writes " +
+        "(on Windows, every update is rejected), so installed apps could never update."
+      const docsLink = "See https://www.electron.build/docs/migration/v26-to-v27"
       const installed = installedElectronUpdaterVersion(appDir)
-      const lowest = installed ?? lowestVersion(updaterVersion)
-      if (lowest != null && lowest.major >= 7) {
+      if (installed != null) {
+        if (installed.major >= 7) {
+          errors.push(
+            `electron-updater ${installed.version} (installed for "${updaterVersion}") ${updater7Error} Build with electron-builder 27, or keep electron-updater 6 (e.g. "^6.8.12"). ${docsLink}`
+          )
+        }
+      } else if (semver.validRange(updaterVersion) != null && semver.intersects(updaterVersion, ">=7.0.0-0")) {
+        // Nothing is installed yet (this check runs before electron-builder installs the app's dependencies), so a declared range that allows 7
+        // (">=6", "^6 || ^7", 7.0.0 prereleases) is rejected: the install that follows takes electron-updater 7 once it is npm `latest`.
         errors.push(
-          `electron-updater ${installed == null ? updaterVersion : `${installed.version} (installed for "${updaterVersion}")`} requires an app built with electron-builder 27: electron-updater 7 rejects the update configuration that electron-builder 26 writes ` +
-            `(on Windows, every update is rejected), so installed apps could never update. Build with electron-builder 27, or keep electron-updater 6 (e.g. "^6.8.12"). ` +
-            `See https://www.electron.build/docs/migration/v26-to-v27`
+          `The declared electron-updater "${updaterVersion}" allows electron-updater 7, which ${updater7Error} Pin electron-updater to "^6" (e.g. "^6.8.12"), or build with electron-builder 27. ${docsLink}`
         )
       }
     }
