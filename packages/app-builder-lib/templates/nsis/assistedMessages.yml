@@ -199,7 +199,7 @@ onlyForMe:
   pl_PL: Tylko dla &mnie
   no: Kun for &meg
   nl_NL: Alleen voor &mij
-  it_IT: Per l'utente attuale
+  it_IT: Per l'&utente attuale
   fi: Vain minulle
   es: Solo para mí.
   da: Kun til mig
@@ -267,7 +267,7 @@ perUserInstallExists:
   pl_PL: Instalacja dla użytkownika już istnieje.
   no: Det er allerede en per-bruker-installasjon.
   nl_NL: Er is al een installatie 'per gebruiker'.
-  it_IT: È già presente un'installazione per l'utente attuale.\n
+  it_IT: È già presente un'installazione per l'utente attuale.
   fi: Tämä on jo käyttäjäkohtainen asennus.
   es: Ya hay una instalación por usuario.
   da: Der er allerede en pr. bruger installation.
@@ -311,7 +311,7 @@ perMachineInstallExists:
   pl_PL: Instalacja dla urządzenia już istnieje.
   no: Det er allerede en per-maskin-installasjon.
   nl_NL: Er is al een installatie 'per apparaat'.
-  it_IT: È già presente un'installazione per tutti gli utenti.\n
+  it_IT: È già presente un'installazione per tutti gli utenti.
   fi: Tämä on jo tietokonekohtainen asennus.
   es: Ya hay una instalación por máquina.
   da: Der er allerede en pr. maskine installation.

@@ -191,7 +191,7 @@ decompressionFailed:
   fr: Échec de décompression des fichiers. Veuillez réessayer d’exécuter l'installeur.
   he: נכשל בחילוץ קבצים. אנא נסה להריץ את המתקין שוב.
   hu: Kicsomagolási hiba. Kérlek futtasd a telepítőt újra!
-  it: Impossibile decomprimere i file.\nProva ad eseguire di nuovo il programma di installazione.
+  it: Impossibile decomprimere i file. Prova ad eseguire di nuovo il programma di installazione.
   ja: ファイルの解凍に失敗しました。もう一度インストーラーを実行してみてください。
   lt: Nepavyko išglaudinti failų. Bandykite paleisti diegimo programą dar kartą.
   nl_NL: Het decomprimeren van bestanden is mislukt. Voer het installatiebestand opnieuw uit om te proberen dit probleem te verhelpen.
@@ -223,7 +223,7 @@ uninstallFailed:
   fr: Échec de désinstallation des anciens fichiers d'application . Veuillez réessayer d’exécuter l'installeur.
   he: נכשל בהסרת קבצים של היישום הישן. אנא נסה להריץ את המתקין שוב.
   hu: A régi alkalmazás állományait nem sikerült törölni. Kérlek futtasd a telepítőt újra!
-  it: Impossibile disinstallare i vecchi file dell'applicazione.\nProva ad eseguire di nuovo il programma di installazione.
+  it: Impossibile disinstallare i vecchi file dell'applicazione. Prova ad eseguire di nuovo il programma di installazione.
   ja: 古いアプリケーションファイルのアンインストールに失敗しました。もう一度インストーラーを実行してみてください。
   lt: Nepavyko pašalinti senos programos failų. Bandykite paleisti diegimo programą dar kartą.
   nl: Het deïnstalleren van oude applicatiebestanden is mislukt. Voer het installatiebestand opnieuw uit om te proberen dit probleem te verhelpen.
@@ -243,5 +243,5 @@ appClosing:
   en: "Closing running ${PRODUCT_NAME}..."
   cs: "Ukončuji aplikaci ${PRODUCT_NAME}..."
   he: "סוגר את ${PRODUCT_NAME} הפעיל..."
-  en: "Chiusura programma ${PRODUCT_NAME}..."
+  it: "Chiusura programma ${PRODUCT_NAME}..."
 
