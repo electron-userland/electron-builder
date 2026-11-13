@@ -439,8 +439,8 @@ Please double check that your authentication token is correct. Due to security r
   }
 
   protected doDownload(requestOptions: ApiRequestOptions, options: DownloadCallOptions, redirectCount: number) {
-    // once configurePipes writes the response into the destination, a failure of the request (a lost connection, a timeout) is reported
-    // like one of the response: once the destination is closed (see there)
+    // a failure of the request (a lost connection, a timeout) goes to whoever reports the failures of the download: the callback, until
+    // configurePipes takes the response over and reports them once the destination is closed (see there)
     let reportFailure: (error: Error) => void = options.callback
     const request = this.createRequest(requestOptions, (response: IncomingMessage) => {
       const code = response.statusCode ?? 0
@@ -482,16 +482,11 @@ Please double check that your authentication token is correct. Due to security r
         return
       }
 
-      if (options.responseHandler == null) {
-        const fail = configurePipes(options, response, () => request.abort())
-        if (fail != null) {
-          // configurePipes reports a failure of the response itself
-          response.removeListener("error", options.callback)
-          reportFailure = fail
-        }
-      } else {
+      if (options.responseHandler != null) {
         options.responseHandler(response, options.callback, () => request.abort())
+        return
       }
+      reportFailure = configurePipes(options, response, () => request.abort())
     })
     this.addErrorAndTimeoutHandlers(request, error => reportFailure(error), requestOptions.timeout)
     this.addRedirectHandlers(request, requestOptions, options.callback, redirectCount, requestOptions => {
@@ -809,17 +804,18 @@ export function detectSha512Encoding(sha512: string): BinaryToTextEncoding {
 }
 
 /**
- * Writes `response` into `options.destination`. Returns the function that reports a failure of the download once the destination is
- * closed, or `null` when the download has already failed.
+ * Writes `response` into `options.destination`, taking the response over from doDownload: its failures, which doDownload reports to
+ * `options.callback`, are reported once the destination is closed. Returns the function that reports a failure of the download from now
+ * on: that one, or `options.callback` when the download has already failed without taking the response over.
  */
-function configurePipes(options: DownloadCallOptions, response: IncomingMessage, abort: () => void): ((error: Error) => void) | null {
+function configurePipes(options: DownloadCallOptions, response: IncomingMessage, abort: () => void): (error: Error) => void {
   if (!checkSha2(safeGetHeader(response, "X-Checksum-Sha2"), options.options.sha2, options.callback)) {
-    return null
+    return options.callback
   }
   const destination = options.destination
   if (destination == null) {
     options.callback(new Error("Cannot download into a file: no destination"))
-    return null
+    return options.callback
   }
 
   const streams: Array<any> = []
@@ -879,6 +875,7 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage,
       }
     })
   }
+  response.removeListener("error", options.callback)
   response.on("error", fail)
   let lastStream = response
   for (const stream of streams) {
