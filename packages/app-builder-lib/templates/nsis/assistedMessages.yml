@@ -16,7 +16,7 @@ chooseInstallationOptions:
   pl_PL: Wybierz opcje instalacji
   no: Velg alternativer for installering
   nl_NL: Kies installatie-opties
-  it_IT: Scegli opzioni di installazione
+  it_IT: Scegli le opzioni per l'installazione
   fi: Valitse asennusvaihtoehdot
   es: Elegir opciones de instalación
   da: Vælg Installeringsmuligheder
@@ -39,7 +39,7 @@ chooseUninstallationOptions:
   pl_PL: Wybierz opcje dezinstalacji
   no: Velg alternativer for avinstallering
   nl_NL: Kies verwijderings-opties
-  it_IT: Scegli opzioni di disinstallazione
+  it_IT: Scegli le opzioni per la disinstallazione
   fi: Valitse asennuksen poistovaihtoehdot
   es: Elegir opciones de desinstalación
   da: Vælg Afinstalleringsmuligheder
@@ -62,7 +62,7 @@ whichInstallationShouldBeRemoved:
   pl_PL: Którą instalację chcesz usunąć?
   no: Hvilken installasjon skal fjernes?
   nl_NL: Welke installatie moet worden verwijderd?
-  it_IT: Quale installazione intendi rimuovere?
+  it_IT: Quale installazione vuoi rimuovere?
   fi: Mikä asennus pitäisi poistaa?
   es: ¿Qué tipo de instalación debe eliminarse?
   da: Hvilken installering skal fjernes?
@@ -85,7 +85,7 @@ whoShouldThisApplicationBeInstalledFor:
   pl_PL: Dla kogo zainstalować tę aplikację?
   no: Hvem skal dette programmet installeres for?
   nl_NL: Voor wie moet deze applicatie worden geïnstalleerd?
-  it_IT: Per chi dovrebbe essere installata questa applicazione?
+  it_IT: Scegli la tipologia di installazione
   fi: Kenen käyttöön tämä sovellus pitäisi asentaa?
   es: ¿Para quién se instalará esta aplicación?
   da: Hvem skal denne applikation installeres til?
@@ -108,7 +108,7 @@ selectUserMode:
   pl_PL: Wybierz, czy to oprogramowanie ma być dostępne dla wszystkich użytkowników, czy tylko dla Ciebie
   no: Velg om du vil gjøre denne programvaren tilgjengelig for alle brukerne eller bare deg selv
   nl_NL: Selecteer of je deze software beschikbaar wilt maken voor alle gebruikers of alleen voor jezelf.
-  it_IT: Seleziona se desideri rendere questo software accessibile a tutti gli utenti o solo a te
+  it_IT: Seleziona se installare questo software per tutti gli utenti o per l'utente attuale
   fi: Valitse, haluatko tämän ohjelmiston kaikkien käyttäjien vai pelkästään itsesi käyttöön
   es: Elige si deseas que este software esté disponible para todos los usuarios o solo para ti.
   da: Vælg, om du vil gøre denne software tilgængelig for andre brugere, eller kun for dig selv
@@ -131,7 +131,7 @@ whichInstallationRemove:
   pl_PL: To oprogramowanie zostało zainstalowane zarówno dla urządzenia (wszyscy użytkownicy), jak i dla użytkownika.\nKtórą instalację chcesz usunąć?
   no: Denne programvaren er installert både per-maskin (alle brukere) og per-bruker. Hvilken installasjon vil du fjerne?
   nl_NL: Deze software is zowel per apparaat (alle gebruikers) als per gebruiker geïnstalleerd. Welke installatie wil je verwijderen?
-  it_IT: Questo software è stato installato sia per computer (tutti gli utenti) sia per utente.\nQuale installazione desideri rimuovere?
+  it_IT: Questo software è stato installato sia per tutti gli utenti che per l'utente attuale.\nQuale installazione vuoi rimuovere?
   fi: Tämä ohjelmisto on asennettu sekä konekohtaisesti (kaikki käyttäjät) että käyttäjäkohtaisesti.\nMinkä asennuksen haluat poistaa?
   es: Este software se ha instalado para la máquina (todos los usuarios) y para el usuario.\n¿Qué instalación quieres eliminar?
   da: Denne software er installeret både pr. maskine (alle brugere) og pr. bruger./nHvilken installering ønsker du at fjerne?
@@ -154,7 +154,7 @@ freshInstallForAll:
   pl_PL: Nowa instalacja dla wszystkich użytkowników (potrzebne będą dane administratora).
   no: Ny installasjon for alle brukere. (vil be om administratorlegitimasjon)
   nl_NL: Nieuwe installatie voor alle gebruikers. (zal om beheerder-gegevens vragen)
-  it_IT: Re-installa per tutti gli utenti. (Richiede le credenziali di amministratore)
+  it_IT: Verrà re-installato il programma per tutti gli utenti (richiede diritti di amministratore).
   fi: Uusi asennus kaikille käyttäjille (pyytää ylläpitäjän käyttäjätunnuksia)
   es: Instalación nueva para todos los usuarios (se pedirán los credenciales del administrador)
   da: Ny installering til alle brugere. (Vil medføre administrations-legitimationsoplysninger)
@@ -176,7 +176,7 @@ freshInstallForCurrent:
   pl_PL: Nowa instalacja wyłącznie dla obecnego użytkownika.
   no: Ny installasjon kun for nåværende bruker.
   nl_NL: Nieuwe installatie alleen voor huidige gebruiker.
-  it_IT: Re-installa solo per l'utente attuale.
+  it_IT: Re-installa per l'utente attuale.
   fi: Uusi asennus vain nykyiselle käyttäjälle.
   es: Instalación nueva solo para el usuario actual.
   da: Ny installering kun til nuværende bruger.
@@ -199,7 +199,7 @@ onlyForMe:
   pl_PL: Tylko dla &mnie
   no: Kun for &meg
   nl_NL: Alleen voor &mij
-  it_IT: Solo per &me
+  it_IT: Per l'&utente attuale
   fi: Vain minulle
   es: Solo para mí.
   da: Kun til mig
@@ -222,7 +222,7 @@ forAll:
   pl_PL: Każdy korzystający z tego komputera (wszyscy użytkownicy)
   no: Alle som bruker denne datamaskinen (alle brukere)
   nl_NL: Iedereen die deze computer gebruikt (alle gebruikers)
-  it_IT: Per chiunque usi questo computer (tutti gli utenti)
+  it_IT: Per tutti gli utenti
   fi: Kaikille, jotka käyttävät tätä tietokonetta (kaikki käyttäjät)
   es: Cualquiera que utilice este ordenador (todos los usuarios)
   da: Enhver, der bruger denne computer (alle brugere)
@@ -245,7 +245,7 @@ loginWithAdminAccount:
   pl_PL: Musisz się zalogować za pomocą konta będącego członkiem grupy administratora, by kontynuować...
   no: Du må logge inn med en konto som er medlem av administrasjonsgruppen for å fortsette...
   nl_NL: Je dient in te loggen met een account dat lid is van de beheerdersgroep om verder te gaan...
-  it_IT: Devi accedere con un account incluso nel gruppo amministratore per continuare...
+  it_IT: Per continuare devi accedere con un account incluso nel gruppo amministratore...
   fi: Jatkaaksesi sinun on kirjauduttava käyttäjätilillä, joka on ylläpitäjäryhmän jäsen...
   es: Para continuar, tienes que iniciar sesión con una cuenta que pertenezca al grupo de administradores...
   da: Du skal logge ind med en konto, der er medlem af administrationsgruppen for at kunne fortsætte...
@@ -267,7 +267,7 @@ perUserInstallExists:
   pl_PL: Instalacja dla użytkownika już istnieje.
   no: Det er allerede en per-bruker-installasjon.
   nl_NL: Er is al een installatie 'per gebruiker'.
-  it_IT: È già presente un'installazione per utente.
+  it_IT: È già presente un'installazione per l'utente attuale.
   fi: Tämä on jo käyttäjäkohtainen asennus.
   es: Ya hay una instalación por usuario.
   da: Der er allerede en pr. bruger installation.
@@ -289,7 +289,7 @@ perUserInstall:
   pl_PL: Instalacja dla użytkownika istnieje.
   no: Det er en per-bruker-installasjon.
   nl_NL: Er is een installatie 'per gebruiker'.
-  it_IT: È presente un'installazione per utente.
+  it_IT: È presente un'installazione per l'utente attuale.
   fi: Käyttäjäkohtainen asennus on olemassa.
   es: Hay una instalación por usuario.
   da: Der er en pr. bruger installation.
@@ -311,7 +311,7 @@ perMachineInstallExists:
   pl_PL: Instalacja dla urządzenia już istnieje.
   no: Det er allerede en per-maskin-installasjon.
   nl_NL: Er is al een installatie 'per apparaat'.
-  it_IT: È già presente un'installazione per computer.
+  it_IT: È già presente un'installazione per tutti gli utenti.
   fi: Tämä on jo tietokonekohtainen asennus.
   es: Ya hay una instalación por máquina.
   da: Der er allerede en pr. maskine installation.
@@ -333,7 +333,7 @@ perMachineInstall:
   pl_PL: Instalacja dla urządzenia istnieje.
   no: Det er en per-maskin-installasjon.
   nl_NL: Er is een installatie 'per apparaat'.
-  it_IT: È presente un'installazione per computer.
+  it_IT: È presente un'installazione per tutti gli utenti.
   fi: Tietokonekohtainen asennus on olemassa.
   es: Hay una instalación por máquina.
   da: Der er en pr. maskine installation.
@@ -355,7 +355,7 @@ reinstallUpgrade:
   pl_PL: Nastąpi ponowna instalacja/aktualizacja.
   no: Vil installere på nytt / oppgradere.
   nl_NL: Zal opnieuw installeren/upgraden.
-  it_IT: Re-installa/aggiorna il programma.
+  it_IT: Verrà reinstallato/aggiornato il programma.
   fi: Asennetaan uudelleen/päivitetään.
   es: Se reinstalará/actualizará.
   da: Reinstallerer/opgraderer.
@@ -377,7 +377,7 @@ uninstall:
   pl_PL: Nastąpi dezinstalacja.
   no: Vil avinstallere.
   nl_NL: Zal installatie verwijderen.
-  it_IT: Disinstalla il programma.
+  it_IT: Verrà disinstallato il programma.
   fi: Poistetaan asennus.
   es: Se desinstalará.
   da: Afinstallerer.

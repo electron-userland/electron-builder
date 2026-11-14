@@ -3,7 +3,7 @@
 win7Required:
   en: Windows 7 and above is required
   de: Windows 7 oder höher wird vorausgesetzt
-  it: È necessario disporre del sistema operativo Windows 7 e successivi
+  it: È richiesto un sistema operativo Windows 7 o versioni successive
   fr: Windows 7 (ou une version ultérieure) est requis
   he: נדרש Windows 7 ומעלה
   ja: Windows 7 以降が必要です
@@ -26,7 +26,7 @@ win7Required:
 x64WinRequired:
   en: 64-bit Windows is required
   de: 64-Bit-Windows wird vorausgesetzt
-  it: È necessario disporre di un sistema operativo Windows a 64 bit
+  it: È richiesto un sistema operativo Windows a 64 bit
   fr: Windows 64 bits est requis
   he: נדרש Windows בגרסת 64 סיביות
   ja: 64 ビット バージョンの Windows が必要です
@@ -62,7 +62,7 @@ appRunning:
   fr: "${PRODUCT_NAME} est en cours d’utilisation. \nCliquez sur «OK» pour fermer ce programme."
   he: "${PRODUCT_NAME} רץ.\nלחץ בסדר כדי לסגור אותו.\nאם הוא לא נסגר, נסה לסגור אותו באופן ידני."
   hu: "A ${PRODUCT_NAME} alkalmazás fut.\nKattints az OK gombra a bezárásához.\nHa így sem áll le, zárd be manuálisan."
-  it: "${PRODUCT_NAME} è in esecuzione.\nClicca su OK per chiuderla.\nSe non si chiude, prova a chiuderla manualmente."
+  it: "${PRODUCT_NAME} è in esecuzione.\nPer chiudere il programma seleziona 'OK'.\nSe non si chiude, prova a chiuderlo manualmente."
   ja: "${PRODUCT_NAME} が起動しています。\nOKをクリックして、閉じてください。\n閉じない場合は、手動で閉じてください。"
   ko: "${PRODUCT_NAME}이(가) 실행 중입니다. \nOK을 클릭하면 종료됩니다."
   lt: "${PRODUCT_NAME} vis dar veikia.\nSpustelėkite „Gerai“, kad ją užvertumėte.\nJeigu ji neužsiveria, pabandykite ją užverti rankiniu būdu."
@@ -106,7 +106,7 @@ appCannotBeClosed:
   hu: "Nem sikerült bezárni a ${PRODUCT_NAME}t. \nZárd be kézzel, majd kattints az Újra gombra a folytatáshoz!"
   id: "${PRODUCT_NAME} tidak dapat ditutup. \nMohon tutup secara manual dan klik Coba Lagi untuk melanjutkan."
   is: "Ekki er hægt að loka ${PRODUCT_NAME}. \nLokaðu því handvirkt og ýttu á 'Reyna aftur' til að halda áfram."
-  it: "${PRODUCT_NAME} non può essere chiuso. \nPer favore, chiudilo manualmente e clicca su Riprova per continuare."
+  it: "${PRODUCT_NAME} non può essere chiuso.\nPer continuare chiudilo manualmente e seleziona 'Riprova'."
   ja: "${PRODUCT_NAME}が終了できません。\n手動で閉じて、『再試行』をクリックしてください。"
   lt: "Nepavyksta užverti ${PRODUCT_NAME}. \nPabandykite ją užverti rankiniu būdu ir norėdami tęsti spustelėkite „Bandyti dar kartą“."
   mr: "${PRODUCT_NAME} बंद करता येत नाही. \nकृपया हाताने/मॅन्युअली बंद करा आणि पुढे चालू ठेवण्यासाठी पुन्हा प्रयत्न/रिट्राय वर क्लिक करा"
@@ -132,7 +132,7 @@ appCannotBeClosed:
 installing:
   en: Installing, please wait...
   de: Installation läuft, bitte warten...
-  it: Attendere prego. Installazione in corso...
+  it: Installazione in corso. Attendi...
   fr: En cours d’installation... Veuillez patienter s'il vous plaît.
   he: מתקין, נא להמתין...
   ja: インストールしています。しばらくお待ちください...
@@ -155,7 +155,7 @@ installing:
 areYouSureToUninstall:
   en: Are you sure you want to uninstall ${PRODUCT_NAME}?
   de: Sind Sie sicher, dass Sie ${PRODUCT_NAME} deinstallieren möchten?
-  it: Sicuro di voler procedere alla disinstallazione di ${PRODUCT_NAME}?
+  it: Vuoi procedere alla disinstallazione di ${PRODUCT_NAME}?
   fr: Etes-vous sûr(e) de vouloir désinstaller ${PRODUCT_NAME}?
   he: האם אתה בטוח שברצונך להסיר את ${PRODUCT_NAME}?
   ja: ${PRODUCT_NAME} をアンインストールしてもよろしいですか？
@@ -191,7 +191,7 @@ decompressionFailed:
   fr: Échec de décompression des fichiers. Veuillez réessayer d’exécuter l'installeur.
   he: נכשל בחילוץ קבצים. אנא נסה להריץ את המתקין שוב.
   hu: Kicsomagolási hiba. Kérlek futtasd a telepítőt újra!
-  it: Impossibile decomprimere i file. Per favore, prova ad eseguire di nuovo il programma di installazione.
+  it: Impossibile decomprimere i file. Prova ad eseguire di nuovo il programma di installazione.
   ja: ファイルの解凍に失敗しました。もう一度インストーラーを実行してみてください。
   lt: Nepavyko išglaudinti failų. Bandykite paleisti diegimo programą dar kartą.
   nl_NL: Het decomprimeren van bestanden is mislukt. Voer het installatiebestand opnieuw uit om te proberen dit probleem te verhelpen.
@@ -223,7 +223,7 @@ uninstallFailed:
   fr: Échec de désinstallation des anciens fichiers d'application . Veuillez réessayer d’exécuter l'installeur.
   he: נכשל בהסרת קבצים של היישום הישן. אנא נסה להריץ את המתקין שוב.
   hu: A régi alkalmazás állományait nem sikerült törölni. Kérlek futtasd a telepítőt újra!
-  it: Impossibile disinstallare i vecchi file dell'applicazione. Per favore, prova ad eseguire di nuovo il programma di installazione.
+  it: Impossibile disinstallare i vecchi file dell'applicazione. Prova ad eseguire di nuovo il programma di installazione.
   ja: 古いアプリケーションファイルのアンインストールに失敗しました。もう一度インストーラーを実行してみてください。
   lt: Nepavyko pašalinti senos programos failų. Bandykite paleisti diegimo programą dar kartą.
   nl: Het deïnstalleren van oude applicatiebestanden is mislukt. Voer het installatiebestand opnieuw uit om te proberen dit probleem te verhelpen.
@@ -243,3 +243,5 @@ appClosing:
   en: "Closing running ${PRODUCT_NAME}..."
   cs: "Ukončuji aplikaci ${PRODUCT_NAME}..."
   he: "סוגר את ${PRODUCT_NAME} הפעיל..."
+  it: "Chiusura programma ${PRODUCT_NAME}..."
+
