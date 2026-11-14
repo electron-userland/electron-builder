@@ -200,9 +200,9 @@ Var isForceCurrentInstall
 		${if} "$1" == "0" ; current user
 			${if} $hasPerUserInstallation == "1"
 				!ifndef BUILD_UNINSTALLER
-					StrCpy $7 "$(perUserInstallExists)($perUserInstallationFolder)$\r$\n$(reinstallUpgrade)"
+					StrCpy $7 "$\r$\n$$(perUserInstallExists)($perUserInstallationFolder)$\r$\n$(reinstallUpgrade)"
 				!else
-					StrCpy $7 "$(perUserInstall)($perUserInstallationFolder)$\r$\n$(uninstall)"
+					StrCpy $7 "$\r$\n$$(perUserInstall)($perUserInstallationFolder)$\r$\n$(uninstall)"
 				!endif
 			${else}
 				StrCpy $7 "$(freshInstallForCurrent)"
@@ -211,9 +211,9 @@ Var isForceCurrentInstall
 		${else} ; all users
 			${if} $hasPerMachineInstallation == "1"
 				!ifndef BUILD_UNINSTALLER
-					StrCpy $7 "$(perMachineInstallExists)($perMachineInstallationFolder)$\r$\n$(reinstallUpgrade)"
+					StrCpy $7 "$\r$\n$$(perMachineInstallExists)($perMachineInstallationFolder)$\r$\n$(reinstallUpgrade)"
 				!else
-					StrCpy $7 "$(perMachineInstall)($perMachineInstallationFolder)$\r$\n$(uninstall)"
+					StrCpy $7 "$\r$\n$$(perMachineInstall)($perMachineInstallationFolder)$\r$\n$(uninstall)"
 				!endif
 			${else}
 				StrCpy $7 "$(freshInstallForAll)"
