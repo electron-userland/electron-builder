@@ -154,7 +154,7 @@ freshInstallForAll:
   pl_PL: Nowa instalacja dla wszystkich użytkowników (potrzebne będą dane administratora).
   no: Ny installasjon for alle brukere. (vil be om administratorlegitimasjon)
   nl_NL: Nieuwe installatie voor alle gebruikers. (zal om beheerder-gegevens vragen)
-  it_IT: Re-installa per tutti gli utenti (richiede diritti di amministratore).
+  it_IT: Verrà re-installato il programma per tutti gli utenti (richiede diritti di amministratore).
   fi: Uusi asennus kaikille käyttäjille (pyytää ylläpitäjän käyttäjätunnuksia)
   es: Instalación nueva para todos los usuarios (se pedirán los credenciales del administrador)
   da: Ny installering til alle brugere. (Vil medføre administrations-legitimationsoplysninger)
@@ -377,7 +377,7 @@ uninstall:
   pl_PL: Nastąpi dezinstalacja.
   no: Vil avinstallere.
   nl_NL: Zal installatie verwijderen.
-  it_IT: Disinstalla il programma.
+  it_IT: Verrà disinstallato il programma.
   fi: Poistetaan asennus.
   es: Se desinstalará.
   da: Afinstallerer.
