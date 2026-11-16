@@ -30,6 +30,8 @@ minimumReleaseAgeExclude:
   - markdown-it@14.3.3
   # Renovate security update: electron@42.11.16
   - electron@42.11.16
+  # Renovate security update: minimatch@11.0.1
+  - minimatch@11.0.1
 patchedDependencies:
   '@changesets/cli@2.29.7': patches/@changesets__cli@2.29.7.patch
   '@changesets/assemble-release-plan@6.0.9': patches/@changesets__assemble-release-plan@6.0.9.patch
