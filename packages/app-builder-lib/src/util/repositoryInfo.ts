@@ -9,7 +9,7 @@ export function getRepositoryInfo(projectDir: string, metadata?: Metadata, devMe
   return _getInfo(projectDir, (devMetadata == null ? null : devMetadata.repository) || (metadata == null ? null : metadata.repository))
 }
 
-async function getGitUrlFromGitConfig(projectDir: string): Promise<string | null> {
+export async function getGitUrlFromGitConfig(projectDir: string): Promise<string | null> {
   const data = await orNullIfFileNotExist(fsExtra.readFile(path.join(projectDir, ".git", "config"), "utf8"))
   if (data == null) {
     return null
