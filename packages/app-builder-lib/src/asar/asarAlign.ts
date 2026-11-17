@@ -46,8 +46,11 @@ export interface AsarContentUnit {
   readonly size: number
 }
 
-/** Receives the units in content order and returns their new offsets (same order); the new ranges must not overlap. */
-export type AsarLayoutPlanner = (units: Array<AsarContentUnit>) => Array<number>
+/**
+ * Receives the units in content order and returns a plan whose `offsets` are their new offsets (same order); the new
+ * ranges must not overlap. The plan is handed back by `relayoutAsarContent`, so it can carry what the planner decided.
+ */
+export type AsarLayoutPlanner<P extends { offsets: Array<number> }> = (units: Array<AsarContentUnit>) => P
 
 interface PackedFile {
   path: string
@@ -93,13 +96,16 @@ function groupIntoUnits(files: Array<PackedFile>): Array<UnitEntry> {
 }
 
 /**
- * Reads the packed content units of an asar (see `AsarContentUnit`) in content order, without rewriting anything.
+ * Reads the packed content units of an asar (see `AsarContentUnit`) in content order, without rewriting anything, and
+ * the size of its content region (the file size after the header). Offsets are taken from the header as they are:
+ * callers that read an untrusted archive must check them against `contentSize`.
  * @internal
  */
-export async function readAsarContentUnits(asarFile: string): Promise<Array<AsarContentUnit>> {
+export async function readAsarContentUnits(asarFile: string): Promise<{ units: Array<AsarContentUnit>; contentSize: number }> {
+  const { header, size: headerSize } = await readAsarHeader(asarFile)
   const files: Array<PackedFile> = []
-  collectPackedFiles(JSON.parse((await readAsarHeader(asarFile)).header) as Node, "", files)
-  return groupIntoUnits(files).map(it => it.unit)
+  collectPackedFiles(JSON.parse(header) as Node, "", files)
+  return { units: groupIntoUnits(files).map(it => it.unit), contentSize: (await fs.stat(asarFile)).size - 8 - headerSize }
 }
 
 function serializeHeader(headerJson: string): Buffer {
@@ -146,7 +152,10 @@ async function copyRange(inFd: number, outFd: number, start: number, size: numbe
  * it over the original; on any failure the original is untouched and the temp file removed.
  * @internal
  */
-export async function relayoutAsarContent(asarFile: string, plan: AsarLayoutPlanner): Promise<AsarAlignmentResult> {
+export async function relayoutAsarContent<P extends { offsets: Array<number> }>(
+  asarFile: string,
+  planner: AsarLayoutPlanner<P>
+): Promise<{ result: AsarAlignmentResult; plan: P }> {
   const { header: headerJson, size: headerSize } = await readAsarHeader(asarFile)
   const header = JSON.parse(headerJson) as Node
   const contentStart = 8 + headerSize
@@ -155,7 +164,8 @@ export async function relayoutAsarContent(asarFile: string, plan: AsarLayoutPlan
   const files: Array<PackedFile> = []
   collectPackedFiles(header, "", files)
   const units = groupIntoUnits(files)
-  const newOffsets = plan(units.map(it => it.unit))
+  const plan = planner(units.map(it => it.unit))
+  const newOffsets = plan.offsets
   if (newOffsets.length !== units.length) {
     throw new Error(`asar layout plan returned ${newOffsets.length} offsets for ${units.length} content units`)
   }
@@ -223,7 +233,7 @@ export async function relayoutAsarContent(asarFile: string, plan: AsarLayoutPlan
     }
   }
 
-  return { files: files.length, paddingBytes: cursor - fileBytes, sizeBefore, sizeAfter: (await fs.stat(asarFile)).size }
+  return { result: { files: files.length, paddingBytes: cursor - fileBytes, sizeBefore, sizeAfter: (await fs.stat(asarFile)).size }, plan }
 }
 
 /**
@@ -243,13 +253,15 @@ export async function relayoutAsarContent(asarFile: string, plan: AsarLayoutPlan
  */
 export async function alignAsarContent(asarFile: string, alignment: number): Promise<AsarAlignmentResult> {
   validateContentAlignment(alignment)
-  const result = await relayoutAsarContent(asarFile, units => {
+  const { result } = await relayoutAsarContent(asarFile, units => {
     let cursor = 0
-    return units.map(unit => {
-      const offset = alignUp(cursor, alignment)
-      cursor = offset + unit.size
-      return offset
-    })
+    return {
+      offsets: units.map(unit => {
+        const offset = alignUp(cursor, alignment)
+        cursor = offset + unit.size
+        return offset
+      }),
+    }
   })
   log.info(
     { file: log.filePath(asarFile), alignment, files: result.files, padding: result.paddingBytes, size: `${result.sizeBefore} → ${result.sizeAfter}` },

@@ -4,6 +4,7 @@ import {
   applyStableAsarLayout,
   applyStableLayoutOption,
   planStableLayout,
+  resolveStableLayoutPrevious,
   STABLE_LAYOUT_MAX_FREE_RATIO,
   StableLayoutParams,
   validateStableLayoutOptions,
@@ -49,7 +50,7 @@ describe("planStableLayout", () => {
     const laidOut = current.map((unit, index) => ({ ...unit, offset: first.offsets[index] }))
     const again = planStableLayout(current, laidOut, PARAMS)
     expect(again.offsets).toEqual(first.offsets)
-    expect(again).toMatchObject({ kept: 3, filled: 0, appended: 0, compacted: false, freedBytes: 0 })
+    expect(again).toMatchObject({ kept: 3, filled: 0, appended: 0, compacted: false, freedBytes: 0, slackBytes: 0 })
   })
 
   test("a new file goes after the previous content, wherever it sorts", ({ expect }) => {
@@ -119,6 +120,75 @@ describe("planStableLayout", () => {
     const plan = planStableLayout(current, previous, { ...PARAMS, maxFreeRatio: 1 })
     expect(plan.offsets).toEqual([0, 1024, 512])
   })
+
+  test("a file only keeps an offset that is a multiple of the alignment", ({ expect }) => {
+    // previous offsets, alignment -> kept, compacted, new offsets
+    const table: Array<[Array<number>, number, number, boolean, Array<number>]> = [
+      [[0, 100, 200], 1, 3, false, [0, 100, 200]],
+      [[0, 100, 200], 512, 0, true, [0, 512, 1024]],
+      [[0, 512, 1024], 512, 3, false, [0, 512, 1024]],
+      [[0, 512, 1024], 1024, 0, true, [0, 1024, 2048]],
+    ]
+    for (const [previousOffsets, alignment, kept, compacted, offsets] of table) {
+      const previous = units(["a", 100, previousOffsets[0]], ["b", 100, previousOffsets[1]], ["c", 100, previousOffsets[2]])
+      const plan = planStableLayout(units(["a", 100], ["b", 100], ["c", 100]), previous, { ...PARAMS, alignment })
+      expect(plan, `${previousOffsets} @ ${alignment}`).toMatchObject({ kept, compacted, offsets })
+    }
+  })
+
+  test("slack left by a file that shrank counts towards compaction", ({ expect }) => {
+    const previous = units(["big", 10_000, 0], ["b", 1000, 10_240])
+    // shrinking within the last aligned block leaves no slack
+    expect(planStableLayout(units(["big", 9_800], ["b", 1000]), previous, PARAMS)).toMatchObject({ kept: 2, compacted: false, freedBytes: 0, slackBytes: 0 })
+    // shrinking to 10 B leaves 9,728 B of the slot unused: more than 10 % of the 1,010 packed bytes
+    const shrunk = planStableLayout(units(["big", 10], ["b", 1000]), previous, PARAMS)
+    expect(shrunk).toMatchObject({ compacted: true, freedBytes: 0, slackBytes: 9_728, offsets: [0, 512] })
+    // below the threshold the file stays put
+    expect(planStableLayout(units(["big", 10], ["b", 1000]), previous, { ...PARAMS, maxFreeRatio: 10 })).toMatchObject({ kept: 2, offsets: [0, 10_240] })
+  })
+
+  test("a gap before the first file of the previous layout counts as freed and can be filled", ({ expect }) => {
+    const previous = units(["a", 1000, 4096])
+    const plan = planStableLayout(units(["new", 2000], ["a", 1000]), previous, { ...PARAMS, maxFreeRatio: 10 })
+    expect(plan).toMatchObject({ freedBytes: 4096, kept: 1, filled: 1, offsets: [0, 4096] })
+  })
+
+  test("a growth margin reserved by a fresh layout is consumed by in-place growth in the next build", ({ expect }) => {
+    const params = { ...PARAMS, growthMargin: 0.5 }
+    const first = units(["a", 1000], ["b", 1000])
+    const fresh = planStableLayout(first, null, params)
+    expect(fresh.offsets).toEqual([0, 1536])
+    const laidOut = first.map((unit, index) => ({ ...unit, offset: fresh.offsets[index] }))
+    const grown = planStableLayout(units(["a", 1400], ["b", 1000]), laidOut, params)
+    expect(grown).toMatchObject({ kept: 2, compacted: false, freedBytes: 0, slackBytes: 0, offsets: [0, 1536] })
+    // past the margin the file moves to the end, and nothing else does
+    const outgrown = planStableLayout(units(["a", 1600], ["b", 1000]), laidOut, { ...params, maxFreeRatio: 1 })
+    expect(outgrown).toMatchObject({ kept: 1, appended: 1, offsets: [2560, 1536] })
+  })
+})
+
+describe("resolveStableLayoutPrevious", () => {
+  test("resolves against the project directory and rejects a path the build overwrites", ({ expect }) => {
+    const project = path.resolve("/project")
+    const outputDirs = ["dist", path.join("dist", "linux-unpacked")]
+    // previous -> resolved path, or null when rejected
+    const table: Array<[string, string | null]> = [
+      [".cache/app.asar", path.join(project, ".cache", "app.asar")],
+      [path.resolve("/elsewhere/app.asar"), path.resolve("/elsewhere/app.asar")],
+      ["dist-previous/app.asar", path.join(project, "dist-previous", "app.asar")],
+      ["dist/linux-unpacked/resources/app.asar", null],
+      ["dist/previous/app.asar", null],
+      ["dist", null],
+      [path.join(project, "dist", "app.asar"), null],
+    ]
+    for (const [previous, expected] of table) {
+      if (expected == null) {
+        expect(() => resolveStableLayoutPrevious(previous, project, outputDirs), previous).toThrow(InvalidConfigurationError)
+      } else {
+        expect(resolveStableLayoutPrevious(previous, project, outputDirs), previous).toBe(expected)
+      }
+    }
+  })
 })
 
 // ─── on real archives ─────────────────────────────────────────────────────────
@@ -152,7 +222,7 @@ async function pack(tmp: string, name: string, files: Map<string, Buffer>): Prom
   return out
 }
 
-async function entries(file: string): Promise<Map<string, any>> {
+function fileEntries(header: any): Map<string, any> {
   const result = new Map<string, any>()
   const walk = (node: any, prefix: string) => {
     for (const [name, child] of Object.entries<any>(node.files ?? {})) {
@@ -164,8 +234,26 @@ async function entries(file: string): Promise<Map<string, any>> {
       }
     }
   }
-  walk(JSON.parse((await readAsarHeader(file)).header), "")
+  walk(header, "")
   return result
+}
+
+async function entries(file: string): Promise<Map<string, any>> {
+  return fileEntries(JSON.parse((await readAsarHeader(file)).header))
+}
+
+/** The header framing @electron/asar writes: a size pickle (one UInt32) followed by a pickle holding the JSON string. */
+function serializeAsarHeader(json: string): Buffer {
+  const text = Buffer.from(json, "utf8")
+  const payload = Buffer.alloc(4 + Math.ceil(text.length / 4) * 4)
+  payload.writeUInt32LE(text.length, 0)
+  text.copy(payload, 4)
+  const headerPickle = Buffer.concat([Buffer.alloc(4), payload])
+  headerPickle.writeUInt32LE(payload.length, 0)
+  const sizePickle = Buffer.alloc(8)
+  sizePickle.writeUInt32LE(4, 0)
+  sizePickle.writeUInt32LE(headerPickle.length, 4)
+  return Buffer.concat([sizePickle, headerPickle])
 }
 
 /** Every file reads back byte-identical through both readers, and its recorded integrity matches what is read. */
@@ -235,9 +323,44 @@ describe("applyStableAsarLayout", () => {
     const tmp = await tmpDir.createTempDir()
     const files = makeTree()
     const file = await pack(tmp, "first", files)
-    const plan = await applyStableLayoutOption(file, tmp, { previous: "does-not-exist/app.asar", growthMargin: 0.05 }, 512)
+    const plan = await applyStableLayoutOption(file, path.join(tmp, "does-not-exist", "app.asar"), { previous: "does-not-exist/app.asar", growthMargin: 0.05 }, 512)
     expect(plan.kept).toBe(0)
     await expectValidArchive(expect, file, files)
+  })
+
+  test("rejects a previous archive whose header points outside it or overlaps", async ({ expect, tmpDir }) => {
+    const tmp = await tmpDir.createTempDir()
+    const files = makeTree()
+    const current = await pack(tmp, "current", files)
+    const valid = await pack(tmp, "valid", files)
+    const { header, size } = await readAsarHeader(valid)
+    const content = (await fs.readFile(valid)).subarray(8 + size)
+    const rewrite = async (name: string, edit: (entries: Map<string, any>) => void) => {
+      const json = JSON.parse(header)
+      edit(fileEntries(json))
+      const file = path.join(tmp, `${name}.asar`)
+      await fs.writeFile(file, Buffer.concat([serializeAsarHeader(JSON.stringify(json)), content]))
+      return file
+    }
+    const pastTheEnd = await rewrite("past-the-end", it => (it.get("lib/mod3.js").offset = String(1e12)))
+    const overlapping = await rewrite("overlapping", it => (it.get("src/deep/file2.txt").offset = String(parseInt(it.get("src/deep/file1.txt").offset, 10) + 1)))
+    const notAnAsar = path.join(tmp, "not-an-asar")
+    await fs.writeFile(notAnAsar, "")
+    const before = await fs.readFile(current)
+    for (const [file, message] of [
+      [pastTheEnd, "past the end of the archive's content"],
+      [overlapping, "overlapping the file before it"],
+      [notAnAsar, "is not a readable asar"],
+    ]) {
+      const error = await applyStableAsarLayout(current, file, PARAMS).catch((e: unknown) => e)
+      expect(error, file).toBeInstanceOf(InvalidConfigurationError)
+      expect((error as Error).message, file).toContain(message)
+    }
+    // nothing was rewritten
+    expect((await fs.readFile(current)).equals(before)).toBe(true)
+    // the same header, re-serialized unmodified, is accepted
+    await applyStableAsarLayout(current, await rewrite("unmodified", () => undefined), PARAMS)
+    await expectValidArchive(expect, current, files)
   })
 
   test("validates the option", ({ expect }) => {
@@ -261,7 +384,9 @@ describe("applyStableAsarLayout", () => {
 // second build keeps the first build's offsets.
 test.ifNotWindows("asar.stableLayout keeps the previous build's offsets; the default layout is unchanged", async ({ expect, tmpDir }) => {
   const keep = await tmpDir.createTempDir()
-  const previous = path.join(keep, "previous-app.asar")
+  // `${arch}` is expanded, so each arch keeps its own previous archive
+  const previousOption = path.join(keep, "previous-${arch}-app.asar")
+  const previous = path.join(keep, `previous-${process.arch}-app.asar`)
   const contiguous = (header: Map<string, any>) => {
     const packed = [...header.values()].filter(e => e.offset != null && !e.unpacked).sort((a, b) => parseInt(a.offset, 10) - parseInt(b.offset, 10))
     let end = 0
@@ -281,13 +406,13 @@ test.ifNotWindows("asar.stableLayout keeps the previous build's offsets; the def
   )
   await app(
     expect,
-    { targets: linuxDirTarget, config: { asar: { contentAlignment: 512, stableLayout: { previous } } } },
+    { targets: linuxDirTarget, config: { asar: { contentAlignment: 512, stableLayout: { previous: previousOption } } } },
     { packed: async context => fs.copyFile(path.join(context.getResources(Platform.LINUX), "app.asar"), previous) }
   )
   const first = await entries(previous)
   await app(
     expect,
-    { targets: linuxDirTarget, config: { asar: { contentAlignment: 512, stableLayout: { previous } } } },
+    { targets: linuxDirTarget, config: { asar: { contentAlignment: 512, stableLayout: { previous: previousOption } } } },
     {
       projectDirCreated: projectDir => fs.writeFile(path.join(projectDir, "aaa-added-first.js"), "module.exports = 42\n"),
       packed: async context => {
@@ -304,6 +429,13 @@ test.ifNotWindows("asar.stableLayout keeps the previous build's offsets; the def
     }
   )
 })
+
+test.ifNotWindows("asar.stableLayout.previous inside the build output fails the build", ({ expect }) =>
+  appThrows(expect, { targets: linuxDirTarget, config: { asar: { stableLayout: { previous: "dist/linux-unpacked/resources/app.asar" } } } }, {}, error => {
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toContain("inside the build output")
+  })
+)
 
 test.ifNotWindows("an invalid asar.stableLayout fails before packing", ({ expect }) =>
   appThrows(expect, { targets: linuxDirTarget, config: { asar: { stableLayout: { previous: "a.asar", growthMargin: 5 } } } }, {}, error => {

@@ -1,14 +1,16 @@
 // Benchmark: how much does app.asar layout churn cost a differential update with the v3 block map, and how much of
 // it do a stable layout (`asar.stableLayout`) and per-file growth margins win back?
 //
-// It runs in CI as a small smoke (200 files, ~2 MiB) whose assertions — the stable layout keeps every untouched
-// file's offset, and costs no more than the default layout for an insertion — are exercised on every run; the
-// table is only logged. The full-size run quoted in the `asar.stableLayout` docs is opt-in:
+// It is skipped unless BENCH is set (the layout behaviour it relies on is covered by asarStableLayoutTest). Any other
+// value runs a small smoke (200 files, ~2 MiB) whose assertions also hold at full size: the stable layout keeps
+// every untouched file's offset, and costs no more than the default layout for an insertion. The full-size run
+// quoted in the `asar.stableLayout` docs:
 //
 //   BENCH=1 TEST_FILES=asarLayoutBenchTest pnpm ci:test
+//   BENCH=smoke TEST_FILES=asarLayoutBenchTest pnpm ci:test
 //
-// Env knobs (all optional):
-//   BENCH            1 = full size and verbose output
+// Env knobs:
+//   BENCH            1 = full size and verbose output, anything else = smoke; unset = skipped
 //   BENCH_FILES      number of files in the synthetic app   (default 2000 full, 200 smoke)
 //   BENCH_ASAR_MB    target packed size in MiB              (default 24 full, 2 smoke)
 //   BENCH_RELEASES   length of the release chain            (default 10 full, 2 smoke)
@@ -40,6 +42,7 @@ import * as path from "path"
 import { Readable } from "stream"
 import { describe, it } from "vitest"
 
+const ENABLED = process.env.BENCH != null && process.env.BENCH.length > 0
 const FULL_SIZE = process.env.BENCH === "1"
 const FILE_COUNT = Number(process.env.BENCH_FILES ?? (FULL_SIZE ? 2000 : 200))
 const ASAR_MB = Number(process.env.BENCH_ASAR_MB ?? (FULL_SIZE ? 24 : 2))
@@ -355,7 +358,7 @@ async function offsetsOf(asarFile: string): Promise<Map<string, string>> {
 const fmt = (n: number) => n.toLocaleString("en-US")
 const kb = (n: number) => `${(n / 1024).toFixed(1)} KB`
 
-describe("asar layout benchmark", () => {
+describe.skipIf(!ENABLED)("asar layout benchmark", () => {
   it("measures the differential cost of layout churn per layout", { timeout: 60 * 60 * 1000 }, async ({ expect, tmpDir }) => {
     const work = await tmpDir.getTempDir({ prefix: "asar-layout-bench" })
     await fs.mkdir(work, { recursive: true })
@@ -364,7 +367,7 @@ describe("asar layout benchmark", () => {
     say(`[bench] ${fmt(v1.size)} files, ${fmt([...v1.values()].reduce((s, it) => s + it.size, 0))} B`)
 
     // ── single-step scenarios ──
-    const rows: Array<{ scenario: string; layout: string; cost: Cost; size: number; shifted: number }> = []
+    const rows: Array<{ scenario: string; layout: string; cost: Cost; size: number; shifted: number; untouchedShifted: number }> = []
     const baseSize = new Map<string, number>()
     for (const [layoutIndex, layout] of LAYOUTS.entries()) {
       const v1File = path.join(work, `v1-${layoutIndex}.asar`)
@@ -379,9 +382,11 @@ describe("asar layout benchmark", () => {
         await packTree(asar, v2, layout, v2File, v1File)
         const cost = measure(v1Map, await blockMap(v2File), await headerEnd(v2File))
         const v2Offsets = await offsetsOf(v2File)
-        const shifted = [...v2Offsets].filter(([file, offset]) => v1Offsets.has(file) && v1Offsets.get(file) !== offset).length
-        rows.push({ scenario: scenario.name, layout: layout.name, cost, size: (await fs.stat(v2File)).size, shifted })
-        say(`[bench] ${layout.name} / ${scenario.name}: ${fmt(cost.wire)} B wire (${fmt(cost.header)} B header), ${shifted} shifted`)
+        const moved = [...v2Offsets].filter(([file, offset]) => v1Offsets.has(file) && v1Offsets.get(file) !== offset).map(([file]) => file)
+        // untouched: same size and the same edits as in v1, so its content is byte-identical
+        const untouchedShifted = moved.filter(file => JSON.stringify(v1.get(file)) === JSON.stringify(v2.get(file))).length
+        rows.push({ scenario: scenario.name, layout: layout.name, cost, size: (await fs.stat(v2File)).size, shifted: moved.length, untouchedShifted })
+        say(`[bench] ${layout.name} / ${scenario.name}: ${fmt(cost.wire)} B wire (${fmt(cost.header)} B header), ${moved.length} shifted`)
         await fs.rm(v2File)
       }
       await fs.rm(v1File)
@@ -438,7 +443,7 @@ describe("asar layout benchmark", () => {
     const row = (scenario: number, layout: string) => rows.find(it => it.scenario === SCENARIOS[scenario].name && it.layout === layout)!
     for (let scenario = 0; scenario < SCENARIOS.length; scenario++) {
       // untouched files never move under the stable layout
-      expect(row(scenario, "stable + align 512").shifted, SCENARIOS[scenario].name).toBeLessThanOrEqual(10)
+      expect(row(scenario, "stable + align 512").untouchedShifted, SCENARIOS[scenario].name).toBe(0)
     }
     // an insertion shifts every later file in the default layout, none in the stable one
     expect(row(3, "default").shifted).toBeGreaterThan(0)

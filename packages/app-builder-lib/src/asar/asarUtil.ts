@@ -151,6 +151,8 @@ export class AsarPackager {
       resourcePath: string
       options: AsarOptions
       unpackPattern: Filter | undefined
+      /** resolved `asar.stableLayout.previous` (see `resolveStableLayoutPrevious`), null without a stable layout */
+      stableLayoutPrevious?: string | null
     }
   ) {
     this.outFile = path.join(config.resourcePath, `app.asar`)
@@ -174,9 +176,10 @@ export class AsarPackager {
 
     const contentAlignment = this.config.options.contentAlignment
     const stableLayout = this.config.options.stableLayout
-    if (stableLayout != null) {
+    const previous = this.config.stableLayoutPrevious
+    if (stableLayout != null && previous != null) {
       // aligns too: every file the stable layout places starts at a multiple of `contentAlignment`
-      await applyStableLayoutOption(this.outFile, this.packager.projectDir, stableLayout, contentAlignment)
+      await applyStableLayoutOption(this.outFile, previous, stableLayout, contentAlignment)
     } else if (contentAlignment != null && contentAlignment !== 0) {
       await alignAsarContent(this.outFile, contentAlignment)
     }
