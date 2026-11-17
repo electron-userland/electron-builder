@@ -1,9 +1,10 @@
 import { Arch } from "electron-builder"
 import { TestContext } from "vitest"
 import { optionsForFlakyE2E, optionsForFlakyMultiHopE2E, runKeyRotationTest, runSignedManifestTest, runTest } from "./blackboxUpdateHelpers"
+import { runMacRequestRulesTest } from "./blackboxUpdateRuntimeChecks"
 
 /** The mac blackbox auto-update e2e cases; each name is also the vitest test name (and so part of the snapshot key). */
-export type MacBlackboxCase = "x64" | "x64 - signed update manifest" | "x64 - key rotation" | "universal" | "arm64"
+export type MacBlackboxCase = "x64" | "x64 - signed update manifest" | "x64 - key rotation" | "universal" | "arm64" | "arm64 - update request rules"
 
 type MacBlackboxCaseDefinition = {
   options: typeof optionsForFlakyE2E | typeof optionsForFlakyMultiHopE2E
@@ -20,6 +21,8 @@ const macBlackboxCases: Record<MacBlackboxCase, MacBlackboxCaseDefinition> = {
   "x64 - key rotation": { options: optionsForFlakyMultiHopE2E, run: context => runKeyRotationTest(context, "zip", "", Arch.x64) },
   universal: { options: optionsForFlakyE2E, run: context => runTest(context, "zip", "", Arch.universal) },
   arm64: { options: optionsForFlakyE2E, arm64HostOnly: true, run: context => runTest(context, "zip", "", Arch.arm64) },
+  // The request rules of electron-updater 7 over five refused launches and the update, with one build pair (see runMacRequestRulesTest).
+  "arm64 - update request rules": { options: optionsForFlakyMultiHopE2E, arm64HostOnly: true, run: runMacRequestRulesTest },
 }
 
 /**
