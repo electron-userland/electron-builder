@@ -1,4 +1,4 @@
-import { ApiRequestOptions, BlockMapDataHolder, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
+import { ApiRequestOptions, BlockMapDataHolder, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions, newError } from "builder-util-runtime"
 import { BlockMap } from "builder-util-runtime"
 import { detectSha512Encoding, urlWithoutQuery } from "builder-util-runtime/internal"
 import fsExtra from "fs-extra"
@@ -33,6 +33,13 @@ export interface DifferentialDownloaderOptions {
   readonly cancellationToken: CancellationToken
   onProgress?: (progress: ProgressInfo) => void
 }
+
+/**
+ * Code of the error for a block map that cannot be planned on: empty, larger than its limit, malformed, not describing the update, or
+ * not the one the update manifest names by `blockMapSha512`. Its message describes it fully, so the fallback logs it without a stack.
+ * @internal
+ */
+export const ERR_UPDATER_INVALID_BLOCKMAP = "ERR_UPDATER_INVALID_BLOCKMAP"
 
 /**
  * The most bytes a compressed (v2 or embedded) block map of a `fileSize`-byte file may inflate to, and the most compressed bytes of
@@ -138,6 +145,10 @@ export abstract class DifferentialDownloader {
     }
 
     const newSize = this.blockAwareFileInfo.size
+    // a map without blocks (or an update of unknown, zero or invalid size) plans nothing: "downloading" it would write an empty file
+    if (newSize == null || !Number.isSafeInteger(newSize) || newSize <= 0 || operations.length === 0) {
+      throw newError(`The block maps plan no data (${operations.length} operations for a ${newSize ?? "unknown"}-byte file)`, ERR_UPDATER_INVALID_BLOCKMAP)
+    }
     if (downloadSize + copySize + (this.fileMetadataBuffer == null ? 0 : this.fileMetadataBuffer.length) !== newSize) {
       throw new Error(`Internal error, size mismatch: downloadSize: ${downloadSize}, copySize: ${copySize}, newSize: ${newSize}`)
     }

@@ -296,19 +296,24 @@ export function parseBlockMapV3Header(buf: Buffer): BlockMapV3Header {
   if (buf.length < headerLen) {
     throw new Error("block map v3: truncated header")
   }
+  const fileSize = Number(buf.readBigUInt64LE(8))
   const regions: Array<BlockMapV3Region> = []
   let p = HEADER_FIXED_SIZE
   for (let i = 0; i < regionCount; i++) {
-    regions.push({
+    const region: BlockMapV3Region = {
       offset: Number(buf.readBigUInt64LE(p)),
       size: Number(buf.readBigUInt64LE(p + 8)),
       min: buf.readUInt32LE(p + 16),
       avg: buf.readUInt32LE(p + 20),
       max: buf.readUInt32LE(p + 24),
-    })
+    }
+    // the builder rejects such regions (normalizeRegions), so one here is corruption
+    if (region.size === 0 || region.offset + region.size > fileSize) {
+      throw new Error(`block map v3: region ${i} [${region.offset}, ${region.offset + region.size}) is empty or extends past the ${fileSize}-byte file`)
+    }
+    regions.push(region)
     p += REGION_SIZE
   }
-  const fileSize = Number(buf.readBigUInt64LE(8))
   const superCount = buf.readUInt32LE(42)
   const groupCount = buf.readUInt32LE(16)
   const blockCount = buf.readUInt32LE(20)
@@ -330,12 +335,17 @@ export function parseBlockMapV3Header(buf: Buffer): BlockMapV3Header {
 }
 
 /**
- * Rejects a header that does not describe a file of `expectedFileSize` bytes (when given), declares a map larger than `maxSize` (when
- * given) or MAX_BLOCK_MAP_V3_SIZE, or (when `length` is given) declares a map of another length, before any size derived from its counts
- * is requested or allocated, or any table is decoded (the counts themselves are bounded by `parseBlockMapV3Header`).
+ * Rejects a header that declares no blocks (or a 0-byte file), does not describe a file of `expectedFileSize` bytes (when given), declares
+ * a map larger than `maxSize` (when given) or MAX_BLOCK_MAP_V3_SIZE, or (when `length` is given) declares a map of another length, before
+ * any size derived from its counts is requested or allocated, or any table is decoded (the counts themselves are bounded by
+ * `parseBlockMapV3Header`).
  */
 export function checkBlockMapV3Header(header: BlockMapV3Header, options: { expectedFileSize?: number | null; length?: number | null; maxSize?: number | null } = {}): void {
   const { expectedFileSize, length, maxSize } = options
+  // the counts are bounded by the file size, so a 0-byte file has no blocks either: nothing to plan a differential download on
+  if (header.blockCount === 0 || header.fileSize === 0) {
+    throw new Error(`block map v3: empty map (fileSize ${header.fileSize}, blocks ${header.blockCount})`)
+  }
   if (expectedFileSize != null && header.fileSize !== expectedFileSize) {
     throw new Error(`block map v3: the map describes a ${header.fileSize}-byte file, the update is ${expectedFileSize} bytes`)
   }
@@ -484,8 +494,15 @@ export function decodeBlockMapV3(buf: Buffer, expectedFileSize?: number | null, 
   const groups = parseBlockMapV3Groups(header, buf)
   checkBlockMapV3Groups(header, groups)
   const records = parseBlockMapV3Records(buf, recordsStart(header), header.blockCount)
-  if (records.some(record => record.size === 0)) {
-    throw new Error("block map v3: empty block")
+  let covered = 0
+  for (const record of records) {
+    if (record.size === 0) {
+      throw new Error("block map v3: empty block")
+    }
+    covered += record.size
+  }
+  if (covered !== header.fileSize) {
+    throw new Error(`block map v3: blocks cover ${covered} bytes, file size is ${header.fileSize}`)
   }
   return { header, supers, groups, records }
 }
