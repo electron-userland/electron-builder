@@ -113,6 +113,11 @@ Var installMode
           ${else}
             ShowWindow $HWNDPARENT ${SW_HIDE}
             !insertmacro UAC_RunElevated
+            # the installer waits for this process: exit with the elevated uninstaller's result
+            ${if} $0 = 0
+            ${andIf} $1 = 1
+              SetErrorLevel $2
+            ${endif}
             Quit
           ${endif}
         ${endif}

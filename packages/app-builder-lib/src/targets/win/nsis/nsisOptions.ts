@@ -90,8 +90,13 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    *
    * electron-builder does not recommend granting these rights: an unelevated process could then change the `UninstallString` that the
    * elevated uninstaller, and deployment tools running as SYSTEM, later execute. The option is for machines whose administrators already
-   * did. The uninstaller part takes effect from the update after the one that installs a build with this option, as an update runs the
-   * uninstaller of the installed version.
+   * did.
+   *
+   * An update runs the uninstaller of the installed version, so the first update to a build with this option still elevates.
+   *
+   * Not checked: `HKLM\Software\Classes` (file associations and protocols), writes made by `customInstall` or `customUnInstall`, and
+   * shortcuts or a Start Menu folder that an earlier version created under another name. Without elevation, a write there that is
+   * denied fails without an error, so leave this option off if the update needs one.
    * @default false
    */
   readonly allowUnelevatedPerMachineUpdate?: boolean

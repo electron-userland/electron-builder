@@ -173,15 +173,18 @@ Name "${PRODUCT_NAME}" "${DoubleAmpersand}"
   # KEY_CREATE_SUB_KEY: the deleted key is re-created under its parent
   !define UNELEVATED_PARENT_REG_KEY_ACCESS 0x4
 
-  # Clears $unelevatedAccess unless this process can open the existing file or folder with the access. Nothing is created or changed.
-  # Uses $0.
+  # Clears $unelevatedAccess unless this process holds the access to the existing file or folder. Nothing is created or changed.
+  # Uses $0 and $1.
   !macro unelevatedProbeFile _PATH _ACCESS
     # FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS (needed to open a folder)
-    System::Call 'kernel32::CreateFileW(w "${_PATH}", i ${_ACCESS}, i 7, p 0, i 3, i 0x02000000, p 0) p.r0'
-    ${if} $0 = -1
-      StrCpy $unelevatedAccess "0"
-    ${else}
+    System::Call 'kernel32::CreateFileW(w "${_PATH}", i ${_ACCESS}, i 7, p 0, i 3, i 0x02000000, p 0) p.r0 ?e'
+    Pop $1
+    ${if} $0 <> -1
       System::Call 'kernel32::CloseHandle(p r0)'
+    ${elseIf} $1 <> 32
+      # ERROR_SHARING_VIOLATION is not a missing right, as access is checked before sharing: $INSTDIR is the current folder of this
+      # process or of the exiting app, and that handle doesn't share DELETE, and a running exe doesn't share write access
+      StrCpy $unelevatedAccess "0"
     ${endif}
   !macroend
 
@@ -214,9 +217,10 @@ Name "${PRODUCT_NAME}" "${DoubleAmpersand}"
   !macroend
 
   # Sets $unelevatedAccess to "1" when a silent update (--updated) of the per-machine installation in $INSTDIR can skip elevation: no
-  # per-user installation exists, and this process already holds every right the update uses. The update runs the old uninstaller, which
-  # removes $INSTDIR, the HKLM keys and the all-users shortcuts, and then re-creates them, so the rights to re-create them in their parents
-  # are needed too. Only probes: nothing is created or changed. Saves and restores the registers it uses.
+  # per-user installation exists, the installed version was built with this option, and this process already holds every right the
+  # update uses. The update runs the old uninstaller, which removes $INSTDIR, the HKLM keys and the all-users shortcuts, and then
+  # re-creates them, so the rights to re-create them in their parents are needed too. Only probes: nothing is created or changed. Saves
+  # and restores the registers it uses.
   !macro checkUnelevatedPerMachineUpdate
     Push $0
     Push $1
@@ -231,6 +235,14 @@ Name "${PRODUCT_NAME}" "${DoubleAmpersand}"
       ${if} $0 == ""
         StrCpy $unelevatedAccess "1"
       ${endif}
+      !ifndef BUILD_UNINSTALLER
+        # the update runs the installed version's uninstaller, which shows a UAC prompt by itself unless that version was built with
+        # this option too (registryAddInstallInfo)
+        ReadRegStr $0 HKLM "${INSTALL_REGISTRY_KEY}" UnelevatedUpdate
+        ${if} $0 != "true"
+          StrCpy $unelevatedAccess "0"
+        ${endif}
+      !endif
     ${endif}
 
     ${if} $unelevatedAccess == "1"
