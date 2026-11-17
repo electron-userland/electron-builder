@@ -1,8 +1,8 @@
 import { CancellationToken, HttpExecutor, ProgressInfo } from "builder-util-runtime"
 import { GenericDifferentialDownloader } from "electron-updater/src/differentialDownloader/GenericDifferentialDownloader"
-import { READ_AHEAD_MAX_RANGE_BYTES, SINGLE_RANGE_CONCURRENCY } from "electron-updater/src/differentialDownloader/singleRangeReadAhead"
+import { READ_AHEAD_MAX_BYTES, READ_AHEAD_MAX_RANGE_BYTES, SINGLE_RANGE_CONCURRENCY } from "electron-updater/src/differentialDownloader/singleRangeReadAhead"
 import { createHash } from "crypto"
-import { readFileSync, writeFileSync } from "fs"
+import { existsSync, readFileSync, writeFileSync } from "fs"
 import { ClientRequest, createServer, IncomingMessage, request as httpRequest, Server, ServerResponse } from "http"
 import { AddressInfo } from "net"
 import * as path from "path"
@@ -206,6 +206,63 @@ describe("single-range host: DOWNLOAD ranges are read ahead", { concurrent: fals
       return true
     }
     await expect(download(await tmpDir.createTempDir({ prefix: "read-ahead" }), files, await startHost(files.newContent))).rejects.toThrow(/did not return the requested range/)
+  })
+
+  test("while a long range is streamed, the ranges read ahead behind it hold at most READ_AHEAD_MAX_BYTES", async ({ tmpDir }) => {
+    const rangesAhead = 6
+    const files = layout([BLOCK, READ_AHEAD_MAX_RANGE_BYTES + BLOCK, ...new Array(rangesAhead).fill(READ_AHEAD_MAX_RANGE_BYTES), BLOCK])
+    // the writer cannot pass the long range until it is answered, so every range requested after it is held
+    const cap = Math.floor(READ_AHEAD_MAX_BYTES / READ_AHEAD_MAX_RANGE_BYTES)
+    expect(cap).toBeLessThan(rangesAhead)
+    let longResponse: ServerResponse | null = null
+    override = (n, res) => {
+      if (n !== 2) {
+        return false
+      }
+      longResponse = res
+      return true
+    }
+    const done = download(await tmpDir.createTempDir({ prefix: "read-ahead" }), files, await startHost(files.newContent))
+    await vi.waitFor(() => expect(exchanges.slice(2).filter(it => it.answered !== Infinity).length).toBeGreaterThanOrEqual(cap), { timeout: 10_000 })
+    // time for a request beyond the cap to show up
+    await new Promise(resolve => setTimeout(resolve, 200))
+    const ahead = exchanges.slice(2)
+    const heldBytes = ahead.reduce((sum, it) => {
+      const [start, end] = it.range.slice("bytes=".length).split("-").map(Number)
+      return sum + end - start + 1
+    }, 0)
+    expect(ahead).toHaveLength(cap)
+    expect(heldBytes).toBeLessThanOrEqual(READ_AHEAD_MAX_BYTES)
+
+    const [start, end] = exchanges[1].range.slice("bytes=".length).split("-").map(Number)
+    const res = longResponse as ServerResponse | null
+    expect(res).not.toBeNull()
+    res?.writeHead(206, { "Content-Range": `bytes ${start}-${end}/${files.newContent.length}`, "Content-Length": end - start + 1 })
+    res?.end(files.newContent.subarray(start, end + 1))
+    const newFile = await done
+    expect(readFileSync(newFile).equals(files.newContent)).toBe(true)
+    expect(exchanges).toHaveLength(2 + rangesAhead + 1)
+  })
+
+  test.for([
+    ["longer", 1, /exceeds the requested 4096 bytes/],
+    ["shorter", -1, /Received data length 4095 is not equal to expected 4096/],
+  ] as const)("a read-ahead answer with a body %s than its Content-Range fails the download, and nothing is written", async ([, extra, error], { tmpDir }) => {
+    const files = layout(new Array(4).fill(BLOCK))
+    const origin = "https://updates.example.com/new.bin"
+    const executor = new FakeElectronHttpExecutor((_url, headers) => {
+      const [start, end] = String(headers.range).slice("bytes=".length).split("-").map(Number)
+      return {
+        statusCode: 206,
+        headers: { "content-range": `bytes ${start}-${end}/${files.newContent.length}` },
+        body: files.newContent.subarray(start, end + 1 + extra),
+      }
+    })
+    const dir = await tmpDir.createTempDir({ prefix: "read-ahead" })
+    await expect(download(dir, files, new URL(origin), undefined, executor)).rejects.toThrow(error)
+    // the plan starts with a DOWNLOAD: its bad answer is the first thing the writer would have written
+    const newFile = path.join(dir, "new.bin")
+    expect(existsSync(newFile) ? readFileSync(newFile).length : 0).toBe(0)
   })
 
   test("after a redirect of the first request, the ranges ahead go straight to the redirect target", async ({ tmpDir }) => {

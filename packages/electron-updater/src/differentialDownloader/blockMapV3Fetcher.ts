@@ -382,13 +382,13 @@ class BlockMapV3Fetcher {
       // result does not wait for the requests still in flight once it is known
       const settle = (error: unknown, whole: Buffer | null): void => {
         settled = true
-        if (error != null || whole != null) {
-          this.abortRequestsInFlight()
-        }
         if (error == null) {
           resolve(whole)
         } else {
           reject(error)
+        }
+        if (error != null || whole != null) {
+          this.abortRequestsInFlight()
         }
       }
       const startNext = (): void => {
@@ -431,7 +431,12 @@ class BlockMapV3Fetcher {
 
   private abortRequestsInFlight(): void {
     for (const request of this.requestsInFlight) {
-      request.abort()
+      try {
+        request.abort()
+      } catch (e: unknown) {
+        // runs in a response handler, where a throw would escape as an unhandled rejection
+        this.options.logger?.warn?.(`Cannot abort block map request: ${e}`)
+      }
     }
     this.requestsInFlight.clear()
   }

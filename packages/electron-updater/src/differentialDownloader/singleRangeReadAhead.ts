@@ -53,7 +53,7 @@ export class SingleRangeReadAhead {
     private readonly target: RangeRequestTarget,
     private readonly tasks: Array<Operation>,
     private readonly out: Writable,
-    private readonly reject: (error: Error) => void
+    private readonly reject: (error: unknown) => void
   ) {}
 
   /**
@@ -89,7 +89,11 @@ export class SingleRangeReadAhead {
 
   /** Calls `onData` with the bytes of operation `index` once they arrived (`advance(index)` returned true). */
   take(index: number, onData: (data: Buffer) => void): void {
-    const range = this.ranges.get(index)!
+    const range = this.ranges.get(index)
+    if (range == null) {
+      this.reject(new Error(`Internal error: range of operation ${index} was not read ahead`))
+      return
+    }
     const deliver = (data: Buffer): void => {
       this.ranges.delete(index)
       this.heldBytes -= range.length
@@ -149,10 +153,11 @@ export class SingleRangeReadAhead {
         response.on("data", (chunk: Buffer) => {
           received += chunk.length
           if (received > range.length) {
-            response.destroy()
+            // before destroying the response, so that its abort cannot be reported first
             this.reject(
               newError(`Received data length exceeds the requested ${range.length} bytes of range bytes=${task.start}-${endInclusive}`, "ERR_UPDATER_RANGE_NOT_SUPPORTED")
             )
+            response.destroy()
             return
           }
           chunks.push(chunk)
