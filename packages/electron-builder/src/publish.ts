@@ -1,8 +1,8 @@
 #! /usr/bin/env node
 
 import { fileURLToPath } from "node:url"
-import { AppInfo, CancellationToken, Packager, PackagerOptions, PublishManager, PublishOptions, UploadTask, checkBuildRequestOptions } from "app-builder-lib"
-import { Publish, checkUpdateManifestBeforeUpload, computeSafeArtifactNameIfNeeded, getConfig, warnAboutUpdateFilesBeforeUpload } from "app-builder-lib/internal"
+import { AppInfo, CancellationToken, Configuration, Packager, PackagerOptions, PublishManager, PublishOptions, UploadTask, checkBuildRequestOptions } from "app-builder-lib"
+import { Publish, checkUpdateManifestBeforeUpload, computeSafeArtifactNameIfNeeded, warnAboutUpdateFilesBeforeUpload } from "app-builder-lib/internal"
 import { Executables, InvalidConfigurationError, archFromString, log, printErrorAndExit } from "builder-util"
 import type { PublishPolicy } from "electron-publish"
 import chalk from "chalk"
@@ -63,8 +63,16 @@ export async function publishArtifactsWithOptions(
   publishConfiguration?: Publish,
   publishOptions?: PublishOptions
 ) {
-  const projectDir = process.cwd()
-  const config = await getConfig(projectDir, configurationFilePath || null, { publish: publishConfiguration, detectUpdateChannel: false })
+  // the overrides only, a config file path in `extends` as the build CLI passes it: the Packager loads the configuration itself. Given the
+  // configuration getConfig had loaded, it merged the file into itself, so a `publish` list failed validation (JSON, YAML) or contained
+  // itself (a JS config, the same required object both times)
+  const config: Configuration = { detectUpdateChannel: false }
+  if (publishConfiguration !== undefined) {
+    config.publish = publishConfiguration
+  }
+  if (configurationFilePath) {
+    config.extends = configurationFilePath
+  }
 
   const buildOptions: BuildOptions = normalizeOptions({ config, publish: publishOptions?.publish })
   checkBuildRequestOptions(buildOptions)
