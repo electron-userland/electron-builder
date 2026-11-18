@@ -259,6 +259,8 @@ autoUpdater.quitAndInstall({ isSilent: true, isForceRunAfter: false })
 
 Defaults are unchanged (`isSilent: false`, `isForceRunAfter: false`), so `quitAndInstall()` with no arguments behaves exactly as before. The object form also carries the new v27 `waitUntilNextLaunch` flag, which defers the install to the next application launch instead of spawning the installer on quit — see [Install on Next Launch](../features/auto-update#install-on-next-launch-windowslinux).
 
+**From electron-updater 7.0.0-alpha.14,** the next launch installs an update deferred with `waitUntilNextLaunch` by itself, right after the app's own `ready` handlers have run, with any `autoInstallEvent` but `"manual"`. Alpha.13 and earlier kept it pending until the app called `installPendingUpdateIfAvailable()`. The install quits the app, so a call made after an `await` or a dialog no longer runs first. To keep installing the update at a moment your app controls, set `autoUpdater.autoInstallEvent = "manual"` and call `installPendingUpdateIfAvailable()`. Targets that always elevate (deb, rpm, pacman, per-machine NSIS) still keep the update pending for that call.
+
 ### `autoInstallEvent` replaces `autoInstallOnAppQuit` {#autoinstallevent-replaces-autoinstallonappquit}
 
 **How you'll find out:** **TypeScript error.** Assigning `autoInstallOnAppQuit` **logs a runtime warning**.
