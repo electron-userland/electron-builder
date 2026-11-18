@@ -71,7 +71,10 @@ export class NsisUpdater extends BaseUpdater {
    * verified. The `publisherName` that electron-builder writes to `app-update.yml` wins over it, and it wins over
    * `verifyUpdateCodeSignature: false` in `app-update.yml` (the update is then verified).
    *
-   * Without it, a packaged app whose update config file is missing rejects the update (`ERR_UPDATER_NO_PUBLISHER_NAME`).
+   * Without it, a packaged app whose update config file is missing when the update is verified rejects the update
+   * (`ERR_UPDATER_NO_PUBLISHER_NAME`). A download reads that file first, so this happens only when the file goes missing after it was read,
+   * for example when `updateConfigPath` is set to a file that does not exist after an earlier download; a packaged app without the file
+   * fails the download itself, reading it (`ENOENT`).
    * @default null
    */
   publisherName: string | Array<string> | null = null
@@ -177,7 +180,8 @@ export class NsisUpdater extends BaseUpdater {
    * {@link publisherName}. Without either, no verify function runs and the update is rejected:
    * - when the update config file has no `publisherName`, the verification fails (`ERR_UPDATER_INVALID_SIGNATURE`), unless the file opts out
    *   with `verifyUpdateCodeSignature: false` (written by electron-builder for `win.verifyUpdateCodeSignature: false`);
-   * - when the update config file of a packaged app is missing at the time the update is verified, `ERR_UPDATER_NO_PUBLISHER_NAME` is thrown.
+   * - when the update config file of a packaged app is missing at the time the update is verified, `ERR_UPDATER_NO_PUBLISHER_NAME` is thrown
+   *   (only after the file was read for the download: without it, the download fails first, reading it).
    */
   get verifyUpdateFileAuthenticodeSignature(): VerifyUpdateFileAuthenticodeSignature {
     return this._verifyUpdateFileAuthenticodeSignature
