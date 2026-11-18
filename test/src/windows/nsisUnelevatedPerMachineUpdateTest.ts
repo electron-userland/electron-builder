@@ -111,9 +111,12 @@ async function preprocess(dir: string, { defines, script }: Script, extraDefines
 
 // The option's code in a preprocessed script:
 // - probes: the access checks (checkUnelevatedPerMachineUpdate)
+// - probesPassSharingViolation: a probe that fails only with ERROR_SHARING_VIOLATION (32) doesn't clear $unelevatedAccess
+// - onlyForUpdate: only a silent update (--updated) of the per-machine installation is checked
 // - readsMarker: the installer skips elevation only when the installed version was built with the option
 // - writesMarker: the installer records that it was
 // - uninstallerElevatesFirst: setInstallModePerAllUsers elevates before it reads the installation folder, as without the option
+// - uninstallerPassesExitCode: an uninstaller that elevates exits with the elevated uninstaller's exit code, which the installer waits for
 function features(lines: Array<string>) {
   let uninstallerElevatesFirst = false
   lines.forEach((line, i) => {
@@ -125,15 +128,54 @@ function features(lines: Array<string>) {
       }
     }
   })
+  // the statements without LogicLib's numbered labels and its comments, to find a block of them in a row
+  const statements = lines.map(line => line.replace(/_LogicLib_\w+?_\d+/g, "_LogicLib_").replace(/\s+;.*$/, ""))
+  const hasBlock = (block: Array<string | RegExp>) =>
+    statements.some((_, i) => block.every((expected, j) => (typeof expected === "string" ? statements[i + j] === expected : expected.test(statements[i + j] ?? ""))))
   return {
     probes: lines.some(line => line.includes("kernel32::CreateFileW")),
-    readsMarker: lines.some(line => /^ReadRegStr \$0 HKLM ".+" UnelevatedUpdate$/.test(line)),
+    probesPassSharingViolation: hasBlock([
+      /^System::Call 'kernel32::CreateFileW\(w ".+", i 0x[0-9a-f]+, i 7, p 0, i 3, i 0x02000000, p 0\) p\.r0 \?e'$/,
+      "Pop $1",
+      "IntCmp `$0` `-1` `_LogicLib_` `` ``",
+      "System::Call 'kernel32::CloseHandle(p r0)'",
+      "Goto _LogicLib_",
+      "_LogicLib_:",
+      "IntCmp `$1` `32` `_LogicLib_` `` ``",
+      'StrCpy $unelevatedAccess "0"',
+    ]),
+    onlyForUpdate: hasBlock([
+      'StrCpy $unelevatedAccess "0"',
+      "IfSilent `` `_LogicLib_`",
+      "push `updated`",
+      "StdUtils::TestParameter /NOUNLOAD",
+      "pop $R9",
+      'StrCmp "$R9" "true" `` `_LogicLib_`',
+      "StrCmp `$installMode` `all` `` `_LogicLib_`",
+    ]),
+    readsMarker: hasBlock([/^ReadRegStr \$0 HKLM ".+" UnelevatedUpdate$/, "StrCmp `$0` `true` `_LogicLib_` ``", 'StrCpy $unelevatedAccess "0"', "_LogicLib_:"]),
     writesMarker: lines.some(line => /^WriteRegStr SHELL_CONTEXT ".+" UnelevatedUpdate "true"$/.test(line)),
     uninstallerElevatesFirst,
+    uninstallerPassesExitCode: hasBlock([
+      "UAC::_ 0",
+      "IntCmp `$0` `0` `` `_LogicLib_` `_LogicLib_`",
+      "IntCmp `$1` `1` `` `_LogicLib_` `_LogicLib_`",
+      "SetErrorLevel $2",
+      "_LogicLib_:",
+      "Quit",
+    ]),
   }
 }
 
-const none = { probes: false, readsMarker: false, writesMarker: false, uninstallerElevatesFirst: false }
+const none = {
+  probes: false,
+  probesPassSharingViolation: false,
+  onlyForUpdate: false,
+  readsMarker: false,
+  writesMarker: false,
+  uninstallerElevatesFirst: false,
+  uninstallerPassesExitCode: false,
+}
 const uninstallerWithoutOption = { ...none, uninstallerElevatesFirst: true }
 
 test("allowUnelevatedPerMachineUpdate is off by default", async ({ expect, tmpDir }) => {
@@ -158,8 +200,8 @@ const cases: Array<{ name: string; nsis: Configuration["nsis"]; extraDefines?: P
   {
     name: "assisted, option on",
     nsis: { oneClick: false, allowUnelevatedPerMachineUpdate: true },
-    installer: { ...none, probes: true, readsMarker: true, writesMarker: true },
-    uninstaller: { ...none, probes: true },
+    installer: { ...none, probes: true, probesPassSharingViolation: true, onlyForUpdate: true, readsMarker: true, writesMarker: true },
+    uninstaller: { ...none, probes: true, probesPassSharingViolation: true, onlyForUpdate: true, uninstallerPassesExitCode: true },
   },
   {
     name: "assisted perMachine, option defined",
@@ -167,6 +209,13 @@ const cases: Array<{ name: string; nsis: Configuration["nsis"]; extraDefines?: P
     extraDefines: { ALLOW_UNELEVATED_PER_MACHINE_UPDATE: null },
     installer: none,
     uninstaller: uninstallerWithoutOption,
+  },
+  {
+    name: "one-click, option defined",
+    nsis: {},
+    extraDefines: { ALLOW_UNELEVATED_PER_MACHINE_UPDATE: null },
+    installer: none,
+    uninstaller: none,
   },
   {
     name: "one-click perMachine, option defined",
