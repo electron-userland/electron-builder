@@ -1,5 +1,3 @@
-## 4.3.0
-
 ## 7.0.0-alpha.13
 ### Minor Changes
 
