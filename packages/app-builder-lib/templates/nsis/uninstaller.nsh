@@ -4,7 +4,15 @@ FunctionEnd
 
 Function un.onInit
   SetOutPath $INSTDIR
-  ${LogSet} on
+  !ifdef ENABLE_LOGGING_ELECTRON_BUILDER
+    # NSIS names the log after $INSTDIR when logging is turned on and keeps it open: log outside $INSTDIR, which an update moves aside
+    # (un.atomicRMDir renames every file in it) and an uninstall removes. An open $INSTDIR\install.log made both fail.
+    Push $INSTDIR
+    StrCpy $INSTDIR "$TEMP\${APP_PACKAGE_NAME}-uninstall"
+    ${LogSet} on
+    Pop $INSTDIR
+    SetOutPath $INSTDIR
+  !endif
   
   !insertmacro check64BitAndSetRegView
 

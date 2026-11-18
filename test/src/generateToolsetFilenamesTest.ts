@@ -133,6 +133,7 @@ describe("Generated toolset test filenames", () => {
     const toolsets = `wcs-${latestToolsetVersion(versions(WIN_CODE_SIGN_VERSIONS))}__nsis-${latestToolsetVersion(versions(NSIS_VERSIONS))}`
     const expected = versions(WINE_VERSIONS).flatMap(wine => [
       `blackboxNsisAuthenticode__${toolsets}__wine-${wine}.win.e2e.ts`,
+      `blackboxNsisDebugLogging__${toolsets}__wine-${wine}__e2e.ts`,
       `blackboxNsisInstallerChecks__${toolsets}__wine-${wine}__e2e.ts`,
       `blackboxNsisNextLaunchModes__${toolsets}__wine-${wine}__e2e.ts`,
     ])
