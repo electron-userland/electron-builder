@@ -149,7 +149,7 @@ export abstract class Provider<T extends UpdateInfo> {
 
   /**
    * {@link httpRequest} for a channel file (`latest*.yml`), which is read into memory and parsed before anything verifies it: a response
-   * larger than `maxUpdateInfoSize` fails with `ERR_HTTP_RESPONSE_TOO_LARGE` (see ApiRequestOptions.maxResponseSize). Channel files are
+   * larger than `maxUpdateInfoSize` fails with `ERR_UPDATER_RESPONSE_TOO_LARGE` (see ApiRequestOptions.maxResponseSize). Channel files are
    * a few KB. Release feeds and API responses (release listings and lookups) are not limited: their size depends on the release history.
    */
   protected async channelFileRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken): Promise<string | null> {
@@ -162,10 +162,10 @@ export abstract class Provider<T extends UpdateInfo> {
       return await this.executor.request(options, cancellationToken)
     } catch (e: unknown) {
       // names the options that raise the limit
-      if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
+      if (e instanceof Error && "code" in e && e.code === "ERR_UPDATER_RESPONSE_TOO_LARGE") {
         throw newError(
           `${e.message}: raise the limit with maxUpdateInfoSize in the publish configuration (app-update.yml) or autoUpdater.maxUpdateInfoSize. See https://www.electron.build/docs/migration/v27-runtime-changes#channel-files-are-limited-to-10-mib`,
-          "ERR_HTTP_RESPONSE_TOO_LARGE"
+          "ERR_UPDATER_RESPONSE_TOO_LARGE"
         )
       }
       throw e
