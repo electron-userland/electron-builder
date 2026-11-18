@@ -129,6 +129,21 @@ test("zip file appears before non-zip when zip arrives after exe", async ({ expe
   })
 })
 
+test("each channel file lists every artifact once when the tasks of an artifact share its update info", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    // createUpdateInfoTasks gives the tasks of every channel of an artifact the same info object
+    const zip = makeTask(dir, "App-1.0.0-mac.zip", "sha-zip", null)
+    const dmg = makeTask(dir, "App-1.0.0.dmg", "sha-dmg", null)
+    const channels = ["latest-mac.yml", "beta-mac.yml", "alpha-mac.yml"]
+    const tasks = [zip, dmg].flatMap(artifact => channels.map(file => ({ ...artifact, file: path.join(dir, file) })))
+    await writeUpdateInfoFiles(tasks, makePackager() as any)
+    for (const file of channels) {
+      expect({ file, urls: (await readYml(path.join(dir, file))).files.map((it: any) => it.url) }).toEqual({ file, urls: ["App-1.0.0-mac.zip", "App-1.0.0.dmg"] })
+    }
+    expect(zip.info.files.map(it => it.url)).toEqual(["App-1.0.0-mac.zip"])
+  })
+})
+
 test("zip file remains first when it already arrives before non-zip", async ({ expect }) => {
   await withTmpDir(async dir => {
     const tasks = [makeTask(dir, "App-1.0.0-mac.zip", "sha-zip", null), makeTask(dir, "App-1.0.0.dmg", "sha-dmg", Arch.x64)]
