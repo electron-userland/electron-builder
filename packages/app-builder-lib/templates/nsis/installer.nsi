@@ -50,7 +50,6 @@ Function .onInit
   Call setInstallSectionSpaceRequired
 
   SetOutPath $INSTDIR
-  ${LogSet} on
 
   !ifmacrodef preInit
     !insertmacro preInit
