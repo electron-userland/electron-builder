@@ -6,7 +6,6 @@ import {
   DEFAULT_MAX_UPDATE_INFO_SIZE,
   HttpExecutor,
   newError,
-  safeStringifyJson,
   UpdateFileInfo,
   UpdateInfo,
   WindowsUpdateInfo,
@@ -355,7 +354,7 @@ export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {
       } as any,
     ]
   } else {
-    throw newError(`No files provided: ${safeStringifyJson(updateInfo)}`, "ERR_UPDATER_NO_FILES_PROVIDED")
+    throw newError(`No files provided for version ${updateInfo.version}`, "ERR_UPDATER_NO_FILES_PROVIDED")
   }
 }
 
@@ -369,7 +368,8 @@ export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransform
   const files = getFileList(updateInfo)
   const result: Array<ResolvedUpdateFileInfo> = files.map(fileInfo => {
     if ((fileInfo as any).sha2 == null && fileInfo.sha512 == null) {
-      throw newError(`Update info doesn't contain nor sha256 neither sha512 checksum: ${safeStringifyJson(fileInfo)}`, "ERR_UPDATER_NO_CHECKSUM")
+      // the file URL without its query: a pre-signed URL's signature is in it
+      throw newError(`Update info doesn't contain nor sha256 neither sha512 checksum for ${urlWithoutQuery(fileInfo.url)}`, "ERR_UPDATER_NO_CHECKSUM")
     }
     return {
       url: newUrlFromBase(pathTransformer(fileInfo.url), baseUrl),

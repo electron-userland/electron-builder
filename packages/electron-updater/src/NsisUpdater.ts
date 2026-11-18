@@ -1,5 +1,6 @@
 import { createRequire } from "node:module"
 import { AllPublishOptions, newError, PackageFileInfo, CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME } from "builder-util-runtime"
+import { urlWithoutQuery } from "builder-util-runtime/internal"
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter.js"
 import { DownloadUpdateOptions, UpdateInfoAndProvider } from "./AppUpdater.js"
@@ -249,7 +250,9 @@ export class NsisUpdater extends BaseUpdater {
         )
       }
       if (fileInfo.packageInfo.sha512 == null) {
-        return Promise.reject(newError(`Update info doesn't contain sha512 checksum for the web installer package: ${fileInfo.packageInfo.path}`, "ERR_UPDATER_NO_CHECKSUM"))
+        return Promise.reject(
+          newError(`Update info doesn't contain sha512 checksum for the web installer package: ${urlWithoutQuery(fileInfo.packageInfo.path)}`, "ERR_UPDATER_NO_CHECKSUM")
+        )
       }
     }
     return this.executeDownload({

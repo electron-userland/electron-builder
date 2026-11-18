@@ -342,3 +342,33 @@ test.ifMac("a second mac download closes the previous proxy server, so its crede
     close()
   }
 })
+
+test.ifMac("a mac update without a zip names the files without their query", async ({ expect, tmpDir }) => {
+  mockForNodeRequire("electron", { autoUpdater: new TestNativeUpdater() })
+  const root = await tmpDir.getTempDir({ prefix: "mac-updater-no-zip-test" })
+  await fsExtra.outputFile(
+    path.join(root, "latest-mac.yml"),
+    serializeToYaml({
+      version: "1.1.0",
+      files: [{ url: "https://cdn.example.com/TestApp-1.1.0.dmg?X-Amz-Signature=signature-secret", sha512: "abc", size: 1 }],
+      releaseDate: "2024-01-01T00:00:00.000Z",
+    })
+  )
+  const { server, port } = await createLocalServer(root)
+  try {
+    const updater = new MacUpdater(undefined, await createTestAppAdapter())
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+    tuneTestUpdater(updater)
+    updater._testOnlyOptions!.platform = process.platform as ProviderPlatform
+
+    const updateCheckResult = await updater.checkForUpdates()
+    const error = await updateCheckResult!.downloadPromise!.then(
+      () => null,
+      (e: Error & { code?: string }) => e
+    )
+    expect(error?.code).toBe("ERR_UPDATER_ZIP_FILE_NOT_FOUND")
+    expect(error?.message).toBe("ZIP file not provided: https://cdn.example.com/TestApp-1.1.0.dmg")
+  } finally {
+    server.close()
+  }
+})

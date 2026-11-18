@@ -1,5 +1,5 @@
 import { createRequire } from "node:module"
-import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
+import { AllPublishOptions, newError } from "builder-util-runtime"
 import { urlWithoutQuery } from "builder-util-runtime/internal"
 
 // import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
@@ -94,7 +94,8 @@ export class MacUpdater extends AppUpdater {
     const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
 
     if (zipFileInfo == null) {
-      throw newError(`ZIP file not provided: ${safeStringifyJson(files)}`, "ERR_UPDATER_ZIP_FILE_NOT_FOUND")
+      // the file URLs without their query: a pre-signed URL's signature or a feed token is in it
+      throw newError(`ZIP file not provided: ${files.length === 0 ? "no files" : files.map(it => urlWithoutQuery(it.url)).join(", ")}`, "ERR_UPDATER_ZIP_FILE_NOT_FOUND")
     }
 
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
