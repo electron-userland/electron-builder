@@ -71,7 +71,8 @@ const require = createRequire(import.meta.url ?? process.execPath)
 // shared rather than per-instance so that `updater.verifyUpdateFile === DEFAULT_VERIFY_UPDATE_FILE` identifies "no custom verifier"
 const DEFAULT_VERIFY_UPDATE_FILE: VerifyUpdateFile = _params => Promise.resolve({ response: "success" })
 
-const LOGIN_EVENT_DOCS = "https://www.electron.build/docs/features/auto-update#event-login"
+// the v27 behavior change these warnings are about, as the migration rule asks (the section links the login event docs)
+const LOGIN_EVENT_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
 
 const CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-headers"
 
@@ -903,7 +904,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       this.limitedLogger("insecure-feed-packaged").warn(
         "autoUpdater.allowInsecureFeed is true in a packaged app: its update requests and redirects may use plain http to any host, where anyone on the network path can tamper with them. " +
           "It is meant for development only: set `autoUpdater.allowInsecureFeed = !app.isPackaged` and serve the production feed over https. " +
-          "https://www.electron.build/docs/features/auto-update#allowinsecurefeed"
+          "https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https"
       )
     }
 
