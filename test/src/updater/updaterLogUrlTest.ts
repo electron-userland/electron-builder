@@ -63,6 +63,13 @@ test("a file without a checksum is named without its query", ({ expect }) => {
   expect(() => resolveFiles(updateInfo, new URL("https://example.com/feed/"))).toThrow(expect.objectContaining({ message: expect.not.stringContaining("signature-secret") }))
 })
 
+test("a file without a url nor a checksum still fails with ERR_UPDATER_NO_CHECKSUM", ({ expect }) => {
+  const updateInfo: any = { version: "1.1.0", files: [{ size: 1 }] }
+  expect(() => resolveFiles(updateInfo, new URL("https://example.com/feed/"))).toThrow(
+    expect.objectContaining({ code: "ERR_UPDATER_NO_CHECKSUM", message: expect.stringContaining("for (no url)") })
+  )
+})
+
 test("update info without files names the version, not its packages", ({ expect }) => {
   const updateInfo: any = { version: "1.1.0", files: [], packages: { x64: { path: "https://cdn.example.com/app-1.1.0-x64.nsis.7z?X-Amz-Signature=signature-secret" } } }
   expect(() => getFileList(updateInfo)).toThrow(expect.objectContaining({ code: "ERR_UPDATER_NO_FILES_PROVIDED", message: "No files provided for version 1.1.0" }))

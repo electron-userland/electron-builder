@@ -667,12 +667,19 @@ export interface DownloadCallOptions {
  * path.
  */
 export function urlWithoutQuery(url: URL | string): string {
+  if (url instanceof URL) {
+    return `${url.protocol}//${url.host}${url.pathname}`
+  }
+  // a malformed update info (latest*.yml is parsed without validation) can lack a url: error messages built with it must not throw
+  if (typeof url !== "string") {
+    return "(no url)"
+  }
   let parsed: URL
   try {
-    parsed = typeof url === "string" ? new URL(url) : url
+    parsed = new URL(url)
   } catch {
     // relative: a path
-    return String(url).replace(/[?#].*$/s, "")
+    return url.replace(/[?#].*$/s, "")
   }
   return `${parsed.protocol}//${parsed.host}${parsed.pathname}`
 }
