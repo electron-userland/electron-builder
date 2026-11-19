@@ -63,15 +63,16 @@ export async function publishArtifactsWithOptions(
   publishConfiguration?: Publish,
   publishOptions?: PublishOptions
 ) {
-  // the overrides only, a config file path in `extends` as the build CLI passes it: the Packager loads the configuration itself. Given the
-  // configuration getConfig had loaded, it merged the file into itself, so a `publish` list failed validation (JSON, YAML) or contained
-  // itself (a JS config, the same required object both times)
+  // the overrides only, a config file path in `extends`: the Packager loads the configuration itself. Given the configuration getConfig
+  // had loaded, it merged the file into itself, so a `publish` list failed validation (JSON, YAML) or contained itself (a JS config, the
+  // same required object both times). The path is absolute so that the Packager reads it as the config file even without a dot
+  // (`-c ci/ebconfig`), instead of a parent of the default configuration
   const config: Configuration = { detectUpdateChannel: false }
   if (publishConfiguration !== undefined) {
     config.publish = publishConfiguration
   }
   if (configurationFilePath) {
-    config.extends = configurationFilePath
+    config.extends = path.resolve(configurationFilePath)
   }
 
   const buildOptions: BuildOptions = normalizeOptions({ config, publish: publishOptions?.publish })
