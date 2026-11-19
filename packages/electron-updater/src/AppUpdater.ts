@@ -71,7 +71,8 @@ const require = createRequire(import.meta.url ?? process.execPath)
 // shared rather than per-instance so that `updater.verifyUpdateFile === DEFAULT_VERIFY_UPDATE_FILE` identifies "no custom verifier"
 const DEFAULT_VERIFY_UPDATE_FILE: VerifyUpdateFile = _params => Promise.resolve({ response: "success" })
 
-const LOGIN_EVENT_DOCS = "https://www.electron.build/docs/features/auto-update#event-login"
+// the v27 migration section for the login warnings, which links the login event docs
+const LOGIN_MIGRATION_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
 
 const CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-headers"
 
@@ -903,7 +904,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       this.limitedLogger("insecure-feed-packaged").warn(
         "autoUpdater.allowInsecureFeed is true in a packaged app: its update requests and redirects may use plain http to any host, where anyone on the network path can tamper with them. " +
           "It is meant for development only: set `autoUpdater.allowInsecureFeed = !app.isPackaged` and serve the production feed over https. " +
-          "https://www.electron.build/docs/features/auto-update#allowinsecurefeed"
+          "https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https"
       )
     }
 
@@ -1053,7 +1054,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     if (listeners.length === 0) {
       this.limitedLogger("login-challenge-no-listener").warn(
         `${challenger} asked for credentials on an update request, and the challenge was cancelled: autoUpdater has no login listener. ` +
-          `Add one that answers it, or serve the updates without authentication. ${LOGIN_EVENT_DOCS}`
+          `Add one that answers it, or serve the updates without authentication. ${LOGIN_MIGRATION_DOCS}`
       )
       callback()
       return
@@ -1062,7 +1063,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     if (!authInfo.isProxy && this.feedOrigin != null && requestUrl.origin !== this.feedOrigin && listeners.every(it => it.length < 3)) {
       this.limitedLogger("login-challenge-other-origin").warn(
         `${challenger}, on ${requestUrl.origin}, another origin than the update feed (${this.feedOrigin}), asked for credentials, and every login handler answers without the url argument: ` +
-          `such a handler answers a challenge from any server. Take (authInfo, callback, url) and answer only when new URL(url).origin is the origin your credentials are meant for. ${LOGIN_EVENT_DOCS}`
+          `such a handler answers a challenge from any server. Take (authInfo, callback, url) and answer only when new URL(url).origin is the origin your credentials are meant for. ${LOGIN_MIGRATION_DOCS}`
       )
     }
     let isAnswered = false
@@ -1077,7 +1078,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       this.emit("login", authInfo, answer, requestUrl.href)
     } catch {
       // a throwing handler must not stall the request; never its error's message, which could hold the credentials
-      this.limitedLogger("login-listener-threw").warn(`A login listener threw for ${challenger}: the challenge was cancelled. ${LOGIN_EVENT_DOCS}`)
+      this.limitedLogger("login-listener-threw").warn(`A login listener threw for ${challenger}: the challenge was cancelled. ${LOGIN_MIGRATION_DOCS}`)
       answer()
     }
   }
