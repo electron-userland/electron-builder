@@ -152,6 +152,10 @@
 !macro registryAddInstallInfo
   WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" InstallLocation "$INSTDIR"
   WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" KeepShortcuts "true"
+  !ifdef UNELEVATED_PER_MACHINE_UPDATE
+    # the uninstaller of this version decides about elevation itself (checkUnelevatedPerMachineUpdate)
+    WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" UnelevatedUpdate "true"
+  !endif
   WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" ShortcutName "${SHORTCUT_NAME}"
   !ifdef MENU_FILENAME
     WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" MenuDirectory "${MENU_FILENAME}"

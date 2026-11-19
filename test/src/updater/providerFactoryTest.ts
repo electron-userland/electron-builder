@@ -181,7 +181,7 @@ describe("createClient — channel file size", () => {
   test.each(providers)("$name: a channel file larger than the limit fails the check with an error naming the options and linking the docs", async ({ options }) => {
     const { provider, executor } = createProvider(options, largeChannelFile)
     await expect(provider.getLatestVersion()).rejects.toMatchObject({
-      code: "ERR_HTTP_RESPONSE_TOO_LARGE",
+      code: "ERR_UPDATER_RESPONSE_TOO_LARGE",
       message: expect.stringContaining(
         `${LIMIT} bytes: raise the limit with maxUpdateInfoSize in the publish configuration (app-update.yml) or autoUpdater.maxUpdateInfoSize. See https://www.electron.build/docs/migration/v27-runtime-changes#channel-files-are-limited-to-10-mib`
       ),
@@ -204,7 +204,7 @@ describe("createClient — channel file size", () => {
     const tooLarge = { statusCode: 200, body: Buffer.alloc(DEFAULT_MAX_UPDATE_INFO_SIZE + 1, "a") }
     const executor = new FakeElectronHttpExecutor(url => (url.startsWith("https://feed.example.com/") ? { location: "https://cdn.example.com/latest-mac.yml" } : tooLarge))
     const provider = createClient({ provider: "generic", url: "https://feed.example.com/updates" }, updater, { ...runtimeOptions, executor })
-    await expect(provider.getLatestVersion()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
+    await expect(provider.getLatestVersion()).rejects.toMatchObject({ code: "ERR_UPDATER_RESPONSE_TOO_LARGE" })
     expect(executor.sent.map(it => it.url)).toEqual(["https://feed.example.com/updates/latest-mac.yml", "https://cdn.example.com/latest-mac.yml"])
   })
 })
