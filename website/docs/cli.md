@@ -94,7 +94,7 @@ electron-builder sign-update-manifest dist/latest-linux.yml --rehash            
 
 A listed file whose `sha512` or `size` does not match its entry makes the command fail (files are looked for next to the manifest and in the build output folder, as `verify` looks for them); `--rehash` takes both from the file, for an artifact a release step changed after the build. See [Re-signing after a file changed](./features/signed-update-manifests.md#re-signing-after-a-file-changed).
 
-`--verify` runs the manifest check of [`verify`](#verify) on the given files only, against `updateManifest.publicKey`, and never loads a signing key; use `verify` for the whole build output.
+`--verify` runs the manifest check of [`verify`](#verify) on the given files only, against `updateManifest.publicKey`, and never loads a signing key; use `verify` for the whole build output. A manifest that uses YAML aliases fails `--verify`, as it fails `verify`; signing writes it without them (every alias expanded) and warns.
 
 See [Re-signing a published manifest](./features/signed-update-manifests.md#re-signing-a-published-manifest).
 
