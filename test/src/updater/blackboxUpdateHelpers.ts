@@ -486,8 +486,9 @@ export async function runTest(
   expectDifferential: boolean = isDifferentialOnFirstHop(target)
 ) {
   const { expect } = context
-  const vm = await windowsVmPromise
-  if (vm && target === "nsis") {
+  // only NSIS runs in the VM: any other target installs and launches on this host, even with a Windows VM registered
+  const vm = target === "nsis" ? await windowsVmPromise : undefined
+  if (vm) {
     console.log("Running Windows test via Parallels VM")
   }
 
@@ -720,8 +721,9 @@ export async function runInstallOnNextLaunchTest(
   } = {}
 ) {
   const { expect } = context
-  const vm = await windowsVmPromise
-  if (vm && target === "nsis") {
+  // only NSIS runs in the VM: any other target installs and launches on this host, even with a Windows VM registered
+  const vm = target === "nsis" ? await windowsVmPromise : undefined
+  if (vm) {
     console.log("Running Windows install-on-next-launch test via Parallels VM")
   }
 
@@ -1039,8 +1041,9 @@ export async function runUpdateScenario(
   }
 ): Promise<void> {
   const { expect } = context
-  const vm = await windowsVmPromise
-  if (vm && target === "nsis") {
+  // only NSIS runs in the VM: any other target installs and launches on this host, even with a Windows VM registered
+  const vm = target === "nsis" ? await windowsVmPromise : undefined
+  if (vm) {
     console.log(`Running Windows ${tmpDirPrefix} test via Parallels VM`)
   }
 
