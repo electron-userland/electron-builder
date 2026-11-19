@@ -44,7 +44,7 @@ describe("electron-updater maxUpdateInfoSize", () => {
       () => null,
       (e: unknown) => e
     )
-    expect(error).toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
+    expect(error).toMatchObject({ code: "ERR_UPDATER_RESPONSE_TOO_LARGE" })
     expect(error).toBeInstanceOf(Error)
     const message = error instanceof Error ? error.message : ""
     expect(message).toContain(`${DEFAULT_MAX_UPDATE_INFO_SIZE} bytes`)
@@ -62,7 +62,7 @@ describe("electron-updater maxUpdateInfoSize", () => {
 
   test("maxUpdateInfoSize in app-update.yml lowers the limit", async ({ tmpDir, expect }) => {
     const { updater } = await createUpdater(tmpDir, { maxUpdateInfoSize: 1024 }, 1025)
-    await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE", message: expect.stringContaining("1024 bytes") })
+    await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_RESPONSE_TOO_LARGE", message: expect.stringContaining("1024 bytes") })
   })
 
   test("0 in app-update.yml disables the limit", async ({ tmpDir, expect }) => {
@@ -77,7 +77,7 @@ describe("electron-updater maxUpdateInfoSize", () => {
 
     const { updater: lowered } = await createUpdater(tmpDir, { maxUpdateInfoSize: 4096 }, 2048)
     lowered.maxUpdateInfoSize = 1024
-    await expect(lowered.checkForUpdates()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
+    await expect(lowered.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_RESPONSE_TOO_LARGE" })
 
     // null goes back to the publish configuration
     lowered.maxUpdateInfoSize = null
@@ -93,7 +93,7 @@ describe("electron-updater maxUpdateInfoSize", () => {
   test("maxUpdateInfoSize of the options given to setFeedURL applies", async ({ tmpDir, expect }) => {
     const { updater } = await createUpdater(tmpDir, null, 2048)
     updater.setFeedURL({ ...FEED, maxUpdateInfoSize: 1024 })
-    await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
+    await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_RESPONSE_TOO_LARGE" })
   })
 
   test.for([-1, 1.5, NaN, Infinity, -Infinity, 2 ** 53, "1024", true])("autoUpdater.maxUpdateInfoSize = %s throws", async (value, { tmpDir, expect }) => {

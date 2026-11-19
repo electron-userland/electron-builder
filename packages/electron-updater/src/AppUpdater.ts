@@ -417,7 +417,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   private publishConfigMaxUpdateInfoSize: unknown = undefined
 
   /**
-   * The largest channel file (`latest*.yml`) read, in bytes. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`.
+   * The largest channel file (`latest*.yml`) read, in bytes. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`.
    * Release feeds and provider API responses (release listings and lookups) are not limited. A positive integer, or `0` for no
    * limit; anything else throws `ERR_UPDATER_INVALID_MAX_UPDATE_INFO_SIZE`.
    *
