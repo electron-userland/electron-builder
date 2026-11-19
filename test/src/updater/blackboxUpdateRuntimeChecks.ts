@@ -1,7 +1,7 @@
-import { ToolsetConfig } from "app-builder-lib"
+import { Configuration, ToolsetConfig } from "app-builder-lib"
 import { log } from "builder-util"
 import { Arch } from "electron-builder"
-import { readdir, readJson } from "fs-extra"
+import { pathExists, readdir, readJson } from "fs-extra"
 import path from "path"
 import { ExpectStatic, TestContext } from "vitest"
 import { WIN_SIGNING_PUBLISHER_NAME } from "../helpers/codeSignData"
@@ -290,13 +290,20 @@ function expectForgedVersionMismatch(expect: ExpectStatic, stdout: string): void
   expect(stdout).toContain(INSTALLER_VERSION_DOCS)
 }
 
-function nsisScenario(context: TestContext, toolsets: NsisToolsets, tmpDirPrefix: string, scenario: (ctx: ScenarioContext) => Promise<void>): Promise<void> {
+function nsisScenario(
+  context: TestContext,
+  toolsets: NsisToolsets,
+  tmpDirPrefix: string,
+  scenario: (ctx: ScenarioContext) => Promise<void>,
+  extraConfig?: Partial<Configuration>
+): Promise<void> {
   return withEmptyUpdaterCaches(() =>
     runUpdateScenario(context, {
       target: "nsis",
       packageManager: "",
       arch: Arch.x64,
       toolsets,
+      extraConfig,
       tmpDirPrefix,
       builds: [{ version: OLD_VERSION_NUMBER }, { version: NEW_VERSION_NUMBER }],
       initialUpdateConfig: () => Promise.resolve({}),
@@ -495,6 +502,33 @@ export async function runNsisNextLaunchModesTest(context: TestContext, toolsets:
     await pollUntilNewVersionInstalled(expect, { ...ctx, packageManagerToTest: ctx.packageManager })
     await expectInstalledNsis(ctx)
   })
+}
+
+/**
+ * `nsis.installerDebugLogging` (#10483) in both versions: the update installs over the log-enabled install, whose uninstaller kept
+ * `$INSTDIR\install.log` open while it moved `$INSTDIR` aside, and aborted, until it left the log in place (still in the install
+ * directory, which only admins can write for a per-machine install).
+ */
+export async function runNsisDebugLoggingUpdateTest(context: TestContext, toolsets: NsisToolsets): Promise<void> {
+  await nsisScenario(
+    context,
+    toolsets,
+    "nsis-debug-logging",
+    async ctx => {
+      const { expect } = ctx
+      await queueForNextLaunch(ctx, VERIFIED_BY_STUB)
+      // the quit timeout also ends the app that the installer starts again (--force-run), which inherits this env
+      await launchInstalled(ctx, { ...VERIFIED_BY_STUB, pendingOnlyQuitAfterMs: 20_000 }, stdout => {
+        expect(countOf(stdout, `Installing pending update ${NEW_VERSION_NUMBER} on launch`)).toBe(1)
+      })
+      await pollUntilNewVersionInstalled(expect, { ...ctx, packageManagerToTest: ctx.packageManager })
+      await expectInstalledNsis(ctx)
+      if (ctx.vm == null) {
+        expect(await pathExists(path.join(path.dirname(ctx.appPath), "install.log")), "the uninstaller logs to the install directory").toBe(true)
+      }
+    },
+    { nsis: { installerDebugLogging: true } }
+  )
 }
 
 /**
