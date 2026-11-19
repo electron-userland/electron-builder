@@ -1,7 +1,7 @@
 import { Configuration, ToolsetConfig } from "app-builder-lib"
 import { log } from "builder-util"
 import { Arch } from "electron-builder"
-import { readdir, readJson } from "fs-extra"
+import { pathExists, readdir, readJson } from "fs-extra"
 import path from "path"
 import { ExpectStatic, TestContext } from "vitest"
 import { WIN_SIGNING_PUBLISHER_NAME } from "../helpers/codeSignData"
@@ -506,7 +506,8 @@ export async function runNsisNextLaunchModesTest(context: TestContext, toolsets:
 
 /**
  * `nsis.installerDebugLogging` (#10483) in both versions: the update installs over the log-enabled install, whose uninstaller kept
- * `$INSTDIR\install.log` open while it moved `$INSTDIR` aside, and aborted, until it logged outside `$INSTDIR`.
+ * `$INSTDIR\install.log` open while it moved `$INSTDIR` aside, and aborted, until it left the log in place (still in the install
+ * directory, which only admins can write for a per-machine install).
  */
 export async function runNsisDebugLoggingUpdateTest(context: TestContext, toolsets: NsisToolsets): Promise<void> {
   await nsisScenario(
@@ -522,6 +523,9 @@ export async function runNsisDebugLoggingUpdateTest(context: TestContext, toolse
       })
       await pollUntilNewVersionInstalled(expect, { ...ctx, packageManagerToTest: ctx.packageManager })
       await expectInstalledNsis(ctx)
+      if (ctx.vm == null) {
+        expect(await pathExists(path.join(path.dirname(ctx.appPath), "install.log")), "the uninstaller logs to the install directory").toBe(true)
+      }
     },
     { nsis: { installerDebugLogging: true } }
   )
