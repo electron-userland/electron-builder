@@ -1387,6 +1387,12 @@ describe("urlWithoutQuery", () => {
     }
   })
 
+  test("a missing or non-string url is named without throwing", () => {
+    expect(urlWithoutQuery(undefined as any)).toBe("(no url)")
+    expect(urlWithoutQuery(null as any)).toBe("(no url)")
+    expect(urlWithoutQuery(Object.create(null))).toBe("(no url)")
+  })
+
   test("an API request's 404 error names the path without its query", async () => {
     const server = http.createServer((_request, response) => {
       response.writeHead(404)
