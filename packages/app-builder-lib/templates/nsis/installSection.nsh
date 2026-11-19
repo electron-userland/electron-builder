@@ -79,7 +79,7 @@ ${endIf}
 
 SetOutPath $INSTDIR
 # logging starts here, in the final $INSTDIR, which NSIS names the log after when it is turned on: in .onInit $INSTDIR is not set yet (the
-# log went nowhere), and an install.log the installer kept open there would stop the old version's uninstaller from moving $INSTDIR aside
+# log went nowhere), or, with /D=, the installer held $INSTDIR\install.log open while the old version's uninstaller moved $INSTDIR aside
 ${LogSet} on
 
 !ifdef UNINSTALLER_ICON

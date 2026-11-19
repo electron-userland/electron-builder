@@ -38,10 +38,10 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly oneClick?: boolean
 
   /**
-   * Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`). The installer writes `install.log` to the installation
-   * directory, from the install of the files on (once the previous version is uninstalled). The uninstaller writes it to
-   * `%TEMP%\<app package name>-uninstall`, since an update moves the installation directory aside and an uninstall removes it. In your
-   * custom NSIS scripts, write to the log via `${LogText}`; in `customInit` / `preInit` nothing is logged yet.
+   * Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation
+   * directory). The installer logs from the install of the files on (once the previous version is uninstalled); the uninstaller logs
+   * from its start and leaves the open `install.log` in place when an update moves the installation directory aside. In your custom
+   * NSIS scripts, write to the log via `${LogText}`; in `customInit` / `preInit` nothing is logged yet.
    *
    * Requires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. From `toolsets.nsis` `"2.0.4"` (the
    * default) on, each NSIS release publishes a log-enabled bundle next to the default one, and electron-builder downloads it when this

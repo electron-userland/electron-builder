@@ -506,8 +506,9 @@ export async function runNsisNextLaunchModesTest(context: TestContext, toolsets:
 
 /**
  * `nsis.installerDebugLogging` (#10483) in both versions: the update installs over the log-enabled install, whose uninstaller kept
- * `$INSTDIR\install.log` open while it moved `$INSTDIR` aside, and aborted, until it logged outside `$INSTDIR`. The installer writes
- * its own install.log into the install directory (read on native Windows).
+ * `$INSTDIR\install.log` open while it moved `$INSTDIR` aside, and aborted, until it left the log in place (still in the install
+ * directory, which only admins can write for a per-machine install). The installer writes its own install.log there too (read on
+ * native Windows).
  */
 export async function runNsisDebugLoggingUpdateTest(context: TestContext, toolsets: NsisToolsets): Promise<void> {
   await nsisScenario(
@@ -524,7 +525,7 @@ export async function runNsisDebugLoggingUpdateTest(context: TestContext, toolse
       await pollUntilNewVersionInstalled(expect, { ...ctx, packageManagerToTest: ctx.packageManager })
       await expectInstalledNsis(ctx)
       if (ctx.vm == null) {
-        expect(await pathExists(path.join(path.dirname(ctx.appPath), "install.log")), "the installer's install.log").toBe(true)
+        expect(await pathExists(path.join(path.dirname(ctx.appPath), "install.log")), "the installer and uninstaller log to the install directory").toBe(true)
       }
     },
     { nsis: { installerDebugLogging: true } }

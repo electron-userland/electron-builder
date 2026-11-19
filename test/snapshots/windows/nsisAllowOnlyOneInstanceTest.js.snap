@@ -52,6 +52,10 @@ exports[`uninstaller.nsh — atomicRMDir > snapshot of atomicRMDir function 1`] 
       Goto continue
 
     isNotDir:
+      !ifdef ENABLE_LOGGING_ELECTRON_BUILDER
+        # held open by this uninstaller's log (or, with /D=, by the installer's): moving it aside fails, and the update aborted
+        StrCmp "$R0\\$R2" "\\install.log" continue
+      !endif
       ClearErrors
       Rename "$INSTDIR$R0\\$R2" "$PLUGINSDIR\\old-install$R0\\$R2"
 
