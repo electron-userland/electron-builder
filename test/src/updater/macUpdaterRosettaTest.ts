@@ -16,8 +16,6 @@ vi.mock("child_process", async importOriginal => ({ ...(await importOriginal<typ
 
 const X64_FILE = "TestApp-1.1.0-x64.dmg"
 const ARM64_FILE = "TestApp-1.1.0-arm64.dmg"
-/** The error of a download whose served files, after the arch filter, are `file` alone. */
-const onlyFileLeft = (file: string) => new RegExp(`^ZIP file not provided: http://127\\.0\\.0\\.1:\\d+/${file.replace(/\./g, "\\.")}$`)
 const INTEL_UNAME = "Darwin host.local 24.0.0 Darwin Kernel Version 24.0.0: root:xnu-11215.1.10~2/RELEASE_X86_64 x86_64\n"
 
 const realArch = Object.getOwnPropertyDescriptor(process, "arch")
@@ -30,9 +28,9 @@ afterEach(() => {
 
 /**
  * The update files that the arch filter of an x64 process leaves, when `sysctl` answers `sysctl` (or fails): the served update has one
- * x64 and one arm64 file and no zip, so the download fails with an error that names them.
+ * x64 and one arm64 file and no zip, so the download fails with an error that names them (by their URL on `feedUrl`).
  */
-async function filesLeftForX64Process(tmpDir: import("temp-file").TmpDir, sysctl: () => string): Promise<{ code?: string; message: string }> {
+async function filesLeftForX64Process(tmpDir: import("temp-file").TmpDir, sysctl: () => string): Promise<{ code?: string; message: string; feedUrl: string }> {
   Object.defineProperty(process, "arch", { ...realArch, value: "x64" })
   execFileSync.mockImplementation((file: string) => {
     if (file === "/usr/sbin/sysctl") {
@@ -55,15 +53,16 @@ async function filesLeftForX64Process(tmpDir: import("temp-file").TmpDir, sysctl
     })
   )
   const { server, port } = await createLocalServer(root)
+  const feedUrl = `http://127.0.0.1:${port}`
   try {
     const updater = new MacUpdater(undefined, await createTestAppAdapter())
-    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: feedUrl })
     tuneTestUpdater(updater)
     updater._testOnlyOptions!.platform = "darwin"
     const updateCheckResult = await updater.checkForUpdates()
     return await updateCheckResult!.downloadPromise!.then(
-      () => ({ message: "downloaded" }),
-      (e: Error & { code?: string }) => e
+      () => ({ message: "downloaded", feedUrl }),
+      (e: Error & { code?: string }) => ({ code: e.code, message: e.message, feedUrl })
     )
   } finally {
     server.close()
@@ -74,14 +73,14 @@ describe("MacUpdater under Rosetta", () => {
   test("an x64 app translated by Rosetta takes the arm64 update files", async ({ expect, tmpDir }) => {
     const error = await filesLeftForX64Process(tmpDir, () => "sysctl.proc_translated: 1\n")
     expect(error.code).toBe("ERR_UPDATER_ZIP_FILE_NOT_FOUND")
-    expect(error.message).toMatch(onlyFileLeft(ARM64_FILE))
+    expect(error.message).toBe(`ZIP file not provided: ${error.feedUrl}/${ARM64_FILE}`)
     expect(execFileSync).toHaveBeenCalledWith("/usr/sbin/sysctl", ["sysctl.proc_translated"], { encoding: "utf8" })
   })
 
   test("an x64 app on an Intel Mac takes the x64 update files", async ({ expect, tmpDir }) => {
     const error = await filesLeftForX64Process(tmpDir, () => "sysctl.proc_translated: 0\n")
     expect(error.code).toBe("ERR_UPDATER_ZIP_FILE_NOT_FOUND")
-    expect(error.message).toMatch(onlyFileLeft(X64_FILE))
+    expect(error.message).toBe(`ZIP file not provided: ${error.feedUrl}/${X64_FILE}`)
   })
 
   test("a failed Rosetta check is taken for no Rosetta", async ({ expect, tmpDir }) => {
@@ -90,6 +89,6 @@ describe("MacUpdater under Rosetta", () => {
       throw new Error("sysctl: unknown oid 'sysctl.proc_translated'")
     })
     expect(error.code).toBe("ERR_UPDATER_ZIP_FILE_NOT_FOUND")
-    expect(error.message).toMatch(onlyFileLeft(X64_FILE))
+    expect(error.message).toBe(`ZIP file not provided: ${error.feedUrl}/${X64_FILE}`)
   })
 })
