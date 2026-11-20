@@ -14,19 +14,24 @@ import {
   runKeyRotationTest,
   runSignedManifestTest,
   runUpdateScenario,
+  THIRD_VERSION_NUMBER,
   updateHop,
   VersionBuild,
   withEmptyUpdaterCaches,
 } from "./blackboxUpdateHelpers"
 import { runMacRequestRulesTest } from "./blackboxUpdateRuntimeChecks"
+import { deriveMacBuild } from "./macDerivedBuild"
 import { resignManifest, rewriteServedManifests } from "./signedManifestTestUtil"
 
-/** Time one build of the test app may add to the case that makes it: ~3 min arm64, ~5 min x64 (Rosetta), ~7 min universal on the macOS CI runner. */
-const BUILD_TIMEOUT = 6 * 60 * 1000
+/** Time the build of the test app may add to the case that makes it: ~3 min arm64, ~7 min universal on the macOS CI runner. */
+const BUILD_TIMEOUT = 8 * 60 * 1000
+/** Time each version derived from it may add (see deriveMacBuild): a copy, signing and the zip. */
+const DERIVED_BUILD_TIMEOUT = 3 * 60 * 1000
 
 /**
- * The builds of one mac blackbox file, made once by the first case that runs and shared by every case of the file. A build (fixture
- * copy, install, native rebuild, signing, zip) is most of the time of a case, and the cases of a file update between the same apps.
+ * The versions of the test app one mac blackbox file updates between, made once by the first case that runs and shared by every case of
+ * the file. The first version is a build of the test app (fixture copy, install, native rebuild, signing, zip); the others are derived
+ * from it (see deriveMacBuild), since they only need to differ from it in version: the cases test the update, not the build.
  */
 class SharedMacBuilds {
   private outDirs: Promise<Array<ApplicationUpdatePaths>> | null = null
@@ -38,7 +43,7 @@ class SharedMacBuilds {
   ) {}
 
   /**
-   * Builds on the first call, so assertPack records the snapshots of the builds under the case that runs first. A failed build is made
+   * Builds on the first call, so assertPack records the snapshots of the build under the case that runs first. A failed build is made
    * again by the next attempt (a retry, or the next case).
    */
   private build(expect: ExpectStatic): Promise<Array<ApplicationUpdatePaths>> {
@@ -46,16 +51,30 @@ class SharedMacBuilds {
       // outlives the case that builds (the tmpDir fixture of a case is removed when it ends): removed by cleanup() once the file is done
       const tmpDir = new TmpDir("mac-update-builds")
       this.tmpDirs.push(tmpDir)
-      const outDirs: Array<ApplicationUpdatePaths> = []
-      this.outDirs = doBuild(expect, outDirs, "zip", this.arch, tmpDir, false, { toolsets: {} }, this.versions).then(
-        () => outDirs,
-        error => {
-          this.outDirs = null
-          throw error
-        }
-      )
+      this.outDirs = this.buildAndDerive(expect, tmpDir).catch(error => {
+        this.outDirs = null
+        throw error
+      })
     }
     return this.outDirs
+  }
+
+  private async buildAndDerive(expect: ExpectStatic, tmpDir: TmpDir): Promise<Array<ApplicationUpdatePaths>> {
+    const [first, ...others] = this.versions
+    const outDirs: Array<ApplicationUpdatePaths> = []
+    await doBuild(expect, outDirs, "zip", this.arch, tmpDir, false, { toolsets: {} }, [first])
+    for (const { version, extraConfig, compression } of others) {
+      outDirs.push(
+        await deriveMacBuild(expect, {
+          from: outDirs[0],
+          fromVersion: first.version,
+          arch: this.arch,
+          derived: { version, extraConfig, compression: compression ?? "store" },
+          tmpDir,
+        })
+      )
+    }
+    return outDirs
   }
 
   /**
@@ -76,8 +95,8 @@ class SharedMacBuilds {
 }
 
 /**
- * The update of runTest (blackboxUpdateHelpers.ts) for a mac zip: the installed 1.0.0 downloads 1.0.1 and Squirrel.Mac installs it. `unsignManifest`: the
- * shared 1.0.1 was built with a signed manifest, which is served without its signatures, as an unsigned build writes it.
+ * The update of runTest (blackboxUpdateHelpers.ts) for a mac zip: the installed 1.0.0 downloads 1.0.1 and Squirrel.Mac installs it.
+ * `unsignManifest`: the shared 1.0.1 has a signed manifest, which is served without its signatures, as an unsigned build writes it.
  */
 async function runMacUpdateTest(context: TestContext, arch: Arch, builds: Array<VersionBuild>, prebuilt: PrebuiltApps, unsignManifest: boolean): Promise<void> {
   await runUpdateScenario(context, {
@@ -107,63 +126,58 @@ type MacBlackboxFile = {
   arch: Arch
   /** Squirrel.Mac only updates an arm64 build on an arm64 host, so the cases are a no-op elsewhere (and build nothing). */
   arm64HostOnly?: boolean
-  /** the builds the cases share */
+  /** the versions the cases share: the first is built, the others are derived from it (their `compression` defaults to "store") */
   versions: Array<VersionBuild>
   /** each name is also the vitest test name (and so part of the snapshot key) */
   cases: Record<string, MacBlackboxCase>
 }
 
-/** An update pair whose builds are both stored: compression takes no part in what these cases check, and costs build time. */
-const STORED_UPDATE_PAIR: Array<VersionBuild> = [
-  { version: OLD_VERSION_NUMBER, compression: "store" },
-  { version: NEW_VERSION_NUMBER, compression: "store" },
-]
-
 const macBlackboxFiles = {
-  x64: (): MacBlackboxFile => {
-    // Every x64 case updates between the builds of the key rotation (1.0.0 signed by A, 1.0.1 by [A, B], 1.0.2 by B), with the served
-    // manifests re-signed where a case needs other signatures. 1.0.1 is the one mac update build compressed at "maximum" (the level
-    // doBuild gives every build after the first by default), so a Squirrel.Mac install of such a zip stays covered; the others are stored.
+  arm64: (): MacBlackboxFile => {
+    // Every arm64 case updates between the versions of the key rotation (1.0.0 signed by A, 1.0.1 by [A, B], 1.0.2 by B), with the served
+    // manifests re-signed (or unsigned) where a case needs other signatures. The build and 1.0.1, the update most cases install, are
+    // compressed at "maximum"; 1.0.2 is stored.
     const keys = generateManifestSigningKeys()
-    const versions: Array<VersionBuild> = keyRotationBuilds(keys).map(build => ({ ...build, compression: build.version === NEW_VERSION_NUMBER ? "maximum" : "store" }))
+    const versions: Array<VersionBuild> = keyRotationBuilds(keys).map(build => ({ ...build, compression: build.version === THIRD_VERSION_NUMBER ? "store" : "maximum" }))
+    // the plain update and the request rules take the first two
+    const pair = (apps: PrebuiltApps): PrebuiltApps => ({ ...apps, outDirs: apps.outDirs.slice(0, 2) })
     return {
-      arch: Arch.x64,
+      arch: Arch.arm64,
+      arm64HostOnly: true,
       versions,
       cases: {
-        x64: { options: optionsForFlakyE2E, run: (context, apps) => runMacUpdateTest(context, Arch.x64, versions, apps, true) },
+        arm64: { options: optionsForFlakyE2E, run: (context, apps) => runMacUpdateTest(context, Arch.arm64, versions.slice(0, 2), pair(apps), true) },
+        // The request rules of electron-updater 7 over five refused launches and the update (see runMacRequestRulesTest).
+        "arm64 - update request rules": { options: optionsForFlakyMultiHopE2E, run: (context, apps) => runMacRequestRulesTest(context, pair(apps)) },
         // Ed25519-signed latest-mac.yml: the installed app verifies the manifest before updating.
-        "x64 - signed update manifest": { options: optionsForFlakyE2E, run: (context, apps) => runSignedManifestTest(context, "zip", "", Arch.x64, {}, { keys, apps }) },
-        // Key rotation A → [A, B] → B over the three builds, including manifests the installed app must refuse.
-        "x64 - key rotation": { options: optionsForFlakyMultiHopE2E, run: (context, apps) => runKeyRotationTest(context, "zip", "", Arch.x64, {}, { keys, apps }) },
+        "arm64 - signed update manifest": { options: optionsForFlakyE2E, run: (context, apps) => runSignedManifestTest(context, "zip", "", Arch.arm64, {}, { keys, apps }) },
+        // Key rotation A → [A, B] → B over the three versions, including manifests the installed app must refuse.
+        "arm64 - key rotation": { options: optionsForFlakyMultiHopE2E, run: (context, apps) => runKeyRotationTest(context, "zip", "", Arch.arm64, {}, { keys, apps }) },
       },
     }
   },
-  arm64: (): MacBlackboxFile => ({
-    arch: Arch.arm64,
-    arm64HostOnly: true,
-    versions: STORED_UPDATE_PAIR,
-    cases: {
-      arm64: { options: optionsForFlakyE2E, run: (context, apps) => runMacUpdateTest(context, Arch.arm64, STORED_UPDATE_PAIR, apps, false) },
-      // The request rules of electron-updater 7 over five refused launches and the update (see runMacRequestRulesTest).
-      "arm64 - update request rules": { options: optionsForFlakyMultiHopE2E, run: runMacRequestRulesTest },
-    },
-  }),
-  universal: (): MacBlackboxFile => ({
-    arch: Arch.universal,
-    versions: STORED_UPDATE_PAIR,
-    cases: {
-      universal: { options: optionsForFlakyE2E, run: (context, apps) => runMacUpdateTest(context, Arch.universal, STORED_UPDATE_PAIR, apps, false) },
-    },
-  }),
+  universal: (): MacBlackboxFile => {
+    const versions: Array<VersionBuild> = [
+      { version: OLD_VERSION_NUMBER, compression: "maximum" },
+      { version: NEW_VERSION_NUMBER, compression: "store" },
+    ]
+    return {
+      arch: Arch.universal,
+      versions,
+      cases: {
+        universal: { options: optionsForFlakyE2E, run: (context, apps) => runMacUpdateTest(context, Arch.universal, versions, apps, false) },
+      },
+    }
+  },
 }
 
 export type MacBlackboxFileName = keyof typeof macBlackboxFiles
 
 /**
  * Registers the mac blackbox auto-update cases of one file (`test/src/updater/mac/blackboxUpdate<Arch>.e2e.ts`) under `mac auto-update`.
- * Every case is a full install → launch → update cycle of the test app; the cases of a file share one set of builds of one arch (see
- * SharedMacBuilds), and the CI sharder bin-packs whole files, so the archs land on different shards. Snapshot keys are
- * `mac > mac auto-update > <first case> N`: the first case to run makes the builds.
+ * Every case is a full install → launch → update cycle of the test app; the cases of a file share one build of one arch and the versions
+ * derived from it (see SharedMacBuilds), and the CI sharder bin-packs whole files, so the archs land on different shards. Snapshot keys
+ * are `mac > mac auto-update > <first case> N`: the first case to run makes the build.
  */
 export function registerBlackboxMacTests(name: MacBlackboxFileName): void {
   const { arch, arm64HostOnly, versions, cases } = macBlackboxFiles[name]()
@@ -172,8 +186,8 @@ export function registerBlackboxMacTests(name: MacBlackboxFileName): void {
     afterAll(() => builds.cleanup())
     for (const [caseName, { options, run }] of Object.entries(cases)) {
       const testFn = arm64HostOnly ? test.ifEnv(process.arch === "arm64") : test
-      // whichever attempt runs first also makes the builds
-      testFn(caseName, { ...options, timeout: options.timeout + versions.length * BUILD_TIMEOUT }, async context => {
+      // whichever attempt runs first also makes the build and the derived versions
+      testFn(caseName, { ...options, timeout: options.timeout + BUILD_TIMEOUT + (versions.length - 1) * DERIVED_BUILD_TIMEOUT }, async context => {
         const apps = await builds.forCase(context)
         // the cases update between the same builds: without the update an earlier case left in the updater cache, each downloads its own
         await withEmptyUpdaterCaches(() => run(context, apps))

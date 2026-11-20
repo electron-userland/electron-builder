@@ -402,7 +402,7 @@ describe("TEST_MODE file discovery", () => {
     // its detectPackageManager unit tests run in the Linux shards
     expect(linux).toContain("test/src/updater/linuxUpdaterTest.ts")
     // the Linux skip list does not leak to other platforms: the mac blackbox suites stay on macOS
-    expect(getAllTestFiles("darwin", "all")).toContain("test/src/updater/mac/blackboxUpdateX64.e2e.ts")
+    expect(getAllTestFiles("darwin", "all")).toContain("test/src/updater/mac/blackboxUpdateArm64.e2e.ts")
 
     // the tokens the CI e2e matrix passes (test/src/updater/test-specific-platforms.sh, .github/workflows/test.yaml)
     vi.stubEnv(

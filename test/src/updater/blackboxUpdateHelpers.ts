@@ -81,6 +81,67 @@ export type ApplicationUpdatePaths = {
   appPath: string
 }
 
+/**
+ * The electron-builder configuration of a build of the test app at `version`, with `extraConfig` deep-merged in (callers can override
+ * individual sub-object keys, e.g. nsis.perMachine, without replacing the entire sub-object). publish/fileOptions are pinned last so
+ * they cannot be accidentally overridden by a caller's extraConfig.
+ */
+export function testAppConfiguration(version: string, extraConfig: Partial<Configuration> | Nullish): Configuration {
+  return Object.assign(
+    deepAssign<Configuration>(
+      {
+        electronVersion: ELECTRON_VERSION,
+        nativeModules: { npmRebuild: true },
+        productName: "TestApp",
+        executableName: "TestApp",
+        appId: "com.test.app",
+        artifactName: "${productName}.${ext}",
+        electronLanguages: ["en"],
+        extraMetadata: {
+          name: "testapp",
+          version,
+        },
+        electronUpdaterCompatibility: ">=2.16",
+        electronFuses: {
+          runAsNode: false,
+          enableCookieEncryption: false, // don't enable cookie encryption for testing because it adds an additional decryption step to the update process which requires user interaction to unlock the keychain on macOS and can cause timeouts in CI, especially on older macOS versions with slower crypto performance
+          enableNodeOptionsEnvironmentVariable: false,
+          enableNodeCliInspectArguments: false,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: false,
+          grantFileProtocolExtraPrivileges: false,
+        },
+        compression: "store",
+        nsis: {
+          artifactName: "${productName} Setup.${ext}",
+          // one click installer required. don't run after install otherwise we lose stdout pipe
+          oneClick: true,
+          runAfterFinish: false,
+        },
+        pacman: {
+          depends: PACMAN_TEST_DEPENDS,
+        },
+      },
+      extraConfig ?? {}
+    ),
+    // Always pin publish and files so they can't be accidentally overridden
+    {
+      publish: {
+        provider: "s3",
+        bucket: "develar",
+        path: "test",
+      },
+      fileOptions: {
+        files: ["**/*", "../**/node_modules/**", "!path/**"],
+        // electron-updater and builder-util-runtime are `link:`ed from this repository (see projectDirCreated in doBuild), so their files
+        // and dependencies resolve into the repository, outside the temporary test workspace: allow exactly that tree
+        allowExternalLinks: [path.resolve(__dirname, "../../..")],
+      },
+    }
+  )
+}
+
 export async function doBuild(
   expect: ExpectStatic,
   outDirs: Array<ApplicationUpdatePaths>,
@@ -93,7 +154,7 @@ export async function doBuild(
 ) {
   const currentPlatform = isWindows ? Platform.WINDOWS : Platform.current()
   // ELECTRON_VERSION has the ASAR integrity digest slot, so on mac the digest mac.asarIntegrityDigest embeds by default is
-  // enforced (enableEmbeddedAsarIntegrityValidation fuse below) on every launch of the installed and the updated app
+  // enforced (enableEmbeddedAsarIntegrityValidation fuse of testAppConfiguration) on every launch of the installed and the updated app
   const isMacBuild = currentPlatform === Platform.MAC
   async function buildApp({
     version,
@@ -115,62 +176,7 @@ export async function doBuild(
       "test-app",
       {
         targets: currentPlatform.createTarget(target, arch),
-        // Deep-merge so callers can override individual sub-object keys (e.g. nsis.perMachine)
-        // without replacing the entire sub-object. publish/fileOptions are pinned last so they cannot
-        // be accidentally overridden by a caller's extraConfig.
-        config: Object.assign(
-          deepAssign<Configuration>(
-            {
-              electronVersion: ELECTRON_VERSION,
-              nativeModules: { npmRebuild: true },
-              productName: "TestApp",
-              executableName: "TestApp",
-              appId: "com.test.app",
-              artifactName: "${productName}.${ext}",
-              electronLanguages: ["en"],
-              extraMetadata: {
-                name: "testapp",
-                version,
-              },
-              electronUpdaterCompatibility: ">=2.16",
-              electronFuses: {
-                runAsNode: false,
-                enableCookieEncryption: false, // don't enable cookie encryption for testing because it adds an additional decryption step to the update process which requires user interaction to unlock the keychain on macOS and can cause timeouts in CI, especially on older macOS versions with slower crypto performance
-                enableNodeOptionsEnvironmentVariable: false,
-                enableNodeCliInspectArguments: false,
-                enableEmbeddedAsarIntegrityValidation: true,
-                onlyLoadAppFromAsar: true,
-                loadBrowserProcessSpecificV8Snapshot: false,
-                grantFileProtocolExtraPrivileges: false,
-              },
-              compression: "store",
-              nsis: {
-                artifactName: "${productName} Setup.${ext}",
-                // one click installer required. don't run after install otherwise we lose stdout pipe
-                oneClick: true,
-                runAfterFinish: false,
-              },
-              pacman: {
-                depends: PACMAN_TEST_DEPENDS,
-              },
-            },
-            extraConfig ?? {}
-          ),
-          // Always pin publish and files so they can't be accidentally overridden
-          {
-            publish: {
-              provider: "s3",
-              bucket: "develar",
-              path: "test",
-            },
-            fileOptions: {
-              files: ["**/*", "../**/node_modules/**", "!path/**"],
-              // electron-updater and builder-util-runtime are `link:`ed from this repository (see projectDirCreated below), so their files
-              // and dependencies resolve into the repository, outside the temporary test workspace: allow exactly that tree
-              allowExternalLinks: [path.resolve(__dirname, "../../..")],
-            },
-          }
-        ),
+        config: testAppConfiguration(version, extraConfig),
       },
       {
         storeDepsLockfileSnapshot: false,
@@ -267,7 +273,7 @@ async function assertEmbeddedPublisherName(expect: ExpectStatic, distDir: string
  * Every slice of the Electron Framework holds the digest of the final `ElectronAsarIntegrity` Info.plist entries (mac.asarIntegrityDigest, on
  * by default), so the launches of this build run under Electron's digest check and fail if the digest or the signing after it is wrong.
  */
-async function assertAsarIntegrityDigestEmbedded(expect: ExpectStatic, contents: string, arch: Arch): Promise<void> {
+export async function assertAsarIntegrityDigestEmbedded(expect: ExpectStatic, contents: string, arch: Arch): Promise<void> {
   const { ElectronAsarIntegrity: integrity } = await parsePlistFile<{ ElectronAsarIntegrity: AsarIntegrity }>(path.join(contents, "Info.plist"))
   const binary = await readFile(path.join(contents, "Frameworks", "Electron Framework.framework", "Versions", "A", "Electron Framework"))
   const sentinel = Buffer.from(ASAR_INTEGRITY_DIGEST_SENTINEL)
@@ -1232,7 +1238,12 @@ export function keyRotationBuilds({ keyA, keyB }: ManifestSigningKeys): Array<Ve
   ]
 }
 
-/** {@link keyRotationBuilds} made once with `keys` and shared by the signed-manifest scenarios of a test file (see {@link PrebuiltApps}). */
+/**
+ * {@link keyRotationBuilds} made once with `keys` and shared by the signed-manifest scenarios of a test file (see {@link PrebuiltApps}).
+ * Only the first is a build of the test app: the later ones are derived from it (see deriveMacBuild in macDerivedBuild.ts), whose
+ * manifests electron-builder signs, but which keep the first build's `app-update.yml` and so its trust list. The scenarios check the
+ * embedded trust list of the first build only, and serve the later trust lists themselves.
+ */
 export interface SharedKeyRotationApps {
   keys: ManifestSigningKeys
   apps: PrebuiltApps
@@ -1243,8 +1254,8 @@ export interface SharedKeyRotationApps {
  * installed app trusts the key electron-builder embedded into its `app-update.yml`, verifies the served
  * `latest*.yml` and installs the update.
  *
- * With `shared` key rotation builds, v2 is the dual-signed bridge release (signed by [A, B], trusting [A, B]) and its served manifest is
- * re-signed by A alone before the update, so the installed v1 still verifies a manifest signed by its one key.
+ * With `shared` key rotation builds, v2 is the dual-signed bridge release (signed by [A, B]) and its served manifest is re-signed by A
+ * alone before the update, so the installed v1 still verifies a manifest signed by its one key.
  */
 export async function runSignedManifestTest(
   context: TestContext,
@@ -1277,7 +1288,9 @@ export async function runSignedManifestTest(
       const { expect } = context
       assertManifestSignedBy(expect, await readUpdateManifest(outDirs[0].dir), OLD_VERSION_NUMBER, [keyA.publicKeyPem])
       assertManifestSignedBy(expect, await readUpdateManifest(outDirs[1].dir), NEW_VERSION_NUMBER, newVersionKeys)
-      await assertEmbeddedTrustList(expect, outDirs[1], newVersionKeys)
+      if (shared == null) {
+        await assertEmbeddedTrustList(expect, outDirs[1], newVersionKeys)
+      }
       // The fixture reads the served config instead of the embedded app-update.yml, so the installed
       // version's trust list is carried over verbatim.
       const updateManifestPublicKey = await assertEmbeddedTrustList(expect, outDirs[0], [keyA.publicKeyPem])
@@ -1336,8 +1349,10 @@ export async function runKeyRotationTest(
       assertManifestSignedBy(expect, await readUpdateManifest(outDirs[0].dir), OLD_VERSION_NUMBER, [keyA.publicKeyPem])
       assertManifestSignedBy(expect, await readUpdateManifest(outDirs[1].dir), NEW_VERSION_NUMBER, [keyA.publicKeyPem, keyB.publicKeyPem])
       assertManifestSignedBy(expect, await readUpdateManifest(outDirs[2].dir), THIRD_VERSION_NUMBER, [keyB.publicKeyPem])
-      await assertEmbeddedTrustList(expect, outDirs[1], [keyA.publicKeyPem, keyB.publicKeyPem])
-      await assertEmbeddedTrustList(expect, outDirs[2], [keyB.publicKeyPem])
+      if (shared == null) {
+        await assertEmbeddedTrustList(expect, outDirs[1], [keyA.publicKeyPem, keyB.publicKeyPem])
+        await assertEmbeddedTrustList(expect, outDirs[2], [keyB.publicKeyPem])
+      }
       const updateManifestPublicKey = await assertEmbeddedTrustList(expect, outDirs[0], [keyA.publicKeyPem])
       return { updateManifestPublicKey }
     },
@@ -1365,8 +1380,9 @@ export async function runKeyRotationTest(
         },
       })
 
-      // The installed app is now v2, whose app-update.yml trusts [A, B]; the served config mirrors it.
-      const { updateManifestPublicKey } = await readEmbeddedUpdateConfig(outDirs[1].dir)
+      // The installed app is now v2, whose app-update.yml trusts [A, B]; the served config mirrors it (a shared v2 is derived from v1
+      // and keeps its app-update.yml, see SharedKeyRotationApps, so it is served the trust list the build of v2 embeds)
+      const updateManifestPublicKey = shared == null ? (await readEmbeddedUpdateConfig(outDirs[1].dir)).updateManifestPublicKey : [keyA.publicKeyPem, keyB.publicKeyPem]
       expect(updateManifestPublicKey).toEqual([keyA.publicKeyPem, keyB.publicKeyPem])
       await writeServedUpdateConfig(updateConfigPath, { ...serverConfig, updateManifestPublicKey })
 
