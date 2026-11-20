@@ -16,6 +16,22 @@ export const TEST_SRC_ROOT = path.resolve(__dirname, "../../src")
 
 const shouldResetSnapshot = process.env.RESET_VITEST_SHARD_CACHE === "true"
 
+/**
+ * Whether a test is heavy: `test.heavy` puts `heavy` on the test's own meta, `describe.heavy` on the meta of an enclosing suite
+ * (vitest-setup.ts), so walk up the suite chain like vitest-heavy-mutex.ts does.
+ */
+export function isHeavyTest(test: TestCase): boolean {
+  let node: any = test
+  while (node != null && node.type !== "module") {
+    const meta = typeof node.meta === "function" ? node.meta() : node.meta
+    if (meta?.heavy === true) {
+      return true
+    }
+    node = node.parent
+  }
+  return false
+}
+
 export default class SmarterReporter implements Reporter {
   private readonly cache = shouldResetSnapshot ? { tests: {}, files: {} } : loadCache()
   private readonly fileDurations = new Map<string, number>()
@@ -71,8 +87,6 @@ export default class SmarterReporter implements Reporter {
       process.stdout.write(`\n${status} ${id} (${Math.round(dur / 1000)}s)\n`)
     }
 
-    const meta = (test as any).meta || {}
-
     const prev: TestStats = this.cache.tests[id] ?? { ...defaultStat }
 
     // Ensure platform objects exist
@@ -93,7 +107,7 @@ export default class SmarterReporter implements Reporter {
 
     platformRuns[this.currentPlatform] = { runs: newRuns, fails: newFails, avgMs: newAvg }
 
-    const isHeavy = meta.heavy === true
+    const isHeavy = isHeavyTest(test)
 
     this.cache.tests[id] = {
       platformRuns,

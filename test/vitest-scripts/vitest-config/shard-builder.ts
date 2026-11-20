@@ -1,11 +1,14 @@
 import { FileStats, loadCache } from "./cache.js"
-import { DEFAULT_FILE_MS, getTestFilesOverride, SAFEGUARD_MAX_SHARDS, SupportedPlatforms, TARGET_MS, TargetPlatform, TEST_ROOT } from "./smart-config.js"
+import { detectHeavyFile } from "./file-discovery.js"
+import { CI_PARALLELISM, DEFAULT_FILE_MS, getTestFilesOverride, SAFEGUARD_MAX_SHARDS, SupportedPlatforms, TARGET_MS, TargetPlatform, TEST_ROOT } from "./smart-config.js"
 
 export interface WeightedFile {
   filename: string
   weight: number
   filepath: string
   cachedMs?: number // raw avgMs from cache; undefined = no data (DEFAULT_FILE_MS was used)
+  /** The file has heavy tests, which run one at a time across the shard's workers (see vitest-heavy-mutex.ts). */
+  heavy?: boolean
 }
 
 /**
@@ -34,23 +37,37 @@ export function buildWeightedFiles(files: string[], targetPlatform: TargetPlatfo
     const base = cachedMs ?? DEFAULT_FILE_MS
     const weight = stat?.unstable ? base * 1.5 : base
 
-    return { filename: key, weight, filepath: file, cachedMs }
+    const heavy = stat?.hasHeavyTests === true || detectHeavyFile(file)
+
+    return { filename: key, weight, filepath: file, cachedMs, heavy }
   })
 }
 
 /**
- * Compute optimal shard count based on total platform-specific duration
+ * Estimated wall-clock time of one shard: its files spread over the runner's workers (`speedup`, see CI_PARALLELISM), but never less
+ * than its heavy files, which run one after another.
  */
-export function computeShardCount(files: WeightedFile[]): number {
+export function estimateShardMs(files: ReadonlyArray<WeightedFile>, speedup = 1): number {
+  const total = files.reduce((sum, f) => sum + f.weight, 0)
+  const heavy = files.reduce((sum, f) => sum + (f.heavy ? f.weight : 0), 0)
+  return Math.max(total / speedup, heavy)
+}
+
+/**
+ * Compute the shard count for a platform: enough shards that each fits TARGET_MS of wall-clock time, with the files of a shard running
+ * on CI_PARALLELISM workers and its heavy files one at a time.
+ */
+export function computeShardCount(files: WeightedFile[], platform: SupportedPlatforms): number {
   // a scoped run (real TEST_FILES override) or an explicit count is never smart-sharded; a blank TEST_FILES is neither
   if (!process.env.CI || getTestFilesOverride() != null || process.env.VITEST_SHARD_COUNT) {
     return Math.max(1, parseInt(process.env.VITEST_SHARD_COUNT || "1", 10))
   }
 
+  const { speedup } = CI_PARALLELISM[platform]
   const total = files.reduce((a, b) => a + b.weight, 0)
-  const actualShardCount = Math.max(1, Math.ceil(total / TARGET_MS))
-  const safeguardedShardCount = Math.min(actualShardCount, SAFEGUARD_MAX_SHARDS)
-  return safeguardedShardCount
+  const heavyTotal = files.reduce((a, b) => a + (b.heavy ? b.weight : 0), 0)
+  const actualShardCount = Math.max(1, Math.ceil(total / (TARGET_MS * speedup)), Math.ceil(heavyTotal / TARGET_MS))
+  return Math.min(actualShardCount, SAFEGUARD_MAX_SHARDS)
 }
 
 /**
@@ -70,21 +87,37 @@ export function shardPlanMismatchError(expectedShardCount: number | null, shardC
 }
 
 /**
- * Split files into balanced shards based on weight (duration)
- * Uses greedy bin-packing algorithm to balance shard durations
+ * Split files into balanced shards based on weight (duration). Greedy bin-packing, longest files first: heavy files are spread first so
+ * that each shard's serial heavy work stays even, then every other file goes to the shard with the lowest estimated wall-clock time
+ * (see estimateShardMs). With `speedup` 1 (one file at a time) this is plain longest-first packing by total duration.
  */
-export function splitIntoShards(weighted: WeightedFile[], shardCount: number): WeightedFile[][] {
-  // Sort by weight descending (longest files first)
-  weighted.sort((a, b) => b.weight - a.weight)
+export function splitIntoShards(weighted: WeightedFile[], shardCount: number, speedup = 1): WeightedFile[][] {
+  // Sort by weight descending (longest files first); the filename breaks ties so planner and shard jobs agree on the plan
+  weighted.sort((a, b) => b.weight - a.weight || a.filename.localeCompare(b.filename))
 
   const shards: WeightedFile[][] = Array.from({ length: shardCount }, () => [])
-  const loads = new Array(shardCount).fill(0)
-
-  for (const f of weighted) {
-    // Find shard with minimum current load
-    const idx = loads.indexOf(Math.min(...loads))
+  const loads = new Array<number>(shardCount).fill(0)
+  const heavyLoads = new Array<number>(shardCount).fill(0)
+  const lowest = (score: (i: number) => number) => loads.reduce((best, _, i) => (score(i) < score(best) ? i : best), 0)
+  const place = (f: WeightedFile, idx: number) => {
     shards[idx].push(f)
     loads[idx] += f.weight
+    if (f.heavy) {
+      heavyLoads[idx] += f.weight
+    }
+  }
+
+  for (const f of weighted.filter(f => f.heavy)) {
+    place(
+      f,
+      lowest(i => heavyLoads[i] + loads[i] / 1e6)
+    )
+  }
+  for (const f of weighted.filter(f => !f.heavy)) {
+    place(
+      f,
+      lowest(i => Math.max(heavyLoads[i], (loads[i] + f.weight) / speedup))
+    )
   }
 
   return shards

@@ -54,9 +54,39 @@ export const CACHE_FILE = process.env.VITEST_SMART_CACHE_FILE || path.resolve(__
 export const SMART_REPORTER_VERBOSE = process.env.SMART_REPORTER_VERBOSE !== "false" && !process.env.CI
 
 export const DEFAULT_FILE_MS = 2 * 60 * 1000
-export const DEFAULT_TARGET_MS = 20 * 60 * 1000
+// Wall-clock budget of one CI shard. The workflow's wall time is already set by its longest fixed jobs (the e2e auto-updater and
+// flatpak jobs take 20-40 min), so shards that fill this budget don't lengthen a run; they only need fewer runners.
+export const DEFAULT_TARGET_MS = 30 * 60 * 1000
 export const TARGET_MS = Number(process.env.VITEST_TARGET_MS) || DEFAULT_TARGET_MS
 export const SAFEGUARD_MAX_SHARDS = 20
+
+/**
+ * How a CI shard runs its files on each platform's runner: `workers` test files at once (vitest `maxWorkers`; tests inside a file still
+ * run one after another), which the shard planner counts as `speedup` times the work per shard. The speed-up is below the worker count
+ * because the files share the runner's cores and disk, and because heavy tests (`describe.heavy` / `test.heavy`) still run one at a time
+ * across all workers (vitest-heavy-mutex.ts). The cached file durations are averages over many runs, so they adapt to the contention only
+ * slowly; tune `speedup` here from the measured shard wall times instead.
+ *
+ * The planner job (smart-shard-count.ts) sizes every platform's matrix from this table, and each shard job re-plans with it, so it is the
+ * single source for both. Runners: macos-26 (3 cores, 7 GB), ubuntu-24.04 and windows-latest (4 cores, 16 GB).
+ */
+export const CI_PARALLELISM: Record<SupportedPlatforms, { readonly workers: number; readonly speedup: number }> = {
+  darwin: { workers: 3, speedup: 2 },
+  linux: { workers: 4, speedup: 2 },
+  win32: { workers: 4, speedup: 2 },
+}
+
+/**
+ * Test files vitest runs at once on this machine: `VITEST_MAX_WORKERS` when set, else the platform's CI_PARALLELISM on CI and one
+ * file at a time locally (the previous behaviour, and the easiest to debug).
+ */
+export function getMaxWorkers(platform: SupportedPlatforms): number {
+  const override = Number(process.env.VITEST_MAX_WORKERS)
+  if (Number.isInteger(override) && override > 0) {
+    return override
+  }
+  return process.env.CI ? CI_PARALLELISM[platform].workers : 1
+}
 
 export const SHARD_INDEX = process.env.VITEST_SHARD_INDEX != null ? Number(process.env.VITEST_SHARD_INDEX) : null
 

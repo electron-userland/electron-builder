@@ -24,9 +24,12 @@ on:
         type: boolean
         default: true
 
-# concurrency:
-# group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-# cancel-in-progress: true
+# One run per pull request: a new push (or a Renovate rebase) cancels the run of the commit it replaces. Pushes to a branch
+# (master, release/v*) never cancel a run in progress, but a run waiting for one is replaced by the next push's run, so a
+# burst of merges is tested once at its tip instead of once per commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -150,7 +153,7 @@ jobs:
             cache-path: ~/.cache/electron
             cache-key: v-42.4.0-linux-electron
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -216,7 +219,7 @@ jobs:
             cache-path: ~\AppData\Local\electron\Cache
             cache-key: v-42.4.0-windows-electron
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -268,7 +271,7 @@ jobs:
             cache-path: ~/Library/Caches/electron
             cache-key: v-42.4.0-macos-electron
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
