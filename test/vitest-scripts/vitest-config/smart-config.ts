@@ -62,19 +62,26 @@ export const SAFEGUARD_MAX_SHARDS = 20
 
 /**
  * How a CI shard runs its files on each platform's runner: `workers` test files at once (vitest `maxWorkers`; tests inside a file still
- * run one after another), which the shard planner counts as `speedup` times the work per shard. The speed-up is below the worker count
- * because the files share the runner's cores and disk, and because heavy tests (`describe.heavy` / `test.heavy`) still run one at a time
- * across all workers (vitest-heavy-mutex.ts). The cached file durations are averages over many runs, so they adapt to the contention only
- * slowly; tune `speedup` here from the measured shard wall times instead.
+ * run one after another), which the shard planner counts as `speedup` times the work per shard. The speed-ups are measured: on the
+ * first full CI run with parallel files, Linux shards (4 cores) finished ~1.6x faster, Windows ones (4 cores) ~1.45x and macOS ones
+ * (3 cores, 3 files at once) only ~1.1-1.2x, as the files compete for the runner's cores and disk. Retune from the shard wall times
+ * the plan reports, not from the cached file durations, which are averages over many runs and follow the contention only slowly.
  *
  * The planner job (smart-shard-count.ts) sizes every platform's matrix from this table, and each shard job re-plans with it, so it is the
  * single source for both. Runners: macos-26 (3 cores, 7 GB), ubuntu-24.04 and windows-latest (4 cores, 16 GB).
  */
 export const CI_PARALLELISM: Record<SupportedPlatforms, { readonly workers: number; readonly speedup: number }> = {
-  darwin: { workers: 3, speedup: 2 },
-  linux: { workers: 4, speedup: 2 },
-  win32: { workers: 4, speedup: 2 },
+  darwin: { workers: 2, speedup: 1.1 },
+  linux: { workers: 4, speedup: 1.5 },
+  win32: { workers: 4, speedup: 1.4 },
 }
+
+/**
+ * Heavy tests (`describe.heavy` / `test.heavy`) run one at a time across all workers of a shard (vitest-heavy-mutex.ts), and run slower
+ * next to the other workers' files than their cached durations say. Capping each shard's heavy work at half of TARGET_MS leaves the
+ * shard room for that and for its other files.
+ */
+export const HEAVY_TARGET_MS = TARGET_MS / 2
 
 /**
  * Test files vitest runs at once on this machine: `VITEST_MAX_WORKERS` when set, else the platform's CI_PARALLELISM in a smart-sharded

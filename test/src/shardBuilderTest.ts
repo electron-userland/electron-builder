@@ -3,9 +3,9 @@ import * as path from "path"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { detectHeavyFile } from "../vitest-scripts/vitest-config/file-discovery"
 import { computeShardCount, estimateShardMs, splitIntoShards, type WeightedFile } from "../vitest-scripts/vitest-config/shard-builder"
-import { CI_PARALLELISM, getMaxWorkers, TARGET_MS } from "../vitest-scripts/vitest-config/smart-config"
+import { CI_PARALLELISM, getMaxWorkers, HEAVY_TARGET_MS, TARGET_MS } from "../vitest-scripts/vitest-config/smart-config"
 import SmartSequencer from "../vitest-scripts/vitest-config/vitest-smart-sequencer"
-import { isHeavyTest } from "../vitest-scripts/vitest-config/vitest-smart-reporter"
+import { isHeavyTest, ownDuration } from "../vitest-scripts/vitest-config/vitest-smart-reporter"
 
 const MIN = 60 * 1000
 
@@ -43,7 +43,7 @@ describe("shard planning with parallel workers", () => {
 
   test("the shard count leaves room for the heavy files, which never run in parallel", () => {
     stubCiPlanning()
-    const heavy = Array.from({ length: 5 }, (_, i) => file(`heavy${i}`, TARGET_MS / MIN, true))
+    const heavy = Array.from({ length: 5 }, (_, i) => file(`heavy${i}`, HEAVY_TARGET_MS / MIN, true))
     expect(computeShardCount(heavy, "darwin")).toBe(5)
   })
 
@@ -116,6 +116,12 @@ describe("heavy test detection", () => {
     }
     expect(detectHeavyFile(generated("heavy__e2e.ts", "heavySuite", "registerHeavy"))).toBe(true)
     expect(detectHeavyFile(generated("light__e2e.ts", "lightSuite", "registerLight"))).toBe(false)
+  })
+
+  test("the reporter caches a heavy test's duration without its wait for the heavy-test mutex", () => {
+    const reported = (duration: number, meta: Record<string, unknown>) => ({ diagnostic: () => ({ duration }), meta: () => meta }) as any
+    expect(ownDuration(reported(10 * MIN, { heavy: true, heavyWaitMs: 4 * MIN }))).toBe(6 * MIN)
+    expect(ownDuration(reported(10 * MIN, {}))).toBe(10 * MIN)
   })
 
   test("the reporter finds the heavy flag of an enclosing suite", () => {

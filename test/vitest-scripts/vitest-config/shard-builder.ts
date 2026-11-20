@@ -1,6 +1,16 @@
 import { FileStats, loadCache } from "./cache.js"
 import { detectHeavyFile } from "./file-discovery.js"
-import { CI_PARALLELISM, DEFAULT_FILE_MS, getTestFilesOverride, SAFEGUARD_MAX_SHARDS, SupportedPlatforms, TARGET_MS, TargetPlatform, TEST_ROOT } from "./smart-config.js"
+import {
+  CI_PARALLELISM,
+  DEFAULT_FILE_MS,
+  getTestFilesOverride,
+  HEAVY_TARGET_MS,
+  SAFEGUARD_MAX_SHARDS,
+  SupportedPlatforms,
+  TARGET_MS,
+  TargetPlatform,
+  TEST_ROOT,
+} from "./smart-config.js"
 
 export interface WeightedFile {
   filename: string
@@ -54,8 +64,8 @@ export function estimateShardMs(files: ReadonlyArray<WeightedFile>, speedup = 1)
 }
 
 /**
- * Compute the shard count for a platform: enough shards that each fits TARGET_MS of wall-clock time, with the files of a shard running
- * on CI_PARALLELISM workers and its heavy files one at a time.
+ * Compute the shard count for a platform: enough shards that each fits TARGET_MS of wall-clock time with the files of a shard running
+ * on CI_PARALLELISM workers, and HEAVY_TARGET_MS of heavy files, which run one at a time.
  */
 export function computeShardCount(files: WeightedFile[], platform: SupportedPlatforms): number {
   // a scoped run (real TEST_FILES override) or an explicit count is never smart-sharded; a blank TEST_FILES is neither
@@ -66,7 +76,7 @@ export function computeShardCount(files: WeightedFile[], platform: SupportedPlat
   const { speedup } = CI_PARALLELISM[platform]
   const total = files.reduce((a, b) => a + b.weight, 0)
   const heavyTotal = files.reduce((a, b) => a + (b.heavy ? b.weight : 0), 0)
-  const actualShardCount = Math.max(1, Math.ceil(total / (TARGET_MS * speedup)), Math.ceil(heavyTotal / TARGET_MS))
+  const actualShardCount = Math.max(1, Math.ceil(total / (TARGET_MS * speedup)), Math.ceil(heavyTotal / HEAVY_TARGET_MS))
   return Math.min(actualShardCount, SAFEGUARD_MAX_SHARDS)
 }
 

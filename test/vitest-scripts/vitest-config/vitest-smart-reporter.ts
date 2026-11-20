@@ -32,6 +32,16 @@ export function isHeavyTest(test: TestCase): boolean {
   return false
 }
 
+/**
+ * A test's duration without the time it waited for the heavy-test mutex (recorded by vitest-heavy-mutex.ts): vitest counts beforeEach
+ * hooks in the duration, and the wait depends on what the other workers of that shard ran, so caching it would inflate the shard plan.
+ */
+export function ownDuration(test: TestCase): number {
+  const duration = test.diagnostic()?.duration ?? 0
+  const waited = (test.meta() as { heavyWaitMs?: unknown }).heavyWaitMs
+  return typeof waited === "number" ? Math.max(0, duration - waited) : duration
+}
+
 export default class SmarterReporter implements Reporter {
   private readonly cache = shouldResetSnapshot ? { tests: {}, files: {} } : loadCache()
   private readonly fileDurations = new Map<string, number>()
@@ -69,7 +79,7 @@ export default class SmarterReporter implements Reporter {
   onTestCaseResult(test: TestCase) {
     const id = `${path.relative(TEST_SRC_ROOT, test.module.moduleId).split(path.sep).join("/")}::${test.fullName}`
     this.inProgressTests.delete(id)
-    const dur = test.diagnostic()?.duration ?? 0
+    const dur = ownDuration(test)
     const testResult = test.result().state
     if (SMART_REPORTER_VERBOSE) {
       const status = (() => {

@@ -148,7 +148,11 @@ beforeEach(
       heavyContexts.add(ctx)
       // Acquire mutex — may wait for a long time if another heavy test is running.
       // The actual test timeout only starts once the mutex is acquired.
+      const waitStart = Date.now()
       await heavyMutex.acquire()
+      // vitest counts beforeEach hooks in the test's duration; the smart reporter subtracts the wait so the cached duration is the
+      // test's own (summed over retries, which run this hook again)
+      task.meta.heavyWaitMs = (task.meta.heavyWaitMs ?? 0) + (Date.now() - waitStart)
     }
   },
   // No timeout on the hook — the test timeout is separate
