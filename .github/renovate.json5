@@ -11,6 +11,9 @@
     ":enableVulnerabilityAlerts",
     "helpers:pinGitHubActionDigests",
   ],
+  // Only rebase when a PR conflicts with master (or when the rebase checkbox is ticked), so merges
+  // to master don't re-trigger the full test matrix on every open Renovate PR.
+  rebaseWhen: "conflicted",
   npm: {
     extends: [
       ":noUnscheduledUpdates",
