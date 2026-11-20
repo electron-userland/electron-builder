@@ -106,7 +106,7 @@ electron-updater verifies the Authenticode signature of a downloaded NSIS update
 Without either, the update is rejected and no verify function is called:
 
 - when the update config file has no `publisherName`, with `ERR_UPDATER_INVALID_SIGNATURE`, unless the file opts out with `verifyUpdateCodeSignature: false` (see [the v27 migration guide](./migration/v27-build-changes.md#missing-publishername-fails-update-verification));
-- when the update config file of a packaged app is missing at the time the update is verified (for example, `updateConfigPath` names a file that does not exist), with `ERR_UPDATER_NO_PUBLISHER_NAME`.
+- when the update config file of a packaged app is missing at the time the update is verified, with `ERR_UPDATER_NO_PUBLISHER_NAME`. A download reads that file before it starts, so this happens only when the file goes missing after it was read, for example when the app sets `updateConfigPath` to a file that does not exist after an earlier download. A packaged app without the file fails the download itself, reading it (`ENOENT`).
 
 An app that is not packaged (development mode) and has no `dev-app-update.yml` is not verified.
 

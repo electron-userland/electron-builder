@@ -11,7 +11,7 @@ import { homedir } from "os"
 import path from "path"
 import { randomUUID } from "crypto"
 import { ExpectStatic, TestContext } from "vitest"
-import { createLocalServer, getParallelsHostIP, launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
+import { createLocalServer, getParallelsHostIP, launchAndWaitForQuit, LocalServer } from "../helpers/launchAppCrossPlatform"
 import { assertPack, expectedWindowsPublisherName, EXTENDED_TIMEOUT, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION, PACMAN_TEST_DEPENDS } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
@@ -28,6 +28,7 @@ import {
   windowsLocalAppData,
 } from "./blackboxInstallWindows"
 import { cleanupLinux, installLinux } from "./blackboxInstallLinux"
+import { pendingUpdateDir } from "./blackboxFixtureEnv"
 import { installMac } from "./blackboxInstallMac"
 import { readEmbeddedUpdateConfig, readUpdateManifest, resignManifest, rewriteServedManifests } from "./signedManifestTestUtil"
 
@@ -54,6 +55,19 @@ export type VersionBuild = {
    * update from an app that ships an older updater)
    */
   electronUpdater?: string
+  /** compression of this build; by default the first build is stored and every later one is compressed at "maximum" */
+  compression?: Configuration["compression"]
+}
+
+/**
+ * Apps built once and shared by several scenarios (the mac blackbox cases of one file, see blackboxUpdateMacSuite.ts), with a fresh
+ * install of the first build for this scenario: the update replaces the installed app in place, so no scenario installs the build itself.
+ */
+export interface PrebuiltApps {
+  /** build output per version, in the order of the scenario's `builds` */
+  outDirs: Array<ApplicationUpdatePaths>
+  /** a directory laid out like the first build's output that holds a fresh copy of its app, which the scenario installs */
+  installDir: string
 }
 
 // Resolve only to a ParallelsVmManager — PwshVmManager (used for code-signing on Linux/Mac via Wine)
@@ -65,6 +79,67 @@ export const windowsVmPromise: Promise<ParallelsVmManager | undefined> = getWind
 export type ApplicationUpdatePaths = {
   dir: string
   appPath: string
+}
+
+/**
+ * The electron-builder configuration of a build of the test app at `version`, with `extraConfig` deep-merged in (callers can override
+ * individual sub-object keys, e.g. nsis.perMachine, without replacing the entire sub-object). publish/fileOptions are pinned last so
+ * they cannot be accidentally overridden by a caller's extraConfig.
+ */
+export function testAppConfiguration(version: string, extraConfig: Partial<Configuration> | Nullish): Configuration {
+  return Object.assign(
+    deepAssign<Configuration>(
+      {
+        electronVersion: ELECTRON_VERSION,
+        nativeModules: { npmRebuild: true },
+        productName: "TestApp",
+        executableName: "TestApp",
+        appId: "com.test.app",
+        artifactName: "${productName}.${ext}",
+        electronLanguages: ["en"],
+        extraMetadata: {
+          name: "testapp",
+          version,
+        },
+        electronUpdaterCompatibility: ">=2.16",
+        electronFuses: {
+          runAsNode: false,
+          enableCookieEncryption: false, // don't enable cookie encryption for testing because it adds an additional decryption step to the update process which requires user interaction to unlock the keychain on macOS and can cause timeouts in CI, especially on older macOS versions with slower crypto performance
+          enableNodeOptionsEnvironmentVariable: false,
+          enableNodeCliInspectArguments: false,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: false,
+          grantFileProtocolExtraPrivileges: false,
+        },
+        compression: "store",
+        nsis: {
+          artifactName: "${productName} Setup.${ext}",
+          // one click installer required. don't run after install otherwise we lose stdout pipe
+          oneClick: true,
+          runAfterFinish: false,
+        },
+        pacman: {
+          depends: PACMAN_TEST_DEPENDS,
+        },
+      },
+      extraConfig ?? {}
+    ),
+    // Always pin publish and files so they can't be accidentally overridden
+    {
+      publish: {
+        provider: "s3",
+        bucket: "develar",
+        path: "test",
+      },
+      fileOptions: {
+        files: ["**/*", "../**/node_modules/**", "!path/**"],
+        // electron-updater and builder-util-runtime are `link:`ed from this repository (see projectDirCreated in doBuild), so their files
+        // and dependencies resolve into the repository, outside the temporary test workspace: allow exactly that tree
+        allowExternalLinks: [path.resolve(__dirname, "../../..")],
+      },
+    }
+  )
 }
 
 export async function doBuild(
@@ -79,7 +154,7 @@ export async function doBuild(
 ) {
   const currentPlatform = isWindows ? Platform.WINDOWS : Platform.current()
   // ELECTRON_VERSION has the ASAR integrity digest slot, so on mac the digest mac.asarIntegrityDigest embeds by default is
-  // enforced (enableEmbeddedAsarIntegrityValidation fuse below) on every launch of the installed and the updated app
+  // enforced (enableEmbeddedAsarIntegrityValidation fuse of testAppConfiguration) on every launch of the installed and the updated app
   const isMacBuild = currentPlatform === Platform.MAC
   async function buildApp({
     version,
@@ -101,62 +176,7 @@ export async function doBuild(
       "test-app",
       {
         targets: currentPlatform.createTarget(target, arch),
-        // Deep-merge so callers can override individual sub-object keys (e.g. nsis.perMachine)
-        // without replacing the entire sub-object. publish/fileOptions are pinned last so they cannot
-        // be accidentally overridden by a caller's extraConfig.
-        config: Object.assign(
-          deepAssign<Configuration>(
-            {
-              electronVersion: ELECTRON_VERSION,
-              nativeModules: { npmRebuild: true },
-              productName: "TestApp",
-              executableName: "TestApp",
-              appId: "com.test.app",
-              artifactName: "${productName}.${ext}",
-              electronLanguages: ["en"],
-              extraMetadata: {
-                name: "testapp",
-                version,
-              },
-              electronUpdaterCompatibility: ">=2.16",
-              electronFuses: {
-                runAsNode: false,
-                enableCookieEncryption: false, // don't enable cookie encryption for testing because it adds an additional decryption step to the update process which requires user interaction to unlock the keychain on macOS and can cause timeouts in CI, especially on older macOS versions with slower crypto performance
-                enableNodeOptionsEnvironmentVariable: false,
-                enableNodeCliInspectArguments: false,
-                enableEmbeddedAsarIntegrityValidation: true,
-                onlyLoadAppFromAsar: true,
-                loadBrowserProcessSpecificV8Snapshot: false,
-                grantFileProtocolExtraPrivileges: false,
-              },
-              compression: "store",
-              nsis: {
-                artifactName: "${productName} Setup.${ext}",
-                // one click installer required. don't run after install otherwise we lose stdout pipe
-                oneClick: true,
-                runAfterFinish: false,
-              },
-              pacman: {
-                depends: PACMAN_TEST_DEPENDS,
-              },
-            },
-            extraConfig ?? {}
-          ),
-          // Always pin publish and files so they can't be accidentally overridden
-          {
-            publish: {
-              provider: "s3",
-              bucket: "develar",
-              path: "test",
-            },
-            fileOptions: {
-              files: ["**/*", "../**/node_modules/**", "!path/**"],
-              // electron-updater and builder-util-runtime are `link:`ed from this repository (see projectDirCreated below), so their files
-              // and dependencies resolve into the repository, outside the temporary test workspace: allow exactly that tree
-              allowExternalLinks: [path.resolve(__dirname, "../../..")],
-            },
-          }
-        ),
+        config: testAppConfiguration(version, extraConfig),
       },
       {
         storeDepsLockfileSnapshot: false,
@@ -225,13 +245,13 @@ export async function doBuild(
       },
     })
   try {
-    // first build uses "store", later builds use "maximum" — validates both compressions work while we're at it
+    // unless a build sets its own compression, the first build uses "store" and later builds use "maximum" — validates both compressions work
     let isFirstBuild = true
     for (const entry of versions) {
-      const { version, extraConfig, target: entryTarget, electronUpdater }: VersionBuild = typeof entry === "string" ? { version: entry, extraConfig: null } : entry
+      const { version, extraConfig, target: entryTarget, electronUpdater, compression }: VersionBuild = typeof entry === "string" ? { version: entry, extraConfig: null } : entry
       // shallow merge on purpose: a per-version block (e.g. `updateManifest`) replaces the shared one wholesale
       // (deepAssign would union arrays such as signingKey lists)
-      await build(version, { ...extraConfiguration, ...extraConfig, compression: isFirstBuild ? "store" : "maximum" }, entryTarget ?? target, electronUpdater)
+      await build(version, { ...extraConfiguration, ...extraConfig, compression: compression ?? (isFirstBuild ? "store" : "maximum") }, entryTarget ?? target, electronUpdater)
       isFirstBuild = false
     }
   } catch (e: any) {
@@ -253,7 +273,7 @@ async function assertEmbeddedPublisherName(expect: ExpectStatic, distDir: string
  * Every slice of the Electron Framework holds the digest of the final `ElectronAsarIntegrity` Info.plist entries (mac.asarIntegrityDigest, on
  * by default), so the launches of this build run under Electron's digest check and fail if the digest or the signing after it is wrong.
  */
-async function assertAsarIntegrityDigestEmbedded(expect: ExpectStatic, contents: string, arch: Arch): Promise<void> {
+export async function assertAsarIntegrityDigestEmbedded(expect: ExpectStatic, contents: string, arch: Arch): Promise<void> {
   const { ElectronAsarIntegrity: integrity } = await parsePlistFile<{ ElectronAsarIntegrity: AsarIntegrity }>(path.join(contents, "Info.plist"))
   const binary = await readFile(path.join(contents, "Frameworks", "Electron Framework.framework", "Versions", "A", "Electron Framework"))
   const sentinel = Buffer.from(ASAR_INTEGRITY_DIGEST_SENTINEL)
@@ -367,17 +387,35 @@ async function handleCleanupPerOS({ target, perMachine }: { target: string; perM
 // win.verifyUpdateCodeSignature: false, as writeUpdateConfig does.
 export async function writeServedUpdateConfig(updateConfigPath: string, config: GenericServerOptions): Promise<void> {
   const served: GenericServerOptions = config.publisherName != null || config.verifyUpdateCodeSignature !== undefined ? config : { ...config, verifyUpdateCodeSignature: false }
-  await outputFile(updateConfigPath, serializeToYaml(served))
+  await writeRawServedUpdateConfig(updateConfigPath, served)
+}
+
+/**
+ * Writes the runtime update config exactly as given (see {@link writeServedUpdateConfig}): without publisherName and
+ * verifyUpdateCodeSignature, electron-updater rejects every NSIS update unless the app sets autoUpdater.publisherName.
+ */
+export async function writeRawServedUpdateConfig(updateConfigPath: string, config: GenericServerOptions): Promise<void> {
+  await outputFile(updateConfigPath, serializeToYaml(config))
+}
+
+/** The servers of a blackbox scenario, which record the requests they get; all of them are closed when the scenario ends. */
+export interface BlackboxServers {
+  /** serves the root directory at the url of the served update config */
+  readonly feed: LocalServer
+  /** the servers of {@link createOrigin}, in the order they were created */
+  readonly origins: ReadonlyArray<LocalServer>
+  /** another origin than the feed: a server on another port of the feed's host that serves the same root directory */
+  createOrigin(): Promise<LocalServer>
 }
 
 /**
  * Serves `rootDirectory` over HTTP and writes the runtime update config (generic provider pointing at that
  * server, merged with `extraUpdateConfig` — e.g. `updateManifestPublicKey`) the fixture app is launched with.
  * `doTest` also receives the server config so a scenario can rewrite the update config between hops via
- * {@link writeServedUpdateConfig}.
+ * {@link writeServedUpdateConfig}, and the servers, whose requests it can check and route.
  */
 export async function runTestWithinServer(
-  doTest: (rootDirectory: string, updateConfigPath: string, serverConfig: GenericServerOptions) => Promise<void>,
+  doTest: (rootDirectory: string, updateConfigPath: string, serverConfig: GenericServerOptions, servers: BlackboxServers) => Promise<void>,
   vm?: VmManager,
   extraUpdateConfig?: Partial<GenericServerOptions> | null
 ) {
@@ -391,7 +429,21 @@ export async function runTestWithinServer(
   if (vm && !serverHost) {
     throw new Error("Cannot determine Parallels host IP for update server — no prl*/bridge* interface found")
   }
-  const { server, port } = await createLocalServer(root, serverHost)
+  const feed = await createLocalServer(root, serverHost)
+  const { server, port } = feed
+  const origins: Array<LocalServer> = []
+  // rejects the scenario on an error of a server, set once the scenario runs (before it can create an origin)
+  let failScenario: ((error: Error) => void) | null = null
+  const servers: BlackboxServers = {
+    feed,
+    origins,
+    createOrigin: async () => {
+      const origin = await createLocalServer(root, serverHost)
+      origin.server.on("error", error => failScenario?.(error))
+      origins.push(origin)
+      return origin
+    },
+  }
 
   const serverConfig: GenericServerOptions = { ...extraUpdateConfig, provider: "generic", url: `http://${serverHost}:${port}` }
   let updateConfig: string
@@ -412,10 +464,12 @@ export async function runTestWithinServer(
     } catch (error) {
       console.error("Failed to cleanup tmpDir", error)
     }
-    try {
-      server.close()
-    } catch (error) {
-      console.error("Failed to close server", error)
+    for (const localServer of [feed, ...origins]) {
+      try {
+        localServer.server.close()
+      } catch (error) {
+        console.error("Failed to close server", error)
+      }
     }
     if (vmConfigDir) {
       remove(vmConfigDir).catch(() => {})
@@ -423,8 +477,9 @@ export async function runTestWithinServer(
   }
 
   return await new Promise<void>((resolve, reject) => {
+    failScenario = reject
     server.on("error", reject)
-    doTest(root, updateConfig, serverConfig).then(resolve).catch(reject)
+    doTest(root, updateConfig, serverConfig, servers).then(resolve).catch(reject)
   }).then(
     v => {
       cleanup()
@@ -450,8 +505,9 @@ export async function runTest(
   expectDifferential: boolean = isDifferentialOnFirstHop(target)
 ) {
   const { expect } = context
-  const vm = await windowsVmPromise
-  if (vm && target === "nsis") {
+  // only NSIS runs in the VM: any other target installs and launches on this host, even with a Windows VM registered
+  const vm = target === "nsis" ? await windowsVmPromise : undefined
+  if (vm) {
     console.log("Running Windows test via Parallels VM")
   }
 
@@ -545,6 +601,7 @@ export async function updateHop(
     fromVersion,
     toVersion,
     assertLaunch,
+    env,
   }: {
     appPath: string
     vm: VmManager | undefined
@@ -553,6 +610,8 @@ export async function updateHop(
     fromVersion: string
     toVersion: string
     assertLaunch?: (stdout: string) => void
+    /** fixture env of the update launch (see fixtureEnv) */
+    env?: Record<string, string>
   }
 ): Promise<void> {
   // waitForExit: true — don't proceed until the old app fully quits.
@@ -567,6 +626,7 @@ export async function updateHop(
     expectedVersion: fromVersion,
     packageManagerToTest: packageManager,
     waitForExit: true,
+    env,
   })
   log.info({ version: result.version, stdout: result.stdout }, "Initial launch completed")
   expect(result.version).toMatch(fromVersion)
@@ -585,7 +645,7 @@ export async function updateHop(
  * AUTO_UPDATER_TEST is disabled so the probe app quits immediately after printing its version
  * (no update cycle triggered), which also prevents a second installer from running in parallel.
  */
-async function pollUntilNewVersionInstalled(
+export async function pollUntilNewVersionInstalled(
   expect: ExpectStatic,
   {
     appPath,
@@ -680,8 +740,9 @@ export async function runInstallOnNextLaunchTest(
   } = {}
 ) {
   const { expect } = context
-  const vm = await windowsVmPromise
-  if (vm && target === "nsis") {
+  // only NSIS runs in the VM: any other target installs and launches on this host, even with a Windows VM registered
+  const vm = target === "nsis" ? await windowsVmPromise : undefined
+  if (vm) {
     console.log("Running Windows install-on-next-launch test via Parallels VM")
   }
 
@@ -728,16 +789,7 @@ export async function runInstallOnNextLaunchTest(
         })
 
         // 2. The installer must NOT have run — the installed binary still reports the old version.
-        const probe = await launchAndWaitForQuit({
-          appPath,
-          vm,
-          timeoutMs: 60 * 1000,
-          updateConfigPath,
-          packageManagerToTest: packageManager,
-          env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
-          waitForExit: true,
-        })
-        await probe.assert(() => expect(probe.version).toMatch(OLD_VERSION_NUMBER))
+        await expectInstalledVersion({ expect, appPath, vm, updateConfigPath, packageManager }, OLD_VERSION_NUMBER)
         await options.afterQueued?.(outDirs)
 
         // 3. Relaunch — the pending update is re-validated against the update server and installed.
@@ -964,7 +1016,7 @@ export const manifestVerifiedMarker = (version: string) => `Update manifest sign
 /** Substring of the warning the updater logs when no `updateManifestPublicKey` is configured at all. */
 export const MANIFEST_VERIFICATION_DISABLED_MARKER = "verification is disabled"
 
-interface ScenarioContext {
+export interface ScenarioContext {
   expect: ExpectStatic
   vm: VmManager | undefined
   /** installed (old) app binary, updated in place by every hop */
@@ -975,13 +1027,14 @@ interface ScenarioContext {
   rootDirectory: string
   updateConfigPath: string
   serverConfig: GenericServerOptions
+  servers: BlackboxServers
 }
 
 /**
- * Shared skeleton of every blackbox update scenario: build all versions, install the first one, serve the
+ * Shared skeleton of every blackbox update scenario: build all versions (or take the `prebuilt` ones), install the first one, serve the
  * second one and run `scenario`; cleanup mirrors {@link runTest}.
  */
-async function runUpdateScenario(
+export async function runUpdateScenario(
   context: TestContext,
   {
     target,
@@ -993,6 +1046,7 @@ async function runUpdateScenario(
     tmpDirPrefix,
     initialUpdateConfig,
     scenario,
+    prebuilt,
   }: {
     target: string
     packageManager: string
@@ -1000,6 +1054,8 @@ async function runUpdateScenario(
     toolsets: ToolsetConfig
     extraConfig?: Partial<Configuration>
     builds: Array<VersionBuild>
+    /** the `builds`, already made: nothing is built, and the scenario installs the first one from `prebuilt.installDir` */
+    prebuilt?: PrebuiltApps
     tmpDirPrefix: string
     /** merged into the served update config, derived from the builds (e.g. the trust list embedded into the installed version) */
     initialUpdateConfig: (outDirs: Array<ApplicationUpdatePaths>) => Promise<Partial<GenericServerOptions>>
@@ -1007,16 +1063,21 @@ async function runUpdateScenario(
   }
 ): Promise<void> {
   const { expect } = context
-  const vm = await windowsVmPromise
-  if (vm && target === "nsis") {
+  // only NSIS runs in the VM: any other target installs and launches on this host, even with a Windows VM registered
+  const vm = target === "nsis" ? await windowsVmPromise : undefined
+  if (vm) {
     console.log(`Running Windows ${tmpDirPrefix} test via Parallels VM`)
   }
 
   const tmpDir = new TmpDir(tmpDirPrefix)
   const outDirs: ApplicationUpdatePaths[] = []
-  const shouldRunWindowsTests = process.platform === "win32" || (target === "nsis" && vm != null)
-  const buildConfig = deepAssign({ toolsets }, extraConfig ?? {})
-  await doBuild(expect, outDirs, target, arch, tmpDir, shouldRunWindowsTests, buildConfig, builds)
+  if (prebuilt == null) {
+    const shouldRunWindowsTests = process.platform === "win32" || (target === "nsis" && vm != null)
+    const buildConfig = deepAssign({ toolsets }, extraConfig ?? {})
+    await doBuild(expect, outDirs, target, arch, tmpDir, shouldRunWindowsTests, buildConfig, builds)
+  } else {
+    outDirs.push(...prebuilt.outDirs)
+  }
   expect(outDirs.length).toBe(builds.length)
   const targetOf = (index: number) => builds[index].target ?? target
   const perMachine = extraConfig?.nsis?.perMachine
@@ -1024,7 +1085,7 @@ async function runUpdateScenario(
   const extraUpdateConfig = { ...(await embeddedCacheDirConfig(outDirs[0].dir)), ...(await initialUpdateConfig(outDirs)) }
 
   // Setup tests by installing the previous version
-  const appPath = await handleInitialInstallPerOS({ target: targetOf(0), dirPath: outDirs[0].dir, arch, vm, perMachine })
+  const appPath = await handleInitialInstallPerOS({ target: targetOf(0), dirPath: prebuilt?.installDir ?? outDirs[0].dir, arch, vm, perMachine })
   if (!vm && !existsSync(appPath)) {
     throw new Error(`App not found: ${appPath}`)
   }
@@ -1032,10 +1093,10 @@ async function runUpdateScenario(
   let queuedError: Error | null = null
   try {
     await runTestWithinServer(
-      async (rootDirectory: string, updateConfigPath: string, serverConfig: GenericServerOptions) => {
+      async (rootDirectory: string, updateConfigPath: string, serverConfig: GenericServerOptions, servers: BlackboxServers) => {
         // Serve the first update
         await copy(updateFilesDir(targetOf(1), outDirs[1].dir), rootDirectory, { recursive: true, overwrite: true })
-        await scenario({ expect, vm, appPath, outDirs, packageManager, rootDirectory, updateConfigPath, serverConfig })
+        await scenario({ expect, vm, appPath, outDirs, packageManager, rootDirectory, updateConfigPath, serverConfig, servers })
       },
       vm,
       extraUpdateConfig
@@ -1060,22 +1121,37 @@ async function runUpdateScenario(
 }
 
 /**
- * Launches the installed app against a served manifest it must refuse: the updater has to fail with
- * `expectedErrorCode` before anything is downloaded, and the installed version must be unchanged afterwards.
+ * Launches the installed app against a served update it must refuse: the updater has to fail with
+ * `expectedErrorCode` before it reports the update downloaded, and the installed version must be unchanged afterwards.
  */
-async function expectRejectedUpdate(
-  { expect, appPath, vm, updateConfigPath, packageManager }: ScenarioContext,
+export async function expectRejectedUpdate(
+  { expect, appPath, vm, updateConfigPath, packageManager, servers }: ScenarioContext,
   {
     installedVersion,
     expectedErrorCode,
     assertLaunch,
+    env,
+    manifests = "signed",
+    expectNoRequests = false,
   }: {
     installedVersion: string
     expectedErrorCode: string
     /** further checks of the stdout of the launch that refuses the update */
     assertLaunch?: (stdout: string) => void
+    /** fixture env of the launch that refuses the update (see fixtureEnv) */
+    env?: Record<string, string>
+    /** "unsigned": the served manifests have no signature, whose verification the launch may then log as disabled */
+    manifests?: "signed" | "unsigned"
+    /** the launch must send no request at all, to the feed or to an origin of servers.createOrigin() */
+    expectNoRequests?: boolean
   }
 ): Promise<void> {
+  const allServers = [servers.feed, ...servers.origins]
+  if (expectNoRequests) {
+    for (const server of allServers) {
+      server.clearRequests()
+    }
+  }
   const result = await launchAndWaitForQuit({
     appPath,
     vm,
@@ -1084,6 +1160,7 @@ async function expectRejectedUpdate(
     expectedVersion: installedVersion,
     packageManagerToTest: packageManager,
     waitForExit: true,
+    env,
   })
   log.info({ version: result.version, expectedErrorCode }, "Rejected-update launch completed")
   await result.assert(() => {
@@ -1091,21 +1168,34 @@ async function expectRejectedUpdate(
     // the fixture prints `Error in auto-updater: <util.inspect(err)>`, which includes the `code` property
     expect(result.stdout).toContain(expectedErrorCode)
     expect(result.stdout).not.toContain("Update downloaded")
-    expect(result.stdout).not.toContain(MANIFEST_VERIFICATION_DISABLED_MARKER)
+    if (manifests === "signed") {
+      expect(result.stdout).not.toContain(MANIFEST_VERIFICATION_DISABLED_MARKER)
+    }
+    if (expectNoRequests) {
+      expect(allServers.flatMap(server => server.requests)).toEqual([])
+    }
     assertLaunch?.(result.stdout)
   })
 
   // nothing may have been installed
+  await expectInstalledVersion({ expect, appPath, vm, updateConfigPath, packageManager }, installedVersion)
+}
+
+/** One probe launch of the installed app (its updater disabled: it prints its version and quits), which must report `version`. */
+export async function expectInstalledVersion(
+  { expect, appPath, vm, updateConfigPath, packageManager }: Pick<ScenarioContext, "expect" | "appPath" | "vm" | "updateConfigPath" | "packageManager">,
+  version: string
+): Promise<void> {
   const probe = await launchAndWaitForQuit({
     appPath,
     vm,
     timeoutMs: 60 * 1000,
     updateConfigPath,
     packageManagerToTest: packageManager,
-    env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
+    env: { AUTO_UPDATER_TEST: "" },
     waitForExit: true,
   })
-  await probe.assert(() => expect(probe.version).toMatch(installedVersion))
+  await probe.assert(() => expect(probe.version).toMatch(version))
 }
 
 /**
@@ -1130,14 +1220,59 @@ async function assertEmbeddedTrustList(expect: ExpectStatic, dist: ApplicationUp
   return expected
 }
 
+type UpdateSigningKeypair = ReturnType<typeof generateUpdateSigningKeypair>
+
+/** The two runtime-generated Ed25519 keys of {@link runKeyRotationTest}: A, the old one, and B, the new one. */
+export interface ManifestSigningKeys {
+  keyA: UpdateSigningKeypair
+  keyB: UpdateSigningKeypair
+}
+
+export function generateManifestSigningKeys(): ManifestSigningKeys {
+  return { keyA: generateUpdateSigningKeypair(), keyB: generateUpdateSigningKeypair() }
+}
+
+/** The builds of {@link runKeyRotationTest}: v1 1.0.0 signed by A, v2 1.0.1 signed by [A, B], v3 1.0.2 signed by B. */
+export function keyRotationBuilds({ keyA, keyB }: ManifestSigningKeys): Array<VersionBuild> {
+  return [
+    { version: OLD_VERSION_NUMBER, extraConfig: { updateManifest: { signingKey: keyA.privateKeyPem } } },
+    // bridge release: dual-signed, old key first so it also fills the legacy `signature`; trust list derived → [A, B]
+    { version: NEW_VERSION_NUMBER, extraConfig: { updateManifest: { signingKey: [keyA.privateKeyPem, keyB.privateKeyPem] } } },
+    { version: THIRD_VERSION_NUMBER, extraConfig: { updateManifest: { signingKey: keyB.privateKeyPem } } },
+  ]
+}
+
+/**
+ * {@link keyRotationBuilds} made once with `keys` and shared by the signed-manifest scenarios of a test file (see {@link PrebuiltApps}).
+ * Only the first is a build of the test app: the later ones are derived from it (see deriveMacBuild in macDerivedBuild.ts), whose
+ * manifests electron-builder signs, but which keep the first build's `app-update.yml` and so its trust list. The scenarios check the
+ * embedded trust list of the first build only, and serve the later trust lists themselves.
+ */
+export interface SharedKeyRotationApps {
+  keys: ManifestSigningKeys
+  apps: PrebuiltApps
+}
+
 /**
  * Signed update manifest end-to-end: both versions are built with the same runtime-generated Ed25519 key, the
  * installed app trusts the key electron-builder embedded into its `app-update.yml`, verifies the served
  * `latest*.yml` and installs the update.
+ *
+ * With `shared` key rotation builds, v2 is the dual-signed bridge release (signed by [A, B]) and its served manifest is re-signed by A
+ * alone before the update, so the installed v1 still verifies a manifest signed by its one key.
  */
-export async function runSignedManifestTest(context: TestContext, target: string, packageManager: string, arch: Arch = Arch.x64, toolsets: ToolsetConfig = {}): Promise<void> {
-  const keyA = generateUpdateSigningKeypair()
+export async function runSignedManifestTest(
+  context: TestContext,
+  target: string,
+  packageManager: string,
+  arch: Arch = Arch.x64,
+  toolsets: ToolsetConfig = {},
+  shared?: SharedKeyRotationApps
+): Promise<void> {
+  const keyA = shared?.keys.keyA ?? generateUpdateSigningKeypair()
   const signedByA: Partial<Configuration> = { updateManifest: { signingKey: keyA.privateKeyPem } }
+  // the keys v2 is built with (and so trusts)
+  const newVersionKeys = shared == null ? [keyA.publicKeyPem] : [keyA.publicKeyPem, shared.keys.keyB.publicKeyPem]
 
   await runUpdateScenario(context, {
     target,
@@ -1145,22 +1280,32 @@ export async function runSignedManifestTest(context: TestContext, target: string
     arch,
     toolsets,
     tmpDirPrefix: "signed-manifest",
-    builds: [
-      { version: OLD_VERSION_NUMBER, extraConfig: signedByA },
-      { version: NEW_VERSION_NUMBER, extraConfig: signedByA },
-    ],
+    builds:
+      shared == null
+        ? [
+            { version: OLD_VERSION_NUMBER, extraConfig: signedByA },
+            { version: NEW_VERSION_NUMBER, extraConfig: signedByA },
+          ]
+        : keyRotationBuilds(shared.keys),
+    prebuilt: shared?.apps,
     initialUpdateConfig: async outDirs => {
       const { expect } = context
       assertManifestSignedBy(expect, await readUpdateManifest(outDirs[0].dir), OLD_VERSION_NUMBER, [keyA.publicKeyPem])
-      assertManifestSignedBy(expect, await readUpdateManifest(outDirs[1].dir), NEW_VERSION_NUMBER, [keyA.publicKeyPem])
-      await assertEmbeddedTrustList(expect, outDirs[1], [keyA.publicKeyPem])
+      assertManifestSignedBy(expect, await readUpdateManifest(outDirs[1].dir), NEW_VERSION_NUMBER, newVersionKeys)
+      if (shared == null) {
+        await assertEmbeddedTrustList(expect, outDirs[1], newVersionKeys)
+      }
       // The fixture reads the served config instead of the embedded app-update.yml, so the installed
       // version's trust list is carried over verbatim.
       const updateManifestPublicKey = await assertEmbeddedTrustList(expect, outDirs[0], [keyA.publicKeyPem])
       return { updateManifestPublicKey }
     },
     scenario: async ctx => {
-      const { expect } = ctx
+      const { expect, rootDirectory } = ctx
+      if (shared != null) {
+        await rewriteServedManifests(rootDirectory, info => resignManifest(info, [keyA.privateKeyPem]))
+        assertManifestSignedBy(expect, await readUpdateManifest(rootDirectory), NEW_VERSION_NUMBER, [keyA.publicKeyPem])
+      }
       await updateHop(expect, {
         ...ctx,
         fromVersion: OLD_VERSION_NUMBER,
@@ -1184,9 +1329,16 @@ export async function runSignedManifestTest(context: TestContext, target: string
  * and stay at 1.0.0. Then 1.0.0 → 1.0.1 verifies through A's signature of the dual-signed manifest, and — with the
  * trust list of the freshly installed v2 — 1.0.1 → 1.0.2 verifies through B alone.
  */
-export async function runKeyRotationTest(context: TestContext, target: string, packageManager: string, arch: Arch = Arch.x64, toolsets: ToolsetConfig = {}): Promise<void> {
-  const keyA = generateUpdateSigningKeypair()
-  const keyB = generateUpdateSigningKeypair()
+export async function runKeyRotationTest(
+  context: TestContext,
+  target: string,
+  packageManager: string,
+  arch: Arch = Arch.x64,
+  toolsets: ToolsetConfig = {},
+  shared?: SharedKeyRotationApps
+): Promise<void> {
+  const keys = shared?.keys ?? generateManifestSigningKeys()
+  const { keyA, keyB } = keys
 
   await runUpdateScenario(context, {
     target,
@@ -1194,19 +1346,17 @@ export async function runKeyRotationTest(context: TestContext, target: string, p
     arch,
     toolsets,
     tmpDirPrefix: "key-rotation",
-    builds: [
-      { version: OLD_VERSION_NUMBER, extraConfig: { updateManifest: { signingKey: keyA.privateKeyPem } } },
-      // bridge release: dual-signed, old key first so it also fills the legacy `signature`; trust list derived → [A, B]
-      { version: NEW_VERSION_NUMBER, extraConfig: { updateManifest: { signingKey: [keyA.privateKeyPem, keyB.privateKeyPem] } } },
-      { version: THIRD_VERSION_NUMBER, extraConfig: { updateManifest: { signingKey: keyB.privateKeyPem } } },
-    ],
+    builds: keyRotationBuilds(keys),
+    prebuilt: shared?.apps,
     initialUpdateConfig: async outDirs => {
       const { expect } = context
       assertManifestSignedBy(expect, await readUpdateManifest(outDirs[0].dir), OLD_VERSION_NUMBER, [keyA.publicKeyPem])
       assertManifestSignedBy(expect, await readUpdateManifest(outDirs[1].dir), NEW_VERSION_NUMBER, [keyA.publicKeyPem, keyB.publicKeyPem])
       assertManifestSignedBy(expect, await readUpdateManifest(outDirs[2].dir), THIRD_VERSION_NUMBER, [keyB.publicKeyPem])
-      await assertEmbeddedTrustList(expect, outDirs[1], [keyA.publicKeyPem, keyB.publicKeyPem])
-      await assertEmbeddedTrustList(expect, outDirs[2], [keyB.publicKeyPem])
+      if (shared == null) {
+        await assertEmbeddedTrustList(expect, outDirs[1], [keyA.publicKeyPem, keyB.publicKeyPem])
+        await assertEmbeddedTrustList(expect, outDirs[2], [keyB.publicKeyPem])
+      }
       const updateManifestPublicKey = await assertEmbeddedTrustList(expect, outDirs[0], [keyA.publicKeyPem])
       return { updateManifestPublicKey }
     },
@@ -1234,8 +1384,9 @@ export async function runKeyRotationTest(context: TestContext, target: string, p
         },
       })
 
-      // The installed app is now v2, whose app-update.yml trusts [A, B]; the served config mirrors it.
-      const { updateManifestPublicKey } = await readEmbeddedUpdateConfig(outDirs[1].dir)
+      // The installed app is now v2, whose app-update.yml trusts [A, B]; the served config mirrors it (a shared v2 is derived from v1
+      // and keeps its app-update.yml, see SharedKeyRotationApps, so it is served the trust list the build of v2 embeds)
+      const updateManifestPublicKey = shared == null ? (await readEmbeddedUpdateConfig(outDirs[1].dir)).updateManifestPublicKey : [keyA.publicKeyPem, keyB.publicKeyPem]
       expect(updateManifestPublicKey).toEqual([keyA.publicKeyPem, keyB.publicKeyPem])
       await writeServedUpdateConfig(updateConfigPath, { ...serverConfig, updateManifestPublicKey })
 
@@ -1449,15 +1600,7 @@ export async function runCorruptedPendingUpdateTest(
       })
 
       // 4. The installed app is untouched.
-      const probe = await launchAndWaitForQuit({
-        appPath,
-        timeoutMs: 60 * 1000,
-        updateConfigPath,
-        packageManagerToTest: packageManager,
-        env: { AUTO_UPDATER_TEST: "" },
-        waitForExit: true,
-      })
-      await probe.assert(() => expect(probe.version).toMatch(OLD_VERSION_NUMBER))
+      await expectInstalledVersion(ctx, OLD_VERSION_NUMBER)
 
       // 5. The next update check downloads the update again and installs it.
       await updateHop(expect, { ...ctx, fromVersion: OLD_VERSION_NUMBER, toVersion: NEW_VERSION_NUMBER })
@@ -1501,14 +1644,23 @@ async function webPackageSha512(dist: ApplicationUpdatePaths): Promise<string> {
 
 /**
  * Runs `test` with empty updater caches and clears them again afterwards: they hold the stored and pending packages of the test
- * app (up to ~250 MB each), which the uninstaller keeps.
+ * app (up to ~250 MB each), which the uninstaller keeps, and any partial download that a failed one left behind.
  */
-async function withEmptyUpdaterCaches(test: () => Promise<void>): Promise<void> {
-  await clearWindowsUpdaterCaches()
+export async function withEmptyUpdaterCaches(test: () => Promise<void>): Promise<void> {
+  await clearUpdaterCaches()
   try {
     await test()
   } finally {
-    await clearWindowsUpdaterCaches().catch((error: any) => log.warn({ error: error.message }, "Failed to clear the updater caches"))
+    await clearUpdaterCaches().catch((error: any) => log.warn({ error: error.message }, "Failed to clear the updater caches"))
+  }
+}
+
+async function clearUpdaterCaches(): Promise<void> {
+  if (process.platform === "win32") {
+    await clearWindowsUpdaterCaches()
+  } else {
+    // the updater cache that holds the pending directory
+    await remove(path.dirname(pendingUpdateDir(UPDATER_STORE_DIR_NAME)))
   }
 }
 

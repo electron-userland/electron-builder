@@ -2,7 +2,7 @@ import * as fsp from "fs/promises"
 import * as path from "path"
 import { createUpdateManifestSignatures, generateUpdateSigningKeypair, InvalidConfigurationError, log, serializeToYaml, TmpDir } from "builder-util"
 import { canonicalizeForSigning, computeUpdateManifestKeyId, hashFile, UpdateInfo, verifyManifestSignatures, WindowsUpdateInfo } from "builder-util-runtime"
-import { verifyBuildOutput } from "app-builder-lib/internal"
+import { UPDATE_INFO_ALIASES_MESSAGE, verifyBuildOutput } from "app-builder-lib/internal"
 import { createYargs } from "electron-builder/src/builder"
 import {
   configureSignUpdateManifestCommand,
@@ -591,6 +591,53 @@ test("--verify agrees with electron-builder verify (verifyBuildOutput) on the sa
   }
   // every outcome is covered
   expect(new Set([...reference.values()].map(it => it.status))).toEqual(new Set(["verified", "failed", "skipped"]))
+})
+
+test("--verify fails a manifest with YAML aliases as electron-builder verify does, and re-signing writes it without them", async ({ expect, tmpDir }) => {
+  const output = captureOutput()
+  const config = { updateManifest: { signingKeyFile: "keys/current.pem", publicKey: current.publicKeyPem } }
+  const dir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }), config)
+  await writeKey(dir, "current.pem", current.privateKeyPem)
+  const file = path.join(dir, "latest.yml")
+  await writeSigned(file, manifest("1.0.0", "App-Setup-1.0.0.exe"), [current.privateKeyPem])
+  // the same values, with path written as an alias of files[0].url: the signature still validates
+  const signed = await fsp.readFile(file, "utf8")
+  const aliased = signed.replace("url: App-Setup-1.0.0.exe", "url: &setup App-Setup-1.0.0.exe").replace("path: App-Setup-1.0.0.exe", "path: *setup")
+  expect(aliased).not.toBe(signed)
+  await fsp.writeFile(file, aliased)
+  expect(verifyManifestSignatures(await readManifest(file), [current.publicKeyPem]).ok).toBe(true)
+
+  const error = await rejection(run(dir, [file, "--verify"]))
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  expect(error!.message).toBe(`1 of 1 update manifest(s) failed signature verification: ${file} (${UPDATE_INFO_ALIASES_MESSAGE})`)
+  const reference = (await verifyBuildOutput({ outDir: dir, config })).filter(it => it.check === "update manifest YAML")
+  expect(reference.map(it => [it.status, it.message])).toEqual([["failed", UPDATE_INFO_ALIASES_MESSAGE]])
+  // the alias check runs before the updateManifest: false skip, as electron-builder verify fails aliases whatever the signing settings
+  const optedOut = await rejection(run(dir, [file, "--verify", "-c.updateManifest=false"]))
+  expect(optedOut).toBeInstanceOf(InvalidConfigurationError)
+  expect(optedOut!.message).toBe(`1 of 1 update manifest(s) failed signature verification: ${file} (${UPDATE_INFO_ALIASES_MESSAGE})`)
+  const optedOutReference = (await verifyBuildOutput({ outDir: dir, config: { updateManifest: false } })).filter(it => it.check === "update manifest YAML")
+  expect(optedOutReference.map(it => [it.status, it.message])).toEqual([["failed", UPDATE_INFO_ALIASES_MESSAGE]])
+
+  expect(output()).not.toContain("written without them")
+  expect(await run(dir, [file])).toEqual([{ file, version: "1.0.0", keyIds: [currentId], rehashed: [] }])
+  expect(output()).toContain("the manifest used YAML aliases, which electron-updater rejects once they expand past its limit: it is written without them")
+  const written = await fsp.readFile(file, "utf8")
+  expect(written).not.toContain("&setup")
+  expect(written).not.toContain("*setup")
+  expect((await readManifest(file)).path).toBe("App-Setup-1.0.0.exe")
+  expect(await run(dir, [file, "--verify"])).toMatchObject([{ status: "verified", keyId: currentId }])
+})
+
+test("--verify reports a manifest that is not valid YAML as a verification failure, not a YAML error", async ({ expect, tmpDir }) => {
+  captureOutput()
+  const dir = await createProject(await tmpDir.getTempDir({ prefix: "sign-update-manifest" }), { updateManifest: { publicKey: current.publicKeyPem } })
+  const file = path.join(dir, "latest.yml")
+  await fsp.writeFile(file, "version: 1.0.0\nfiles: [unterminated\n")
+
+  const error = await rejection(run(dir, [file, "--verify"]))
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  expect(error!.message.startsWith(`1 of 1 update manifest(s) failed signature verification: ${file} (the manifest is not valid YAML: `)).toBe(true)
 })
 
 test("re-signing refuses a signing key outside updateManifest.publicKey exactly as a publishing build does", async ({ expect, tmpDir }) => {

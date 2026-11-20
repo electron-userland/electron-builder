@@ -725,6 +725,17 @@ export class NsisTarget extends Target {
       defines.INSTALL_MODE_PER_ALL_USERS_REQUIRED = null
     }
 
+    if (options.allowUnelevatedPerMachineUpdate === true) {
+      // only the assisted installer's per-user mode elevates for an update of a per-machine installation: a one-click installer is either
+      // per-user or (with perMachine) always elevated, and a perMachine installer is always elevated
+      if (oneClick || options.perMachine === true) {
+        throw new InvalidConfigurationError(
+          "allowUnelevatedPerMachineUpdate makes sense only for assisted installer without perMachine (please set oneClick and perMachine to false)"
+        )
+      }
+      defines.ALLOW_UNELEVATED_PER_MACHINE_UPDATE = null
+    }
+
     if (options.allowToChangeInstallationDirectory) {
       if (oneClick) {
         throw new InvalidConfigurationError("allowToChangeInstallationDirectory makes sense only for assisted installer (please set oneClick to false)")
