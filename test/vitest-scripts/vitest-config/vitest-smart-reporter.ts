@@ -1,7 +1,7 @@
 import * as path from "path"
 import type { Reporter, TestCase, TestModule } from "vitest/node"
 import { FileStats, loadCache, saveCache, TestStats } from "./cache.js"
-import { UNSTABLE_FAIL_RATIO, SupportedPlatforms, SMART_REPORTER_VERBOSE } from "./smart-config.js"
+import { CI_PARALLELISM, getMaxWorkers, UNSTABLE_FAIL_RATIO, SupportedPlatforms, SMART_REPORTER_VERBOSE } from "./smart-config.js"
 
 const defaultStat: TestStats = {
   platformRuns: {
@@ -15,6 +15,49 @@ const defaultStat: TestStats = {
 export const TEST_SRC_ROOT = path.resolve(__dirname, "../../src")
 
 const shouldResetSnapshot = process.env.RESET_VITEST_SHARD_CACHE === "true"
+
+/**
+ * Whether a test is heavy: `test.heavy` puts `heavy` on the test's own meta, `describe.heavy` on the meta of an enclosing suite
+ * (vitest-setup.ts), so walk up the suite chain like vitest-heavy-mutex.ts does.
+ */
+export function isHeavyTest(test: TestCase): boolean {
+  let node: any = test
+  while (node != null && node.type !== "module") {
+    const meta = typeof node.meta === "function" ? node.meta() : node.meta
+    if (meta?.heavy === true) {
+      return true
+    }
+    node = node.parent
+  }
+  return false
+}
+
+/**
+ * A test's duration without the time it waited for the heavy-test mutex (recorded by vitest-heavy-mutex.ts): vitest counts beforeEach
+ * hooks in the duration, and the wait depends on what the other workers of that shard ran, so caching it would inflate the shard plan.
+ */
+export function ownDuration(test: TestCase): number {
+  const duration = test.diagnostic()?.duration ?? 0
+  const waited = (test.meta() as { heavyWaitMs?: unknown }).heavyWaitMs
+  return typeof waited === "number" ? Math.max(0, duration - waited) : duration
+}
+
+/**
+ * The duration to cache for a test, in the unit the shard planner works in: how long it takes with its file running alone. With
+ * `workers` files at once, a file takes about workers / speedup times as long as alone (they share the runner's cores and disk), and
+ * the planner divides by the speed-up itself (computeShardCount), so a parallel run's duration is scaled back by speedup / workers.
+ * A one-file-at-a-time run (local, or a TEST_FILES-scoped CI job) and a heavy test are cached as measured.
+ */
+export function serialEquivalentDuration(test: TestCase, platform: SupportedPlatforms): number {
+  const duration = ownDuration(test)
+  // a heavy test runs alone in the shard's heavy lane (vitest-heavy-mutex.ts), so its measured time is already what the planner caps
+  // per shard (HEAVY_TARGET_MS): cache it as measured
+  if (isHeavyTest(test)) {
+    return duration
+  }
+  const workers = getMaxWorkers(platform)
+  return workers > 1 ? (duration * Math.min(CI_PARALLELISM[platform].speedup, workers)) / workers : duration
+}
 
 export default class SmarterReporter implements Reporter {
   private readonly cache = shouldResetSnapshot ? { tests: {}, files: {} } : loadCache()
@@ -53,7 +96,7 @@ export default class SmarterReporter implements Reporter {
   onTestCaseResult(test: TestCase) {
     const id = `${path.relative(TEST_SRC_ROOT, test.module.moduleId).split(path.sep).join("/")}::${test.fullName}`
     this.inProgressTests.delete(id)
-    const dur = test.diagnostic()?.duration ?? 0
+    const dur = serialEquivalentDuration(test, this.currentPlatform)
     const testResult = test.result().state
     if (SMART_REPORTER_VERBOSE) {
       const status = (() => {
@@ -70,8 +113,6 @@ export default class SmarterReporter implements Reporter {
       })()
       process.stdout.write(`\n${status} ${id} (${Math.round(dur / 1000)}s)\n`)
     }
-
-    const meta = (test as any).meta || {}
 
     const prev: TestStats = this.cache.tests[id] ?? { ...defaultStat }
 
@@ -93,7 +134,7 @@ export default class SmarterReporter implements Reporter {
 
     platformRuns[this.currentPlatform] = { runs: newRuns, fails: newFails, avgMs: newAvg }
 
-    const isHeavy = meta.heavy === true
+    const isHeavy = isHeavyTest(test)
 
     this.cache.tests[id] = {
       platformRuns,
