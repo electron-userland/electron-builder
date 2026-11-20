@@ -32,6 +32,7 @@ import { forceCodeSigningError, forceCodeSigningOverrideHint, VERIFICATION_FAILE
 import { isAutoDiscoveryCodeSignIdentity } from "./util/flags.js"
 import { CodeSigningInfo, createKeychain, CreateKeychainOptions, Identity, isSignAllowed, macSigningUnavailableError, removeKeychain, sign } from "./codeSign/mac/macCodeSign.js"
 import { validateStapledTicket, verifyMacCodeSignature } from "./codeSign/mac/macSignatureVerifier.js"
+import { normalizeFileNamesToNfd } from "./codeSign/mac/unicodeFileNames.js"
 import { combineSignResults, isSignResultSigned, SigningResult } from "./codeSign/signResult.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { AfterPackContext, ElectronPlatformName } from "./index.js"
@@ -727,6 +728,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
     if (!isMacOsHighSierra()) {
       throw new InvalidConfigurationError("macOS High Sierra 10.13.6 is required to sign")
+    }
+
+    // Seal the names the DMG will actually contain. Both signing paths funnel through here — the mac flow
+    // via signApp/doSignAfterPack and the MAS flow, which calls sign() directly — so this is the one place
+    // that covers every flavor. See normalizeFileNamesToNfd.
+    const renamed = await normalizeFileNamesToNfd(appPath)
+    if (renamed > 0) {
+      log.info({ file: log.filePath(appPath), count: renamed }, "normalized precomposed file names to NFD before code signing")
     }
 
     const signOptions = await this.helper.buildSignOptions(appPath, identity, signOpts, keychainFile, arch, targetPlatform, hasCustomSign)
