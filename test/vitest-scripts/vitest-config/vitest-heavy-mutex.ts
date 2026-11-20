@@ -1,8 +1,8 @@
-import { closeSync, openSync, statSync, unlinkSync } from "fs"
 import { createHash } from "crypto"
 import { tmpdir } from "os"
 import { join } from "path"
 import { afterEach, beforeEach } from "vitest"
+import { CrossProcessFileLock } from "./cross-process-file-lock"
 
 /**
  * Heavy test mutex - ensures tests marked as heavy run sequentially across
@@ -11,7 +11,7 @@ import { afterEach, beforeEach } from "vitest"
  * Uses a per-project file lock in tmpdir so that:
  *   - Workers in the same Vitest run serialize (cross-process mutex)
  *   - Runs from different project directories don't collide
- *   - Stale locks from crashed processes are automatically cleared
+ *   - Only the holder removes the lock, and stale locks from crashed processes are automatically cleared
  *
  * This prevents resource contention when tests spawn exclusive processes like:
  * - hdiutil (macOS DMG creation)
@@ -25,49 +25,16 @@ import { afterEach, beforeEach } from "vitest"
 const projectHash = createHash("md5").update(process.cwd()).digest("hex").slice(0, 8)
 const LOCK_FILE = join(tmpdir(), `vitest-heavy-${projectHash}.lock`)
 
-// A lock file older than this is considered stale (from a previous crashed run).
-const STALE_LOCK_MS = 30 * 60 * 1000 // 30 min
+const fileLock = new CrossProcessFileLock(LOCK_FILE)
 
-function tryAcquireFileLock(): boolean {
-  // Remove stale lock if present
-  try {
-    const stat = statSync(LOCK_FILE)
-    if (Date.now() - stat.mtimeMs > STALE_LOCK_MS) {
-      unlinkSync(LOCK_FILE)
-    }
-  } catch {
-    // file doesn't exist — nothing to clean up
-  }
-
-  // Atomically create the lock file (O_CREAT | O_EXCL fails if it already exists)
-  try {
-    const fd = openSync(LOCK_FILE, "wx")
-    closeSync(fd)
-    return true
-  } catch (e: any) {
-    if (e.code !== "EEXIST") {
-      throw e
-    }
-    return false
-  }
-}
-
-function releaseFileLock(): void {
-  try {
-    unlinkSync(LOCK_FILE)
-  } catch {
-    // already released or never acquired
-  }
-}
-
-// Release on process exit to avoid stale locks after crashes
-process.on("exit", releaseFileLock)
+// Release on process exit to avoid stale locks after crashes (only a lock this process holds, see CrossProcessFileLock)
+process.on("exit", () => fileLock.release())
 process.on("SIGINT", () => {
-  releaseFileLock()
+  fileLock.release()
   process.exit(130)
 })
 process.on("SIGTERM", () => {
-  releaseFileLock()
+  fileLock.release()
   process.exit(143)
 })
 
@@ -88,10 +55,11 @@ class HeavyTestMutex {
       })
     }
 
-    // 2. Spin-wait on the cross-process file lock
-    const deadline = Date.now() + 20 * 60 * 1000 // 20 min max wait
+    // 2. Spin-wait on the cross-process file lock. With several workers, a heavy test can queue behind the heavy tests of the others;
+    // the job timeout bounds the wait, this only catches a lock that never frees.
+    const deadline = Date.now() + 60 * 60 * 1000
     while (Date.now() < deadline) {
-      if (tryAcquireFileLock()) {
+      if (fileLock.tryAcquire()) {
         this.fileLockHeld = true
         return
       }
@@ -105,7 +73,7 @@ class HeavyTestMutex {
 
   release(): void {
     if (this.fileLockHeld) {
-      releaseFileLock()
+      fileLock.release()
       this.fileLockHeld = false
     }
     this.releaseInProcess()
