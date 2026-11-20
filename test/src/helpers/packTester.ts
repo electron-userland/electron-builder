@@ -30,7 +30,7 @@ import { TmpDir } from "temp-file"
 import { getCollectorByPackageManager, PM } from "app-builder-lib/internal"
 import { promisify } from "util"
 import { macSigningCredentialsInfo, WIN_SIGNING_PUBLISHER_NAME, winSigningCredentialsInfo } from "./codeSignData"
-import { withCrossProcessLock } from "./crossProcessLock"
+import { withMacKeychainLock } from "./crossProcessLock"
 import { assertThat } from "./fileAssert"
 import AdmZip from "adm-zip"
 // @ts-ignore
@@ -509,7 +509,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       // (createKeychain in macCodeSign.ts), so two signed builds in parallel test workers can drop each other's keychain and fail to
       // find their identity. Take turns for the build; everything else in the test still runs in parallel.
       const signsOnMac = process.platform === "darwin" && ((packagerOptions.config as Configuration | null | undefined)?.cscLink != null || process.env.CSC_LINK != null)
-      const { packager, outDir } = signsOnMac ? await withCrossProcessLock("mac-keychain", pack) : await pack()
+      const { packager, outDir } = signsOnMac ? await withMacKeychainLock(pack) : await pack()
 
       if (checkOptions.packed != null) {
         await checkOptions.packed(createPackedContext(outDir, packager, projectDir, tmpDir))

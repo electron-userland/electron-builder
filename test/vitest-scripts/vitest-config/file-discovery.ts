@@ -94,14 +94,14 @@ export function detectFilePlatforms(file: string): Set<SupportedPlatforms> | nul
   return sawBlock ? allowed : null
 }
 
-// A test or suite registered with `.heavy` in its chain, e.g. `describe.heavy.ifLinux(` or `test.ifMac.heavy(`.
-const HEAVY_BLOCK = /\b(?:describe|test|it)(?:\.[A-Za-z0-9]+)*\.heavy(?:\.[A-Za-z0-9]+)*\s*\(/
+// A test or suite registered with `.heavy` in its chain, e.g. `describe.heavy.ifLinux(` or `test.ifMac.heavy(`, at the start of a
+// statement (so neither a string literal nor a cast such as `(test.heavy as any)(` counts)
+const HEAVY_BLOCK = /^\s*(?:describe|test|it)(?:\.[A-Za-z0-9]+)*\.heavy(?:\.[A-Za-z0-9]+)*\s*\(/
 // The suite module a generated toolset file registers (`import { registerX } from "../../windows/xSuite"`).
 const RELATIVE_IMPORT = /^import\s+[^;]*?from\s+"(\.\.?\/[^"]+)"/gm
 
-// Comment lines are skipped: they mention `describe.heavy(...)` in prose.
 function hasHeavyBlock(content: string): boolean {
-  return content.split("\n").some(line => !/^\s*(?:\/\/|\*)/.test(line) && HEAVY_BLOCK.test(line))
+  return content.split("\n").some(line => HEAVY_BLOCK.test(line))
 }
 
 /**

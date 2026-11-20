@@ -26,9 +26,11 @@ on:
 
 # One run per pull request: a new push (or a Renovate rebase) cancels the run of the commit it replaces. Pushes to a branch
 # (master, release/v*) never cancel a run in progress, but a run waiting for one is replaced by the next push's run, so a
-# burst of merges is tested once at its tip instead of once per commit.
+# burst of merges is tested once at its tip instead of once per commit. A manual run has a group of its own, so a push never
+# replaces it (and its inputs). Jobs that run after failed upstream jobs use `!cancelled()`, not `always()`, so a cancelled
+# run releases their runners too.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -64,7 +66,7 @@ jobs:
   run-docker-build:
     needs: check-if-docker-build
     if: |
-      always() &&
+      !cancelled() &&
       (needs.check-if-docker-build.outputs.force-docker-build == 'true' ||
       inputs.rebuild-docker-images == 'true' || inputs.rebuild-docker-images == true)
     uses: $/.github/workflows/docker-build.yml
@@ -140,7 +142,7 @@ jobs:
     name: Test Linux (Shard ${{ matrix.shard }})
     needs: [check-if-docker-build, run-docker-build, validate-and-shard]
     if: |
-      always() &&
+      !cancelled() &&
       needs.check-if-docker-build.result == 'success' &&
       (needs.run-docker-build.result == 'success' || needs.run-docker-build.result == 'skipped')
     strategy:
@@ -343,7 +345,7 @@ jobs:
     name: Test Updater
     needs: [check-if-docker-build, run-docker-build]
     if: |
-      always() &&
+      !cancelled() &&
       needs.check-if-docker-build.result == 'success' &&
       (needs.run-docker-build.result == 'success' || needs.run-docker-build.result == 'skipped')
     runs-on: ubuntu-24.04
@@ -504,7 +506,7 @@ jobs:
     name: Test Flatpak
     needs: [check-if-docker-build, run-docker-build]
     if: |
-      always() &&
+      !cancelled() &&
       needs.check-if-docker-build.result == 'success' &&
       (needs.run-docker-build.result == 'success' || needs.run-docker-build.result == 'skipped')
     runs-on: ubuntu-24.04
@@ -724,7 +726,7 @@ jobs:
   merge-smart-cache:
     name: Merge smart cache and test reports
     needs: [test-linux, test-windows, test-macos, test-e2e, test-updater, test-snap, test-flatpak]
-    if: always()
+    if: "!cancelled()"
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:

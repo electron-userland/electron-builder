@@ -43,3 +43,12 @@ export async function withCrossProcessLock<T>(name: string, task: () => Promise<
     await rm(lockPath, { recursive: true, force: true })
   }
 }
+
+/**
+ * Runs `task` while no other worker rewrites the user's keychain search list: createKeychain (macCodeSign.ts) reads the list and writes it
+ * back with its temporary keychain added, and delete-keychain removes one, so two workers doing so at once can drop each other's keychain
+ * and fail to find their identity. Every test that creates or removes a real keychain, or builds signed on macOS, takes this lock.
+ */
+export function withMacKeychainLock<T>(task: () => Promise<T>): Promise<T> {
+  return withCrossProcessLock("mac-keychain", task)
+}

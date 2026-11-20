@@ -5,7 +5,7 @@ import { detectHeavyFile } from "../vitest-scripts/vitest-config/file-discovery"
 import { computeShardCount, estimateShardMs, splitIntoShards, type WeightedFile } from "../vitest-scripts/vitest-config/shard-builder"
 import { CI_PARALLELISM, getMaxWorkers, HEAVY_TARGET_MS, TARGET_MS } from "../vitest-scripts/vitest-config/smart-config"
 import SmartSequencer from "../vitest-scripts/vitest-config/vitest-smart-sequencer"
-import { isHeavyTest, ownDuration } from "../vitest-scripts/vitest-config/vitest-smart-reporter"
+import { isHeavyTest, ownDuration, serialEquivalentDuration } from "../vitest-scripts/vitest-config/vitest-smart-reporter"
 
 const MIN = 60 * 1000
 
@@ -99,7 +99,12 @@ describe("heavy test detection", () => {
     expect(detectHeavyFile(write("suiteTest.ts", `describe.heavy.ifLinux("deb", () => {})\n`))).toBe(true)
     expect(detectHeavyFile(write("testTest.ts", `test.ifMac.heavy("dmg", options, () => {})\n`))).toBe(true)
     expect(
-      detectHeavyFile(write("proseTest.ts", `// runs like describe.heavy("x", ...)\n  expect((test.heavy as any)("legacy", () => 1, 5)).toThrow()\ndescribe("x", () => {})\n`))
+      detectHeavyFile(
+        write(
+          "proseTest.ts",
+          `// runs like describe.heavy("x", ...)\n  expect((test.heavy as any)("legacy", () => 1, 5)).toThrow()\n  write("a.ts", "describe.heavy(\\"deb\\", () => {})")\ndescribe("x", () => {})\n`
+        )
+      )
     ).toBe(false)
   })
 
@@ -122,6 +127,21 @@ describe("heavy test detection", () => {
     const reported = (duration: number, meta: Record<string, unknown>) => ({ diagnostic: () => ({ duration }), meta: () => meta }) as any
     expect(ownDuration(reported(10 * MIN, { heavy: true, heavyWaitMs: 4 * MIN }))).toBe(6 * MIN)
     expect(ownDuration(reported(10 * MIN, {}))).toBe(10 * MIN)
+  })
+
+  test("a duration from files running in parallel is cached in the serial unit the planner divides by the speed-up", () => {
+    const reported = (duration: number) => ({ diagnostic: () => ({ duration }), meta: () => ({}) }) as any
+    vi.stubEnv("TEST_FILES", "")
+    vi.stubEnv("VITEST_MAX_WORKERS", "")
+    vi.stubEnv("CI", "true")
+    const { workers, speedup } = CI_PARALLELISM.linux
+    expect(serialEquivalentDuration(reported(10 * MIN), "linux")).toBeCloseTo((10 * MIN * speedup) / workers)
+    // one file at a time: as measured
+    vi.stubEnv("TEST_FILES", "blackboxUpdateTest")
+    expect(serialEquivalentDuration(reported(10 * MIN), "linux")).toBe(10 * MIN)
+    vi.stubEnv("TEST_FILES", "")
+    vi.stubEnv("CI", "")
+    expect(serialEquivalentDuration(reported(10 * MIN), "linux")).toBe(10 * MIN)
   })
 
   test("the reporter finds the heavy flag of an enclosing suite", () => {

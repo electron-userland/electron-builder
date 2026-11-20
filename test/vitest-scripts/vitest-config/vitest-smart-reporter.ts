@@ -1,7 +1,7 @@
 import * as path from "path"
 import type { Reporter, TestCase, TestModule } from "vitest/node"
 import { FileStats, loadCache, saveCache, TestStats } from "./cache.js"
-import { UNSTABLE_FAIL_RATIO, SupportedPlatforms, SMART_REPORTER_VERBOSE } from "./smart-config.js"
+import { CI_PARALLELISM, getMaxWorkers, UNSTABLE_FAIL_RATIO, SupportedPlatforms, SMART_REPORTER_VERBOSE } from "./smart-config.js"
 
 const defaultStat: TestStats = {
   platformRuns: {
@@ -42,6 +42,18 @@ export function ownDuration(test: TestCase): number {
   return typeof waited === "number" ? Math.max(0, duration - waited) : duration
 }
 
+/**
+ * The duration to cache for a test, in the unit the shard planner works in: how long it takes with its file running alone. With
+ * `workers` files at once, a file takes about workers / speedup times as long as alone (they share the runner's cores and disk), and
+ * the planner divides by the speed-up itself (computeShardCount), so a parallel run's duration is scaled back by speedup / workers.
+ * A one-file-at-a-time run (local, or a TEST_FILES-scoped CI job) is cached as measured.
+ */
+export function serialEquivalentDuration(test: TestCase, platform: SupportedPlatforms): number {
+  const duration = ownDuration(test)
+  const workers = getMaxWorkers(platform)
+  return workers > 1 ? (duration * Math.min(CI_PARALLELISM[platform].speedup, workers)) / workers : duration
+}
+
 export default class SmarterReporter implements Reporter {
   private readonly cache = shouldResetSnapshot ? { tests: {}, files: {} } : loadCache()
   private readonly fileDurations = new Map<string, number>()
@@ -79,7 +91,7 @@ export default class SmarterReporter implements Reporter {
   onTestCaseResult(test: TestCase) {
     const id = `${path.relative(TEST_SRC_ROOT, test.module.moduleId).split(path.sep).join("/")}::${test.fullName}`
     this.inProgressTests.delete(id)
-    const dur = ownDuration(test)
+    const dur = serialEquivalentDuration(test, this.currentPlatform)
     const testResult = test.result().state
     if (SMART_REPORTER_VERBOSE) {
       const status = (() => {

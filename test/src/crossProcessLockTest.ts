@@ -7,6 +7,11 @@ import { crossProcessLockPath, withCrossProcessLock } from "./helpers/crossProce
 
 const lockName = () => `test-${randomBytes(6).toString("hex")}`
 
+async function makeOld(file: string, ageMs: number) {
+  const then = new Date(Date.now() - ageMs)
+  await fs.utimes(file, then, then)
+}
+
 describe("withCrossProcessLock", () => {
   test("holders of the same lock take turns", async () => {
     const name = lockName()
@@ -63,13 +68,44 @@ describe("CrossProcessFileLock (heavy-test mutex)", () => {
     const file = path.join(await tmpDir.createTempDir({ prefix: "heavy-lock" }), "heavy.lock")
     const crashed = new CrossProcessFileLock(file, 60_000)
     expect(crashed.tryAcquire()).toBe(true)
-    crashed.release = () => undefined
-    const longAgo = new Date(Date.now() - 2 * 60_000)
-    await fs.utimes(file, longAgo, longAgo)
+    // a crash ends the heartbeat thread with the process, and nothing releases the lock
+    await (crashed as any).heartbeat.terminate()
+    await makeOld(file, 2 * 60_000)
 
     const next = new CrossProcessFileLock(file, 60_000)
     expect(next.tryAcquire()).toBe(true)
     expect(crashed.isHeld()).toBe(false)
     next.release()
+  })
+
+  test("a holder whose thread is blocked in a long synchronous step keeps its lock", async ({ tmpDir }) => {
+    const file = path.join(await tmpDir.createTempDir({ prefix: "heavy-lock" }), "heavy.lock")
+    const holder = new CrossProcessFileLock(file, 1000, 100)
+    expect(holder.tryAcquire()).toBe(true)
+    // like execFileSync of an installer: this thread runs nothing for longer than the stale window
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2500)
+
+    const other = new CrossProcessFileLock(file, 1000, 100)
+    expect(other.tryAcquire()).toBe(false)
+    expect(holder.isHeld()).toBe(true)
+    holder.release()
+  })
+
+  test("only one waiter takes over a stale lock: one that finds the takeover guard taken leaves the lock alone", async ({ tmpDir }) => {
+    const file = path.join(await tmpDir.createTempDir({ prefix: "heavy-lock" }), "heavy.lock")
+    await fs.writeFile(file, "crashed-owner")
+    await makeOld(file, 2 * 60_000)
+    // another waiter is in the middle of its takeover
+    await fs.writeFile(`${file}.takeover`, "")
+
+    const waiter = new CrossProcessFileLock(file, 60_000)
+    expect(waiter.tryAcquire()).toBe(false)
+    expect(await fs.readFile(file, "utf8")).toBe("crashed-owner")
+
+    // a guard left by a waiter that crashed mid-takeover goes stale too
+    await makeOld(`${file}.takeover`, 60_000)
+    expect(waiter.tryAcquire()).toBe(true)
+    expect(waiter.isHeld()).toBe(true)
+    waiter.release()
   })
 })
