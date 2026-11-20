@@ -49,7 +49,7 @@ export interface ServedRequest {
   readonly headerNames: ReadonlyArray<string>
   /** the status of the response, 0 when it closed before its head was written; final once {@link LocalServer.settled} resolves */
   status: number
-  /** the response closed before all of it was written: the client went away mid-body; final once {@link LocalServer.settled} resolves */
+  /** the response closed before the server wrote all of it: the client went away mid-body; final once {@link LocalServer.settled} resolves */
   aborted: boolean
 }
 
@@ -90,7 +90,10 @@ export function createLocalServer(root: string, bindAddress = "127.0.0.1", onReq
       new Promise(resolve =>
         res.once("close", () => {
           request.status = res.headersSent ? res.statusCode : 0
-          request.aborted = !res.writableFinished
+          // writableEnded, not writableFinished: the response is ended once its last byte is handed to the socket, while it finishes
+          // only when that write's callback has run, which on a busy machine can come after a client that read the whole body has
+          // already closed the connection (the request would be recorded as aborted although nothing was cut off)
+          request.aborted = !res.writableEnded
           resolve()
         })
       )
