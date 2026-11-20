@@ -86,14 +86,22 @@ export function createLocalServer(root: string, bindAddress = "127.0.0.1", onReq
     const requestPath = decodeURIComponent(new URL(req.url!, "http://localhost").pathname)
     const request: ServedRequest = { pathname: requestPath, headerNames: Object.keys(req.headers).sort(), status: 0, aborted: false }
     requests.push(request)
+    // The body bytes handed to the socket, and the Content-Length the response declared (null when it declares none)
+    let bodyBytes = 0
+    let declaredBytes: number | null = null
+    const write = res.write.bind(res) as (chunk: string | Uint8Array, ...rest: Array<any>) => boolean
+    res.write = ((chunk: string | Uint8Array, ...rest: Array<any>) => {
+      bodyBytes += typeof chunk === "string" ? Buffer.byteLength(chunk) : chunk.length
+      return write(chunk, ...rest)
+    }) as typeof res.write
     responsesClosed.push(
       new Promise(resolve =>
         res.once("close", () => {
           request.status = res.headersSent ? res.statusCode : 0
-          // writableEnded, not writableFinished: the response is ended once its last byte is handed to the socket, while it finishes
-          // only when that write's callback has run, which on a busy machine can come after a client that read the whole body has
-          // already closed the connection (the request would be recorded as aborted although nothing was cut off)
-          request.aborted = !res.writableEnded
+          // Aborted only when the body was cut off. A client that has read the whole Content-Length closes the connection at once (as
+          // `agent: false` clients do), which on a busy machine can come before the server ends the response (the file stream's EOF
+          // read) or sees the last write finish, so neither writableEnded nor writableFinished alone says the body was complete.
+          request.aborted = !res.writableEnded && (declaredBytes == null || bodyBytes < declaredBytes)
           resolve()
         })
       )
@@ -124,7 +132,8 @@ export function createLocalServer(root: string, bindAddress = "127.0.0.1", onReq
       const rangeHeader = req.headers["range"]
       if (!rangeHeader) {
         const extraBytes = route != null && "extraBytes" in route ? route.extraBytes : 0
-        res.writeHead(200, { "Content-Length": size + extraBytes, "Content-Type": "application/octet-stream" })
+        declaredBytes = size + extraBytes
+        res.writeHead(200, { "Content-Length": declaredBytes, "Content-Type": "application/octet-stream" })
         // pipeline, not pipe: the file is closed when the client goes away mid-body too (the request is recorded as aborted)
         pipeline(fileWithExtraBytes(filePath, extraBytes), res, () => undefined)
         return
@@ -139,9 +148,10 @@ export function createLocalServer(root: string, bindAddress = "127.0.0.1", onReq
 
       if (ranges.length === 1) {
         const [start, end] = ranges[0]
+        declaredBytes = end - start + 1
         res.writeHead(206, {
           "Content-Range": `bytes ${start}-${end}/${size}`,
-          "Content-Length": end - start + 1,
+          "Content-Length": declaredBytes,
           "Content-Type": "application/octet-stream",
         })
         fs.createReadStream(filePath, { start, end }).pipe(res)
