@@ -16,6 +16,7 @@ import {
   expectInstalledVersion,
   expectRejectedUpdate,
   pollUntilNewVersionInstalled,
+  PrebuiltApps,
   runUpdateScenario,
   ScenarioContext,
   THIRD_VERSION_NUMBER,
@@ -229,8 +230,9 @@ function expectSquirrelProxyChallenge(expect: ExpectStatic, stdout: string): voi
  * The request rules of electron-updater 7 on a real mac update (zip, Squirrel.Mac, Electron's net), with one build pair for all of them. The
  * installed 1.0.0 refuses the served 1.0.1 without autoUpdater.crossOriginHeaders, from a plain http feed on a host that is not loopback (and
  * the redirect from there to loopback), and while the zip is larger than its update info says; then it updates with the zip on another origin.
+ * `prebuilt`: the arm64 pair that the other mac cases of its file share, instead of a pair built for this test.
  */
-export async function runMacRequestRulesTest(context: TestContext): Promise<void> {
+export async function runMacRequestRulesTest(context: TestContext, prebuilt?: PrebuiltApps): Promise<void> {
   await withEmptyUpdaterCaches(() =>
     runUpdateScenario(context, {
       target: "zip",
@@ -239,6 +241,7 @@ export async function runMacRequestRulesTest(context: TestContext): Promise<void
       toolsets: {},
       tmpDirPrefix: "request-rules",
       builds: [{ version: OLD_VERSION_NUMBER }, { version: NEW_VERSION_NUMBER }],
+      prebuilt,
       initialUpdateConfig: () => Promise.resolve({}),
       scenario: async ctx => {
         const other = await ctx.servers.createOrigin()
