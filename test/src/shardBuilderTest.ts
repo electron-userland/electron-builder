@@ -72,12 +72,16 @@ describe("shard planning with parallel workers", () => {
     ])
   })
 
-  test("files are run one at a time locally unless VITEST_MAX_WORKERS says otherwise", () => {
+  test("files are run one at a time locally and in TEST_FILES-scoped CI jobs unless VITEST_MAX_WORKERS says otherwise", () => {
     vi.stubEnv("CI", "")
     vi.stubEnv("VITEST_MAX_WORKERS", "")
+    vi.stubEnv("TEST_FILES", "")
     expect(getMaxWorkers("darwin")).toBe(1)
     vi.stubEnv("CI", "true")
     expect(getMaxWorkers("darwin")).toBe(CI_PARALLELISM.darwin.workers)
+    // the e2e auto-updater jobs install packages machine-wide from several files
+    vi.stubEnv("TEST_FILES", "blackboxUpdateTest,blackboxInstallTest")
+    expect(getMaxWorkers("linux")).toBe(1)
     vi.stubEnv("VITEST_MAX_WORKERS", "2")
     expect(getMaxWorkers("darwin")).toBe(2)
   })

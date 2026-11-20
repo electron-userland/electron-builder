@@ -77,15 +77,17 @@ export const CI_PARALLELISM: Record<SupportedPlatforms, { readonly workers: numb
 }
 
 /**
- * Test files vitest runs at once on this machine: `VITEST_MAX_WORKERS` when set, else the platform's CI_PARALLELISM on CI and one
- * file at a time locally (the previous behaviour, and the easiest to debug).
+ * Test files vitest runs at once on this machine: `VITEST_MAX_WORKERS` when set, else the platform's CI_PARALLELISM in a smart-sharded
+ * CI shard, and one file at a time otherwise. A run scoped with TEST_FILES is one of the dedicated jobs (e2e auto-updater, updater,
+ * snap, flatpak) that install packages and apps machine-wide (`pacman -Sy`, /opt/TestApp, …) from several files, so it keeps running
+ * them one after another, like a local run (the easiest to debug).
  */
 export function getMaxWorkers(platform: SupportedPlatforms): number {
   const override = Number(process.env.VITEST_MAX_WORKERS)
   if (Number.isInteger(override) && override > 0) {
     return override
   }
-  return process.env.CI ? CI_PARALLELISM[platform].workers : 1
+  return process.env.CI && getTestFilesOverride() == null ? CI_PARALLELISM[platform].workers : 1
 }
 
 export const SHARD_INDEX = process.env.VITEST_SHARD_INDEX != null ? Number(process.env.VITEST_SHARD_INDEX) : null
