@@ -14,7 +14,6 @@ import {
   runKeyRotationTest,
   runSignedManifestTest,
   runUpdateScenario,
-  THIRD_VERSION_NUMBER,
   updateHop,
   VersionBuild,
   withEmptyUpdaterCaches,
@@ -135,10 +134,11 @@ type MacBlackboxFile = {
 const macBlackboxFiles = {
   arm64: (): MacBlackboxFile => {
     // Every arm64 case updates between the versions of the key rotation (1.0.0 signed by A, 1.0.1 by [A, B], 1.0.2 by B), with the served
-    // manifests re-signed (or unsigned) where a case needs other signatures. The build and 1.0.1, the update most cases install, are
-    // compressed at "maximum"; 1.0.2 is stored.
+    // manifests re-signed (or unsigned) where a case needs other signatures. The zip of the build is never downloaded (1.0.0 is installed
+    // from its app folder), so it is stored; 1.0.1, the update most cases download and Squirrel.Mac installs, is a compressed ("normal")
+    // zip like the ones apps ship; 1.0.2 is stored.
     const keys = generateManifestSigningKeys()
-    const versions: Array<VersionBuild> = keyRotationBuilds(keys).map(build => ({ ...build, compression: build.version === THIRD_VERSION_NUMBER ? "store" : "maximum" }))
+    const versions: Array<VersionBuild> = keyRotationBuilds(keys).map(build => ({ ...build, compression: build.version === NEW_VERSION_NUMBER ? "normal" : "store" }))
     // the plain update and the request rules take the first two
     const pair = (apps: PrebuiltApps): PrebuiltApps => ({ ...apps, outDirs: apps.outDirs.slice(0, 2) })
     return {
@@ -158,7 +158,8 @@ const macBlackboxFiles = {
   },
   universal: (): MacBlackboxFile => {
     const versions: Array<VersionBuild> = [
-      { version: OLD_VERSION_NUMBER, compression: "maximum" },
+      // installed from its app folder: its zip is never downloaded
+      { version: OLD_VERSION_NUMBER, compression: "store" },
       { version: NEW_VERSION_NUMBER, compression: "store" },
     ]
     return {
