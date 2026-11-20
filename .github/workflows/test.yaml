@@ -24,13 +24,12 @@ on:
         type: boolean
         default: true
 
-# One run per pull request: a new push (or a Renovate rebase) cancels the run of the commit it replaces. Pushes to a branch
-# (master, release/v*) never cancel a run in progress, but a run waiting for one is replaced by the next push's run, so a
-# burst of merges is tested once at its tip instead of once per commit. A manual run has a group of its own, so a push never
-# replaces it (and its inputs). Jobs that run after failed upstream jobs use `!cancelled()`, not `always()`, so a cancelled
-# run releases their runners too.
+# One run per pull request: a new push (or a Renovate rebase) cancels the run of the commit it replaces. Every other run (a
+# push to master or release/v*, a manual run) has a group of its own, so every commit on a branch is tested and nothing
+# replaces a manual run's inputs. Jobs that run after failed upstream jobs use `!cancelled()`, not `always()`, so a cancelled
+# PR run releases their runners too.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
