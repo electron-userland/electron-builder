@@ -16,7 +16,10 @@ describe("withCrossProcessLock", () => {
         events.push(`${id} end`)
       })
     await Promise.all([hold("a"), hold("b")])
-    expect(events).toEqual(["a start", "a end", "b start", "b end"])
+    // either may get the lock first, but the other starts only after it ends
+    const first = events[0].split(" ")[0]
+    const second = first === "a" ? "b" : "a"
+    expect(events).toEqual([`${first} start`, `${first} end`, `${second} start`, `${second} end`])
   })
 
   test("the lock is released when the task throws", async () => {
