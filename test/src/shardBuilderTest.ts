@@ -130,12 +130,14 @@ describe("heavy test detection", () => {
   })
 
   test("a duration from files running in parallel is cached in the serial unit the planner divides by the speed-up", () => {
-    const reported = (duration: number) => ({ diagnostic: () => ({ duration }), meta: () => ({}) }) as any
+    const reported = (duration: number, meta: Record<string, unknown> = {}) => ({ type: "test", diagnostic: () => ({ duration }), meta: () => meta }) as any
     vi.stubEnv("TEST_FILES", "")
     vi.stubEnv("VITEST_MAX_WORKERS", "")
     vi.stubEnv("CI", "true")
     const { workers, speedup } = CI_PARALLELISM.linux
     expect(serialEquivalentDuration(reported(10 * MIN), "linux")).toBeCloseTo((10 * MIN * speedup) / workers)
+    // a heavy test ran alone in the heavy lane: its own time (without the mutex wait) is what the heavy cap counts
+    expect(serialEquivalentDuration(reported(10 * MIN, { heavy: true, heavyWaitMs: 3 * MIN }), "linux")).toBe(7 * MIN)
     // one file at a time: as measured
     vi.stubEnv("TEST_FILES", "blackboxUpdateTest")
     expect(serialEquivalentDuration(reported(10 * MIN), "linux")).toBe(10 * MIN)

@@ -46,10 +46,15 @@ export function ownDuration(test: TestCase): number {
  * The duration to cache for a test, in the unit the shard planner works in: how long it takes with its file running alone. With
  * `workers` files at once, a file takes about workers / speedup times as long as alone (they share the runner's cores and disk), and
  * the planner divides by the speed-up itself (computeShardCount), so a parallel run's duration is scaled back by speedup / workers.
- * A one-file-at-a-time run (local, or a TEST_FILES-scoped CI job) is cached as measured.
+ * A one-file-at-a-time run (local, or a TEST_FILES-scoped CI job) and a heavy test are cached as measured.
  */
 export function serialEquivalentDuration(test: TestCase, platform: SupportedPlatforms): number {
   const duration = ownDuration(test)
+  // a heavy test runs alone in the shard's heavy lane (vitest-heavy-mutex.ts), so its measured time is already what the planner caps
+  // per shard (HEAVY_TARGET_MS): cache it as measured
+  if (isHeavyTest(test)) {
+    return duration
+  }
   const workers = getMaxWorkers(platform)
   return workers > 1 ? (duration * Math.min(CI_PARALLELISM[platform].speedup, workers)) / workers : duration
 }
