@@ -641,6 +641,11 @@ export interface ManifestVerificationResult {
   readonly format?: UpdateManifestSignatureFormat
   /** Why the manifest was refused before or apart from a plain signature mismatch, when it was. */
   readonly reason?: string
+  /**
+   * True when the manifest was refused under a rule `EBUM2` signatures brought in v27: it has top-level fields an `EBUM1` signature does
+   * not cover (see {@link EBUM1_MANIFEST_FIELDS}) and no `EBUM2` signature validates, or its `EBUM2` payload cannot be computed.
+   */
+  readonly ebum2Refusal?: boolean
 }
 
 /**
@@ -685,6 +690,7 @@ export function verifyManifestSignatures(info: UpdateInfo, publicKeys: Array<str
   }
 
   const reasons: Array<string> = []
+  let ebum2Refusal = false
   const ebum2 = candidates.filter(it => it.format === UPDATE_MANIFEST_SIGNATURE_VERSION_2)
   if (ebum2.length > 0) {
     const canonical = canonicalizeForSigningV2(info)
@@ -695,6 +701,7 @@ export function verifyManifestSignatures(info: UpdateInfo, publicKeys: Array<str
       }
     } else {
       reasons.push(`its EBUM2 payload cannot be computed: ${canonical.reason}`)
+      ebum2Refusal = true
     }
   }
 
@@ -704,6 +711,7 @@ export function verifyManifestSignatures(info: UpdateInfo, publicKeys: Array<str
     if (outside.length > 0) {
       // only reported when no EBUM2 signature verified: an EBUM1 signature does not cover these fields
       reasons.push(`${outside.map(it => JSON.stringify(it)).join(", ")} ${outside.length === 1 ? "is" : "are"} not covered by an EBUM1 signature, and no EBUM2 signature validates`)
+      ebum2Refusal = true
     } else {
       const keyId = findVerifyingKey(Buffer.from(canonicalizeForSigning(info), "utf8"), trustedKeys, ebum1)
       if (keyId != null) {
@@ -715,7 +723,10 @@ export function verifyManifestSignatures(info: UpdateInfo, publicKeys: Array<str
   if (ebum1.length === 0 && ebum2.length === 0) {
     reasons.push(`it carries no signature in a supported format (${UPDATE_MANIFEST_SIGNATURE_VERSION_2}, ${UPDATE_MANIFEST_SIGNATURE_VERSION})`)
   }
-  return reasons.length === 0 ? { ok: false } : { ok: false, reason: reasons.join("; ") }
+  if (reasons.length === 0) {
+    return { ok: false }
+  }
+  return ebum2Refusal ? { ok: false, reason: reasons.join("; "), ebum2Refusal } : { ok: false, reason: reasons.join("; ") }
 }
 
 /**

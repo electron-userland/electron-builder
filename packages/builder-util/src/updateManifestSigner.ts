@@ -18,6 +18,8 @@ import {
 import { decodeStrictBase64 } from "./cscLink.js"
 import { InvalidConfigurationError, serializeToYaml } from "./util.js"
 
+const EBUM2_SIGNING_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#update-manifests-are-signed-with-ebum2"
+
 /** `info` without the signature fields, which no signed payload covers. */
 function withoutSignatures(info: UpdateInfo): UpdateInfo {
   const { signature: _signature, signatures: _signatures, ...rest } = info
@@ -32,7 +34,10 @@ function withoutSignatures(info: UpdateInfo): UpdateInfo {
 function computeEbum2Payload(info: UpdateInfo): string {
   const canonical = canonicalizeForSigningV2(load(serializeToYaml(withoutSignatures(info), false, true)))
   if (!canonical.ok) {
-    throw new Error(`Cannot sign update manifest for version ${info.version}: ${canonical.reason}`)
+    throw new InvalidConfigurationError(
+      `Cannot sign update manifest for version ${info.version}: ${canonical.reason}. electron-builder 27 signs every field of latest*.yml (EBUM2) as it reads back from YAML, ` +
+        `so each value must be a plain string, number, boolean, list or mapping: write a date as an ISO string. ${EBUM2_SIGNING_DOCS}`
+    )
   }
   return canonical.payload
 }
@@ -112,13 +117,21 @@ function signAndSerializeUpdateManifest(
   const published = load(yaml)
   const ebum2 = canonicalizeForSigningV2(published)
   if (!ebum2.ok || ebum2.payload !== computeEbum2Payload(unsigned)) {
-    throw new Error(`Update manifest for version ${info.version} does not read back as it was signed (EBUM2)${ebum2.ok ? "" : `: ${ebum2.reason}`}`)
+    throw readBackError(info, `EBUM2${ebum2.ok ? "" : `: ${ebum2.reason}`}`)
   }
   // ebum2.ok implies a mapping; re-check the EBUM1 payload over the parse as well
   if (typeof published !== "object" || published == null || canonicalizeForSigning(published as UpdateInfo) !== canonicalizeForSigning(unsigned)) {
-    throw new Error(`Update manifest for version ${info.version} does not read back as it was signed (EBUM1)`)
+    throw readBackError(info, "EBUM1")
   }
   return { content: yaml, info: signed, signatures }
+}
+
+// the YAML written for `info` parses back to other values than were signed, so installs would refuse the manifest
+function readBackError(info: UpdateInfo, detail: string): InvalidConfigurationError {
+  return new InvalidConfigurationError(
+    `Update manifest for version ${info.version} does not read back as it was signed (${detail}): latest*.yml would hold other values than were signed, so installs would refuse it. ` +
+      `Every value must survive YAML as itself: plain enumerable data, no class instances or getters. ${EBUM2_SIGNING_DOCS}`
+  )
 }
 
 /** Accepts an Ed25519 private key as a PEM string (PKCS#8) and returns a normalized KeyObject. */

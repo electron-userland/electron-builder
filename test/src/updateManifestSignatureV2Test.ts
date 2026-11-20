@@ -13,12 +13,28 @@ import {
   verifyManifestSignatures,
   WindowsUpdateInfo,
 } from "builder-util-runtime"
-import { generateUpdateSigningKeypair, loadUpdateSigningKeys, serializeSignedUpdateManifest, serializeToYaml, signUpdateManifest } from "builder-util"
+import { generateUpdateSigningKeypair, InvalidConfigurationError, loadUpdateSigningKeys, serializeSignedUpdateManifest, serializeToYaml, signUpdateManifest } from "builder-util"
 import { DebUpdater } from "electron-updater"
 import { alpha11VerifyManifestSignatures } from "./updater/signedManifestTestUtil"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import { carryUpdateManifestSource, parseUpdateInfo } from "electron-updater/src/providers/Provider"
 import { resolveCatalogSignatureOptions } from "electron-updater/src/windowsExecutableCodeSignatureVerifier"
+
+const EBUM2_BUILD_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#update-manifests-are-signed-with-ebum2"
+const EBUM2_RUNTIME_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-manifests-are-verified-with-ebum2"
+
+/** The error `fn` throws; fails the test when it returns. */
+function captureError(fn: () => unknown): Error {
+  try {
+    fn()
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return e
+    }
+    throw e
+  }
+  throw new Error("expected the call to throw")
+}
 
 function makeInfo(overrides: Record<string, unknown> = {}): UpdateInfo {
   return {
@@ -185,6 +201,8 @@ describe("EBUM2 signatures cover every field", () => {
     expect(verifyManifestSignatures(injected, [publicKeyPem])).toEqual({
       ok: false,
       reason: '"allowSomethingDangerous" is not covered by an EBUM1 signature, and no EBUM2 signature validates',
+      // a refusal under a rule EBUM2 brought, which the updater links to its v27 migration section
+      ebum2Refusal: true,
     })
     // stripping the EBUM2 signatures does not help: EBUM1 is only accepted for the fields an EBUM1-only builder writes
     expect(verifyManifestSignatures(onlyFormat(injected, "EBUM1"), [publicKeyPem]).ok).toBe(false)
@@ -274,15 +292,28 @@ describe("EBUM2 survives the YAML round trip", () => {
     expect(verifyManifestSignatures(onlyFormat(parsed, "EBUM2"), [publicKeyPem])).toEqual({
       ok: false,
       reason: "its EBUM2 payload cannot be computed: releaseDate is Date, which has no canonical form (quote it in the YAML to make it a string)",
+      ebum2Refusal: true,
     })
     // EBUM1 never covered releaseDate, so a dual-signed manifest still verifies through its EBUM1 signature
     expect(verifyManifestSignatures(parsed, [publicKeyPem])).toMatchObject({ ok: true, format: "EBUM1" })
   })
 
   test("the builder refuses to sign a value that does not survive YAML as itself (a Date from a JS config)", () => {
-    expect(() => serializeSignedUpdateManifest(makeInfo({ vendor: { builtAt: new Date() } }), [privateKeyPem])).toThrow(
-      /Cannot sign update manifest for version 1\.2\.3: vendor\.builtAt is Date, which has no canonical form/
-    )
+    const error = captureError(() => serializeSignedUpdateManifest(makeInfo({ vendor: { builtAt: new Date() } }), [privateKeyPem]))
+    // a configuration error of the build, linking its v27 migration section
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toMatch(/^Cannot sign update manifest for version 1\.2\.3: vendor\.builtAt is Date, which has no canonical form/)
+    expect(error.message.endsWith(` ${EBUM2_BUILD_DOCS}`)).toBe(true)
+  })
+
+  test("the builder refuses a manifest whose YAML does not read back as it was signed", () => {
+    const info = makeInfo()
+    // a value that is signed in memory but not written to the YAML: a non-enumerable property, as a class instance or getter may have
+    Object.defineProperty(info.files[0], "sha512", { value: "abc123", enumerable: false })
+    const error = captureError(() => serializeSignedUpdateManifest(info, [privateKeyPem]))
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toMatch(/^Update manifest for version 1\.2\.3 does not read back as it was signed \(EBUM1\)/)
+    expect(error.message.endsWith(` ${EBUM2_BUILD_DOCS}`)).toBe(true)
   })
 
   test("signs with the keys from ELECTRON_BUILDER_UPDATE_SIGN_KEY, in both formats, for every key", () => {
@@ -367,6 +398,7 @@ describe("compatibility with EBUM1-only verifiers and manifests", () => {
     expect(verifyManifestSignatures({ ...base, signature: signUpdateManifest(base, oldKey.privateKeyPem) }, [oldKey.publicKeyPem])).toEqual({
       ok: false,
       reason: '"customFlag" is not covered by an EBUM1 signature, and no EBUM2 signature validates',
+      ebum2Refusal: true,
     })
   })
 
@@ -447,6 +479,72 @@ describe("AppUpdater verifies the manifest as published, before providers add fi
       code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID",
       message: expect.stringContaining('"tag" is not covered by an EBUM1 signature'),
     })
+  })
+
+  const withLogger = (updater: DebUpdater) => {
+    const warn = vi.fn()
+    updater.logger = { info: vi.fn(), warn, error: vi.fn(), debug: vi.fn() }
+    return warn
+  }
+
+  test("verifying update info without a recorded manifest text warns once per updater", async () => {
+    const parsed = publish(makeInfo(), [privateKeyPem])
+    const updater = makeUpdater()
+    const warn = withLogger(updater)
+    await expect(verify(updater, parsed)).resolves.toBe(true)
+    await expect(verify(updater, parsed)).resolves.toBe(true)
+    expect(warn).toHaveBeenCalledTimes(1)
+    // another updater instance warns again
+    const other = makeUpdater()
+    const otherWarn = withLogger(other)
+    await expect(verify(other, parsed)).resolves.toBe(true)
+    expect(otherWarn).toHaveBeenCalledTimes(1)
+  })
+
+  test("update info parsed with parseUpdateInfo, or carried with carryUpdateManifestSource, verifies without that warning", async () => {
+    const result = parseUpdateInfo(serializeSignedUpdateManifest(makeInfo(), [privateKeyPem]), "latest.yml", feedUrl)
+    const updater = makeUpdater()
+    const warn = withLogger(updater)
+    await expect(verify(updater, result)).resolves.toBe(true)
+    await expect(verify(updater, carryUpdateManifestSource(result, { tag: "v1.2.3", ...result }))).resolves.toBe(true)
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  test("when update info without a recorded manifest text fails verification, the error names the replacement and links the migration section instead", async () => {
+    const parsed = publish(makeInfo(), [privateKeyPem])
+    const updater = makeUpdater()
+    const warn = withLogger(updater)
+    const error = await verify(updater, { ...parsed, tag: "v1.2.3" } as UpdateInfo).catch((e: Error) => e)
+    expect(error).toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+    expect((error as Error).message).toContain("carryUpdateManifestSource(parsed, copy)")
+    expect((error as Error).message.endsWith(` ${EBUM2_RUNTIME_DOCS}`)).toBe(true)
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  test("an EBUM1-only manifest with a field EBUM1 does not cover is refused with a link to the v27 migration section", async () => {
+    const base = makeInfo({ customFlag: true })
+    const signature = signUpdateManifest(base, privateKeyPem)
+    const yaml = serializeToYaml({ ...base, signature, signatures: [{ keyId: computeUpdateManifestKeyId(publicKeyPem), signature }] }, false, true)
+    const error = await verify(makeUpdater(), parseUpdateInfo(yaml, "latest.yml", feedUrl)).catch((e: Error) => e)
+    expect(error).toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+    expect((error as Error).message).toContain('"customFlag" is not covered by an EBUM1 signature')
+    expect((error as Error).message.endsWith(` ${EBUM2_RUNTIME_DOCS}`)).toBe(true)
+    // the manifest text was recorded, so the error does not blame the provider
+    expect((error as Error).message).not.toContain("carryUpdateManifestSource")
+  })
+
+  test("a provider that changes a signed field after parsing is refused with a link to the v27 migration section", async () => {
+    const result = parseUpdateInfo(serializeSignedUpdateManifest(makeInfo(), [privateKeyPem]), "latest.yml", feedUrl)
+    result.releaseDate = "2099-01-01T00:00:00.000Z"
+    const error = await verify(makeUpdater(), result).catch((e: Error) => e)
+    expect((error as Error).message.endsWith(` ${EBUM2_RUNTIME_DOCS}`)).toBe(true)
+  })
+
+  test("a tampered manifest is refused without the EBUM2 migration link: that refusal is not a v27 change", async () => {
+    const yaml = serializeSignedUpdateManifest(makeInfo(), [privateKeyPem]).replace("sha512: abc123", "sha512: EVIL")
+    const error = await verify(makeUpdater(), parseUpdateInfo(yaml, "latest.yml", feedUrl)).catch((e: Error) => e)
+    expect(error).toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+    expect((error as Error).message).not.toContain(EBUM2_RUNTIME_DOCS)
   })
 })
 

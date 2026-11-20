@@ -325,7 +325,7 @@ Before uploading, run [`electron-builder verify`](../cli.md#verify) on the outpu
 
 When at least one public key is configured (embedded or set at runtime), verification is enforced on every update check, for every provider. The manifest is accepted when **any trusted key validates any of its signatures**. `EBUM2` entries are tried first; `EBUM1` entries and the legacy `signature` only after them, and only for a manifest whose fields `EBUM1` can vouch for (see [What is signed](#what-is-signed)). Entries in a format the updater does not know are skipped. Within a format, entries tagged with a trusted key's id are tried before untagged ones. The update log names the format that verified (`Update manifest signature verified for version 1.2.3 (EBUM2)`).
 
-A custom provider that builds the `UpdateInfo` itself is verified on the object it returns, so a field it adds counts against the signature. Parse the manifest with `parseUpdateInfo` from `electron-updater`, and pass a copy you return through `carryUpdateManifestSource(parsed, copy)`, so the updater verifies the manifest as published.
+A custom provider that builds the `UpdateInfo` itself is verified on the object it returns, so a field it adds counts against the signature. Parse the manifest with `parseUpdateInfo` from `electron-updater`, and pass a copy you return through `carryUpdateManifestSource(parsed, copy)`, so the updater verifies the manifest as published. Without it, electron-updater logs a warning when it verifies the update info, and names the cause when verification fails (see [the v27 runtime changes](../migration/v27-runtime-changes.md#update-manifests-are-verified-with-ebum2)).
 
 | Manifest state | Result |
 | --- | --- |

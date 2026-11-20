@@ -77,6 +77,10 @@ const DEFAULT_VERIFY_UPDATE_FILE: VerifyUpdateFile = _params => Promise.resolve(
 const LOGIN_MIGRATION_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
 
 const CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-headers"
+const EBUM2_VERIFICATION_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-manifests-are-verified-with-ebum2"
+// how a custom provider hands the updater the manifest as published, named where its update info has none
+const MANIFEST_SOURCE_REPLACEMENT =
+  "Parse latest*.yml with parseUpdateInfo from electron-updater, and pass any copy the provider returns through carryUpdateManifestSource(parsed, copy)"
 
 /** `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`, for `subject`: what needs `autoUpdater.crossOriginHeaders`. */
 function crossOriginHeadersNotConfiguredError(subject: string): Error {
@@ -997,19 +1001,23 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     // Verify the manifest as published: EBUM2 signs every field, so it must not see the fields a provider adds after
     // parsing (a GitHub `tag`, PrivateGitHub `assets`, a release name from the feed). A custom provider that builds the
     // UpdateInfo itself has no recorded text; its object is verified as it is.
-    const published = reparseUpdateManifest(info) ?? info
+    const recorded = reparseUpdateManifest(info)
+    const published = recorded ?? info
     if (collectManifestSignatures(published).length === 0) {
       throw newError(`Update manifest for version ${info.version} is not signed, but updateManifestPublicKey is configured. Refusing to update.`, "ERR_UPDATER_MANIFEST_NOT_SIGNED")
     }
 
     let result = verifyManifestSignatures(published, trustedKeys)
-    if (result.ok && published !== info) {
+    // the refusal follows from a rule EBUM2 brought in v27, so the error links its migration section
+    let ebum2Refusal = result.ebum2Refusal === true
+    if (result.ok && recorded != null) {
       // the updater goes on to use `info`, so every signed field must still be what was verified
       const changed = Object.keys(published).filter(
         key => !UPDATE_MANIFEST_UNSIGNED_FIELDS.includes(key) && !isDeepStrictEqual(Reflect.get(published, key), Reflect.get(info, key))
       )
       if (changed.length > 0) {
         result = { ok: false, reason: `the update provider changed signed field(s) ${changed.map(it => JSON.stringify(it)).join(", ")} after parsing` }
+        ebum2Refusal = true
       }
     }
     if (!result.ok) {
@@ -1029,9 +1037,24 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
           ? ""
           : " stagingPercentage is covered by the signature. If it was set or changed after latest*.yml was signed, sign latest*.yml again: " +
             "https://www.electron.build/docs/features/auto-update#staged-rollouts"
+      // a custom provider that does not record the manifest text: any field it added after parsing counts against the signature
+      const manifestSourceHint =
+        recorded == null
+          ? " The update provider returned update info without the manifest text it was parsed from, so its signature was checked over the update info as returned, " +
+            `including any field the provider added after parsing. ${MANIFEST_SOURCE_REPLACEMENT}.`
+          : ""
+      const migrationLink = ebum2Refusal || recorded == null ? ` ${EBUM2_VERIFICATION_DOCS}` : ""
       throw newError(
-        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.${blockMapUrlHint}${stagingPercentageHint}`,
+        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.${blockMapUrlHint}${stagingPercentageHint}${manifestSourceHint}${migrationLink}`,
         "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID"
+      )
+    }
+    if (recorded == null) {
+      // verified, but over the update info as returned: a field the provider adds later fails verification in this release
+      this.limitedLogger("update-manifest-source-not-recorded").warn(
+        `electron-updater 7 (electron-builder v27) verifies the update manifest as published, but the update provider returned update info for version ${info.version} ` +
+          "without the manifest text it was parsed from, so its signature was checked over the update info as returned: a field the provider adds to it fails verification. " +
+          `${MANIFEST_SOURCE_REPLACEMENT}. ${EBUM2_VERIFICATION_DOCS}`
       )
     }
 
