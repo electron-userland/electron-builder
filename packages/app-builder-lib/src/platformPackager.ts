@@ -1,6 +1,7 @@
 import type { FuseConfig, FuseV1Config } from "@electron/fuses"
 import { dynamicImport } from "./util/dynamicImport.js"
 import { CONTENT_ALIGNMENT_WARN_THRESHOLD, validateContentAlignment } from "./asar/asarAlign.js"
+import { resolveStableLayoutPrevious, validateStableLayoutOptions } from "./asar/asarStableLayout.js"
 import {
   Arch,
   asArray,
@@ -817,6 +818,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
           fileMatcher = null
         }
       }
+      // `previous` may name the archive per arch (`${arch}`); it must not be one this build overwrites
+      const stableLayoutPrevious =
+        asarOptions.stableLayout == null
+          ? null
+          : resolveStableLayoutPrevious(this.expandMacro(asarOptions.stableLayout.previous, Arch[packContext.arch]), this.projectDir, [packContext.outDir, packContext.appOutDir])
       taskManager.addTask(
         _computeFileSets(mainMatchers).then(async fileSets => {
           for (const fileSet of fileSets) {
@@ -828,6 +834,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
             resourcePath,
             options: asarOptions,
             unpackPattern: fileMatcher?.createFilter(),
+            stableLayoutPrevious,
           }).pack(fileSets)
         })
       )
@@ -880,6 +887,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
           "asar.contentAlignment pads every packed file up to the next boundary; such a large alignment makes app.asar much bigger"
         )
       }
+    }
+    if (asarOptions.stableLayout != null) {
+      validateStableLayoutOptions(asarOptions.stableLayout)
     }
     return asarOptions
   }
