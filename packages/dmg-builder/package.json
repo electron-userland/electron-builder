@@ -1,6 +1,6 @@
 {
   "name": "dmg-builder",
-  "version": "27.0.0-alpha.15",
+  "version": "27.0.0-alpha.16",
   "type": "module",
   "main": "./dist/dmgUtil.js",
   "exports": {
