@@ -55,6 +55,7 @@ describe("differentialDownloadInstaller rejects unusable block maps", { concurre
   let log: ReturnType<typeof makeLogger>
   let servedNewBlockMap: Buffer
   let servedOldBlockMap: Buffer
+  let blockMapFilesResolved: number
   let requests: Array<{ url: string; maxSize: number | null | undefined }>
   let planned: boolean
 
@@ -68,6 +69,7 @@ describe("differentialDownloadInstaller rejects unusable block maps", { concurre
     servedOldBlockMap = gzippedJson(v2BlockMap([600, 400], "1.0.0"))
     requests = []
     planned = false
+    blockMapFilesResolved = 0
     ;(updater as any).httpExecutor = {
       downloadToBuffer: (url: URL, options: DownloadOptions) => {
         requests.push({ url: url.href, maxSize: options.maxSize })
@@ -86,14 +88,17 @@ describe("differentialDownloadInstaller rejects unusable block maps", { concurre
     vi.restoreAllMocks()
   })
 
-  function differentialDownloadInstaller(info: { size?: number; blockMapSha512?: string } = {}): Promise<boolean> {
+  function differentialDownloadInstaller(info: { size?: number; blockMapSha512?: string } = {}, fileUrl = "https://example.com/TestApp-Setup-2.0.0.exe"): Promise<boolean> {
     const provider = {
-      getBlockMapFiles: () => Promise.resolve([new URL(OLD_BLOCKMAP_URL), new URL(NEW_BLOCKMAP_URL)]),
+      getBlockMapFiles: () => {
+        blockMapFilesResolved++
+        return Promise.resolve([new URL(OLD_BLOCKMAP_URL), new URL(NEW_BLOCKMAP_URL)])
+      },
       isUseMultipleRangeRequest: true,
       feedBaseUrl: new URL("https://example.com/"),
     } as any
     const fileInfo = {
-      url: new URL("https://example.com/TestApp-Setup-2.0.0.exe"),
+      url: new URL(fileUrl),
       info: { url: "TestApp-Setup-2.0.0.exe", sha512: "sha512-of-2.0.0", size: 1100, ...info },
     }
     const downloadUpdateOptions = {
@@ -117,11 +122,24 @@ describe("differentialDownloadInstaller rejects unusable block maps", { concurre
     expect(log.errors).toEqual([])
   })
 
-  test("a 0-byte update is downloaded in full without requesting a block map", async () => {
-    expect(await differentialDownloadInstaller({ size: 0 })).toBe(true)
+  test.for([
+    [0, "0 bytes"],
+    [undefined, "unknown"],
+    [Number.NaN, "invalid (NaN)"],
+    [-1, "invalid (-1)"],
+    [1.5, "invalid (1.5)"],
+  ] as const)("an update of size %s is downloaded in full without resolving or requesting a block map", async ([size, described]) => {
+    expect(await differentialDownloadInstaller({ size })).toBe(true)
+    expect(blockMapFilesResolved).toBe(0)
     expect(requests).toEqual([])
     expect(planned).toBe(false)
-    expectOneLineFallback(log, /is 0 bytes/)
+    expectOneLineFallback(log, `The size of the update "https://example.com/TestApp-Setup-2.0.0.exe" is ${described}, it cannot be downloaded differentially`)
+  })
+
+  test("the size error names the update without its query, which may hold a pre-signed URL's signature", async () => {
+    expect(await differentialDownloadInstaller({ size: undefined }, "https://example.com/TestApp-Setup-2.0.0.exe?X-Amz-Signature=secret")).toBe(true)
+    expectOneLineFallback(log, `The size of the update "https://example.com/TestApp-Setup-2.0.0.exe" is unknown`)
+    expect(log.errors.join(" ")).not.toContain("secret")
   })
 
   test("an empty new block map body is rejected", async () => {
@@ -174,16 +192,17 @@ describe("differentialDownloadInstaller rejects unusable block maps", { concurre
     expectOneLineFallback(log, `Cannot parse blockmap "${OLD_BLOCKMAP_URL}"`)
   })
 
-  test("an update of unknown size is still planned on, with the block map download bounded by the limit for an unknown size", async () => {
-    expect(await differentialDownloadInstaller({ size: undefined })).toBe(false)
-    expect(planned).toBe(true)
-    expect(requests).toEqual([{ url: NEW_BLOCKMAP_URL, maxSize: blockMapSizeLimit(undefined) }])
-  })
-
-  test.for(["base64", "hex"] as const)("a new block map that matches the %s blockMapSha512 of the manifest is planned on", async encoding => {
-    expect(await differentialDownloadInstaller({ blockMapSha512: sha512(servedNewBlockMap, encoding) })).toBe(false)
+  test("a new block map that matches the base64 blockMapSha512 of the manifest is planned on", async () => {
+    expect(await differentialDownloadInstaller({ blockMapSha512: sha512(servedNewBlockMap) })).toBe(false)
     expect(planned).toBe(true)
     expect(log.errors).toEqual([])
+  })
+
+  // blockMapSha512 is base64 only: unlike sha512 it never had a hex producer, so a hex value is a mismatch
+  test("a hex blockMapSha512 of the right block map is a mismatch", async () => {
+    expect(await differentialDownloadInstaller({ blockMapSha512: sha512(servedNewBlockMap, "hex") })).toBe(true)
+    expect(planned).toBe(false)
+    expectOneLineFallback(log, "does not match the blockMapSha512 of the update manifest")
   })
 
   test("a new block map that does not match the blockMapSha512 of the manifest is neither planned on nor cached", async () => {

@@ -1,5 +1,5 @@
 import { createRequire } from "node:module"
-import { blockMapV2ToV3Keys, decodeBlockMapV3, detectSha512Encoding, filterHeaders, isBlockMapV3, LogLimiter, toBlockMap, urlWithoutQuery } from "builder-util-runtime/internal"
+import { blockMapV2ToV3Keys, decodeBlockMapV3, filterHeaders, isBlockMapV3, LogLimiter, toBlockMap, urlWithoutQuery } from "builder-util-runtime/internal"
 import {
   AllPublishOptions,
   asArray,
@@ -1539,6 +1539,12 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
       }
+      // a differential download is planned against the update's size, so without a positive one no block map is worth fetching
+      const newFileSize = fileInfo.info.size
+      if (newFileSize == null || !Number.isSafeInteger(newFileSize) || newFileSize <= 0) {
+        const size = newFileSize == null ? "unknown" : newFileSize === 0 ? "0 bytes" : `invalid (${newFileSize})`
+        throw newError(`The size of the update "${urlWithoutQuery(fileInfo.url)}" is ${size}, it cannot be downloaded differentially`, ERR_UPDATER_INVALID_BLOCKMAP)
+      }
       const provider = downloadUpdateOptions.updateInfoAndProvider.provider
       const override = this.previousBlockmapBaseUrlOverride
       const getBlockMapFiles = () => provider.getBlockMapFiles(fileInfo.url, this.app.version, downloadUpdateOptions.updateInfoAndProvider.info.version, override)
@@ -1551,10 +1557,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         // valid for the old one: the old blockmap comes from the cache, else from previousBlockmapBaseUrlOverride.
         newBlockMapUrl = fileInfo.blockMapUrl
         oldBlockMapUrl = override ? (await getBlockMapFiles())[0] : null
-      }
-      const newFileSize = fileInfo.info.size ?? null
-      if (newFileSize === 0) {
-        throw newError(`The update "${fileInfo.info.url}" is 0 bytes, it has no blocks to download differentially`, ERR_UPDATER_INVALID_BLOCKMAP)
       }
       this.log.info(`Download block maps (old: "${oldBlockMapUrl == null ? "cache only" : urlWithoutQuery(oldBlockMapUrl)}", new: ${urlWithoutQuery(newBlockMapUrl)})`)
 
@@ -1586,11 +1588,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         verifyBlockMapSha512(data, fileInfo.info.blockMapSha512, source)
         const loaded = parseBlockMapData(data, source, blockMapLimit, newFileSize)
         const end = getBlockMapEnd(loaded.map)
-        // a size that is not one (NaN, negative) is treated as unknown here, as by blockMapSizeLimit; the planner rejects it
-        const isKnownSize = newFileSize != null && Number.isSafeInteger(newFileSize) && newFileSize > 0
-        if (end == null || end === 0 || (isKnownSize && end !== newFileSize)) {
+        if (end == null || end !== newFileSize) {
           throw newError(
-            `Blockmap "${source}" does not describe the ${newFileSize ?? "unknown"}-byte update (${end == null ? "malformed" : `its blocks end at ${end}`})`,
+            `Blockmap "${source}" does not describe the ${newFileSize}-byte update (${end == null ? "malformed" : `its blocks end at ${end}`})`,
             ERR_UPDATER_INVALID_BLOCKMAP
           )
         }
@@ -1773,14 +1773,14 @@ function parseBlockMapData(data: Buffer, source: string, maxSize: number, expect
 }
 
 /**
- * Checks `data` against the `blockMapSha512` of the update manifest. Nothing is checked when the manifest has none (electron-builder
- * does not write it yet).
+ * Checks `data` against the `blockMapSha512` of the update manifest, a base64 SHA-512 (the field is new, so unlike `sha512` it has no
+ * legacy hex form). Nothing is checked when the manifest has none (electron-builder does not write it yet).
  */
 function verifyBlockMapSha512(data: Buffer, expected: string | null | undefined, source: string): void {
   if (expected == null) {
     return
   }
-  const actual = createHash("sha512").update(data).digest(detectSha512Encoding(expected))
+  const actual = createHash("sha512").update(data).digest("base64")
   if (actual !== expected) {
     throw newError(`Blockmap "${source}" does not match the blockMapSha512 of the update manifest (expected ${expected}, got ${actual})`, ERR_UPDATER_INVALID_BLOCKMAP)
   }
