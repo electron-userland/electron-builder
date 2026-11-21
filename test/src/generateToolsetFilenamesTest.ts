@@ -133,6 +133,7 @@ describe("Generated toolset test filenames", () => {
     const toolsets = `wcs-${latestToolsetVersion(versions(WIN_CODE_SIGN_VERSIONS))}__nsis-${latestToolsetVersion(versions(NSIS_VERSIONS))}`
     const expected = versions(WINE_VERSIONS).flatMap(wine => [
       `blackboxNsisAuthenticode__${toolsets}__wine-${wine}.win.e2e.ts`,
+      `blackboxNsisDebugLogging__${toolsets}__wine-${wine}__e2e.ts`,
       `blackboxNsisInstallerChecks__${toolsets}__wine-${wine}__e2e.ts`,
       `blackboxNsisNextLaunchModes__${toolsets}__wine-${wine}__e2e.ts`,
     ])
@@ -400,8 +401,8 @@ describe("TEST_MODE file discovery", () => {
     expect(linux.filter(f => linuxE2eOnly.includes(f) || f.includes("blackboxLinux__appimage"))).toEqual([])
     // its detectPackageManager unit tests run in the Linux shards
     expect(linux).toContain("test/src/updater/linuxUpdaterTest.ts")
-    // the Linux skip list does not leak to other platforms: the mac split blackbox suites stay on macOS
-    expect(getAllTestFiles("darwin", "all")).toContain("test/src/updater/mac/blackboxUpdateKeyRotation.e2e.ts")
+    // the Linux skip list does not leak to other platforms: the mac blackbox suites stay on macOS
+    expect(getAllTestFiles("darwin", "all")).toContain("test/src/updater/mac/blackboxUpdateArm64.e2e.ts")
 
     // the tokens the CI e2e matrix passes (test/src/updater/test-specific-platforms.sh, .github/workflows/test.yaml)
     vi.stubEnv(
