@@ -40,6 +40,7 @@ export { loadCscLink, decodeCscLinkBase64, decodeStrictBase64, resolveCscLinkPat
 export {
   signUpdateManifest,
   createUpdateManifestSignatures,
+  serializeSignedUpdateManifest,
   parsePrivateKey,
   derivePublicKeyPem,
   loadUpdateSigningKey,

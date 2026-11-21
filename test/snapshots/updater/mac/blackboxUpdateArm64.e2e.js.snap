@@ -34,6 +34,12 @@ exports[`mac > mac auto-update > arm64 1`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
