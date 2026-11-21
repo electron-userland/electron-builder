@@ -513,7 +513,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -638,7 +638,7 @@
       "properties": {
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -2331,7 +2331,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -2443,7 +2443,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -2612,7 +2612,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -2763,7 +2763,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -4927,6 +4927,11 @@
           "description": "*assisted installer only.* Whether to allow user to change installation directory.",
           "type": "boolean"
         },
+        "allowUnelevatedPerMachineUpdate": {
+          "default": false,
+          "description": "*assisted installer only, with `perMachine` not set.* Let a silent update (`--updated`) of a per-machine installation run without a UAC\nprompt when the user already holds every access right the update uses. Off by default: the update elevates, as before.\n\nAn update removes and re-creates the installation folder, the app's `HKLM` registration and the all-users shortcuts, so this applies\nonly where an administrator granted standard users those rights: on the folder and its files, its parent folder, the\n`INSTALL_REGISTRY_KEY` and Uninstall keys and their parent keys (`HKLM\\Software`,\n`HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall`), and the Start Menu folder and Public Desktop. The installer and\nthe uninstaller check each right without changing anything, and elevate when one is missing, when a per-user installation exists too,\nand for an interactive install or uninstall.\n\nelectron-builder does not recommend granting these rights: an unelevated process could then change the `UninstallString` that the\nelevated uninstaller, and deployment tools running as SYSTEM, later execute. The option is for machines whose administrators already\ndid.\n\nAn update runs the uninstaller of the installed version, so the first update to a build with this option still elevates.\n\nNot checked: `HKLM\\Software\\Classes` (file associations and protocols), writes made by `customInstall` or `customUnInstall`, and\nshortcuts or a Start Menu folder that an earlier version created under another name. Without elevation, a write there that is\ndenied fails without an error, so leave this option off if the update needs one.",
+          "type": "boolean"
+        },
         "artifactName": {
           "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.",
           "type": [
@@ -4999,7 +5004,7 @@
         },
         "installerDebugLogging": {
           "default": false,
-          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). In your custom NSIS scripts, write to the log via `${LogText}`.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. From `toolsets.nsis` `\"2.0.4\"` (the\ndefault) on, each NSIS release publishes a log-enabled bundle next to the default one, and electron-builder downloads it when this\noption is `true` (the default bundle otherwise). Its stubs make the installer and uninstaller up to about 8 KB larger, and they\nwrite a log only once `LogSet on` runs, which this option adds. The older pinned bundles (`\"0.0.0\"`, `\"1.2.1\"`) have no\nlog-enabled variant, and the build fails with one of them. A custom `toolsets.nsis` bundle must be log-enabled itself.\nReplaces the v26 `customNsisBinary.debugLogging`.",
+          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). The installer logs from the install of the files on (once the previous version is uninstalled); the uninstaller logs\nfrom its start and leaves the open `install.log` in place when an update moves the installation directory aside. In your custom\nNSIS scripts, write to the log via `${LogText}`; in `customInit` / `preInit` nothing is logged yet.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. From `toolsets.nsis` `\"2.0.4\"` (the\ndefault) on, each NSIS release publishes a log-enabled bundle next to the default one, and electron-builder downloads it when this\noption is `true` (the default bundle otherwise). Its stubs make the installer and uninstaller up to about 8 KB larger, and they\nwrite a log only once `LogSet on` runs, which this option adds. The older pinned bundles (`\"0.0.0\"`, `\"1.2.1\"`) have no\nlog-enabled variant, and the build fails with one of them. A custom `toolsets.nsis` bundle must be log-enabled itself.\nReplaces the v26 `customNsisBinary.debugLogging`.",
           "type": "boolean"
         },
         "installerHeader": {
@@ -5274,6 +5279,11 @@
           "description": "*assisted installer only.* Whether to allow user to change installation directory.",
           "type": "boolean"
         },
+        "allowUnelevatedPerMachineUpdate": {
+          "default": false,
+          "description": "*assisted installer only, with `perMachine` not set.* Let a silent update (`--updated`) of a per-machine installation run without a UAC\nprompt when the user already holds every access right the update uses. Off by default: the update elevates, as before.\n\nAn update removes and re-creates the installation folder, the app's `HKLM` registration and the all-users shortcuts, so this applies\nonly where an administrator granted standard users those rights: on the folder and its files, its parent folder, the\n`INSTALL_REGISTRY_KEY` and Uninstall keys and their parent keys (`HKLM\\Software`,\n`HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall`), and the Start Menu folder and Public Desktop. The installer and\nthe uninstaller check each right without changing anything, and elevate when one is missing, when a per-user installation exists too,\nand for an interactive install or uninstall.\n\nelectron-builder does not recommend granting these rights: an unelevated process could then change the `UninstallString` that the\nelevated uninstaller, and deployment tools running as SYSTEM, later execute. The option is for machines whose administrators already\ndid.\n\nAn update runs the uninstaller of the installed version, so the first update to a build with this option still elevates.\n\nNot checked: `HKLM\\Software\\Classes` (file associations and protocols), writes made by `customInstall` or `customUnInstall`, and\nshortcuts or a Start Menu folder that an earlier version created under another name. Without elevation, a write there that is\ndenied fails without an error, so leave this option off if the update needs one.",
+          "type": "boolean"
+        },
         "allowUnverifiedAppPackage": {
           "default": false,
           "description": "Whether the web installer may install an app package that doesn't match any package built with it: a package passed via `--package-file`,\nor (when `appPackageUrl` is not set) the downloaded package. By default such a package aborts the installation.\n\nEnable only if you intentionally run one web installer with packages of other builds (e.g. a version-independent installer with `--package-file`).",
@@ -5359,7 +5369,7 @@
         },
         "installerDebugLogging": {
           "default": false,
-          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). In your custom NSIS scripts, write to the log via `${LogText}`.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. From `toolsets.nsis` `\"2.0.4\"` (the\ndefault) on, each NSIS release publishes a log-enabled bundle next to the default one, and electron-builder downloads it when this\noption is `true` (the default bundle otherwise). Its stubs make the installer and uninstaller up to about 8 KB larger, and they\nwrite a log only once `LogSet on` runs, which this option adds. The older pinned bundles (`\"0.0.0\"`, `\"1.2.1\"`) have no\nlog-enabled variant, and the build fails with one of them. A custom `toolsets.nsis` bundle must be log-enabled itself.\nReplaces the v26 `customNsisBinary.debugLogging`.",
+          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). The installer logs from the install of the files on (once the previous version is uninstalled); the uninstaller logs\nfrom its start and leaves the open `install.log` in place when an update moves the installation directory aside. In your custom\nNSIS scripts, write to the log via `${LogText}`; in `customInit` / `preInit` nothing is logged yet.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. From `toolsets.nsis` `\"2.0.4\"` (the\ndefault) on, each NSIS release publishes a log-enabled bundle next to the default one, and electron-builder downloads it when this\noption is `true` (the default bundle otherwise). Its stubs make the installer and uninstaller up to about 8 KB larger, and they\nwrite a log only once `LogSet on` runs, which this option adds. The older pinned bundles (`\"0.0.0\"`, `\"1.2.1\"`) have no\nlog-enabled variant, and the build fails with one of them. A custom `toolsets.nsis` bundle must be log-enabled itself.\nReplaces the v26 `customNsisBinary.debugLogging`.",
           "type": "boolean"
         },
         "installerHeader": {
@@ -6744,7 +6754,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -7357,7 +7367,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -8276,7 +8286,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -8777,7 +8787,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"

@@ -209,6 +209,12 @@ const SUITES: WindowsSuiteConfig[] = [
     "updater/blackboxUpdateWinChecksSuite",
     { name: "blackboxWin" }
   ),
+  blackboxNsisUpdateSuite(
+    "blackboxNsisDebugLogging",
+    namedFn("registerBlackboxNsisDebugLoggingTests" satisfies keyof typeof _BlackboxWinChecksSuite),
+    "updater/blackboxUpdateWinChecksSuite",
+    { name: "blackboxWin" }
+  ),
   // native Windows only: the .win. file is left out of the Linux and mac runs
   blackboxNsisUpdateSuite(
     "blackboxNsisAuthenticode",

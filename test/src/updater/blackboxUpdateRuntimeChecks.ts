@@ -1,7 +1,7 @@
-import { ToolsetConfig } from "app-builder-lib"
+import { Configuration, ToolsetConfig } from "app-builder-lib"
 import { log } from "builder-util"
 import { Arch } from "electron-builder"
-import { readdir, readJson } from "fs-extra"
+import { pathExists, readdir, readJson } from "fs-extra"
 import path from "path"
 import { ExpectStatic, TestContext } from "vitest"
 import { WIN_SIGNING_PUBLISHER_NAME } from "../helpers/codeSignData"
@@ -16,6 +16,7 @@ import {
   expectInstalledVersion,
   expectRejectedUpdate,
   pollUntilNewVersionInstalled,
+  PrebuiltApps,
   runUpdateScenario,
   ScenarioContext,
   THIRD_VERSION_NUMBER,
@@ -24,7 +25,7 @@ import {
   writeRawServedUpdateConfig,
   writeServedUpdateConfig,
 } from "./blackboxUpdateHelpers"
-import { findUpdateManifests, readEmbeddedUpdateConfig, readUpdateManifest, rewriteServedManifests } from "./signedManifestTestUtil"
+import { findUpdateManifests, readEmbeddedUpdateConfig, readUpdateManifest, resignManifest, rewriteServedManifests } from "./signedManifestTestUtil"
 
 // The request rules of electron-updater 7 on real updates of the test app. The errors and warnings are what the app's user meets, so their
 // texts and links are asserted next to their codes; the requests the servers recorded show what was sent where.
@@ -229,8 +230,9 @@ function expectSquirrelProxyChallenge(expect: ExpectStatic, stdout: string): voi
  * The request rules of electron-updater 7 on a real mac update (zip, Squirrel.Mac, Electron's net), with one build pair for all of them. The
  * installed 1.0.0 refuses the served 1.0.1 without autoUpdater.crossOriginHeaders, from a plain http feed on a host that is not loopback (and
  * the redirect from there to loopback), and while the zip is larger than its update info says; then it updates with the zip on another origin.
+ * `prebuilt`: the first two arm64 versions the other mac cases of its file share, instead of a pair built for this test.
  */
-export async function runMacRequestRulesTest(context: TestContext): Promise<void> {
+export async function runMacRequestRulesTest(context: TestContext, prebuilt?: PrebuiltApps): Promise<void> {
   await withEmptyUpdaterCaches(() =>
     runUpdateScenario(context, {
       target: "zip",
@@ -239,8 +241,13 @@ export async function runMacRequestRulesTest(context: TestContext): Promise<void
       toolsets: {},
       tmpDirPrefix: "request-rules",
       builds: [{ version: OLD_VERSION_NUMBER }, { version: NEW_VERSION_NUMBER }],
+      prebuilt,
       initialUpdateConfig: () => Promise.resolve({}),
       scenario: async ctx => {
+        if (prebuilt != null) {
+          // the shared mac versions have signed manifests (see blackboxUpdateMacSuite.ts): these checks run against an unsigned one, as built here
+          await rewriteServedManifests(ctx.rootDirectory, info => resignManifest(info, []))
+        }
         const other = await ctx.servers.createOrigin()
         await expectCrossOriginHeadersRequired(ctx)
         await expectNonLoopbackFeedRules(ctx, other)
@@ -290,13 +297,20 @@ function expectForgedVersionMismatch(expect: ExpectStatic, stdout: string): void
   expect(stdout).toContain(INSTALLER_VERSION_DOCS)
 }
 
-function nsisScenario(context: TestContext, toolsets: NsisToolsets, tmpDirPrefix: string, scenario: (ctx: ScenarioContext) => Promise<void>): Promise<void> {
+function nsisScenario(
+  context: TestContext,
+  toolsets: NsisToolsets,
+  tmpDirPrefix: string,
+  scenario: (ctx: ScenarioContext) => Promise<void>,
+  extraConfig?: Partial<Configuration>
+): Promise<void> {
   return withEmptyUpdaterCaches(() =>
     runUpdateScenario(context, {
       target: "nsis",
       packageManager: "",
       arch: Arch.x64,
       toolsets,
+      extraConfig,
       tmpDirPrefix,
       builds: [{ version: OLD_VERSION_NUMBER }, { version: NEW_VERSION_NUMBER }],
       initialUpdateConfig: () => Promise.resolve({}),
@@ -495,6 +509,34 @@ export async function runNsisNextLaunchModesTest(context: TestContext, toolsets:
     await pollUntilNewVersionInstalled(expect, { ...ctx, packageManagerToTest: ctx.packageManager })
     await expectInstalledNsis(ctx)
   })
+}
+
+/**
+ * `nsis.installerDebugLogging` (#10483) in both versions: the update installs over the log-enabled install, whose uninstaller kept
+ * `$INSTDIR\install.log` open while it moved `$INSTDIR` aside, and aborted, until it left the log in place (still in the install
+ * directory, which only admins can write for a per-machine install). The installer writes its own install.log there too (read on
+ * native Windows).
+ */
+export async function runNsisDebugLoggingUpdateTest(context: TestContext, toolsets: NsisToolsets): Promise<void> {
+  await nsisScenario(
+    context,
+    toolsets,
+    "nsis-debug-logging",
+    async ctx => {
+      const { expect } = ctx
+      await queueForNextLaunch(ctx, VERIFIED_BY_STUB)
+      // the quit timeout also ends the app that the installer starts again (--force-run), which inherits this env
+      await launchInstalled(ctx, { ...VERIFIED_BY_STUB, pendingOnlyQuitAfterMs: 20_000 }, stdout => {
+        expect(countOf(stdout, `Installing pending update ${NEW_VERSION_NUMBER} on launch`)).toBe(1)
+      })
+      await pollUntilNewVersionInstalled(expect, { ...ctx, packageManagerToTest: ctx.packageManager })
+      await expectInstalledNsis(ctx)
+      if (ctx.vm == null) {
+        expect(await pathExists(path.join(path.dirname(ctx.appPath), "install.log")), "the installer and uninstaller log to the install directory").toBe(true)
+      }
+    },
+    { nsis: { installerDebugLogging: true } }
+  )
 }
 
 /**

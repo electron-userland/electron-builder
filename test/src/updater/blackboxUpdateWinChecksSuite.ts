@@ -1,7 +1,7 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { TestContext } from "vitest"
 import { optionsForFlakyE2E, windowsVmPromise } from "./blackboxUpdateHelpers"
-import { runNsisAuthenticodeTest, runNsisInstallerChecksTest, runNsisNextLaunchModesTest } from "./blackboxUpdateRuntimeChecks"
+import { runNsisAuthenticodeTest, runNsisDebugLoggingUpdateTest, runNsisInstallerChecksTest, runNsisNextLaunchModesTest } from "./blackboxUpdateRuntimeChecks"
 
 // The checks of electron-updater 7 on NSIS updates (blackboxUpdateRuntimeChecks.ts). Each register function adds a single test, and
 // generate-toolset-tests-windows.ts emits one file per function, built with the newest toolsets only (the toolsets take no part in what
@@ -30,6 +30,11 @@ export function registerBlackboxNsisInstallerChecksTests(toolsets: WinChecksTool
 /** Native Windows or a Parallels VM. */
 export function registerBlackboxNsisNextLaunchModesTests(toolsets: WinChecksToolsets): void {
   registerNsisCheck("nsis - install on next launch: manual, then the default autoInstallEvent", true, context => runNsisNextLaunchModesTest(context, toolsets))
+}
+
+/** Native Windows or a Parallels VM. */
+export function registerBlackboxNsisDebugLoggingTests(toolsets: WinChecksToolsets): void {
+  registerNsisCheck("nsis - an update over an installerDebugLogging install", true, context => runNsisDebugLoggingUpdateTest(context, toolsets))
 }
 
 /** Native Windows (a `.win.` file), elevated: the test certificate is trusted in LocalMachine\Root (skipped when it cannot be). */

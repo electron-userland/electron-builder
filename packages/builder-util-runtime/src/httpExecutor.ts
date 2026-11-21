@@ -88,7 +88,7 @@ export interface RequestHeaders extends OutgoingHttpHeaders {
 export interface ApiRequestOptions extends RequestOptions {
   /**
    * The largest body, in bytes, read into memory (set by electron-updater for update info, which is parsed before it is verified):
-   * a larger response fails the request with `ERR_HTTP_RESPONSE_TOO_LARGE` and aborts it. Applies when it is a finite number of at
+   * a larger response fails the request with `ERR_UPDATER_RESPONSE_TOO_LARGE` and aborts it. Applies when it is a finite number of at
    * least 0, and is kept on redirects, whose options are copied from these.
    */
   maxResponseSize?: number
@@ -329,7 +329,7 @@ Please double check that your authentication token is correct. Due to security r
             newError(
               // the path without its query, which can carry credentials
               `Response from ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${(options.path ?? "").replace(/[?#].*$/s, "")} exceeds the maximum allowed size of ${maxResponseSize} bytes`,
-              "ERR_HTTP_RESPONSE_TOO_LARGE"
+              "ERR_UPDATER_RESPONSE_TOO_LARGE"
             )
           )
           abort()
@@ -667,12 +667,19 @@ export interface DownloadCallOptions {
  * path.
  */
 export function urlWithoutQuery(url: URL | string): string {
+  if (url instanceof URL) {
+    return `${url.protocol}//${url.host}${url.pathname}`
+  }
+  // a malformed update info (latest*.yml is parsed without validation) can lack a url: error messages built with it must not throw
+  if (typeof url !== "string") {
+    return "(no url)"
+  }
   let parsed: URL
   try {
-    parsed = typeof url === "string" ? new URL(url) : url
+    parsed = new URL(url)
   } catch {
     // relative: a path
-    return String(url).replace(/[?#].*$/s, "")
+    return url.replace(/[?#].*$/s, "")
   }
   return `${parsed.protocol}//${parsed.host}${parsed.pathname}`
 }

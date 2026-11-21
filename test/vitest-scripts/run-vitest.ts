@@ -6,7 +6,7 @@ import { startVitest } from "vitest/node"
 import { getAllTestFiles } from "./vitest-config/file-discovery.js"
 import { generateTests } from "./generate-tests.js"
 import { buildWeightedFiles, computeShardCount, shardPlanMismatchError, splitIntoShards } from "./vitest-config/shard-builder.js"
-import { DEFAULT_TEST_FILE_GLOBS, getTestFilesOverride, SHARD_INDEX, SupportedPlatforms, TEST_MODE } from "./vitest-config/smart-config.js"
+import { CI_PARALLELISM, DEFAULT_TEST_FILE_GLOBS, getMaxWorkers, getTestFilesOverride, SHARD_INDEX, SupportedPlatforms, TEST_MODE } from "./vitest-config/smart-config.js"
 import SmartSequencer from "./vitest-config/vitest-smart-sequencer.js"
 
 const PACKAGES_DIR = path.join(__dirname, "..", "..", "packages")
@@ -84,8 +84,8 @@ async function main() {
 
   // Build weighted files with platform-specific durations
   const weighted = buildWeightedFiles(files, currentPlatform)
-  const shardCount = computeShardCount(weighted)
-  const shards = splitIntoShards(weighted, shardCount)
+  const shardCount = computeShardCount(weighted, currentPlatform)
+  const shards = splitIntoShards(weighted, shardCount, CI_PARALLELISM[currentPlatform].speedup)
   const index = SHARD_INDEX ?? 0
 
   const expectedShardCount = process.env.VITEST_EXPECTED_SHARD_COUNT ? Number(process.env.VITEST_EXPECTED_SHARD_COUNT) : null
@@ -109,8 +109,11 @@ async function main() {
   // Extract file paths from WeightedFile objects
   const selectedFiles = selectedShard.map(wf => wf.filepath)
 
+  const maxWorkers = getMaxWorkers(currentPlatform)
+
   console.log(`\n=== Shard ${index + 1} of ${shardCount} ===`)
   console.log(`Scanned Files: ${selectedFiles.length}`)
+  console.log(`Test files run at once: ${maxWorkers}`)
 
   // Per-run report id — unique across every shard/job so artifacts never collide. The pid keeps the
   // two ci:test invocations that share a single runner (snap core24: docker pass + native pass)
@@ -176,10 +179,12 @@ async function main() {
       reporters,
       ...coverageOption,
 
-      // Disable Vitest's default file-based parallelism and use our custom shard-based sequencing instead.  This ensures that tests are grouped into shards according to our custom logic (e.g. platform-specific weighting) rather than Vitest's default file-based distribution.
-      // It's either disabling here or increasing test timeout to be generous due to the I/O-heavy nature of our tests and the fact that running many in parallel can exhaust memory (e.g. due to multiple icon-tool spawns across workers).
-      // Disabling file-based parallelism is more efficient than increasing timeouts, as it allows us to run tests in parallel at the shard level while keeping individual test files running sequentially within each shard.
-      fileParallelism: false,
+      // Test files run on `maxWorkers` worker processes at once (CI_PARALLELISM in smart-config.ts on CI, one locally unless
+      // VITEST_MAX_WORKERS is set); the tests inside a file still run one after another. Tests that need a machine-wide resource
+      // (hdiutil, snapcraft, installing the app, …) are marked heavy and take turns across all workers (vitest-heavy-mutex.ts), and the
+      // SmartSequencer hands heavy files out between the regular ones so the other workers keep busy while one waits for its turn.
+      fileParallelism: maxWorkers > 1,
+      maxWorkers,
       sequence: {
         sequencer: SmartSequencer,
         concurrent: false,
