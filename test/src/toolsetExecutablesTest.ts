@@ -267,6 +267,9 @@ describe("default locations", () => {
     // macOS uses the archive toolset
     expect(defaultExecutableLocations("lzip", "darwin")).toEqual([])
     expect(defaultExecutableLocations("flatpak-builder", "linux")).toEqual(["/usr/bin/flatpak-builder", "/usr/local/bin/flatpak-builder"])
+    expect(defaultExecutableLocations("appstreamcli", "linux")).toEqual(["/usr/bin/appstreamcli", "/usr/local/bin/appstreamcli"])
+    expect(defaultExecutableLocations("appstreamcli", "darwin")).toEqual(["/opt/homebrew/bin/appstreamcli", "/usr/local/bin/appstreamcli"])
+    expect(defaultExecutableLocations("appstreamcli", "win32")).toEqual([])
     expect(defaultExecutableLocations("snapcraft", "linux")).toEqual(["/snap/bin/snapcraft", "/usr/bin/snapcraft"])
     expect(defaultExecutableLocations("snapcraft", "darwin")).toEqual(["/opt/homebrew/bin/snapcraft", "/usr/local/bin/snapcraft"])
     expect(defaultExecutableLocations("mono", "linux")).toEqual(["/home/linuxbrew/.linuxbrew/bin/mono", "/usr/local/bin/mono", "/usr/bin/mono"])

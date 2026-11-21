@@ -20,7 +20,7 @@ import {
   sanitizeDirPath,
   statOrNull,
 } from "builder-util"
-import { CancellationToken, deepAssign, MemoLazy, Nullish } from "builder-util-runtime"
+import { CancellationToken, deepAssign, isValidKey, MemoLazy, Nullish } from "builder-util-runtime"
 import type { KeyObject } from "crypto"
 import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
@@ -117,7 +117,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
    * Replaces the manual `deepAssign({}, packager.platformSpecificBuildOptions, config.X)` pattern.
    */
   getOptionsForTarget<T>(key: string): T {
-    return deepAssign({}, this.platformSpecificBuildOptions, (this.config as any)[key] ?? {}) as T
+    return mergeTargetOptions<T>(this.platformSpecificBuildOptions, (this.config as any)[key])
   }
 
   private externalLinkPolicy: Promise<ExternalLinkPolicy> | null = null
@@ -1193,6 +1193,39 @@ export function normalizeExt(ext: string) {
 
 export function chooseNotNull<T>(v1: T | Nullish, v2: T | Nullish): T | Nullish {
   return v1 == null ? v2 : v1
+}
+
+/**
+ * Merge platform-level options (e.g. `config.linux`) with the target-specific overrides (e.g. `config.flatpak`)
+ * into a fresh object graph — what {@link PlatformPackager.getOptionsForTarget} does for each target.
+ *
+ * deepAssign stores a plain object taken from a source into the target by reference, and merging a later source into
+ * such a key mutates the stored object itself: without the clone, `flatpak: { metainfo: { validate: false } }` would be
+ * merged into `config.linux.metainfo` and leak into every other Linux target. Cloning the platform options first keeps
+ * the merge inside objects the result owns. Arrays, class instances and functions are kept by reference, like deepAssign
+ * itself keeps them; deepAssign's own aliasing behaviour is unchanged because other callers (e.g. the snap targets)
+ * mutate a source object after merging it and rely on the target reflecting that.
+ */
+export function mergeTargetOptions<T>(platformOptions: any, targetOptions: any): T {
+  return deepAssign({}, clonePlainObjects(platformOptions), targetOptions ?? {}) as T
+}
+
+function clonePlainObjects(value: any): any {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return value
+  }
+  const proto = Object.getPrototypeOf(value)
+  if (proto !== Object.prototype && proto !== null) {
+    // class instance (RegExp, Date, ...) — keep by reference
+    return value
+  }
+  const clone: any = {}
+  for (const key of Object.keys(value)) {
+    if (isValidKey(key) && value[key] !== undefined) {
+      clone[key] = clonePlainObjects(value[key])
+    }
+  }
+  return clone
 }
 
 function capitalizeFirstLetter(text: string) {
