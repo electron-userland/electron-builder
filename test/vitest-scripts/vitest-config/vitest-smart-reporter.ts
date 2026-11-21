@@ -1,7 +1,7 @@
 import * as path from "path"
 import type { Reporter, TestCase, TestModule } from "vitest/node"
 import { FileStats, loadCache, saveCache, TestStats } from "./cache.js"
-import { CI_PARALLELISM, getMaxWorkers, UNSTABLE_FAIL_RATIO, SupportedPlatforms, SMART_REPORTER_VERBOSE } from "./smart-config.js"
+import { CI_PARALLELISM, getMaxWorkers, UNSTABLE_FAIL_RATIO, SupportedPlatforms, SMART_REPORTER_VERBOSE, SMART_CACHE_HISTORY_RUNS } from "./smart-config.js"
 
 const defaultStat: TestStats = {
   platformRuns: {
@@ -57,6 +57,12 @@ export function serialEquivalentDuration(test: TestCase, platform: SupportedPlat
   }
   const workers = getMaxWorkers(platform)
   return workers > 1 ? (duration * Math.min(CI_PARALLELISM[platform].speedup, workers)) / workers : duration
+}
+
+/** The cached average after one more run, with the history counting for at most SMART_CACHE_HISTORY_RUNS runs (see there). */
+function nextAverageMs(prevAvgMs: number, prevRuns: number, durationMs: number): number {
+  const historyRuns = Math.min(prevRuns, SMART_CACHE_HISTORY_RUNS)
+  return (prevAvgMs * historyRuns + durationMs) / (historyRuns + 1)
 }
 
 export default class SmarterReporter implements Reporter {
@@ -130,7 +136,7 @@ export default class SmarterReporter implements Reporter {
 
     const newRuns = prevRuns + 1
     const newFails = prevFails + (testResult === "failed" ? 1 : 0)
-    const newAvg = shouldResetSnapshot ? dur : (prevAvg * prevRuns + dur) / newRuns
+    const newAvg = nextAverageMs(prevAvg, prevRuns, dur)
 
     platformRuns[this.currentPlatform] = { runs: newRuns, fails: newFails, avgMs: newAvg }
 
@@ -186,7 +192,7 @@ export default class SmarterReporter implements Reporter {
     platformRuns[this.currentPlatform] = {
       runs: newPlatformRuns,
       fails: totalFails,
-      avgMs: shouldResetSnapshot ? dur : (prevPlatformAvg * prevPlatformRuns + dur) / newPlatformRuns,
+      avgMs: nextAverageMs(prevPlatformAvg, prevPlatformRuns, dur),
     }
 
     this.cache.files[file] = {
