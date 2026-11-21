@@ -313,6 +313,23 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   if (configuration.updateManifest === undefined) {
     ;(configuration as any).updateManifest = false
   }
+  // Fixture builds use the fastest compression unless the test sets its own, so only the tests about compression pay for it.
+  // The fixtures' package.json already says "store", but fpm ignores it and packs deb/rpm/pacman with xz, so those default
+  // to gzip here.
+  if (configuration.compression === undefined) {
+    ;(configuration as any).compression = "store"
+  }
+  if (packagerOptions.targets?.has(Platform.LINUX) === true) {
+    for (const [target, fastest] of [
+      ["deb", "gz"],
+      ["rpm", "gzip"],
+      ["pacman", "gz"],
+    ] as const) {
+      if (configuration[target]?.compression === undefined) {
+        ;(configuration as any)[target] = { ...configuration[target], compression: fastest }
+      }
+    }
+  }
   // The same for Windows update signature verification: fixture builds are unsigned unless the test signs them (signedWin), and since
   // v27 a build that writes app-update.yml without a publisherName fails. Opt them out explicitly - app-update.yml then carries
   // `verifyUpdateCodeSignature: false`, as the snapshots show - unless the test configures win.sign or the verification itself
