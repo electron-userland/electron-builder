@@ -1,5 +1,23 @@
 # electron-builder
 
+## 27.0.0-alpha.16
+### Patch Changes
+
+- Fix(publish): `electron-builder publish -f` works with a configuration that has a `publish` list: it loaded the configuration and then had it merged into the same file again, which failed validation (JSON, YAML) or crashed with "Converting circular structure to JSON" (a JS config). A `-c` path without a dot (`-c ci/ebconfig`) is read as the configuration file, and an absolute `extends` path without a dot given in the options is too, as one with a dot already was _[`#10630`](https://github.com/electron-userland/electron-builder/pull/10630) [`7fc52ed`](https://github.com/electron-userland/electron-builder/commit/7fc52edab86fada2876e6c0e8879778902f32cac)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`dbc5014`](https://github.com/electron-userland/electron-builder/commit/dbc5014658d35c93fd0d215091067ce8ea174993) [`7fc52ed`](https://github.com/electron-userland/electron-builder/commit/7fc52edab86fada2876e6c0e8879778902f32cac)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.16`
+- `dmg-builder@27.0.0-alpha.16`
+
+</details>
+
 ## 27.0.0-alpha.15
 ### Minor Changes
 

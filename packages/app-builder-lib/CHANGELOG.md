@@ -1,5 +1,24 @@
 # app-builder-lib
 
+## 27.0.0-alpha.16
+### Patch Changes
+
+- Upgrade `minimatch` to `^11.0.1` and `@electron/asar` to `^4.3.2` (which moves to `minimatch` ^11.0.1 and `glob` ^14) to pick up the fix for GHSA-g3hv-75wg-m249. Also upgrade `ejs` (used for the MSI project templates) to `^7.0.2`, which no longer depends on `jake`, removing the `minimatch` 3 and 5 copies that `jake` and `filelist` brought in. _[`#10539`](https://github.com/electron-userland/electron-builder/pull/10539) [`dbc5014`](https://github.com/electron-userland/electron-builder/commit/dbc5014658d35c93fd0d215091067ce8ea174993)_
+- Fix(publish): `electron-builder publish -f` works with a configuration that has a `publish` list: it loaded the configuration and then had it merged into the same file again, which failed validation (JSON, YAML) or crashed with "Converting circular structure to JSON" (a JS config). A `-c` path without a dot (`-c ci/ebconfig`) is read as the configuration file, and an absolute `extends` path without a dot given in the options is too, as one with a dot already was _[`#10630`](https://github.com/electron-userland/electron-builder/pull/10630) [`7fc52ed`](https://github.com/electron-userland/electron-builder/commit/7fc52edab86fada2876e6c0e8879778902f32cac)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+
+
+</small>
+
+- `dmg-builder@27.0.0-alpha.16`
+- `electron-builder-squirrel-windows@27.0.0-alpha.16`
+
+</details>
+
 ## 27.0.0-alpha.15
 ### Major Changes
 
