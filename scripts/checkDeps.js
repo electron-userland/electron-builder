@@ -71,7 +71,8 @@ async function check(projectDir, devPackageData) {
     if (
       name === "electron-builder-squirrel-windows" ||
       name === "electron-webpack" ||
-      (packageName === "app-builder-lib" && (name === "dmg-builder" || knownMissedDependencies.has(name) || name.startsWith("@babel/")))
+      // electron-updater is resolved from the user's app directory at runtime (require.resolve with paths), not a package dependency
+      (packageName === "app-builder-lib" && (name === "dmg-builder" || name === "electron-updater" || knownMissedDependencies.has(name) || name.startsWith("@babel/")))
     ) {
       delete result.missing[name]
     }
