@@ -4,6 +4,7 @@ import {
   BLOCK_MAP_V3_MAGIC,
   BLOCK_MAP_V3_VERSION,
   BlockInput,
+  decodeBlockMapV3,
   encodeBlockMapV3,
   GROUP_SIZE,
   HASH_LEN,
@@ -14,6 +15,7 @@ import {
 import { AppUpdater } from "electron-updater"
 import type { DownloadUpdateOptions } from "electron-updater/src/AppUpdater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
+import { firstRangeSize } from "electron-updater/src/differentialDownloader/blockMapV3Fetcher"
 import { GenericDifferentialDownloader } from "electron-updater/src/differentialDownloader/GenericDifferentialDownloader"
 import { createClient } from "electron-updater/src/providerFactory"
 import { Provider } from "electron-updater/src/providers/Provider"
@@ -245,11 +247,19 @@ describe("block map format detection", () => {
   /** The key a v3 map gives a block: the hex of the first 8 bytes of its blake2b-18 digest, which a v2 map stores whole. */
   const v3Keys = (blocks: Array<BlockInput>) => blocks.map(b => Buffer.from(b.digest.subarray(0, 8)).toString("hex"))
 
+  // the first Range request is sized from the cached v3 map's header
+  const FIRST = firstRangeSize(decodeBlockMapV3(OLD_V3).header)
+
   test.for([
     // the new map is downloaded whole: no Range request against a cached map of the other format
     { name: "v2 cached, v3 published (the first release built with a newer format)", cached: OLD_V2, published: NEW_V3, ranges: [/^$/] },
     // the Range fetch against the cached v3 map finds a v2 map and completes its download
-    { name: "v3 cached, v2 published (a release built with blockmap: v2 again)", cached: OLD_V3, published: NEW_V2, ranges: [/^bytes=0-2047$/, /^bytes=2048-\d+$/] },
+    {
+      name: "v3 cached, v2 published (a release built with blockmap: v2 again)",
+      cached: OLD_V3,
+      published: NEW_V2,
+      ranges: [new RegExp(`^bytes=0-${FIRST - 1}$`), new RegExp(`^bytes=${FIRST}-\\d+$`)],
+    },
   ])("$name: the blocks are compared by the v3 hash both maps carry; the new map is cached as published", async ({ cached, published, ranges }, { tmpDir, expect }) => {
     const server = await serve(tmpDir, { new: published })
     const { updater, helper, maps } = await setUp(tmpDir, cached)
