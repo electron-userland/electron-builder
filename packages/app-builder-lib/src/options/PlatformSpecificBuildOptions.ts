@@ -116,13 +116,14 @@ export interface AsarOptions {
  * re-downloads most of the header even though the content blocks of the moved files are still found. With a
  * stable layout a file that still fits its previous slot (its size plus the padding up to the next file) keeps its
  * offset; a new file, or one that outgrew its slot, goes into a freed slot it fits or after the previous content, so
- * it never shifts another file. Files are matched by path. When the unused space (freed slots, and slack left in a
- * slot by a file that shrank) exceeds 10 % of the packed bytes the archive is laid out afresh (one update then pays
- * for the whole header).
+ * it never shifts another file. Files are matched by path. When the unused space before the last kept file (freed
+ * slots, and slack left in a slot by a file that shrank) exceeds 10 % of the packed bytes the archive is laid out
+ * afresh (one update then pays for the whole header). Space after the last kept file is reused for appended files, so
+ * growing, shrinking or removing the last file does not count.
  *
  * Every packed file starts at a multiple of `asar.contentAlignment` when that is set: a file only keeps an offset that
- * is a multiple of it, so changing the alignment (or adopting it with a previous archive packed without it) lays the
- * archive out afresh once.
+ * is a multiple of it, so changing the alignment (or adopting it with a previous archive packed without it) moves
+ * every misaligned file once, or lays the archive out afresh when that leaves too much unused.
  *
  * File sizes, the header's entry order and per-file integrity are unchanged, and Electron's asar integrity is computed
  * from the result. The layout is applied when electron-builder packs `app.asar`, so — like `contentAlignment` — it is

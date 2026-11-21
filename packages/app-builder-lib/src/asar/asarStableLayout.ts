@@ -1,4 +1,4 @@
-import { InvalidConfigurationError, log, statOrNull } from "builder-util"
+import { InvalidConfigurationError, isPathWithin, log, statOrNull } from "builder-util"
 import * as path from "path"
 import { AsarStableLayoutOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { AsarContentUnit, alignUp, readAsarContentUnits, relayoutAsarContent } from "./asarAlign.js"
@@ -29,9 +29,15 @@ export interface StableLayoutPlan {
   appended: number
   /** true if the previous layout was dropped because too much of it was unused */
   compacted: boolean
-  /** bytes of the previous layout that no current file occupies: unclaimed slots and any gap before the first file (before any of them is filled) */
+  /**
+   * bytes of the previous layout before the last kept file that no current file occupies: unclaimed slots and any gap
+   * before the first file (before any of them is filled). Space after the last kept file is the open tail, not waste
+   */
   freedBytes: number
-  /** bytes inside kept slots beyond what their file now needs (its aligned size plus growth margin): what files that shrank leave behind */
+  /**
+   * bytes inside kept slots, other than the last, beyond what their file now needs (its aligned size plus growth
+   * margin): what files that shrank leave behind. Slack in the last kept slot becomes part of the open tail
+   */
   slackBytes: number
 }
 
@@ -49,11 +55,6 @@ export function validateStableLayoutOptions(options: unknown): asserts options i
   }
 }
 
-function isSameOrInside(file: string, dir: string): boolean {
-  const relative = path.relative(dir, file)
-  return relative.length === 0 || (!relative.startsWith("..") && !path.isAbsolute(relative))
-}
-
 /**
  * Resolves `asar.stableLayout.previous` (already macro-expanded) against `projectDir`. A path inside one of
  * `outputDirs` is rejected: the build overwrites it before it is read, so the archive would be laid out against itself.
@@ -62,7 +63,7 @@ function isSameOrInside(file: string, dir: string): boolean {
 export function resolveStableLayoutPrevious(previous: string, projectDir: string, outputDirs: Array<string>): string {
   const resolved = path.resolve(projectDir, previous)
   for (const dir of outputDirs) {
-    if (isSameOrInside(resolved, path.resolve(projectDir, dir))) {
+    if (isPathWithin(path.resolve(projectDir, dir), resolved)) {
       throw new InvalidConfigurationError(
         `asar.stableLayout.previous (${resolved}) is inside the build output (${dir}), which this build overwrites before it is read. ` +
           "Keep a copy of the previous release's app.asar outside the output directory, e.g. in a CI cache directory"
@@ -167,8 +168,10 @@ interface PreviousSlot {
  *
  * Identity is the path: a file that is renamed counts as removed + added. Without a previous layout, or when the unused
  * space (`freedBytes` + `slackBytes`) exceeds `maxFreeRatio` of the packed bytes, the files are laid out afresh in the
- * order given, each followed by its growth margin. A previous layout with a different alignment is therefore
- * compacted once, and aligned from then on.
+ * order given, each followed by its growth margin. Only space before the end of the last kept file counts as unused:
+ * everything after it is the open tail that new and moved files are appended into, so growing, shrinking or removing
+ * the last file never compacts. A misaligned file of a previous layout therefore moves once (or the layout is
+ * compacted), and stays aligned from then on.
  */
 export function planStableLayout(units: Array<AsarContentUnit>, previous: Array<AsarContentUnit> | null, params: StableLayoutParams): StableLayoutPlan {
   const fresh = (compacted: boolean, freedBytes: number, slackBytes: number): StableLayoutPlan => ({
@@ -215,9 +218,19 @@ export function planStableLayout(units: Array<AsarContentUnit>, previous: Array<
     }
   }
 
-  let freedBytes = previousFiles[0].offset
+  // the open tail starts where the last kept file now ends (its slack is reclaimed), so nothing from there on is waste
+  let lastKept: PreviousSlot | null = null
+  for (const slot of slots) {
+    if (slot.claimedBy != null) {
+      lastKept = slot
+    }
+  }
+  let freedBytes = lastKept == null ? 0 : previousFiles[0].offset
   let slackBytes = 0
   for (const slot of slots) {
+    if (lastKept == null || slot === lastKept) {
+      break
+    }
     if (slot.claimedBy == null) {
       freedBytes += slot.end - slot.offset
     } else {
@@ -238,7 +251,7 @@ export function planStableLayout(units: Array<AsarContentUnit>, previous: Array<
     if (slot.offset > cursor) {
       holes.push({ start: cursor, end: slot.offset })
     }
-    cursor = Math.max(cursor, slot.end)
+    cursor = Math.max(cursor, slot === lastKept ? Math.min(slot.end, slot.offset + reserve(slot.claimedBy, params)) : slot.end)
   }
   let tail = cursor
   let filled = 0

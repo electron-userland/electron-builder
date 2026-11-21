@@ -125,7 +125,8 @@ describe("planStableLayout", () => {
     // previous offsets, alignment -> kept, compacted, new offsets
     const table: Array<[Array<number>, number, number, boolean, Array<number>]> = [
       [[0, 100, 200], 1, 3, false, [0, 100, 200]],
-      [[0, 100, 200], 512, 0, true, [0, 512, 1024]],
+      // a keeps 0; b and c lie after the last kept file, so they move into the open tail without a compaction
+      [[0, 100, 200], 512, 1, false, [0, 512, 1024]],
       [[0, 512, 1024], 512, 3, false, [0, 512, 1024]],
       [[0, 512, 1024], 1024, 0, true, [0, 1024, 2048]],
     ]
@@ -145,6 +146,27 @@ describe("planStableLayout", () => {
     expect(shrunk).toMatchObject({ compacted: true, freedBytes: 0, slackBytes: 9_728, offsets: [0, 512] })
     // below the threshold the file stays put
     expect(planStableLayout(units(["big", 10], ["b", 1000]), previous, { ...PARAMS, maxFreeRatio: 10 })).toMatchObject({ kept: 2, offsets: [0, 10_240] })
+  })
+
+  describe("space after the last kept file is the open tail, not waste", () => {
+    // "a" was appended last by an earlier build, so it is the last file of the layout but first in header order:
+    // a compaction would move "b" and "c", which did not change
+    const previous = units(["b", 1000, 0], ["c", 1000, 1024], ["a", 1000, 2048])
+
+    test("growing the last file moves only it", ({ expect }) => {
+      const plan = planStableLayout(units(["a", 2000], ["b", 1000], ["c", 1000]), previous, PARAMS)
+      expect(plan).toMatchObject({ compacted: false, kept: 2, appended: 1, freedBytes: 0, slackBytes: 0, offsets: [2048, 0, 1024] })
+    })
+
+    test("shrinking the last file keeps it, and its slack is reused by the next appended file", ({ expect }) => {
+      const plan = planStableLayout(units(["a", 10], ["b", 1000], ["c", 1000], ["new", 100]), previous, PARAMS)
+      expect(plan).toMatchObject({ compacted: false, kept: 3, appended: 1, freedBytes: 0, slackBytes: 0, offsets: [2048, 0, 1024, 2560] })
+    })
+
+    test("removing the last file keeps the others", ({ expect }) => {
+      const plan = planStableLayout(units(["b", 1000], ["c", 1000]), previous, PARAMS)
+      expect(plan).toMatchObject({ compacted: false, kept: 2, freedBytes: 0, slackBytes: 0, offsets: [0, 1024] })
+    })
   })
 
   test("a gap before the first file of the previous layout counts as freed and can be filled", ({ expect }) => {
