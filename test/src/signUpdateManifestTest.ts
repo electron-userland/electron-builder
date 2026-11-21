@@ -42,7 +42,7 @@ async function readManifest(file: string): Promise<UpdateInfo> {
 /**
  * `info`, re-signed by `privateKeys`, carries exactly the signatures a build writes for it (createUpdateManifestSignatures): an EBUM1 entry
  * per key, then an EBUM2 entry per key, with `signature` repeating the first EBUM1 one. It verifies with EBUM2 for `publicKeyPem`, and the
- * EBUM1-only verifier of electron-updater 7.0.0-alpha.8 to alpha.13 still accepts it.
+ * EBUM1-only verifier of electron-updater 7.0.0-alpha.8 to alpha.14 still accepts it.
  */
 function expectSignedAsBuild(expect: ExpectStatic, info: UpdateInfo, privateKeys: Array<string>, publicKeyPem: string): void {
   const { signature, signatures, ...unsigned } = info

@@ -118,11 +118,12 @@ export async function readEmbeddedUpdateConfig(distDir: string): Promise<Embedde
 }
 
 /**
- * The verifier of electron-updater 7.0.0-alpha.8 to alpha.13 (builder-util-runtime 10.0.0-alpha.8 to alpha.13), reproduced from the
- * published `dist/updateManifestSignature.js` (the collect/verify code is identical in all of them): it knows no `format`, collects every
+ * The verifier of electron-updater 7.0.0-alpha.8 to alpha.14 (builder-util-runtime 10.0.0-alpha.8 to alpha.14), reproduced from the
+ * published `dist/updateManifestSignature.js` of alpha.8 to alpha.13 (the collect/verify code is identical in all of them, and the source
+ * of alpha.14 is unchanged from alpha.13): it knows no `format`, collects every
  * entry with a non-empty `signature`, and tries each against the EBUM1 payload. Its EBUM1 canonicalizer and shape check are the current
  * `canonicalizeForSigning` and `validateSignedManifestShape` (whose wire format is pinned in updateManifestSignatureTest), as shipped in
- * alpha.12 and alpha.13; alpha.8 to alpha.11 lack only the `allowCatalogSignature:true` line, which no manifest here carries.
+ * alpha.12 to alpha.14; alpha.8 to alpha.11 lack only the `allowCatalogSignature:true` line, which no manifest here carries.
  */
 export function alpha11VerifyManifestSignatures(info: UpdateInfo, publicKeys: Array<string>): { ok: boolean; keyId?: string; reason?: string } {
   const candidates: Array<{ keyId?: string; signature: string }> = []

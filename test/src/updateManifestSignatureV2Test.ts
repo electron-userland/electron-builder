@@ -341,7 +341,7 @@ describe("compatibility with EBUM1-only verifiers and manifests", () => {
   const oldKey = generateUpdateSigningKeypair()
   const newKey = generateUpdateSigningKeypair()
 
-  test("a dual-signed manifest verifies under the alpha.8–alpha.13 verifier, for each key, and still fails when tampered", () => {
+  test("a dual-signed manifest verifies under the alpha.8–alpha.14 verifier, for each key, and still fails when tampered", () => {
     const parsed = publish(makeInfo({ stagingPercentage: 50 }), [oldKey.privateKeyPem, newKey.privateKeyPem])
     expect(alpha11VerifyManifestSignatures(parsed, [oldKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(oldKey.publicKeyPem) })
     expect(alpha11VerifyManifestSignatures(parsed, [newKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(newKey.publicKeyPem) })
@@ -352,7 +352,7 @@ describe("compatibility with EBUM1-only verifiers and manifests", () => {
     expect(alpha11VerifyManifestSignatures({ ...parsed, stagingPercentage: 100 }, [newKey.publicKeyPem]).ok).toBe(false)
   })
 
-  test("an EBUM2 entry alone does not verify under the alpha.8–alpha.13 verifier, so the EBUM1 entries are what keep it updating", () => {
+  test("an EBUM2 entry alone does not verify under the alpha.8–alpha.14 verifier, so the EBUM1 entries are what keep it updating", () => {
     const parsed = publish(makeInfo(), [oldKey.privateKeyPem])
     expect(alpha11VerifyManifestSignatures(onlyFormat(parsed, "EBUM2"), [oldKey.publicKeyPem]).ok).toBe(false)
     expect(alpha11VerifyManifestSignatures(onlyFormat(parsed, "EBUM1"), [oldKey.publicKeyPem]).ok).toBe(true)
@@ -364,9 +364,9 @@ describe("compatibility with EBUM1-only verifiers and manifests", () => {
     expect(verifyManifestSignatures(parsed, [newKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(newKey.publicKeyPem), format: "EBUM2" })
   })
 
-  test("an EBUM1-only manifest as electron-builder 27.0.0-alpha.9–alpha.14 wrote it still verifies", () => {
+  test("an EBUM1-only manifest as electron-builder 27.0.0-alpha.9–alpha.15 wrote it still verifies", () => {
     const base = makeInfo({ releaseNotes: "notes", path: "App-1.2.3.exe", sha512: "abc123" })
-    // alpha.9–alpha.14: `signatures` entries without `format`, plus the legacy `signature`
+    // alpha.9–alpha.15: `signatures` entries without `format`, plus the legacy `signature`
     const alphaShape: UpdateInfo = {
       ...base,
       signature: signUpdateManifest(base, oldKey.privateKeyPem),
