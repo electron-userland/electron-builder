@@ -86,7 +86,7 @@ fileOptions:
 ```
 
 **"Cannot find module" at runtime after packaging**
-: A production dependency isn't being included. Check that it's in `dependencies` (not `devDependencies`) in `package.json`. electron-builder only includes production dependencies.
+: A production dependency isn't being included. Check that it's in `dependencies` (not `devDependencies`) in `package.json`. electron-builder only includes production dependencies. With npm, the `peerDependencies` of your dependencies are not packaged either: npm 7+ installs a required peer for you, so the app works in development, but the packaged app fails with "Cannot find package". Add the peer to your app's own `dependencies`.
 
 **FileSet `from` path not found**
 : In `files`, the `from` path is relative to the **app directory**. In `extraResources` / `extraFiles`, `from` is relative to the **project root**. These are different when `directories.app` is set.
