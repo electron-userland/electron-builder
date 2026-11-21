@@ -37,7 +37,7 @@ import AdmZip from "adm-zip"
 import sanitizeFileName from "sanitize-filename"
 import type { ExpectStatic } from "vitest"
 import { computeDefaultAppDirectory, installDependencies } from "app-builder-lib/internal"
-import { ELECTRON_VERSION } from "./testConfig"
+import { ELECTRON_UNPACK_CACHE_DIR, ELECTRON_VERSION } from "./testConfig"
 import { execSync, spawnSync } from "child_process"
 import { detectPackageManager } from "app-builder-lib/src/node-module-collector/packageManager"
 import { SelfSignedIdentity } from "./selfSignedIdentity"
@@ -267,6 +267,13 @@ export interface AssertPackOptions {
   readonly publish?: PublishPolicy
 
   readonly tmpDir?: TmpDir
+
+  /**
+   * Copy the default Electron distribution from the shared unpack cache (`PackagerOptions.electronUnpackCacheDir`) instead of
+   * unzipping it in every build. On by default; set `false` for a test of the download/unzip itself or one that resolves a
+   * nightly or other one-off Electron, which would only fill the cache. `electronDist` builds never use the cache.
+   */
+  readonly electronUnpackCache?: boolean
 }
 
 export interface PackedContext {
@@ -684,10 +691,11 @@ async function packAndCheck(
   // were built for them, so the target post-checks below are skipped (the .app / *-unpacked directory still exists).
   const earlyExited = new Set<string>()
   const testHook = checkOptions.afterPackTestHook
-  let effectivePackagerOptions = packagerOptions
+  let effectivePackagerOptions: PackagerOptions =
+    checkOptions.electronUnpackCache === false ? packagerOptions : { ...packagerOptions, electronUnpackCacheDir: ELECTRON_UNPACK_CACHE_DIR }
   if (testHook != null) {
     effectivePackagerOptions = {
-      ...packagerOptions,
+      ...effectivePackagerOptions,
       // closes over `packager` (declared below); safe because the hook only runs inside `packager.build()`
       afterPackTestHook: async packContext => {
         const platform = packContext.packager.platform

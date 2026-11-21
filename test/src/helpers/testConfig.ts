@@ -3,6 +3,10 @@ import * as path from "path"
 
 export const ELECTRON_VERSION = "42.4.0"
 
+// Shared by every test worker process (see PackagerOptions.electronUnpackCacheDir). Deliberately outside the electron-builder cache directory,
+// which CI saves as a cache snapshot whenever it gains files: the unpacked Electron trees would bloat every snapshot.
+export const ELECTRON_UNPACK_CACHE_DIR = path.join(os.tmpdir(), "electron-builder-test-electron-unpack-cache")
+
 // Test builds pin an explicit pacman `depends` list so installing the built .pacman inside a
 // vanilla Arch container works regardless of what the library's default depends list contains
 // (every entry here resolves from the official Arch repositories).

@@ -110,6 +110,7 @@ const expectedOptions = new Set([
   "config",
   "effectiveOptionComputed",
   "afterPackTestHook",
+  "electronUnpackCacheDir",
   "prepackaged",
 ])
 

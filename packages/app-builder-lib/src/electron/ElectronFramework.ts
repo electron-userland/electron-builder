@@ -1,5 +1,6 @@
 import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, orIfFileNotExist, sanitizeDirPath, statOrNull, unlinkIfExists } from "builder-util"
 import _fsExtra from "fs-extra"
+import { cp } from "fs/promises"
 import * as path from "path"
 import * as semver from "semver"
 import asyncPool from "tiny-async-pool"
@@ -9,7 +10,7 @@ import { Packager, Platform } from "../index.js"
 import { LinuxPackager } from "../linuxPackager.js"
 import { MacPackager } from "../macPackager.js"
 import { PlatformType } from "../targets/mac/MacTargetHelper.js"
-import { downloadElectronArtifactZip, extractArchive } from "../util/electronGet.js"
+import { downloadElectronArtifact, downloadElectronArtifactZip, extractArchive } from "../util/electronGet.js"
 import { getTemplatePath } from "../util/pathManager.js"
 import { resolveFunction } from "../util/resolve.js"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion.js"
@@ -272,14 +273,18 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, _
   if (resolvedDist == null) {
     // if no custom electronDist is provided, use the default unpack logic
     log.debug(null, "no custom electronDist provided, unpacking default Electron distribution")
-    const downloadOptions = packager.config.electronGet
-    const zipPath = await downloadElectronArtifactZip({
-      options: downloadOptions,
-      artifactName: "electron",
-      platformName: prepareOptions.platformName,
-      arch: prepareOptions.arch,
-      version: prepareOptions.version,
-    })
+    const artifact = { options: packager.config.electronGet, artifactName: "electron", platformName, arch, version }
+    const unpackCacheDir = packager.packagerOptions.electronUnpackCacheDir
+    if (unpackCacheDir != null) {
+      // test-only (see PackagerOptions.electronUnpackCacheDir). A real copy, not hard links: the build renames, edits and signs these files in place.
+      // fs.cp rather than copyDir, which drops empty directories and rewrites file modes, so the result matches extractArchive exactly.
+      const unpackedDir = await downloadElectronArtifact(artifact, unpackCacheDir)
+      await rm(appOutDir, { recursive: true, force: true })
+      await cp(unpackedDir, appOutDir, { recursive: true, verbatimSymlinks: true, errorOnExist: true, force: false })
+      log.info({ output: appOutDir }, "copied electron from the unpack cache")
+      return true
+    }
+    const zipPath = await downloadElectronArtifactZip(artifact)
     await extractArchive(zipPath, appOutDir)
     log.info({ output: appOutDir }, "downloaded electron zip extracted successfully")
     return true // indicates that we should clean up after unpacking

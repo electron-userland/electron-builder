@@ -1,0 +1,13 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the test harness turns the unpack cache on unless a test opts out 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`the test harness turns the unpack cache on unless a test opts out 2`] = `
+{
+  "linux": [],
+}
+`;

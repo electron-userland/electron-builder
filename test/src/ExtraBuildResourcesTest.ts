@@ -95,6 +95,8 @@ test.ifNotWindows("retrieve latest electron version", ({ expect }) =>
           }
           delete data.build.electronVersion
         }),
+      // whatever is latest today would only fill the shared unpack cache
+      electronUnpackCache: false,
     }
   )
 )
@@ -114,6 +116,8 @@ test.ifNotWindows("retrieve latest electron-nightly version", ({ expect }) =>
           }
           delete data.build.electronVersion
         }),
+      // a nightly changes daily, so it would only fill the shared unpack cache
+      electronUnpackCache: false,
     }
   )
 )

@@ -998,15 +998,15 @@ export async function downloadElectronArtifactZip(options: ArtifactDownloadOptio
 /**
  * Downloads an electron platform artifact (e.g. ffmpeg) via `@electron/get` and extracts it into a
  * content-addressed cache directory (keyed on a hash of the resolved artifact config), returning the
- * extraction path.
+ * extraction path. `extractRoot` defaults to the electron-builder cache directory.
  */
-export async function downloadElectronArtifact(options: ArtifactDownloadOptions): Promise<string> {
+export async function downloadElectronArtifact(options: ArtifactDownloadOptions, extractRoot?: string): Promise<string> {
   const { arch, version, platformName: platform, artifactName } = options
   const artifactConfig = await buildElectronArtifactConfig(options)
 
   const suffix = hashUrlSafe(JSON.stringify(artifactConfig), 5)
   const folderName = `${artifactName}-v${version}-${platform}-${arch}-${suffix}`
-  const extractDir = path.join(await cacheDirectoryOverrideAllowed.value, `${artifactName}-v${version}`, folderName)
+  const extractDir = path.join(extractRoot ?? (await cacheDirectoryOverrideAllowed.value), `${artifactName}-v${version}`, folderName)
 
   return downloadAndExtract(artifactConfig, extractDir, artifactName)
 }

@@ -4,6 +4,7 @@
   "private": true,
   "devDependencies": {
     "@electron-forge/core": "8.0.1",
+    "@electron/get": "^5.1.0",
     "@electron/osx-sign": "^1.0.4",
     "@noble/hashes": "^2.2.0",
     "@types/fs-extra": "^9.0.11",

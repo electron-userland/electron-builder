@@ -32,6 +32,13 @@ export interface PackagerOptions {
    */
   readonly afterPackTestHook?: (context: AfterPackContext) => Promise<boolean>
 
+  /**
+   * @internal Test-only. When set, the default Electron distribution (no `electronDist`) is unzipped once per
+   * version/platform/arch/`electronGet` options into this directory, and every build copies it into the app output
+   * directory instead of unzipping the archive again. Not part of `Configuration`; programmatic API only.
+   */
+  readonly electronUnpackCacheDir?: string | null
+
   readonly prepackaged?: string | null
 }
 
