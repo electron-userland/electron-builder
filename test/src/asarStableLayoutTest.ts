@@ -10,7 +10,7 @@ import {
   validateStableLayoutOptions,
 } from "app-builder-lib/src/asar/asarStableLayout"
 import { dynamicImport } from "app-builder-lib/src/util/dynamicImport"
-import { Platform } from "app-builder-lib"
+import { Arch, Platform } from "app-builder-lib"
 import { InvalidConfigurationError } from "builder-util"
 import { createHash } from "crypto"
 import * as fs from "fs/promises"
@@ -406,9 +406,10 @@ describe("applyStableAsarLayout", () => {
 // second build keeps the first build's offsets.
 test.ifNotWindows("asar.stableLayout keeps the previous build's offsets; the default layout is unchanged", async ({ expect, tmpDir }) => {
   const keep = await tmpDir.createTempDir()
-  // `${arch}` is expanded, so each arch keeps its own previous archive
+  // `${arch}` is expanded, so each arch keeps its own previous archive. linuxDirTarget always builds x64, whatever the
+  // host arch, so the copy has to land under that name or the third build silently lays out afresh
   const previousOption = path.join(keep, "previous-${arch}-app.asar")
-  const previous = path.join(keep, `previous-${process.arch}-app.asar`)
+  const previous = path.join(keep, `previous-${Arch[Arch.x64]}-app.asar`)
   const contiguous = (header: Map<string, any>) => {
     const packed = [...header.values()].filter(e => e.offset != null && !e.unpacked).sort((a, b) => parseInt(a.offset, 10) - parseInt(b.offset, 10))
     let end = 0
