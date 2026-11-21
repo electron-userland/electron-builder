@@ -232,6 +232,8 @@ describe("differential downloads use the per-download headers", () => {
     })
   }
 
+  const ONE_BLOCK_MAP = { version: "2", files: [{ name: "file", offset: 0, checksums: ["a"], sizes: [10] }] }
+
   function updateInfo(fileUrl: string, extra: object = {}): UpdateInfo {
     return { version: "1.1.0", files: [{ url: fileUrl, sha512: "x", size: 10 }], releaseDate: "2024-01-01T00:00:00.000Z", ...extra }
   }
@@ -246,7 +248,8 @@ describe("differential downloads use the per-download headers", () => {
     ;(updater as any).httpExecutor = {
       downloadToBuffer: (url: URL, options: DownloadOptions) => {
         requests.push({ url: url.href, headers: options.headers! })
-        return Promise.resolve(gzipSync(JSON.stringify({ version: "2", files: [] })))
+        // one block covering the 10-byte update of `updateInfo` (a map without blocks is rejected before planning)
+        return Promise.resolve(gzipSync(JSON.stringify(ONE_BLOCK_MAP)))
       },
     }
     return requests
@@ -484,7 +487,7 @@ describe("differential downloads use the per-download headers", () => {
 
   async function writeCachedOldBlockMap(updater: AppUpdater) {
     const cacheDir = (updater as any).downloadedUpdateHelper.cacheDir
-    await fsExtra.outputFile(path.join(cacheDir, "current.blockmap"), gzipSync(JSON.stringify({ version: "2", files: [] })))
+    await fsExtra.outputFile(path.join(cacheDir, "current.blockmap"), gzipSync(JSON.stringify(ONE_BLOCK_MAP)))
   }
 
   const PRE_SIGNED = {
