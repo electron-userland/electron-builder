@@ -2,8 +2,8 @@ import { Arch, Platform } from "electron-builder"
 import { readFile } from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
-import { readSquashfsCompression } from "../helpers/fileAssert.js"
-import { app, appThrows, assertPack, snapTarget } from "../helpers/packTester.js"
+import { assertThat, readSquashfsCompression } from "../helpers/fileAssert.js"
+import { app, assertLinuxTargetConfig, snapTarget } from "../helpers/packTester.js"
 
 test.ifNotWindows("snap", ({ expect }) =>
   app(expect, {
@@ -39,9 +39,9 @@ test.ifNotWindows("arm", ({ expect }) =>
   })
 )
 
-test.ifNotWindows("default stagePackages", async ({ expect }) => {
+test.ifNotWindows("default stagePackages", async ({ expect, tmpDir }) => {
   for (const p of [["default"], ["default", "custom"], ["custom", "default"], ["foo1", "default", "foo2"]]) {
-    await assertPack(expect, "test-app-one", {
+    await assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: {
@@ -97,8 +97,8 @@ test.ifNotWindows("classic confinement", ({ expect }) =>
   )
 )
 
-test.ifNotWindows("buildPackages", async ({ expect }) => {
-  await assertPack(expect, "test-app-one", {
+test.ifNotWindows("buildPackages", async ({ expect, tmpDir }) => {
+  await assertLinuxTargetConfig(expect, tmpDir, {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -122,7 +122,7 @@ test.ifNotWindows("buildPackages", async ({ expect }) => {
   })
 })
 
-test.ifNotWindows("plugs option", async ({ expect }) => {
+test.ifNotWindows("plugs option", async ({ expect, tmpDir }) => {
   for (const p of [
     [
       {
@@ -141,7 +141,7 @@ test.ifNotWindows("plugs option", async ({ expect }) => {
       "another-simple-plug-name": null,
     },
   ]) {
-    await assertPack(expect, "test-app-one", {
+    await assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         snapcraft: {
@@ -163,7 +163,7 @@ test.ifNotWindows("plugs option", async ({ expect }) => {
   }
 })
 
-test.ifNotWindows("slots option", async ({ expect }) => {
+test.ifNotWindows("slots option", async ({ expect, tmpDir }) => {
   for (const slots of [
     ["foo", "bar"],
     [
@@ -176,7 +176,7 @@ test.ifNotWindows("slots option", async ({ expect }) => {
       "another-simple-slot-name",
     ],
   ]) {
-    await assertPack(expect, "test-app-one", {
+    await assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: {
@@ -198,8 +198,8 @@ test.ifNotWindows("slots option", async ({ expect }) => {
   }
 })
 
-test.ifNotWindows("custom env", ({ expect }) =>
-  app(expect, {
+test.ifNotWindows("custom env", ({ expect, tmpDir }) =>
+  assertLinuxTargetConfig(expect, tmpDir, {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -222,8 +222,8 @@ test.ifNotWindows("custom env", ({ expect }) =>
   })
 )
 
-test.ifNotWindows("custom after, no desktop", ({ expect }) =>
-  app(expect, {
+test.ifNotWindows("custom after, no desktop", ({ expect, tmpDir }) =>
+  assertLinuxTargetConfig(expect, tmpDir, {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -244,8 +244,8 @@ test.ifNotWindows("custom after, no desktop", ({ expect }) =>
   })
 )
 
-test.ifNotWindows("no desktop plugs", ({ expect }) =>
-  app(expect, {
+test.ifNotWindows("no desktop plugs", ({ expect, tmpDir }) =>
+  assertLinuxTargetConfig(expect, tmpDir, {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -267,8 +267,8 @@ test.ifNotWindows("no desktop plugs", ({ expect }) =>
   })
 )
 
-test.ifNotWindows("auto start", ({ expect }) =>
-  app(expect, {
+test.ifNotWindows("auto start", ({ expect, tmpDir }) =>
+  assertLinuxTargetConfig(expect, tmpDir, {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -290,8 +290,8 @@ test.ifNotWindows("auto start", ({ expect }) =>
   })
 )
 
-test.ifNotWindows("default compression", ({ expect }) =>
-  app(expect, {
+test.ifNotWindows("default compression", ({ expect, tmpDir }) =>
+  assertLinuxTargetConfig(expect, tmpDir, {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -306,8 +306,8 @@ test.ifNotWindows("default compression", ({ expect }) =>
   })
 )
 
-test.ifNotWindows("compression option", ({ expect }) =>
-  app(expect, {
+test.ifNotWindows("compression option", ({ expect, tmpDir }) =>
+  assertLinuxTargetConfig(expect, tmpDir, {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -331,8 +331,8 @@ test.ifNotWindows("compression option", ({ expect }) =>
   })
 )
 
-test.ifNotWindows("default base", ({ expect }) =>
-  app(expect, {
+test.ifNotWindows("default base", ({ expect, tmpDir }) =>
+  assertLinuxTargetConfig(expect, tmpDir, {
     targets: snapTarget,
     config: {
       productName: "Sep",
@@ -345,8 +345,8 @@ test.ifNotWindows("default base", ({ expect }) =>
   })
 )
 
-test.ifNotWindows("base option", ({ expect }) =>
-  app(expect, {
+test.ifNotWindows("base option", ({ expect, tmpDir }) =>
+  assertLinuxTargetConfig(expect, tmpDir, {
     targets: snapTarget,
     config: {
       productName: "Sep",
@@ -362,8 +362,8 @@ test.ifNotWindows("base option", ({ expect }) =>
   })
 )
 
-test.ifNotWindows("use template app", ({ expect }) =>
-  app(expect, {
+test.ifNotWindows("use template app", ({ expect, tmpDir }) =>
+  assertLinuxTargetConfig(expect, tmpDir, {
     targets: snapTarget,
     config: {
       snapcraft: {
@@ -476,10 +476,10 @@ test.ifNotWindows("template app moves a configured LD_LIBRARY_PATH into command.
   )
 )
 
-test.ifNotWindows("template app honors toolsets.appimage pin", ({ expect }) =>
-  appThrows(
+test.ifNotWindows("template app honors toolsets.appimage pin", ({ expect, tmpDir }) =>
+  assertThat(
     expect,
-    {
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: {
@@ -495,8 +495,8 @@ test.ifNotWindows("template app honors toolsets.appimage pin", ({ expect }) =>
           },
         },
       },
-    },
-    {},
+    })
+  ).throws(
     // The pinned legacy "0.0.0" mksquashfs supports only gzip/xz, so the pin reaching the template build is rejected up front.
     error => expect(error.message).toContain('Snap compression "lzo" is not supported with toolsets.appimage "0.0.0"')
   )
