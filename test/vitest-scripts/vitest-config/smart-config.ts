@@ -65,7 +65,7 @@ export const SAFEGUARD_MAX_SHARDS = 20
  * run one after another), which the shard planner counts as `speedup` times the work per shard. The speed-ups are measured: on the
  * first full CI run with parallel files, Linux shards (4 cores) finished ~1.6x faster, Windows ones (4 cores) ~1.45x and macOS ones
  * (3 cores, 3 files at once) only ~1.1-1.2x, as the files compete for the runner's cores and disk. Retune from the shard wall times
- * the plan reports, not from the cached file durations, which are averages over many runs and follow the contention only slowly.
+ * the plan reports, not from the cached file durations, which are averages over the last few runs (SMART_CACHE_HISTORY_RUNS).
  *
  * The planner job (smart-shard-count.ts) sizes every platform's matrix from this table, and each shard job re-plans with it, so it is the
  * single source for both. Runners: macos-26 (3 cores, 7 GB), ubuntu-24.04 and windows-latest (4 cores, 16 GB).
@@ -77,11 +77,19 @@ export const CI_PARALLELISM: Record<SupportedPlatforms, { readonly workers: numb
 }
 
 /**
- * Heavy tests (`describe.heavy` / `test.heavy`) run one at a time across all workers of a shard (vitest-heavy-mutex.ts), and run slower
- * next to the other workers' files than their cached durations say. Capping each shard's heavy work at half of TARGET_MS leaves the
- * shard room for that and for its other files.
+ * Heavy tests (`describe.heavy` / `test.heavy`) run one at a time across all workers of a shard (vitest-heavy-mutex.ts), so a shard
+ * takes at least as long as its heavy files together. Capping that at the full TARGET_MS keeps every shard within its budget; a lower cap
+ * only adds runners (Windows, where half the work is heavy, would need ~40% more), since the run's wall time is set by its
+ * longest fixed jobs (see DEFAULT_TARGET_MS).
  */
-export const HEAVY_TARGET_MS = TARGET_MS / 2
+export const HEAVY_TARGET_MS = TARGET_MS
+
+/**
+ * How many past runs the cached average of a test or file counts for at most (vitest-smart-reporter.ts): each new run moves it by
+ * 1 / (SMART_CACHE_HISTORY_RUNS + 1) of the difference, so the shard plan follows a file that got faster or slower within a few runs
+ * instead of being diluted by every run since the cache was last reset. The `runs` and `fails` counters keep counting for the fail ratio.
+ */
+export const SMART_CACHE_HISTORY_RUNS = 4
 
 /**
  * Test files vitest runs at once on this machine: `VITEST_MAX_WORKERS` when set, else the platform's CI_PARALLELISM in a smart-sharded

@@ -1,7 +1,7 @@
 import * as path from "path"
 import type { Reporter, TestCase, TestModule } from "vitest/node"
 import { FileStats, loadCache, saveCache, TestStats } from "./cache.js"
-import { CI_PARALLELISM, getMaxWorkers, UNSTABLE_FAIL_RATIO, SupportedPlatforms, SMART_REPORTER_VERBOSE } from "./smart-config.js"
+import { CI_PARALLELISM, getMaxWorkers, UNSTABLE_FAIL_RATIO, SupportedPlatforms, SMART_REPORTER_VERBOSE, SMART_CACHE_HISTORY_RUNS } from "./smart-config.js"
 
 const defaultStat: TestStats = {
   platformRuns: {
@@ -57,6 +57,20 @@ export function serialEquivalentDuration(test: TestCase, platform: SupportedPlat
   }
   const workers = getMaxWorkers(platform)
   return workers > 1 ? (duration * Math.min(CI_PARALLELISM[platform].speedup, workers)) / workers : duration
+}
+
+/**
+ * The cached average after one more run, with the history counting for at most SMART_CACHE_HISTORY_RUNS runs (see there). Only a passing
+ * run measures the real duration: a failed or skipped test, or a file with a failure, often stops early (a download or network outage, a
+ * broken commit), and with the short history a few such runs would drag the average, and the shard count, well below the real workload.
+ * So such a run keeps the previous average, except on the first run, where its duration is still a better estimate than none.
+ */
+function nextAverageMs(prevAvgMs: number, prevRuns: number, durationMs: number, passed: boolean): number {
+  if (!passed) {
+    return prevRuns === 0 ? durationMs : prevAvgMs
+  }
+  const historyRuns = Math.min(prevRuns, SMART_CACHE_HISTORY_RUNS)
+  return (prevAvgMs * historyRuns + durationMs) / (historyRuns + 1)
 }
 
 export default class SmarterReporter implements Reporter {
@@ -130,7 +144,7 @@ export default class SmarterReporter implements Reporter {
 
     const newRuns = prevRuns + 1
     const newFails = prevFails + (testResult === "failed" ? 1 : 0)
-    const newAvg = shouldResetSnapshot ? dur : (prevAvg * prevRuns + dur) / newRuns
+    const newAvg = nextAverageMs(prevAvg, prevRuns, dur, testResult === "passed")
 
     platformRuns[this.currentPlatform] = { runs: newRuns, fails: newFails, avgMs: newAvg }
 
@@ -186,7 +200,7 @@ export default class SmarterReporter implements Reporter {
     platformRuns[this.currentPlatform] = {
       runs: newPlatformRuns,
       fails: totalFails,
-      avgMs: shouldResetSnapshot ? dur : (prevPlatformAvg * prevPlatformRuns + dur) / newPlatformRuns,
+      avgMs: nextAverageMs(prevPlatformAvg, prevPlatformRuns, dur, fails === 0),
     }
 
     this.cache.files[file] = {
