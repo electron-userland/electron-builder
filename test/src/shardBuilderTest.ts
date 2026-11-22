@@ -161,8 +161,11 @@ describe("smart cache averages", () => {
   type PlatformRun = { runs: number; fails: number; avgMs: number }
 
   /** Reports one run of a one-test file through the reporter, starting from `prev`, and returns the cached test and file records. */
-  function reportRun(prev: PlatformRun | undefined, durationMs: number, state: "passed" | "failed" = "passed") {
-    vi.stubEnv("CI", "") // one file at a time: the duration is cached as measured
+  function reportRun(prev: PlatformRun | undefined, durationMs: number, state: "passed" | "failed" | "skipped" = "passed") {
+    // one file at a time: the duration is cached as measured
+    vi.stubEnv("CI", "")
+    vi.stubEnv("VITEST_MAX_WORKERS", "")
+    vi.stubEnv("TEST_FILES", "")
     const reporter = new SmarterReporter()
     const cache = reporter["cache"]
     const relPath = "averageTest.ts"
@@ -185,12 +188,30 @@ describe("smart cache averages", () => {
 
   test("a file that got faster moves its cached average within a few runs, however long its history", () => {
     // 93 runs at 15 min, now 3.2 min: the last few runs count, not all 93
-    const { test: testRun, file: fileRun } = reportRun({ runs: 93, fails: 2, avgMs: 15 * MIN }, 3.2 * MIN, "failed")
+    const { test: testRun, file: fileRun } = reportRun({ runs: 93, fails: 2, avgMs: 15 * MIN }, 3.2 * MIN)
     for (const run of [testRun, fileRun]) {
       expect(run.avgMs / MIN).toBeCloseTo((15 * SMART_CACHE_HISTORY_RUNS + 3.2) / (SMART_CACHE_HISTORY_RUNS + 1))
-      // the counters behind the fail ratio keep counting every run
       expect(run.runs).toBe(94)
-      expect(run.fails).toBe(3)
+      expect(run.fails).toBe(2)
+    }
+  })
+
+  test("a failed run keeps the cached average, but still counts towards the fail ratio", () => {
+    // a test that fails early (a download outage, a broken commit) says nothing about how long it takes when it passes
+    const { test: testRun, file: fileRun } = reportRun({ runs: 93, fails: 2, avgMs: 15 * MIN }, 0.1 * MIN, "failed")
+    for (const run of [testRun, fileRun]) {
+      expect(run).toEqual({ runs: 94, fails: 3, avgMs: 15 * MIN })
+    }
+  })
+
+  test("a skipped test keeps its cached average", () => {
+    expect(reportRun({ runs: 93, fails: 2, avgMs: 15 * MIN }, 0, "skipped").test).toEqual({ runs: 94, fails: 2, avgMs: 15 * MIN })
+  })
+
+  test("a failed first run is cached at its duration rather than as no time at all", () => {
+    const { test: testRun, file: fileRun } = reportRun(undefined, 6 * MIN, "failed")
+    for (const run of [testRun, fileRun]) {
+      expect(run).toEqual({ runs: 1, fails: 1, avgMs: 6 * MIN })
     }
   })
 
