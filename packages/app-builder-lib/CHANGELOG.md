@@ -1,5 +1,31 @@
 # app-builder-lib
 
+## 26.18.2
+
+### Patch Changes
+
+- Fix(publish): `createPublisher` debug output names the provider instead of dumping the publish configuration _[`#10540`](https://github.com/electron-userland/electron-builder/pull/10540) [`a4e36e7`](https://github.com/electron-userland/electron-builder/commit/a4e36e714346dc41d91f91de7da00d1f0b89c157) [@claude](https://github.com/apps/claude)_
+- Accept `minimatch` 10 or 11 (`^10.2.5 || ^11.0.1`). Fresh installs typically resolve 11.x, which is patched for GHSA-g3hv-75wg-m249; existing lockfiles can stay on 10.x or override to 11. File pattern matching behaves the same on both versions. _[`#10538`](https://github.com/electron-userland/electron-builder/pull/10538) [`dea2881`](https://github.com/electron-userland/electron-builder/commit/dea2881bff029c7ee4eccde6ee9d15829693659a) [@claude](https://github.com/apps/claude)_
+- Fix(rpm): build RPMs without /usr/lib/.build-id links and with v4 package format so output is the same on every build host (#10471) _[`#10476`](https://github.com/electron-userland/electron-builder/pull/10476) [`7f293a9`](https://github.com/electron-userland/electron-builder/commit/7f293a90f31ed020ee6bea26fd87b03e2ee21f2b) [@claude](https://github.com/apps/claude)_
+- Fix: cache the pending publisher promise in `PublishManager` so concurrent artifact uploads share one publisher instead of racing to create duplicate GitHub draft releases _[`#10606`](https://github.com/electron-userland/electron-builder/pull/10606) [`4055f92`](https://github.com/electron-userland/electron-builder/commit/4055f921fd51f3a728578b7e789580448797391a) [@claude](https://github.com/apps/claude)_
+- Fix: fail the build when the app's electron-updater can be 7 or later (the 7.0.0 prereleases included): an installed electron-updater 7, or, when none is installed yet, a version declared in `dependencies` whose range allows 7 (e.g. `>=6`). electron-updater 7 rejects the update configuration electron-builder 26 writes (on Windows, every update is rejected), so installs of such a build could never update. Build with electron-builder 27, or pin electron-updater to `^6`. See https://www.electron.build/docs/migration/v26-to-v27 _[`#10615`](https://github.com/electron-userland/electron-builder/pull/10615) [`a539199`](https://github.com/electron-userland/electron-builder/commit/a539199eb38a80da53653ae85b0475c0f54191b6) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`8348b16`](https://github.com/electron-userland/electron-builder/commit/8348b165b05273e8fa0d07763180d39017ddfbff) [`86a6010`](https://github.com/electron-userland/electron-builder/commit/86a6010a956106ef65a60e148d2b6bac2ed9e5ee) [`d0a7644`](https://github.com/electron-userland/electron-builder/commit/d0a7644d2a72f70e42f7503cd125726ddc614a33) [`2d1dc9e`](https://github.com/electron-userland/electron-builder/commit/2d1dc9e9e1bd7382931cc3aa78f5867d74b121f3) [`f3c7077`](https://github.com/electron-userland/electron-builder/commit/f3c7077c6e86c63ac27898a10fbfab319d87c1b6) [`406725d`](https://github.com/electron-userland/electron-builder/commit/406725dd3cf6d2d7768334f27d9dfd4f09f7b685) [`2d1dc9e`](https://github.com/electron-userland/electron-builder/commit/2d1dc9e9e1bd7382931cc3aa78f5867d74b121f3)
+
+</small>
+
+- `builder-util@26.18.2`
+- `dmg-builder@26.18.2`
+- `builder-util-runtime@9.7.2`
+- `electron-publish@26.18.2`
+- `electron-builder-squirrel-windows@26.18.2`
+
+</details>
+
 ## 26.18.1
 
 ### Patch Changes
