@@ -1,4 +1,4 @@
-import { LOCK_WAIT_RETRIES, withLock, withSigntoolLock } from "app-builder-lib/src/util/toolsetLock"
+import { LOCK_WAIT_MS, withLock, withSigntoolLock } from "app-builder-lib/src/util/toolsetLock"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { vi } from "vitest"
@@ -36,14 +36,8 @@ async function lockFileIn(dir: string): Promise<string> {
 }
 
 test("the default wait covers an hour of a live holder's turns, not the former ~8 minutes", ({ expect }) => {
-  // proper-lockfile's retry schedule (retry 0.12): minTimeout * 2^attempt, capped at maxTimeout
-  let waitedMs = 0
-  for (let attempt = 0; attempt < LOCK_WAIT_RETRIES; attempt++) {
-    waitedMs += Math.min(1000 * 2 ** attempt, 5000)
-  }
-  expect(waitedMs).toBeGreaterThanOrEqual(60 * 60 * 1000)
-  // and bounded, so a lock that a live but stuck holder never releases fails the build instead of hanging it
-  expect(waitedMs).toBeLessThan(61 * 60 * 1000)
+  // bounded, so a lock that a live but stuck holder never releases fails the build instead of hanging it
+  expect(LOCK_WAIT_MS).toBe(60 * 60 * 1000)
 })
 
 test("a waiter retries while a live holder keeps the lock, and takes it once released", { timeout: 30_000 }, async ({ expect, tmpDir }) => {
@@ -56,14 +50,14 @@ test("a waiter retries while a live holder keeps the lock, and takes it once rel
   })
   await sleep(100)
   const start = Date.now()
-  // 1s, 2s, 4s and 5s apart: the holder releases during the third wait
+  // retried 1s, 2s and 4s apart: the holder releases during the third wait
   const waiter = withLock(
     lockFile,
     async () => {
       events.push("waiter start")
       return "acquired"
     },
-    4
+    20_000
   )
   await expect(waiter).resolves.toBe("acquired")
   await holder
@@ -71,16 +65,36 @@ test("a waiter retries while a live holder keeps the lock, and takes it once rel
   expect(Date.now() - start).toBeGreaterThanOrEqual(3000)
 })
 
-test("a waiter that runs out of retries fails with an error naming the lock", { timeout: 30_000 }, async ({ expect, tmpDir }) => {
+test("a waiter whose wait runs out fails with an error naming the lock", { timeout: 30_000 }, async ({ expect, tmpDir }) => {
   const lockFile = await lockFileIn(await tmpDir.getTempDir({ prefix: "toolset-lock" }))
   const holder = withLock(lockFile, () => sleep(5000))
   await sleep(100)
   const waiterRan = vi.fn()
-  const error = await withLock(lockFile, async () => waiterRan(), 1).catch((e: Error) => e)
+  const error = await withLock(lockFile, async () => waiterRan(), 1000).catch((e: Error) => e)
   expect(error).toBeInstanceOf(Error)
   expect((error as Error).message).toMatch(/^Timed out after \d+s waiting for the cross-process lock /)
   expect((error as Error).message).toContain(lockFile)
   expect(error).toMatchObject({ code: "ELOCKED", cause: { code: "ELOCKED" } })
   expect(waiterRan).not.toHaveBeenCalled()
   await holder
+})
+
+// Not on Windows: the temp folder plus a 251-character name can pass MAX_PATH (260), so writing the lock file itself could fail instead
+// of the lock attempt this test is about.
+test.ifNotWindows("a lock that cannot be created fails at once with its own error, without the long wait for a held lock", { timeout: 30_000 }, async ({ expect, tmpDir }) => {
+  const dir = await tmpDir.getTempDir({ prefix: "toolset-lock" })
+  await fs.mkdir(dir, { recursive: true })
+  // a name of 251 characters can be written, but proper-lockfile's lock directory (the name plus ".lock") exceeds the 255 a file name may
+  // have, so creating it fails with an error other than ELOCKED on every attempt, as a full disk or a read-only temp folder would
+  const lockFile = path.join(dir, "l".repeat(251))
+  const task = vi.fn(async () => "acquired")
+  const start = Date.now()
+  // the production wait: before, proper-lockfile retried this error for the whole of it
+  const error = await withLock(lockFile, task).catch((e: NodeJS.ErrnoException) => e)
+  expect(error).toBeInstanceOf(Error)
+  expect((error as NodeJS.ErrnoException).code).not.toBe("ELOCKED")
+  expect(Date.now() - start).toBeLessThan(5000)
+  // the error came from the lock attempt: the lock file itself was written, and the task never ran
+  await expect(fs.stat(lockFile)).resolves.toBeTruthy()
+  expect(task).not.toHaveBeenCalled()
 })

@@ -9,34 +9,39 @@ const SIGNTOOL_LOCK_FILE = path.join(os.tmpdir(), ".electron-builder-signtool.lo
 const ICONS_LOCK_FILE = path.join(os.tmpdir(), ".electron-builder-icons.lock")
 
 /**
- * Retries a caller makes for a lock another live process holds: 1s, 2s and 4s apart, then every 5s, for about 60 minutes. A holder keeps
- * its lock for as long as its task runs, and Squirrel.Windows and MSI hold the toolset lock for a whole installer build, which takes
- * minutes: with several queued (x64 and arm64 targets, or parallel builds sharing os.tmpdir()), the previous 100 retries (about 8 minutes)
- * ran out while live holders were still taking turns. The long wait cannot hang on a dead process: a live holder refreshes its lock every
- * `stale / 2` (60s), and the lock of one that died goes stale after `stale` (120s) and is taken over.
+ * How long a caller waits for a lock another live process holds, retrying 1s, 2s and 4s apart, then every 5s. A holder keeps its lock for
+ * as long as its task runs, and Squirrel.Windows and MSI hold the toolset lock for a whole installer build, which takes minutes: with
+ * several queued (x64 and arm64 targets, or parallel builds sharing os.tmpdir()), the previous 100 retries (about 8 minutes) ran out while
+ * live holders were still taking turns. The long wait cannot hang on a dead process: a live holder refreshes its lock every `stale / 2`
+ * (60s), and the lock of one that died goes stale after `stale` (120s) and is taken over.
  * @internal
  */
-export const LOCK_WAIT_RETRIES = 3 + (60 * 60) / 5
+export const LOCK_WAIT_MS = 60 * 60 * 1000
 
-/** @internal `retries` is a test seam; production uses {@link LOCK_WAIT_RETRIES}. */
-export async function withLock<T>(lockFile: string, task: () => Promise<T>, retries = LOCK_WAIT_RETRIES): Promise<T> {
+/** @internal `waitMs` is a test seam; production uses {@link LOCK_WAIT_MS}. */
+export async function withLock<T>(lockFile: string, task: () => Promise<T>, waitMs = LOCK_WAIT_MS): Promise<T> {
   await writeFile(lockFile, "", { flag: "a" })
   const start = Date.now()
   let release: () => Promise<void>
-  try {
-    release = await lockfile.lock(lockFile, {
-      retries: { retries, minTimeout: 1000, maxTimeout: 5000 },
-      stale: 120_000,
-    })
-  } catch (e: any) {
-    if (e?.code === "ELOCKED") {
-      // proper-lockfile's own message does not say which lock; the code stays ELOCKED for callers that match it
-      throw Object.assign(
-        new Error(`Timed out after ${Math.round((Date.now() - start) / 1000)}s waiting for the cross-process lock ${lockFile}, which another electron-builder process holds`),
-        { code: "ELOCKED", cause: e }
-      )
+  // Only a lock that another process holds (ELOCKED) is waited out here. proper-lockfile retries every error of its own, so it gets no
+  // retries: a lock that cannot be created at all (EACCES, ENOSPC, EROFS, ...) fails at once instead of after the whole wait.
+  for (let delay = 1000; ; delay = Math.min(delay * 2, 5000)) {
+    try {
+      release = await lockfile.lock(lockFile, { stale: 120_000 })
+      break
+    } catch (e: any) {
+      if (e?.code !== "ELOCKED") {
+        throw e
+      }
+      if (Date.now() - start >= waitMs) {
+        // proper-lockfile's own message does not say which lock; the code stays ELOCKED for callers that match it
+        throw Object.assign(
+          new Error(`Timed out after ${Math.round((Date.now() - start) / 1000)}s waiting for the cross-process lock ${lockFile}, which another electron-builder process holds`),
+          { code: "ELOCKED", cause: e }
+        )
+      }
+      await new Promise(resolve => setTimeout(resolve, delay))
     }
-    throw e
   }
   try {
     return await task()
