@@ -1,7 +1,19 @@
 import { LOCK_WAIT_MS, withLock, withSigntoolLock } from "app-builder-lib/src/util/toolsetLock"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { vi } from "vitest"
+import { type Mock, vi } from "vitest"
+
+type LockFunction = (file: string, options?: object) => Promise<() => Promise<void>>
+
+// proper-lockfile as toolsetLock.ts imports it (app-builder-lib's own dependency, so it is reached by path), with `lock` a spy that calls
+// the real one unless a test says otherwise
+const properLockfile = vi.hoisted(() => ({ lock: null as Mock<LockFunction> | null }))
+vi.mock("../../packages/app-builder-lib/node_modules/proper-lockfile", async importOriginal => {
+  const actual: any = await importOriginal()
+  const lock = vi.fn<LockFunction>(actual.lock)
+  properLockfile.lock = lock
+  return { ...actual, default: { ...actual.default, lock }, lock }
+})
 
 // signtool is not safe to run concurrently (it races on the per-user crypto store), so withSigntoolLock
 // must serialize overlapping invocations across the process. Verify two concurrent holders never interleave.
@@ -81,20 +93,41 @@ test("a waiter whose wait runs out fails with an error naming the lock", { timeo
 
 // Not on Windows: the temp folder plus a 251-character name can pass MAX_PATH (260), so writing the lock file itself could fail instead
 // of the lock attempt this test is about.
-test.ifNotWindows("a lock that cannot be created fails at once with its own error, without the long wait for a held lock", { timeout: 30_000 }, async ({ expect, tmpDir }) => {
+test.ifNotWindows(
+  "a lock that cannot be created fails with its own error after a few retries, without the long wait for a held lock",
+  { timeout: 60_000 },
+  async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "toolset-lock" })
+    await fs.mkdir(dir, { recursive: true })
+    // a name of 251 characters can be written, but proper-lockfile's lock directory (the name plus ".lock") exceeds the 255 a file name may
+    // have, so creating it fails with an error other than ELOCKED on every attempt, as a full disk or a read-only temp folder would
+    const lockFile = path.join(dir, "l".repeat(251))
+    const task = vi.fn(async () => "acquired")
+    const start = Date.now()
+    // the production wait: proper-lockfile on its own would retry this error for the whole of it; it is retried 5 times (about 17s)
+    const error = await withLock(lockFile, task).catch((e: NodeJS.ErrnoException) => e)
+    expect(error).toBeInstanceOf(Error)
+    expect((error as NodeJS.ErrnoException).code).not.toBe("ELOCKED")
+    expect(Date.now() - start).toBeLessThan(30_000)
+    // the error came from the lock attempt: the lock file itself was written, and the task never ran
+    await expect(fs.stat(lockFile)).resolves.toBeTruthy()
+    expect(task).not.toHaveBeenCalled()
+  }
+)
+
+test("a short-lived error other than ELOCKED is retried, and the lock then taken", { timeout: 30_000 }, async ({ expect, tmpDir }) => {
   const dir = await tmpDir.getTempDir({ prefix: "toolset-lock" })
   await fs.mkdir(dir, { recursive: true })
-  // a name of 251 characters can be written, but proper-lockfile's lock directory (the name plus ".lock") exceeds the 255 a file name may
-  // have, so creating it fails with an error other than ELOCKED on every attempt, as a full disk or a read-only temp folder would
-  const lockFile = path.join(dir, "l".repeat(251))
-  const task = vi.fn(async () => "acquired")
-  const start = Date.now()
-  // the production wait: before, proper-lockfile retried this error for the whole of it
-  const error = await withLock(lockFile, task).catch((e: NodeJS.ErrnoException) => e)
-  expect(error).toBeInstanceOf(Error)
-  expect((error as NodeJS.ErrnoException).code).not.toBe("ELOCKED")
-  expect(Date.now() - start).toBeLessThan(5000)
-  // the error came from the lock attempt: the lock file itself was written, and the task never ran
-  await expect(fs.stat(lockFile)).resolves.toBeTruthy()
-  expect(task).not.toHaveBeenCalled()
+  const lockFile = path.join(dir, "toolset.lock")
+  // what a Windows lock directory that another process is still removing gives mkdir or stat for a moment
+  const deletePending = () => Promise.reject(Object.assign(new Error("EPERM: operation not permitted, mkdir"), { code: "EPERM" }))
+  const lock = properLockfile.lock
+  if (lock == null) {
+    throw new Error("proper-lockfile was not mocked")
+  }
+  lock.mockClear()
+  lock.mockImplementationOnce(deletePending).mockImplementationOnce(deletePending)
+  await expect(withLock(lockFile, async () => "acquired")).resolves.toBe("acquired")
+  // twice EPERM, then the real lock
+  expect(lock).toHaveBeenCalledTimes(3)
 })

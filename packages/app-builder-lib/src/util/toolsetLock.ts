@@ -18,27 +18,37 @@ const ICONS_LOCK_FILE = path.join(os.tmpdir(), ".electron-builder-icons.lock")
  */
 export const LOCK_WAIT_MS = 60 * 60 * 1000
 
+// Consecutive errors other than ELOCKED that are retried before the last one is rethrown (1s, 2s, 4s, 5s and 5s apart)
+const OTHER_LOCK_ERROR_RETRIES = 5
+
 /** @internal `waitMs` is a test seam; production uses {@link LOCK_WAIT_MS}. */
 export async function withLock<T>(lockFile: string, task: () => Promise<T>, waitMs = LOCK_WAIT_MS): Promise<T> {
   await writeFile(lockFile, "", { flag: "a" })
   const start = Date.now()
   let release: () => Promise<void>
-  // Only a lock that another process holds (ELOCKED) is waited out here. proper-lockfile retries every error of its own, so it gets no
-  // retries: a lock that cannot be created at all (EACCES, ENOSPC, EROFS, ...) fails at once instead of after the whole wait.
+  // A lock that another process holds (ELOCKED) is waited out until the deadline. proper-lockfile retries every error of its own, so it
+  // gets no retries, and any other error is retried only a few times in a row: on Windows, a lock directory that another process is
+  // removing stays delete-pending while a handle is open, and mkdir or stat fails with EPERM, EACCES or EBUSY until it is gone, while a
+  // lock that cannot be created at all (ENOSPC, EROFS, ENAMETOOLONG) still fails within half a minute instead of after the whole wait.
+  let otherFailures = 0
   for (let delay = 1000; ; delay = Math.min(delay * 2, 5000)) {
     try {
       release = await lockfile.lock(lockFile, { stale: 120_000 })
       break
     } catch (e: any) {
       if (e?.code !== "ELOCKED") {
-        throw e
-      }
-      if (Date.now() - start >= waitMs) {
+        if (++otherFailures > OTHER_LOCK_ERROR_RETRIES) {
+          throw e
+        }
+      } else if (Date.now() - start >= waitMs) {
         // proper-lockfile's own message does not say which lock; the code stays ELOCKED for callers that match it
         throw Object.assign(
           new Error(`Timed out after ${Math.round((Date.now() - start) / 1000)}s waiting for the cross-process lock ${lockFile}, which another electron-builder process holds`),
           { code: "ELOCKED", cause: e }
         )
+      } else {
+        // the lock directory could be looked at, so a run of other errors starts over
+        otherFailures = 0
       }
       await new Promise(resolve => setTimeout(resolve, delay))
     }
