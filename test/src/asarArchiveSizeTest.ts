@@ -25,6 +25,7 @@ async function packArchive(tmp: string): Promise<string> {
 }
 
 const sizeMismatch = /is corrupted: the header describes an archive of \d+ bytes, but it is \d+ bytes/
+const cutOff = /is corrupted: its content ends at byte \d+, but the archive is \d+ bytes/
 
 test("an archive whose size matches its header passes the sanity check", async ({ expect, tmpDir }) => {
   const file = await packArchive(await tmpDir.createTempDir())
@@ -43,6 +44,26 @@ test("an archive cut short inside its last file fails the sanity check", async (
   await fs.truncate(file, size - 10)
   // the bytes before the cut extend past the last entry that fits in the file, so they count as trailing bytes
   await expect(checkFileInArchive(file, "package.json", "Application")).rejects.toThrow(sizeMismatch)
+})
+
+test("an archive cut right after its header fails the sanity check", async ({ expect, tmpDir }) => {
+  const file = await packArchive(await tmpDir.createTempDir())
+  const { size: headerSize } = await readAsarHeader(file)
+  // only the 8-byte size prefix and the header are left: no file has content, and no bytes trail the header
+  await fs.truncate(file, 8 + headerSize)
+  await expect(checkFileInArchive(file, "package.json", "Application")).rejects.toThrow(cutOff)
+})
+
+test("an archive cut at a file boundary fails the sanity check for the file that was cut off", async ({ expect, tmpDir }) => {
+  const file = await packArchive(await tmpDir.createTempDir())
+  const { header, size: headerSize } = await readAsarHeader(file)
+  const { files } = JSON.parse(header)
+  // the packed file with the highest offset: cutting at its offset keeps every earlier file whole and drops this one entirely
+  const name = Object.keys(files).reduce((last, it) => (Number(files[it].offset) > Number(files[last].offset) ? it : last))
+  const offset = Number(files[name].offset)
+  expect(offset).toBeGreaterThan(0)
+  await fs.truncate(file, 8 + headerSize + offset)
+  await expect(checkFileInArchive(file, name, "Application")).rejects.toThrow(cutOff)
 })
 
 // asarmor's default afterPack patch (createBloatPatch) adds about 100 header entries whose offset sits near MAX_SAFE_INTEGER and whose size is 1 GiB.

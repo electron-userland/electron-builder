@@ -37,6 +37,14 @@ export async function checkFileInArchive(asarFile: string, relativeFile: string,
   if (actualSize > describedSize) {
     throw error(`is corrupted: the header describes an archive of ${describedSize} bytes, but it is ${actualSize} bytes`)
   }
+  // An entry past the end of the file may be bloat, but not the file being checked: its content has to be inside the archive.
+  const fileStat = stat as FilesystemFileEntry
+  if (fileStat.offset != null && !fileStat.unpacked) {
+    const fileEnd = 8 + headerSize + parseInt(fileStat.offset, 10) + fileStat.size
+    if (fileEnd > actualSize) {
+      throw error(`is corrupted: its content ends at byte ${fileEnd}, but the archive is ${actualSize} bytes`)
+    }
+  }
   if (actualSize < expectedSize) {
     // asarmor's default afterPack patch (createBloatPatch) adds header entries that point far past the end of the file on purpose,
     // so a header that describes more bytes than the file has only warns

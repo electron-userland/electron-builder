@@ -120,7 +120,9 @@ export function expectedArchiveSize(header: Node, headerSize: number): number {
 
 /**
  * The archive size the header describes when only entries whose content ends inside the file count.
- * Entries past the end of the file (asarmor's bloat patch) are left out, so bytes after the last entry that fits are trailing bytes.
+ * Entries past the end of the file are left out, so bytes after the last entry that fits are trailing bytes.
+ * A left-out entry is either bloat (asarmor's patch) or a real file cut off at a file boundary, and the header alone cannot tell them apart:
+ * `checkFileInArchive` fails when the file it checks is one of them and only warns about the others.
  */
 export function expectedArchiveSizeWithin(header: Node, headerSize: number, archiveSize: number): number {
   const contentStart = 8 + headerSize
