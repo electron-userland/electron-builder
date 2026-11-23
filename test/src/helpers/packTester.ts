@@ -35,7 +35,7 @@ import { assertThat } from "./fileAssert"
 import AdmZip from "adm-zip"
 // @ts-ignore
 import sanitizeFileName from "sanitize-filename"
-import type { ExpectStatic } from "vitest"
+import { inject, type ExpectStatic } from "vitest"
 import { computeDefaultAppDirectory, installDependencies } from "app-builder-lib/internal"
 import { ELECTRON_VERSION } from "./testConfig"
 import { execSync, spawnSync } from "child_process"
@@ -313,6 +313,23 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   if (configuration.updateManifest === undefined) {
     ;(configuration as any).updateManifest = false
   }
+  // Fixture builds use the fastest compression unless the test sets its own, so only the tests about compression pay for it.
+  // The fixtures' package.json already says "store", but fpm ignores it and packs deb/rpm/pacman with xz, so those default
+  // to gzip here.
+  if (configuration.compression === undefined) {
+    ;(configuration as any).compression = "store"
+  }
+  if (packagerOptions.targets?.has(Platform.LINUX) === true) {
+    for (const [target, fastest] of [
+      ["deb", "gz"],
+      ["rpm", "gzip"],
+      ["pacman", "gz"],
+    ] as const) {
+      if (configuration[target]?.compression === undefined) {
+        ;(configuration as any)[target] = { ...configuration[target], compression: fastest }
+      }
+    }
+  }
   // The same for Windows update signature verification: fixture builds are unsigned unless the test signs them (signedWin), and since
   // v27 a build that writes app-update.yml without a publisherName fails. Opt them out explicitly - app-update.yml then carries
   // `verifyUpdateCodeSignature: false`, as the snapshots show - unless the test configures win.sign or the verification itself
@@ -384,23 +401,34 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         }
       })
 
-      const tmpCache = await tmpDir.createTempDir({ prefix: "cache-" })
       const tmpHome = await tmpDir.createTempDir({ prefix: "home-" })
+      // Every test still installs its fixture for real, in its own HOME, but the package-manager downloads are shared across the
+      // run (see vitest-package-manager-caches.ts), so a test no longer downloads npm/pnpm/yarn through corepack and every package
+      // anew. Corepack (renames each download into place and tolerates a torn lastKnownGood.json), the npm cache and the pnpm store
+      // are safe for concurrent processes and shared by all workers; the yarn caches are not proven so and belong to one worker,
+      // whose test files run one after another.
+      const cacheDir = inject("packageManagerCacheDir")
+      const workerCacheDir = path.join(cacheDir, `worker-${process.env.VITEST_POOL_ID}`)
       const runtimeEnv = {
         ...process.env,
-        // corepack
-        // COREPACK_HOME,
-        // COREPACK_ENABLE_DOWNLOADS: "1",
+        COREPACK_HOME: path.join(cacheDir, "corepack"),
         // yarn
         HOME: tmpHome,
         USERPROFILE: tmpHome, // for Windows compatibility
-        YARN_CACHE_FOLDER: tmpCache, // this doesn't seem to always work in concurrent tests? So we must set manually
+        YARN_CACHE_FOLDER: path.join(workerCacheDir, "yarn"), // yarn 1 (yarn berry uses its global folder's cache instead)
+        YARN_GLOBAL_FOLDER: path.join(workerCacheDir, "yarn-berry"),
         // YARN_DISABLE_TELEMETRY: "1",
         // YARN_ENABLE_TELEMETRY: "false",
         YARN_IGNORE_PATH: "1", // ignore globally installed yarn binaries
         YARN_ENABLE_IMMUTABLE_INSTALLS: "false", // to be sure that --frozen-lockfile is not used
         // YARN_NODE_LINKER: "node-modules", // force to not use pnp (as there's no way to access virtual packages within the paths returned by pnpm)
-        npm_config_cache: tmpCache, // prevent npm fallback caching
+        npm_config_cache: path.join(cacheDir, "npm"),
+        // pnpm 11 reads `pnpm_config_*` only, so a test pinning an older pnpm keeps a store in its own HOME. The store's files are
+        // copied (or cloned) into node_modules rather than hard-linked, so a test that edits an installed file can't change it for
+        // the other tests.
+        pnpm_config_store_dir: path.join(cacheDir, "pnpm-store"),
+        pnpm_config_cache_dir: path.join(cacheDir, "pnpm-cache"),
+        pnpm_config_package_import_method: "clone-or-copy",
       }
       const postNodeModulesInstallHook = checkOptions.projectDirCreated ? await checkOptions.projectDirCreated(projectDir, tmpDir, runtimeEnv) : null
 

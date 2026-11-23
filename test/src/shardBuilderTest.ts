@@ -3,9 +3,9 @@ import * as path from "path"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { detectHeavyFile } from "../vitest-scripts/vitest-config/file-discovery"
 import { computeShardCount, estimateShardMs, splitIntoShards, type WeightedFile } from "../vitest-scripts/vitest-config/shard-builder"
-import { CI_PARALLELISM, getMaxWorkers, HEAVY_TARGET_MS, TARGET_MS } from "../vitest-scripts/vitest-config/smart-config"
+import { CI_PARALLELISM, getMaxWorkers, SMART_CACHE_HISTORY_RUNS, TARGET_MS } from "../vitest-scripts/vitest-config/smart-config"
 import SmartSequencer from "../vitest-scripts/vitest-config/vitest-smart-sequencer"
-import { isHeavyTest, ownDuration, serialEquivalentDuration } from "../vitest-scripts/vitest-config/vitest-smart-reporter"
+import SmarterReporter, { isHeavyTest, ownDuration, serialEquivalentDuration, TEST_SRC_ROOT } from "../vitest-scripts/vitest-config/vitest-smart-reporter"
 
 const MIN = 60 * 1000
 
@@ -41,10 +41,11 @@ describe("shard planning with parallel workers", () => {
     expect(computeShardCount(files, "linux")).toBe(3)
   })
 
-  test("the shard count leaves room for the heavy files, which never run in parallel", () => {
+  test("a shard holds up to TARGET_MS of heavy files, which never run in parallel", () => {
     stubCiPlanning()
-    const heavy = Array.from({ length: 5 }, (_, i) => file(`heavy${i}`, HEAVY_TARGET_MS / MIN, true))
-    expect(computeShardCount(heavy, "darwin")).toBe(5)
+    // 2.5 x TARGET_MS of work: 2 shards by the speed-up, but the heavy files alone need 3 shards of TARGET_MS
+    const heavy = Array.from({ length: 5 }, (_, i) => file(`heavy${i}`, TARGET_MS / 2 / MIN, true))
+    expect(computeShardCount(heavy, "linux")).toBe(3)
   })
 
   test("a scoped or local run is never smart-sharded", () => {
@@ -153,6 +154,70 @@ describe("heavy test detection", () => {
     expect(isHeavyTest({ type: "test", meta: () => ({}), parent: heavySuite } as any)).toBe(true)
     expect(isHeavyTest({ type: "test", meta: () => ({ heavy: true }), parent: plainSuite } as any)).toBe(true)
     expect(isHeavyTest({ type: "test", meta: () => ({}), parent: plainSuite } as any)).toBe(false)
+  })
+})
+
+describe("smart cache averages", () => {
+  type PlatformRun = { runs: number; fails: number; avgMs: number }
+
+  /** Reports one run of a one-test file through the reporter, starting from `prev`, and returns the cached test and file records. */
+  function reportRun(prev: PlatformRun | undefined, durationMs: number, state: "passed" | "failed" | "skipped" = "passed") {
+    // one file at a time: the duration is cached as measured
+    vi.stubEnv("CI", "")
+    vi.stubEnv("VITEST_MAX_WORKERS", "")
+    vi.stubEnv("TEST_FILES", "")
+    const reporter = new SmarterReporter()
+    const cache = reporter["cache"]
+    const relPath = "averageTest.ts"
+    cache.tests = prev ? { [`${relPath}::t`]: { platformRuns: { linux: prev } as any } } : {}
+    cache.files = prev ? { [relPath]: { platformRuns: { linux: prev } as any } } : {}
+    reporter.currentPlatform = "linux"
+    const module = { type: "module", moduleId: path.join(TEST_SRC_ROOT, relPath), meta: () => ({}) }
+    reporter.onTestCaseResult({
+      type: "test",
+      module,
+      parent: module,
+      fullName: "t",
+      diagnostic: () => ({ duration: durationMs }),
+      meta: () => ({}),
+      result: () => ({ state }),
+    } as any)
+    reporter.onTestModuleEnd(module as any)
+    return { test: cache.tests[`${relPath}::t`].platformRuns!.linux, file: cache.files[relPath].platformRuns!.linux }
+  }
+
+  test("a file that got faster moves its cached average within a few runs, however long its history", () => {
+    // 93 runs at 15 min, now 3.2 min: the last few runs count, not all 93
+    const { test: testRun, file: fileRun } = reportRun({ runs: 93, fails: 2, avgMs: 15 * MIN }, 3.2 * MIN)
+    for (const run of [testRun, fileRun]) {
+      expect(run.avgMs / MIN).toBeCloseTo((15 * SMART_CACHE_HISTORY_RUNS + 3.2) / (SMART_CACHE_HISTORY_RUNS + 1))
+      expect(run.runs).toBe(94)
+      expect(run.fails).toBe(2)
+    }
+  })
+
+  test("a failed run keeps the cached average, but still counts towards the fail ratio", () => {
+    // a test that fails early (a download outage, a broken commit) says nothing about how long it takes when it passes
+    const { test: testRun, file: fileRun } = reportRun({ runs: 93, fails: 2, avgMs: 15 * MIN }, 0.1 * MIN, "failed")
+    for (const run of [testRun, fileRun]) {
+      expect(run).toEqual({ runs: 94, fails: 3, avgMs: 15 * MIN })
+    }
+  })
+
+  test("a skipped test keeps its cached average", () => {
+    expect(reportRun({ runs: 93, fails: 2, avgMs: 15 * MIN }, 0, "skipped").test).toEqual({ runs: 94, fails: 2, avgMs: 15 * MIN })
+  })
+
+  test("a failed first run is cached at its duration rather than as no time at all", () => {
+    const { test: testRun, file: fileRun } = reportRun(undefined, 6 * MIN, "failed")
+    for (const run of [testRun, fileRun]) {
+      expect(run).toEqual({ runs: 1, fails: 1, avgMs: 6 * MIN })
+    }
+  })
+
+  test("a short history is a plain average", () => {
+    expect(reportRun(undefined, 6 * MIN).file).toEqual({ runs: 1, fails: 0, avgMs: 6 * MIN })
+    expect(reportRun({ runs: 1, fails: 0, avgMs: 6 * MIN }, 4 * MIN).file).toEqual({ runs: 2, fails: 0, avgMs: 5 * MIN })
   })
 })
 

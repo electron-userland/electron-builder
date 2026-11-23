@@ -50,6 +50,10 @@ declare module "vitest" {
     /** Per-test temp directory, auto-created and cleaned up by the `tmpDir` fixture in vitest-setup.ts. */
     tmpDir: import("temp-file").TmpDir
   }
+  interface ProvidedContext {
+    /** Root of the package-manager caches the tests of this run share, created by vitest-package-manager-caches.ts. */
+    packageManagerCacheDir: string
+  }
   interface TestOptions {
     meta?: {
       platform?: "mac" | "win" | "linux"

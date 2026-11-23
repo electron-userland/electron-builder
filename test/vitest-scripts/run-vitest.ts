@@ -172,6 +172,7 @@ async function main() {
       // Allow test metadata
       includeTaskLocation: true,
       setupFiles: [__dirname + "/vitest-config/vitest-setup.ts", __dirname + "/vitest-config/vitest-heavy-mutex.ts", __dirname + "/vitest-config/vitest-tmpdir.ts"],
+      globalSetup: [__dirname + "/vitest-config/vitest-package-manager-caches.ts"],
       // Which of the admitted files run is decided by the discovery list above (TEST_MODE + sharding).
       include: [`test/src/**/${includeGlob}.ts`],
 
