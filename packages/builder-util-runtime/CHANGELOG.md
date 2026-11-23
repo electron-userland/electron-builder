@@ -1,5 +1,15 @@
 # builder-util-runtime
 
+## 9.7.2
+
+### Patch Changes
+
+- Fix: a download that fails with a status of 400 or above now rejects with an `HttpError` carrying `statusCode` and `code: "HTTP_ERROR_<status>"`, and its message leaves out the URL's query string and hash so signed links don't reach logs _[`#10553`](https://github.com/electron-userland/electron-builder/pull/10553) [`d0a7644`](https://github.com/electron-userland/electron-builder/commit/d0a7644d2a72f70e42f7503cd125726ddc614a33) [@claude](https://github.com/apps/claude)_
+- Fix(runtime): a download follows a `Location` header only on a 3xx response, and a redirect it cannot follow (another protocol than http(s), or an invalid URL) now fails the download instead of throwing an uncaught exception and stalling until the request times out. On Node, a request's socket timeout ends with the request, so the keep-alive agent's idle timeout on a redirect's released socket does not fail the download of the redirect target with "Request timed out" _[`#10541`](https://github.com/electron-userland/electron-builder/pull/10541) [`2d1dc9e`](https://github.com/electron-userland/electron-builder/commit/2d1dc9e9e1bd7382931cc3aa78f5867d74b121f3) [@claude](https://github.com/apps/claude)_
+- Fix: secrets in logs and error messages (passwords, tokens and keys in redacted command lines, environments and request options) are shown as a fingerprint keyed with a random secret of the process, derived with scrypt: the same value has the same fingerprint within a run, but a fingerprint cannot be checked against guessed values offline. A value whose fingerprint cannot be computed is shown as `<redacted>`. _[`#10457`](https://github.com/electron-userland/electron-builder/pull/10457) [`f3c7077`](https://github.com/electron-userland/electron-builder/commit/f3c7077c6e86c63ac27898a10fbfab319d87c1b6) [@claude](https://github.com/apps/claude)_
+- Fix(runtime): a cross-origin redirect drops the request `auth` option together with the Authorization header, so Basic credentials go only to the original origin; with `DEBUG=electron-builder` a debug line names both origins, never the credentials _[`#10573`](https://github.com/electron-userland/electron-builder/pull/10573) [`406725d`](https://github.com/electron-userland/electron-builder/commit/406725dd3cf6d2d7768334f27d9dfd4f09f7b685) [@claude](https://github.com/apps/claude)_
+- Fix(runtime): on Node, a download that fails with a status of 400 or more drains the response, so its socket is released and the request's socket timeout does not call back the failed download a second time with "Request timed out" _[`#10541`](https://github.com/electron-userland/electron-builder/pull/10541) [`2d1dc9e`](https://github.com/electron-userland/electron-builder/commit/2d1dc9e9e1bd7382931cc3aa78f5867d74b121f3) [@claude](https://github.com/apps/claude)_
+
 ## 9.7.1
 
 ### Patch Changes
