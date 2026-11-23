@@ -1,6 +1,6 @@
 import { expandDefaultKeyword, parseValidEnvVarUrl, resolveDefaultKeywordList } from "builder-util/internal"
 import { resolveEnvShellValue, validateShellEmbeddable } from "builder-util/src/envUtil"
-import { exec, removePassword, removePasswordFromArgs, filterSensitiveEnv, spawnAndWrite, spawnAndWriteWithOutput, ExecError, getPlatformIconFileName } from "builder-util"
+import { exec, removePassword, removePasswordFromArgs, filterSensitiveEnv, spawn, spawnAndWrite, spawnAndWriteWithOutput, ExecError, getPlatformIconFileName } from "builder-util"
 import { execFile, ExecFileException } from "child_process"
 import * as path from "path"
 import { inspect } from "util"
@@ -553,6 +553,35 @@ describe("exec failure", () => {
 // the exit code (not the stdin write error) must decide the outcome, with no unhandled 'error' event
 const largePayload = "x".repeat(16 * 1024 * 1024)
 
+// writes "Café 日本\n" to stdout and stderr with the 3-byte "日" split across two writes, then exits with argv[1]
+const splitUtf8Script = `
+  const b = Buffer.from("Café 日本\\n")
+  const i = b.indexOf(0xe6) + 1
+  process.stdout.write(b.subarray(0, i))
+  process.stderr.write(b.subarray(0, i))
+  setTimeout(() => {
+    process.stdout.write(b.subarray(i))
+    process.stderr.write(b.subarray(i))
+    process.exitCode = Number(process.argv[1] ?? 0)
+  }, 50)
+`
+
+// explicit pipes, so the output is captured even when DEBUG makes spawn inherit stdio
+const pipedOutput = { stdio: ["ignore", "pipe", "pipe"] as Array<"ignore" | "pipe"> }
+
+describe("spawn", () => {
+  test("keeps a multi-byte character split across output chunks", async ({ expect }) => {
+    expect(await spawn(process.execPath, ["-e", splitUtf8Script], pipedOutput)).toBe("Café 日本\n")
+  })
+
+  test("keeps a multi-byte character split across output chunks in the error", async ({ expect }) => {
+    const error = await spawn(process.execPath, ["-e", splitUtf8Script, "1"], pipedOutput).catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(Error)
+    expect((error as Error).message).toContain("Café 日本")
+    expect((error as Error).message).not.toContain("\ufffd")
+  })
+})
+
 describe("spawnAndWriteWithOutput", () => {
   afterEach(() => {
     vi.useRealTimers()
@@ -570,6 +599,12 @@ describe("spawnAndWriteWithOutput", () => {
     const { stdout, stderr } = await spawnAndWriteWithOutput(process.execPath, ["-e", script], "hello")
     expect(stdout).toBe("out:hello")
     expect(stderr).toBe("err:hello")
+  })
+
+  test("keeps a multi-byte character split across output chunks", async ({ expect }) => {
+    const { stdout, stderr } = await spawnAndWriteWithOutput(process.execPath, ["-e", splitUtf8Script], "")
+    expect(stdout).toBe("Café 日本\n")
+    expect(stderr).toBe("Café 日本\n")
   })
 
   test("resolves with empty stdout and stderr when process emits nothing", async ({ expect }) => {
