@@ -123,7 +123,7 @@ Builds on [Canonical's Launchpad](https://launchpad.net/) infrastructure. Works 
 
 Remote builds require Snapcraft Store credentials. electron-builder resolves them in this order:
 
-1. `remoteBuild.cscLink` — base64-encoded credentials or a file path in the build config.
+1. `snapcraft.cscLink` — base64-encoded credentials or a file path in the build config.
 2. `SNAP_CSC_LINK` — environment variable, same format (CI-recommended).
 3. `SNAPCRAFT_STORE_CREDENTIALS` — plain-text macaroon, read directly by snapcraft.
 4. An active interactive `snapcraft login` session.
@@ -161,10 +161,10 @@ To reference credentials file directly via the config (useful for monorepos wher
 {
   "snapcraft": {
     "base": "core24",
+    "cscLink": "file://...",
     "core24": {
       "remoteBuild": {
-        "enabled": true,
-        "cscLink": "file://..."
+        "enabled": true
       }
     }
   }
