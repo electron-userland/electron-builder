@@ -4,7 +4,7 @@ import { EventEmitter } from "events"
 import { outputFile, pathExists } from "fs-extra"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { DebUpdater, NsisUpdater } from "electron-updater"
+import { DebUpdater, NsisUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
 import type { AppAdapter, CancellableQuitEvent } from "electron-updater/src/AppAdapter"
 import { CommandExitError } from "electron-updater/src/BaseUpdater"
 import { ElevationDeniedError } from "electron-updater/src/LinuxUpdater"
@@ -1086,6 +1086,183 @@ describe("install on quit", { concurrent: false }, () => {
       expect(errors[0].message).toContain("Since electron-updater 7, a downloaded update is hashed again right before it is installed.")
       expect(errors[0].message.slice(-MIGRATION_LINK.length)).toBe(MIGRATION_LINK)
       await expectRemoved(debInstaller())
+    })
+
+    test("deb with cancelQuitOnInstallFailure: an installer overwritten after update-downloaded is not installed, and only that quit is cancelled", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { errors, pkexecCalls } = createDebUpdater(app, 0, { cancelQuitOnInstallFailure: true })
+      await outputFile(debInstaller(), "another package")
+
+      // the install on quit runs in will-quit, which the rejected update cancels
+      expect(app.quitApp()).toBe(false)
+
+      expect(pkexecCalls).toEqual([])
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
+      await expectRemoved(debInstaller())
+      // nothing is left to install
+      expect(app.quitApp()).toBe(true)
+      expect(pkexecCalls).toEqual([])
+      expect(errors).toHaveLength(1)
+    })
+
+    test("deb, quitAndInstall: an installer overwritten after update-downloaded is not installed, and the app keeps running", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { updater, errors } = createDebUpdater(app, 0)
+      const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue(undefined)
+      await outputFile(debInstaller(), "another package")
+
+      updater.quitAndInstall({ isSilent: true })
+      await vi.waitFor(() => expect(errors).toHaveLength(1))
+      await flush()
+
+      expect(spawnAsyncLog).not.toHaveBeenCalled()
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
+      expect(app.quitCalls).toBe(0)
+      await expectRemoved(debInstaller())
+    })
+
+    // the install on next launch hashes the pending package when it validates it against the fresh update info; a package replaced after
+    // that (here, while the app's own verifier runs) is caught by the hash right before the install
+    test("deb, installPendingUpdateIfAvailable: a package overwritten after it was validated is not installed", async () => {
+      await seedDownloadedUpdate()
+      const app = makeStubApp()
+      const { updater, errors } = createDebUpdater(app, 0)
+      updater.forceDevUpdateConfig = true
+      const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue(undefined)
+      helper.markInstallOnNextLaunchSync(log)
+      const sha512 = helper.downloadedFileInfo?.sha512 ?? ""
+      vi.spyOn(updater as any, "getUpdateInfoAndProvider").mockResolvedValue({
+        info: { version: "1.0.1", files: [{ url: "TestApp-1.0.1.deb", sha512 }], path: "TestApp-1.0.1.deb", sha512, releaseDate: "" },
+        provider: {
+          resolveFiles: (info: UpdateInfo) => info.files.map(it => ({ url: new URL(`https://example.com/${it.url}`), info: { url: it.url, sha512: it.sha512, size: 1024 } })),
+        },
+      })
+      const verifiedFiles: string[] = []
+      updater.verifyUpdateFile = async ({ updateFilePath }) => {
+        verifiedFiles.push(updateFilePath)
+        await outputFile(updateFilePath, "another package")
+        return { response: "success" }
+      }
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      await flush()
+
+      expect(verifiedFiles).toEqual([debInstaller()])
+      expect(spawnAsyncLog).not.toHaveBeenCalled()
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
+      expect(app.quitCalls).toBe(0)
+      await expectRemoved(debInstaller())
+    })
+
+    // an earlier session downloaded the update. This session's update check finds it in the cache, hashes it and announces it without
+    // downloading it again; the install on quit checks it against the update info of that check, which only this session holds
+    describe("deb on quit, an update an earlier session downloaded", () => {
+      async function checkInNextSession(updater: DebUpdater) {
+        const sha512 = helper.downloadedFileInfo?.sha512 ?? ""
+        // the next session's download helper knows the update only from the cache directory
+        ;(updater as any).downloadedUpdateHelper = new DownloadedUpdateHelper(helper.cacheDir, log)
+        updater.forceDevUpdateConfig = true
+        updater.crossOriginHeaders = () => []
+        const download = vi.fn(() => Promise.reject(new Error("the cached update was downloaded again")))
+        ;(updater as any).httpExecutor = { download }
+        vi.spyOn(updater as any, "getUpdateInfoAndProvider").mockResolvedValue({
+          info: { version: "1.0.1", files: [{ url: "TestApp-1.0.1.deb", sha512, size: 1024 }], path: "TestApp-1.0.1.deb", sha512, releaseDate: "" },
+          provider: {
+            feedBaseUrl: new URL("https://example.com/"),
+            resolveFiles: (info: UpdateInfo) => info.files.map(it => ({ url: new URL(`https://example.com/${it.url}`), info: it })),
+          },
+        })
+        const downloadedFiles: string[] = []
+        updater.on("update-downloaded", event => downloadedFiles.push(event.downloadedFile))
+
+        await expect((await updater.checkForUpdates())?.downloadPromise).resolves.toMatchObject({ updateFile: debInstaller() })
+        expect(download).not.toHaveBeenCalled()
+        expect(downloadedFiles).toEqual([debInstaller()])
+      }
+
+      test("is installed when it is untouched", async () => {
+        await seedDownloadedUpdate()
+        const app = makeStubApp()
+        const { updater, errors, pkexecCalls } = createDebUpdater(app, 0)
+        await checkInNextSession(updater)
+
+        expect(app.quitApp()).toBe(true)
+
+        expect(pkexecCalls).toEqual([["--disable-internal-agent", "/usr/bin/dpkg", "-i", debInstaller()]])
+        expect(errors).toEqual([])
+      })
+
+      test("is not installed, and is removed, when it was overwritten after update-downloaded", async () => {
+        await seedDownloadedUpdate()
+        const app = makeStubApp()
+        const { updater, errors, pkexecCalls } = createDebUpdater(app, 0)
+        await checkInNextSession(updater)
+        await outputFile(debInstaller(), "another package")
+
+        expect(app.quitApp()).toBe(true)
+
+        expect(pkexecCalls).toEqual([])
+        expect(errors).toEqual([
+          expect.objectContaining({ code: "ERR_UPDATER_UPDATE_FILE_CHANGED", message: expect.stringContaining(`${debInstaller()} changed since it was verified`) }),
+        ])
+        await expectRemoved(debInstaller())
+      })
+    })
+
+    // only the spawn, and the lookups of the package manager and the elevation helper, are stubbed, as in createDebUpdater
+    function createPackageUpdater(app: StubApp, target: "rpm" | "pacman") {
+      const updater = target === "rpm" ? new RpmUpdater(null, app) : new PacmanUpdater(null, app)
+      updater.logger = log
+      ;(updater as any).downloadedUpdateHelper = helper
+      const errors: Error[] = []
+      updater.on("error", (error: Error) => errors.push(error))
+      const packageManager = target === "rpm" ? "dnf" : "pacman"
+      vi.spyOn(updater as any, "isRunningAsRoot").mockReturnValue(false)
+      vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === packageManager || args[0] === "pkexec")
+      vi.spyOn(updater as any, "resolveTrustedCommand").mockImplementation((...args: unknown[]) => `/usr/bin/${String(args[0])}`)
+      const pkexecCalls: string[][] = []
+      vi.spyOn(updater as any, "spawnSyncLog").mockImplementation((...args: unknown[]) => {
+        const [cmd, cmdArgs] = args
+        if (cmd === "pkexec") {
+          pkexecCalls.push(Array.isArray(cmdArgs) ? cmdArgs.map(String) : [])
+        }
+        return ""
+      })
+      ;(updater as any).addQuitHandler()
+      return { errors, pkexecCalls }
+    }
+
+    describe.each([
+      ["rpm", "TestApp-1.0.1.rpm", ["--disable-internal-agent", "/usr/bin/dnf", "install", "--nogpgcheck", "-y"]],
+      ["pacman", "TestApp-1.0.1.pacman", ["--disable-internal-agent", "/usr/bin/pacman", "-U", "--noconfirm"]],
+    ] as const)("%s on quit", (target, fileName, command) => {
+      const packagePath = () => path.join(helper.cacheDirForPendingUpdate, fileName)
+
+      test("an untouched package is installed", async () => {
+        await seedDownloadedUpdate(fileName)
+        const app = makeStubApp()
+        const { errors, pkexecCalls } = createPackageUpdater(app, target)
+
+        expect(app.quitApp()).toBe(true)
+
+        expect(pkexecCalls).toEqual([[...command, packagePath()]])
+        expect(errors).toEqual([])
+      })
+
+      test("a package overwritten after update-downloaded is not installed, and is removed", async () => {
+        await seedDownloadedUpdate(fileName)
+        const app = makeStubApp()
+        const { errors, pkexecCalls } = createPackageUpdater(app, target)
+        await outputFile(packagePath(), "another package")
+
+        expect(app.quitApp()).toBe(true)
+
+        expect(pkexecCalls).toEqual([])
+        expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
+        await expectRemoved(packagePath())
+      })
     })
 
     test("deb, async install: an untouched installer is installed", async () => {
