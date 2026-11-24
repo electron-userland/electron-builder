@@ -210,7 +210,7 @@ jobs:
         if: steps.changesets.outputs.published != 'true'
         run: echo "No changesets to publish"
 
-      # The private package docker (the electronuserland/builder images) is versioned by changesets on its own, without
+      # The private package docker (the ghcr.io/electron-userland/builder images) is versioned by changesets on its own, without
       # an npm release or a tag of changesets: a version of docker/package.json that has no tag docker@<version> yet is
       # not deployed yet (released by this push, or by an earlier one whose run failed before this step). The tag
       # records the commit the version is deployed from, and the deploy-docker job below deploys it. A tag on this run's

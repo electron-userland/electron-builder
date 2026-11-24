@@ -60,7 +60,7 @@ The stock packages of Ubuntu 22.04, Debian 12, RHEL 8 and 9 and newer releases a
 
 Newer tools are available for older distributions: [`ppa:flatpak/stable`](https://launchpad.net/~flatpak/+archive/ubuntu/stable) for Ubuntu 22.04, and `bookworm-backports` for Debian 12 (`sudo apt-get install -t bookworm-backports flatpak-builder`, which works with the stock `flatpak`).
 
-The `ghcr.io/electron-userland/builder` Docker images with a date tag newer than `-05.26` include both tools, from that PPA, but no runtime, SDK or base app — see [Flatpak in the Docker Images](features/multi-platform-build.md#flatpak-in-the-docker-images). Images up to `-05.26` include neither tool.
+The `ghcr.io/electron-userland/builder` Docker images include both tools, from that PPA, but no runtime, SDK or base app — see [Flatpak in the Docker Images](features/multi-platform-build.md#flatpak-in-the-docker-images). Of the old Docker Hub images (`electronuserland/builder`), those with a date tag newer than `-05.26` include them too, and those up to `-05.26` include neither tool.
 
 Two more things have to be in place:
 

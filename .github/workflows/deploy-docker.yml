@@ -57,6 +57,22 @@ jobs:
       - name: Cleanup runner
         uses: $/.github/actions/cleanup-runner
 
+      # the version of the docker package at this commit, the one docker-build.yml tagged the images with (build.sh)
+      - name: Checkout docker/package.json
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: docker/package.json
+          sparse-checkout-cone-mode: false
+
+      - name: Read the docker package version
+        id: version
+        run: |
+          set -euo pipefail
+          version=$(jq -r .version docker/package.json)
+          echo "docker@$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - name: Download images artifact - node${{ matrix.nodeMajorVersion }}
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -90,29 +106,64 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && !inputs.push
         run: echo "Not pushing (run the workflow with push checked to push and attest the images)"
 
-      # the digests are those of the registry's manifests, read back after the push: the attestations name them. The
-      # aliases of the LTS version (latest, wine, …) are the same manifests as its <node>-* tags, so they are covered too
+      # The versioned tags (<image>-<version>) are immutable: the job fails before it pushes anything when one of them
+      # is in the registry already, so a version is never overwritten (release a new version instead). The moving tags
+      # (<node>, <node>-wine, …, latest, wine, …) move to the new images. Only the LTS job pushes base and base-<version>:
+      # every job builds its own base, and only one of them can have the versioned tag. The digests are those of the
+      # registry's manifests, read back after the push: the attestations name them. The moving tags are the same
+      # manifests as the versioned ones, so they are covered too
       - name: Push all Docker images
         id: push
         if: github.event_name != 'workflow_dispatch' || inputs.push
         run: |
           set -euo pipefail
-          docker image push --all-tags "$IMAGE"
-          # <output key>=<tag>
-          for entry in base=base node="$NODE_MAJOR_VERSION" wine="$NODE_MAJOR_VERSION-wine" \
-            wine-mono="$NODE_MAJOR_VERSION-wine-mono" wine-chrome="$NODE_MAJOR_VERSION-wine-chrome"; do
-            tag="${entry#*=}"
+          # <output key>=<image>: the image is tagged <image> (moving) and <image>-<version> (immutable)
+          images="node=$NODE_MAJOR_VERSION wine=$NODE_MAJOR_VERSION-wine wine-mono=$NODE_MAJOR_VERSION-wine-mono \
+            wine-chrome=$NODE_MAJOR_VERSION-wine-chrome"
+          aliases=""
+          if [ "$NODE_MAJOR_VERSION" = "$LATEST_IMAGE_NODE_MAJOR_VERSION" ]; then
+            images="base=base $images"
+            aliases="latest wine wine-mono wine-chrome"
+          fi
+
+          for entry in $images; do
+            tag="${entry#*=}-$VERSION"
+            if out=$(docker buildx imagetools inspect --raw "$IMAGE:$tag" 2>&1); then
+              echo "::error::$IMAGE:$tag is already in the registry, and a versioned tag is never overwritten. Release a new docker version (a changeset for docker) to deploy again"
+              exit 1
+            fi
+            # anything but a missing tag (e.g. a registry or auth error) also stops the job: it cannot tell that the
+            # push would not overwrite
+            if ! grep -qiE 'not found|manifest unknown|name unknown' <<< "$out"; then
+              echo "::error::Could not check whether $IMAGE:$tag is in the registry: $out"
+              exit 1
+            fi
+          done
+
+          # the versioned tags first, then the moving ones
+          for entry in $images; do
+            docker image push "$IMAGE:${entry#*=}-$VERSION"
+          done
+          for entry in $images; do
+            docker image push "$IMAGE:${entry#*=}"
+          done
+          for alias in $aliases; do
+            docker image push "$IMAGE:$alias"
+          done
+
+          for entry in $images; do
+            tag="${entry#*=}-$VERSION"
             digest=$(docker buildx imagetools inspect "$IMAGE:$tag" --format '{{json .Manifest}}' | jq -r .digest)
             echo "$IMAGE:$tag $digest"
             echo "${entry%%=*}=$digest" >> "$GITHUB_OUTPUT"
           done
         env:
           NODE_MAJOR_VERSION: ${{ matrix.nodeMajorVersion }}
+          VERSION: ${{ steps.version.outputs.version }}
 
-      # one attestation per image: push-to-registry takes a single subject. Each job attests its own base, also when a
-      # later job overwrites the base tag (verify by digest, or with the tag of the job that pushed last)
+      # one attestation per image: push-to-registry takes a single subject, the digest of the image's versioned tag
       - name: Attest base
-        if: github.event_name != 'workflow_dispatch' || inputs.push
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.push) && matrix.nodeMajorVersion == env.LATEST_IMAGE_NODE_MAJOR_VERSION }}
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE }}
