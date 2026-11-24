@@ -1299,8 +1299,8 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
     const errors: Array<Error> = []
     updater.on("error", (e: Error) => errors.push(e))
     const spawnLog = vi
-      .spyOn(updater as any, "spawnLog")
-      .mockImplementation((file: unknown) => (file === installerPath && options.startError != null ? Promise.reject(options.startError) : Promise.resolve(true)))
+      .spyOn(updater as unknown as { spawnLog: (file: string, args: Array<string>) => Promise<boolean> }, "spawnLog")
+      .mockImplementation(file => (file === installerPath && options.startError != null ? Promise.reject(options.startError) : Promise.resolve(true)))
 
     const writable = options.writable ?? []
     denyWrites(
