@@ -398,7 +398,7 @@ function resolveRemoteToken(remoteToken: string | null | undefined, remoteReleas
     log.warn(
       { hostname },
       `Since electron-builder 27, ${envName} is not sent with squirrelWindows.remoteReleases to this host: a token from the environment goes only to its provider's host. ` +
-        `For a private repository on this host, add the host to the ${PUBLISH_TOKEN_HOSTS_ENV} environment variable or set squirrelWindows.remoteToken. See ${PUBLISH_TOKEN_HOST_DOCS_URL}`
+        `For a private repository on a GitHub Enterprise host, add the host to the ${PUBLISH_TOKEN_HOSTS_ENV} environment variable or set squirrelWindows.remoteToken; a public repository or a server that is not GitHub needs nothing. See ${PUBLISH_TOKEN_HOST_DOCS_URL}`
     )
   }
   return undefined

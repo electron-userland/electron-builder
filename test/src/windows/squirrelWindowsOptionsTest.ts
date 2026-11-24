@@ -303,7 +303,7 @@ describe("SquirrelWindowsTarget.computeEffectiveDistOptions", () => {
         const [fields, message] = remoteReleasesWarnings()[0]
         expect(fields).toEqual({ hostname: "releases.example.com" })
         expect(message).toMatch(
-          /^Since electron-builder 27, GH_TOKEN is not sent with squirrelWindows\.remoteReleases to this host\b.*ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS.*squirrelWindows\.remoteToken/
+          /^Since electron-builder 27, GH_TOKEN is not sent with squirrelWindows\.remoteReleases to this host\b.*GitHub Enterprise.*ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS.*squirrelWindows\.remoteToken/
         )
         expect(message).toMatch(/See https:\/\/www\.electron\.build\/docs\/migration\/v27-build-changes#publish-tokens-from-the-environment-are-bound-to-the-provider-host$/)
         await compute({ squirrelWindows: { remoteReleases: "https://other.example.com/owner/repo" } })
