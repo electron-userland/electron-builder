@@ -12,8 +12,8 @@ Signing is **required**: publishing a build that emits auto-update metadata fail
 
 Verification remains backward compatible in both directions:
 
-- Apps built **before** a public key existed ignore the `signature`/`signatures` fields in the manifest (a one-time warning notes that verification is disabled).
-- Apps built **with** a public key **fail closed**: an unsigned or tampered manifest aborts the update check before any download starts.
+- Apps built **before** a public key existed ignore the `signature`/`signatures` fields in the manifest (electron-updater 7.0.0-alpha.8 and later log a one-time warning that verification is disabled).
+- Apps built **with** a public key **fail closed** (electron-updater 7.0.0-alpha.8 and later): an unsigned or tampered manifest aborts the update check before any download starts.
 
 :::warning[Full protection arrives one release after adoption]
 Installs already in the field carry whatever `app-update.yml` they shipped with. Those built before you adopted signing have no trusted key, so they keep accepting unsigned manifests — signing a release does not retroactively protect the installs that will consume it. The installs protected by a signed manifest are the ones built *after* the public key was embedded.
@@ -200,9 +200,9 @@ A signature proves that a key the install trusts signed the manifest's covered f
 - **No revocation or expiry.** A signed manifest stays valid for as long as a key that signed it is in the install's trust list. Pausing a [staged rollout](./auto-update.md#staged-rollouts) (re-signing with `stagingPercentage: 0`) or superseding a broken release with a higher version does not invalidate its earlier signed manifest, which can be served again to every install still below that version. Removing the key from the trust list, through a [key rotation](#key-rotation), is the only way to stop installs from accepting manifests it signed.
 - **No channel or app binding.** A manifest signed for another channel, or for another app signed with the same key, also verifies when served as `latest*.yml`. Use a key per app.
 
-Installs without a key verify nothing, and their feed is the trust anchor. These builds embed no key: a build with `updateManifest: false`; a build that needed no signing key and had none, which is one without a publish policy or `forceCodeSigning` (it only warns) or one whose publish providers all set `publishAutoUpdate: false`, unless it sets `updateManifest.publicKey`; a build made with electron-builder before 27.0.0-alpha.9, or with 27.0.0-alpha.9 without a key; and an app with no `app-update.yml` that sets no `updateManifestPublicKey` at runtime.
+Installs without a key verify nothing, and their feed is the trust anchor. These builds embed no key: a build with `updateManifest: false`; a build that needed no signing key and had none, which is one without a publish policy or `forceCodeSigning` (it only warns) or one whose publish providers all set `publishAutoUpdate: false`, unless it sets `updateManifest.publicKey`; a build made with electron-builder before 27.0.0-alpha.9, or with 27.0.0-alpha.9 without a key; and an app with no `app-update.yml` that sets no `updateManifestPublicKey` at runtime. An install whose electron-updater predates signed manifests (electron-updater 6, or 7.0.0-alpha.0 to alpha.7) verifies nothing either, even with a key in `app-update.yml`, and logs no warning.
 
-On Windows, an unsigned manifest also lets the `nsis-web` installer of a release built with electron-builder before 27.0.0-alpha.10 be served to an install with `allowDowngrade` on; that installer installs any package the manifest lists (see [NSIS update installers must carry the update's version](../migration/v27-runtime-changes.md#nsis-update-installers-must-carry-the-updates-version)).
+On Windows, an unsigned manifest also lets the `nsis-web` installer of a release built with electron-builder before 27.0.0-alpha.10 be served to an install with `allowDowngrade` on (electron-updater 7.0.0-alpha.14 and later; earlier versions, electron-updater 6 included, do not compare the installer's version, so they need no `allowDowngrade`); that installer installs any package the manifest lists (see [NSIS update installers must carry the update's version](../migration/v27-runtime-changes.md#nsis-update-installers-must-carry-the-updates-version)).
 
 ## Re-signing a published manifest {#re-signing-a-published-manifest}
 
