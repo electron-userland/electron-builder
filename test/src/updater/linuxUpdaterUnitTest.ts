@@ -233,7 +233,9 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       expect(determineSudoCommand()).toBe(path.join(systemDir, "gksudo"))
 
       expect(warn.mock.calls).toEqual([
-        [`pkexec found in PATH is not used: electron-updater 7 runs an elevation helper only from ${systemDir} (a symlink there must lead into one of them). See ${UPDATE_ELEVATION_DOCS}`],
+        [
+          `pkexec found in PATH is not used: electron-updater 7 runs an elevation helper only from ${systemDir} (a symlink there must lead into one of them). See ${UPDATE_ELEVATION_DOCS}`,
+        ],
       ])
     })
 
@@ -258,26 +260,23 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       const warn = vi.fn()
       const other = new DebUpdater(null, stubApp)
       vi.spyOn(other as any, "trustedCommandDirs", "get").mockReturnValue([systemDir])
-      const helpersSpawned: unknown[] = []
-      for (const target of [updater, other]) {
+      const spawnAsyncLogs = [updater, other].map(target => {
         target.logger = { info() {}, warn, error() {} }
         ;(target as any).downloadedUpdateHelper = { file: "/tmp/update-1.0.2.deb", downloadedFileInfo: { isAdminRightsRequired: false } }
         vi.spyOn(target as any, "isRunningAsRoot").mockReturnValue(false)
         vi.spyOn(target as any, "spawnSyncLog").mockReturnValue("")
         vi.spyOn(target as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === "dpkg")
-        vi.spyOn(target as any, "spawnAsyncLog").mockImplementation((...args: unknown[]) => {
-          helpersSpawned.push(args[0])
-          return Promise.resolve()
-        })
-      }
+        return vi.spyOn(target as any, "spawnAsyncLog").mockResolvedValue(undefined)
+      })
       const options = { isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false }
 
       expect(await (updater as any).doInstallAsync(options)).toBe(true)
       expect(await (updater as any).doInstallAsync(options)).toBe(true)
       expect(await (other as any).doInstallAsync(options)).toBe(true)
 
+      // the helpers each updater spawned: the pkexec of the system directories
       const pkexec = path.join(systemDir, "pkexec")
-      expect(helpersSpawned).toEqual([pkexec, pkexec, pkexec])
+      expect(spawnAsyncLogs.map(spawnAsyncLog => spawnAsyncLog.mock.calls.map(([cmd]) => cmd))).toEqual([[pkexec, pkexec], [pkexec]])
       const warning = `electron-updater 7 elevates the install with pkexec (polkit), which it tries first, so the authentication prompt comes from polkit; kdesudo is only used on systems without polkit (electron-updater 6 tried gksudo and kdesudo before pkexec). See ${UPDATE_ELEVATION_DOCS}`
       expect(warn.mock.calls).toEqual([[warning], [warning]])
     })
