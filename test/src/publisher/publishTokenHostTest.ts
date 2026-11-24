@@ -117,7 +117,7 @@ describe("GitHub", () => {
     } catch (e: any) {
       message = e.message
     }
-    expect(message).toContain("github.host must be a host name")
+    expect(message).toContain("Since electron-builder 27, github.host must be a host name")
     expect(message).toContain(MIGRATION_LINK)
     expect(message).not.toContain("password")
   })
@@ -194,7 +194,7 @@ describe("GitLab", () => {
     } catch (e: any) {
       message = e.message
     }
-    expect(message).toContain("gitlab.host must be a host name")
+    expect(message).toContain("Since electron-builder 27, gitlab.host must be a host name")
     expect(message).toContain(MIGRATION_LINK)
     expect(message).not.toContain("password")
   })
@@ -228,7 +228,7 @@ describe("Keygen", () => {
     } catch (e: any) {
       message = e.message
     }
-    expect(message).toContain("keygen.host must be a host name")
+    expect(message).toContain("Since electron-builder 27, keygen.host must be a host name")
     expect(message).toContain(MIGRATION_LINK)
   })
 })

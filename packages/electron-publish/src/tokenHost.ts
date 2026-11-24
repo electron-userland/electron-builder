@@ -32,7 +32,7 @@ export function parseConfiguredHost(host: string, option: string, allowPath = fa
     const shape = allowPath
       ? 'optionally with a port and a path (e.g. "git.example.com:8443/gitlab"), without user info, query or fragment'
       : 'optionally with a port (e.g. "git.example.com:8443"), without user info, path, query or fragment'
-    throw new InvalidConfigurationError(`${option} must be a host name in ASCII (punycode for an internationalized name), ${shape}. See ${PUBLISH_TOKEN_HOST_DOCS_URL}`)
+    throw new InvalidConfigurationError(`Since electron-builder 27, ${option} must be a host name in ASCII (punycode for an internationalized name), ${shape}. See ${PUBLISH_TOKEN_HOST_DOCS_URL}`)
   }
   return url.hostname
 }
