@@ -469,10 +469,12 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
     })
 
     // an installer and, with `withPackage`, a web installer package, as downloaded and verified in this session
-    async function seed(options: { withPackage?: boolean; packageInfo?: boolean; checksum?: "sha512" | "sha2" } = {}) {
+    async function seed(options: { withPackage?: boolean; packageInfo?: boolean; checksum?: "sha512" | "sha512-hex" | "sha2" } = {}) {
       const installerPath = path.join(helper.cacheDirForPendingUpdate, "TestApp Setup.exe")
       await outputFile(installerPath, "installer")
-      const sha512 = await hashFile(installerPath)
+      // "sha512-hex": update info with the legacy hex encoding of the sha512, which the download accepts
+      const sha512Encoding = options.checksum === "sha512-hex" ? "hex" : "base64"
+      const sha512 = await hashFile(installerPath, "sha512", sha512Encoding)
       const info: UpdateFileInfo =
         options.checksum === "sha2"
           ? // the type requires a sha512, which update info for legacy clients does not have
@@ -484,7 +486,7 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
         packagePath = path.join(helper.cacheDirForPendingUpdate, "package-1.0.1.7z")
         await outputFile(packagePath, "package")
         if (options.packageInfo !== false) {
-          fileInfo.packageInfo = { path: "https://example.com/TestApp.nsis.7z", sha512: await hashFile(packagePath), size: 7 }
+          fileInfo.packageInfo = { path: "https://example.com/TestApp.nsis.7z", sha512: await hashFile(packagePath, "sha512", sha512Encoding), size: 7 }
         }
       }
       await helper.setDownloadedFile(installerPath, packagePath, makeUpdateInfo(), fileInfo, "TestApp Setup.exe", true)
@@ -523,6 +525,13 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
 
     test("checks the legacy sha2 checksum of update info without sha512", async () => {
       const { installerPath } = await seed({ checksum: "sha2" })
+      expect(helper.verifyDownloadedFilesSync()).toBeNull()
+      await outputFile(installerPath, "another installer")
+      expect(helper.verifyDownloadedFilesSync()).toBe(`${installerPath} changed since it was verified`)
+    })
+
+    test("checks a hex sha512 of the installer and the package, as the download does", async () => {
+      const { installerPath } = await seed({ withPackage: true, checksum: "sha512-hex" })
       expect(helper.verifyDownloadedFilesSync()).toBeNull()
       await outputFile(installerPath, "another installer")
       expect(helper.verifyDownloadedFilesSync()).toBe(`${installerPath} changed since it was verified`)

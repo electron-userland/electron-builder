@@ -1,5 +1,6 @@
 import { BlockMapDataHolder, hashFile, UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
-import { createHash } from "crypto"
+import { detectSha512Encoding } from "builder-util-runtime/internal"
+import { BinaryToTextEncoding, createHash } from "crypto"
 import { closeSync, openSync, readSync } from "fs"
 import { NonThrowableLogger, ResolvedUpdateFileInfo } from "./types.js"
 import { Logger } from "./types.js"
@@ -31,7 +32,7 @@ function updateFileId(info: UpdateFileInfo, file: string, version: string | null
  * {@link hashFile}, synchronously: the install on quit has to check the installer before the app exits, and cannot wait
  * for a stream.
  */
-function hashFileSync(file: string, algorithm: string, encoding: "base64" | "hex"): string {
+function hashFileSync(file: string, algorithm: string, encoding: BinaryToTextEncoding): string {
   const hash = createHash(algorithm)
   const buffer = Buffer.allocUnsafe(1024 * 1024)
   const fd = openSync(file, "r")
@@ -51,7 +52,8 @@ function hasChecksumSync(file: string, info: BlockMapDataHolder): boolean {
   // typed as required, but missing from update info that only has the legacy sha2 checksum
   const sha512: string | undefined = info.sha512
   if (typeof sha512 === "string" && sha512.length !== 0) {
-    return hashFileSync(file, "sha512", "base64") === sha512
+    // like the download, accept the legacy hex encoding of the manifest's sha512
+    return hashFileSync(file, "sha512", detectSha512Encoding(sha512)) === sha512
   }
   const sha2 = "sha2" in info ? info.sha2 : undefined
   return typeof sha2 === "string" && sha2.length !== 0 && hashFileSync(file, "sha256", "hex") === sha2
