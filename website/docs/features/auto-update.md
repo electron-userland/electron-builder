@@ -375,7 +375,7 @@ electron-builder does not sign rpm packages, so with `false` sign them yourself 
 
 ### Linux update authenticity
 
-electron-updater installs what `latest-linux.yml` describes once the download matches its `sha512`. When the app embeds an update manifest public key (`updateManifestPublicKey` in `app-update.yml`, or set at runtime), that key is the trust anchor: a manifest it does not verify is rejected. Without a key (an app built with `updateManifest: false`, or an older build), verification is skipped with a warning and the feed — the first provider in `app-update.yml`, or the URL passed to `setFeedURL` — is the trust anchor; the `sha512` comes from the same feed, so whoever can change the files on the feed can serve an update with a matching checksum. Signed update manifests are required by default at build time, and electron-updater enforces them whenever the app embeds a key. What makes a Linux update authentic is a [signed update manifest](./signed-update-manifests.md), not a package-manager flag:
+electron-updater installs what `latest-linux.yml` describes once the download matches its `sha512`. When the app embeds an update manifest public key (`updateManifestPublicKey` in `app-update.yml`, or set at runtime), that key is the trust anchor: a manifest it does not verify is rejected. Without a key (an app built with `updateManifest: false`, by a build that needed no signing key and had none, such as one without a publish policy or one whose publish providers all set `publishAutoUpdate: false`, or by an older electron-builder; see [What a signed manifest does not cover](./signed-update-manifests.md#what-a-signed-manifest-does-not-cover)), verification is skipped with a warning and the feed — the first provider in `app-update.yml`, or the URL passed to `setFeedURL` — is the trust anchor; the `sha512` comes from the same feed, so whoever can change the files on the feed can serve an update with a matching checksum. Signed update manifests are required by default at build time, and electron-updater enforces them whenever the app embeds a key. What makes a Linux update authentic is a [signed update manifest](./signed-update-manifests.md), not a package-manager flag:
 
 - **AppImage** has no package signature check at all.
 - **deb** gets no package-level signature check, whatever `allowUnverifiedLinuxPackages` is set to (see above).
@@ -475,8 +475,10 @@ Where electron-builder cannot run, the script in [Re-signing without electron-bu
 
 Then upload the signed `latest.yml`. While the build output is still at hand, [`electron-builder verify`](../cli.md#verify) checks it against the key the packaged app embeds, and the files it lists against the artifacts.
 
+Pausing a rollout this way does not withdraw the earlier signed `latest.yml`: it has no expiry and cannot be revoked, so whoever can change the files on the feed can serve it again, with its earlier percentage, to every install still below that version (see [What a signed manifest does not cover](./signed-update-manifests.md#what-a-signed-manifest-does-not-cover)).
+
 If you want to pull a staged release because it hasn't gone well, you **must** increment the version number higher than your broken release.
-Because some of your users will be on the broken 1.0.1, releasing a new 1.0.1 would result in them staying on a broken version.
+Because some of your users will be on the broken 1.0.1, releasing a new 1.0.1 would result in them staying on a broken version. A higher version supersedes the broken release but does not revoke its signed `latest.yml`, which installs still below 1.0.1 accept if it is served again.
 
 ## File Generated and Uploaded in Addition
 

@@ -29,7 +29,7 @@ If you want to use channels, you should add this to your package.json:
 ```
 
 :::note
-`allowDowngrade` is automatically set to `true` when `generateUpdatesFilesForAllChannels = true`, so you don't need to set it.
+`generateUpdatesFilesForAllChannels` does not change `allowDowngrade`: electron-updater never reads it. Setting `autoUpdater.channel` in the app is what sets `allowDowngrade` to `true` (see below).
 :::
 
 All you have to do to release using channels is to define the channel in the version tag of the `package.json`. Add "-beta" or "-alpha" (nothing for "latest") to automatically build for the related channel.
@@ -42,6 +42,10 @@ Github release does not respect the version in the version tag even if `detectUp
 All you need to do here is to define which channel the user will receive with:
 
 `autoUpdater.channel = "beta"` (see [auto-update documentation](../features/auto-update.md))
+
+:::warning[Setting the channel allows downgrades]
+Setting `autoUpdater.channel` also sets `autoUpdater.allowDowngrade` to `true`, so the app then installs any release whose version is lower than its own, from any channel. That includes an older release whose signed `latest*.yml` is served again: a [signed update manifest](../features/signed-update-manifests.md#what-a-signed-manifest-does-not-cover) does not stop a downgrade. If users should not go back to an older release, set `autoUpdater.allowDowngrade = false` after setting the channel.
+:::
 
 The following versions will be distributed to users depending on the channel defined:
 

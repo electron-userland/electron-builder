@@ -254,7 +254,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   /**
    * *GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.
    *
-   * If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`).
+   * It does not change `allowDowngrade`; only setting `channel` does. Other providers ignore it and offer whatever version the update manifest names, prerelease or not.
    */
   allowPrerelease = false
 
@@ -267,7 +267,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   /**
    * Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
    *
-   * Taken in account only if channel differs (pre-release version component in terms of semantic versioning).
+   * When `true`, an update whose version is lower than the running app's is installed like a newer one, whatever its channel.
+   * Setting `channel` sets this to `true`; set it back to `false` after setting `channel` if the app should not go back to an older release.
+   *
+   * A signed update manifest does not stop a downgrade: the signed `latest*.yml` of an older release still verifies, so whoever can
+   * change the files on the update feed can serve it again, and an install with this set goes back to that release. With an unsigned
+   * manifest, the `nsis-web` installer of a release built with electron-builder before 27.0.0-alpha.10 installs any package that manifest
+   * lists. See https://www.electron.build/docs/features/signed-update-manifests#what-a-signed-manifest-does-not-cover
    *
    * @default false
    */
