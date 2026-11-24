@@ -1,3 +1,4 @@
+import { createPublicKey, verify as cryptoVerify } from "crypto"
 import * as fsp from "fs/promises"
 import * as path from "path"
 import { createUpdateManifestSignatures, generateUpdateSigningKeypair, InvalidConfigurationError, log, serializeToYaml, TmpDir } from "builder-util"
@@ -796,6 +797,29 @@ test("re-signing refuses a manifest that does not describe a listed file next to
     ["update manifest signature", "verified"],
     ["update manifest file", "verified"],
   ])
+})
+
+test("re-signing, also with --rehash, keeps a blockMapSha512 as it is and signs the payload released verifiers check, which leaves it out", async ({ expect, tmpDir }) => {
+  captureOutput()
+  const { dir, installer, file } = await createReleaseOutput(tmpDir)
+  const signedAsBuilt = await readManifest(file)
+  const blockMapSha512 = "bWFwIG9mIHRoZSBpbnN0YWxsZXI="
+  // not signed: adding it keeps the signatures valid, and re-signing writes the same ones
+  await editManifest(file, it => (it.files[0].blockMapSha512 = blockMapSha512))
+  expect(verifyManifestSignatures(await readManifest(file), [current.publicKeyPem]).ok).toBe(true)
+  await run(dir, [file])
+  expect((await readManifest(file)).signatures).toEqual(signedAsBuilt.signatures)
+
+  // a release step signs the installer again: --rehash takes its sha512 and size from the file and keeps the field
+  await fsp.writeFile(installer, "installer as built, signed again after the build")
+  expect(await run(dir, [file, "--rehash"])).toMatchObject([{ rehashed: ["App-Setup-1.0.0.exe"] }])
+  const resigned = await readManifest(file)
+  const sha512 = await hashFile(installer)
+  const { size } = await fsp.stat(installer)
+  expect(resigned.files).toEqual([{ url: "App-Setup-1.0.0.exe", sha512, size, blockMapSha512 }])
+  const releasedPayload = ["EBUM1", 'version:"1.0.0"', "staging:", "minimumSystemVersion:", `file:"App-Setup-1.0.0.exe"\t${JSON.stringify(sha512)}\t${size}`].join("\n")
+  expect(cryptoVerify(null, Buffer.from(releasedPayload, "utf8"), createPublicKey(current.publicKeyPem), Buffer.from(String(resigned.signature), "base64"))).toBe(true)
+  expect(verifyManifestSignatures(resigned, [current.publicKeyPem])).toEqual({ ok: true, keyId: currentId })
 })
 
 /**
