@@ -1,6 +1,6 @@
 import { MacPackager, Platform } from "app-builder-lib"
 import { MacTargetHelper, normalizeFileNamesToNfd } from "app-builder-lib/internal"
-import { Arch, log } from "builder-util"
+import { Arch } from "builder-util"
 import { mkdir, readdir, readFile, rename, symlink, writeFile } from "fs/promises"
 import * as path from "path"
 import { afterEach, beforeEach, vi } from "vitest"
@@ -53,7 +53,7 @@ describe("normalizeFileNamesToNfd", () => {
   test("leaves an already decomposed name untouched", async ({ expect, tmpDir }) => {
     const dir = await tmpDir.createTempDir({ prefix: "nfd-" })
     await writeFile(path.join(dir, NFD_KOREAN), "x")
-    await normalizeFileNamesToNfd(dir)
+    await expect(normalizeFileNamesToNfd(dir)).resolves.toEqual({ renamed: [], skipped: [] })
     expect(await readdir(dir)).toEqual([NFD_KOREAN])
     expect(vi.mocked(rename)).not.toHaveBeenCalled()
   })
@@ -62,7 +62,7 @@ describe("normalizeFileNamesToNfd", () => {
     const dir = await tmpDir.createTempDir({ prefix: "nfd-" })
     await writeFile(path.join(dir, "Electron Framework"), "x")
     await mkdir(path.join(dir, "Resources"))
-    await normalizeFileNamesToNfd(dir)
+    await expect(normalizeFileNamesToNfd(dir)).resolves.toEqual({ renamed: [], skipped: [] })
     expect((await readdir(dir)).sort()).toEqual(["Electron Framework", "Resources"])
     expect(vi.mocked(rename)).not.toHaveBeenCalled()
   })
@@ -98,36 +98,28 @@ describe("normalizeFileNamesToNfd", () => {
     if ((await readdir(dir)).length !== 2) {
       skip("the filesystem of the temp dir is normalization-insensitive")
     }
-    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
 
-    await normalizeFileNamesToNfd(dir)
+    const result = await normalizeFileNamesToNfd(dir)
 
+    expect(result).toEqual({ renamed: [], skipped: [{ file: path.join(dir, NFC_ACCENTED), reason: "collision" }] })
     expect((await readdir(dir)).sort()).toEqual([NFC_ACCENTED, NFD_ACCENTED].sort())
     expect(await readFile(path.join(dir, NFC_ACCENTED), "utf8")).toBe("precomposed")
     expect(await readFile(path.join(dir, NFD_ACCENTED), "utf8")).toBe("decomposed")
-    expect(warn).toHaveBeenCalledWith(
-      expect.objectContaining({ file: expect.stringContaining(NFC_ACCENTED) }),
-      "not normalizing the file name to NFD: a sibling already has the decomposed name"
-    )
   })
 
-  // signing still goes ahead, so a failed rename must not throw, only say what may go wrong
-  test("warns and carries on when a rename fails", async ({ expect, tmpDir }) => {
+  // signing still goes ahead, so a failed rename must not throw, only be reported back
+  test("reports a failed rename and carries on", async ({ expect, tmpDir }) => {
     const dir = await tmpDir.createTempDir({ prefix: "nfd-" })
     await writeFile(path.join(dir, NFC_KOREAN), "x")
     await writeFile(path.join(dir, NFC_ACCENTED), "x")
     vi.mocked(rename).mockRejectedValueOnce(Object.assign(new Error("EACCES: permission denied"), { code: "EACCES" }))
-    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
 
-    await expect(normalizeFileNamesToNfd(dir)).resolves.toBeUndefined()
+    const result = await normalizeFileNamesToNfd(dir)
 
-    expect(warn).toHaveBeenCalledTimes(1)
-    expect(warn).toHaveBeenCalledWith(
-      expect.objectContaining({ error: "EACCES: permission denied" }),
-      expect.stringContaining("the code signature may be reported as damaged when the app is installed from a DMG")
-    )
+    expect(result.skipped).toEqual([{ file: expect.any(String), reason: "error", error: "EACCES: permission denied" }])
     // the entry whose rename did not fail is still normalized
-    expect(vi.mocked(rename)).toHaveBeenCalledTimes(2)
+    expect(result.renamed).toHaveLength(1)
+    expect([...result.renamed, ...result.skipped.map(({ file }) => file)].sort()).toEqual([path.join(dir, NFC_KOREAN), path.join(dir, NFC_ACCENTED)].sort())
     expect((await readdir(dir)).filter(name => name !== name.normalize("NFD"))).toHaveLength(1)
   })
 
@@ -146,7 +138,7 @@ describe("normalizeFileNamesToNfd", () => {
     const dir = await tmpDir.createTempDir({ prefix: "nfd-" })
     await symlink(outside, path.join(dir, "Linked"))
 
-    await normalizeFileNamesToNfd(dir)
+    await expect(normalizeFileNamesToNfd(dir)).resolves.toEqual({ renamed: [], skipped: [] })
 
     expect(await readdir(dir)).toEqual(["Linked"])
     expect(vi.mocked(rename)).not.toHaveBeenCalled()
@@ -166,7 +158,7 @@ describe("normalizeFileNamesToNfd", () => {
 
   test("resolves for a missing directory instead of throwing", async ({ expect, tmpDir }) => {
     const missing = path.join(await tmpDir.createTempDir({ prefix: "nfd-" }), "does-not-exist")
-    await expect(normalizeFileNamesToNfd(missing)).resolves.toBeUndefined()
+    await expect(normalizeFileNamesToNfd(missing)).resolves.toEqual({ renamed: [], skipped: [] })
   })
 })
 

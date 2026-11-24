@@ -733,7 +733,16 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     // Seal the names the DMG will actually contain. Both signing paths funnel through here — the mac flow
     // via signApp/doSignAfterPack and the MAS flow, which calls sign() directly — so this is the one place
     // that covers every flavor. See normalizeFileNamesToNfd.
-    await normalizeFileNamesToNfd(appPath)
+    for (const skipped of (await normalizeFileNamesToNfd(appPath)).skipped) {
+      if (skipped.reason === "collision") {
+        log.warn({ file: log.filePath(skipped.file) }, "not normalizing the file name to NFD: a sibling already has the decomposed name")
+      } else {
+        log.warn(
+          { file: log.filePath(skipped.file), error: skipped.error },
+          "cannot normalize the file name to NFD — the code signature may be reported as damaged when the app is installed from a DMG"
+        )
+      }
+    }
 
     const signOptions = await this.helper.buildSignOptions(appPath, identity, signOpts, keychainFile, arch, targetPlatform, hasCustomSign)
     await this.doSign(signOptions, config, identity)

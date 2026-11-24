@@ -5,6 +5,7 @@ export { createKeychain, findIdentity, isSignAllowed, macSigningUnavailableError
 export type { Identity } from "./codeSign/mac/macCodeSign.js"
 export { verifyMacCodeSignature } from "./codeSign/mac/macSignatureVerifier.js"
 export { normalizeFileNamesToNfd } from "./codeSign/mac/unicodeFileNames.js"
+export type { NfdNormalizationResult } from "./codeSign/mac/unicodeFileNames.js"
 export { forceCodeSigningError, forceCodeSigningOverrideHint, VERIFICATION_FAILED_ERROR_CODE } from "./codeSign/forceCodeSigning.js"
 export { CustomWindowsSign, WindowsSignTaskConfiguration } from "./codeSign/win/windowsSignToolManager.js"
 export { Configuration, DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES, ToolsetConfig, ToolsetCustom } from "./configuration.js"
