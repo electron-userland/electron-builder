@@ -554,5 +554,18 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       expect(helper.verifyDownloadedFilesSync()).toBe("no verified update file")
       expect(await pathExists(installerPath)).toBe(false)
     })
+
+    // as clear() does: a pending directory that cannot be emptied does not stop the update from being rejected. Here a file has replaced
+    // the directory, which fs-extra can neither read as a directory nor create one at
+    test("clearSync forgets the update when the pending directory cannot be emptied", async () => {
+      await seed()
+      await remove(helper.cacheDirForPendingUpdate)
+      await outputFile(helper.cacheDirForPendingUpdate, "not a directory")
+
+      expect(() => helper.clearSync()).not.toThrow()
+
+      expect(helper.file).toBeNull()
+      expect(helper.verifyDownloadedFilesSync()).toBe("no verified update file")
+    })
   })
 })

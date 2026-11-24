@@ -1350,6 +1350,31 @@ describe("install on quit", { concurrent: false }, () => {
       expect(spawnLog).not.toHaveBeenCalled()
       expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
     })
+
+    // doInstallAsync is protected: a subclass may call it without a downloaded update
+    test("NSIS, async install without a downloaded update: no signature is verified, and the install reports the missing installer", async () => {
+      const { updater, errors, spawnLog } = createNsisUpdater(makeStubApp())
+      ;(updater as any).downloadedUpdateHelper = null
+      const verifySignature = vi
+        .spyOn(updater as unknown as { verifySignature: () => Promise<VerifyUpdateFileResult> }, "verifySignature")
+        .mockResolvedValue({ response: "success" })
+
+      await expect((updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })).resolves.toBe(false)
+
+      expect(verifySignature).not.toHaveBeenCalled()
+      expect(spawnLog).not.toHaveBeenCalled()
+      expect(errors.map(it => it.message)).toEqual(["No update filepath provided, can't quit and install"])
+    })
+
+    // verifyDownloadedUpdateBeforeInstall is protected: a subclass may call it without a downloaded update, and gets no install
+    test("the re-check fails closed when no update was downloaded", () => {
+      const { updater, errors } = createDebUpdater(makeStubApp(), 0)
+      ;(updater as any).downloadedUpdateHelper = null
+
+      expect((updater as any).verifyDownloadedUpdateBeforeInstall()).toBe(false)
+
+      expect(errors).toEqual([expect.objectContaining({ code: "ERR_UPDATER_UPDATE_FILE_CHANGED", message: expect.stringContaining("not installed: no update was downloaded.") })])
+    })
   })
 
   test("ElectronAppAdapter forwards every will-quit event, so a cancelled quit can be followed by another", () => {
