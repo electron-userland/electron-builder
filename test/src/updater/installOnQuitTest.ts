@@ -1071,6 +1071,8 @@ describe("install on quit", { concurrent: false }, () => {
       expect(await pathExists(path.join(helper.cacheDirForPendingUpdate, "update-info.json"))).toBe(false)
     }
 
+    const MIGRATION_LINK = "https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed"
+
     test("deb on quit: an installer overwritten after update-downloaded is not installed, and is removed", async () => {
       await seedDownloadedUpdate()
       const app = makeStubApp()
@@ -1081,6 +1083,8 @@ describe("install on quit", { concurrent: false }, () => {
 
       expect(pkexecCalls).toEqual([])
       expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
+      expect(errors[0].message).toContain("Since electron-updater 7, a downloaded update is hashed again right before it is installed.")
+      expect(errors[0].message.slice(-MIGRATION_LINK.length)).toBe(MIGRATION_LINK)
       await expectRemoved(debInstaller())
     })
 

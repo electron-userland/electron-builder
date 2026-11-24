@@ -348,7 +348,12 @@ export abstract class BaseUpdater extends AppUpdater {
       return true
     }
     this.rejectDownloadedUpdate(
-      newError(`The downloaded update is not installed: ${failure}. It is removed and will be downloaded again on the next update check.`, "ERR_UPDATER_UPDATE_FILE_CHANGED")
+      newError(
+        `The downloaded update is not installed: ${failure}. It is removed and will be downloaded again on the next update check. ` +
+          "Since electron-updater 7, a downloaded update is hashed again right before it is installed. " +
+          "See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed",
+        "ERR_UPDATER_UPDATE_FILE_CHANGED"
+      )
     )
     return false
   }
