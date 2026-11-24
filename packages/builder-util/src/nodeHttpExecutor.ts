@@ -9,12 +9,12 @@ import { isEmptyOrSpaces } from "./stringUtil.js"
 
 const DEFAULT_CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-developer-changes#builder-util-runtime-default-cross-origin-headers"
 
-// builder-util-runtime's default policy, announcing the v27 change: once per process for each set of header names it leaves out that v26 sent
+// builder-util-runtime's default policy, announcing the v27 change once per process: at the first redirect that leaves out headers v26 sent
 // there, naming them and both origins, never a value
 const defaultCrossOriginHeaderPolicy = createDefaultCrossOriginHeaderPolicy((headerNames, hop) => {
   const names = [...headerNames].sort().join(", ")
   log
-    .once(`cross-origin-headers-dropped:${names}`)
+    .once("cross-origin-headers-dropped")
     .warn(
       `electron-builder v27 sends a redirect to another origin only the request headers that carry no credential (Accept, Content-Type, Range, User-Agent and the like): ` +
         `the redirect from ${hop.from.origin} to ${hop.to.origin} went without ${names}, which electron-builder v26 sent there. ` +
@@ -26,7 +26,8 @@ const defaultCrossOriginHeaderPolicy = createDefaultCrossOriginHeaderPolicy((hea
 export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
   /**
    * @param crossOriginHeaderPolicy see {@link HttpExecutor}; by default builder-util-runtime's, which sends only the headers that carry no
-   * credential on a redirect to another origin, and here logs a warning naming the ones it leaves out that electron-builder v26 sent there
+   * credential on a redirect to another origin, and here logs a warning once per process, at the first redirect that leaves out headers
+   * electron-builder v26 sent there, naming them
    */
   constructor(crossOriginHeaderPolicy: CrossOriginHeaderPolicy = defaultCrossOriginHeaderPolicy) {
     super(crossOriginHeaderPolicy)

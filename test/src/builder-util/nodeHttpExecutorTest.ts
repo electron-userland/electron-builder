@@ -204,7 +204,7 @@ describe("NodeHttpExecutor.createRequest", { concurrent: false }, () => {
 describe("NodeHttpExecutor cross-origin header policy", { concurrent: false }, () => {
   const hop = { from: new URL("https://api.example.com/upload"), to: new URL("https://storage.example.net/bucket/file") }
 
-  test("by default sends another origin only the headers that carry no credential, and warns once per process for each set of names it leaves out that v26 sent there, never with a value", ({
+  test("by default sends another origin only the headers that carry no credential, and warns once per process, at the first redirect that leaves out headers v26 sent there, never with a value", ({
     expect,
   }) => {
     log.resetLimits()
@@ -230,9 +230,9 @@ describe("NodeHttpExecutor cross-origin header policy", { concurrent: false }, (
       expect(message).not.toContain("secret-value")
       expect(message).not.toContain("other-value")
 
-      policy({ "X-Tenant": "acme", "X-Api-Token": "secret-value" }, hop)
-      expect(warn).toHaveBeenCalledTimes(2)
-      expect(warn).toHaveBeenLastCalledWith(expect.stringContaining("went without x-api-token, x-tenant, which"))
+      // a later redirect, to another origin too, that leaves out another set of names: they are still left out, and the warning is not repeated
+      expect(policy({ "X-Tenant": "acme", "X-Api-Token": "secret-value" }, { from: hop.from, to: new URL("https://uploads.example.org/file") })).toEqual({})
+      expect(warn).toHaveBeenCalledOnce()
     } finally {
       warn.mockRestore()
       log.resetLimits()
