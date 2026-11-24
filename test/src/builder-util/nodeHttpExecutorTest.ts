@@ -1,3 +1,4 @@
+import { log } from "builder-util/src/log"
 import { buildGotProxyAgent, NodeHttpExecutor } from "builder-util/src/nodeHttpExecutor"
 import { afterEach, beforeEach, vi } from "vitest"
 
@@ -197,5 +198,53 @@ describe("NodeHttpExecutor.createRequest", { concurrent: false }, () => {
       callCreateRequest(executor, options)
       expect(options.agent).toBeUndefined()
     })
+  })
+})
+
+describe("NodeHttpExecutor cross-origin header policy", { concurrent: false }, () => {
+  const hop = { from: new URL("https://api.example.com/upload"), to: new URL("https://storage.example.net/bucket/file") }
+
+  test("by default sends another origin only the headers that carry no credential, and warns once per process for each set of names it leaves out, never with a value", ({
+    expect,
+  }) => {
+    log.resetLimits()
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    try {
+      const policy = new NodeHttpExecutor().crossOriginHeaderPolicy
+      expect(policy({ "X-Api-Token": "secret-value", Authorization: "token t", Accept: "application/json" }, hop)).toEqual({ Accept: "application/json" })
+      // the same names again, then none left out: no other warning
+      policy({ authorization: "token other", "x-api-token": "other-value", accept: "*/*" }, hop)
+      policy({ accept: "*/*" }, hop)
+      expect(warn).toHaveBeenCalledOnce()
+      const message = warn.mock.calls[0][0]
+      expect(typeof message).toBe("string")
+      expect(message).toContain("electron-builder v27 sends only the request headers that carry no credential")
+      expect(message).toContain("the redirect from https://api.example.com to https://storage.example.net was sent without authorization, x-api-token;")
+      expect(message).toMatch(/ See https:\/\/www\.electron\.build\/docs\/migration\/v27-developer-changes#builder-util-runtime-default-cross-origin-headers$/)
+      expect(message).not.toContain("secret-value")
+      expect(message).not.toContain("other-value")
+
+      policy({ "X-Tenant": "acme" }, hop)
+      expect(warn).toHaveBeenCalledTimes(2)
+      expect(warn).toHaveBeenLastCalledWith(expect.stringContaining("was sent without x-tenant;"))
+    } finally {
+      warn.mockRestore()
+      log.resetLimits()
+    }
+  })
+
+  test("a policy passed to the constructor is used instead, without a warning", ({ expect }) => {
+    log.resetLimits()
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    try {
+      const policy = vi.fn(() => ({}))
+      const executor = new NodeHttpExecutor(policy)
+      expect(executor.crossOriginHeaderPolicy).toBe(policy)
+      executor.crossOriginHeaderPolicy({ "X-Api-Token": "secret-value" }, hop)
+      expect(warn).not.toHaveBeenCalled()
+    } finally {
+      warn.mockRestore()
+      log.resetLimits()
+    }
   })
 })
