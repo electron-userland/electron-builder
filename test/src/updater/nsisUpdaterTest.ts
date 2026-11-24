@@ -885,7 +885,12 @@ describe("NsisUpdater — disableWebInstaller", () => {
       trackEvents(updater)
 
       const updateCheckResult = await updater.checkForUpdates()
-      await expect(updateCheckResult!.downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_NO_CHECKSUM" })
+      await expect(updateCheckResult!.downloadPromise).rejects.toMatchObject({
+        code: "ERR_UPDATER_NO_CHECKSUM",
+        message: expect.stringMatching(
+          /As of v27, a web-installer package is downloaded only when latest\.yml lists its sha512; .* https:\/\/www\.electron\.build\/docs\/migration\/v27-runtime-changes#disablewebinstaller-defaults-to-true$/
+        ),
+      })
       expect(downloads).toEqual([])
     } finally {
       server.close()

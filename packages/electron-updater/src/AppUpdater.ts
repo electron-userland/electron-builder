@@ -76,6 +76,8 @@ const LOGIN_MIGRATION_DOCS = "https://www.electron.build/docs/migration/v27-runt
 
 const CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-headers"
 
+const SIGNED_MANIFESTS_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required"
+
 /** `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`, for `subject`: what needs `autoUpdater.crossOriginHeaders`. */
 function crossOriginHeadersNotConfiguredError(subject: string): Error {
   return newError(
@@ -986,13 +988,16 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     if (trustedKeys.length === 0) {
       this.limitedLogger("manifest-verification-disabled").warn(
-        "update manifest signature verification is disabled. Configure updateManifestPublicKey (and sign manifests at build time) to enable it."
+        `update manifest signature verification is disabled. Configure updateManifestPublicKey (and sign manifests at build time) to enable it. ${SIGNED_MANIFESTS_DOCS}`
       )
       return false
     }
 
     if (collectManifestSignatures(info).length === 0) {
-      throw newError(`Update manifest for version ${info.version} is not signed, but updateManifestPublicKey is configured. Refusing to update.`, "ERR_UPDATER_MANIFEST_NOT_SIGNED")
+      throw newError(
+        `Update manifest for version ${info.version} is not signed, but updateManifestPublicKey is configured. Refusing to update. Sign latest*.yml at build time (required when publishing as of v27) with the private key of updateManifestPublicKey: ${SIGNED_MANIFESTS_DOCS}`,
+        "ERR_UPDATER_MANIFEST_NOT_SIGNED"
+      )
     }
 
     const result = verifyManifestSignatures(info, trustedKeys)
@@ -1013,7 +1018,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
           : " stagingPercentage is covered by the signature. If it was set or changed after latest*.yml was signed, sign latest*.yml again: " +
             "https://www.electron.build/docs/features/auto-update#staged-rollouts"
       throw newError(
-        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.${blockMapUrlHint}${stagingPercentageHint}`,
+        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.${blockMapUrlHint}${stagingPercentageHint} ${SIGNED_MANIFESTS_DOCS}`,
         "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID"
       )
     }

@@ -49,7 +49,7 @@
           # An explicit --package-file that cannot be copied aborts the installation. A package found next to the installer is ignored
           # and the package is downloaded instead, as when its checksum doesn't match.
           ${if} $isPackageFileExplicitlySpecified == "true"
-            MessageBox MB_OK|MB_ICONSTOP "Package file $4 cannot be copied to $PLUGINSDIR. Installation aborted." /SD IDOK
+            MessageBox MB_OK|MB_ICONSTOP "Package file $4 cannot be copied to $PLUGINSDIR. Installation aborted.$\r$\nhttps://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true" /SD IDOK
             SetErrorLevel 2
             Quit
           ${endIf}
@@ -70,7 +70,7 @@
             !ifdef APP_ARM64_HASH
               StrCmp $3 "${APP_ARM64_HASH}" web_package_ready
             !endif
-            MessageBox MB_OK|MB_ICONSTOP "Package file $4 doesn't match any package of this installer (checksum $3). Installation aborted." /SD IDOK
+            MessageBox MB_OK|MB_ICONSTOP "Package file $4 doesn't match any package of this installer (checksum $3). Installation aborted.$\r$\nhttps://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true" /SD IDOK
             SetErrorLevel 2
             Quit
           !endif
@@ -96,7 +96,7 @@
         !ifndef ALLOW_UNVERIFIED_APP_PACKAGE
           ${StdUtils.HashFile} $3 "SHA2-512" "$packageFile"
           ${if} $3 != $1
-            MessageBox MB_OK|MB_ICONSTOP "Package downloaded from $packageUrl doesn't match this installer — expected checksum $1, actual $3. Installation aborted." /SD IDOK
+            MessageBox MB_OK|MB_ICONSTOP "Package downloaded from $packageUrl doesn't match this installer — expected checksum $1, actual $3. Installation aborted.$\r$\nhttps://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true" /SD IDOK
             SetErrorLevel 2
             Quit
           ${endIf}

@@ -18,6 +18,7 @@ const cases = [
   { packages: ["32", "64"], expected: ["32", "64", "64"] },
   { packages: ["32", "64", "ARM64"], expected: ["32", "64", "ARM64"] },
 ]
+const packageCheckLink = 'https://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true" /SD IDOK'
 const payload = (arch: string) => `package for ${arch}`
 const hash = (arch: string) => createHash("sha512").update(payload(arch)).digest("hex").toUpperCase()
 
@@ -105,7 +106,8 @@ for (const incomplete of [false, true]) {
         "System::Call 'kernel32::CopyFileW(w s, w s, i 1) i .r0'",
         `IntCmp \`$0\` \`0\` \`\` \`${copied}\` \`${copied}\``,
         `StrCmp \`$isPackageFileExplicitlySpecified\` \`true\` \`\` \`${notExplicit}\``,
-        'MessageBox MB_OK|MB_ICONSTOP "Package file $4 cannot be copied to $PLUGINSDIR. Installation aborted." /SD IDOK',
+        'MessageBox MB_OK|MB_ICONSTOP "Package file $4 cannot be copied to $PLUGINSDIR. Installation aborted.',
+        packageCheckLink,
         "SetErrorLevel 2",
         "Quit",
         `${notExplicit}:`,
@@ -115,6 +117,17 @@ for (const incomplete of [false, true]) {
         `${copied}:`,
         staged,
       ])
+      // The package checks abort with a link to the migration section that documents them.
+      const abort = (message: string) => {
+        const index = script.indexOf(message)
+        return index === -1 ? [] : script.slice(index, index + 4)
+      }
+      const notInPackages = "MessageBox MB_OK|MB_ICONSTOP \"Package file $4 doesn't match any package of this installer (checksum $3). Installation aborted."
+      expect(abort(notInPackages)).toEqual(allowUnverified ? [] : [notInPackages, packageCheckLink, "SetErrorLevel 2", "Quit"])
+      const downloadMismatch =
+        "MessageBox MB_OK|MB_ICONSTOP \"Package downloaded from $packageUrl doesn't match this installer — expected checksum $1, actual $3. Installation aborted."
+      expect(abort(downloadMismatch)).toEqual(incomplete && !allowUnverified ? [downloadMismatch, packageCheckLink, "SetErrorLevel 2", "Quit"] : [])
+
       // the download that follows starts right after the label
       const downloadLabel = script.indexOf("web_package_download:")
       expect(downloadLabel).toBeGreaterThan(script.indexOf(staged))

@@ -87,6 +87,40 @@ describe("AppUpdater.verifyManifestSignature (A1)", () => {
     }
   })
 
+  describe("messages end with the v27 migration link", () => {
+    const link = "https://www.electron.build/docs/migration/v27-build-changes#signed-update-manifests-are-required"
+
+    it("ERR_UPDATER_MANIFEST_NOT_SIGNED", async ({ expect }) => {
+      const error = await verify(makeUpdater(publicKeyPem), makeInfo()).catch((e: Error) => e)
+      expect(error).toMatchObject({ code: "ERR_UPDATER_MANIFEST_NOT_SIGNED" })
+      expect(error.message).toContain("required when publishing as of v27")
+      expect(error.message.endsWith(` ${link}`)).toBe(true)
+    })
+
+    it("ERR_UPDATER_MANIFEST_SIGNATURE_INVALID, also after the blockMapUrl and stagingPercentage hints", async ({ expect }) => {
+      const info = signed(makeInfo(), privateKeyPem)
+      const tampered = { ...info, files: [{ ...info.files[0], sha512: "tampered" }] }
+      const withHints = { ...tampered, stagingPercentage: 50, files: [{ ...tampered.files[0], blockMapUrl: "https://cdn.example.com/App-2.0.0.exe.blockmap" }] }
+      for (const manifest of [tampered, withHints]) {
+        const error = await verify(makeUpdater(publicKeyPem), manifest).catch((e: Error) => e)
+        expect(error).toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+        expect(error.message.endsWith(` ${link}`)).toBe(true)
+      }
+    })
+
+    it("the warning when no key is configured", async ({ expect }) => {
+      const updater = makeUpdater(null)
+      const warnSpy = vi.spyOn((updater as any).logger, "warn")
+      try {
+        await expect(verify(updater, makeInfo())).resolves.toBe(false)
+        const warning = warnSpy.mock.calls.map(c => String(c[0])).find(m => m.includes("signature verification is disabled"))
+        expect(warning?.endsWith(` ${link}`)).toBe(true)
+      } finally {
+        warnSpy.mockRestore()
+      }
+    })
+  })
+
   it("rejects a manifest signed by a different key", async () => {
     const updater = makeUpdater(generateUpdateSigningKeypair().publicKeyPem)
     const info = signed(makeInfo(), privateKeyPem)

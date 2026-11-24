@@ -255,7 +255,12 @@ export class NsisUpdater extends BaseUpdater {
       }
       if (fileInfo.packageInfo.sha512 == null) {
         return Promise.reject(
-          newError(`Update info doesn't contain sha512 checksum for the web installer package: ${urlWithoutQuery(fileInfo.packageInfo.path)}`, "ERR_UPDATER_NO_CHECKSUM")
+          newError(
+            `Update info doesn't contain sha512 checksum for the web installer package: ${urlWithoutQuery(fileInfo.packageInfo.path)}. ` +
+              "As of v27, a web-installer package is downloaded only when latest.yml lists its sha512; publish the latest.yml electron-builder writes for nsis-web. " +
+              "https://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true",
+            "ERR_UPDATER_NO_CHECKSUM"
+          )
         )
       }
     }
