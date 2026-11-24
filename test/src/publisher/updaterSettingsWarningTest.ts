@@ -189,6 +189,23 @@ describe("the scan of the packed app", () => {
     expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": updater, "dist/updates.js": 'autoUpdater["crossOriginHeaders"] = () => []' }))).toBe(
       true
     )
+    // a comment line at the start of the file
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": `// ${assignment}${updater}` }))).toBe(false)
+  })
+
+  // a source map's sourcesContent holds the bundled code as a JSON string, and a webpack eval bundle (devtool: "eval", webpack's default in
+  // development mode) each module as a JavaScript string: all on one line, with escaped newlines (\n) between the lines of the code
+  const sourceMap = (code: string) =>
+    JSON.stringify({ version: 3, file: "main.js", sources: ["../node_modules/electron-updater/dist/AppUpdater.js"], sourcesContent: [code], mappings: "" })
+  const evalModule = (code: string) =>
+    `/*!*** ./node_modules/electron-updater/dist/AppUpdater.js ***!*/\n((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {\n"use strict";\neval(${JSON.stringify(`{${code}}`)});\n}),\n`
+
+  test.for([
+    ["a source map", "dist/main.js.map", sourceMap],
+    ["a webpack eval bundle", "dist/main.js", evalModule],
+  ] as const)("in %s that holds the bundled electron-updater as a string, finds only an assignment of the app", async ([, file, wrap], { expect, tmpDir }) => {
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { [file]: wrap(bundledUpdater) }))).toBe(false)
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { [file]: wrap(`${bundledUpdater}\nautoUpdater.crossOriginHeaders = () => [];\n`) }))).toBe(true)
   })
 
   test("a bundle that does not assign the property gets the warning, which says to confirm another way of setting it", async ({ expect, tmpDir }) => {

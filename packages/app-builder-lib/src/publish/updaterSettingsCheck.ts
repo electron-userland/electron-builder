@@ -184,11 +184,13 @@ export async function findUpdaterSettingsMentions(resourcesDir: string): Promise
 /**
  * Whether `code`, which bundles electron-updater, assigns `crossOriginHeaders` (see {@link CROSS_ORIGIN_HEADERS_ASSIGNMENT}) outside
  * electron-updater's own text: the assignment that its error message shows (after a backtick) and its JSDoc examples (in a comment line,
- * which an unminified bundle keeps).
+ * which an unminified bundle keeps). A line also starts after an escaped newline (`\n`): a source map's `sourcesContent` and a webpack
+ * eval bundle hold the bundled code as strings, on one line.
  */
 function setsCrossOriginHeaders(code: string): boolean {
   for (const match of code.matchAll(CROSS_ORIGIN_HEADERS_ASSIGNMENT)) {
-    const line = code.slice(code.lastIndexOf("\n", match.index) + 1, match.index)
+    const escapedNewline = code.lastIndexOf("\\n", match.index)
+    const line = code.slice(Math.max(code.lastIndexOf("\n", match.index) + 1, escapedNewline === -1 ? 0 : escapedNewline + 2), match.index)
     if (!/`[\w$.]*$/.test(line) && !/^\s*(?:\*|\/\/|\/\*)/.test(line)) {
       return true
     }
