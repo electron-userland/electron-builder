@@ -52,7 +52,7 @@ explicitly with `updateManifest: false`. See https://www.electron.build/docs/mig
 
 A build **without** a publish policy only warns, so local builds keep working while your release pipeline is the thing that has to hold the key. With [`forceCodeSigning`](./code-signing/code-signing.md#the-forcecodesigning-option), every build that emits a manifest requires the key, whether or not it publishes — pull-request builds included.
 
-**3. That's it.** electron-updater picks the public key up from `app-update.yml` and enforces verification from the first update check.
+**3. That's it.** electron-updater (electron-updater 7.0.0-alpha.8 and later) picks the public key up from `app-update.yml` and enforces verification from the first update check.
 
 ## Providing the key in CI {#ci-secrets}
 
@@ -206,7 +206,7 @@ On Windows, an unsigned manifest also lets the `nsis-web` installer of a release
 
 ## Re-signing a published manifest {#re-signing-a-published-manifest}
 
-Cosmetic fields can be edited in a published `latest*.yml` as they are, but changing a signed field — raising `stagingPercentage` during a staged rollout, adding a `minimumSystemVersion`, pointing a file `url` at a different host — invalidates its signatures, and every install that embeds a public key then refuses the update with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`. Rather than rebuilding, edit the file and sign it again from the project directory. Like `electron-builder publish`, the command reads the project's electron-builder configuration (`-c` / `--config` picks a different file), and it takes the key(s) from the same place the build does: `updateManifest.signingKey` / `updateManifest.signingKeyFile` (the platform's own `mac.updateManifest` / `win.updateManifest` / `linux.updateManifest` first), then `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`. There is no flag that takes key material.
+Cosmetic fields can be edited in a published `latest*.yml` as they are, but changing a signed field — raising `stagingPercentage` during a staged rollout, adding a `minimumSystemVersion`, pointing a file `url` at a different host — invalidates its signatures, and every install that embeds a public key (electron-updater 7.0.0-alpha.8 and later) then refuses the update with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`. Rather than rebuilding, edit the file and sign it again from the project directory. Like `electron-builder publish`, the command reads the project's electron-builder configuration (`-c` / `--config` picks a different file), and it takes the key(s) from the same place the build does: `updateManifest.signingKey` / `updateManifest.signingKeyFile` (the platform's own `mac.updateManifest` / `win.updateManifest` / `linux.updateManifest` first), then `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`. There is no flag that takes key material.
 
 ```sh
 # keys from the configuration or the environment, exactly as in a build
@@ -305,7 +305,7 @@ Before uploading, run [`electron-builder verify`](../cli.md#verify) on the outpu
 
 ## Verification behavior in electron-updater
 
-When at least one public key is configured (embedded or set at runtime), verification is enforced on every update check, for every provider. The manifest is accepted when **any trusted key validates any of its signatures** (`signatures` entries tagged with that key's id are tried first, then the untagged legacy `signature`):
+In electron-updater 7.0.0-alpha.8 and later, when at least one public key is configured (embedded or set at runtime), verification is enforced on every update check, for every provider. The manifest is accepted when **any trusted key validates any of its signatures** (`signatures` entries tagged with that key's id are tried first, then the untagged legacy `signature`):
 
 | Manifest state | Result |
 | --- | --- |
@@ -318,7 +318,7 @@ Both errors are emitted through the updater's regular `error` event and abort th
 Some settings take effect only in a manifest that was verified this way. `allowCatalogSignature: true` (written for [`win.allowCatalogSignature`](../win.md)) lets the NSIS updater accept an installer whose signature Windows reports from a security catalog, when the catalog signer matches `publisherName`; without a trusted key, or for a manifest that was not verified, it is ignored with a warning. Since it is signed, changing it later means re-signing or republishing `latest.yml`. electron-updater 7.0.0-alpha.8 to alpha.11 installs with an update key configured reject a signed manifest that sets `allowCatalogSignature: true` (`ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`), the same way alpha.8 treats a signed `files[].blockMapUrl`. Installs with an update key configured whose electron-updater predates `files[].blockMapSha512` likewise reject a signed manifest that sets it (`ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`): add it only once those installs have updated.
 
 :::warning[The hazard is turning it off, not turning it on]
-Verification is enforced by the *installed* app, and since signing is on by default there is nothing to roll out — your first build already embeds the public key and signs its manifests. Older installs without the key simply skip verification. What matters from then on is that every future manifest is signed: publishing an unsigned one makes every install that carries the key refuse the update.
+Verification is enforced by the *installed* app, and since signing is on by default there is nothing to roll out — your first build already embeds the public key and signs its manifests. Older installs without the key simply skip verification. What matters from then on is that every future manifest is signed: publishing an unsigned one makes every install that carries the key (electron-updater 7.0.0-alpha.8 and later) refuse the update.
 :::
 
 ## Key rotation
@@ -327,7 +327,7 @@ An install trusts the **list** of public keys embedded in its `app-update.yml`, 
 
 1. **Bridge release(s):** configure both the **old** and the **new** private key (old first, so it also fills the legacy `signature` field), e.g. `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=old.pem:new.pem`, or `ELECTRON_BUILDER_UPDATE_SIGN_KEY` holding the output of `cat old.pem new.pem | base64 | tr -d '\n'`. Manifests are now dual-signed and `app-update.yml` trusts `[old, new]`. Installs in the field verify via the old signature; once updated they trust both keys.
 2. **Keep dual-signing** for as long as you want installs that predate the first bridge release to be able to update.
-3. **Drop the old key** from the environment. Manifests are signed by the new key only; every install that took a bridge release keeps verifying. Installs that never did stop updating (`ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`) and must be reinstalled or served from a separate feed still signed with the old key.
+3. **Drop the old key** from the environment. Manifests are signed by the new key only; every install that took a bridge release keeps verifying. Installs that never did stop updating (`ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`, electron-updater 7.0.0-alpha.8 and later) and must be reinstalled or served from a separate feed still signed with the old key.
 
 Better still, embed the *next* key before you need it: set `updateManifest.publicKey` to `[current, next]` and keep the next private key offline. A compromise of the current key can then be answered by switching to the next key at once, with no bridge release. Note that a trust list does not protect against a leaked key itself while installs still list it — remove it from the list as fast as adoption allows. The full procedure — including compromise handling, key storage advice, and the equivalent steps for Windows, macOS, and Linux code-signing keys — is in the [Key Rotation](./key-rotation.md) runbook.
 

@@ -103,7 +103,7 @@ Every later release must be signed by the new key, so remove the option again in
 
 **3. Keep dual-signing for your support window.** Every release you publish while both keys are configured is a bridge release: old installs verify it via the old signature, updated installs via either. How long to keep the old key depends on how far back you support updating from; measure adoption of the first dual-signed release and decide.
 
-**4. Drop the old key.** Remove the old private key from the environment. From this release on, manifests are signed by the new key only and `app-update.yml` trusts only the new key. Installs that took any dual-signed release verify them; installs that skipped the whole window fail with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID` and stop updating.
+**4. Drop the old key.** Remove the old private key from the environment. From this release on, manifests are signed by the new key only and `app-update.yml` trusts only the new key. Installs that took any dual-signed release verify them; installs that skipped the whole window fail with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID` (electron-updater 7.0.0-alpha.8 and later) and stop updating.
 
 **5. Deal with stragglers.** Installs older than the first dual-signed release trust only the old key. Your options are:
 
@@ -248,7 +248,7 @@ Use this as a template for a rotation ticket.
 - [ ] Linux GPG (if enforced): package installs the new public key; sign with the old GPG key.
 - [ ] macOS: nothing to bridge for a same-Team certificate change; announce a Team ID change in-app.
 - [ ] Verify the built `app-update.yml` lists both keys under `updateManifestPublicKey` / both `publisherName` entries, and `latest*.yml` has two `signatures` entries, before publishing.
-- [ ] Never reach for `updateManifest: false` to get a rotation release out: it is not a rotation tool, and it produces manifests that every install carrying a key will refuse.
+- [ ] Never reach for `updateManifest: false` to get a rotation release out: it is not a rotation tool, and it produces manifests that every install carrying a key (electron-updater 7.0.0-alpha.8 and later) will refuse.
 
 **Switch**
 
