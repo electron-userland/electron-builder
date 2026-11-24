@@ -1281,7 +1281,7 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
   // The app runs from <root>/TestApp/TestApp.exe with elevate.exe in <root>/TestApp/resources. Writing to `writable` succeeds; the
   // attempts on the others fail with `deniedCode` (see denyWrites). spawnLog rejects a start of the installer itself with `startError`
   // (EACCES: Windows refuses an installer that asks for administrator rights to an app that does not run elevated) and starts elevate.exe.
-  async function install(tmpDir: TmpDir, options: { isAdminRightsRequired: boolean; startError?: Error; writable?: Array<Writable>; elevateExe?: boolean; deniedCode?: string }) {
+  async function install(tmpDir: TmpDir, options: { isAdminRightsRequired: boolean; startError?: unknown; writable?: Array<Writable>; elevateExe?: boolean; deniedCode?: string }) {
     const root = await tmpDir.getTempDir({ prefix: "installer-start" })
     const installFolder = path.join(root, "TestApp")
     const resourcesPath = path.join(installFolder, "resources")
@@ -1348,6 +1348,15 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
     const { errors, spawnLog } = await install(tmpDir, { isAdminRightsRequired: false, startError: error })
     expect(spawnLog).toHaveBeenCalledTimes(1)
     expect(errors).toEqual([error])
+  })
+
+  // spawnLog is protected, so a subclass can reject with a value that is not an Error
+  test("a start failure that is not an Error is emitted as one", config, async ({ expect, tmpDir }) => {
+    const { errors, spawnLog } = await install(tmpDir, { isAdminRightsRequired: false, startError: "spawn failed" })
+    expect(spawnLog).toHaveBeenCalledTimes(1)
+    expect(errors).toHaveLength(1)
+    expect(errors[0]).toBeInstanceOf(Error)
+    expect(errors[0].message).toBe("spawn failed")
   })
 
   for (const { name, isAdminRightsRequired } of [
