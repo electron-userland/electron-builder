@@ -291,7 +291,7 @@ describe("SquirrelWindowsTarget.computeEffectiveDistOptions", () => {
 
     // The warning is shown once per process, so this runs before any other test that triggers it; the https case
     // fails if an earlier test already used up the warning.
-    test("a local path gets no warning, an http(s) host does", async () => {
+    test("a local path gets no warning, an http(s) host does, once per process", async () => {
       vi.stubEnv("GH_TOKEN", "env-gh")
       const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
       const remoteReleasesWarnings = () => warn.mock.calls.filter(([, message]) => String(message).includes("squirrelWindows.remoteReleases"))
@@ -300,7 +300,12 @@ describe("SquirrelWindowsTarget.computeEffectiveDistOptions", () => {
         expect(remoteReleasesWarnings()).toHaveLength(0)
         await compute({ squirrelWindows: { remoteReleases: "https://releases.example.com/owner/repo" } })
         expect(remoteReleasesWarnings()).toHaveLength(1)
-        expect(remoteReleasesWarnings()[0][0]).toEqual({ hostname: "releases.example.com" })
+        const [fields, message] = remoteReleasesWarnings()[0]
+        expect(fields).toEqual({ hostname: "releases.example.com" })
+        expect(message).toMatch(/^Since electron-builder 27, GH_TOKEN is not sent with squirrelWindows\.remoteReleases to this host\b.*ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS.*squirrelWindows\.remoteToken/)
+        expect(message).toMatch(/See https:\/\/www\.electron\.build\/docs\/migration\/v27-build-changes#publish-tokens-from-the-environment-are-bound-to-the-provider-host$/)
+        await compute({ squirrelWindows: { remoteReleases: "https://other.example.com/owner/repo" } })
+        expect(remoteReleasesWarnings()).toHaveLength(1)
       } finally {
         warn.mockRestore()
       }
