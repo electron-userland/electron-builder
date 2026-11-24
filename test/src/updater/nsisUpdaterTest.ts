@@ -1471,7 +1471,7 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
 
   // any process of the user can modify the folders of an app installed per user, and the app does not run elevated: Windows refuses to start
   // the per-machine installer, and elevate.exe may not run
-  test("an update cannot switch an app installed per user to a per-machine installation", config, async ({ expect, tmpDir }) => {
+  test("an update cannot switch an app installed per user that does not run elevated to a per-machine installation", config, async ({ expect, tmpDir }) => {
     const { result, errors, spawnLog, installerPath, elevatePath } = await install(tmpDir, {
       isAdminRightsRequired: true,
       writable: ["elevate.exe", "resources", "install folder"],
@@ -1480,7 +1480,7 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
     expect(result).toBe(true)
     expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"])
     expect(errors[0].message).toContain(`but the current user can modify ${elevatePath}`)
-    expect(errors[0].message).toContain("an update cannot switch an app installed per user to a per-machine installation")
+    expect(errors[0].message).toContain("an update cannot switch an app installed per user to a per-machine installation unless the app runs with administrator rights")
     expect(spawnLog).toHaveBeenCalledTimes(1)
     expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
   })

@@ -510,7 +510,7 @@ export class NsisUpdater extends BaseUpdater {
         if (refusal != null) {
           this.dispatchError(
             newError(
-              `Cannot start the update installer through elevate.exe: the installer requires administrator rights (EACCES: ${message}), but ${refusal}. Since electron-updater 7, elevate.exe is used only when the current user cannot modify it, its folder or the install folder of the app, and an app that runs with administrator rights starts the installer directly instead. Install per-machine apps into a folder only administrators can write, e.g. build them with nsis.perMachine: true; an update cannot switch an app installed per user to a per-machine installation. See https://www.electron.build/docs/migration/v27-runtime-changes#nsis-a-failed-installer-start-is-no-longer-retried`,
+              `Cannot start the update installer through elevate.exe: the installer requires administrator rights (EACCES: ${message}), but ${refusal}. Since electron-updater 7, elevate.exe is used only when the current user cannot modify it, its folder or the install folder of the app, and an app that runs with administrator rights starts the installer directly instead. Install per-machine apps into a folder only administrators can write, e.g. build them with nsis.perMachine: true; an update cannot switch an app installed per user to a per-machine installation unless the app runs with administrator rights. See https://www.electron.build/docs/migration/v27-runtime-changes#nsis-a-failed-installer-start-is-no-longer-retried`,
               "ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"
             )
           )
