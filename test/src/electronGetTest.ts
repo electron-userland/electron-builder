@@ -1,4 +1,4 @@
-import { exec, log } from "builder-util"
+import { exec, InvalidConfigurationError, log } from "builder-util"
 import { createHash } from "crypto"
 import { readFileSync } from "fs"
 import * as fs from "fs/promises"
@@ -20,6 +20,7 @@ import {
   reinitializeProxy,
 } from "app-builder-lib/internal"
 import { HttpError } from "builder-util-runtime"
+import { importCertificate } from "app-builder-lib/src/codeSign/codesign.js"
 import {
   buildElectronArtifactConfig,
   defaultElectronGetCacheRoot,
@@ -1298,5 +1299,23 @@ describe("download without a checksum", () => {
     expect(error?.message).toBe(`cannot download http://127.0.0.1:${port}${urlPath}: ${reason}`)
     expect(error.stack).not.toMatch(/SECRET/)
     expect(error.cause).toBeUndefined()
+  })
+})
+
+// ─── importCertificate ────────────────────────────────────────────────────────
+
+describe("importCertificate", () => {
+  test("rejects an https link with user info without showing it", async ({ expect, tmpDir }) => {
+    const error = await importCertificate("https://user:PASSWORD_SECRET@127.0.0.1/certificate.p12", tmpDir, process.cwd()).then(
+      () => null,
+      (e: unknown) => e
+    )
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    const { message, stack } = error as InvalidConfigurationError
+    expect(message).toMatch(/^A certificate link \(cscLink, cscInstallerLink, CSC_LINK, WIN_CSC_LINK or CSC_INSTALLER_LINK\) is an https URL with user info/)
+    expect(message.endsWith("https://www.electron.build/docs/migration/v27-build-changes#certificate-links-with-user-info-are-rejected")).toBe(true)
+    expect(stack).not.toMatch(/SECRET/)
+    const doc = await fs.readFile(path.join(import.meta.dirname, "../../website/docs/migration/v27-build-changes.md"), "utf8")
+    expect(doc).toContain("{#certificate-links-with-user-info-are-rejected}")
   })
 })

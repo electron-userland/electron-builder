@@ -40,6 +40,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [`ELECTRON_BUILDER_OFFLINE=1` skips the Windows signing timestamp](#electron_builder_offline-skips-the-signing-timestamp) | Warns | Only if you set `ELECTRON_BUILDER_OFFLINE=1`: unset it for release builds, or keep it to sign without a timestamp server |
 | [`forceCodeSigning` covers notarization and update manifests](#forcecodesigning-covers-notarization-and-update-manifests) | Fails build (with `forceCodeSigning`) | Provide notarization credentials and the update-manifest signing key wherever `forceCodeSigning` is set, or opt out explicitly (`mac.notarize: false`, `updateManifest: false`); pass `-c.forceCodeSigning=false` to pull-request and local builds that cannot sign |
 | [`mac.notarize: true` requires notarization credentials](#mac-notarize-true-requires-credentials) | Fails build (with `notarize: true`) | Only if you set `mac.notarize: true`: set the notarization credentials, or leave `notarize` unset to notarize only when they are set |
+| [Certificate links with user info are rejected](#certificate-links-with-user-info-are-rejected) | Fails build | Only for an `https://user:password@…` certificate link (`cscLink`, `CSC_LINK`, …): use a pre-signed URL, a file path or a base64 value |
 | [Signed update manifests are required](#signed-update-manifests-are-required) | Fails when publishing (or with `forceCodeSigning`) | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY` to the base64-encoded PEM file, or set `updateManifest: false` to keep publishing unsigned manifests |
 | [Signing key must be in `updateManifest.publicKey`](#signing-key-must-be-in-updatemanifestpublickey) | Fails when publishing | Only if you set `updateManifest.publicKey`: list a key the build signs with, or set `updateManifest.allowSigningKeyOutsideTrustList: true` for a deliberate cutover release |
 | [`app-update.yml` feed follows the update-writing targets](#app-updateyml-feed-follows-the-update-writing-targets) | Silent (conflicts fail) | Only with target-level `publish` (e.g. `nsis.publish`), targets of one app with different feeds, or a first provider with `publishAutoUpdate: false`: check which feed installs will poll |
@@ -455,6 +456,14 @@ Run [`electron-builder verify`](../cli.md#verify) after a build to check the sig
 `mac.notarize: true` now means that notarization is required: a build without notarization credentials (`APPLE_API_KEY` + `APPLE_API_KEY_ID` + `APPLE_API_ISSUER`, `APPLE_ID` + `APPLE_APP_SPECIFIC_PASSWORD` + `APPLE_TEAM_ID`, or `APPLE_KEYCHAIN_PROFILE`) fails with an `InvalidConfigurationError`, at build start and again when notarizing — wherever notarization would run: on a macOS host, outside a pull-request build, and, for the app, unless the configuration turns its signing off (`mac.sign: null`, `sign.identity: null`, or `CSC_IDENTITY_AUTO_DISCOVERY=false` without an identity or custom signer); a `pkg` installer is notarized whenever it is built. Elsewhere missing credentials only warn. Previously `true` behaved like leaving `notarize` unset, which notarizes when the credentials are set and skips notarization with a warning otherwise; that is still the default.
 
 **Action:** if you set `mac.notarize: true` only because the docs showed it, remove it: notarization still runs whenever the credentials are set. Keep it where a build without notarization must fail, and make sure the credentials are in the environment when the build starts.
+
+### Certificate links with user info are rejected {#certificate-links-with-user-info-are-rejected}
+
+**How you'll find out:** **Fails the build**, with a link here.
+
+electron-builder downloads an `https://` certificate link (`cscLink`, `cscInstallerLink`, `CSC_LINK`, `WIN_CSC_LINK` or `CSC_INSTALLER_LINK`) with Node's `fetch`, which refuses a URL with user info (`https://user:password@host/certificate.p12`). v26 sent the user info as HTTP Basic authentication. v27 fails the build with an `InvalidConfigurationError` before the download, and neither the error nor the log shows the link. A failed certificate download names the link without its user info or query.
+
+**Action:** serve the certificate from a pre-signed URL, or set the link to a file path or a base64 value (see [Base64 certificate values](../features/code-signing/code-signing.md#base64-certificate-values)).
 
 ---
 
