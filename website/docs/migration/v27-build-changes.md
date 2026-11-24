@@ -669,7 +669,7 @@ A token set in the configuration is explicit: `github.token` and `gitlab.token` 
 
 </details>
 
-**Action is required only if** you publish to a custom host with a token from the environment and the CI runner does not report that host. Add the host to `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS` in the publishing job:
+**Action is required only if** you publish to a custom host with a token from the environment, or build Squirrel.Windows with a private `squirrelWindows.remoteReleases` repository on a GitHub Enterprise host, and the CI runner does not report that host. Add the host to `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS` in the publishing job:
 
 ```yaml
 env:
