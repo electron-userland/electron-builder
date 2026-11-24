@@ -221,22 +221,22 @@ function checkFileOptionsShape(config: Record<string, any>, errors: string[]): v
 
 /**
  * `extraMetadata` is merged into the packaged app's `package.json`, so a `build` or `directories` key there (the keys
- * `--em.build` / `--em.directories` set) never configures the build. Both are rejected so that they are not silently
- * shipped in the app.
+ * `--em.build` / `--em.directories` set) never configures the build: `build` is stripped from the packaged package.json
+ * and `directories` is shipped in it. Both are rejected so that neither is silently ignored.
  */
 function checkExtraMetadata(config: Record<string, any>, errors: string[]): void {
   const extraMetadata = config.extraMetadata
   if (!isPlainObject(extraMetadata)) {
     return
   }
-  const replacements: Array<[key: string, replacement: string]> = [
-    ["build", "your electron-builder config file, or pass it with `-c`"],
-    ["directories", "`directories` in your electron-builder config, or pass it with `-c.directories`"],
+  const replacements: Array<[key: string, effect: string, replacement: string]> = [
+    ["build", "it is stripped from the packaged app's package.json", "your electron-builder config file, or pass it with `-c`"],
+    ["directories", "it is copied into the packaged app's package.json", "`directories` in your electron-builder config, or pass it with `-c.directories`"],
   ]
-  for (const [key, replacement] of replacements) {
+  for (const [key, effect, replacement] of replacements) {
     if (extraMetadata[key] != null) {
       errors.push(
-        `\`extraMetadata.${key}\` (the \`--em.${key}\` flag) is not supported: it is only copied into the packaged app's package.json and does not configure the build.\n` +
+        `\`extraMetadata.${key}\` (the \`--em.${key}\` flag) is not supported: ${effect} and does not configure the build.\n` +
           `  Put that configuration in ${replacement} instead.\n` +
           `  ${BUILD_CHANGES_URL}#removed-flags-embuild-emdirectories`
       )
