@@ -12,6 +12,10 @@ import { makeLogger } from "../helpers/updaterTestUtil"
 
 /** A `BaseUpdater` subclass of another package: it picks the file it downloads itself and has no `findUpdateFile` of its own. */
 class ThirdPartyUpdater extends BaseUpdater {
+  constructor(options: null, app: AppAdapter) {
+    super(options, app)
+  }
+
   protected doDownloadUpdate(): Promise<DownloadExecutorResult> {
     return Promise.reject(new Error("these tests do not download"))
   }
