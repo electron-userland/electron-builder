@@ -1,4 +1,4 @@
-import { exec } from "builder-util"
+import { exec, log } from "builder-util"
 import { createHash } from "crypto"
 import { readFileSync } from "fs"
 import * as fs from "fs/promises"
@@ -23,6 +23,7 @@ import { HttpError } from "builder-util-runtime"
 import {
   buildElectronArtifactConfig,
   defaultElectronGetCacheRoot,
+  download,
   getCacheDirectoryInternal,
   parseChecksumFile,
   resolveSeededChecksums,
@@ -1236,5 +1237,35 @@ describe("proxy integration", () => {
         }
       })
     ).toBe(true)
+  })
+})
+
+// ─── download (certificate import) ───────────────────────────────────────────
+
+// download() fetches an https CSC_LINK, whose pre-signed query or user info is a credential
+describe("download without a checksum", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.restoreAllMocks()
+  })
+
+  test.for([
+    ["a pre-signed query", "", "?X-Amz-Signature=SIGNATURE_SECRET"],
+    ["user info", "user:PASSWORD_SECRET@", ""],
+  ])("names the url without %s in its warning", async ([, userInfo, query], { expect, tmpDir }) => {
+    vi.stubEnv("ELECTRON_BUILDER_CACHE", await tmpDir.getTempDir({ prefix: "cache" }))
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    const server = http.createServer((_request, response) => response.end("certificate"))
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    const { port } = server.address() as net.AddressInfo
+    try {
+      // fetch refuses a url with user info, so that download fails: only the warning matters here
+      await download(`http://${userInfo}127.0.0.1:${port}/certificate.p12${query}`, await tmpDir.getTempFile({ suffix: ".p12" }), null).catch(() => undefined)
+    } finally {
+      await new Promise<void>(resolve => server.close(() => resolve()))
+    }
+    const checksumWarning = warn.mock.calls.find(([, message]) => message?.startsWith("downloading without an integrity checksum"))
+    expect(checksumWarning?.[0]).toEqual({ url: `http://127.0.0.1:${port}/certificate.p12` })
+    expect(JSON.stringify(warn.mock.calls)).not.toMatch(/SECRET/)
   })
 })

@@ -10,6 +10,7 @@ import {
 } from "@electron/get"
 import { exec, exists, log, PADDING, parseValidEnvVarUrl, sanitizeDirPath, to7zaOutputSwitch, ensureDir, moveDirAtomic } from "builder-util"
 import { HttpError, MemoLazy, retry, sleep } from "builder-util-runtime"
+import { urlWithoutQuery } from "builder-util-runtime/internal"
 import * as crypto from "crypto"
 import type { ProgressBar } from "electron-publish"
 import { MultiProgress } from "electron-publish"
@@ -719,7 +720,8 @@ async function downloadAndExtract(
 export async function download(url: string, output: string, checksum?: string | null): Promise<void> {
   const filenameWithExt = path.basename(new URL(url).pathname)
   if (checksum == null) {
-    log.warn({ url }, "downloading without an integrity checksum — the download is not verified against a known-good hash")
+    // the url can be a certificate link (CSC_LINK) with user info or a pre-signed query
+    log.warn({ url: urlWithoutQuery(url) }, "downloading without an integrity checksum — the download is not verified against a known-good hash")
   }
   const downloadedFile = await downloadArtifactToFile(
     {
