@@ -227,7 +227,10 @@ export class NsisUpdater extends BaseUpdater {
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-    const fileInfo = this.findUpdateFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info))!
+    const fileInfo = this.findUpdateFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info))
+    if (fileInfo == null) {
+      return Promise.reject(newError(`No .exe file in the files of update ${downloadUpdateOptions.updateInfoAndProvider.info.version}`, "ERR_UPDATER_UPDATE_FILE_NOT_FOUND"))
+    }
     const webInstallerDisabled = downloadUpdateOptions.disableWebInstaller ?? true
     // the app set disableWebInstaller to false (read with the options above), not the default of an install made by an nsis-web installer
     const webInstallerEnabledByApp = this.isWebInstallerEnabledByApp
