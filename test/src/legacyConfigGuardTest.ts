@@ -3,6 +3,7 @@ import { checkLegacyConfiguration, RESOLVED_LEGACY_CONFIG_OPTIONS, validateConfi
 import { DebugLogger, InvalidConfigurationError, log } from "builder-util"
 import { configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/src/builder"
 import { readFileSync } from "fs"
+import { outputJson } from "fs-extra"
 import * as path from "path"
 import { describe, expect, test, vi } from "vitest"
 import { resolveExcludedExtensions } from "../../packages/app-builder-lib/src/fileMatcher"
@@ -326,7 +327,9 @@ describe("checkLegacyConfiguration — extraMetadata.build / extraMetadata.direc
     const config = { extraMetadata: { build: { appId: "com.example.app" } } }
     await expect(validateConfiguration(config as any, logger)).rejects.toThrow(InvalidConfigurationError)
     const message = expectRejected(config)
-    expect(message).toContain("`extraMetadata.build` (the `--em.build` flag) is not supported: it is only copied into the packaged app's package.json")
+    expect(message).toContain(
+      "`extraMetadata.build` (the `--em.build` flag) is not supported: it is stripped from the packaged app's package.json and does not configure the build"
+    )
     expect(message).toContain("pass it with `-c`")
     expect(message).toContain(link)
   })
@@ -335,7 +338,9 @@ describe("checkLegacyConfiguration — extraMetadata.build / extraMetadata.direc
     const config = { extraMetadata: { directories: { output: "dist" } } }
     await expect(validateConfiguration(config as any, logger)).rejects.toThrow(InvalidConfigurationError)
     const message = expectRejected(config)
-    expect(message).toContain("`extraMetadata.directories` (the `--em.directories` flag) is not supported")
+    expect(message).toContain(
+      "`extraMetadata.directories` (the `--em.directories` flag) is not supported: it is copied into the packaged app's package.json and does not configure the build"
+    )
     expect(message).toContain("`-c.directories`")
     expect(message).toContain(link)
   })
@@ -362,6 +367,25 @@ describe("checkLegacyConfiguration — extraMetadata.build / extraMetadata.direc
       expect(() => checkBuildRequestOptions(options)).toThrow(InvalidConfigurationError)
       expect(() => checkBuildRequestOptions(options)).toThrow(/`--em\.\*` flags .* are not supported\.\n[\s\S]*`-c`[\s\S]*removed-flags-embuild-emdirectories/)
     }
+  })
+
+  // extraMetadata is merged into the package.json metadata before checkMetadata runs, whose package.json checks must not
+  // report these keys first (a root `directories` in a one-package project, `build` in the app package.json of a two-package one)
+  describe.each([
+    ["one package.json", false],
+    ["two package.json", true],
+  ])("Packager.validateConfig() in a %s project reports the targeted error", (_layout, isTwoPackageLayout) => {
+    test.for(["build", "directories"])("for extraMetadata.%s", async (key, { tmpDir }) => {
+      const projectDir = await tmpDir.getTempDir({ prefix: "eb-extra-metadata-guard" })
+      const metadata = { name: "test-app", version: "1.0.0", description: "test", author: "test" }
+      await outputJson(path.join(projectDir, "package.json"), isTwoPackageLayout ? { name: "test-app-dev", version: "1.0.0" } : metadata)
+      if (isTwoPackageLayout) {
+        await outputJson(path.join(projectDir, "app", "package.json"), metadata)
+      }
+      const { Packager } = await import("app-builder-lib")
+      const packager = new Packager({ projectDir, config: { extraMetadata: { [key]: { output: "out" } } } })
+      await expect(packager.validateConfig()).rejects.toThrow(`\`extraMetadata.${key}\` (the \`--em.${key}\` flag) is not supported`)
+    })
   })
 
   test("the build-changes page has the linked section", () => {

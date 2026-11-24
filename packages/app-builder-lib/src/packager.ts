@@ -429,9 +429,11 @@ export class Packager {
     }
     // per platform the build targets, which writes update files for its own range
     const updaterRequirements = electronUpdaterRequirements(configuration, resolveTargetNames(builtTargets, configuration))
-    checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile, projectDir, updaterRequirements)
-
+    // the configuration is validated first: its extraMetadata is already merged into the metadata, so checkMetadata would
+    // otherwise report an extraMetadata.build or extraMetadata.directories key as a package.json problem
     await validateConfiguration(configuration, this.debugLogger)
+
+    checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile, projectDir, updaterRequirements)
 
     this._configuration = configuration
     this._devMetadata = devMetadata
