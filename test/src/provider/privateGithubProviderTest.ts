@@ -2,7 +2,7 @@ import { vi } from "vitest"
 import { GithubOptions, HttpError } from "builder-util-runtime"
 import { PrivateGitHubProvider } from "electron-updater/src/providers/PrivateGitHubProvider"
 import type { PrivateGitHubUpdateInfo } from "electron-updater/src/providers/PrivateGitHubProvider"
-import { assertDownloadNotTriggered, getProvider, mockAliasChainYaml, mockComplexKeyYaml, mockYaml } from "../helpers/providerTestUtil.js"
+import { assertDownloadNotTriggered, getProvider, mockAliasChainYaml, mockComplexKeyYaml, mockWebInstallerYaml, mockWebPackageName, mockYaml } from "../helpers/providerTestUtil.js"
 import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
 const MOCK_TOKEN = "ghp_test-token-12345"
@@ -209,6 +209,58 @@ test("resolveFiles - throws ERR_UPDATER_ASSET_NOT_FOUND when asset missing from 
   }
 
   expect(() => provider.resolveFiles(updateInfoWithEmptyAssets)).toThrow(expect.objectContaining({ code: "ERR_UPDATER_ASSET_NOT_FOUND" }))
+})
+
+describe("nsis-web package", () => {
+  const PACKAGE_ASSET_URL = `https://api.github.com/repos/${MOCK_OWNER}/${MOCK_REPO}/releases/assets/1004`
+
+  // the release of an nsis-web build: its package uploaded next to the web installer
+  function mockWebRelease(version: string) {
+    const release = mockRelease(version)
+    release.assets.push({ name: mockWebPackageName(version), url: PACKAGE_ASSET_URL })
+    return release
+  }
+
+  test("resolveFiles - attaches the package of the app's arch as packageInfo, at its API asset URL", async ({ expect }) => {
+    const requestSpy = createMockRequest()
+    const updater = await createPrivateUpdater(requestSpy)
+    requestSpy.mockResolvedValueOnce(JSON.stringify(mockWebRelease(STABLE_VERSION))).mockResolvedValueOnce(mockWebInstallerYaml(STABLE_VERSION))
+
+    const result = await updater.checkForUpdates()
+    const [installer] = getProvider<PrivateGitHubProvider>(updater).resolveFiles(result?.updateInfo as PrivateGitHubUpdateInfo)
+
+    expect(installer.url.href).toBe(`https://api.github.com/repos/${MOCK_OWNER}/${MOCK_REPO}/releases/assets/1002`)
+    expect(installer.packageInfo).toMatchObject({ path: PACKAGE_ASSET_URL, size: 1234 })
+  })
+
+  test("resolveFiles - throws ERR_UPDATER_ASSET_NOT_FOUND when the package is missing from the release", async ({ expect }) => {
+    const requestSpy = createMockRequest()
+    const updater = await createPrivateUpdater(requestSpy)
+    requestSpy.mockResolvedValueOnce(JSON.stringify(mockRelease(STABLE_VERSION))).mockResolvedValueOnce(mockWebInstallerYaml(STABLE_VERSION))
+
+    const result = await updater.checkForUpdates()
+
+    expect(() => getProvider<PrivateGitHubProvider>(updater).resolveFiles(result?.updateInfo as PrivateGitHubUpdateInfo)).toThrow(
+      expect.objectContaining({ code: "ERR_UPDATER_ASSET_NOT_FOUND", message: expect.stringContaining(mockWebPackageName(STABLE_VERSION)) })
+    )
+  })
+
+  test("downloadUpdate - a web-installer update with a package for the app's arch is downloaded", async ({ expect }) => {
+    const requestSpy = createMockRequest()
+    const updater = await createPrivateUpdater(requestSpy)
+    const stop = new Error("installer download requested")
+    const downloadSpy = vi.fn().mockRejectedValue(stop)
+    ;(updater as any).httpExecutor = { request: requestSpy, download: downloadSpy }
+    updater.disableWebInstaller = false
+    updater.disableDifferentialDownload = true
+    requestSpy.mockResolvedValueOnce(JSON.stringify(mockWebRelease(STABLE_VERSION))).mockResolvedValueOnce(mockWebInstallerYaml(STABLE_VERSION))
+
+    await updater.checkForUpdates()
+
+    // rejected by the installer download, not before it with ERR_UPDATER_NO_WEB_PACKAGE_FOR_ARCH
+    await expect(updater.downloadUpdate()).rejects.toBe(stop)
+    expect(downloadSpy.mock.calls[0][0].href).toBe(`https://api.github.com/repos/${MOCK_OWNER}/${MOCK_REPO}/releases/assets/1002`)
+  })
 })
 
 test("autoDownload=false - checkForUpdates does not trigger download", async ({ expect }) => {

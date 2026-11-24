@@ -7,6 +7,7 @@ import { assertThat, readAppImageCompression } from "../helpers/fileAssert"
 import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { ToolsetConfig } from "app-builder-lib/internal"
+import { APPIMAGE_VERSIONS, latestToolsetVersion } from "../../vitest-scripts/runtime-tests/generate-toolset-versions"
 
 const appImageTarget = Platform.LINUX.createTarget("appimage", Arch.x64)
 
@@ -17,6 +18,13 @@ const testPublishConfig: GenericServerOptions = {
 }
 
 export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
+  // generate-toolset-tests-linux.ts registers this suite once per APPIMAGE_VERSIONS entry. The plain `test` cases run code
+  // that differs by toolset version (FUSE2 vs static-runtime builder, runtime and library selection per arch, the
+  // mksquashfs compression mapping) and assert it on the produced image, so they run on every version. The
+  // `newestToolsetOnly` cases fail or return before the toolset is downloaded, or only exercise the launcher, icon,
+  // license, MIME and desktop-entry staging both builders share.
+  const newestToolsetOnly = test.ifEnv(toolsets.appimage === latestToolsetVersion(APPIMAGE_VERSIONS))
+
   test("AppImage", ({ expect }) =>
     app(
       expect,
@@ -110,7 +118,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
       }
     ))
 
-  test("AppImage - deprecated systemIntegration", ({ expect }) =>
+  newestToolsetOnly("AppImage - deprecated systemIntegration", ({ expect }) =>
     appThrows(
       expect,
       {
@@ -133,9 +141,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
         expect(error.message).toContain("electron-builder migrate-schema")
         expect(error.message).toContain("v27-config-changes#appimagesystemintegration")
       }
-    ))
+    )
+  )
 
-  test("text license and file associations", ({ expect }) =>
+  newestToolsetOnly("text license and file associations", ({ expect }) =>
     app(
       expect,
       {
@@ -164,9 +173,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
           ])
         },
       }
-    ))
+    )
+  )
 
-  test("html license", ({ expect }) =>
+  newestToolsetOnly("html license", ({ expect }) =>
     app(
       expect,
       {
@@ -188,9 +198,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
           )
         },
       }
-    ))
+    )
+  )
 
-  test("AppImage - default icon, custom executable and custom desktop", ({ expect }) =>
+  newestToolsetOnly("AppImage - default icon, custom executable and custom desktop", ({ expect }) =>
     app(
       expect,
       {
@@ -255,9 +266,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
           await assertThat(expect, path.join(projectDir, "Foo")).isFile()
         },
       }
-    ))
+    )
+  )
 
-  test("icons from ICNS (mac)", ({ expect }) =>
+  newestToolsetOnly("icons from ICNS (mac)", ({ expect }) =>
     app(
       expect,
       {
@@ -286,9 +298,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
           await assertThat(expect, projectDir).isDirectory()
         },
       }
-    ))
+    )
+  )
 
-  test("icons from ICNS if nothing specified", ({ expect }) =>
+  newestToolsetOnly("icons from ICNS if nothing specified", ({ expect }) =>
     app(
       expect,
       {
@@ -303,9 +316,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
           await fs.rm(path.join(projectDir, "build", "icons"), { recursive: true, force: true })
         },
       }
-    ))
+    )
+  )
 
-  test("icons from dir and one icon with suffix", ({ expect }) =>
+  newestToolsetOnly("icons from dir and one icon with suffix", ({ expect }) =>
     app(
       expect,
       {
@@ -324,9 +338,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
           await assertThat(expect, projectDir).isDirectory()
         },
       }
-    ))
+    )
+  )
 
-  test("icons dir with images without size in the filename", ({ expect }) =>
+  newestToolsetOnly("icons dir with images without size in the filename", ({ expect }) =>
     app(
       expect,
       {
@@ -351,10 +366,11 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
           await assertThat(expect, projectDir).isDirectory()
         },
       }
-    ))
+    )
+  )
 
   // test prepacked asar also https://github.com/electron-userland/electron-builder/issues/1102
-  test("icons from ICNS", ({ expect }) =>
+  newestToolsetOnly("icons from ICNS", ({ expect }) =>
     app(
       expect,
       {
@@ -385,9 +401,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
           await assertThat(expect, path.join(projectDir, "dist")).isDirectory()
         },
       }
-    ))
+    )
+  )
 
-  test("no-author-email", ({ expect }) =>
+  newestToolsetOnly("no-author-email", ({ expect }) =>
     appThrows(
       expect,
       {
@@ -402,9 +419,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
             data.author = "Foo"
           }),
       }
-    ))
+    )
+  )
 
-  test("AppImage - desktopName sets StartupWMClass", ({ expect }) =>
+  newestToolsetOnly("AppImage - desktopName sets StartupWMClass", ({ expect }) =>
     app(
       expect,
       {
@@ -430,9 +448,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
             data.desktopName = "signal.desktop"
           }),
       }
-    ))
+    )
+  )
 
-  test("AppImage - desktopName without .desktop suffix is used as-is for StartupWMClass", ({ expect }) =>
+  newestToolsetOnly("AppImage - desktopName without .desktop suffix is used as-is for StartupWMClass", ({ expect }) =>
     app(
       expect,
       {
@@ -458,9 +477,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
             data.desktopName = "myapp"
           }),
       }
-    ))
+    )
+  )
 
-  test("AppImage - desktopName with surrounding whitespace is trimmed for StartupWMClass", ({ expect }) =>
+  newestToolsetOnly("AppImage - desktopName with surrounding whitespace is trimmed for StartupWMClass", ({ expect }) =>
     app(
       expect,
       {
@@ -486,9 +506,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
             data.desktopName = "  signal.desktop  "
           }),
       }
-    ))
+    )
+  )
 
-  test("AppImage - no desktopName falls back to productName for StartupWMClass", ({ expect }) =>
+  newestToolsetOnly("AppImage - no desktopName falls back to productName for StartupWMClass", ({ expect }) =>
     app(
       expect,
       {
@@ -509,9 +530,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
         },
       },
       {}
-    ))
+    )
+  )
 
-  test("AppImage - desktopName drives installed filename", ({ expect }) =>
+  newestToolsetOnly("AppImage - desktopName drives installed filename", ({ expect }) =>
     app(
       expect,
       {
@@ -531,9 +553,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
             data.desktopName = "signal.desktop"
           }),
       }
-    ))
+    )
+  )
 
-  test("AppImage - desktopName drives installed filename (reverse-DNS)", ({ expect }) =>
+  newestToolsetOnly("AppImage - desktopName drives installed filename (reverse-DNS)", ({ expect }) =>
     app(
       expect,
       {
@@ -553,9 +576,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
             data.desktopName = "com.example.Signal.desktop"
           }),
       }
-    ))
+    )
+  )
 
-  test("AppImage - missing desktopName falls back to executableName", ({ expect }) =>
+  newestToolsetOnly("AppImage - missing desktopName falls back to executableName", ({ expect }) =>
     app(
       expect,
       {
@@ -570,9 +594,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
         },
       },
       {}
-    ))
+    )
+  )
 
-  test("forbid desktop.Exec", ({ expect }) =>
+  newestToolsetOnly("forbid desktop.Exec", ({ expect }) =>
     appThrows(expect, {
       targets: appImageTarget,
       config: {
@@ -585,9 +610,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
           },
         },
       },
-    }))
+    })
+  )
 
-  test("AppImage - desktopName rejects path traversal", ({ expect }) =>
+  newestToolsetOnly("AppImage - desktopName rejects path traversal", ({ expect }) =>
     appThrows(
       expect,
       {
@@ -603,9 +629,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
           }),
       },
       err => expect(err.message).toContain("produces an invalid .desktop filename")
-    ))
+    )
+  )
 
-  test("AppImage - desktopName rejects absolute path", ({ expect }) =>
+  newestToolsetOnly("AppImage - desktopName rejects absolute path", ({ expect }) =>
     appThrows(
       expect,
       {
@@ -621,9 +648,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
           }),
       },
       err => expect(err.message).toContain("produces an invalid .desktop filename")
-    ))
+    )
+  )
 
-  test("AppImage - desktopName rejects backslash", ({ expect }) =>
+  newestToolsetOnly("AppImage - desktopName rejects backslash", ({ expect }) =>
     appThrows(
       expect,
       {
@@ -639,5 +667,6 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
           }),
       },
       err => expect(err.message).toContain("produces an invalid .desktop filename")
-    ))
+    )
+  )
 }

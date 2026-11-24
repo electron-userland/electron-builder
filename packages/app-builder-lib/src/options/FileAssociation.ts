@@ -17,7 +17,7 @@ export interface FileAssociation {
   readonly name?: string | null
 
   /**
-   * *windows-only.* The description.
+   * The description. On Windows, the file type description. On Linux, the `<comment>` of the MIME type declared for `mimeType`: deb, rpm and pacman write it only when set, while AppImage and Flatpak fall back to `<productName> document`.
    */
   readonly description?: string | null
 

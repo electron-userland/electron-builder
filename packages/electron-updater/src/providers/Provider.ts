@@ -6,7 +6,6 @@ import {
   DEFAULT_MAX_UPDATE_INFO_SIZE,
   HttpExecutor,
   newError,
-  safeStringifyJson,
   UpdateFileInfo,
   UpdateInfo,
   WindowsUpdateInfo,
@@ -149,7 +148,7 @@ export abstract class Provider<T extends UpdateInfo> {
 
   /**
    * {@link httpRequest} for a channel file (`latest*.yml`), which is read into memory and parsed before anything verifies it: a response
-   * larger than `maxUpdateInfoSize` fails with `ERR_HTTP_RESPONSE_TOO_LARGE` (see ApiRequestOptions.maxResponseSize). Channel files are
+   * larger than `maxUpdateInfoSize` fails with `ERR_UPDATER_RESPONSE_TOO_LARGE` (see ApiRequestOptions.maxResponseSize). Channel files are
    * a few KB. Release feeds and API responses (release listings and lookups) are not limited: their size depends on the release history.
    */
   protected async channelFileRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken): Promise<string | null> {
@@ -162,10 +161,10 @@ export abstract class Provider<T extends UpdateInfo> {
       return await this.executor.request(options, cancellationToken)
     } catch (e: unknown) {
       // names the options that raise the limit
-      if (e instanceof Error && "code" in e && e.code === "ERR_HTTP_RESPONSE_TOO_LARGE") {
+      if (e instanceof Error && "code" in e && e.code === "ERR_UPDATER_RESPONSE_TOO_LARGE") {
         throw newError(
-          `${e.message}: raise the limit with maxUpdateInfoSize in the publish configuration (app-update.yml) or autoUpdater.maxUpdateInfoSize`,
-          "ERR_HTTP_RESPONSE_TOO_LARGE"
+          `${e.message}: raise the limit with maxUpdateInfoSize in the publish configuration (app-update.yml) or autoUpdater.maxUpdateInfoSize. See https://www.electron.build/docs/migration/v27-runtime-changes#channel-files-are-limited-to-10-mib`,
+          "ERR_UPDATER_RESPONSE_TOO_LARGE"
         )
       }
       throw e
@@ -355,7 +354,7 @@ export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {
       } as any,
     ]
   } else {
-    throw newError(`No files provided: ${safeStringifyJson(updateInfo)}`, "ERR_UPDATER_NO_FILES_PROVIDED")
+    throw newError(`No files provided for version ${updateInfo.version}`, "ERR_UPDATER_NO_FILES_PROVIDED")
   }
 }
 
@@ -369,7 +368,8 @@ export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransform
   const files = getFileList(updateInfo)
   const result: Array<ResolvedUpdateFileInfo> = files.map(fileInfo => {
     if ((fileInfo as any).sha2 == null && fileInfo.sha512 == null) {
-      throw newError(`Update info doesn't contain nor sha256 neither sha512 checksum: ${safeStringifyJson(fileInfo)}`, "ERR_UPDATER_NO_CHECKSUM")
+      // the file URL without its query: a pre-signed URL's signature is in it
+      throw newError(`Update info doesn't contain nor sha256 neither sha512 checksum for ${urlWithoutQuery(fileInfo.url)}`, "ERR_UPDATER_NO_CHECKSUM")
     }
     return {
       url: newUrlFromBase(pathTransformer(fileInfo.url), baseUrl),
@@ -378,13 +378,24 @@ export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransform
     }
   })
 
-  const packages = (updateInfo as WindowsUpdateInfo).packages
+  return attachPackageInfo(result, updateInfo, packagePath => newUrlFromBase(pathTransformer(packagePath), baseUrl))
+}
+
+/**
+ * Sets the `packageInfo` of the first of `files` (the web installer) to the nsis-web package of `updateInfo` for `process.arch`, else
+ * `ia32`, with its `path` resolved by `resolvePackageUrl` the way the provider resolves the installer's: NsisUpdater passes this package
+ * to the web installer with `--package-file`. Returns `files`.
+ */
+export function attachPackageInfo(
+  files: Array<ResolvedUpdateFileInfo>,
+  updateInfo: WindowsUpdateInfo,
+  resolvePackageUrl: (packagePath: string) => URL
+): Array<ResolvedUpdateFileInfo> {
+  const packages = updateInfo.packages
   const packageInfo = packages == null ? null : packages[process.arch] || packages.ia32
-  if (packageInfo != null) {
-    ;(result[0] as any).packageInfo = {
-      ...packageInfo,
-      path: newUrlFromBase(pathTransformer(packageInfo.path), baseUrl).href,
-    }
+  const installer = files[0]
+  if (packageInfo != null && installer != null) {
+    installer.packageInfo = { ...packageInfo, path: resolvePackageUrl(packageInfo.path).href }
   }
-  return result
+  return files
 }

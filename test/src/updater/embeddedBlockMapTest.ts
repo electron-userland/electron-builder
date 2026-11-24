@@ -59,7 +59,7 @@ test("rejects an embedded blockmap that inflates past the size limit for the fil
   const inflating = deflateRawSync(Buffer.concat([Buffer.from(JSON.stringify({ version: "2", files: [] })), Buffer.alloc(8 * MiB, " ")]))
   const oldFile = path.join(await tmpDir.getTempDir({ prefix: "embedded-blockmap-test" }), "old.bin")
   const downloader = new TestDownloader(oldFile, Buffer.concat([inflating, Buffer.alloc(4)]))
-  await expect(downloader.download()).rejects.toMatchObject({ code: "ERR_BUFFER_TOO_LARGE" })
+  await expect(downloader.download()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_BLOCKMAP", message: expect.stringContaining("more than the 8388608-byte limit") })
 })
 
 test("rejects an old file whose embedded blockmap inflates past the size limit for it", async ({ tmpDir }) => {
@@ -70,7 +70,10 @@ test("rejects an old file whose embedded blockmap inflates past the size limit f
   const oldFile = path.join(await tmpDir.getTempDir({ prefix: "embedded-blockmap-test" }), "old.bin")
   await fsExtra.outputFile(oldFile, Buffer.concat([inflating, trailer]))
 
-  await expect(new TestDownloader(oldFile, REMOTE_METADATA).download()).rejects.toMatchObject({ code: "ERR_BUFFER_TOO_LARGE" })
+  await expect(new TestDownloader(oldFile, REMOTE_METADATA).download()).rejects.toMatchObject({
+    code: "ERR_UPDATER_INVALID_BLOCKMAP",
+    message: expect.stringContaining("more than the 8388608-byte limit"),
+  })
 })
 
 test.for([
@@ -83,7 +86,7 @@ test.for([
   { name: "past the size limit for the file", info: { size: 100 * MiB, blockMapSize: 9 * MiB } },
 ])("rejects a blockMapSize that is $name before requesting it", async ({ info }) => {
   const downloader = new TestDownloader("unused", REMOTE_METADATA, info)
-  await expect(downloader.download()).rejects.toThrow(/blockMapSize/)
+  await expect(downloader.download()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_BLOCKMAP", message: expect.stringMatching(/blockMapSize/) })
   expect(downloader.remoteReads).toBe(0)
 })
 
@@ -94,7 +97,10 @@ test("rejects an old file whose embedded blockmap length is larger than the file
   await fsExtra.outputFile(oldFile, trailer)
   const allocUnsafe = vi.spyOn(Buffer, "allocUnsafe")
 
-  await expect(new TestDownloader(oldFile, REMOTE_METADATA).download()).rejects.toThrow(/declares a 4294967295-byte block map/)
+  await expect(new TestDownloader(oldFile, REMOTE_METADATA).download()).rejects.toMatchObject({
+    code: "ERR_UPDATER_INVALID_BLOCKMAP",
+    message: expect.stringContaining("declares a 4294967295-byte block map"),
+  })
   expect(allocUnsafe).not.toHaveBeenCalledWith(0xffffffff)
 })
 
@@ -110,8 +116,21 @@ test("rejects an old file whose embedded blockmap fits in the file but is past t
   await fsExtra.appendFile(oldFile, trailer)
   const allocUnsafe = vi.spyOn(Buffer, "allocUnsafe")
 
-  await expect(new TestDownloader(oldFile, REMOTE_METADATA).download()).rejects.toThrow(`declares a ${blockMapSize}-byte block map`)
+  await expect(new TestDownloader(oldFile, REMOTE_METADATA).download()).rejects.toMatchObject({
+    code: "ERR_UPDATER_INVALID_BLOCKMAP",
+    message: expect.stringContaining(`declares a ${blockMapSize}-byte block map`),
+  })
   expect(allocUnsafe).not.toHaveBeenCalledWith(blockMapSize)
+})
+
+test("rejects an old file whose trailer declares an empty embedded blockmap", async ({ tmpDir }) => {
+  const oldFile = path.join(await tmpDir.getTempDir({ prefix: "embedded-blockmap-test" }), "old.bin")
+  await fsExtra.outputFile(oldFile, Buffer.alloc(100))
+
+  await expect(new TestDownloader(oldFile, REMOTE_METADATA).download()).rejects.toMatchObject({
+    code: "ERR_UPDATER_INVALID_BLOCKMAP",
+    message: expect.stringContaining("declares a 0-byte block map"),
+  })
 })
 
 test.for([
