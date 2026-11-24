@@ -22,8 +22,10 @@
       ":maintainLockFilesWeekly",
       "security:minimumReleaseAgeNpm",
       "helpers:disableTypesNodeMajor",
+      // Monday before 4am, the same window as lock file maintenance; weekly so a full prConcurrentLimit
+      // doesn't hold npm updates back for a whole month
+      "schedule:weekly",
     ],
-    schedule: ["before 3am on the first day of the month"],
     packageRules: [
       {
         // oxlint and oxlint-tsgolint are version-coupled; keep the oxc tooling on one PR
