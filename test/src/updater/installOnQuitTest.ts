@@ -135,13 +135,15 @@ describe("install on quit", { concurrent: false }, () => {
     const errors: Error[] = []
     updater.on("error", (error: Error) => errors.push(error))
     vi.spyOn(updater as any, "isRunningAsRoot").mockReturnValue(false)
-    vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === "dpkg" || args[0] === "pkexec")
+    vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === "dpkg")
+    // pkexec is the only elevation helper in the system directories
+    vi.spyOn(updater as any, "findTrustedCommand").mockImplementation((...args: unknown[]) => (args[0] === "pkexec" ? "/usr/bin/pkexec" : null))
     vi.spyOn(updater as any, "resolveTrustedCommand").mockImplementation((...args: unknown[]) => `/usr/bin/${String(args[0])}`)
     const pkexecCalls: string[][] = []
     const pkexec = { exitCode: pkexecExitCode }
     vi.spyOn(updater as any, "spawnSyncLog").mockImplementation((...args: unknown[]) => {
       const [cmd, cmdArgs] = args
-      if (cmd === "pkexec") {
+      if (cmd === "/usr/bin/pkexec") {
         pkexecCalls.push(Array.isArray(cmdArgs) ? cmdArgs.map(String) : [])
         if (pkexec.exitCode !== 0) {
           throw new CommandExitError(`Command pkexec exited with code ${pkexec.exitCode}`, "pkexec", pkexec.exitCode, null)

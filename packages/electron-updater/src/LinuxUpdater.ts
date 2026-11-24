@@ -11,11 +11,15 @@ import { nonThrowingLogger } from "./util.js"
 const SAFE_PM_REGEX = /^[a-zA-Z0-9_-]+$/
 
 /**
- * Where a privileged command passed as argv is looked up. An elevation helper resolves a relative program name with the
- * caller's PATH, which can hold user-writable directories (`~/.local/bin`): a program planted there would run as root
- * once the user authenticates. A relative name is resolved in these system directories instead.
+ * Where the elevation helper and the privileged command it runs are looked up. Node and the elevation helper resolve a
+ * relative program name with the caller's PATH, which can hold user-writable directories (`~/.local/bin`): a program
+ * planted there would get the user's password, or run as root once the user authenticates. A relative name is resolved in
+ * these system directories instead.
  */
 const TRUSTED_COMMAND_DIRS: readonly string[] = ["/usr/sbin", "/usr/bin", "/sbin", "/bin"]
+
+/** Ends every message about how a deb, rpm or pacman update is elevated: the v27 migration section. */
+const UPDATE_ELEVATION_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#linux-update-elevation"
 
 /** The directories that `dirs` resolve to, following symlinks (`/bin` is `/usr/bin` on merged-/usr systems). */
 function realDirs(dirs: readonly string[]): string[] {
@@ -289,7 +293,8 @@ export abstract class LinuxUpdater extends BaseUpdater {
 
   /** Whether the elevation helper runs an argv array rather than a single command string. */
   private takesArgv(sudo: string): boolean {
-    return /pkexec/i.test(sudo) || sudo === "sudo"
+    // the helper is the absolute path determineSudoCommand found, such as /usr/bin/sudo
+    return /pkexec/i.test(sudo) || path.basename(sudo) === "sudo"
   }
 
   /** Determines once per install how {@link runCommandWithSudoIfNeeded} and {@link runCommandWithSudoIfNeededAsync} run privileged commands. */
@@ -309,7 +314,7 @@ export abstract class LinuxUpdater extends BaseUpdater {
   }
 
   /**
-   * Resolves a relative command name in {@link trustedCommandDirs}, for a command run by an elevation helper: the first
+   * Resolves a relative command name in {@link trustedCommandDirs}, for an elevation helper or a command it runs: the first
    * executable regular file of that name, which, symlinks followed, lies in a trusted directory as well. Only a bare name is looked up: one with a `/`, `.` and `..` would reach outside those directories. Throws when
    * it is not found there; the install plan treats that as a failed command.
    */
@@ -319,8 +324,23 @@ export abstract class LinuxUpdater extends BaseUpdater {
     }
     const dirs = this.trustedCommandDirs
     if (command.length === 0 || command === "." || command === ".." || command.includes("/") || command.includes("\0")) {
-      throw new Error(`${JSON.stringify(command)} is not a command name, it cannot be looked up in ${dirs.join(":")}`)
+      throw new Error(`${JSON.stringify(command)} is not a command name, it cannot be looked up in ${dirs.join(":")}. See ${UPDATE_ELEVATION_DOCS}`)
     }
+    const resolved = this.findTrustedCommand(command)
+    if (resolved == null) {
+      throw new Error(
+        `${command} not found in ${dirs.join(":")}: electron-updater 7 runs elevation helpers and package managers only from these directories (a symlink there must lead into one of them), not from elsewhere in PATH. See ${UPDATE_ELEVATION_DOCS}`
+      )
+    }
+    return resolved
+  }
+
+  /**
+   * The first executable regular file named `command`, a bare command name, in {@link trustedCommandDirs} that, symlinks
+   * followed, lies in a trusted directory as well; `null` when there is none.
+   */
+  private findTrustedCommand(command: string): string | null {
+    const dirs = this.trustedCommandDirs
     const trustedRealDirs = realDirs(dirs)
     for (const dir of dirs) {
       const candidate = path.join(dir, command)
@@ -328,12 +348,14 @@ export abstract class LinuxUpdater extends BaseUpdater {
         return candidate
       }
     }
-    throw new Error(`${command} not found in ${dirs.join(":")}`)
+    return null
   }
 
   /**
    * The program, arguments and shell use that run `commandWithArgs` with `elevation`. The synchronous (on-quit) and the
    * asynchronous install both spawn what this returns, so the authentication dialog shows the same command for both.
+   *
+   * The helper is spawned by the absolute path {@link determineSudoCommand} found in the system directories.
    *
    * pkexec and sudo take an argv array: no shell is involved, so their authentication dialog shows the command being
    * authorized (`/usr/bin/dpkg -i /path/app.deb`) instead of a `/bin/bash -c '…'` wrapper, the installer path needs no
@@ -391,6 +413,9 @@ export abstract class LinuxUpdater extends BaseUpdater {
     }
     if (elevation.kind === "wrapped") {
       checkWrappedInstallerPath(elevation.helper[0], rawInstallerPath)
+      this.limitedLogger("wrapped-helper-clean-environment").warn(
+        `electron-updater 7 runs the package manager under ${path.basename(elevation.helper[0])} by its absolute path in a clean environment (env -i, PATH=${TRUSTED_COMMAND_DIRS.join(":")}), so the app's environment variables, proxy settings included, no longer reach it; configure a proxy the package manager needs in its system configuration. See ${UPDATE_ELEVATION_DOCS}`
+      )
     }
     return { elevation, plan: this.resolveInstallPlan(installerPath) }
   }
@@ -459,6 +484,11 @@ export abstract class LinuxUpdater extends BaseUpdater {
     }
   }
 
+  /**
+   * The absolute path of the elevation helper, found in {@link trustedCommandDirs} like the package manager: spawned by a
+   * bare name, it would be looked up in the user's PATH, where a planted helper would get the user's password. Throws when
+   * not even sudo is there.
+   */
   protected determineSudoCommand(): string {
     // pkexec first: it is the maintained, polkit-based mechanism, it is the only helper here that takes an
     // argv array (so the dialog shows the install command and the path needs no escaping), and it works under
@@ -466,14 +496,21 @@ export abstract class LinuxUpdater extends BaseUpdater {
     // fallbacks for systems without polkit.
     const sudos = ["pkexec", "gksudo", "kdesudo", "beesu"]
     for (const sudo of sudos) {
-      if (this.hasCommand(sudo)) {
+      const helper = this.findTrustedCommand(sudo)
+      if (helper != null) {
         if (sudo === "pkexec") {
           this.announceSkippedLegacyHelpers()
         }
-        return sudo
+        return helper
+      }
+      // electron-updater 6 used a helper wherever PATH had it
+      if (this.hasCommand(sudo)) {
+        this.limitedLogger(`elevation-helper-outside-system-directories ${sudo}`).warn(
+          `${sudo} found in PATH is not used: electron-updater 7 runs an elevation helper only from ${this.trustedCommandDirs.join(":")} (a symlink there must lead into one of them). See ${UPDATE_ELEVATION_DOCS}`
+        )
       }
     }
-    return "sudo"
+    return this.resolveTrustedCommand("sudo")
   }
 
   private legacyHelpersChecked = false
@@ -484,9 +521,11 @@ export abstract class LinuxUpdater extends BaseUpdater {
       return
     }
     this.legacyHelpersChecked = true
-    const installed = ["gksudo", "kdesudo"].filter(helper => this.hasCommand(helper))
+    const installed = ["gksudo", "kdesudo"].filter(helper => this.findTrustedCommand(helper) != null)
     if (installed.length !== 0) {
-      this.log.info(`Elevating the install with pkexec (polkit); ${installed.join(" and ")} ${installed.length === 1 ? "is" : "are"} only used on systems without polkit`)
+      this.log.warn(
+        `electron-updater 7 elevates the install with pkexec (polkit), which it tries first, so the authentication prompt comes from polkit; ${installed.join(" and ")} ${installed.length === 1 ? "is" : "are"} only used on systems without polkit (electron-updater 6 tried gksudo and kdesudo before pkexec). See ${UPDATE_ELEVATION_DOCS}`
+      )
     }
   }
 
