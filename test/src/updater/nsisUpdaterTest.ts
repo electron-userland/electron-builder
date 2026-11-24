@@ -1117,7 +1117,8 @@ describe("NsisUpdater — disableWebInstaller", () => {
           () => null,
           () => null
         )
-      expect(warnings.some(w => w.includes("a full installer (not a web installer) was downloaded"))).toBe(true)
+      const warning = warnings.find(w => w.includes("a full installer (not a web installer) was downloaded"))
+      expect(warning).toMatch(/As of v27 web installers are opt-in .* https:\/\/www\.electron\.build\/docs\/migration\/v27-runtime-changes#disablewebinstaller-defaults-to-true$/)
     } finally {
       server.close()
       await tmpDir.cleanup()

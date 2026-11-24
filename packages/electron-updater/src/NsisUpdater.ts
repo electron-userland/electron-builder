@@ -277,7 +277,8 @@ export class NsisUpdater extends BaseUpdater {
         if (!isWebInstaller && !webInstallerDisabled) {
           if (webInstallerEnabledByApp) {
             this.log.warn(
-              "disableWebInstaller is explicitly set to false, but a full installer (not a web installer) was downloaded. As of v27 web installers are opt-in (disabled by default); remove the override unless you intentionally publish NSIS web-installer packages."
+              "disableWebInstaller is explicitly set to false, but a full installer (not a web installer) was downloaded. As of v27 web installers are opt-in (disabled by default); remove the override unless you intentionally publish NSIS web-installer packages. " +
+                "https://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true"
             )
           } else {
             // the nsis-web default (package-type marker) needs no change by the app, but the full installer writes the `nsis` marker
