@@ -104,7 +104,7 @@ describe("the warning", () => {
 
     expect(crossOriginWarnings()).toHaveLength(1)
     const [fields, message] = crossOriginWarnings()[0] as unknown as [Record<string, string>, string]
-    expect(message).toContain("found no mention of crossOriginHeaders in the app's files (outside node_modules)")
+    expect(message).toContain("found no mention of crossOriginHeaders in the app's files (outside node_modules and source maps)")
     expect(message).toContain("electron-updater rejects every update check and download of the installed app with ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED")
     expect(fields.solution).toContain("autoUpdater.crossOriginHeaders = () => []")
     expect(message.endsWith(` See ${docs}`)).toBe(true)
@@ -193,6 +193,16 @@ describe("the scan of the packed app", () => {
     expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": `// ${assignment}${updater}` }))).toBe(false)
   })
 
+  test("in a file that bundles electron-updater, does not count a commented-out assignment after an escaped newline in the comment", async ({ expect, tmpDir }) => {
+    // a line comment and a JSDoc line, as rollup and webpack development builds keep them
+    for (const comment of [
+      '// console.log("checking\\n"); autoUpdater.crossOriginHeaders = () => []\n',
+      '/**\n * e.g. "init\\nautoUpdater.crossOriginHeaders = () => []"\n */\n',
+    ]) {
+      expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": bundledUpdater + comment })), comment).toBe(false)
+    }
+  })
+
   // logical assignments of the app: `??=` and `||=` set the property while it is unset (electron-updater initializes it to null), `&&=` only
   // replaces a value it already has, so an app that only uses `&&=` still gets the warning
   const logicalAssignments = [
@@ -216,19 +226,40 @@ describe("the scan of the packed app", () => {
     }
   )
 
-  // a source map's sourcesContent holds the bundled code as a JSON string, and a webpack eval bundle (devtool: "eval", webpack's default in
-  // development mode) each module as a JavaScript string: all on one line, with escaped newlines (\n) between the lines of the code
-  const sourceMap = (code: string) =>
-    JSON.stringify({ version: 3, file: "main.js", sources: ["../node_modules/electron-updater/dist/AppUpdater.js"], sourcesContent: [code], mappings: "" })
+  // a webpack eval bundle (devtool: "eval", webpack's default in development mode) holds each module as a JavaScript string: all on one
+  // line, with escaped newlines (\n) between the lines of the code, and an escaped tab (\t) for each tab of their indentation
   const evalModule = (code: string) =>
     `/*!*** ./node_modules/electron-updater/dist/AppUpdater.js ***!*/\n((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {\n"use strict";\neval(${JSON.stringify(`{${code}}`)});\n}),\n`
 
-  test.for([
-    ["a source map", "dist/main.js.map", sourceMap],
-    ["a webpack eval bundle", "dist/main.js", evalModule],
-  ] as const)("in %s that holds the bundled electron-updater as a string, finds only an assignment of the app", async ([, file, wrap], { expect, tmpDir }) => {
-    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { [file]: wrap(bundledUpdater) }))).toBe(false)
-    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { [file]: wrap(`${bundledUpdater}\nautoUpdater.crossOriginHeaders = () => [];\n`) }))).toBe(true)
+  test("in a webpack eval bundle that holds the bundled electron-updater as a string, finds only an assignment of the app", async ({ expect, tmpDir }) => {
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": evalModule(bundledUpdater) }))).toBe(false)
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": evalModule(`${bundledUpdater}\nautoUpdater.crossOriginHeaders = () => [];\n`) }))).toBe(
+      true
+    )
+  })
+
+  test("in a webpack eval bundle, does not count a commented-out assignment of the app indented with tabs", async ({ expect, tmpDir }) => {
+    const appCode = (statement: string) => `${bundledUpdater}export function setupUpdates() {\n\t${statement}\n\tautoUpdater.checkForUpdatesAndNotify()\n}\n`
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": evalModule(appCode("// autoUpdater.crossOriginHeaders = () => []")) }))).toBe(false)
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": evalModule(appCode("autoUpdater.crossOriginHeaders = () => []")) }))).toBe(true)
+  })
+
+  // a source map's `names` hold the property's name wherever the bundled electron-updater's code has it, also in a map without `sourcesContent`
+  // (webpack's nosources-* devtools, terser's default), and its `sourcesContent` holds the bundled code as a JSON string
+  const sourceMap = (fields: Record<string, Array<string>>) =>
+    JSON.stringify({ version: 3, file: "main.js", sources: ["../node_modules/electron-updater/dist/AppUpdater.js"], mappings: "AAAA", ...fields })
+
+  test("does not count a source map, only the file it maps", async ({ expect, tmpDir }) => {
+    const namesOnly = sourceMap({ names: ["autoUpdater", "crossOriginHeaders"] })
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": minifiedBundledUpdater, "dist/main.js.map": namesOnly }))).toBe(false)
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { ...noMention, "main.js.map": namesOnly }))).toBe(false)
+
+    // nor does an assignment in its sourcesContent
+    const withSources = sourceMap({ names: ["crossOriginHeaders"], sourcesContent: [`${bundledUpdater}\nautoUpdater.crossOriginHeaders = () => [];\n`] })
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": minifiedBundledUpdater, "dist/main.js.map": withSources }))).toBe(false)
+    // the bundle that the map maps assigns the property
+    const bundle = `${minifiedBundledUpdater}e.autoUpdater.crossOriginHeaders=()=>[],e.autoUpdater.checkForUpdates();`
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": bundle, "dist/main.js.map": withSources }))).toBe(true)
   })
 
   test("a bundle that does not assign the property gets the warning, which says to confirm another way of setting it", async ({ expect, tmpDir }) => {

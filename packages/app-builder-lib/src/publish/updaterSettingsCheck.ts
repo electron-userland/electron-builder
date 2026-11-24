@@ -19,6 +19,9 @@ const BUNDLED_ELECTRON_UPDATER = "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURE
  */
 const CROSS_ORIGIN_HEADERS_ASSIGNMENT = /\.crossOriginHeaders\s*(?:\?\?|\|\|)?=(?![=>]|\s*null\b)/g
 
+/** A comment line: `*`, `//` or `/*` after the indentation, which in a string (see {@link setsCrossOriginHeaders}) can be the escape `\t`. */
+const COMMENT_LINE = /^(?:\s|\\t)*(?:\*|\/\/|\/\*)/
+
 /**
  * `autoUpdater.allowUnverifiedLinuxPackages = false` as formatted code and as minifiers write it (`false` as `!1`). Not
  * `allowUnverifiedLinuxPackages=false`: electron-updater's own log messages contain it, so every app that bundles electron-updater would match.
@@ -30,7 +33,7 @@ const MAX_SCANNED_FILE_SIZE = 20 * 1024 * 1024
 
 /** Which electron-updater settings the files of the packed app mention. */
 export interface UpdaterSettingsMentions {
-  /** a file contains `crossOriginHeaders`; a file that bundles electron-updater, an assignment of it (see {@link setsCrossOriginHeaders}) */
+  /** a file other than a source map contains `crossOriginHeaders`; a file that bundles electron-updater, an assignment of it (see {@link setsCrossOriginHeaders}) */
   crossOriginHeaders: boolean
   /** a file contains `allowUnverifiedLinuxPackages = false` (see {@link DISALLOWS_UNVERIFIED_LINUX_PACKAGES}) */
   disallowsUnverifiedLinuxPackages: boolean
@@ -41,8 +44,9 @@ export interface UpdaterSettingsMentions {
  * it. Each warning is once per process: after both, later builds skip the scan. It never fails the build.
  *
  * - electron-updater rejects every update check and download of an installed app until the app sets `autoUpdater.crossOriginHeaders`
- *   (`ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`), and cannot recover an app shipped that way: warns when no file of the app contains
- *   the string `crossOriginHeaders`, for an app that ships an electron-updater that may require it (see {@link mayRequireCrossOriginHeaders}).
+ *   (`ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`), and cannot recover an app shipped that way: warns when no file of the app other
+ *   than a source map contains the string `crossOriginHeaders`, for an app that ships an electron-updater that may require it (see
+ *   {@link mayRequireCrossOriginHeaders}).
  *   A file that bundles electron-updater mentions the property in electron-updater's own code, so in such a file only an assignment of it
  *   counts: an app that sets it in another way (e.g. `Object.assign`) in the same bundle gets the warning, which says to confirm it.
  * - With `autoUpdater.allowUnverifiedLinuxPackages = false`, an rpm update installs only when the package manager verifies its signature,
@@ -91,7 +95,7 @@ export async function warnAboutUpdaterSettings(
           "set autoUpdater.crossOriginHeaders to a function before the app checks for updates, e.g. autoUpdater.crossOriginHeaders = () => [] " +
           "to send none of the app's request headers to another origin than the update feed",
       },
-      "found no mention of crossOriginHeaders in the app's files (outside node_modules); in a file that bundles electron-updater, only an assignment " +
+      "found no mention of crossOriginHeaders in the app's files (outside node_modules and source maps); in a file that bundles electron-updater, only an assignment " +
         "such as autoUpdater.crossOriginHeaders = () => [] counts, because electron-updater's own code mentions it. " +
         "Unless the app sets autoUpdater.crossOriginHeaders to a function, " +
         "electron-updater rejects every update check and download of the installed app with ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED. " +
@@ -118,6 +122,8 @@ export async function warnAboutUpdaterSettings(
 /**
  * Which electron-updater settings the files of the app in `resourcesDir` (app.asar, its unpacked files, or the app directory; not
  * `node_modules`) mention, in one pass with a plain string search, or null when the resources hold neither app.asar nor an app directory.
+ * A source map (`.map`) does not count for `crossOriginHeaders`: it is never executed and the file it maps is scanned, while its `names`
+ * (also without `sourcesContent`) hold the property's name wherever the bundled electron-updater's code has it.
  * The packed tree comes from the project, which is not trusted: only regular files are read, never a symlink, and no file larger than
  * {@link MAX_SCANNED_FILE_SIZE}. Rejects when app.asar cannot be read.
  *
@@ -138,7 +144,8 @@ export async function findUpdaterSettingsMentions(resourcesDir: string): Promise
             return
           }
           const content = await read(file)
-          mentions.crossOriginHeaders ||= content.includes(CROSS_ORIGIN_HEADERS) && (!content.includes(BUNDLED_ELECTRON_UPDATER) || setsCrossOriginHeaders(content.toString()))
+          mentions.crossOriginHeaders ||=
+            !file.endsWith(".map") && content.includes(CROSS_ORIGIN_HEADERS) && (!content.includes(BUNDLED_ELECTRON_UPDATER) || setsCrossOriginHeaders(content.toString()))
           mentions.disallowsUnverifiedLinuxPackages ||= DISALLOWS_UNVERIFIED_LINUX_PACKAGES.some(it => content.includes(it))
         },
       },
@@ -185,14 +192,18 @@ export async function findUpdaterSettingsMentions(resourcesDir: string): Promise
 /**
  * Whether `code`, which bundles electron-updater, assigns `crossOriginHeaders` (see {@link CROSS_ORIGIN_HEADERS_ASSIGNMENT}) outside
  * electron-updater's own text: the assignment that its error message shows (after a backtick) and its JSDoc examples (in a comment line,
- * which an unminified bundle keeps). A line also starts after an escaped newline (`\n`): a source map's `sourcesContent` and a webpack
- * eval bundle hold the bundled code as strings, on one line.
+ * which an unminified bundle keeps). A webpack eval bundle holds the bundled code as a string on one line, so a line also starts after the
+ * last escaped newline (`\n`) of the physical line: a match is skipped when the physical line or the text after that escaped newline is a
+ * {@link COMMENT_LINE}. That never counts a match that the physical line alone skips; an escaped newline followed by `*`, `//` or `/*` in
+ * an earlier string or regex literal of the line (`"\n* "`) makes the app's assignment look like a comment line, an extra warning. The
+ * search stops at the first match that counts, and each skipped match costs time linear in the length of its physical line.
  */
 function setsCrossOriginHeaders(code: string): boolean {
   for (const match of code.matchAll(CROSS_ORIGIN_HEADERS_ASSIGNMENT)) {
-    const escapedNewline = code.lastIndexOf("\\n", match.index)
-    const line = code.slice(Math.max(code.lastIndexOf("\n", match.index) + 1, escapedNewline === -1 ? 0 : escapedNewline + 2), match.index)
-    if (!/`[\w$.]*$/.test(line) && !/^\s*(?:\*|\/\/|\/\*)/.test(line)) {
+    const physicalLine = code.slice(code.lastIndexOf("\n", match.index) + 1, match.index)
+    const escapedNewline = physicalLine.lastIndexOf("\\n")
+    const line = escapedNewline === -1 ? physicalLine : physicalLine.slice(escapedNewline + 2)
+    if (!/`[\w$.]*$/.test(line) && !COMMENT_LINE.test(physicalLine) && !COMMENT_LINE.test(line)) {
       return true
     }
   }
