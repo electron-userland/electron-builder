@@ -1,16 +1,6 @@
-import { log, walk } from "builder-util"
-import { rename } from "fs/promises"
+import { log, orIfFileNotExist, orNullIfFileNotExist } from "builder-util"
+import { lstat, readdir, rename } from "fs/promises"
 import * as path from "path"
-
-/** Fast path: a pure ASCII name can never change under Unicode normalization, and most names are. */
-function isAscii(name: string): boolean {
-  for (let i = 0; i < name.length; i++) {
-    if (name.charCodeAt(i) > 0x7f) {
-      return false
-    }
-  }
-  return true
-}
 
 /**
  * An HFS+ volume stores file names in the canonical decomposed form (NFD) and rewrites every name it
@@ -33,41 +23,36 @@ function isAscii(name: string): boolean {
  * decomposed name through unchanged. Lookups on both are normalization-insensitive, so code that opens
  * the file under its precomposed name keeps working.
  *
- * @param root the app bundle to normalize in place; the root's own name is not changed
- * @returns the number of entries renamed
+ * Children are renamed before their directory (post-order), so every path used is still valid when it
+ * is used. Symlinks are renamed as themselves and never followed (`Dirent` is `lstat`-based).
+ *
+ * @param dir the app bundle to normalize in place; the directory's own name is not changed
  */
-export async function normalizeFileNamesToNfd(root: string): Promise<number> {
-  // `walk` stats with `lstat`, so a symlink is listed as itself and never followed, and it omits the
-  // root it was given — which is what we want, since the caller holds that path.
-  const entries = await walk(root, null, { isIncludeDir: true, consume: () => null })
-
-  // `walk` collects top-down, so a parent is renamed before the children whose paths it already
-  // collected. macOS resolves those stale paths anyway — lookups ignore normalization, so a child
-  // path spelled with the parent's precomposed name still opens after the parent is decomposed — but
-  // that makes the rename order load-bearing on filesystem behavior. Rename the deepest entries first
-  // instead. (The tests do not catch the unsorted version for exactly that reason; see the PR notes.)
-  entries.sort((a, b) => b.split(path.sep).length - a.split(path.sep).length)
-
-  let renamed = 0
-  for (const entry of entries) {
-    const name = path.basename(entry)
-    if (isAscii(name)) {
+export async function normalizeFileNamesToNfd(dir: string): Promise<void> {
+  for (const entry of await orIfFileNotExist(readdir(dir, { withFileTypes: true }), [])) {
+    const from = path.join(dir, entry.name)
+    if (entry.isDirectory()) {
+      await normalizeFileNamesToNfd(from)
+    }
+    const nfd = entry.name.normalize("NFD")
+    if (nfd === entry.name) {
       continue
     }
-    const normalized = name.normalize("NFD")
-    if (normalized === name) {
-      continue
-    }
+    const to = path.join(dir, nfd)
     try {
-      await rename(entry, path.join(path.dirname(entry), normalized))
-      renamed++
+      const [src, dst] = await Promise.all([lstat(from), orNullIfFileNotExist(lstat(to))])
+      // on APFS/HFS+ lstat(to) resolves to `from` itself; a different inode is a real sibling that `rename` would clobber
+      if (dst != null && (dst.ino !== src.ino || dst.dev !== src.dev)) {
+        log.warn({ file: log.filePath(from) }, "not normalizing the file name to NFD: a sibling already has the decomposed name")
+        continue
+      }
+      await rename(from, to)
     } catch (e: any) {
       // signing still happens; the name stays precomposed and may break inside a DMG, so say so
       log.warn(
-        { file: log.filePath(entry), error: e.message },
+        { file: log.filePath(from), error: e.message },
         "cannot normalize the file name to NFD — the code signature may be reported as damaged when the app is installed from a DMG"
       )
     }
   }
-  return renamed
 }
