@@ -390,7 +390,12 @@ export class Packager {
       // it is a path to config file
       configPath = configFromOptions
       configFromOptions = null
-    } else if (configFromOptions != null && typeof configFromOptions.extends === "string" && configFromOptions.extends.includes(".")) {
+    } else if (
+      configFromOptions != null &&
+      typeof configFromOptions.extends === "string" &&
+      // an absolute path is a config file even without a dot (a preset or module name never is): publish -f passes -c that way
+      (configFromOptions.extends.includes(".") || path.isAbsolute(configFromOptions.extends))
+    ) {
       configPath = configFromOptions.extends
       delete configFromOptions.extends
     }

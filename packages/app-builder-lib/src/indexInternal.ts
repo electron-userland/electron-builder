@@ -94,7 +94,14 @@ export {
 } from "./util/electronGet.js"
 export { checkUpdateManifestBeforeUpload, warnAboutUpdateFilesBeforeUpload } from "./publish/manifestUploadCheck.js"
 export { verifyBuildOutput } from "./util/buildOutputVerifier.js"
-export { compareListedFilesInOutput, listedFileFolders, updateManifestPlatform, verifyUpdateManifestContent } from "./publish/updateManifestVerifier.js"
+export {
+  compareListedFilesInOutput,
+  listedFileFolders,
+  readUpdateInfo,
+  UPDATE_INFO_ALIASES_MESSAGE,
+  updateManifestPlatform,
+  verifyUpdateManifestContent,
+} from "./publish/updateManifestVerifier.js"
 export type { UpdateManifestVerification } from "./publish/updateManifestVerifier.js"
 export type { VerificationResult, VerificationStatus, VerifyBuildOutputOptions } from "./util/buildOutputVerifier.js"
 export { buildSourceCandidates, convertIcon, getPngSize } from "./util/iconConverter.js"

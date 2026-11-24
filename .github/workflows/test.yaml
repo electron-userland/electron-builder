@@ -24,9 +24,13 @@ on:
         type: boolean
         default: true
 
-# concurrency:
-# group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-# cancel-in-progress: true
+# One run per pull request: a new push (or a Renovate rebase) cancels the run of the commit it replaces. Every other run (a
+# push to master or release/v*, a manual run) has a group of its own, so every commit on a branch is tested and nothing
+# replaces a manual run's inputs. Jobs that run after failed upstream jobs use `!cancelled()`, not `always()`, so a cancelled
+# PR run releases their runners too.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -61,7 +65,7 @@ jobs:
   run-docker-build:
     needs: check-if-docker-build
     if: |
-      always() &&
+      !cancelled() &&
       (needs.check-if-docker-build.outputs.force-docker-build == 'true' ||
       inputs.rebuild-docker-images == 'true' || inputs.rebuild-docker-images == true)
     uses: $/.github/workflows/docker-build.yml
@@ -137,7 +141,7 @@ jobs:
     name: Test Linux (Shard ${{ matrix.shard }})
     needs: [check-if-docker-build, run-docker-build, validate-and-shard]
     if: |
-      always() &&
+      !cancelled() &&
       needs.check-if-docker-build.result == 'success' &&
       (needs.run-docker-build.result == 'success' || needs.run-docker-build.result == 'skipped')
     strategy:
@@ -150,7 +154,7 @@ jobs:
             cache-path: ~/.cache/electron
             cache-key: v-42.4.0-linux-electron
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -216,7 +220,7 @@ jobs:
             cache-path: ~\AppData\Local\electron\Cache
             cache-key: v-42.4.0-windows-electron
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -268,7 +272,7 @@ jobs:
             cache-path: ~/Library/Caches/electron
             cache-key: v-42.4.0-macos-electron
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -340,7 +344,7 @@ jobs:
     name: Test Updater
     needs: [check-if-docker-build, run-docker-build]
     if: |
-      always() &&
+      !cancelled() &&
       needs.check-if-docker-build.result == 'success' &&
       (needs.run-docker-build.result == 'success' || needs.run-docker-build.result == 'skipped')
     runs-on: ubuntu-24.04
@@ -501,7 +505,7 @@ jobs:
     name: Test Flatpak
     needs: [check-if-docker-build, run-docker-build]
     if: |
-      always() &&
+      !cancelled() &&
       needs.check-if-docker-build.result == 'success' &&
       (needs.run-docker-build.result == 'success' || needs.run-docker-build.result == 'skipped')
     runs-on: ubuntu-24.04
@@ -671,6 +675,12 @@ jobs:
             test_files: blackboxLinux__appimage
             env:
               RUN_APP_IMAGE_TEST: true
+          # its own job, so appimage-update stays under the 60-minute cap
+          - id: appimage-update-rules
+            stem: appimage
+            test_files: blackboxUpdateAppImageRules
+            env:
+              RUN_APP_IMAGE_TEST: true
     steps:
       - name: Checkout code repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -715,7 +725,7 @@ jobs:
   merge-smart-cache:
     name: Merge smart cache and test reports
     needs: [test-linux, test-windows, test-macos, test-e2e, test-updater, test-snap, test-flatpak]
-    if: always()
+    if: "!cancelled()"
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
