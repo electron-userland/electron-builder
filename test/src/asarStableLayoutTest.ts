@@ -385,6 +385,15 @@ describe("applyStableAsarLayout", () => {
     await expectValidArchive(expect, current, files)
   })
 
+  // a re-layout copies each file from its header offset and drops bytes after the last one, so a drifted archive would come out the right size
+  test("refuses an archive longer than its header describes and leaves it untouched", async ({ expect, tmpDir }) => {
+    const file = await pack(await tmpDir.getTempDir({ prefix: "asar-stable-layout" }), "drifted", makeTree())
+    await fs.appendFile(file, Buffer.alloc(2482))
+    const before = await fs.readFile(file)
+    await expect(applyStableAsarLayout(file, null, PARAMS)).rejects.toThrow("refusing to re-lay it out")
+    expect((await fs.readFile(file)).equals(before)).toBe(true)
+  })
+
   test("validates the option", ({ expect }) => {
     for (const bad of [
       null,

@@ -170,6 +170,34 @@ export async function readAsarHeader(archive: string): Promise<ReadAsarHeader> {
   return { header: headerPickle.createIterator().readString(), size }
 }
 
+/**
+ * The archive size the header describes, in one walk over its packed entries: the 8-byte size prefix, the header and the end of the last packed file.
+ * Packed content is read at `8 + header size + offset` (https://github.com/electron/asar/blob/fde819a/src/disk.ts#L428).
+ * `sizeWithin` counts only the entries whose content ends inside an archive of `archiveSize` bytes, so bytes after the last entry that fits are trailing bytes.
+ * A left-out entry is either bloat (asarmor's patch points entries far past the end on purpose) or a real file cut off at a file boundary,
+ * and the header alone cannot tell them apart.
+ */
+export function describedArchiveSize(header: Node, headerSize: number, archiveSize: number): { size: number; sizeWithin: number } {
+  const contentStart = 8 + headerSize
+  let size = contentStart
+  let sizeWithin = contentStart
+  const visit = (node: Node) => {
+    for (const child of Object.values(node.files ?? {})) {
+      if (child.files != null) {
+        visit(child)
+      } else if (child.offset != null && !child.unpacked && child.link == null) {
+        const end = contentStart + parseInt(child.offset, 10) + (child.size ?? 0)
+        size = Math.max(size, end)
+        if (end <= archiveSize) {
+          sizeWithin = Math.max(sizeWithin, end)
+        }
+      }
+    }
+  }
+  visit(header)
+  return { size, sizeWithin }
+}
+
 export async function readAsar(archive: string): Promise<AsarFilesystem> {
   const { header, size } = await readAsarHeader(archive)
   return new AsarFilesystem(archive, JSON.parse(header), size)

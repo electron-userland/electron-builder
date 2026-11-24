@@ -179,7 +179,7 @@ describe("alignAsarContent", () => {
     await fs.truncate(file, original.length - 1)
     const truncated = await fs.readFile(file)
 
-    await expect(alignAsarContent(file, 512)).rejects.toThrow("refusing to align it")
+    await expect(alignAsarContent(file, 512)).rejects.toThrow("refusing to re-lay it out")
     expect((await fs.readFile(file)).equals(truncated), "input must not be replaced").toBe(true)
     await expect(fs.stat(`${file}.aligning`)).rejects.toThrow()
   })
@@ -187,7 +187,7 @@ describe("alignAsarContent", () => {
   // No end-to-end route reaches this cleanup: once the size check has passed, a copy or write only fails when the disk does,
   // so the first write is made to fail and the test checks that the temp file it had already opened is removed.
   test("removes the temp file when a write fails after it was opened", async ({ expect, tmpDir }) => {
-    const tmp = await tmpDir.createTempDir()
+    const tmp = await tmpDir.getTempDir({ prefix: "asar-align" })
     const file = await packTree(tmp, "write-fails", makeTree())
     const original = await fs.readFile(file)
     // the same fs-extra copy asarAlign.ts loads: this test's own resolution finds another version
@@ -205,7 +205,7 @@ describe("alignAsarContent", () => {
   // The size pre-check passes on an intact archive, so the copy guard is the only thing left to catch a content read that comes back short.
   // Header reads pass a null position and go through; only the numbered content reads are cut short.
   test("fails when a content read comes back short after the size check passed", async ({ expect, tmpDir }) => {
-    const tmp = await tmpDir.createTempDir()
+    const tmp = await tmpDir.getTempDir({ prefix: "asar-align" })
     const file = await packTree(tmp, "short-read", makeTree())
     const original = await fs.readFile(file)
     // the same fs-extra copy asarAlign.ts loads (see the write spy above)
