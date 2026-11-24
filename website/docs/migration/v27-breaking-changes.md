@@ -45,7 +45,7 @@ Most v27 breaking changes announce themselves when a build runs into them:
 
 - **Removed or moved config keys** fail the build with one error that lists each key, its replacement and a link to its section.
 - **Most build and publish changes** fail the build or log a warning with a link to their section: missing dependencies, mismatched native binaries, removed environment variables, signing-key and publisher checks, Flatpak and Snap defaults, and more.
-- **Some runtime defaults** are reported by `migrate-schema` (`nsis-web` installers, per-machine NSIS builds, macOS entitlements, feed URLs with a query string, feeds over plain `http`), the build warns when no file of the app mentions `autoUpdater.crossOriginHeaders` (in a file that bundles electron-updater, only an assignment counts), and electron-updater logs a warning when app code uses a changed API.
+- **Some runtime defaults** are reported by `migrate-schema` (`nsis-web` installers, per-machine NSIS builds, macOS entitlements, feed URLs with a query string, feeds over plain `http`), the build warns when no file of the app mentions `crossOriginHeaders` (in a file that bundles electron-updater, only an assignment counts), and electron-updater logs a warning when app code uses a changed API.
 
 The quickest way through an upgrade is:
 
