@@ -737,7 +737,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
       await fsExtra.outputFile(path.join(root, "TestApp-1.0.1.nsis.7z"), payload.package)
     }
     const { server, port } = await createLocalServer(root)
-    return { server, port, tmpDir }
+    return { server, port, tmpDir, root }
   }
 
   // Seeds the pending cache exactly as a previous launch that downloaded the WEB_PAYLOAD update leaves it, so
@@ -1119,6 +1119,42 @@ describe("NsisUpdater — disableWebInstaller", () => {
         )
       const warning = warnings.find(w => w.includes("a full installer (not a web installer) was downloaded"))
       expect(warning).toMatch(/As of v27 web installers are opt-in .* https:\/\/www\.electron\.build\/docs\/migration\/v27-runtime-changes#disablewebinstaller-defaults-to-true$/)
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  test("explicit disableWebInstaller=false warns once per updater instance, however many full installers it downloads", config, async ({ expect }) => {
+    const { server, port, tmpDir, root } = await serveUpdate(false, WEB_PAYLOAD)
+    const downloads = trackDownloads(server)
+    try {
+      const updater = await createNsisUpdater("1.0.0")
+      updater.disableWebInstaller = false
+      const warnings: Array<string> = []
+      updater.logger = { info() {}, warn: (m: string) => warnings.push(m), error() {}, debug() {} }
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      trackEvents(updater)
+
+      await expect((await updater.checkForUpdates())!.downloadPromise).resolves.toMatchObject({ updateFile: expect.stringContaining(WEB_INSTALLER_NAME) })
+      // a newer release is published while the app runs: the same updater downloads its full installer too
+      const installer = Buffer.from("electron-builder localhost update-server test installer of the next release")
+      const sha512 = sha512Base64(installer)
+      await fsExtra.outputFile(path.join(root, "TestApp Setup 1.0.2.exe"), installer)
+      await fsExtra.outputFile(
+        path.join(root, "latest.yml"),
+        serializeToYaml({
+          version: "1.0.2",
+          files: [{ url: "TestApp Setup 1.0.2.exe", sha512, size: installer.length }],
+          path: "TestApp Setup 1.0.2.exe",
+          sha512,
+          releaseDate: new Date(0).toISOString(),
+        })
+      )
+      await expect((await updater.checkForUpdates())!.downloadPromise).resolves.toMatchObject({ updateFile: expect.stringContaining("TestApp Setup 1.0.2.exe") })
+
+      expect(downloads).toEqual(expect.arrayContaining([`/${WEB_INSTALLER_NAME}`, "/TestApp Setup 1.0.2.exe"]))
+      expect(warnings.filter(w => w.includes("a full installer (not a web installer) was downloaded"))).toHaveLength(1)
     } finally {
       server.close()
       await tmpDir.cleanup()
