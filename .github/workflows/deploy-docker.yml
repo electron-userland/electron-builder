@@ -4,35 +4,40 @@ on:
   # release:
   #   types: [published]
   # a new version of the private package docker, from the Release workflow (pr-release.yml) on master, which also pushes
-  # its tag docker@<version>. There is no tag trigger: the Docker Hub secrets are in the `release` environment, whose
-  # branch policy a run on a tag does not pass, so pushing a docker@ tag starts nothing
+  # its tag docker@<version>. There is no tag trigger: the deploy job is in the `release` environment, whose branch policy
+  # a run on a tag does not pass, so pushing a docker@ tag starts nothing
   workflow_call:
-    # environment secrets of `release` (the deploy job): the caller has to pass them by name, or they are empty in a
-    # reusable workflow; required makes a caller that does not pass them fail
-    secrets:
-      DOCKERHUB_USERNAME:
-        required: true
-      DOCKERHUB_TOKEN:
-        required: true
   workflow_dispatch:
 
-permissions:
-  contents: read
+# every job states what it needs; a caller (pr-release.yml) has to grant at least as much to its deploy-docker job
+permissions: {}
 
 env:
   LATEST_IMAGE_NODE_MAJOR_VERSION: 24
+  IMAGE: ghcr.io/electron-userland/builder
 
 jobs:
   run-docker-build:
+    permissions:
+      contents: read
     uses: $/.github/workflows/docker-build.yml
 
   deploy:
     name: Build and Push Docker
     needs: run-docker-build
     runs-on: ubuntu-24.04
-    # DOCKERHUB_USERNAME and DOCKERHUB_TOKEN; the environment allows master, release/* and changeset-release/* only, so
-    # a manual run (workflow_dispatch) has to be on one of them
+    # no secrets: the push authenticates with the job's GITHUB_TOKEN (packages: write) and the attestations are signed
+    # with a short-lived Sigstore certificate from the job's OIDC token (id-token: write). The environment allows master,
+    # release/* and changeset-release/* only, so a manual run (workflow_dispatch) has to be on one of them
     environment: release
+    permissions:
+      contents: read
+      # push to ghcr.io/electron-userland/builder
+      packages: write
+      # OIDC token for the Sigstore signing certificate of the provenance attestations
+      id-token: write
+      # store the provenance attestations in the repository's attestations API
+      attestations: write
     strategy:
       # each Node.js version is pushed by its own job: a failed one must not cancel the others in the middle of their
       # pushes. Re-run the failed jobs while the image artifacts are kept (a day, docker-build.yml)
@@ -59,25 +64,88 @@ jobs:
       - name: Tag LTS (${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }}) images for electron-builder latest/wine/wine-chrome/wine-mono
         if: ${{ matrix.nodeMajorVersion == env.LATEST_IMAGE_NODE_MAJOR_VERSION }}
         run: |
-          docker image tag "electronuserland/builder:$LATEST_IMAGE_NODE_MAJOR_VERSION" electronuserland/builder:latest
-          docker image tag "electronuserland/builder:$LATEST_IMAGE_NODE_MAJOR_VERSION-wine" electronuserland/builder:wine
-          docker image tag "electronuserland/builder:$LATEST_IMAGE_NODE_MAJOR_VERSION-wine-mono" electronuserland/builder:wine-mono
-          docker image tag "electronuserland/builder:$LATEST_IMAGE_NODE_MAJOR_VERSION-wine-chrome" electronuserland/builder:wine-chrome
+          docker image tag "$IMAGE:$LATEST_IMAGE_NODE_MAJOR_VERSION" "$IMAGE:latest"
+          docker image tag "$IMAGE:$LATEST_IMAGE_NODE_MAJOR_VERSION-wine" "$IMAGE:wine"
+          docker image tag "$IMAGE:$LATEST_IMAGE_NODE_MAJOR_VERSION-wine-mono" "$IMAGE:wine-mono"
+          docker image tag "$IMAGE:$LATEST_IMAGE_NODE_MAJOR_VERSION-wine-chrome" "$IMAGE:wine-chrome"
 
       - name: List all images and tags
         run: docker image ls -a
 
-      - name: Login to DockerHub
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push all Docker images (workflow_dispatch test)
         if: github.event_name == 'workflow_dispatch'
         run: echo "TESTING step logic. (this would normally trigger docker push)"
 
+      # the digests are those of the registry's manifests, read back after the push: the attestations name them. The
+      # aliases of the LTS version (latest, wine, …) are the same manifests as its <node>-* tags, so they are covered too
       - name: Push all Docker images
+        id: push
         if: github.event_name != 'workflow_dispatch'
-        run: docker image push --all-tags electronuserland/builder
+        run: |
+          set -euo pipefail
+          docker image push --all-tags "$IMAGE"
+          # <output key>=<tag>
+          for entry in base=base node="$NODE_MAJOR_VERSION" wine="$NODE_MAJOR_VERSION-wine" \
+            wine-mono="$NODE_MAJOR_VERSION-wine-mono" wine-chrome="$NODE_MAJOR_VERSION-wine-chrome"; do
+            tag="${entry#*=}"
+            digest=$(docker buildx imagetools inspect "$IMAGE:$tag" --format '{{json .Manifest}}' | jq -r .digest)
+            echo "$IMAGE:$tag $digest"
+            echo "${entry%%=*}=$digest" >> "$GITHUB_OUTPUT"
+          done
+        env:
+          NODE_MAJOR_VERSION: ${{ matrix.nodeMajorVersion }}
 
+      # one attestation per image: push-to-registry takes a single subject. Each job attests its own base, also when a
+      # later job overwrites the base tag (verify by digest, or with the tag of the job that pushed last)
+      - name: Attest base
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.base }}
+          push-to-registry: true
+          # a storage record needs the artifact-metadata permission; the attestation does not
+          create-storage-record: false
+
+      - name: Attest ${{ matrix.nodeMajorVersion }}
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.node }}
+          push-to-registry: true
+          create-storage-record: false
+
+      - name: Attest ${{ matrix.nodeMajorVersion }}-wine
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.wine }}
+          push-to-registry: true
+          create-storage-record: false
+
+      - name: Attest ${{ matrix.nodeMajorVersion }}-wine-mono
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.wine-mono }}
+          push-to-registry: true
+          create-storage-record: false
+
+      - name: Attest ${{ matrix.nodeMajorVersion }}-wine-chrome
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.wine-chrome }}
+          push-to-registry: true
+          create-storage-record: false

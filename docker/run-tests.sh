@@ -11,7 +11,7 @@ else
   _ELECTRON_BUILDER_CACHE_DEFAULT="$HOME/.cache/electron-builder"
 fi
 
-_IMAGE="${TEST_RUNNER_IMAGE_TAG:-electronuserland/builder:22-wine-mono}"
+_IMAGE="${TEST_RUNNER_IMAGE_TAG:-ghcr.io/electron-userland/builder:22-wine-mono}"
 
 # Pull with retries so transient registry timeouts don't fail the whole run.
 # Skip the pull entirely if the image is already present locally (e.g. a locally-built test image).

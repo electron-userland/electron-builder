@@ -1,5 +1,5 @@
 ARG IMAGE_VERSION=latest
-FROM --platform=linux/x86_64 electronuserland/builder:$IMAGE_VERSION
+FROM --platform=linux/x86_64 ghcr.io/electron-userland/builder:$IMAGE_VERSION
 
 RUN dpkg --add-architecture i386 && \
   mkdir -pm755 /etc/apt/keyrings && \

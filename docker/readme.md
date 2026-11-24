@@ -1,6 +1,6 @@
 It is developer documentation. See [user documentation](https://www.electron.build/docs/features/multi-platform-build#docker).
 
-The `electronuserland/builder` images are built from this directory and published to [Docker Hub](https://hub.docker.com/r/electronuserland/builder/tags). The directory is the private workspace package `docker`, versioned on its own (see [Versioning and deploy](#versioning-and-deploy)).
+The `ghcr.io/electron-userland/builder` images are built from this directory and published to the GitHub Container Registry as [`ghcr.io/electron-userland/builder`](https://github.com/electron-userland/electron-builder/pkgs/container/builder). Up to `docker@26.12.0-alpha.1` they were published to [Docker Hub](https://hub.docker.com/r/electronuserland/builder/tags) as `electronuserland/builder`, which is no longer updated (see [Docker Hub](#docker-hub)). The directory is the private workspace package `docker`, versioned on its own (see [Versioning and deploy](#versioning-and-deploy)).
 
 # Images
 
@@ -22,11 +22,11 @@ The `electronuserland/builder` images are built from this directory and publishe
 
 [build.sh](build.sh) tags every image twice: `<image>`, and `<image>-MM.YY`, dated by the month of the build (`date +%m.%y`, month first). For example, `22-wine-mono` and `22-wine-mono-10.26` in October 2026.
 
-The deploy also tags the images of `LATEST_IMAGE_NODE_MAJOR_VERSION` of [deploy-docker.yml](../.github/workflows/deploy-docker.yml) (24): `24` as `latest`, `24-wine` as `wine`, `24-wine-mono` as `wine-mono` and `24-wine-chrome` as `wine-chrome`. The deploy gives these aliases no dated tag. The `wine-MM.YY`, `wine-mono-MM.YY` and `wine-chrome-MM.YY` tags on Docker Hub are left from deploys of 2021 and earlier.
+The deploy also tags the images of `LATEST_IMAGE_NODE_MAJOR_VERSION` of [deploy-docker.yml](../.github/workflows/deploy-docker.yml) (24): `24` as `latest`, `24-wine` as `wine`, `24-wine-mono` as `wine-mono` and `24-wine-chrome` as `wine-chrome`. The deploy gives these aliases no dated tag. The `wine-MM.YY`, `wine-mono-MM.YY` and `wine-chrome-MM.YY` tags of the old Docker Hub repository are left from deploys of 2021 and earlier.
 
 * A second deploy in the same month overwrites the dated tags of the first, so only a digest pins one build.
 * Every Node.js version of a deploy builds and pushes its own `base` and `base-MM.YY`, so the one pushed last wins. The published `base` is the parent of the images of that one Node.js version only.
-* A deploy never deletes a tag. The tags of a Node.js version removed from the matrix stay on Docker Hub as they were.
+* A deploy never deletes a tag. The tags of a Node.js version removed from the matrix stay in the registry as they were.
 
 ## Node.js versions
 
@@ -47,7 +47,7 @@ From the repository root, with a full Node.js version of the matrix, without `v`
 pnpm docker-images 22.23.3
 ```
 
-This runs [build.sh](build.sh), which builds the five images for that Node.js version, then lists all local `electronuserland/builder` images.
+This runs [build.sh](build.sh), which builds the five images for that Node.js version, then lists all local `ghcr.io/electron-userland/builder` images.
 
 * The build contexts (`docker/base`, …) are relative to the current directory, so run `bash docker/build.sh 22.23.3` from the repository root. `pnpm docker-images` runs it there. In `docker/`, which is a workspace package of its own, use `pnpm -w docker-images 22.23.3`.
 * Without a version, `base` is built, then the next image fails with `invalid reference format`.
@@ -55,7 +55,7 @@ This runs [build.sh](build.sh), which builds the five images for that Node.js ve
 * build.sh always builds the five images. To rebuild one, run its `docker build` command of build.sh with the tag of its parent in `IMAGE_VERSION`:
 
   ```sh
-  docker build --provenance=false --build-arg IMAGE_VERSION=22-wine -t electronuserland/builder:22-wine-mono docker/wine-mono
+  docker build --provenance=false --build-arg IMAGE_VERSION=22-wine -t ghcr.io/electron-userland/builder:22-wine-mono docker/wine-mono
   ```
 
   Without `IMAGE_VERSION`, a Dockerfile builds on a published moving tag: `base` for `node`, `latest` (Node.js 24, without Wine) for `wine`, and `wine` (Node.js 24) for `wine-mono` and `wine-chrome`.
@@ -67,18 +67,18 @@ pnpm test:linux
 TEST_FILES=snapTest pnpm test:linux
 ```
 
-[run-tests.sh](run-tests.sh) runs the tests in `electronuserland/builder:22-wine-mono`, the image of CI's Linux test shards.
+[run-tests.sh](run-tests.sh) runs the tests in `ghcr.io/electron-userland/builder:22-wine-mono`, the image of CI's Linux test shards.
 
 * Without `TEST_FILES`, and with `CI` not set, the whole suite runs, which is slow. Set `VITEST_SHARD_COUNT` and `VITEST_SHARD_INDEX` (from 0) to run one shard of it.
 * `CI` is passed as it is set on the host, so a local run is not a CI run, as on the host: vitest writes a missing snapshot instead of failing (a changed one still fails), and the smart reporter prints a line per test (`-e SMART_REPORTER_VERBOSE=false` in `ADDITIONAL_DOCKER_ARGS` turns that off).
 * run-tests.sh mounts the current directory at `/project`, so run it from the repository root. `pnpm test:linux` does that. In the container, [test-in-docker.sh](test-in-docker.sh) installs corepack and bun, then runs `pnpm install --force`, `pnpm compile` and `pnpm ci:test`. pnpm is the version of `packageManager` in the root `package.json`, via corepack, not the pnpm 10.18.0 of the image. run-tests.sh also mounts the corepack home of the host (`$COREPACK_HOME`, else `~/.cache/node/corepack`, which `.github/actions/pnpm` caches on the runner) at `/root/.cache/node/corepack`, so corepack in the container finds that pnpm without a download. When it has to download it, test-in-docker.sh tries `corepack install` up to 3 times, and gives the corepack home back to the owner of `.git` when it ends.
-* The image is pulled, with 3 attempts, only if it is not present locally. So a locally built image of that tag is used as is, and an outdated one is not updated: run `docker pull electronuserland/builder:22-wine-mono` to update it.
+* The image is pulled, with 3 attempts, only if it is not present locally. So a locally built image of that tag is used as is, and an outdated one is not updated: run `docker pull ghcr.io/electron-userland/builder:22-wine-mono` to update it.
 * To test a change of an image, build the images with `pnpm docker-images 22.23.3`, then run the tests. build.sh gives the local images the published tags, so run-tests.sh uses the local `22-wine-mono`.
-* To work in an image, start a shell in it with `docker run --rm -it electronuserland/builder:22-wine-mono`. It starts `bash` in `/project`. To mount the repository as the tests do, add `-v "$PWD:/project" -v "$PWD/node-modules-docker:/project/node_modules"`.
+* To work in an image, start a shell in it with `docker run --rm -it ghcr.io/electron-userland/builder:22-wine-mono`. It starts `bash` in `/project`. To mount the repository as the tests do, add `-v "$PWD:/project" -v "$PWD/node-modules-docker:/project/node_modules"`.
 
 | Variable | Default | |
 | --- | --- | --- |
-| `TEST_RUNNER_IMAGE_TAG` | `electronuserland/builder:22-wine-mono` | The image to run the tests in |
+| `TEST_RUNNER_IMAGE_TAG` | `ghcr.io/electron-userland/builder:22-wine-mono` | The image to run the tests in |
 | `ELECTRON_CACHE_PATH` | `~/Library/Caches/electron` on macOS, `~/.cache/electron` otherwise | Mounted at `/root/.cache/electron` |
 | `ELECTRON_BUILDER_CACHE_PATH` | `~/Library/Caches/electron-builder` on macOS, `~/.cache/electron-builder` otherwise | Mounted at `/root/.cache/electron-builder` |
 | `ADDITIONAL_DOCKER_ARGS` | | More `docker run` options, split on whitespace, e.g. `-v /tmp/test-app:/tmp/test-app -e TEST_APP_TMP_DIR=/tmp/test-app` to keep the build output of a test on the host. Quotes in it are kept as is, so no value can contain a space. |
@@ -98,12 +98,12 @@ TEST_FILES=snapTest pnpm test:linux
 
 The workspace package `docker` ([package.json](package.json), private, never published to npm) is versioned with changesets on its own. It is not in the linked group of electron-builder's packages, and its changelog is `docker/CHANGELOG.md`. A changeset that names only `docker` is left out of the root `CHANGELOG.md` and of the GitHub release notes. A changeset that also names another package is listed there as if it named only the other packages, without `docker` (e.g. one for `docker` and `app-builder-lib` under `electron-builder@<version>`).
 
-The images on Docker Hub have the tags of [Tags](#tags), not the package version. The version and `docker/CHANGELOG.md` record what changed in the images between two versions, and the git tag `docker@<version>` records the commit a version is deployed from. The Release workflow creates the tag when it starts the deploy, so a version whose deploy failed has its tag too. Up to and including `docker@26.11.1`, each `docker@` tag had the version of electron-builder at the tagged commit, and the package starts from 26.11.1.
+The images in the registry have the tags of [Tags](#tags), not the package version. The version and `docker/CHANGELOG.md` record what changed in the images between two versions, and the git tag `docker@<version>` records the commit a version is deployed from. The Release workflow creates the tag when it starts the deploy, so a version whose deploy failed has its tag too. Up to and including `docker@26.11.1`, each `docker@` tag had the version of electron-builder at the tagged commit, and the package starts from 26.11.1.
 
 1. A PR that changes an image adds a changeset for `docker` (`pnpm changeset`, then select `docker`). That includes a change of the Node.js versions in the workflows, which are outside `docker/`. Use major for a breaking change of the images, e.g. a removed tool or Node.js version, minor for a new tool or Node.js version, and patch for a fix or an update. To deploy again without a change, e.g. for newer Ubuntu packages, add a patch changeset.
 2. The release PR of changesets bumps the version in `docker/package.json` and writes `docker/CHANGELOG.md`. It is the release PR of every package, so merging it also publishes the packages that have changesets to npm. While the repository is in pre mode (`.changeset/pre.json`), the version is a prerelease, e.g. `26.12.0-alpha.0`. A prerelease is deployed like any other version: it overwrites the moving tags, `latest` included.
 3. The merged release PR deploys the new version. The Release workflow ([pr-release.yml](../.github/workflows/pr-release.yml)) runs on the push to `master`, publishes, and then finds the version of `docker/package.json` without its tag `docker@<version>`. Its step "Tag a new docker version" tags the commit (an annotated tag by the release bot, created through the GitHub REST API with `gh`), and its job `deploy-docker` runs deploy-docker.yml on that commit. A later run finds the tag on another commit and does not deploy it again. A deploy that is still waiting for the one before it is cancelled when a newer version is tagged, so only the newer one is deployed. changesets itself does not tag `docker`: it is private, `privatePackages.tag` is false by default, and the `changeset tag` of `pnpm ci:publish` only tags electron-builder and electron-updater (`patches/@changesets__cli@2.29.7.patch`).
-4. deploy-docker.yml builds the images of every Node.js version with docker-build.yml, and does not run test.yaml: the release commit only reaches `master` after its PR passed CI. When the builds of all Node.js versions have passed, it pushes all tags of `electronuserland/builder` to Docker Hub. The deploy builds the images again, so they are only tested by a PR that changes `docker/*/Dockerfile`, `docker/build.sh` or docker-build.yml (see [CI](#ci)), and the packages that are not pinned can differ from the tested images. A deploy from a changeset alone, e.g. for newer Ubuntu packages, pushes images that no test has run. The `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets are in the `release` environment, which only a run on `master`, `release/*` or `changeset-release/*` can use, and the Release workflow passes them to deploy-docker.yml by name. Only the Release workflow on `master` deploys: its tag step runs on `master` only, so a `release/v*` branch never deploys, although the environment allows it. No workflow runs on a tag, so pushing a `docker@` tag by hand deploys nothing, and on another commit than the release commit it even stops the deploy of that version. When deploy-docker.yml is run manually (`workflow_dispatch`, on `master`, `release/*` or `changeset-release/*`), it builds, and does not push.
+4. deploy-docker.yml builds the images of every Node.js version with docker-build.yml, and does not run test.yaml: the release commit only reaches `master` after its PR passed CI. When the builds of all Node.js versions have passed, it pushes all tags of `ghcr.io/electron-userland/builder` to the GitHub Container Registry, and attaches a signed build provenance attestation to each image it pushed (`actions/attest`, stored in the registry and in the repository's attestations). The deploy builds the images again, so they are only tested by a PR that changes `docker/*/Dockerfile`, `docker/build.sh` or docker-build.yml (see [CI](#ci)), and the packages that are not pinned can differ from the tested images. A deploy from a changeset alone, e.g. for newer Ubuntu packages, pushes images that no test has run. The deploy needs no secret: it logs in with the job's `GITHUB_TOKEN` (`packages: write`), and signs the attestations with a short-lived Sigstore certificate for the job's OIDC token (`id-token: write`). The Release workflow's `deploy-docker` job grants these permissions, which deploy-docker.yml cannot exceed. The deploy job runs in the `release` environment, which only a run on `master`, `release/*` or `changeset-release/*` can use. Only the Release workflow on `master` deploys: its tag step runs on `master` only, so a `release/v*` branch never deploys, although the environment allows it. No workflow runs on a tag, so pushing a `docker@` tag by hand deploys nothing, and on another commit than the release commit it even stops the deploy of that version. When deploy-docker.yml is run manually (`workflow_dispatch`, on `master`, `release/*` or `changeset-release/*`), it builds, and does not push.
 
 If the deploy fails, re-run the failed jobs of the Release run in GitHub Actions. Each Node.js version is pushed by its own job, and a failed job does not cancel the others. Re-running only the failed jobs works until the image artifacts expire, a day after docker-build.yml uploaded them. After that, re-run all jobs of the Release run (GitHub allows it for 30 days), which builds the images again, with dated tags of the month of the re-run. A re-run uses the commit of its run, and its tag step finds the tag on that commit, so it deploys the version again, unless a later commit has a newer `docker@` tag. A re-run of an older Release run that failed before its tag step does not find its tag, and it does not tag or deploy its version either when a later commit has a newer `docker@` tag. Re-running only the failed deploy jobs of such an older run skips the tag step, so it still deploys and puts the older images back on the moving tags: don't. If the images need a fix, release it as a new version.
 
@@ -127,3 +127,13 @@ If the deploy fails, re-run the failed jobs of the Release run in GitHub Actions
   No runtime, SDK or base app is installed — a build downloads what it needs from the `flathub` remote. The remote is added with `--user` for root, the user the images run as, because the flatpak target installs into the user installation. A container that runs as another user or with another `HOME` does not see it.
 
   See [user documentation](https://www.electron.build/docs/features/multi-platform-build#flatpak-in-the-docker-images).
+
+# Docker Hub
+
+The images were published to Docker Hub as `electronuserland/builder` up to `docker@26.12.0-alpha.1`. That repository is no longer updated: its images stay as they were and can still be pulled until it is deleted. The images of the GitHub Container Registry have the same tags, so replacing `electronuserland/builder` with `ghcr.io/electron-userland/builder` is enough to move, e.g. `ghcr.io/electron-userland/builder:wine`.
+
+To check that an image was built by this repository's deploy:
+
+```sh
+gh attestation verify oci://ghcr.io/electron-userland/builder:22-wine-mono --owner electron-userland
+```

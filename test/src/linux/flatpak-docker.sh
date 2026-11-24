@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Runs a command for the flatpak tests (the "Test Flatpak" job of .github/workflows/test.yaml) in a privileged
-# container of the electronuserland/builder image, as the calling user rather than as root.
+# container of the ghcr.io/electron-userland/builder image, as the calling user rather than as root.
 #
-#   FLATPAK_TEST_IMAGE=electronuserland/builder:22-wine-chrome test/src/linux/flatpak-docker.sh pnpm ci:test
+#   FLATPAK_TEST_IMAGE=ghcr.io/electron-userland/builder:22-wine-chrome test/src/linux/flatpak-docker.sh pnpm ci:test
 #
 # Run it from the repository root, with the dependencies installed and compiled (pnpm install && pnpm compile): the
 # container uses the workspace as it is. The flatpak user installation of the calling user (~/.local/share/flatpak), the
@@ -27,7 +27,7 @@ if [[ $# -eq 0 ]]; then
   exit 2
 fi
 
-_IMAGE="${FLATPAK_TEST_IMAGE:-electronuserland/builder:22-wine-chrome}"
+_IMAGE="${FLATPAK_TEST_IMAGE:-ghcr.io/electron-userland/builder:22-wine-chrome}"
 
 # docker would create missing mount sources owned by root
 mkdir -p "$HOME/.local/share/flatpak" "$HOME/.cache/electron" "$HOME/.cache/electron-builder" "$HOME/.cache/node/corepack"

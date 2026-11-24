@@ -178,14 +178,14 @@ Or run with `--appimage-extract-and-run`:
 : This is a symptom of the legacy FUSE2 runtime. Remove any `toolsets.appimage: "0.0.0"` pin so the build uses the default static runtime.
 
 **Flatpak build fails: "flatpak-builder 1.0.12 is not supported"**
-: As of v27 the flatpak target requires `flatpak` 1.12.4 or newer and `flatpak-builder` 1.2.2 or newer; with an older tool the build fails with `<tool> <version> is not supported - version <minimum> or newer is required to build the flatpak target`. The stock packages of Ubuntu 22.04, Debian 12, RHEL 8 and 9 and newer releases are new enough; older releases, such as Ubuntu 20.04 (now only covered by Ubuntu Pro) and Debian 11, ship older tools. Without the tools the build fails with `cannot run flatpak - flatpak and flatpak-builder must be installed to build the flatpak target`, which is what happens in an `electronuserland/builder` Docker image with the date tag `-05.26` or an older one: only the images with a newer date tag [include the tools](features/multi-platform-build.md#flatpak-in-the-docker-images).
+: As of v27 the flatpak target requires `flatpak` 1.12.4 or newer and `flatpak-builder` 1.2.2 or newer; with an older tool the build fails with `<tool> <version> is not supported - version <minimum> or newer is required to build the flatpak target`. The stock packages of Ubuntu 22.04, Debian 12, RHEL 8 and 9 and newer releases are new enough; older releases, such as Ubuntu 20.04 (now only covered by Ubuntu Pro) and Debian 11, ship older tools. Without the tools the build fails with `cannot run flatpak - flatpak and flatpak-builder must be installed to build the flatpak target`, which is what happens in an `ghcr.io/electron-userland/builder` Docker image with the date tag `-05.26` or an older one: only the images with a newer date tag [include the tools](features/multi-platform-build.md#flatpak-in-the-docker-images).
 
 **Flatpak build fails: "No remote refs found"**
 : A build needs the runtime, the SDK and the base app (`org.freedesktop.Platform`, `org.freedesktop.Sdk` and `org.electronjs.Electron2.BaseApp` in version `26.08` by default; [`20.08` before v27](migration/v27-build-changes.md#flatpak-tooling-requirements)). electron-builder installs whichever of them is missing itself, with `flatpak install --user`, which only searches the remotes of the user installation. Add Flathub there, and check that the configured `runtimeVersion` and `baseVersion` exist:
 ```bash
 flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 ```
-The `electronuserland/builder` Docker images that include `flatpak` have the remote for `root` with `HOME=/root` only; a container that runs as another user or with another `HOME` has to add it — see [Flatpak in the Docker Images](features/multi-platform-build.md#flatpak-in-the-docker-images).
+The `ghcr.io/electron-userland/builder` Docker images that include `flatpak` have the remote for `root` with `HOME=/root` only; a container that runs as another user or with another `HOME` has to add it — see [Flatpak in the Docker Images](features/multi-platform-build.md#flatpak-in-the-docker-images).
 
 **Flatpak build fails in a container: "Failure spawning rofiles-fuse" or "is not a valid icon: bwrap: ..."**
 : FUSE or user namespaces are not available, which is typical in unprivileged containers. electron-builder logs a hint naming the option to set for each of the two errors:
@@ -248,13 +248,13 @@ docker run --rm -ti \
   -v ${PWD}:/project \
   -v ~/.cache/electron:/root/.cache/electron \
   -v ~/.cache/electron-builder:/root/.cache/electron-builder \
-  electronuserland/builder:wine \
+  ghcr.io/electron-userland/builder:wine \
   /bin/bash -c "npm ci && npx electron-builder --linux"
 ```
 For the `flatpak` target the image has to be one with a date tag newer than `-05.26`, and the configuration needs `flatpak.additionalArgs` with the two arguments for unprivileged containers — see [Flatpak in the Docker Images](features/multi-platform-build.md#flatpak-in-the-docker-images) and the Flatpak entries under [Linux-Specific](#linux-specific).
 
 **"wine: command not found" when building Windows on Linux**
-: Use the `electronuserland/builder:wine` Docker image which includes Wine. Or install Wine on the host system.
+: Use the `ghcr.io/electron-userland/builder:wine` Docker image which includes Wine. Or install Wine on the host system.
 
 ---
 

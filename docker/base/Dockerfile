@@ -2,6 +2,9 @@
 # That's OK as this image can't be built on arm64 machines due to gcc-multilib & g++-multilib only provided for x64
 FROM --platform=linux/x86_64 buildpack-deps:22.04-curl
 
+# links the package ghcr.io/electron-userland/builder to this repository; the images built from this one inherit it
+LABEL org.opencontainers.image.source=https://github.com/electron-userland/electron-builder
+
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN curl -L --fail --tlsv1.2 --proto "=https" --proto-redir "=https" \

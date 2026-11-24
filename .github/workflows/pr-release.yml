@@ -261,8 +261,8 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "## 🐳 docker@$version" >> "$GITHUB_STEP_SUMMARY"
 
-  # the images of the new docker version, from this run's commit: a run on master passes the branch policy of the
-  # `release` environment, which holds the Docker Hub secrets (deploy-docker.yml)
+  # the images of the new docker version, from this run's commit, pushed to ghcr.io with the GITHUB_TOKEN of
+  # deploy-docker.yml's deploy job (no secrets): a run on master passes the branch policy of its `release` environment
   deploy-docker:
     needs: pr-release
     # also when pr-release failed in its release notes step, which runs before the tag step: the tag is created, and a
@@ -272,10 +272,11 @@ jobs:
     concurrency:
       group: deploy-docker
       cancel-in-progress: false
+    # the most the jobs of deploy-docker.yml may have (its deploy job): push the images to ghcr.io, and sign and store
+    # their provenance attestations. No `secrets:`: the deploy needs none
     permissions:
       contents: read
+      packages: write
+      id-token: write
+      attestations: write
     uses: $/.github/workflows/deploy-docker.yml
-    # by name, not `secrets: inherit`, which would also hand RELEASE_BOT_APP_CREDS to the deploy job (it is in the `release` environment too)
-    secrets:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

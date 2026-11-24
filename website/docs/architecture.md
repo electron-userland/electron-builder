@@ -169,7 +169,7 @@ docker run --rm \
   -v ~/.cache/electron:/root/.cache/electron \
   -v ~/.cache/electron-builder:/root/.cache/electron-builder \
   --platform linux/arm64 \
-  electronuserland/builder \
+  ghcr.io/electron-userland/builder \
   /bin/bash -c "npm ci && npx electron-builder --linux --arm64"
 ```
 
@@ -184,7 +184,7 @@ docker run --rm \
   -v ${PWD}:/project \
   -v ~/.cache/electron:/root/.cache/electron \
   -v ~/.cache/electron-builder:/root/.cache/electron-builder \
-  electronuserland/builder:wine \
+  ghcr.io/electron-userland/builder:wine \
   /bin/bash -c "npm ci && npx electron-builder --win"
 ```
 
@@ -199,11 +199,11 @@ docker run --rm \
   -v ${PWD}:/project \
   -v ~/.cache/electron:/root/.cache/electron \
   -v ~/.cache/electron-builder:/root/.cache/electron-builder \
-  electronuserland/builder \
+  ghcr.io/electron-userland/builder \
   /bin/bash -c "npm ci && npx electron-builder --linux"
 ```
 
-The `electronuserland/builder` images with a date tag newer than `-05.26` include `flatpak` and `flatpak-builder`; those up to `-05.26` include neither. To build the `flatpak` target this way, the configuration needs `flatpak.additionalArgs` with the two arguments for unprivileged containers (`--disable-rofiles-fuse` and `--disable-sandbox`), and a volume keeps the downloaded runtime between runs — see [Flatpak in the Docker Images](features/multi-platform-build.md#flatpak-in-the-docker-images).
+The `ghcr.io/electron-userland/builder` images with a date tag newer than `-05.26` include `flatpak` and `flatpak-builder`; those up to `-05.26` include neither. To build the `flatpak` target this way, the configuration needs `flatpak.additionalArgs` with the two arguments for unprivileged containers (`--disable-rofiles-fuse` and `--disable-sandbox`), and a volume keeps the downloaded runtime between runs — see [Flatpak in the Docker Images](features/multi-platform-build.md#flatpak-in-the-docker-images).
 
 ### Building AppX on macOS (via Parallels VM)
 

@@ -210,7 +210,7 @@ docker run --rm -ti \
   -v ${PWD}:/project \
   -v ~/.cache/electron:/root/.cache/electron \
   -v ~/.cache/electron-builder:/root/.cache/electron-builder \
-  electronuserland/builder:wine \
+  ghcr.io/electron-userland/builder:wine \
   /bin/bash -c "npm install && npx electron-builder --linux"
 ```
 

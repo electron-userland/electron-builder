@@ -27,7 +27,7 @@ export function registerNsisWineTests(toolsets: ToolsetConfig): void {
   }
 
   // On Linux the wine@1.0.1 portable bundle fails to load ntdll.dll in CI Docker environments
-  // (electronuserland/builder:22-wine-mono) because the bundle's PE loader requires libraries not
+  // (ghcr.io/electron-userland/builder:22-wine-mono) because the bundle's PE loader requires libraries not
   // present in that container. Linux NSIS build + install coverage exists in oneClickInstaller.e2e.ts
   // via the system wine that Docker already provides (null toolset → host wine).
   if (process.platform === "linux") {
