@@ -734,7 +734,12 @@ export async function download(url: string, output: string, checksum?: string | 
       isGeneric: true,
     },
     filenameWithExt
-  )
+  ).catch((e: any) => {
+    // the error names the url, or the url it was redirected to, with its user info and query: keep only the HTTP status or error code
+    const status = e?.response?.status
+    const code = typeof e?.code === "string" ? e.code : e?.cause?.code
+    throw new Error(`cannot download ${urlWithoutQuery(url)}: ${typeof status === "number" ? `HTTP status ${status}` : (code ?? e?.name)}`)
+  })
   await fs.copyFile(downloadedFile, output)
 }
 

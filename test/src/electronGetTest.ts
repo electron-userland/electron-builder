@@ -1268,4 +1268,35 @@ describe("download without a checksum", () => {
     expect(checksumWarning?.[0]).toEqual({ url: `http://127.0.0.1:${port}/certificate.p12` })
     expect(JSON.stringify(warn.mock.calls)).not.toMatch(/SECRET/)
   })
+
+  test.for([
+    ["a pre-signed query", "", "/certificate.p12", "?X-Amz-Signature=SIGNATURE_SECRET", "HTTP status 404"],
+    ["a redirect to a pre-signed query", "", "/redirect", "", "HTTP status 404"],
+    ["user info", "user:PASSWORD_SECRET@", "/certificate.p12", "", "TypeError"],
+  ])("fails without naming the url with %s", async ([, userInfo, urlPath, query, reason], { expect, tmpDir }) => {
+    vi.stubEnv("ELECTRON_BUILDER_CACHE", await tmpDir.getTempDir({ prefix: "cache" }))
+    vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    const server = http.createServer((request, response) => {
+      if (request.url === "/redirect") {
+        response.writeHead(302, { location: "/certificate.p12?X-Amz-Signature=REDIRECT_SECRET" }).end()
+      } else {
+        response.writeHead(404).end()
+      }
+    })
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    const { port } = server.address() as net.AddressInfo
+    let error: any
+    try {
+      error = await download(`http://${userInfo}127.0.0.1:${port}${urlPath}${query}`, await tmpDir.getTempFile({ suffix: ".p12" }), null).then(
+        () => null,
+        (e: unknown) => e
+      )
+    } finally {
+      await new Promise<void>(resolve => server.close(() => resolve()))
+    }
+    // @electron/get's error names the requested or redirected url with its query, and fetch's error the url with its user info
+    expect(error?.message).toBe(`cannot download http://127.0.0.1:${port}${urlPath}: ${reason}`)
+    expect(error.stack).not.toMatch(/SECRET/)
+    expect(error.cause).toBeUndefined()
+  })
 })
