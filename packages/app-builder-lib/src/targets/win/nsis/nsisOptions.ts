@@ -39,7 +39,9 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
 
   /**
    * Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation
-   * directory). In your custom NSIS scripts, write to the log via `${LogText}`.
+   * directory). The installer logs from the install of the files on (once the previous version is uninstalled); the uninstaller logs
+   * from its start and leaves the open `install.log` in place when an update moves the installation directory aside. In your custom
+   * NSIS scripts, write to the log via `${LogText}`; in `customInit` / `preInit` nothing is logged yet.
    *
    * Requires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. From `toolsets.nsis` `"2.0.4"` (the
    * default) on, each NSIS release publishes a log-enabled bundle next to the default one, and electron-builder downloads it when this
@@ -76,6 +78,30 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    * @default true
    */
   readonly allowElevation?: boolean
+
+  /**
+   * *assisted installer only, with `perMachine` not set.* Let a silent update (`--updated`) of a per-machine installation run without a UAC
+   * prompt when the user already holds every access right the update uses. Off by default: the update elevates, as before.
+   *
+   * An update removes and re-creates the installation folder, the app's `HKLM` registration and the all-users shortcuts, so this applies
+   * only where an administrator granted standard users those rights: on the folder and its files, its parent folder, the
+   * `INSTALL_REGISTRY_KEY` and Uninstall keys and their parent keys (`HKLM\Software`,
+   * `HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall`), and the Start Menu folder and Public Desktop. The installer and
+   * the uninstaller check each right without changing anything, and elevate when one is missing, when a per-user installation exists too,
+   * and for an interactive install or uninstall.
+   *
+   * electron-builder does not recommend granting these rights: an unelevated process could then change the `UninstallString` that the
+   * elevated uninstaller, and deployment tools running as SYSTEM, later execute. The option is for machines whose administrators already
+   * did.
+   *
+   * An update runs the uninstaller of the installed version, so the first update to a build with this option still elevates.
+   *
+   * Not checked: `HKLM\Software\Classes` (file associations and protocols), writes made by `customInstall` or `customUnInstall`, and
+   * shortcuts or a Start Menu folder that an earlier version created under another name. Without elevation, a write there that is
+   * denied fails without an error, so leave this option off if the update needs one.
+   * @default false
+   */
+  readonly allowUnelevatedPerMachineUpdate?: boolean
 
   /**
    * *assisted installer only.* Whether to allow user to change installation directory.

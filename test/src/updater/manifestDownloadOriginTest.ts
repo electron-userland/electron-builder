@@ -18,7 +18,15 @@ import type { TmpDir } from "temp-file"
 import { afterEach, describe, test, vi } from "vitest"
 import { gzipSync } from "zlib"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
-import { createNsisUpdater, createTestAppAdapter, FakeElectronHttpExecutor, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
+import {
+  createNsisUpdater,
+  createTestAppAdapter,
+  FakeElectronHttpExecutor,
+  trackEvents,
+  tuneTestUpdater,
+  windowsExecutable,
+  writeUpdateConfig,
+} from "../helpers/updaterTestUtil.js"
 
 // The app's request headers (requestHeaders / addAuthHeader) other than the ones its crossOriginHeaders keeps, and the feed URL's query, are
 // only sent to download URLs on the feed's origin. The test updaters set crossOriginHeaders to () => [] (see tuneTestUpdater).
@@ -27,7 +35,8 @@ const sha512 = (data: Buffer) => createHash("sha512").update(data).digest("base6
 
 describe("download URLs chosen by the update manifest", () => {
   const INSTALLER_NAME = "TestApp-Setup-1.1.0.exe"
-  const INSTALLER = Buffer.from("manifest download origin test installer — not a real executable")
+  // the installer of the update version: its signature is checked (stubbed), so is its ProductVersion
+  const INSTALLER = windowsExecutable(["1.1.0"])
   const PACKAGE_NAME = "TestApp-1.1.0.nsis.7z"
   const PACKAGE = Buffer.from("manifest download origin test web package — not a real 7z archive")
 
@@ -223,6 +232,8 @@ describe("differential downloads use the per-download headers", () => {
     })
   }
 
+  const ONE_BLOCK_MAP = { version: "2", files: [{ name: "file", offset: 0, checksums: ["a"], sizes: [10] }] }
+
   function updateInfo(fileUrl: string, extra: object = {}): UpdateInfo {
     return { version: "1.1.0", files: [{ url: fileUrl, sha512: "x", size: 10 }], releaseDate: "2024-01-01T00:00:00.000Z", ...extra }
   }
@@ -237,7 +248,8 @@ describe("differential downloads use the per-download headers", () => {
     ;(updater as any).httpExecutor = {
       downloadToBuffer: (url: URL, options: DownloadOptions) => {
         requests.push({ url: url.href, headers: options.headers! })
-        return Promise.resolve(gzipSync(JSON.stringify({ version: "2", files: [] })))
+        // one block covering the 10-byte update of `updateInfo` (a map without blocks is rejected before planning)
+        return Promise.resolve(gzipSync(JSON.stringify(ONE_BLOCK_MAP)))
       },
     }
     return requests
@@ -475,7 +487,7 @@ describe("differential downloads use the per-download headers", () => {
 
   async function writeCachedOldBlockMap(updater: AppUpdater) {
     const cacheDir = (updater as any).downloadedUpdateHelper.cacheDir
-    await fsExtra.outputFile(path.join(cacheDir, "current.blockmap"), gzipSync(JSON.stringify({ version: "2", files: [] })))
+    await fsExtra.outputFile(path.join(cacheDir, "current.blockmap"), gzipSync(JSON.stringify(ONE_BLOCK_MAP)))
   }
 
   const PRE_SIGNED = {

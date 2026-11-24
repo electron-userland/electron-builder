@@ -88,7 +88,7 @@ describe("API request size limit (maxResponseSize)", () => {
       response.emit("end")
     }).not.toThrow()
 
-    await expect(result).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
+    await expect(result).rejects.toMatchObject({ code: "ERR_UPDATER_RESPONSE_TOO_LARGE" })
     expect(executor.requests[0].abort).toHaveBeenCalledOnce()
   })
 
@@ -114,7 +114,7 @@ describe("API request size limit (maxResponseSize)", () => {
     response.emit("data", "a".repeat(2048))
     response.emit("end")
 
-    await expect(result).rejects.toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE" })
+    await expect(result).rejects.toMatchObject({ code: "ERR_UPDATER_RESPONSE_TOO_LARGE" })
     expect(executor.requests).toHaveLength(2)
     expect(executor.requests[1].options.maxResponseSize).toBe(1024)
     expect(executor.requests[1].abort).toHaveBeenCalledOnce()
@@ -129,7 +129,7 @@ describe("API request size limit (maxResponseSize)", () => {
 
     const error = await result.catch((e: unknown) => e)
     expect(error).toBeInstanceOf(Error)
-    expect(error).toMatchObject({ code: "ERR_HTTP_RESPONSE_TOO_LARGE", message: "Response from https://example.com/latest.yml exceeds the maximum allowed size of 10 bytes" })
+    expect(error).toMatchObject({ code: "ERR_UPDATER_RESPONSE_TOO_LARGE", message: "Response from https://example.com/latest.yml exceeds the maximum allowed size of 10 bytes" })
   })
 
   // a limit that is not a finite number of at least 0 is not applied

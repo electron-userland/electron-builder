@@ -1,0 +1,38 @@
+name: 'Save test caches'
+description: "Save the Electron and electron-builder binaries caches restored by the pretest action, only when this job downloaded files they lacked"
+
+runs:
+  using: 'composite'
+  steps:
+    # Also after failed tests: what they downloaded is still good. A job that ran without the pretest action has nothing to save.
+    - name: Check test caches for new files
+      id: grown
+      if: "!cancelled() && env.TEST_CACHE_ELECTRON_KEY != ''"
+      run: |
+        echo "electron=$(node "${GITHUB_ACTION_PATH}/cache-files.mjs" grown "${RUNNER_TEMP}/electron-cache-files.txt" "${TEST_CACHE_ELECTRON_PATH}")" >> "$GITHUB_OUTPUT"
+        echo "binaries=$(node "${GITHUB_ACTION_PATH}/cache-files.mjs" grown "${RUNNER_TEMP}/binaries-cache-files.txt" "${BINARIES_CACHE_PATHS}")" >> "$GITHUB_OUTPUT"
+      shell: bash
+      env:
+        # keep in sync with the pretest action
+        BINARIES_CACHE_PATHS: |
+          ~/.cache/electron-builder
+          ~/Library/Caches/electron-builder
+          ~\AppData\Local\electron-builder\Cache
+
+    - name: Save Electron cache
+      if: "!cancelled() && steps.grown.outputs.electron != ''"
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ env.TEST_CACHE_ELECTRON_PATH }}
+        key: ${{ env.TEST_CACHE_ELECTRON_KEY }}-${{ steps.grown.outputs.electron }}
+
+    - name: Save electron-builder binaries cache
+      if: "!cancelled() && steps.grown.outputs.binaries != ''"
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        # keep in sync with the pretest action
+        path: |
+          ~/.cache/electron-builder
+          ~/Library/Caches/electron-builder
+          ~\AppData\Local\electron-builder\Cache
+        key: ${{ env.TEST_CACHE_BINARIES_KEY }}-${{ steps.grown.outputs.binaries }}

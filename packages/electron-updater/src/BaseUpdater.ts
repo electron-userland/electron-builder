@@ -551,7 +551,16 @@ export abstract class BaseUpdater extends AppUpdater {
         // ignore
       })
 
-    const signatureFailure = verificationFailureMessage(await this.verifyInstallerSignatureOnLaunch(installerPath, updateInfoAndProvider))
+    let signatureResult: VerifyUpdateFileResult
+    try {
+      signatureResult = await this.verifyInstallerSignatureOnLaunch(installerPath, updateInfoAndProvider)
+    } catch (e: unknown) {
+      // a verification that cannot decide (e.g. ERR_UPDATER_NO_PUBLISHER_NAME) rejects the pending update like a failed one
+      await clearPendingCache()
+      this.dispatchError(e instanceof Error ? e : new Error(String(e)))
+      return false
+    }
+    const signatureFailure = verificationFailureMessage(signatureResult)
     if (signatureFailure != null) {
       await clearPendingCache()
       this.dispatchError(newError(`Pending update ${latestInfo.version} is not signed by the application owner: ${signatureFailure}`, "ERR_UPDATER_INVALID_SIGNATURE"))

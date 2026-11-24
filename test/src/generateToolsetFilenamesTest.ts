@@ -125,6 +125,36 @@ describe("Generated toolset test filenames", () => {
     }
   })
 
+  // The NSIS update checks (blackboxUpdateWinChecksSuite.ts): one file per test, built with the newest toolsets, the Authenticode one native
+  // Windows only (.win.). They run on Windows only and CI doesn't write missing snapshots, so each needs a hand-written one of both builds.
+  it("blackboxNsis check suites generate one file per test with the newest toolsets, each with a snapshot", () => {
+    const files = collectGeneratedFiles(GENERATED_TESTS_DIR).filter(f => path.basename(f).startsWith("blackboxNsis"))
+    const versions = (list: ReadonlyArray<unknown>) => list.filter((it): it is string => typeof it === "string")
+    const toolsets = `wcs-${latestToolsetVersion(versions(WIN_CODE_SIGN_VERSIONS))}__nsis-${latestToolsetVersion(versions(NSIS_VERSIONS))}`
+    const expected = versions(WINE_VERSIONS).flatMap(wine => [
+      `blackboxNsisAuthenticode__${toolsets}__wine-${wine}.win.e2e.ts`,
+      `blackboxNsisDebugLogging__${toolsets}__wine-${wine}__e2e.ts`,
+      `blackboxNsisInstallerChecks__${toolsets}__wine-${wine}__e2e.ts`,
+      `blackboxNsisNextLaunchModes__${toolsets}__wine-${wine}__e2e.ts`,
+    ])
+    expect(files.map(f => path.basename(f)).sort()).toEqual(expected.sort())
+
+    for (const file of files) {
+      const snapshot = path.join(
+        path.resolve(GENERATED_TESTS_DIR, "../../snapshots/generated"),
+        path.basename(path.dirname(file)),
+        path
+          .basename(file)
+          .replace(/__wine-\d+(?:\.\d+)*/, "")
+          .replace(/\.ts$/, ".js.snap")
+      )
+      expect(fs.existsSync(snapshot), `hand-written snapshot of ${path.basename(file)}: ${snapshot}`).toBe(true)
+      // the old and the new build of the single test of the file
+      const entries = [...fs.readFileSync(snapshot, "utf8").matchAll(/^exports\[`blackboxWin > windows > nsis - [^`]+ (\d+)`\]/gm)].map(it => it[1])
+      expect(entries, `the entries of ${path.basename(snapshot)}`).toEqual(["1", "2"])
+    }
+  })
+
   // The msi suite runs once per WiX bundle, and msiWrapped once more with the legacy bundle. They run on Windows only and CI doesn't
   // write missing snapshots, so each generated file needs a hand-written snapshot with an entry for every msiTestSuite test.
   it("msi suites generate one file per WiX bundle, each with a snapshot entry for every test", () => {
@@ -371,8 +401,8 @@ describe("TEST_MODE file discovery", () => {
     expect(linux.filter(f => linuxE2eOnly.includes(f) || f.includes("blackboxLinux__appimage"))).toEqual([])
     // its detectPackageManager unit tests run in the Linux shards
     expect(linux).toContain("test/src/updater/linuxUpdaterTest.ts")
-    // the Linux skip list does not leak to other platforms: the mac split blackbox suites stay on macOS
-    expect(getAllTestFiles("darwin", "all")).toContain("test/src/updater/mac/blackboxUpdateKeyRotation.e2e.ts")
+    // the Linux skip list does not leak to other platforms: the mac blackbox suites stay on macOS
+    expect(getAllTestFiles("darwin", "all")).toContain("test/src/updater/mac/blackboxUpdateArm64.e2e.ts")
 
     // the tokens the CI e2e matrix passes (test/src/updater/test-specific-platforms.sh, .github/workflows/test.yaml)
     vi.stubEnv(
