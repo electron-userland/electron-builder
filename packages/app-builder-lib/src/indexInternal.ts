@@ -36,7 +36,7 @@ export {
 export { PM } from "./node-module-collector/packageManager.js"
 export type { NodeModuleInfo } from "./node-module-collector/types.js"
 export { computeSafeArtifactNameIfNeeded, DoPackOptions, trackPackWork, waitForPackWork } from "./platformPackager.js"
-export { createPublisher } from "./publish/PublishManager.js"
+export { checkUpdateSigningKeysTrusted, createPublisher, normalizeExplicitPublicKeys } from "./publish/PublishManager.js"
 export { isEnvTokenHostAllowed, PUBLISH_TOKEN_HOST_DOCS_URL, PUBLISH_TOKEN_HOSTS_ENV } from "electron-publish/internal"
 export { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./publish/updateInfoBuilder.js"
 export { buildBlockMap } from "./targets/blockmap/blockmap.js"
@@ -95,6 +95,15 @@ export {
 } from "./util/electronGet.js"
 export { checkUpdateManifestBeforeUpload, warnAboutUpdateFilesBeforeUpload } from "./publish/manifestUploadCheck.js"
 export { verifyBuildOutput } from "./util/buildOutputVerifier.js"
+export {
+  compareListedFilesInOutput,
+  listedFileFolders,
+  readUpdateInfo,
+  UPDATE_INFO_ALIASES_MESSAGE,
+  updateManifestPlatform,
+  verifyUpdateManifestContent,
+} from "./publish/updateManifestVerifier.js"
+export type { UpdateManifestVerification } from "./publish/updateManifestVerifier.js"
 export type { VerificationResult, VerificationStatus, VerifyBuildOutputOptions } from "./util/buildOutputVerifier.js"
 export { buildSourceCandidates, convertIcon, getPngSize } from "./util/iconConverter.js"
 export { getLicenseAssets, getLicenseFiles } from "./util/license.js"

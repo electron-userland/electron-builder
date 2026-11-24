@@ -1,12 +1,13 @@
 import { CancellationToken, configureRequestOptions, configureRequestUrl, HttpExecutor } from "builder-util-runtime"
 import { serializeToYaml } from "builder-util"
 import { createHash } from "crypto"
+import fs from "fs"
 import fsExtra from "fs-extra"
 import * as http from "http"
 import type { IncomingMessage } from "http"
 import type { Socket } from "net"
 import * as path from "path"
-import { describe, test } from "vitest"
+import { describe, test, vi } from "vitest"
 import { createNsisUpdater, FakeElectronHttpExecutor, FakeNetRequest, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
 // A full download into a file stops once it receives more bytes than the size the update info declares for the file.
@@ -97,6 +98,39 @@ describe("HttpExecutor download maxSize", () => {
       await expect.poll(() => isClosedBeforeEnd).toBe(true)
       expect((await fsExtra.stat(destination)).size).toBeLessThanOrEqual(MAX_SIZE)
     })
+  })
+
+  // createWriteStream opens the destination asynchronously, so a body that passes maxSize before that open has finished fails the download
+  // while the file does not exist yet. The failure must be reported once the destination is closed: a caller that removes the partly
+  // written file on the failure (electron-updater empties pending/) would otherwise run before the open creates it, and leave it behind
+  test("a body that passes maxSize before the destination is open fails only once the destination is closed", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "download-size-limit" })
+    await fsExtra.ensureDir(dir)
+    const destination = path.join(dir, "slow-open.exe")
+    // hold the open of the destination back, as a busy disk or thread pool does
+    const realOpen = fs.open
+    const openSpy = vi.spyOn(fs, "open").mockImplementation(((...args: Array<any>) => {
+      if (args[0] === destination) {
+        setTimeout(() => (realOpen as any)(...args), 300)
+      } else {
+        ;(realOpen as any)(...args)
+      }
+    }) as any)
+    try {
+      await withServer(
+        response => response.end(Buffer.alloc(MAX_SIZE + 1, 5)),
+        async url => {
+          await expect(new LocalDownloadExecutor().download(url, destination, { maxSize: MAX_SIZE })).rejects.toMatchObject({ code: "ERR_UPDATER_DOWNLOAD_SIZE_EXCEEDED" })
+          // what electron-updater does on the failure: remove the partly written file with the rest of the pending update
+          await fsExtra.remove(destination)
+        }
+      )
+      // well after the held-back open has run
+      await new Promise(resolve => setTimeout(resolve, 600))
+      expect(fs.existsSync(destination)).toBe(false)
+    } finally {
+      openSpy.mockRestore()
+    }
   })
 
   test("a body of exactly maxSize downloads; without maxSize, or with a negative one, a larger body is not limited", async ({ expect, tmpDir }) => {

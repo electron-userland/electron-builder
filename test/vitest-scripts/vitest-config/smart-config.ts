@@ -54,9 +54,56 @@ export const CACHE_FILE = process.env.VITEST_SMART_CACHE_FILE || path.resolve(__
 export const SMART_REPORTER_VERBOSE = process.env.SMART_REPORTER_VERBOSE !== "false" && !process.env.CI
 
 export const DEFAULT_FILE_MS = 2 * 60 * 1000
-export const DEFAULT_TARGET_MS = 20 * 60 * 1000
+// Wall-clock budget of one CI shard. The workflow's wall time is already set by its longest fixed jobs (the e2e auto-updater and
+// flatpak jobs take 20-40 min), so shards that fill this budget don't lengthen a run; they only need fewer runners.
+export const DEFAULT_TARGET_MS = 30 * 60 * 1000
 export const TARGET_MS = Number(process.env.VITEST_TARGET_MS) || DEFAULT_TARGET_MS
 export const SAFEGUARD_MAX_SHARDS = 20
+
+/**
+ * How a CI shard runs its files on each platform's runner: `workers` test files at once (vitest `maxWorkers`; tests inside a file still
+ * run one after another), which the shard planner counts as `speedup` times the work per shard. The speed-ups are measured: on the
+ * first full CI run with parallel files, Linux shards (4 cores) finished ~1.6x faster, Windows ones (4 cores) ~1.45x and macOS ones
+ * (3 cores, 3 files at once) only ~1.1-1.2x, as the files compete for the runner's cores and disk. Retune from the shard wall times
+ * the plan reports, not from the cached file durations, which are averages over the last few runs (SMART_CACHE_HISTORY_RUNS).
+ *
+ * The planner job (smart-shard-count.ts) sizes every platform's matrix from this table, and each shard job re-plans with it, so it is the
+ * single source for both. Runners: macos-26 (3 cores, 7 GB), ubuntu-24.04 and windows-latest (4 cores, 16 GB).
+ */
+export const CI_PARALLELISM: Record<SupportedPlatforms, { readonly workers: number; readonly speedup: number }> = {
+  darwin: { workers: 2, speedup: 1.1 },
+  linux: { workers: 4, speedup: 1.5 },
+  win32: { workers: 4, speedup: 1.4 },
+}
+
+/**
+ * Heavy tests (`describe.heavy` / `test.heavy`) run one at a time across all workers of a shard (vitest-heavy-mutex.ts), so a shard
+ * takes at least as long as its heavy files together. Capping that at the full TARGET_MS keeps every shard within its budget; a lower cap
+ * only adds runners (Windows, where half the work is heavy, would need ~40% more), since the run's wall time is set by its
+ * longest fixed jobs (see DEFAULT_TARGET_MS).
+ */
+export const HEAVY_TARGET_MS = TARGET_MS
+
+/**
+ * How many past runs the cached average of a test or file counts for at most (vitest-smart-reporter.ts): each new run moves it by
+ * 1 / (SMART_CACHE_HISTORY_RUNS + 1) of the difference, so the shard plan follows a file that got faster or slower within a few runs
+ * instead of being diluted by every run since the cache was last reset. The `runs` and `fails` counters keep counting for the fail ratio.
+ */
+export const SMART_CACHE_HISTORY_RUNS = 4
+
+/**
+ * Test files vitest runs at once on this machine: `VITEST_MAX_WORKERS` when set, else the platform's CI_PARALLELISM in a smart-sharded
+ * CI shard, and one file at a time otherwise. A run scoped with TEST_FILES is one of the dedicated jobs (e2e auto-updater, updater,
+ * snap, flatpak) that install packages and apps machine-wide (`pacman -Sy`, /opt/TestApp, …) from several files, so it keeps running
+ * them one after another, like a local run (the easiest to debug).
+ */
+export function getMaxWorkers(platform: SupportedPlatforms): number {
+  const override = Number(process.env.VITEST_MAX_WORKERS)
+  if (Number.isInteger(override) && override > 0) {
+    return override
+  }
+  return process.env.CI && getTestFilesOverride() == null ? CI_PARALLELISM[platform].workers : 1
+}
 
 export const SHARD_INDEX = process.env.VITEST_SHARD_INDEX != null ? Number(process.env.VITEST_SHARD_INDEX) : null
 
@@ -120,6 +167,7 @@ export const skipPerOSTests: Record<SupportedPlatforms, string[]> = {
     "blackboxUpdateLinuxSignedManifest",
     "blackboxUpdateLinuxKeyRotation",
     "blackboxLinux__appimage",
+    "blackboxUpdateAppImageRules",
   ],
   win32: [],
 }

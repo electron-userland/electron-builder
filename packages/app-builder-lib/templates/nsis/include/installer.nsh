@@ -18,6 +18,14 @@
 
       ${StdUtils.GetParameter} $packageFile "package-file" ""
       ${if} $packageFile == ""
+        # electron-updater starts a web installer with --updated and passes the package it verified with --package-file. An update without
+        # one (the web installer was published as a full installer, with no package in the update info) is aborted: the package is not
+        # downloaded from the URL built into the installer.
+        ${if} ${isUpdated}
+          MessageBox MB_OK|MB_ICONSTOP "This web installer was started as an update without a package file (--package-file). Installation aborted.$\r$\nhttps://www.electron.build/docs/migration/v27-runtime-changes#an-nsis-web-installer-started-as-an-update-needs-a-package-file" /SD IDOK
+          SetErrorLevel 2
+          Quit
+        ${endIf}
         !insertmacro selectWebPackage $packageFile $1
         StrCpy $4 "$packageFile"
         StrCpy $packageFile "$EXEDIR/$packageFile"
@@ -144,6 +152,10 @@
 !macro registryAddInstallInfo
   WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" InstallLocation "$INSTDIR"
   WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" KeepShortcuts "true"
+  !ifdef UNELEVATED_PER_MACHINE_UPDATE
+    # the uninstaller of this version decides about elevation itself (checkUnelevatedPerMachineUpdate)
+    WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" UnelevatedUpdate "true"
+  !endif
   WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" ShortcutName "${SHORTCUT_NAME}"
   !ifdef MENU_FILENAME
     WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" MenuDirectory "${MENU_FILENAME}"
