@@ -23,7 +23,17 @@ const normalizeName = (name: string): string => name.toLowerCase().replace(/[-_]
 // HTTP header names (normalised) that builder-util-runtime 9 (electron-builder v26) left off a redirect to another origin, sending every other
 // header on. The default policy now sends only CROSS_ORIGIN_REDIRECT_HEADERS, and reports the names it leaves out that are not in here: the
 // ones it is the first to stop sending (see createDefaultCrossOriginHeaderPolicy). Stored normalised; lookup normalises the key with normalizeName().
-const V26_DROPPED_REDIRECT_HEADERS: ReadonlySet<string> = new Set(["authorization", "proxyauthorization", "privatetoken", "xapikey", "xauthtoken", "xaccesstoken", "xgitlabtoken", "cookie", "xcsrftoken"])
+const V26_DROPPED_REDIRECT_HEADERS: ReadonlySet<string> = new Set([
+  "authorization",
+  "proxyauthorization",
+  "privatetoken",
+  "xapikey",
+  "xauthtoken",
+  "xaccesstoken",
+  "xgitlabtoken",
+  "cookie",
+  "xcsrftoken",
+])
 
 /** A request, or a redirect, from one origin to another (see {@link HttpExecutor.isCrossOrigin}). */
 export interface CrossOriginHop {
