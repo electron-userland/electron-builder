@@ -650,7 +650,7 @@ The Bitbucket publisher now selects its authentication scheme by whether a usern
 
 **How you'll find out:** **Fails at publish** with an `InvalidConfigurationError` that names the variable and the host (never the token), with a link here. A `host` that is not a host name fails the same way, naming the option (never its value). Squirrel.Windows **warns** during the build instead, published or not; for a private repository on that host, SyncReleases then fails. Other builds that don't publish are silent.
 
-A token taken from the environment is now sent only to a host it belongs to. Before, it went to whatever `host` the publish configuration named, so a changed `host` in the project could send the CI token elsewhere. This applies to `GH_TOKEN`, `GITHUB_TOKEN` and `GITHUB_RELEASE_TOKEN` (`github` publisher and `squirrelWindows.remoteReleases`), `GITLAB_TOKEN` (`gitlab`) and `KEYGEN_TOKEN` (`keygen`). Such a token is sent only to:
+A token taken from the environment is now sent only to a host it belongs to. Before, it went to whatever `host` the publish configuration named, so a changed `host` in the project could send the CI token elsewhere. This applies to `GH_TOKEN`, `GITHUB_TOKEN` and `GITHUB_RELEASE_TOKEN` (`github` publisher; `GH_TOKEN` and `GITHUB_TOKEN` also for `squirrelWindows.remoteReleases`), `GITLAB_TOKEN` (`gitlab`) and `KEYGEN_TOKEN` (`keygen`). Such a token is sent only to:
 
 - **the provider's public host:** `github.com`, `api.github.com` and `uploads.github.com`; `gitlab.com`; `api.keygen.sh`.
 - **the host the CI runner reports:** on GitHub Actions the hosts of `GITHUB_SERVER_URL` and `GITHUB_API_URL` (for a GitHub token), on GitLab CI the hosts of `CI_SERVER_URL` and `CI_API_V4_URL` (for a GitLab token). A GitHub Enterprise or self-managed GitLab runner therefore needs no change.
@@ -669,7 +669,7 @@ A token set in the configuration is explicit: `github.token` and `gitlab.token` 
 
 </details>
 
-**Action is required only if** you publish to a custom host with a token from the environment, or build Squirrel.Windows with a private `squirrelWindows.remoteReleases` repository on a GitHub Enterprise host, and the CI runner does not report that host. Add the host to `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS` in the publishing job:
+**Action is required only if** you publish to a custom host with a token from the environment, or build Squirrel.Windows with a private `squirrelWindows.remoteReleases` repository on a GitHub Enterprise host, and the CI runner does not report that host. Add the host to `ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS` in the publishing job (for Squirrel.Windows, in the job that builds it):
 
 ```yaml
 env:
