@@ -59,7 +59,7 @@ electron-builder reads signing credentials from environment variables. **Never c
 
 | Variable | Description |
 |---|---|
-| `CSC_LINK` | HTTPS URL, `file://` path, local path, or base64-encoded `.p12`/`.pfx` file |
+| `CSC_LINK` | HTTPS URL, `file://` path, local path, or base64-encoded `.p12`/`.pfx` file. An HTTPS URL with user info (`https://user:password@…`) is rejected: use a pre-signed URL, a file path or a base64 value (see [the v27 migration guide](../../migration/v27-build-changes.md#certificate-links-with-user-info-are-rejected)) |
 | `CSC_KEY_PASSWORD` | Password to decrypt the certificate at `CSC_LINK` |
 | `CSC_NAME` | *macOS only.* Certificate identity name from keychain. Useful when multiple identities exist on a dev machine |
 | `CSC_IDENTITY_AUTO_DISCOVERY` | `true` (default) / `false`. On macOS, automatically selects a valid identity from the keychain |

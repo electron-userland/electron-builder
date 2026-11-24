@@ -16,7 +16,7 @@ Several environment variables were **removed in v27** — most notably `CI_BUILD
 
 ## Code signing
 
-Signing credentials are read from the environment so certificates and passwords never have to live in your config. **Never commit them to source control** — inject them via CI secrets. Each value accepts an HTTPS URL, a `file://` path, a local path, or a base64-encoded certificate string — standard base64 without surrounding quotes (line breaks in it are ignored; see [Base64 certificate values](./features/code-signing/code-signing.md#base64-certificate-values)).
+Signing credentials are read from the environment so certificates and passwords never have to live in your config. **Never commit them to source control** — inject them via CI secrets. Each value accepts an HTTPS URL, a `file://` path, a local path, or a base64-encoded certificate string — standard base64 without surrounding quotes (line breaks in it are ignored; see [Base64 certificate values](./features/code-signing/code-signing.md#base64-certificate-values)). An HTTPS URL with user info (`https://user:password@…`) is rejected: use a pre-signed URL, a file path or a base64 value instead (see [the breaking-change note](./migration/v27-build-changes.md#certificate-links-with-user-info-are-rejected)).
 
 ### Shared / macOS
 
