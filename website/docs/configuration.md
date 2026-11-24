@@ -35,7 +35,7 @@ Most of the options accept `null` — for example, to explicitly set that DMG ic
 
 ## Environment Variables from File
 
-Env file `electron-builder.env` in the current dir ([example](https://github.com/motdotla/dotenv-expand/blob/1cc80d02e1f8aa749253a04a2061c0fecb9bdb69/tests/.env)). Supported only for CLI usage.
+Env file `electron-builder.env` in the current dir ([example](https://github.com/motdotla/dotenv-expand/blob/1cc80d02e1f8aa749253a04a2061c0fecb9bdb69/tests/.env)). Supported only for CLI usage. Since v27, the variables that decide which hosts receive a publish token (`ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS`, `GITHUB_SERVER_URL`, `GITHUB_API_URL`, `CI_SERVER_URL`, `CI_API_V4_URL`) are ignored in this file; see [publish token hosts](./environment-variables.md#publish-token-hosts).
 
 ## Effective Configuration
 
