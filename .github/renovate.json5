@@ -4,16 +4,18 @@
     ":semanticCommitType(chore)",
     ":label(renovate)",
     ":prHourlyLimit2",
-    ":prConcurrentLimit10",
-    ":prNotPending",
     "group:recommended",
     "group:monorepos",
     ":enableVulnerabilityAlerts",
     "helpers:pinGitHubActionDigests",
   ],
   // Never auto-rebase; only rebase when the rebase checkbox in the PR description is ticked, so merges
-  // to master don't re-trigger the full test matrix on every open Renovate PR.
+  // to master don't re-trigger the full test matrix on every open Renovate PR. Open Renovate branches
+  // also don't pick up newer versions until that checkbox is ticked.
   rebaseWhen: "never",
+  // Bound how many Renovate PRs and branch pushes hit CI at once (with :prHourlyLimit2 above).
+  prConcurrentLimit: 2,
+  commitHourlyLimit: 2,
   npm: {
     extends: [
       ":noUnscheduledUpdates",
