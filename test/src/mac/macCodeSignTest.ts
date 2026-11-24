@@ -1,20 +1,25 @@
 import { createKeychain, removeKeychain } from "app-builder-lib/internal"
 import { removePassword } from "builder-util"
+import { withMacKeychainLock } from "../helpers/crossProcessLock.js"
 import { getMacSigningIdentity } from "../helpers/packTester.js"
 
 describe.ifMac("macos keychain", { concurrent: false }, () => {
   test("create keychain", async ({ expect, tmpDir }) => {
     const { p12Base64, password } = await getMacSigningIdentity()
-    const result = await createKeychain({ tmpDir, cscLink: p12Base64, cscKeyPassword: password, currentDir: process.cwd() })
-    expect(result.keychainFile).not.toEqual("")
-    await removeKeychain(result.keychainFile!)
+    await withMacKeychainLock(async () => {
+      const result = await createKeychain({ tmpDir, cscLink: p12Base64, cscKeyPassword: password, currentDir: process.cwd() })
+      expect(result.keychainFile).not.toEqual("")
+      await removeKeychain(result.keychainFile!)
+    })
   })
 
   test("create keychain with installers", async ({ expect, tmpDir }) => {
     const { p12Base64, password } = await getMacSigningIdentity()
-    const result = await createKeychain({ tmpDir, cscLink: p12Base64, cscKeyPassword: password, currentDir: process.cwd() })
-    expect(result.keychainFile).not.toEqual("")
-    await removeKeychain(result.keychainFile!)
+    await withMacKeychainLock(async () => {
+      const result = await createKeychain({ tmpDir, cscLink: p12Base64, cscKeyPassword: password, currentDir: process.cwd() })
+      expect(result.keychainFile).not.toEqual("")
+      await removeKeychain(result.keychainFile!)
+    })
   })
 })
 

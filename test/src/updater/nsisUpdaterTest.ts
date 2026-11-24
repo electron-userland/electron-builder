@@ -16,6 +16,7 @@ import {
   trackEvents,
   tuneTestUpdater,
   validateDownload,
+  windowsExecutable,
   writeRawUpdateConfig,
   writeUpdateConfig,
 } from "../helpers/updaterTestUtil.js"
@@ -51,13 +52,16 @@ function installerName(version: string) {
   return `TestApp Setup ${version}.exe`
 }
 
-function channelYml(options: { version?: string; sha512?: string; stagingPercentage?: number; webInstallerPackage?: { fileName: string; content: Buffer } } = {}): string {
+function channelYml(
+  options: { version?: string; sha512?: string; stagingPercentage?: number; webInstallerPackage?: { fileName: string; content: Buffer }; installer?: Buffer } = {}
+): string {
   const version = options.version ?? UPDATE_VERSION
   const fileName = installerName(version)
-  const sha512 = options.sha512 ?? createHash("sha512").update(INSTALLER_CONTENT).digest("base64")
+  const installer = options.installer ?? INSTALLER_CONTENT
+  const sha512 = options.sha512 ?? createHash("sha512").update(installer).digest("base64")
   const info: any = {
     version,
-    files: [{ url: fileName, sha512, size: INSTALLER_CONTENT.length }],
+    files: [{ url: fileName, sha512, size: installer.length }],
     path: fileName,
     sha512,
     releaseDate: RELEASE_DATE,
@@ -99,10 +103,10 @@ async function serveUpdate(files: Record<string, string | Buffer>): Promise<{ ur
   }
 }
 
-function serveDefaultUpdate() {
+function serveDefaultUpdate(installer: Buffer = INSTALLER_CONTENT) {
   return serveUpdate({
-    "latest.yml": channelYml(),
-    [installerName(UPDATE_VERSION)]: INSTALLER_CONTENT,
+    "latest.yml": channelYml({ installer }),
+    [installerName(UPDATE_VERSION)]: installer,
   })
 }
 
@@ -468,8 +472,9 @@ test.ifWindows("invalid signature", config, async ({ expect }) => {
   }
 })
 
+// the signature is verified against a publisherName, so the ProductVersion of the installer is checked too: serve a PE carrying the update version
 test.ifWindows("test custom signature verifier", config, async ({ expect }) => {
-  const { url, close } = await serveDefaultUpdate()
+  const { url, close } = await serveDefaultUpdate(windowsExecutable([UPDATE_VERSION]))
   try {
     const updater = await createNsisUpdater("1.0.2")
     updater.updateConfigPath = await writeUpdateConfig({
@@ -747,7 +752,11 @@ describe("NsisUpdater — disableWebInstaller", () => {
   // keyed by the test arch, so resolveFiles populates fileInfo.packageInfo → isWebInstaller. Without `payload` no
   // installer/package files are served and the checksums are placeholders — enough for the branches that reject or
   // warn before the download. With `payload` its bytes are served and latest.yml carries their real sha512.
-  async function serveUpdate(web: boolean, payload?: { installer: Buffer; package: Buffer; omitPackageSha512?: boolean; isAdminRightsRequired?: boolean }) {
+  async function serveUpdate(
+    web: boolean,
+    payload?: { installer: Buffer; package: Buffer; omitPackageSha512?: boolean; isAdminRightsRequired?: boolean },
+    packageArch: string = process.arch
+  ) {
     const tmpDir = new TmpDir("web-installer-unit")
     const root = await tmpDir.getTempDir()
     const placeholderSha512 = Buffer.alloc(64).toString("base64")
@@ -764,7 +773,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
       if (payload?.omitPackageSha512 !== true) {
         packageInfo.sha512 = payload == null ? placeholderSha512 : sha512Base64(payload.package)
       }
-      updateInfo.packages = { [process.arch]: packageInfo }
+      updateInfo.packages = { [packageArch]: packageInfo }
     }
     await fsExtra.outputFile(path.join(root, "latest.yml"), serializeToYaml(updateInfo))
     if (payload != null) {
@@ -855,6 +864,34 @@ describe("NsisUpdater — disableWebInstaller", () => {
       expect(actualEvents).not.toContain("update-downloaded")
       expect(downloads).toEqual([])
     } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  // without a package for its arch, a web installer started as an update would abort (it gets no --package-file)
+  test("rejects a web-installer update without a package for the app's arch before downloading it", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(true, WEB_PAYLOAD, "x64")
+    const downloads = trackDownloads(server)
+    const arch = Object.getOwnPropertyDescriptor(process, "arch")
+    Object.defineProperty(process, "arch", { ...arch, value: "arm64" })
+    try {
+      const updater = await createNsisUpdater("1.0.0")
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      updater.disableWebInstaller = false
+      const actualEvents = trackEvents(updater)
+
+      const updateCheckResult = await updater.checkForUpdates()
+      await expect(updateCheckResult!.downloadPromise).rejects.toMatchObject({
+        code: "ERR_UPDATER_NO_WEB_PACKAGE_FOR_ARCH",
+        message: expect.stringContaining("no app package for the arch arm64 (packages: x64)"),
+      })
+      expect(actualEvents).not.toContain("update-downloaded")
+      expect(downloads).toEqual([])
+    } finally {
+      if (arch != null) {
+        Object.defineProperty(process, "arch", arch)
+      }
       server.close()
       await tmpDir.cleanup()
     }
@@ -1257,7 +1294,8 @@ describe("NsisUpdater — package-type pre-seeds disableWebInstaller", () => {
 })
 
 // a failed start of the update installer is not retried elevated or with the shell; EACCES is retried through elevate.exe, which (like
-// for an update with isAdminRightsRequired) is run only when the current user cannot modify it, its folder or the install folder of the app
+// for an update with isAdminRightsRequired) is run only when the current user cannot modify it, its folder or the install folder of the app.
+// Elsewhere an update with isAdminRightsRequired is started directly, which runs it elevated only in an app that runs elevated
 describe("NsisUpdater — installer start failure and elevate.exe", () => {
   afterEach(() => vi.restoreAllMocks())
 
@@ -1271,14 +1309,14 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
   type Writable = "elevate.exe" | "resources" | "install folder"
 
   // The app runs from <root>/TestApp/TestApp.exe with elevate.exe in <root>/TestApp/resources. Writing to `writable` succeeds; the
-  // attempts on the others fail with `deniedCode` (see denyWrites). With `isAdminRightsRequired`, the update is installed through
-  // elevate.exe right away; without it, spawnLog rejects the first start with `startError`. `verifyDownloadedFilesSync` is the re-check
-  // of the downloaded installer before each start, unchanged by default.
+  // attempts on the others fail with `deniedCode` (see denyWrites). spawnLog rejects a start of the installer itself with `startError`
+  // (EACCES: Windows refuses an installer that asks for administrator rights to an app that does not run elevated) and starts elevate.exe.
+  // `verifyDownloadedFilesSync` is the re-check of the downloaded installer before each start, unchanged by default.
   async function install(
     tmpDir: TmpDir,
     options: {
       isAdminRightsRequired: boolean
-      startError?: Error
+      startError?: unknown
       writable?: Array<Writable>
       elevateExe?: boolean
       deniedCode?: string
@@ -1302,12 +1340,9 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
     ;(updater as any).downloadedUpdateHelper = { verifyDownloadedFilesSync: options.verifyDownloadedFilesSync ?? (() => null), clearSync: () => {} }
     const errors: Array<Error> = []
     updater.on("error", (e: Error) => errors.push(e))
-    const spawnLog = vi.spyOn(updater as any, "spawnLog")
-    if (options.startError != null) {
-      spawnLog.mockRejectedValueOnce(options.startError)
-    }
-    // the elevated start succeeds
-    spawnLog.mockResolvedValue(true)
+    const spawnLog = vi
+      .spyOn(updater as unknown as { spawnLog: (file: string, args: Array<string>) => Promise<boolean> }, "spawnLog")
+      .mockImplementation(file => (file === installerPath && options.startError != null ? Promise.reject(options.startError) : Promise.resolve(true)))
 
     const writable = options.writable ?? []
     denyWrites(
@@ -1345,7 +1380,8 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
       expect(spawnLog).toHaveBeenCalledTimes(1)
       expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
       expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_START_FAILED"])
-      expect(errors[0].message).toContain(MIGRATION_LINK)
+      expect(errors[0].message).toContain("Since electron-updater 7, the installer is not started again through elevate.exe or opened with the shell")
+      expect(errors[0].message.slice(-MIGRATION_LINK.length)).toBe(MIGRATION_LINK)
     })
   }
 
@@ -1354,6 +1390,15 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
     const { errors, spawnLog } = await install(tmpDir, { isAdminRightsRequired: false, startError: error })
     expect(spawnLog).toHaveBeenCalledTimes(1)
     expect(errors).toEqual([error])
+  })
+
+  // spawnLog is protected, so a subclass can reject with a value that is not an Error
+  test("a start failure that is not an Error is emitted as one", config, async ({ expect, tmpDir }) => {
+    const { errors, spawnLog } = await install(tmpDir, { isAdminRightsRequired: false, startError: "spawn failed" })
+    expect(spawnLog).toHaveBeenCalledTimes(1)
+    expect(errors).toHaveLength(1)
+    expect(errors[0]).toBeInstanceOf(Error)
+    expect(errors[0].message).toBe("spawn failed")
   })
 
   test("EACCES is not retried through elevate.exe when the installer changed after the first start", config, async ({ expect, tmpDir }) => {
@@ -1368,7 +1413,9 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
     { name: "an update with isAdminRightsRequired", isAdminRightsRequired: true },
     { name: "an installer start failing with EACCES", isAdminRightsRequired: false },
   ]) {
-    const startError = isAdminRightsRequired ? undefined : spawnError("EACCES")
+    // the app does not run elevated, so Windows refuses to start the installer, which asks for administrator rights
+    const startError = spawnError("EACCES")
+    // where elevate.exe may run, an update with isAdminRightsRequired is started through it right away
     const startCalls = isAdminRightsRequired ? 0 : 1
 
     const expectElevated = (expect: ExpectStatic, { result, errors, spawnLog, installerPath, elevatePath }: Awaited<ReturnType<typeof install>>) => {
@@ -1378,14 +1425,16 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
       expect(spawnLog).toHaveBeenLastCalledWith(elevatePath, [installerPath, ...args])
     }
 
-    const expectRefused = (expect: ExpectStatic, { result, errors, spawnLog }: Awaited<ReturnType<typeof install>>, reason: string) => {
+    const expectRefused = (expect: ExpectStatic, { result, errors, spawnLog, installerPath }: Awaited<ReturnType<typeof install>>, reason: string) => {
       expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"])
       expect(errors[0].message).toContain(reason)
-      expect(errors[0].message).toContain("elevate.exe is used only when the current user cannot modify it, its folder or the install folder of the app")
-      expect(errors[0].message).toContain(MIGRATION_LINK)
-      // isAdminRightsRequired is refused before anything is started
-      expect(result).toBe(!isAdminRightsRequired)
-      expect(spawnLog).toHaveBeenCalledTimes(startCalls)
+      expect(errors[0].message).toContain("Since electron-updater 7, elevate.exe is used only when the current user cannot modify it, its folder or the install folder of the app")
+      expect(errors[0].message.slice(-MIGRATION_LINK.length)).toBe(MIGRATION_LINK)
+      // where elevate.exe may not run, an update with isAdminRightsRequired is started directly as well (it runs elevated only if the app
+      // does); Windows refused that start, and elevate.exe is not started after it
+      expect(result).toBe(true)
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
     }
 
     describe(name, () => {
@@ -1448,4 +1497,41 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
       })
     })
   }
+
+  // UAC turned off, the built-in Administrator or Run as administrator: the app can modify elevate.exe and the folders around it, and Windows
+  // starts an installer that asks for administrator rights from it without asking again
+  describe("an update with isAdminRightsRequired in an app that runs elevated", () => {
+    const writable: Array<Writable> = ["elevate.exe", "resources", "install folder"]
+
+    test("starts the installer directly, without elevate.exe", config, async ({ expect, tmpDir }) => {
+      const { result, errors, spawnLog, installerPath } = await install(tmpDir, { isAdminRightsRequired: true, writable })
+      expect(errors).toEqual([])
+      expect(result).toBe(true)
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
+    })
+
+    test("does not retry an installer Windows refuses to start through elevate.exe", config, async ({ expect, tmpDir }) => {
+      const { errors, spawnLog, installerPath } = await install(tmpDir, { isAdminRightsRequired: true, writable, startError: spawnError("UNKNOWN") })
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_START_FAILED"])
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
+    })
+  })
+
+  // any process of the user can modify the folders of an app installed per user, and the app does not run elevated: Windows refuses to start
+  // the per-machine installer, and elevate.exe may not run
+  test("an update cannot switch an app installed per user to a per-machine installation", config, async ({ expect, tmpDir }) => {
+    const { result, errors, spawnLog, installerPath, elevatePath } = await install(tmpDir, {
+      isAdminRightsRequired: true,
+      writable: ["elevate.exe", "resources", "install folder"],
+      startError: spawnError("EACCES"),
+    })
+    expect(result).toBe(true)
+    expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"])
+    expect(errors[0].message).toContain(`but the current user can modify ${elevatePath}`)
+    expect(errors[0].message).toContain("an update cannot switch an app installed per user to a per-machine installation")
+    expect(spawnLog).toHaveBeenCalledTimes(1)
+    expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
+  })
 })

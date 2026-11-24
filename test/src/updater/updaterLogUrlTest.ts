@@ -3,7 +3,7 @@ import { createHash } from "crypto"
 import fsExtra from "fs-extra"
 import type { Server } from "http"
 import * as path from "path"
-import { channelFileNotFoundError } from "electron-updater/src/providers/Provider"
+import { channelFileNotFoundError, getFileList, resolveFiles } from "electron-updater/src/providers/Provider"
 import { afterEach, describe, test } from "vitest"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { createNsisUpdater, makeLogger, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
@@ -52,4 +52,25 @@ test("a provider's channel file error names the URL without its query", ({ expec
   const error = channelFileNotFoundError("latest.yml", new URL("https://gitlab.example.com/api/v4/latest.yml?private_token=token-secret"), new Error("404"))
   expect(error.message).toContain("(https://gitlab.example.com/api/v4/latest.yml)")
   expect(error.message).not.toContain("token-secret")
+})
+
+// update info errors name the files by URL without query, instead of dumping the update info
+test("a file without a checksum is named without its query", ({ expect }) => {
+  const updateInfo: any = { version: "1.1.0", files: [{ url: "https://cdn.example.com/app-1.1.0.exe?X-Amz-Signature=signature-secret", size: 1 }] }
+  expect(() => resolveFiles(updateInfo, new URL("https://example.com/feed/"))).toThrow(
+    expect.objectContaining({ code: "ERR_UPDATER_NO_CHECKSUM", message: expect.stringContaining("for https://cdn.example.com/app-1.1.0.exe") })
+  )
+  expect(() => resolveFiles(updateInfo, new URL("https://example.com/feed/"))).toThrow(expect.objectContaining({ message: expect.not.stringContaining("signature-secret") }))
+})
+
+test("a file without a url nor a checksum still fails with ERR_UPDATER_NO_CHECKSUM", ({ expect }) => {
+  const updateInfo: any = { version: "1.1.0", files: [{ size: 1 }] }
+  expect(() => resolveFiles(updateInfo, new URL("https://example.com/feed/"))).toThrow(
+    expect.objectContaining({ code: "ERR_UPDATER_NO_CHECKSUM", message: expect.stringContaining("for (no url)") })
+  )
+})
+
+test("update info without files names the version, not its packages", ({ expect }) => {
+  const updateInfo: any = { version: "1.1.0", files: [], packages: { x64: { path: "https://cdn.example.com/app-1.1.0-x64.nsis.7z?X-Amz-Signature=signature-secret" } } }
+  expect(() => getFileList(updateInfo)).toThrow(expect.objectContaining({ code: "ERR_UPDATER_NO_FILES_PROVIDED", message: "No files provided for version 1.1.0" }))
 })

@@ -365,7 +365,8 @@ describe("differential download failures fall back to a verified full download, 
         return false
       }
     const oldWithEmptyBlock = blockMap(["A", "X", "C", "Y", "Z"], [BLOCK, BLOCK, BLOCK, BLOCK, 0])
-    const malformedPlans: Array<[string, Override]> = [
+    // the third value: the new map is rejected as malformed when it is loaded, before the planner (doDownload) runs
+    const malformedPlans: Array<[string, Override, boolean?]> = [
       ["a zero-size block after a downloaded range", serveBlockMaps(oldWithEmptyBlock, blockMap(["A", "B", "C", "D", "Z"], [BLOCK, BLOCK, BLOCK, BLOCK, 0]))],
       ["a zero-size block after a copied one", serveBlockMaps(oldWithEmptyBlock, blockMap(["A", "Z", "B", "C", "D"], [BLOCK, 0, BLOCK, BLOCK, BLOCK]))],
       ["a zero-size block between two copies inside a multipart response", serveBlockMaps(oldWithEmptyBlock, blockMap(["B", "A", "Z", "C", "D"], [BLOCK, BLOCK, 0, BLOCK, BLOCK]))],
@@ -374,12 +375,13 @@ describe("differential download failures fall back to a verified full download, 
         serveBlockMaps(blockMap(["A", "H", "C", "Y"], [BLOCK, 0.5, BLOCK, 2 * BLOCK - 0.5]), blockMap(["A", "C", "B", "D"], [BLOCK, BLOCK, BLOCK, BLOCK])),
       ],
       [
-        // the first block is downloaded from [-BLOCK, 0): only its start is out of range
+        // the first block would be downloaded from [-BLOCK, 0): only its start is out of range
         "a negative file offset in the new blockmap",
         serveBlockMaps(blockMap(["A", "X", "C", "Y"], [BLOCK, BLOCK, BLOCK, BLOCK]), blockMap(["B", "A", "C", "D"], [BLOCK, BLOCK, BLOCK, BLOCK], -BLOCK)),
+        true,
       ],
     ]
-    for (const [name, override] of malformedPlans) {
+    for (const [name, override, rejectedBeforePlanning] of malformedPlans) {
       for (const multiRange of [true, false]) {
         test(`${name} is rejected before any range request (${multiRange ? "multi" : "single"}-range)`, async ({ tmpDir }) => {
           const uncaught: Array<unknown> = []
@@ -404,9 +406,11 @@ describe("differential download failures fall back to a verified full download, 
             expect(uncaught).toEqual([])
             expect(rangeRequests()).toEqual([])
             expect(fullDownloads()).toHaveLength(1)
-            expect(doDownload.mock.results).toEqual([
-              { type: "throw", value: expect.objectContaining({ message: expect.stringMatching(/^Invalid (COPY|DOWNLOAD) range .*: malformed blockmap$/) }) },
-            ])
+            expect(doDownload.mock.results).toEqual(
+              rejectedBeforePlanning === true
+                ? []
+                : [{ type: "throw", value: expect.objectContaining({ message: expect.stringMatching(/^Invalid (COPY|DOWNLOAD) range .*: malformed blockmap$/) }) }]
+            )
           } finally {
             doDownload.mockRestore()
             clearTimeout(hangTimer)

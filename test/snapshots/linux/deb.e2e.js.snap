@@ -432,12 +432,11 @@ exports[`deb > deb file associations 3`] = `
 exports[`deb > deb file associations 4`] = `"Test Application (test quite “ #378)"`;
 
 exports[`deb > deb file associations 5`] = `
-"<?xml version="1.0" encoding="utf-8"?>
+"<?xml version="1.0"?>
 <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
 <mime-type type="application/x-example">
   <glob pattern="*.my-app"/>
-    
-  <icon name="x-office-document" />
+  <generic-icon name="x-office-document"/>
 </mime-type>
 </mime-info>"
 `;

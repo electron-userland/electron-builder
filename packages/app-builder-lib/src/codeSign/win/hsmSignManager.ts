@@ -1,5 +1,6 @@
 import { InvalidConfigurationError } from "builder-util"
 import { resolveWindowsSigningConfiguration, WindowsHsmSigningConfig } from "../../options/winOptions.js"
+import { isOfflineModeEnabled } from "../../util/flags.js"
 import { VmManager } from "../../vm/vm.js"
 import type { WinPackager } from "../../winPackager.js"
 import { CustomWindowsSign, getSigntoolFamilyConfig, SigntoolBaseSignManager, WindowsSignTaskConfiguration } from "./signtoolBaseSignManager.js"
@@ -32,7 +33,7 @@ export class HsmSignManager extends SigntoolBaseSignManager {
     const args = ["sign"]
 
     // Timestamping
-    if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
+    if (!isOfflineModeEnabled()) {
       const isRfc3161 = options.isNest || options.hash === "sha256"
       args.push(isRfc3161 ? "/tr" : "/t")
       args.push(isRfc3161 ? signing.rfc3161TimeStampServer || "http://timestamp.digicert.com" : signing.timeStampServer || "http://timestamp.digicert.com")
@@ -47,7 +48,7 @@ export class HsmSignManager extends SigntoolBaseSignManager {
 
     // Modern toolset always requires /fd; no sha1 dual-sign path for HSM
     args.push("/fd", options.hash.toLowerCase())
-    if (process.env.ELECTRON_BUILDER_OFFLINE !== "true" && (options.isNest || options.hash === "sha256")) {
+    if (!isOfflineModeEnabled() && (options.isNest || options.hash === "sha256")) {
       args.push("/td", "sha256")
     }
 

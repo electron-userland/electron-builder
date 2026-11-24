@@ -1,6 +1,6 @@
-import { BlockMap } from "builder-util-runtime"
+import { BlockMap, newError } from "builder-util-runtime"
 import fsExtra from "fs-extra"
-import { blockMapSizeLimit, DifferentialDownloader } from "./DifferentialDownloader.js"
+import { blockMapSizeLimit, DifferentialDownloader, ERR_UPDATER_INVALID_BLOCKMAP } from "./DifferentialDownloader.js"
 import { inflateRawSync } from "zlib"
 
 export class FileWithEmbeddedBlockMapDifferentialDownloader extends DifferentialDownloader {
@@ -20,7 +20,7 @@ export class FileWithEmbeddedBlockMapDifferentialDownloader extends Differential
         blockMapSize <= limit
       )
     ) {
-      throw new Error(`Invalid blockMapSize ${blockMapSize} for a ${fileSize}-byte file (at most ${limit} bytes)`)
+      throw newError(`Invalid blockMapSize ${blockMapSize} for a ${fileSize}-byte file (at most ${limit} bytes)`, ERR_UPDATER_INVALID_BLOCKMAP)
     }
     const offset = fileSize - (blockMapSize + 4)
     this.fileMetadataBuffer = await this.readRemoteBytes(offset, fileSize - 1)
@@ -30,7 +30,16 @@ export class FileWithEmbeddedBlockMapDifferentialDownloader extends Differential
 }
 
 function readBlockMap(data: Buffer, maxOutputLength: number): BlockMap {
-  return JSON.parse(inflateRawSync(data, { maxOutputLength }).toString())
+  let json: Buffer
+  try {
+    json = inflateRawSync(data, { maxOutputLength })
+  } catch (e: unknown) {
+    if (e instanceof Error && "code" in e && e.code === "ERR_BUFFER_TOO_LARGE") {
+      throw newError(`Embedded block map inflates to more than the ${maxOutputLength}-byte limit`, ERR_UPDATER_INVALID_BLOCKMAP)
+    }
+    throw e
+  }
+  return JSON.parse(json.toString())
 }
 
 async function readEmbeddedBlockMapData(file: string): Promise<BlockMap> {
@@ -42,8 +51,8 @@ async function readEmbeddedBlockMapData(file: string): Promise<BlockMap> {
 
     const blockMapSize = sizeBuffer.readUInt32BE(0)
     const limit = blockMapSizeLimit(fileSize)
-    if (blockMapSize > fileSize - sizeBuffer.length || blockMapSize > limit) {
-      throw new Error(`"${file}" declares a ${blockMapSize}-byte block map, more than the file holds or the ${limit}-byte limit`)
+    if (blockMapSize === 0 || blockMapSize > fileSize - sizeBuffer.length || blockMapSize > limit) {
+      throw newError(`"${file}" declares a ${blockMapSize}-byte block map: empty, or more than the file holds or the ${limit}-byte limit`, ERR_UPDATER_INVALID_BLOCKMAP)
     }
     const dataBuffer = Buffer.allocUnsafe(blockMapSize)
     await fsExtra.read(fd, dataBuffer, 0, dataBuffer.length, fileSize - sizeBuffer.length - dataBuffer.length)

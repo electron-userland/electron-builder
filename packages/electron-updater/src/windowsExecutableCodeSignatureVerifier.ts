@@ -66,6 +66,7 @@ export function missingPublisherNameMessage(): string {
     "The update is rejected: app-update.yml has no publisherName to verify its Authenticode signature against. " +
     "Configure one at build time so that electron-builder writes it to app-update.yml: sign the build (electron-builder writes CN=<common name> of the certificate), " +
     "or set win.sign.publisherName to the subject of the certificate that signs your updates. " +
+    "Alternatively, the app can set autoUpdater.publisherName to that subject at runtime. " +
     "To opt out of update signature verification, set win.verifyUpdateCodeSignature: false at build time (in a dev-app-update.yml or updateConfigPath file: verifyUpdateCodeSignature: false). " +
     MISSING_PUBLISHER_NAME_DOCS
   )

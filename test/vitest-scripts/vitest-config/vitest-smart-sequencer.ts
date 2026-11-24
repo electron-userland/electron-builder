@@ -1,6 +1,7 @@
 import { BaseSequencer, TestSpecification } from "vitest/node"
 import { getFileStats, loadCache } from "./cache"
-import { DEFAULT_FILE_MS, SupportedPlatforms } from "./smart-config"
+import { detectHeavyFile } from "./file-discovery"
+import { DEFAULT_FILE_MS, getMaxWorkers, SupportedPlatforms } from "./smart-config"
 
 export default class SmartSequencer extends BaseSequencer {
   readonly cache = loadCache()
@@ -39,7 +40,7 @@ export default class SmartSequencer extends BaseSequencer {
     for (const file of files) {
       const { stat } = getFileStats(this.cache, file)
 
-      if (stat?.hasHeavyTests) {
+      if (stat?.hasHeavyTests || detectHeavyFile(file.moduleId)) {
         heavyFiles.push(file)
       } else {
         regularFiles.push(file)
@@ -64,9 +65,19 @@ export default class SmartSequencer extends BaseSequencer {
       return bScore - aScore
     })
 
-    // Heavy tests run first, then regular tests
-    // This allows heavy tests to claim workers early and run sequentially
-    return [...sortedHeavy, ...sortedRegular]
+    // One worker: heavy tests run first, then regular tests.
+    // Several workers: heavy tests take turns across all of them (vitest-heavy-mutex.ts), so a worker that picks up a heavy file while
+    // another one runs is idle until its turn. Hand the files out heavy first, then one heavy file after every (workers - 1) regular
+    // ones, so the heavy lane is always busy while the other workers keep taking regular files.
+    const workers = getMaxWorkers(currentPlatform)
+    if (workers <= 1 || sortedHeavy.length === 0) {
+      return [...sortedHeavy, ...sortedRegular]
+    }
+    const ordered: TestSpecification[] = []
+    for (const heavy of sortedHeavy) {
+      ordered.push(heavy, ...sortedRegular.splice(0, workers - 1))
+    }
+    return [...ordered, ...sortedRegular]
   }
 }
 

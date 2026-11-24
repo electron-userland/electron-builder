@@ -1,5 +1,5 @@
 name: 'Upload test artifacts'
-description: "Upload this job's Vitest smart-cache, plus its per-shard JSON + blob reports, for the merge job to consume"
+description: "Upload this job's Vitest smart-cache, plus its per-shard JSON + blob reports, for the merge job to consume, and save the test caches it grew"
 inputs:
   name:
     description: "Unique artifact label for this shard/job (e.g. linux-3, windows-0, updater, snap-core24, e2e-apt)"
@@ -37,3 +37,9 @@ runs:
           vitest-blobs/
         retention-days: 1
         if-no-files-found: ignore
+
+    # Every test job ends here, so this is where a job that downloaded Electron zips or toolsets the restored caches lacked saves
+    # them (see the pretest action)
+    - name: Save test caches
+      if: "!cancelled()"
+      uses: $/.github/actions/save-test-caches

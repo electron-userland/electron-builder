@@ -14,6 +14,10 @@ DMG is the standard distribution format for direct-download macOS apps. Users mo
 
 For Mac App Store distribution, see [MAS](mas.md). For system-level installs (kernel extensions, launch daemons), see [PKG](pkg.md).
 
+:::note[Build host]
+DMGs are built on macOS. The dmgbuild runtime that electron-builder downloads and bundles needs a macOS 11 or later build host.
+:::
+
 ## Window Customization
 
 The `window` option controls the Finder window that appears when the DMG is mounted:
@@ -288,7 +292,7 @@ dmg:
 
 **"Multiple license files found" error:** You have both `license_en.txt` and `eula_en.txt` (or two files that resolve to the same language code) in your build resources. Remove the duplicate or use the config-based `license` map to point to the exact file you want.
 
-**CJK license not appearing:** Japanese, Korean, and Chinese plain-text licenses require CJK codec support in the dmgbuild Python runtime. Use `.rtf` format for these languages, or ensure your dmgbuild bundle version is `1.2.5` or later.
+**CJK license not appearing:** Japanese, Korean, and Chinese plain-text licenses require CJK codec support in the dmgbuild Python runtime. The dmgbuild runtime bundled with electron-builder includes it; with a `CUSTOM_DMGBUILD_PATH` runtime that lacks it, use `.rtf` format for these languages.
 
 ## Configuration
 

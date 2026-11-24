@@ -5,7 +5,7 @@ import { lcid } from "../../../util/langs.js"
 import { getLicenseFiles, getNotLocalizedLicenseFile } from "../../../util/license.js"
 import { WinPackager } from "../../../winPackager.js"
 import { NsisOptions } from "./nsisOptions.js"
-import { NsisScriptGenerator } from "./nsisScriptGenerator.js"
+import { NsisScriptGenerator, nsisQuotePath } from "./nsisScriptGenerator.js"
 import { nsisTemplatesDir } from "./nsisUtil.js"
 
 function convertFileToUtf8WithBOMSync(filePath: string): boolean {
@@ -47,12 +47,12 @@ export async function computeLicensePage(packager: WinPackager, options: NsisOpt
         `!insertmacro MUI_PAGE_LICENSE "${path.join(nsisTemplatesDir, "empty-license.txt")}"`,
       ]
     } else {
-      licensePage = [`!insertmacro MUI_PAGE_LICENSE "${license}"`]
+      licensePage = [`!insertmacro MUI_PAGE_LICENSE ${nsisQuotePath(license)}`]
     }
 
     scriptGenerator.macro("licensePage", licensePage)
     if (license.endsWith(".html")) {
-      scriptGenerator.macro("addLicenseFiles", [`File /oname=$PLUGINSDIR\\license.html "${license}"`])
+      scriptGenerator.macro("addLicenseFiles", [`File /oname=$PLUGINSDIR\\license.html ${nsisQuotePath(license)}`])
     }
     return
   }
@@ -67,16 +67,18 @@ export async function computeLicensePage(packager: WinPackager, options: NsisOpt
 
   let defaultFile: string | null = null
   for (const item of licenseFiles) {
+    // checked before the file is rewritten with a BOM
+    const file = nsisQuotePath(item.file)
     unspecifiedLangs.delete(item.langWithRegion)
     convertFileToUtf8WithBOMSync(item.file)
     if (defaultFile == null) {
-      defaultFile = item.file
+      defaultFile = file
     }
-    licensePage.push(`LicenseLangString MUILicense ${lcid[item.langWithRegion] || item.lang} "${item.file}"`)
+    licensePage.push(`LicenseLangString MUILicense ${lcid[item.langWithRegion] || item.lang} ${file}`)
   }
 
   for (const l of unspecifiedLangs) {
-    licensePage.push(`LicenseLangString MUILicense ${lcid[l]} "${defaultFile}"`)
+    licensePage.push(`LicenseLangString MUILicense ${lcid[l]} ${defaultFile}`)
   }
 
   licensePage.push('!insertmacro MUI_PAGE_LICENSE "$(MUILicense)"')
