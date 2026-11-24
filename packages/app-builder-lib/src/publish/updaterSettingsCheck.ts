@@ -13,10 +13,11 @@ const CROSS_ORIGIN_HEADERS = "crossOriginHeaders"
 const BUNDLED_ELECTRON_UPDATER = "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED"
 
 /**
- * An assignment of `crossOriginHeaders` on an object, formatted or minified (`e.crossOriginHeaders=()=>[]`), but not of `null` (electron-updater's
- * own `this.crossOriginHeaders = null`) and not a comparison (`===`, `==`).
+ * An assignment of `crossOriginHeaders` on an object, formatted or minified (`e.crossOriginHeaders=()=>[]`), also with `??=` or `||=`, which set
+ * the property while it is unset, but not with `&&=`, which never sets an unset property (so an app that only uses it still gets the warning);
+ * not of `null` (electron-updater's own `this.crossOriginHeaders = null`) and not a comparison (`===`, `==`).
  */
-const CROSS_ORIGIN_HEADERS_ASSIGNMENT = /\.crossOriginHeaders\s*=(?![=>]|\s*null\b)/g
+const CROSS_ORIGIN_HEADERS_ASSIGNMENT = /\.crossOriginHeaders\s*(?:\?\?|\|\|)?=(?![=>]|\s*null\b)/g
 
 /**
  * `autoUpdater.allowUnverifiedLinuxPackages = false` as formatted code and as minifiers write it (`false` as `!1`). Not

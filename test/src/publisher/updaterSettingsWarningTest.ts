@@ -193,6 +193,29 @@ describe("the scan of the packed app", () => {
     expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": `// ${assignment}${updater}` }))).toBe(false)
   })
 
+  // logical assignments of the app: `??=` and `||=` set the property while it is unset (electron-updater initializes it to null), `&&=` only
+  // replaces a value it already has, so an app that only uses `&&=` still gets the warning
+  const logicalAssignments = [
+    ["formatted", bundledUpdater, (operator: string) => `\nautoUpdater.crossOriginHeaders ${operator} () => [];\n`],
+    ["minified", minifiedBundledUpdater, (operator: string) => `e.autoUpdater.crossOriginHeaders${operator}()=>[],e.autoUpdater.checkForUpdates();`],
+  ] as const
+
+  test.for(logicalAssignments)(
+    "in a %s file that bundles electron-updater, finds an assignment of the app with ??= or ||=",
+    async ([, updater, appAssignment], { expect, tmpDir }) => {
+      for (const operator of ["??=", "||="]) {
+        expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": updater + appAssignment(operator) })), operator).toBe(true)
+      }
+    }
+  )
+
+  test.for(logicalAssignments)(
+    "in a %s file that bundles electron-updater, does not count an assignment of the app with &&=",
+    async ([, updater, appAssignment], { expect, tmpDir }) => {
+      expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": updater + appAssignment("&&=") }))).toBe(false)
+    }
+  )
+
   // a source map's sourcesContent holds the bundled code as a JSON string, and a webpack eval bundle (devtool: "eval", webpack's default in
   // development mode) each module as a JavaScript string: all on one line, with escaped newlines (\n) between the lines of the code
   const sourceMap = (code: string) =>
