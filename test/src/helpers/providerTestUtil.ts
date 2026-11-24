@@ -22,6 +22,21 @@ releaseDate: '2024-01-01T00:00:00.000Z'
 `
 }
 
+/** The nsis-web package of {@link mockWebInstallerYaml}, for the arch of the test process. */
+export function mockWebPackageName(version: string, appName = "my-app"): string {
+  return `${appName}-${version}-${process.arch}.nsis.7z`
+}
+
+/** mockYaml of an nsis-web installer: with the `packages` electron-builder lists for it, one for the arch of the test process. */
+export function mockWebInstallerYaml(version: string, appName = "my-app"): string {
+  return `${mockYaml(version, appName)}packages:
+  ${process.arch}:
+    path: ${mockWebPackageName(version, appName)}
+    sha512: ${MOCK_SHA512}
+    size: 1234
+`
+}
+
 /**
  * mockYaml plus a chain of YAML aliases as releaseNotes: each level references the previous one twice,
  * so a few hundred bytes reach 2^depth values.

@@ -46,7 +46,7 @@ export interface PublishConfiguration {
 
   /**
    * The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything
-   * verifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses
+   * verifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses
    * (release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`
    * overrides it at runtime. A positive integer, or `0` for no limit.
    * @default 10485760
@@ -583,12 +583,12 @@ export interface SpacesOptions extends BaseS3Options {
   readonly provider: "spaces"
 
   /**
-   * The space name.
+   * The space name: 3-63 letters, digits and dashes, starting with a letter or digit.
    */
   readonly name: string
 
   /**
-   * The region (e.g. `nyc3`).
+   * The DigitalOcean region slug (e.g. `nyc3`): three letters followed by one or two digits.
    */
   readonly region: string
 }

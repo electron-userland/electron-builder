@@ -177,7 +177,7 @@ export default class FlatpakTarget extends Target {
   // the custom MIME types of fileAssociations, which the desktop entry lists. flatpak exports the files of share/mime/packages whose
   // name starts with the app id
   private async writeMimeTypes(stageDir: StageDir) {
-    const xml = generateMimeTypeXml(this.packager.fileAssociations, this.packager.appInfo.productName)
+    const xml = generateMimeTypeXml(this.packager.fileAssociations, `${this.packager.appInfo.productName} document`)
     if (xml != null) {
       await outputFile(stageDir.getTempFile(path.join("share", "mime", "packages", `${this.appId}.xml`)), xml)
     }

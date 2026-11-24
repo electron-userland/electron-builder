@@ -38,7 +38,7 @@ It rewrites every change marked **Auto ✓** below. See the [walkthrough](./v26-
 | [`GitlabOptions.vPrefixedTagName` retained](#githuboptions-gitlaboptions-vprefixedtagname) | — | None — still functional; the migrator leaves GitLab entries untouched |
 | [`squirrelWindows.customSquirrelVendorDir` removed](#squirrelwindowscustomsquirrelvendordir) | — | Supply a custom Squirrel bundle via `toolsets.squirrel` (a `ToolsetCustom` object); `migrate-schema` warns but cannot rewrite it (different bundle layout) |
 | [`.customNsisBinary` / `.customNsisResources` removed](#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis) | partial | Originally avail on nsis, nsisWeb, portable. Now combined and moved to a [NSIS Toolset Bundle](../toolsets#custom-nsis-bundle-layout) configured under `toolsets.nsis`. **Manual action required** - [A complete migration guide is available](./v26-to-v27#step-4-custom-nsis-migration-guide). A config that still sets removed key(s) fails the build with a message naming the replacement. (`migrate-schema` warns, cannot convert it). |
-| [`toolsets.*: null` rejected; `appimage: "1.0.2"` retired](#toolsets-null-rejected) | ✓ | `null` entries are removed (unset = `"latest"`); `"1.0.2"` becomes `"1.0.3"` |
+| [`toolsets.*: null` rejected; `appimage` `"1.0.2"` and `"1.2.0"` retired](#toolsets-null-rejected) | ✓ | `null` entries are removed (unset = `"latest"`); `"1.0.2"` becomes `"1.0.3"` and `"1.2.0"` becomes `"1.2.1"` |
 | [Native-module options grouped under `nativeModules`](#native-module-options-nativemodules) | ✓ | `nativeRebuilder` → `rebuildMode`; the `"legacy"` rebuilder is removed (dropped with a warning) |
 | [ASAR options consolidated under `asar`](#asar-options-asar) | ✓ | `asarUnpack` → `asar.unpack`, etc., including platform-level `mac.asarUnpack` → `mac.asar.unpack` (`asar: true` is still valid, just redundant) |
 | [`files` / `extraResources` / `extraFiles` nested under `fileOptions`](#file-options-fileoptions) | ✓ | `files` → `fileOptions.files`, etc., at the root and per platform (`mac.extraResources` → `mac.fileOptions.extraResources`) |
@@ -260,9 +260,9 @@ Of note, `v27` also accepts a `file://` path in the `url` field. A `file://` pat
 
 `migrate-schema` moves `debugLogging` to `installerDebugLogging` (dropping it, with a warning, for `portable`) and removes a `customNsisBinary` that sets nothing else. It cannot convert a custom bundle, so it leaves a `customNsisBinary` with a `url` / `checksum` / `version`, and any `customNsisResources`, in place and warns; the build then fails with the message above until you move them.
 
-### `toolsets.*: null` rejected; `appimage: "1.0.2"` retired {#toolsets-null-rejected}
+### `toolsets.*: null` rejected; `appimage` `"1.0.2"` and `"1.2.0"` retired {#toolsets-null-rejected}
 
-The `null` value is no longer part of the `ToolsetConfig` type, and it is **rejected by schema validation** — each `toolsets.*` property is typed as a `ToolsetCustom` object or a version string, with no `null` branch. Switch `null` → `"latest"` or omit the key entirely; both resolve to the newest bundle. `migrate-schema` removes `null` entries. The `appimage` `"1.0.2"` pin is no longer offered; `migrate-schema` rewrites it to `"1.0.3"`.
+The `null` value is no longer part of the `ToolsetConfig` type, and it is **rejected by schema validation** — each `toolsets.*` property is typed as a `ToolsetCustom` object or a version string, with no `null` branch. Switch `null` → `"latest"` or omit the key entirely; both resolve to the newest bundle. `migrate-schema` removes `null` entries. The `appimage` `"1.0.2"` pin is no longer offered; `migrate-schema` rewrites it to `"1.0.3"`. The `appimage` `"1.2.0"` pin (the default of 27.0.0-alpha.14) was withdrawn because the bundle was missing license files, and a `"1.2.0"` pin fails as an unknown version; `"1.2.1"` is its license-corrected re-release, so use `"1.2.1"` or `"latest"`. `migrate-schema` rewrites `"1.2.0"` to `"1.2.1"`.
 
 What `"latest"` resolves to for each toolset is covered under [Toolset defaults resolve to `"latest"`](./v27-build-changes.md#toolset-defaults-resolve-to-latest-newest-bundle).
 

@@ -477,22 +477,20 @@ describe("block map format detection", () => {
     expect(await fsExtra.pathExists(path.join(helper.cacheDirForPendingUpdate, "current.blockmap"))).toBe(false)
   })
 
-  // blockMapSizeLimit turns any size into a limit of 8 to 64 MiB, so a block map download is never left with the 500 MB default
+  // a differential download is planned against the update's size, so an update without a usable one downloads no block map at all
   test.for([
     { name: "NaN", size: Number.NaN },
     { name: "negative", size: -1 },
-  ])("a $name update size limits the block map downloads to 64 MiB", async ({ size }, { tmpDir, expect }) => {
+  ])("a $name update size downloads no block map", async ({ size }, { tmpDir, expect }) => {
     const server = await serve(tmpDir, { old: OLD_V2, new: NEW_V2 })
     const { updater } = await setUp(tmpDir, null)
     captureLog(updater)
     const downloadToBuffer = vi.spyOn(httpExecutor, "downloadToBuffer")
 
-    await run(updater, server.url, tmpDir, size)
+    // outside test mode this is the fallback to a full download
+    await expect(run(updater, server.url, tmpDir, size)).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_BLOCKMAP", message: expect.stringMatching(/ is invalid \(/) })
 
-    expect(downloadToBuffer.mock.calls.map(([url, options]) => [url.pathname, options.maxSize])).toEqual([
-      ["/app-1.1.0.exe.blockmap", 64 * 1024 * 1024],
-      ["/app-1.0.0.exe.blockmap", 64 * 1024 * 1024],
-    ])
+    expect(downloadToBuffer).not.toHaveBeenCalled()
   })
 
   test("a cached v3 map past the size limit is ignored, and the installed release's map is downloaded", async ({ tmpDir, expect }) => {

@@ -94,6 +94,47 @@ export function detectFilePlatforms(file: string): Set<SupportedPlatforms> | nul
   return sawBlock ? allowed : null
 }
 
+// A test or suite registered with `.heavy` in its chain, e.g. `describe.heavy.ifLinux(` or `test.ifMac.heavy(`, at the start of a
+// statement (so neither a string literal nor a cast such as `(test.heavy as any)(` counts)
+const HEAVY_BLOCK = /^\s*(?:describe|test|it)(?:\.[A-Za-z0-9]+)*\.heavy(?:\.[A-Za-z0-9]+)*\s*\(/
+// The suite module a generated toolset file registers (`import { registerX } from "../../windows/xSuite"`).
+const RELATIVE_IMPORT = /^import\s+[^;]*?from\s+"(\.\.?\/[^"]+)"/gm
+
+function hasHeavyBlock(content: string): boolean {
+  return content.split("\n").some(line => HEAVY_BLOCK.test(line))
+}
+
+/**
+ * Whether a test file has heavy tests (`describe.heavy` / `test.heavy`), which vitest-heavy-mutex.ts runs one at a time across all
+ * workers of a shard. Read statically, like {@link detectFilePlatforms}, so the planner knows before the first run; a generated toolset
+ * file is heavy when the suite module it registers is. Over-approximates a file with only some heavy tests as wholly heavy.
+ */
+export function detectHeavyFile(file: string): boolean {
+  let content: string
+  try {
+    content = fs.readFileSync(file, "utf8")
+  } catch {
+    return false
+  }
+  if (hasHeavyBlock(content)) {
+    return true
+  }
+  if (!/[\\/]generated[\\/]/.test(file)) {
+    return false
+  }
+  for (const [, specifier] of content.matchAll(RELATIVE_IMPORT)) {
+    const suite = path.resolve(path.dirname(file), specifier.endsWith(".ts") ? specifier : `${specifier}.ts`)
+    try {
+      if (hasHeavyBlock(fs.readFileSync(suite, "utf8"))) {
+        return true
+      }
+    } catch {
+      // not a local module
+    }
+  }
+  return false
+}
+
 /**
  * e2e test files build the installer/archive and inspect it; everything else stops at the app directory. Hand-written
  * files are `<name>.e2e.ts`; generated toolset files carry the platform marker in front of the tail, so an ungated suite

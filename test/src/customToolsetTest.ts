@@ -47,6 +47,8 @@ describe("getCustomToolsetPath memoization", { concurrent: false }, () => {
     const p1 = getCustomToolsetPath(toolset, "")
     const p2 = getCustomToolsetPath(toolset, "")
     expect(p1).toBe(p2)
+    // settle before the test's temp dir is removed, or the resolution rejects after the test (an unhandled rejection)
+    await expect(p1).resolves.toBe(dir)
   })
 
   test("concurrent calls resolve to the same path", async ({ expect, tmpDir }) => {
@@ -64,6 +66,7 @@ describe("getCustomToolsetPath memoization", { concurrent: false }, () => {
     const p1 = getCustomToolsetPath(dirToolset(dir1), "")
     const p2 = getCustomToolsetPath(dirToolset(dir2), "")
     expect(p1).not.toBe(p2)
+    await expect(Promise.all([p1, p2])).resolves.toEqual([dir1, dir2])
   })
 
   test("different resourcesDir produces different cache entry", async ({ expect, tmpDir }) => {
@@ -72,6 +75,7 @@ describe("getCustomToolsetPath memoization", { concurrent: false }, () => {
     const p1 = getCustomToolsetPath(toolset, "")
     const p2 = getCustomToolsetPath(toolset, "/some/other/resources")
     expect(p1).not.toBe(p2)
+    await expect(Promise.all([p1, p2])).resolves.toEqual([dir, dir])
   })
 
   test("clearCustomToolsetCache forces re-resolution", async ({ expect, tmpDir }) => {
@@ -81,6 +85,7 @@ describe("getCustomToolsetPath memoization", { concurrent: false }, () => {
     clearCustomToolsetCache()
     const p2 = getCustomToolsetPath(toolset, "")
     expect(p1).not.toBe(p2)
+    await expect(Promise.all([p1, p2])).resolves.toEqual([dir, dir])
   })
 
   test("directory type resolves to the directory path", async ({ expect, tmpDir }) => {

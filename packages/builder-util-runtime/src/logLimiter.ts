@@ -1,3 +1,5 @@
+import { Nullish } from "./index.js"
+
 export type LogLevel = "info" | "warn" | "debug" | "error"
 
 export interface LogLimitOptions {
@@ -10,7 +12,7 @@ export interface LogLimitOptions {
    * its own quota and the counters are garbage-collected with it. Defaults to the limiter itself: once per process
    * for builder-util's `log` singleton, once per updater instance in electron-updater.
    */
-  readonly scope?: object
+  readonly scope?: object | Nullish
 }
 
 /** Any logger with `info`/`warn`/`error` and an optional `debug` — builder-util's `Logger`, electron-updater's `Logger`, `console`. */
@@ -51,7 +53,7 @@ export class LogLimiter {
    * Records one emission of `key` and returns `true` when it is still within `max`; returns `false` (recording
    * nothing) once the limit is reached.
    */
-  take(key: string, max = 1, scope?: object): boolean {
+  take(key: string, max = 1, scope?: object | Nullish): boolean {
     const counts = this.countsFor(scope)
     const count = counts.get(key) ?? 0
     if (count >= max) {
@@ -62,7 +64,7 @@ export class LogLimiter {
   }
 
   /** Whether `key` has already been emitted `max` times — lets a call site skip computing an expensive message. */
-  isExhausted(key: string, max = 1, scope?: object): boolean {
+  isExhausted(key: string, max = 1, scope?: object | Nullish): boolean {
     return (this.existingCounts(scope)?.get(key) ?? 0) >= max
   }
 
@@ -70,7 +72,7 @@ export class LogLimiter {
    * Forgets recorded emissions: of one key (in the default scope, or in `scope`), of every key in `scope`, or —
    * with no arguments — of everything. Intended for tests.
    */
-  reset(key?: string, scope?: object): void {
+  reset(key?: string, scope?: object | Nullish): void {
     if (scope == null) {
       if (key == null) {
         this.ownCounts.clear()
@@ -116,12 +118,12 @@ export class LogLimiter {
   }
 
   /** The counters of `scope` (the limiter's own without one), or `undefined` when nothing has been recorded in `scope` yet. */
-  private existingCounts(scope: object | undefined): Map<string, number> | undefined {
+  private existingCounts(scope: object | Nullish): Map<string, number> | undefined {
     return isWeakMapKey(scope) ? this.scopedCounts.get(scope) : this.ownCounts
   }
 
   /** The counters of `scope` (the limiter's own without one), created on first use. */
-  private countsFor(scope: object | undefined): Map<string, number> {
+  private countsFor(scope: object | Nullish): Map<string, number> {
     if (!isWeakMapKey(scope)) {
       return this.ownCounts
     }
