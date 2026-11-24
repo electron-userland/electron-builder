@@ -243,6 +243,74 @@ function getDefaultConfig(): Configuration {
   }
 }
 
+/**
+ * Configuration fields that hold a credential but match none of the sensitive-name patterns of safeStringifyJson (password, token,
+ * secret, auth, credential, apikey, passphrase, `*key`): a certificate or Snap Store login, as a base64 value or a link to one, and a
+ * PKCS#11 key URI, which can carry the token PIN (`pin-value=`).
+ */
+const CONFIG_SECRET_FIELD_NAMES = ["cscLink", "cscInstallerLink", "pkcs11KeyUri"]
+
+/**
+ * The user info of a URL (`//user:password@`, after a scheme or on its own), up to the last `@` before its path, query or fragment.
+ * Linear: a match starts only at `//` and cannot run past the next `/`.
+ */
+const URL_USER_INFO = /\/\/[^/?#\s]*@/g
+
+/** A URL query, from a `?` up to the next `#`. Linear: a match cannot run past the next `#`. */
+const URL_QUERY = /\?[^#]*/g
+
+/**
+ * `data` (the configuration, a part of it, or an object that holds one, such as a publish configuration or a build event) as JSON for
+ * builder-effective-config.yaml, the debug log and builder-debug.yml, with the secrets it can recognize masked: the values of sensitive
+ * fields at any depth (see safeStringifyJson, plus every cscLink, cscInstallerLink and pkcs11KeyUri) as fingerprints, and in every other
+ * string the user info and the query parameter values of URLs as `<redacted>`.
+ */
+export function safeStringifyConfig(data: unknown, skippedNames: Set<string> = new Set()): string {
+  // a configuration is not server data: every masked value is fingerprinted, so that equal values stay recognizable
+  const json = safeStringifyJson(data, new Set([...CONFIG_SECRET_FIELD_NAMES, ...skippedNames]), Number.POSITIVE_INFINITY)
+  return JSON.stringify(redactUrlCredentials(JSON.parse(json)), null, 2)
+}
+
+/** Redacts, in place, the URL credentials in every string of the parsed JSON. */
+function redactUrlCredentials(value: any): any {
+  if (typeof value === "string") {
+    return value.replace(/\S+/g, redactUrlCredentialsInWord)
+  }
+  if (value != null && typeof value === "object") {
+    for (const key of Object.keys(value)) {
+      value[key] = redactUrlCredentials(value[key])
+    }
+  }
+  return value
+}
+
+/**
+ * `word` (text without whitespace, such as `https://user:password@host/path?token=value` or `--registry=//user:password@host`) with the
+ * user info and the query parameter values of the URLs in it replaced by `<redacted>`; the parameter names are kept. Only text with `//` is
+ * a URL here, so `user@host`, `git@host:owner/repo.git` and `npm:package@1.0.0` stay as they are. Every `?` after the first `//` starts a
+ * query, so a second URL in the same word is covered too.
+ */
+function redactUrlCredentialsInWord(word: string): string {
+  const urlStart = word.indexOf("//")
+  if (urlStart < 0) {
+    return word
+  }
+  const urls = word
+    .slice(urlStart)
+    // `name=value` as `name=<redacted>`, a parameter without `=` as `<redacted>`
+    .replace(
+      URL_QUERY,
+      query =>
+        `?${query
+          .slice(1)
+          .split("&")
+          .map(parameter => (parameter === "" ? parameter : `${parameter.slice(0, parameter.indexOf("=") + 1)}<redacted>`))
+          .join("&")}`
+    )
+    .replace(URL_USER_INFO, "//<redacted>@")
+  return `${word.slice(0, urlStart)}${urls}`
+}
+
 const schemeDataPromise = new Lazy(() => readJson(path.join(import.meta.dirname, "..", "..", "..", "scheme.json")))
 
 export async function validateConfiguration(config: Configuration, debugLogger: DebugLogger) {
@@ -254,7 +322,7 @@ export async function validateConfiguration(config: Configuration, debugLogger: 
     name: `electron-builder ${PACKAGE_VERSION}`,
     postFormatter: (formattedError, error): string => {
       if (debugLogger.isEnabled) {
-        debugLogger.add("invalidConfig", safeStringifyJson(error))
+        debugLogger.add("invalidConfig", safeStringifyConfig(error))
       }
 
       const site = "https://www.electron.build"

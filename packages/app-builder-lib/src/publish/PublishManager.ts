@@ -67,6 +67,7 @@ import { WinPackager } from "../winPackager.js"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
 import { findUpdaterSettingsMentions, UpdaterSettingsMentions, warnAboutUpdaterSettings } from "./updaterSettingsCheck.js"
 import { resolveModule } from "../util/resolve.js"
+import { safeStringifyConfig } from "../util/config/config.js"
 import { parseUrl } from "../util/pathManager.js"
 import { isPublishForPullRequest } from "../util/flags.js"
 import { BUILD_CHANGES_URL } from "../util/config/legacyOptions.js"
@@ -289,7 +290,9 @@ export class PublishManager implements PublishContext {
         this.taskManager.addTask(this.artifactCreatedWithoutExplicitPublishConfig(event))
       } else if (this.isPublish) {
         if (debug.enabled) {
-          debug(`artifactCreated (isPublish: ${this.isPublish}): ${safeStringifyJson(event, new Set(["packager"]))},\n  publishConfig: ${safeStringifyJson(publishConfiguration)}`)
+          debug(
+            `artifactCreated (isPublish: ${this.isPublish}): ${safeStringifyConfig(event, new Set(["packager"]))},\n  publishConfig: ${safeStringifyConfig(publishConfiguration)}`
+          )
         }
         await this.scheduleUpload(publishConfiguration, event, this.getAppInfo(event.packager))
       }
@@ -349,7 +352,7 @@ export class PublishManager implements PublishContext {
         {
           file: log.filePath(event.file),
           reason: "publisher is null",
-          publishConfig: safeStringifyJson(publishConfig),
+          publishConfig: safeStringifyConfig(publishConfig),
         },
         "not published"
       )
@@ -375,7 +378,7 @@ export class PublishManager implements PublishContext {
     const publishConfigs = await getPublishConfigs(platformPackager, target == null ? null : target.options, event.arch, this.isPublish)
 
     if (debug.enabled) {
-      debug(`artifactCreated (isPublish: ${this.isPublish}): ${safeStringifyJson(event, new Set(["packager"]))},\n  publishConfigs: ${safeStringifyJson(publishConfigs)}`)
+      debug(`artifactCreated (isPublish: ${this.isPublish}): ${safeStringifyConfig(event, new Set(["packager"]))},\n  publishConfigs: ${safeStringifyConfig(publishConfigs)}`)
     }
 
     const eventFile = event.file
@@ -821,11 +824,11 @@ export async function getPublishConfigsForUpdateInfo(
     // https://github.com/electron-userland/electron-builder/issues/925#issuecomment-261732378
     // default publish config is github, file should be generated regardless of publish state (user can test installer locally or manage the release process manually)
     const repositoryInfo = await packager.repositoryInfo
-    debug(`getPublishConfigsForUpdateInfo: ${safeStringifyJson(repositoryInfo)}`)
+    debug(`getPublishConfigsForUpdateInfo: ${safeStringifyConfig(repositoryInfo)}`)
     if (repositoryInfo != null && repositoryInfo.type === "github") {
       const resolvedPublishConfig = await getResolvedPublishConfig(packager, { provider: repositoryInfo.type }, arch, false)
       if (resolvedPublishConfig != null) {
-        debug(`getPublishConfigsForUpdateInfo: resolve to publish config ${safeStringifyJson(resolvedPublishConfig)}`)
+        debug(`getPublishConfigsForUpdateInfo: resolve to publish config ${safeStringifyConfig(resolvedPublishConfig)}`)
         return [resolvedPublishConfig]
       }
     }
@@ -1033,7 +1036,7 @@ async function resolvePublishConfigurations(
     return []
   }
 
-  debug(`Explicit publish provider: ${safeStringifyJson(publishers)}`)
+  debug(`Explicit publish provider: ${safeStringifyConfig(publishers)}`)
   return (await Promise.all(
     asArray(publishers).map(it => getResolvedPublishConfig(platformPackager, typeof it === "string" ? { provider: it } : it, arch, errorIfCannot, fallbackPackager))
   )) as PublishConfiguration[]

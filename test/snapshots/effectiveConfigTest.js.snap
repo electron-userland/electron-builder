@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`the effective config and its debug log mask every certificate link and URL credentials 1`] = `
+exports[`the effective config and its debug log mask certificate links, the PKCS#11 key URI and URL credentials 1`] = `
 {
   "linux": [],
 }

@@ -11,7 +11,6 @@ import {
   MAX_FILE_REQUESTS,
   orNullIfFileNotExist,
   sanitizeDirPath,
-  safeStringifyJson,
   serializeToYaml,
   TmpDir,
 } from "builder-util"
@@ -32,7 +31,7 @@ import { Metadata } from "./options/metadata.js"
 import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions, PlannedTargets } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
 import { addTargetsForPlatform, createTargets, NoOpTarget, PlatformBuildPlan, resolvePlatformBuildPlan, resolveTargetNames } from "./targets/targetFactory.js"
-import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
+import { computeDefaultAppDirectory, getConfig, safeStringifyConfig, validateConfiguration } from "./util/config/config.js"
 import { assertNoRemovedEnvVars } from "./util/flags.js"
 import { expandMacro } from "./util/macroExpander.js"
 import { electronUpdaterRequirements } from "./util/electronUpdaterCompatibility.js"
@@ -846,33 +845,7 @@ export interface BuildResult {
   readonly configuration: Configuration
 }
 
-/**
- * Configuration fields that hold a credential but match none of the sensitive-name patterns of safeStringifyJson (password, token,
- * secret, auth, credential, apikey, passphrase, `*key`): a certificate or Snap Store login, as a base64 value or a link to one.
- */
-const CONFIG_SECRET_FIELD_NAMES = new Set(["cscLink", "cscInstallerLink"])
-
-/** The user info (`user:password@`) of a URL at the start of a string, up to the last `@` before the path. */
-const URL_USER_INFO = /^([a-z][a-z0-9+.-]*:\/\/)[^/?#\s]*@/i
-
-/**
- * The configuration for `builder-effective-config.yaml` and the debug log, with every secret masked: the values of sensitive fields
- * at any depth (root, platform and target sections, publish entries, including every `cscLink` / `cscInstallerLink`) and the
- * credentials of URLs (a feed or mirror URL with `user:password@`).
- */
+/** The configuration for `builder-effective-config.yaml` and the debug log, with the secrets safeStringifyConfig recognizes masked. */
 function getSafeEffectiveConfig(configuration: Configuration): string {
-  return serializeToYaml(redactUrlCredentials(JSON.parse(safeStringifyJson(configuration, CONFIG_SECRET_FIELD_NAMES))), true)
-}
-
-/** Redacts the user info of every URL in the parsed JSON, in place. */
-function redactUrlCredentials(value: any): any {
-  if (typeof value === "string") {
-    return value.replace(URL_USER_INFO, "$1<redacted>@")
-  }
-  if (value != null && typeof value === "object") {
-    for (const key of Object.keys(value)) {
-      value[key] = redactUrlCredentials(value[key])
-    }
-  }
-  return value
+  return serializeToYaml(JSON.parse(safeStringifyConfig(configuration)), true)
 }
