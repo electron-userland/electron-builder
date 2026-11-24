@@ -1,14 +1,28 @@
 import { Arch, Platform } from "electron-builder"
 import * as fs from "fs/promises"
-import { app, extractDebMember, resolveDebMember } from "../helpers/packTester"
+import { app, extractDebMember, readDebCompression, resolveDebMember } from "../helpers/packTester"
 
 const defaultDebTarget = Platform.LINUX.createTarget("deb", Arch.x64)
 
 describe.heavy.ifNotWindows("deb", () => {
+  // The other tests get the harness default (gz); this one packs with fpm's own default, xz, end to end.
   test("deb", ({ expect }) =>
-    app(expect, {
-      targets: defaultDebTarget,
-    }))
+    app(
+      expect,
+      {
+        targets: defaultDebTarget,
+        config: {
+          deb: {
+            compression: "xz",
+          },
+        },
+      },
+      {
+        packed: async context => {
+          expect(await readDebCompression(`${context.outDir}/TestApp_1.1.0_amd64.deb`)).toBe("xz")
+        },
+      }
+    ))
 
   test("arm", ({ expect }) => app(expect, { targets: Platform.LINUX.createTarget("deb", Arch.armv7l, Arch.arm64) }))
 
@@ -36,13 +50,21 @@ describe.heavy.ifNotWindows("deb", () => {
     }))
 
   test("top-level exec name", ({ expect }) =>
-    app(expect, {
-      targets: defaultDebTarget,
-      config: {
-        productName: "foo",
-        executableName: "Boo",
+    app(
+      expect,
+      {
+        targets: defaultDebTarget,
+        config: {
+          productName: "foo",
+          executableName: "Boo",
+        },
       },
-    }))
+      {
+        packed: async context => {
+          expect(await readDebCompression(`${context.outDir}/TestApp_1.1.0_amd64.deb`)).toBe("gz")
+        },
+      }
+    ))
 
   test("no quotes for safe exec name", ({ expect }) =>
     app(expect, {

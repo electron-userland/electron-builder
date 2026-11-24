@@ -13,7 +13,7 @@ import { HttpError, MemoLazy, retry, sleep } from "builder-util-runtime"
 import * as crypto from "crypto"
 import type { ProgressBar } from "electron-publish"
 import { MultiProgress } from "electron-publish"
-import { createReadStream, createWriteStream } from "fs"
+import { createReadStream } from "fs"
 import * as fs from "fs/promises"
 import * as os from "os"
 import * as path from "path"
@@ -136,6 +136,72 @@ export function isSafeExtractPath(destPath: string, dir: string): boolean {
   return normalizedDest.startsWith(normalizedDir + path.sep) || normalizedDest === normalizedDir
 }
 
+/**
+ * Creates the missing directories of `target` one level at a time under the real path of the extraction dir,
+ * resolving symlinks after every step, so a symlink extracted earlier cannot redirect a write outside it.
+ * Returns the real path of `target`.
+ */
+async function mkdirInsideRealDir(target: string, dir: string, realDir: string, entryPath: string): Promise<string> {
+  let current = realDir
+  for (const part of path.relative(dir, target).split(path.sep)) {
+    if (part === "") {
+      continue
+    }
+    const next = path.join(current, part)
+    let existed = false
+    try {
+      await fs.mkdir(next)
+    } catch (e: any) {
+      if (e.code !== "EEXIST") {
+        throw e
+      }
+      existed = true
+    }
+    current = await fs.realpath(next)
+    if (!isSafeExtractPath(current, realDir)) {
+      throw new Error(`Symlinked path escapes extraction dir: ${entryPath}`)
+    }
+    // an earlier file entry (or a symlink to one) at this path cannot hold a directory
+    if (existed && !(await fs.stat(current)).isDirectory()) {
+      throw new Error(`Zip entry needs a directory where a file already exists: ${entryPath}`)
+    }
+  }
+  return current
+}
+
+/**
+ * Walks a relative symlink `target` from the real directory holding the link the way the OS would: existing components
+ * are followed by real path, missing ones are joined lexically (a later `..` steps back out of them, and existing components
+ * after that are followed by real path again). Returns false when any step leaves `realDir`. With `finished`, the tree is
+ * complete and a dangling symlink used as an intermediate component is refused too (its meaning would change once its target
+ * appears); during extraction it is not, because its target may simply come later in the archive.
+ */
+async function isLinkTargetInside(realParent: string, target: string, realDir: string, finished: boolean): Promise<boolean> {
+  const parts = target.split(process.platform === "win32" ? /[\\/]/ : "/").filter(part => part !== "" && part !== ".")
+  let current = realParent
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i] === "..") {
+      current = path.dirname(current)
+    } else {
+      current = path.join(current, parts[i])
+      try {
+        current = await fs.realpath(current)
+      } catch (e: any) {
+        if (e.code !== "ENOENT" && e.code !== "ENOTDIR") {
+          throw e
+        }
+        if (finished && i < parts.length - 1 && (await fs.lstat(current).catch(() => null))?.isSymbolicLink()) {
+          return false
+        }
+      }
+    }
+    if (!isSafeExtractPath(current, realDir)) {
+      return false
+    }
+  }
+  return true
+}
+
 async function extractZipStreaming(file: string, dir: string): Promise<void> {
   // Pass 1: read central directory once to collect Unix modes (one seek to EOF)
   const zipDir = await unzipper.Open.file(file)
@@ -147,6 +213,10 @@ async function extractZipStreaming(file: string, dir: string): Promise<void> {
     }
   }
   const isSymlink = (mode: number) => (mode & 0o170000) === 0o120000
+
+  // Lexical checks alone miss chained symlinks, so every write is also confined by real path at write time.
+  const realDir = await fs.realpath(dir)
+  const symlinks: { realParent: string; target: string }[] = []
 
   // Pass 2: stream from byte 0 — no per-entry seeks, no Docker hang.
   // Destroy the read stream in a finally block so the file handle is always released,
@@ -162,28 +232,56 @@ async function extractZipStreaming(file: string, dir: string): Promise<void> {
       const mode = entryModes.get(entry.path) ?? 0
       if (mode > 0 && isSymlink(mode)) {
         const target = (await entry.buffer()).toString()
-        if (path.isAbsolute(target)) {
+        // on Windows a drive-relative target ("C:x") is not absolute but resolves against that drive's current directory,
+        // and a ":" inside a component names an alternate data stream, so any ":" is refused there
+        if (path.isAbsolute(target) || (process.platform === "win32" && target.includes(":"))) {
           throw new Error(`Absolute symlink target blocked: ${target}`)
         }
-        const resolvedTarget = path.resolve(path.dirname(destPath), target)
-        if (!isSafeExtractPath(resolvedTarget, dir)) {
+        const realParent = await mkdirInsideRealDir(path.dirname(destPath), dir, realDir, entry.path)
+        if (!(await isLinkTargetInside(realParent, target, realDir, false))) {
           throw new Error(`Symlink target escapes extraction dir: ${target}`)
         }
-        await fs.mkdir(path.dirname(destPath), { recursive: true })
-        await fs.symlink(target, destPath)
+        await fs.symlink(target, path.join(realParent, path.basename(destPath))).catch((e: any) => {
+          // fs.symlink never replaces an existing path, so a symlink entry at a path an earlier entry holds is refused by name
+          if (e.code === "EEXIST") {
+            throw new Error(`Zip symlink entry would replace an existing file, directory or symlink: ${entry.path}`)
+          }
+          throw e
+        })
+        symlinks.push({ realParent, target })
       } else if (entry.type === "Directory") {
-        await fs.mkdir(destPath, { recursive: true })
+        await mkdirInsideRealDir(destPath, dir, realDir, entry.path)
         entry.autodrain()
       } else {
-        await fs.mkdir(path.dirname(destPath), { recursive: true })
-        await pipeline(entry, createWriteStream(destPath))
+        const realDest = path.join(await mkdirInsideRealDir(path.dirname(destPath), dir, realDir, entry.path), path.basename(destPath))
+        // "wx" refuses an existing path, so a symlink already sitting at the destination is never followed
+        const handle = await fs.open(realDest, "wx").catch(async (e: any) => {
+          if (e.code !== "EEXIST") {
+            throw e
+          }
+          // a duplicate entry replaces the earlier regular file (last one wins, as before); anything else is refused
+          if (!(await fs.lstat(realDest)).isFile()) {
+            throw new Error(`Zip entry would replace an existing symlink or directory: ${entry.path}`)
+          }
+          await fs.unlink(realDest)
+          return fs.open(realDest, "wx")
+        })
+        await pipeline(entry, handle.createWriteStream())
         if (mode > 0) {
-          await fs.chmod(destPath, mode & 0o7777)
+          await fs.chmod(realDest, mode & 0o7777)
         }
       }
     }
   } finally {
     readStream.destroy()
+  }
+
+  // A later entry can turn a component of an earlier symlink's target into a symlink, so re-check every link against
+  // the finished tree: the build writes into this directory afterwards and must not be redirected outside it.
+  for (const { realParent, target } of symlinks) {
+    if (!(await isLinkTargetInside(realParent, target, realDir, true))) {
+      throw new Error(`Symlink target escapes extraction dir: ${target}`)
+    }
   }
 }
 

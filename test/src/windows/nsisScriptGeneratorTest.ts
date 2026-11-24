@@ -14,6 +14,39 @@ describe("NsisScriptGenerator.file", () => {
   })
 })
 
+// A path is written into the script inside double quotes, so a character that ends the string is rejected, not escaped.
+describe("NsisScriptGenerator path sinks", () => {
+  const unsafe = /contains a double quote, line break or NUL character/
+
+  test("addIncludeDir rejects a double quote", ({ expect }) => {
+    expect(() => new NsisScriptGenerator().addIncludeDir('/build/a"\n!system "id')).toThrow(unsafe)
+  })
+
+  test("addPluginDir rejects a NUL character", ({ expect }) => {
+    expect(() => new NsisScriptGenerator().addPluginDir("x86-unicode", "/build/a\0b")).toThrow(unsafe)
+  })
+
+  test("include rejects a line break", ({ expect }) => {
+    expect(() => new NsisScriptGenerator().include("/build/a.nsh\n!system id")).toThrow(unsafe)
+  })
+
+  test("file rejects every character that ends the quoted string, naming the path", ({ expect }) => {
+    for (const name of ['a".ico', "a\r.ico", "a\n.ico", "a\0.ico"]) {
+      const file = `/build/${name}`
+      expect(() => new NsisScriptGenerator().file(null, file), JSON.stringify(name)).toThrow(JSON.stringify(file))
+    }
+  })
+
+  test("quotes ordinary paths, including spaces, $, single quotes and backticks", ({ expect }) => {
+    const gen = new NsisScriptGenerator()
+    gen.addIncludeDir("/build/my dir")
+    gen.addPluginDir("x86-unicode", "/build/plug'ins")
+    gen.include("/build/$x.nsh")
+    gen.file(null, "/build/a`b.ico")
+    expect(gen.build()).toBe(`!addincludedir "/build/my dir"\n!addplugindir /x86-unicode "/build/plug'ins"\n!include "/build/$x.nsh"\nFile "/build/a\`b.ico"\n`)
+  })
+})
+
 describe("nsisEscapeString", () => {
   test("leaves plain strings unchanged", ({ expect }) => {
     expect(nsisEscapeString("Hello World")).toBe("Hello World")

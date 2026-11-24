@@ -15,6 +15,7 @@ import {
   trackEvents,
   tuneTestUpdater,
   validateDownload,
+  windowsExecutable,
   writeRawUpdateConfig,
   writeUpdateConfig,
 } from "../helpers/updaterTestUtil.js"
@@ -37,13 +38,16 @@ function installerName(version: string) {
   return `TestApp Setup ${version}.exe`
 }
 
-function channelYml(options: { version?: string; sha512?: string; stagingPercentage?: number; webInstallerPackage?: { fileName: string; content: Buffer } } = {}): string {
+function channelYml(
+  options: { version?: string; sha512?: string; stagingPercentage?: number; webInstallerPackage?: { fileName: string; content: Buffer }; installer?: Buffer } = {}
+): string {
   const version = options.version ?? UPDATE_VERSION
   const fileName = installerName(version)
-  const sha512 = options.sha512 ?? createHash("sha512").update(INSTALLER_CONTENT).digest("base64")
+  const installer = options.installer ?? INSTALLER_CONTENT
+  const sha512 = options.sha512 ?? createHash("sha512").update(installer).digest("base64")
   const info: any = {
     version,
-    files: [{ url: fileName, sha512, size: INSTALLER_CONTENT.length }],
+    files: [{ url: fileName, sha512, size: installer.length }],
     path: fileName,
     sha512,
     releaseDate: RELEASE_DATE,
@@ -85,10 +89,10 @@ async function serveUpdate(files: Record<string, string | Buffer>): Promise<{ ur
   }
 }
 
-function serveDefaultUpdate() {
+function serveDefaultUpdate(installer: Buffer = INSTALLER_CONTENT) {
   return serveUpdate({
-    "latest.yml": channelYml(),
-    [installerName(UPDATE_VERSION)]: INSTALLER_CONTENT,
+    "latest.yml": channelYml({ installer }),
+    [installerName(UPDATE_VERSION)]: installer,
   })
 }
 
@@ -424,8 +428,9 @@ test.ifWindows("invalid signature", config, async ({ expect }) => {
   }
 })
 
+// the signature is verified against a publisherName, so the ProductVersion of the installer is checked too: serve a PE carrying the update version
 test.ifWindows("test custom signature verifier", config, async ({ expect }) => {
-  const { url, close } = await serveDefaultUpdate()
+  const { url, close } = await serveDefaultUpdate(windowsExecutable([UPDATE_VERSION]))
   try {
     const updater = await createNsisUpdater("1.0.2")
     updater.updateConfigPath = await writeUpdateConfig({
@@ -703,7 +708,11 @@ describe("NsisUpdater — disableWebInstaller", () => {
   // keyed by the test arch, so resolveFiles populates fileInfo.packageInfo → isWebInstaller. Without `payload` no
   // installer/package files are served and the checksums are placeholders — enough for the branches that reject or
   // warn before the download. With `payload` its bytes are served and latest.yml carries their real sha512.
-  async function serveUpdate(web: boolean, payload?: { installer: Buffer; package: Buffer; omitPackageSha512?: boolean; isAdminRightsRequired?: boolean }) {
+  async function serveUpdate(
+    web: boolean,
+    payload?: { installer: Buffer; package: Buffer; omitPackageSha512?: boolean; isAdminRightsRequired?: boolean },
+    packageArch: string = process.arch
+  ) {
     const tmpDir = new TmpDir("web-installer-unit")
     const root = await tmpDir.getTempDir()
     const placeholderSha512 = Buffer.alloc(64).toString("base64")
@@ -720,7 +729,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
       if (payload?.omitPackageSha512 !== true) {
         packageInfo.sha512 = payload == null ? placeholderSha512 : sha512Base64(payload.package)
       }
-      updateInfo.packages = { [process.arch]: packageInfo }
+      updateInfo.packages = { [packageArch]: packageInfo }
     }
     await fsExtra.outputFile(path.join(root, "latest.yml"), serializeToYaml(updateInfo))
     if (payload != null) {
@@ -811,6 +820,34 @@ describe("NsisUpdater — disableWebInstaller", () => {
       expect(actualEvents).not.toContain("update-downloaded")
       expect(downloads).toEqual([])
     } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  // without a package for its arch, a web installer started as an update would abort (it gets no --package-file)
+  test("rejects a web-installer update without a package for the app's arch before downloading it", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(true, WEB_PAYLOAD, "x64")
+    const downloads = trackDownloads(server)
+    const arch = Object.getOwnPropertyDescriptor(process, "arch")
+    Object.defineProperty(process, "arch", { ...arch, value: "arm64" })
+    try {
+      const updater = await createNsisUpdater("1.0.0")
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      updater.disableWebInstaller = false
+      const actualEvents = trackEvents(updater)
+
+      const updateCheckResult = await updater.checkForUpdates()
+      await expect(updateCheckResult!.downloadPromise).rejects.toMatchObject({
+        code: "ERR_UPDATER_NO_WEB_PACKAGE_FOR_ARCH",
+        message: expect.stringContaining("no app package for the arch arm64 (packages: x64)"),
+      })
+      expect(actualEvents).not.toContain("update-downloaded")
+      expect(downloads).toEqual([])
+    } finally {
+      if (arch != null) {
+        Object.defineProperty(process, "arch", arch)
+      }
       server.close()
       await tmpDir.cleanup()
     }
