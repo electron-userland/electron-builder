@@ -1956,7 +1956,7 @@ function withRemovedVersionInfo(result: UpdateCheckResult, logger: LimitedLogger
     configurable: true,
     get: () => {
       logger.warn(
-        "UpdateCheckResult.versionInfo is removed and reads as undefined; read updateInfo instead: `const { updateInfo } = await autoUpdater.checkForUpdates()`. " +
+        "UpdateCheckResult.versionInfo was removed in electron-updater 7 (electron-builder v27) and reads as undefined; read updateInfo instead: `const { updateInfo } = await autoUpdater.checkForUpdates()`. " +
           "See https://www.electron.build/docs/migration/v27-runtime-changes#updatecheckresultversioninfo-is-removed"
       )
       return undefined

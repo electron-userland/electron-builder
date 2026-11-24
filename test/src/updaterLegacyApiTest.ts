@@ -181,7 +181,7 @@ describe("quitAndInstall positional-argument normalization", () => {
 })
 
 describe("the removed UpdateCheckResult.versionInfo", () => {
-  const REMOVED = "UpdateCheckResult.versionInfo is removed"
+  const REMOVED = "UpdateCheckResult.versionInfo was removed in electron-updater 7 (electron-builder v27)"
   const latest: UpdateInfo = {
     version: "2.0.0",
     files: [{ url: "App-2.0.0.deb", sha512: "hash", size: 100 }],
