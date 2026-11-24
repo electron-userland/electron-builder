@@ -149,10 +149,59 @@ describe("the scan of the packed app", () => {
     ["an assignment", "main.js", assignment],
     ["a minified assignment", "dist/main.cjs", 'e.crossOriginHeaders=()=>[],e.checkForUpdates();var s="a/b"'],
     ["an ES module", "main.mjs", 'import { autoUpdater } from "electron-updater"\nautoUpdater.crossOriginHeaders = function () { return [] }'],
-    // an app that bundles electron-updater is not checked: its code mentions the property
-    ["a bundled electron-updater", "dist/main.js", "class AppUpdater {\n  constructor() {\n    this.crossOriginHeaders = null;\n  }\n}\n"],
+    // a file without electron-updater's code: any mention counts
+    ["a mention", "main.js", 'autoUpdater["crossOriginHeaders"] = () => []\n'],
   ])("finds %s in the app directory", async ([, file, code], { expect, tmpDir }) => {
     expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "package.json": "{}", [file]: code }))).toBe(true)
+  })
+
+  // electron-updater's own mentions of the property, as a bundler writes them into the app's JavaScript: formatted (tsc, esbuild) and minified (esbuild)
+  const bundledUpdater =
+    'throw newError(`${subject} requires autoUpdater.crossOriginHeaders: set \\`autoUpdater.crossOriginHeaders = () => []\\` to send none of them.`, "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED");\n' +
+    "class AppUpdater {\n" +
+    "  constructor() {\n" +
+    "    /**\n" +
+    "     * @example autoUpdater.crossOriginHeaders = () => [] // none of them\n" +
+    "     */\n" +
+    "    this.crossOriginHeaders = null;\n" +
+    "    // autoUpdater.crossOriginHeaders = () => [] in a line comment\n" +
+    "    this.crossOriginHeaderPolicy = createCrossOriginHeaderPolicy(() => this.crossOriginHeaders);\n" +
+    "  }\n" +
+    "  check() {\n" +
+    '    if (typeof this.crossOriginHeaders === "function") {\n' +
+    "      return HttpExecutor.crossOriginHeaders(headers, ownHeaders, hop, this.crossOriginHeaderPolicy);\n" +
+    "    }\n" +
+    "  }\n" +
+    "}\n"
+  const minifiedBundledUpdater =
+    'function Ma(n){return _(`${n} requires autoUpdater.crossOriginHeaders: set \\`autoUpdater.crossOriginHeaders = () => []\\` to send none of them.`,"ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED")}' +
+    'var Ua=class{constructor(){this.requestHeaders=null,this.crossOriginHeaders=null,this.feedOrigin=null}check(e){if(typeof this.crossOriginHeaders=="function")return null;return We.crossOriginHeaders(e,s,o)}};'
+
+  test.for([
+    ["formatted", bundledUpdater, "\nautoUpdater.crossOriginHeaders = () => [];\n"],
+    ["minified", minifiedBundledUpdater, "e.autoUpdater.crossOriginHeaders=()=>[],e.autoUpdater.checkForUpdates();"],
+  ])("in a %s file that bundles electron-updater, finds only an assignment of the app", async ([, updater, appAssignment], { expect, tmpDir }) => {
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": updater }))).toBe(false)
+    expect(await findCrossOriginHeadersMention(await createAsar(tmpDir, { "dist/main.js": updater }))).toBe(false)
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": updater + appAssignment }))).toBe(true)
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": appAssignment + updater }))).toBe(true)
+    // the app sets it in another file than the bundle
+    expect(await findCrossOriginHeadersMention(await createAppDir(tmpDir, { "dist/main.js": updater, "dist/updates.js": 'autoUpdater["crossOriginHeaders"] = () => []' }))).toBe(
+      true
+    )
+  })
+
+  test("a bundle that does not assign the property gets the warning, which says to confirm another way of setting it", async ({ expect, tmpDir }) => {
+    const crossOriginWarnings = spyWarnings()
+    await warn(await createProject(tmpDir), await createAppDir(tmpDir, { "dist/main.js": `${bundledUpdater}Object.assign(autoUpdater, { crossOriginHeaders: () => [] })\n` }))
+    expect(crossOriginWarnings()).toHaveLength(1)
+    const [, message] = crossOriginWarnings()[0] as unknown as [Record<string, string>, string]
+    expect(message).toContain("in a file that bundles electron-updater, only an assignment such as autoUpdater.crossOriginHeaders = () => [] counts")
+    expect(message).toContain("If a dependency sets it, or the app sets it in another way, check for updates once from a packaged build to confirm.")
+
+    log.resetLimits()
+    await warn(await createProject(tmpDir), await createAppDir(tmpDir, { "dist/main.js": `${minifiedBundledUpdater}t.crossOriginHeaders=r;` }))
+    expect(crossOriginWarnings()).toHaveLength(1)
   })
 
   test("finds no mention in an app directory without one, inside node_modules or in a file over the size limit", async ({ expect, tmpDir }) => {

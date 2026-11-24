@@ -9,6 +9,15 @@ import { findAppElectronUpdater } from "../util/packageMetadata.js"
 
 const CROSS_ORIGIN_HEADERS = "crossOriginHeaders"
 
+/** An error code that only electron-updater's own code contains: a file with it bundles electron-updater, whose code mentions `crossOriginHeaders` itself. */
+const BUNDLED_ELECTRON_UPDATER = "ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED"
+
+/**
+ * An assignment of `crossOriginHeaders` on an object, formatted or minified (`e.crossOriginHeaders=()=>[]`), but not of `null` (electron-updater's
+ * own `this.crossOriginHeaders = null`) and not a comparison (`===`, `==`).
+ */
+const CROSS_ORIGIN_HEADERS_ASSIGNMENT = /\.crossOriginHeaders\s*=(?![=>]|\s*null\b)/g
+
 /**
  * `autoUpdater.allowUnverifiedLinuxPackages = false` as formatted code and as minifiers write it (`false` as `!1`). Not
  * `allowUnverifiedLinuxPackages=false`: electron-updater's own log messages contain it, so every app that bundles electron-updater would match.
@@ -20,7 +29,7 @@ const MAX_SCANNED_FILE_SIZE = 20 * 1024 * 1024
 
 /** Which electron-updater settings the files of the packed app mention. */
 export interface UpdaterSettingsMentions {
-  /** a file contains `crossOriginHeaders` */
+  /** a file contains `crossOriginHeaders`; a file that bundles electron-updater, an assignment of it (see {@link setsCrossOriginHeaders}) */
   crossOriginHeaders: boolean
   /** a file contains `allowUnverifiedLinuxPackages = false` (see {@link DISALLOWS_UNVERIFIED_LINUX_PACKAGES}) */
   disallowsUnverifiedLinuxPackages: boolean
@@ -33,8 +42,8 @@ export interface UpdaterSettingsMentions {
  * - electron-updater rejects every update check and download of an installed app until the app sets `autoUpdater.crossOriginHeaders`
  *   (`ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`), and cannot recover an app shipped that way: warns when no file of the app contains
  *   the string `crossOriginHeaders`, for an app that ships an electron-updater that may require it (see {@link mayRequireCrossOriginHeaders}).
- *   Accepted trade-off: an app that bundles electron-updater into its own JavaScript contains the string anyway, so the check stays quiet
- *   for bundled apps; it only catches apps that never mention the property.
+ *   A file that bundles electron-updater mentions the property in electron-updater's own code, so in such a file only an assignment of it
+ *   counts: an app that sets it in another way (e.g. `Object.assign`) in the same bundle gets the warning, which says to confirm it.
  * - With `autoUpdater.allowUnverifiedLinuxPackages = false`, an rpm update installs only when the package manager verifies its signature,
  *   and electron-builder does not sign Linux packages: warns, for a pack with an rpm target that writes update info (`packsRpmUpdate`) and an
  *   electron-updater that may honor the property, when a file of the app contains the assignment. It has no effect on deb, pacman or
@@ -81,9 +90,11 @@ export async function warnAboutUpdaterSettings(
           "set autoUpdater.crossOriginHeaders to a function before the app checks for updates, e.g. autoUpdater.crossOriginHeaders = () => [] " +
           "to send none of the app's request headers to another origin than the update feed",
       },
-      "found no mention of crossOriginHeaders in the app's files (outside node_modules). Unless the app sets autoUpdater.crossOriginHeaders to a function, " +
+      "found no mention of crossOriginHeaders in the app's files (outside node_modules); in a file that bundles electron-updater, only an assignment " +
+        "such as autoUpdater.crossOriginHeaders = () => [] counts, because electron-updater's own code mentions it. " +
+        "Unless the app sets autoUpdater.crossOriginHeaders to a function, " +
         "electron-updater rejects every update check and download of the installed app with ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED. " +
-        "If a dependency sets it, check for updates once from a packaged build to confirm. " +
+        "If a dependency sets it, or the app sets it in another way, check for updates once from a packaged build to confirm. " +
         "See https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-headers"
     )
   }
@@ -126,7 +137,7 @@ export async function findUpdaterSettingsMentions(resourcesDir: string): Promise
             return
           }
           const content = await read(file)
-          mentions.crossOriginHeaders ||= content.includes(CROSS_ORIGIN_HEADERS)
+          mentions.crossOriginHeaders ||= content.includes(CROSS_ORIGIN_HEADERS) && (!content.includes(BUNDLED_ELECTRON_UPDATER) || setsCrossOriginHeaders(content.toString()))
           mentions.disallowsUnverifiedLinuxPackages ||= DISALLOWS_UNVERIFIED_LINUX_PACKAGES.some(it => content.includes(it))
         },
       },
@@ -168,4 +179,19 @@ export async function findUpdaterSettingsMentions(resourcesDir: string): Promise
   }
   await scan(appDir, file => readFile(file))
   return mentions
+}
+
+/**
+ * Whether `code`, which bundles electron-updater, assigns `crossOriginHeaders` (see {@link CROSS_ORIGIN_HEADERS_ASSIGNMENT}) outside
+ * electron-updater's own text: the assignment that its error message shows (after a backtick) and its JSDoc examples (in a comment line,
+ * which an unminified bundle keeps).
+ */
+function setsCrossOriginHeaders(code: string): boolean {
+  for (const match of code.matchAll(CROSS_ORIGIN_HEADERS_ASSIGNMENT)) {
+    const line = code.slice(code.lastIndexOf("\n", match.index) + 1, match.index)
+    if (!/`[\w$.]*$/.test(line) && !/^\s*(?:\*|\/\/|\/\*)/.test(line)) {
+      return true
+    }
+  }
+  return false
 }
