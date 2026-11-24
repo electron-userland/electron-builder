@@ -499,7 +499,7 @@ A publishing build whose targets write no update info (for example only snap, fl
 Once a release embeds a public key, its installs are **fail-closed** (electron-updater 7.0.0-alpha.8 and later): an unsigned manifest is rejected with `ERR_UPDATER_MANIFEST_NOT_SIGNED` and those installs stop updating entirely. Do not switch to `updateManifest: false` after shipping signed manifests, and make sure every pipeline that can publish a release — including a hotfix built from a laptop — has the key.
 :::
 
-Note that installs already in the field are unaffected but also unprotected: they carry whatever `app-update.yml` they shipped with, so those built before you adopted signing keep accepting unsigned manifests. Full protection begins with the installs built after the public key was embedded.
+Note that installs already in the field are unaffected but also unprotected: they carry whatever `app-update.yml` they shipped with, so those built before you adopted signing keep accepting unsigned manifests. Full protection begins with the installs built after the public key was embedded, with electron-updater 7.0.0-alpha.8 or later.
 
 If you run [staged rollouts](../features/auto-update.md#staged-rollouts) by editing `stagingPercentage` in `latest*.yml`, sign the file again after every change: `stagingPercentage` is covered by the signature, and a manifest edited without signing it again is rejected with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID` by every install that embeds the public key (electron-updater 7.0.0-alpha.8 and later).
 
@@ -509,7 +509,7 @@ See [Signed Update Manifests](../features/signed-update-manifests.md) and [Key R
 
 **How you'll find out:** **Fails the build** when publishing. **Warns** otherwise.
 
-When `updateManifest.publicKey` is set explicitly, it is the whole trust list embedded in `app-update.yml`. If none of the keys the build signs `latest*.yml` with is in that list, installs of the release reject manifests signed with the current key(s), and every later release has to be signed by a listed key. Earlier v27 pre-releases only warned about this; a **publishing** build now fails at build start, before anything is packed or uploaded, with an `InvalidConfigurationError` that names the key ids of the signing keys and of the listed keys (never key material). A build without a publish policy still only warns.
+When `updateManifest.publicKey` is set explicitly, it is the whole trust list embedded in `app-update.yml`. If none of the keys the build signs `latest*.yml` with is in that list, installs of the release (electron-updater 7.0.0-alpha.8 and later) reject manifests signed with the current key(s), and every later release has to be signed by a listed key. Earlier v27 pre-releases only warned about this; a **publishing** build now fails at build start, before anything is packed or uploaded, with an `InvalidConfigurationError` that names the key ids of the signing keys and of the listed keys (never key material). A build without a publish policy still only warns.
 
 **Action:**
 
