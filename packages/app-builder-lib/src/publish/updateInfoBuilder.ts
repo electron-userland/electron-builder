@@ -257,7 +257,9 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
     const key = `${task.file}@${safeStringifyJson(task.publishConfiguration, new Set(["releaseType"]), Number.POSITIVE_INFINITY)}`
     const existingTask = updateChannelFileToInfo.get(key)
     if (existingTask == null) {
-      updateChannelFileToInfo.set(key, task)
+      // the other artifacts' files are merged into a copy: createUpdateInfoTasks gives the tasks of every channel and publish
+      // configuration of an artifact the same info, so merging into its files listed them once per channel file
+      updateChannelFileToInfo.set(key, { ...task, info: { ...task.info, files: [...task.info.files] } })
       continue
     }
 

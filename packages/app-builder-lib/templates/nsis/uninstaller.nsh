@@ -4,6 +4,8 @@ FunctionEnd
 
 Function un.onInit
   SetOutPath $INSTDIR
+  # With installerDebugLogging, NSIS keeps $INSTDIR\install.log open from here on, and un.atomicRMDir leaves it in place. It stays in
+  # $INSTDIR, which only admins can write for a per-machine install: the elevated uninstaller must not log to a fixed path in %TEMP%.
   ${LogSet} on
   
   !insertmacro check64BitAndSetRegView
@@ -66,6 +68,10 @@ Function un.atomicRMDir
       Goto continue
 
     isNotDir:
+      !ifdef ENABLE_LOGGING_ELECTRON_BUILDER
+        # held open by this uninstaller's log (or, with /D=, by the installer's): moving it aside fails, and the update aborted
+        StrCmp "$R0\$R2" "\install.log" continue
+      !endif
       ClearErrors
       Rename "$INSTDIR$R0\$R2" "$PLUGINSDIR\old-install$R0\$R2"
 

@@ -358,7 +358,12 @@ export abstract class BaseUpdater extends AppUpdater {
       return true
     }
     this.rejectDownloadedUpdate(
-      newError(`The downloaded update is not installed: ${failure}. It is removed and will be downloaded again on the next update check.`, "ERR_UPDATER_UPDATE_FILE_CHANGED")
+      newError(
+        `The downloaded update is not installed: ${failure}. It is removed and will be downloaded again on the next update check. ` +
+          "Since electron-updater 7, a downloaded update is hashed again right before it is installed. " +
+          "See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed",
+        "ERR_UPDATER_UPDATE_FILE_CHANGED"
+      )
     )
     return false
   }
@@ -588,7 +593,16 @@ export abstract class BaseUpdater extends AppUpdater {
         // ignore
       })
 
-    const signatureFailure = verificationFailureMessage(await this.verifyInstallerSignatureOnLaunch(installerPath, updateInfoAndProvider))
+    let signatureResult: VerifyUpdateFileResult
+    try {
+      signatureResult = await this.verifyInstallerSignatureOnLaunch(installerPath, updateInfoAndProvider)
+    } catch (e: unknown) {
+      // a verification that cannot decide (e.g. ERR_UPDATER_NO_PUBLISHER_NAME) rejects the pending update like a failed one
+      await clearPendingCache()
+      this.dispatchError(e instanceof Error ? e : new Error(String(e)))
+      return false
+    }
+    const signatureFailure = verificationFailureMessage(signatureResult)
     if (signatureFailure != null) {
       await clearPendingCache()
       this.dispatchError(newError(`Pending update ${latestInfo.version} is not signed by the application owner: ${signatureFailure}`, "ERR_UPDATER_INVALID_SIGNATURE"))

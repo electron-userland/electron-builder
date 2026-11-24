@@ -388,26 +388,29 @@ export interface DmgOptions extends TargetSpecificOptions {
   writeUpdateInfo?: boolean
 }
 
+/**
+ * With a background image (the default), each unset value is derived from the image. With `backgroundColor`, the unset values of a set
+ * `window` use fixed defaults; without `window`, dmgbuild's own window defaults apply.
+ */
 export interface DmgWindow {
   /**
-   * The X position relative to left of the screen.
-   * @default 400
+   * The X position relative to left of the screen. Defaults to 400 with a background image, or 100 with `backgroundColor`.
    */
   x?: number
 
   /**
-   * The Y position relative to bottom of the screen.
-   * @default 100
+   * The Y position relative to bottom of the screen. Defaults to (1440 - background image height) / 2, rounded, with a background image,
+   * or 400 with `backgroundColor`.
    */
   y?: number
 
   /**
-   * The width. Defaults to background image width or 540.
+   * The width. Defaults to the background image width (540 for the default background), or 540 with `backgroundColor`.
    */
   width?: number
 
   /**
-   * The height. Defaults to background image height or 380.
+   * The height. Defaults to the background image height (380 for the default background), or 300 with `backgroundColor`.
    */
   height?: number
 }

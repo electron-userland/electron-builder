@@ -13,7 +13,7 @@ import { TestAppAdapter } from "../helpers/TestAppAdapter.js"
 // A challenge nothing answers is cancelled: the callback is called without credentials.
 
 const DOWNLOAD_URL = new URL("https://downloads.example.net/TestApp-Setup-1.1.0.exe")
-const LOGIN_DOCS = "https://www.electron.build/docs/features/auto-update#event-login"
+const LOGIN_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
 
 function challenge(host: string, port: number, isProxy = false): AuthInfo {
   return { isProxy, scheme: "basic", host, port, realm: "updates" }

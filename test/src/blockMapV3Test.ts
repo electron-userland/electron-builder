@@ -347,3 +347,32 @@ describe("blockMapV2ToV3Keys (comparing a v2 map with a v3 map)", () => {
     expect(ms).toBeLessThan(5000)
   })
 })
+
+describe("block map v3 maps that cannot be planned on", () => {
+  test("an empty map (a 0-byte file, or a file without blocks) is rejected", ({ expect }) => {
+    for (const fileSize of [0, 4096]) {
+      const buf = encodeBlockMapV3([], { fileSize, defaultChunker: DEFAULT })
+      expect(() => decodeBlockMapV3(buf)).toThrow(`empty map (fileSize ${fileSize}, blocks 0)`)
+      expect(() => checkBlockMapV3Header(parseBlockMapV3Header(buf))).toThrow(`empty map (fileSize ${fileSize}, blocks 0)`)
+    }
+  })
+
+  test("a region that is empty or extends past the file is rejected", ({ expect }) => {
+    const blocks = makeBlocks(20, 1)
+    const fileSize = blocks.reduce((s, b) => s + b.size, 0)
+    const offset = blocks[5].offset
+    const encodeWith = (size: number) => encodeBlockMapV3(blocks, { fileSize, defaultChunker: DEFAULT, regions: [{ offset, size, min: 512, avg: 1024, max: 2048 }] })
+    expect(() => parseBlockMapV3Header(encodeWith(0))).toThrow(/region 0 .* is empty or extends past/)
+    expect(() => parseBlockMapV3Header(encodeWith(fileSize - offset + 1))).toThrow(/region 0 .* is empty or extends past/)
+    expect(parseBlockMapV3Header(encodeWith(fileSize - offset)).regions).toHaveLength(1)
+  })
+
+  test("blocks that do not cover the file size are rejected", ({ expect }) => {
+    const blocks = makeBlocks(20, 1)
+    const fileSize = blocks.reduce((s, b) => s + b.size, 0)
+    expect(decodeBlockMapV3(encodeBlockMapV3(blocks, { fileSize, defaultChunker: DEFAULT })).records).toHaveLength(20)
+    expect(() => decodeBlockMapV3(encodeBlockMapV3(blocks, { fileSize: fileSize + 1, defaultChunker: DEFAULT }))).toThrow(
+      `blocks cover ${fileSize} bytes, file size is ${fileSize + 1}`
+    )
+  })
+})

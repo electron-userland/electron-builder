@@ -21,8 +21,14 @@ export function isRemoveStageDirEvenIfDebug() {
   return isEnvTrue(process.env.ELECTRON_BUILDER_REMOVE_STAGE_EVEN_IF_DEBUG)
 }
 
+/**
+ * Only `true` or `1` count: unlike the other boolean flags, an empty value does not. Offline mode drops
+ * the timestamp from Windows signatures, and a CI template that maps an unset variable into the
+ * environment exports an empty value — that must not silently ship untimestamped release binaries.
+ */
 export function isOfflineModeEnabled() {
-  return isEnvTrue(process.env.ELECTRON_BUILDER_OFFLINE)
+  const value = process.env.ELECTRON_BUILDER_OFFLINE?.trim()
+  return value === "true" || value === "1"
 }
 
 // ─── Publishing ───────────────────────────────────────────────────────────────
