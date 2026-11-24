@@ -88,9 +88,9 @@ electron-builder no longer inspects `npm_lifecycle_event`: naming your npm/yarn/
 
 ### Removed flags: `--em.build`, `--em.directories` {#removed-flags-embuild-emdirectories}
 
-**How you'll find out:** **Fails the build.** On the command line, a literal `--em.build` / `--em.directories` flag fails as an unknown argument (`Unknown argument: em`, printed after the CLI help), as it did in v26, and the message does not link here. A `build` or `directories` key under `extraMetadata`, and an `em` option passed to the `build()` API, fail with an error that links here.
+**How you'll find out:** **Fails the build.** On the command line, a literal `--em.build` / `--em.directories` flag fails as an unknown argument (`Unknown argument: em`, printed after the CLI help), as it did in v26, and the message does not link here. A `build` or `directories` key under `extraMetadata` fails the build, as it did in v26, and an `em` option passed to the `build()` API fails too; both errors link here.
 
-The `--em` (`--extraMetadata`) command-line option was removed in electron-builder v20.0.0. A `build` or `directories` key under `extraMetadata`, which is what these flags used to set, fails the build whether it comes from the command line (`-c.extraMetadata.build…`) or from your config file. `extraMetadata` only changes the packaged app's `package.json`, so those keys do not configure the build: `build` is stripped from it and `directories` is shipped in it. Other `extraMetadata` keys are unaffected.
+The `--em` (`--extraMetadata`) command-line option was removed in electron-builder v20.0.0. A `build` or `directories` key under `extraMetadata`, which is what these flags used to set, fails the build, as in v26, whether it comes from the command line (`-c.extraMetadata.build…`) or from your config file. `extraMetadata` only changes the packaged app's `package.json`, so those keys do not configure the build: `build` is stripped from it and `directories` is shipped in it. Other `extraMetadata` keys are unaffected.
 
 | Removed flag | Replacement |
 |---|---|
