@@ -118,7 +118,8 @@ export function checkBuildRequestOptions(options: PackagerOptions & PublishOptio
   for (const optionName of Object.keys(options)) {
     if (!expectedOptions.has(optionName) && (options as any)[optionName] !== undefined) {
       if (optionName === "em") {
-        // any literal `--em.*` flag on the command line
+        // an `em` option passed to the build API (what a literal `--em.*` flag parses to). The electron-builder CLI never gets here:
+        // its yargs strict mode rejects that flag as an unknown argument first
         throw new InvalidConfigurationError(
           "The `--em.*` flags (`--em.build`, `--em.directories`) are not supported in electron-builder v27.\n" +
             "  Pass build configuration with `-c` (e.g. `-c.directories.output=dist`), and package.json properties with `-c.extraMetadata.<name>`.\n" +

@@ -221,7 +221,7 @@ function checkFileOptionsShape(config: Record<string, any>, errors: string[]): v
 
 /**
  * `extraMetadata` is merged into the packaged app's `package.json`, so a `build` or `directories` key there (the keys
- * `--em.build` / `--em.directories` set) never configures the build: `build` is stripped from the packaged package.json
+ * the removed `--em.build` / `--em.directories` flags used to set) never configures the build: `build` is stripped from the packaged package.json
  * and `directories` is shipped in it. Both are rejected so that neither is silently ignored.
  */
 function checkExtraMetadata(config: Record<string, any>, errors: string[]): void {

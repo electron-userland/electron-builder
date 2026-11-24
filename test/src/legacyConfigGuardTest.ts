@@ -359,7 +359,9 @@ describe("checkLegacyConfiguration — extraMetadata.build / extraMetadata.direc
     expect(() => checkLegacyConfiguration({ extraMetadata: null } as any)).not.toThrow()
   })
 
-  test("a literal --em.build / --em.directories on the command line names electron-builder v27, -c and the build-changes section", () => {
+  // covers an `em` option passed to the build API, as normalizeOptions produces it from a parsed --em.* flag: the build command's yargs
+  // options are parsed here without the CLI's strict mode, which rejects the flag before this check (next test)
+  test("an em option passed to the build API (from --em.build / --em.directories via normalizeOptions) names electron-builder v27, -c and the build-changes section", () => {
     const yargs = createYargs()
     configureBuildCommand(yargs)
     for (const flag of ["--em.build.appId=com.example.app", "--em.directories.output=dist"]) {
@@ -368,6 +370,21 @@ describe("checkLegacyConfiguration — extraMetadata.build / extraMetadata.direc
       expect(() => checkBuildRequestOptions(options)).toThrow(
         /`--em\.\*` flags .* are not supported in electron-builder v27\.\n[\s\S]*`-c`[\s\S]*removed-flags-embuild-emdirectories/
       )
+    }
+  })
+
+  // mirrors cli.ts (not imported: it parses process.argv on import), which registers configureBuildCommand, declaring no `em` option, as the
+  // default command in yargs strict mode: a literal flag fails as an unknown argument before the build handler (and checkBuildRequestOptions)
+  // runs, so the command line never gets the error above
+  test("on the command line, yargs strict mode rejects --em.build / --em.directories as an unknown argument before the build runs", async () => {
+    for (const flag of ["--em.build.appId=com.example.app", "--em.directories.output=dist"]) {
+      const buildHandler = vi.fn()
+      const cli = createYargs().command(["build", "*"], "Build", configureBuildCommand, buildHandler).strict()
+      const error = await new Promise<Error | undefined>(resolve => {
+        void cli.parse(flag, {}, parseError => resolve(parseError))
+      })
+      expect(error?.message).toBe("Unknown argument: em")
+      expect(buildHandler).not.toHaveBeenCalled()
     }
   })
 
