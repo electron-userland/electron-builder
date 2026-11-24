@@ -1,7 +1,7 @@
 import { getMakeNsisPath } from "app-builder-lib/src/toolsets/nsis"
 import { serializeToYaml, spawnAndWriteWithOutput } from "builder-util"
 import { GenericServerOptions, UpdateInfo } from "builder-util-runtime"
-import { NsisUpdater } from "electron-updater"
+import { NsisUpdater, type VerifyUpdateFileAuthenticodeSignature, type VerifyUpdateFileResult } from "electron-updater"
 import { readExecutableProductVersions } from "electron-updater/src/windowsExecutableVersion"
 import { createHash } from "crypto"
 import fsExtra from "fs-extra"
@@ -362,6 +362,56 @@ describe("NsisUpdater installer version check", () => {
       await expect((await updater.checkForUpdates())?.downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_INSTALLER_VERSION_MISMATCH" })
       expect(events).toEqual(["checking-for-update", "update-available", "error"])
       expect(requests.filter(url => url.includes(".exe"))).toEqual([])
+    })
+
+    // a cached installer is verified as a downloaded one is: its signature first, then its ProductVersion. Each case fails when the reuse
+    // runs only one of the two checks
+    test.for<[string, VerifyUpdateFileResult, string, boolean]>([
+      ["accepted", { response: "success" }, "ERR_UPDATER_INSTALLER_VERSION_MISMATCH", true],
+      ["rejected", { response: "failure", message: "signed by someone else" }, "ERR_UPDATER_INVALID_SIGNATURE", false],
+    ])("a cached installer whose signature is %s is verified before its ProductVersion when it is reused", async ([, signature, code, isVersionChecked], { expect, tmpDir }) => {
+      const root = await tmpDir.getTempDir({ prefix: "installer-version-server" })
+      const installer = windowsExecutable(["1.1.0"])
+      const sha512 = createHash("sha512").update(installer).digest("base64")
+      const writeManifest = (version: string) =>
+        fsExtra.outputFile(
+          path.join(root, "latest.yml"),
+          serializeToYaml({ version, files: [{ url: "TestApp-Setup-1.1.0.exe", sha512, size: installer.length }], releaseDate: "2024-01-01T00:00:00.000Z" })
+        )
+      await fsExtra.outputFile(path.join(root, "TestApp-Setup-1.1.0.exe"), installer)
+      await writeManifest("1.1.0")
+      const requests: Array<string> = []
+      const { server, port } = await createLocalServer(root, "127.0.0.1", url => requests.push(url))
+      servers.push(server)
+      const app = await createTestAppAdapter("1.0.0")
+      const config = await signedConfig(`http://127.0.0.1:${port}`)
+      const launch = (verify: VerifyUpdateFileAuthenticodeSignature) => {
+        const updater = new NsisUpdater(null, app)
+        tuneTestUpdater(updater)
+        updater.updateConfigPath = config
+        updater.verifyUpdateFileAuthenticodeSignature = verify
+        return updater
+      }
+
+      const cached = await (await launch(() => Promise.resolve({ response: "success" })).checkForUpdates())?.downloadPromise
+      // a later launch: the feed announces 1.2.0 with the checksum of the cached 1.1.0 installer
+      await writeManifest("1.2.0")
+      requests.length = 0
+      const verify = vi.fn<VerifyUpdateFileAuthenticodeSignature>(() => Promise.resolve(signature))
+      const updater = launch(verify)
+      const verifyInstallerVersion = vi.spyOn(updater as unknown as { verifyInstallerVersion: (installerPath: string, update: unknown) => Promise<void> }, "verifyInstallerVersion")
+
+      await expect((await updater.checkForUpdates())?.downloadPromise).rejects.toMatchObject({ code })
+      expect(verify).toHaveBeenCalledTimes(1)
+      expect(verify).toHaveBeenCalledWith(["CN=Test"], cached?.updateFile)
+      expect(verifyInstallerVersion).toHaveBeenCalledTimes(isVersionChecked ? 1 : 0)
+      if (isVersionChecked) {
+        expect(verifyInstallerVersion).toHaveBeenCalledWith(cached?.updateFile, expect.objectContaining({ info: expect.objectContaining({ version: "1.2.0" }) }))
+        expect(verify.mock.invocationCallOrder[0]).toBeLessThan(verifyInstallerVersion.mock.invocationCallOrder[0])
+      }
+      // reused, not downloaded again, and removed once rejected
+      expect(requests.filter(url => url.includes(".exe"))).toEqual([])
+      expect(await fsExtra.pathExists(cached?.updateFile ?? "")).toBe(false)
     })
 
     // the pending installer is matched to the latest update info by sha512 only, so a manifest of a newer version could otherwise install it
