@@ -1413,6 +1413,8 @@ describe("createDefaultCrossOriginHeaderPolicy", () => {
     "Accept-Encoding": "gzip",
     "Accept-Language": "en",
     "Cache-Control": "no-cache",
+    "Content-Encoding": "gzip",
+    "Content-Language": "en",
     "Content-Length": 3,
     "Content-Type": "application/octet-stream",
     "If-Match": '"a"',
@@ -1430,13 +1432,31 @@ describe("createDefaultCrossOriginHeaderPolicy", () => {
     expect(policy({ ...headersWithoutCredential(), "X-Api-Token": "secret", Authorization: "token t", Cookie: "c=1", "X-Tenant": "acme" }, hop)).toEqual(headersWithoutCredential())
   })
 
-  test("gives onDropped the lowercase names of the headers it leaves out, once each and never their values, and only when it leaves one out", ({ expect }) => {
+  test("gives onDropped the lowercase names of the headers it leaves out that v26 sent on, once each and never their values", ({ expect }) => {
     const onDropped = vi.fn()
     const policy = createDefaultCrossOriginHeaderPolicy(onDropped)
-    policy({ ...headersWithoutCredential(), "X-Api-Token": "secret", "x-api-token": "secret", Authorization: "token t", "X-Unset": undefined }, hop)
-    expect(onDropped).toHaveBeenCalledExactlyOnceWith(["x-api-token", "authorization"], hop)
+    policy({ ...headersWithoutCredential(), "X-Api-Token": "secret", "x-api-token": "secret", "X-Tenant": "acme", Authorization: "token t", "X-Unset": undefined }, hop)
+    expect(onDropped).toHaveBeenCalledExactlyOnceWith(["x-api-token", "x-tenant"], hop)
+  })
+
+  test("does not call onDropped when it leaves out none, or only the credential headers v26 left out too", ({ expect }) => {
+    const onDropped = vi.fn()
+    const policy = createDefaultCrossOriginHeaderPolicy(onDropped)
     policy(headersWithoutCredential(), hop)
-    expect(onDropped).toHaveBeenCalledOnce()
+    // the nine names v26 never sent to another origin, whatever their case and separators
+    const v26Dropped = {
+      Authorization: "token t",
+      "Proxy-Authorization": "Basic p",
+      Cookie: "c=1",
+      PRIVATE_TOKEN: "glpat",
+      "x-api-key": "k",
+      "X-Auth-Token": "t",
+      XAccessToken: "a",
+      "X-GitLab-Token": "g",
+      "x-csrf-token": "c",
+    }
+    expect(policy({ ...headersWithoutCredential(), ...v26Dropped }, hop)).toEqual(headersWithoutCredential())
+    expect(onDropped).not.toHaveBeenCalled()
   })
 })
 

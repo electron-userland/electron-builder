@@ -9,23 +9,24 @@ import { isEmptyOrSpaces } from "./stringUtil.js"
 
 const DEFAULT_CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-developer-changes#builder-util-runtime-default-cross-origin-headers"
 
-// builder-util-runtime's default policy, announcing the v27 change: once per process for each set of left-out header names, which it names
-// with both origins, never a value
+// builder-util-runtime's default policy, announcing the v27 change: once per process for each set of header names it leaves out that v26 sent
+// there, naming them and both origins, never a value
 const defaultCrossOriginHeaderPolicy = createDefaultCrossOriginHeaderPolicy((headerNames, hop) => {
   const names = [...headerNames].sort().join(", ")
   log
     .once(`cross-origin-headers-dropped:${names}`)
     .warn(
-      `electron-builder v27 sends only the request headers that carry no credential (Accept, Content-Type, Range, User-Agent and the like) on a redirect to another origin, ` +
-        `so the redirect from ${hop.from.origin} to ${hop.to.origin} was sent without ${names}; electron-builder v26 sent every header there but Authorization, Cookie and a few other credential headers. ` +
-        `If ${hop.to.origin} needs one of them, send the request to it yourself with that header, or pass a crossOriginHeaderPolicy to the executor's constructor. See ${DEFAULT_CROSS_ORIGIN_HEADERS_DOCS}`
+      `electron-builder v27 sends a redirect to another origin only the request headers that carry no credential (Accept, Content-Type, Range, User-Agent and the like): ` +
+        `the redirect from ${hop.from.origin} to ${hop.to.origin} went without ${names}, which electron-builder v26 sent there. ` +
+        `If ${hop.to.origin} needs one of them, send the request to it yourself with that header, or pass a crossOriginHeaderPolicy that keeps it for that origin to the NodeHttpExecutor constructor. ` +
+        `See ${DEFAULT_CROSS_ORIGIN_HEADERS_DOCS}`
     )
 })
 
 export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
   /**
    * @param crossOriginHeaderPolicy see {@link HttpExecutor}; by default builder-util-runtime's, which sends only the headers that carry no
-   * credential on a redirect to another origin, and here logs a warning naming the ones it leaves out
+   * credential on a redirect to another origin, and here logs a warning naming the ones it leaves out that electron-builder v26 sent there
    */
   constructor(crossOriginHeaderPolicy: CrossOriginHeaderPolicy = defaultCrossOriginHeaderPolicy) {
     super(crossOriginHeaderPolicy)

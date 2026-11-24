@@ -204,13 +204,17 @@ describe("NodeHttpExecutor.createRequest", { concurrent: false }, () => {
 describe("NodeHttpExecutor cross-origin header policy", { concurrent: false }, () => {
   const hop = { from: new URL("https://api.example.com/upload"), to: new URL("https://storage.example.net/bucket/file") }
 
-  test("by default sends another origin only the headers that carry no credential, and warns once per process for each set of names it leaves out, never with a value", ({
+  test("by default sends another origin only the headers that carry no credential, and warns once per process for each set of names it leaves out that v26 sent there, never with a value", ({
     expect,
   }) => {
     log.resetLimits()
     const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
     try {
       const policy = new NodeHttpExecutor().crossOriginHeaderPolicy
+      // only headers v26 left out too: nothing changed, nothing to announce
+      expect(policy({ Authorization: "token t", Cookie: "c=1", Accept: "application/json" }, hop)).toEqual({ Accept: "application/json" })
+      expect(warn).not.toHaveBeenCalled()
+
       expect(policy({ "X-Api-Token": "secret-value", Authorization: "token t", Accept: "application/json" }, hop)).toEqual({ Accept: "application/json" })
       // the same names again, then none left out: no other warning
       policy({ authorization: "token other", "x-api-token": "other-value", accept: "*/*" }, hop)
@@ -218,15 +222,17 @@ describe("NodeHttpExecutor cross-origin header policy", { concurrent: false }, (
       expect(warn).toHaveBeenCalledOnce()
       const message = warn.mock.calls[0][0]
       expect(typeof message).toBe("string")
-      expect(message).toContain("electron-builder v27 sends only the request headers that carry no credential")
-      expect(message).toContain("the redirect from https://api.example.com to https://storage.example.net was sent without authorization, x-api-token;")
+      expect(message).toContain("electron-builder v27 sends a redirect to another origin only the request headers that carry no credential")
+      // Authorization never went to another origin: only the header v26 sent there is named
+      expect(message).toContain("the redirect from https://api.example.com to https://storage.example.net went without x-api-token, which electron-builder v26 sent there.")
+      expect(message).toContain("send the request to it yourself with that header, or pass a crossOriginHeaderPolicy")
       expect(message).toMatch(/ See https:\/\/www\.electron\.build\/docs\/migration\/v27-developer-changes#builder-util-runtime-default-cross-origin-headers$/)
       expect(message).not.toContain("secret-value")
       expect(message).not.toContain("other-value")
 
-      policy({ "X-Tenant": "acme" }, hop)
+      policy({ "X-Tenant": "acme", "X-Api-Token": "secret-value" }, hop)
       expect(warn).toHaveBeenCalledTimes(2)
-      expect(warn).toHaveBeenLastCalledWith(expect.stringContaining("was sent without x-tenant;"))
+      expect(warn).toHaveBeenLastCalledWith(expect.stringContaining("went without x-api-token, x-tenant, which"))
     } finally {
       warn.mockRestore()
       log.resetLimits()
