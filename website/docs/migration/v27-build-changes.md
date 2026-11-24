@@ -677,7 +677,7 @@ env:
   ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS: github.example.com
 ```
 
-For a private `squirrelWindows.remoteReleases` repository on another host, add the host the same way or set `squirrelWindows.remoteToken`. Remove user info, a query or a fragment from `host`, and a path from `github.host` or `keygen.host`; a path in `gitlab.host` is kept.
+For a private `squirrelWindows.remoteReleases` repository on a GitHub Enterprise host, add the host the same way or set `squirrelWindows.remoteToken`; a public repository or a server that is not GitHub needs nothing. Remove user info, a query or a fragment from `host`, and a path from `github.host` or `keygen.host`; a path in `gitlab.host` is kept.
 
 ---
 
