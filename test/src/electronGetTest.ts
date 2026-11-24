@@ -9,6 +9,7 @@ import * as os from "os"
 import * as path from "path"
 import * as tar from "tar"
 import { TmpDir } from "temp-file"
+import { inspect } from "util"
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
 import {
   ArtifactDownloadOptions,
@@ -1317,5 +1318,22 @@ describe("importCertificate", () => {
     expect(stack).not.toMatch(/SECRET/)
     const doc = await fs.readFile(path.join(import.meta.dirname, "../../website/docs/migration/v27-build-changes.md"), "utf8")
     expect(doc).toContain("{#certificate-links-with-user-info-are-rejected}")
+  })
+
+  test("rejects an https link that is not a valid URL without showing it", async ({ expect, tmpDir }) => {
+    // the TypeError of new URL holds the whole link in its input property
+    const error = (await importCertificate("https://user:SECRET@exa mple.com/certificate.p12?X-Amz-Signature=SECRET", tmpDir, process.cwd()).then(
+      () => null,
+      (e: unknown) => e
+    )) as InvalidConfigurationError
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toBe(
+      "A certificate link (cscLink, cscInstallerLink, CSC_LINK, WIN_CSC_LINK or CSC_INSTALLER_LINK) is an https link that is not a valid URL (the link is not shown)"
+    )
+    expect(error.stack).not.toMatch(/SECRET/)
+    expect(inspect(error)).not.toMatch(/SECRET/)
+    for (const key of Reflect.ownKeys(error)) {
+      expect(inspect(Reflect.get(error, key)), String(key)).not.toMatch(/SECRET/)
+    }
   })
 })

@@ -11,7 +11,15 @@ export async function importCertificate(cscLink: string, tmpDir: TmpDir, current
   cscLink = cscLink.trim()
 
   if (cscLink.startsWith("https://")) {
-    const url = new URL(cscLink)
+    let url: URL
+    try {
+      url = new URL(cscLink)
+    } catch {
+      // the TypeError of new URL holds the whole link, user info and query included, in its input property
+      throw new InvalidConfigurationError(
+        "A certificate link (cscLink, cscInstallerLink, CSC_LINK, WIN_CSC_LINK or CSC_INSTALLER_LINK) is an https link that is not a valid URL (the link is not shown)"
+      )
+    }
     // fetch refuses a url with user info, and its error would print the link with them
     if (url.username || url.password) {
       throw new InvalidConfigurationError(
