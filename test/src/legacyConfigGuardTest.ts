@@ -359,13 +359,13 @@ describe("checkLegacyConfiguration — extraMetadata.build / extraMetadata.direc
     expect(() => checkLegacyConfiguration({ extraMetadata: null } as any)).not.toThrow()
   })
 
-  test("a literal --em.build / --em.directories on the command line names -c and the build-changes section", () => {
+  test("a literal --em.build / --em.directories on the command line names electron-builder v27, -c and the build-changes section", () => {
     const yargs = createYargs()
     configureBuildCommand(yargs)
     for (const flag of ["--em.build.appId=com.example.app", "--em.directories.output=dist"]) {
       const options = normalizeOptions(yargs.parse(flag) as any)
       expect(() => checkBuildRequestOptions(options)).toThrow(InvalidConfigurationError)
-      expect(() => checkBuildRequestOptions(options)).toThrow(/`--em\.\*` flags .* are not supported\.\n[\s\S]*`-c`[\s\S]*removed-flags-embuild-emdirectories/)
+      expect(() => checkBuildRequestOptions(options)).toThrow(/`--em\.\*` flags .* are not supported in electron-builder v27\.\n[\s\S]*`-c`[\s\S]*removed-flags-embuild-emdirectories/)
     }
   })
 
