@@ -7,7 +7,14 @@ on:
   # its tag docker@<version>. There is no tag trigger: the deploy job is in the `release` environment, whose branch policy
   # a run on a tag does not pass, so pushing a docker@ tag starts nothing
   workflow_call:
+  # by hand from the Actions tab, e.g. to fill the registry before the first release deploy. It builds, and pushes and
+  # attests only with `push` checked; the deploy job's `release` environment still limits it to its branches
   workflow_dispatch:
+    inputs:
+      push:
+        description: Push and attest the images (unchecked, the run only builds)
+        type: boolean
+        default: false
 
 # every job states what it needs; a caller (pr-release.yml) has to grant at least as much to its deploy-docker job
 permissions: {}
@@ -79,15 +86,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push all Docker images (workflow_dispatch test)
-        if: github.event_name == 'workflow_dispatch'
-        run: echo "TESTING step logic. (this would normally trigger docker push)"
+      - name: Skip the push (workflow_dispatch without push)
+        if: github.event_name == 'workflow_dispatch' && !inputs.push
+        run: echo "Not pushing (run the workflow with push checked to push and attest the images)"
 
       # the digests are those of the registry's manifests, read back after the push: the attestations name them. The
       # aliases of the LTS version (latest, wine, …) are the same manifests as its <node>-* tags, so they are covered too
       - name: Push all Docker images
         id: push
-        if: github.event_name != 'workflow_dispatch'
+        if: github.event_name != 'workflow_dispatch' || inputs.push
         run: |
           set -euo pipefail
           docker image push --all-tags "$IMAGE"
@@ -105,7 +112,7 @@ jobs:
       # one attestation per image: push-to-registry takes a single subject. Each job attests its own base, also when a
       # later job overwrites the base tag (verify by digest, or with the tag of the job that pushed last)
       - name: Attest base
-        if: github.event_name != 'workflow_dispatch'
+        if: github.event_name != 'workflow_dispatch' || inputs.push
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE }}
@@ -115,7 +122,7 @@ jobs:
           create-storage-record: false
 
       - name: Attest ${{ matrix.nodeMajorVersion }}
-        if: github.event_name != 'workflow_dispatch'
+        if: github.event_name != 'workflow_dispatch' || inputs.push
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE }}
@@ -124,7 +131,7 @@ jobs:
           create-storage-record: false
 
       - name: Attest ${{ matrix.nodeMajorVersion }}-wine
-        if: github.event_name != 'workflow_dispatch'
+        if: github.event_name != 'workflow_dispatch' || inputs.push
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE }}
@@ -133,7 +140,7 @@ jobs:
           create-storage-record: false
 
       - name: Attest ${{ matrix.nodeMajorVersion }}-wine-mono
-        if: github.event_name != 'workflow_dispatch'
+        if: github.event_name != 'workflow_dispatch' || inputs.push
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE }}
@@ -142,7 +149,7 @@ jobs:
           create-storage-record: false
 
       - name: Attest ${{ matrix.nodeMajorVersion }}-wine-chrome
-        if: github.event_name != 'workflow_dispatch'
+        if: github.event_name != 'workflow_dispatch' || inputs.push
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE }}
