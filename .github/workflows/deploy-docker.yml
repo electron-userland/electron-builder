@@ -8,7 +8,8 @@ on:
   # a run on a tag does not pass, so pushing a docker@ tag starts nothing
   workflow_call:
   # by hand from the Actions tab, e.g. to fill the registry before the first release deploy. It builds, and pushes and
-  # attests only with `push` checked; the deploy job's `release` environment still limits it to its branches
+  # attests only with `push` checked, and only on master: a branch that has not been reviewed and merged must not push
+  # to the registry. With `push` checked on another ref, the check-ref job fails the run before anything is built
   workflow_dispatch:
     inputs:
       push:
@@ -24,7 +25,23 @@ env:
   IMAGE: ghcr.io/electron-userland/builder
 
 jobs:
+  # images are pushed from master only, by both triggers: the Release workflow calls this workflow on master only (its tag
+  # step runs on master only), and a manual run pushes only on master. Fails early, before the builds, otherwise
+  check-ref:
+    name: Push from master only
+    runs-on: ubuntu-24.04
+    permissions: {}
+    steps:
+      - name: Fail a push from another ref than master
+        if: ${{ github.ref != 'refs/heads/master' && (github.event_name != 'workflow_dispatch' || inputs.push) }}
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          echo "::error::The images are pushed from master only, not from $REF. Run the workflow on master, or uncheck push to only build"
+          exit 1
+
   run-docker-build:
+    needs: check-ref
     permissions:
       contents: read
     uses: $/.github/workflows/docker-build.yml
@@ -34,8 +51,9 @@ jobs:
     needs: run-docker-build
     runs-on: ubuntu-24.04
     # no secrets: the push authenticates with the job's GITHUB_TOKEN (packages: write) and the attestations are signed
-    # with a short-lived Sigstore certificate from the job's OIDC token (id-token: write). The environment allows master,
-    # release/* and changeset-release/* only, so a manual run (workflow_dispatch) has to be on one of them
+    # with a short-lived Sigstore certificate from the job's OIDC token (id-token: write). It pushes from master only
+    # (check-ref, and PUSH below); the environment allows master, release/* and changeset-release/* only, so a manual run
+    # that only builds has to be on one of them
     environment: release
     permissions:
       contents: read
@@ -45,6 +63,10 @@ jobs:
       id-token: write
       # store the provenance attestations in the repository's attestations API
       attestations: write
+    env:
+      # 'true' when this job pushes and attests the images: a run from the Release workflow, or a manual run with push
+      # checked, on master only (check-ref already failed the run otherwise; the ref is checked again here)
+      PUSH: ${{ (github.event_name != 'workflow_dispatch' || inputs.push) && github.ref == 'refs/heads/master' }}
     strategy:
       # each Node.js version is pushed by its own job: a failed one must not cancel the others in the middle of their
       # pushes. Re-run the failed jobs while the image artifacts are kept (a day, docker-build.yml)
@@ -103,8 +125,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Skip the push (workflow_dispatch without push)
-        if: github.event_name == 'workflow_dispatch' && !inputs.push
-        run: echo "Not pushing (run the workflow with push checked to push and attest the images)"
+        if: env.PUSH != 'true'
+        run: echo "Not pushing (run the workflow on master with push checked to push and attest the images)"
 
       # The versioned tags (<image>-<version>) are immutable: the job fails before it pushes anything when one of them
       # is in the registry already, so a version is never overwritten (release a new version instead). The moving tags
@@ -114,7 +136,7 @@ jobs:
       # manifests as the versioned ones, so they are covered too
       - name: Push all Docker images
         id: push
-        if: github.event_name != 'workflow_dispatch' || inputs.push
+        if: env.PUSH == 'true'
         run: |
           set -euo pipefail
           # <output key>=<image>: the image is tagged <image> (moving) and <image>-<version> (immutable)
@@ -163,7 +185,7 @@ jobs:
 
       # one attestation per image: push-to-registry takes a single subject, the digest of the image's versioned tag
       - name: Attest base
-        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.push) && matrix.nodeMajorVersion == env.LATEST_IMAGE_NODE_MAJOR_VERSION }}
+        if: ${{ env.PUSH == 'true' && matrix.nodeMajorVersion == env.LATEST_IMAGE_NODE_MAJOR_VERSION }}
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE }}
@@ -173,7 +195,7 @@ jobs:
           create-storage-record: false
 
       - name: Attest ${{ matrix.nodeMajorVersion }}
-        if: github.event_name != 'workflow_dispatch' || inputs.push
+        if: env.PUSH == 'true'
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE }}
@@ -182,7 +204,7 @@ jobs:
           create-storage-record: false
 
       - name: Attest ${{ matrix.nodeMajorVersion }}-wine
-        if: github.event_name != 'workflow_dispatch' || inputs.push
+        if: env.PUSH == 'true'
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE }}
@@ -191,7 +213,7 @@ jobs:
           create-storage-record: false
 
       - name: Attest ${{ matrix.nodeMajorVersion }}-wine-mono
-        if: github.event_name != 'workflow_dispatch' || inputs.push
+        if: env.PUSH == 'true'
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE }}
@@ -200,7 +222,7 @@ jobs:
           create-storage-record: false
 
       - name: Attest ${{ matrix.nodeMajorVersion }}-wine-chrome
-        if: github.event_name != 'workflow_dispatch' || inputs.push
+        if: env.PUSH == 'true'
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE }}
