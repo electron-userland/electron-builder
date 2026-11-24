@@ -536,6 +536,15 @@ export abstract class BaseUpdater extends AppUpdater {
       return false
     }
 
+    // the pending cache, which the user can write to, can only make the automatic install skip an update here, which spares
+    // the request for the latest update info; an update it marks per-user is checked against the latest update info below
+    if (isAutomatic && pendingInfo.isAdminRightsRequired) {
+      this.log.info(
+        "Skipping automatic install of the pending update on launch: it is a per-machine installation (isAdminRightsRequired is true). Call installPendingUpdateIfAvailable() explicitly to install it."
+      )
+      return false
+    }
+
     this.log.info("Update is marked for install on next launch, validating it against the latest update info")
     const updateInfoAndProvider = await this.getUpdateInfoAndProvider()
     const latestInfo = updateInfoAndProvider.info
@@ -568,7 +577,7 @@ export abstract class BaseUpdater extends AppUpdater {
     // read from the latest update info, not from the pending cache, which the user can write to
     if (isAutomatic && fileInfo.info.isAdminRightsRequired === true) {
       this.log.info(
-        "Skipping automatic install of the pending update on launch: it is a per-machine installation (isAdminRightsRequired is true). Call installPendingUpdateIfAvailable() explicitly to install it."
+        "Skipping automatic install of the pending update on launch: the latest update info marks it as a per-machine installation (isAdminRightsRequired is true). Call installPendingUpdateIfAvailable() explicitly to install it."
       )
       return false
     }

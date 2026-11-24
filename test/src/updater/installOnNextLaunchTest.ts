@@ -578,6 +578,21 @@ describe("install on next launch", { concurrent: false }, () => {
       expect(doInstall).toHaveBeenCalledWith(expect.objectContaining({ isAdminRightsRequired: true }))
     })
 
+    test("the automatic install at launch skips an update the pending cache marks per-machine without requesting the update info", async () => {
+      await seedDownloadedUpdate(helper, { version: "1.0.1" })
+      helper.markInstallOnNextLaunchSync(log)
+      const infoFile = path.join(helper.cacheDirForPendingUpdate, "update-info.json")
+      await outputJson(infoFile, { ...(await readJson(infoFile)), isAdminRightsRequired: true })
+      // without update info, a request for it fails the install
+      const { updater, doInstall, getUpdateInfoAndProvider } = createUpdater(null, NsisUpdater)
+
+      await expect((updater as any).installPendingUpdate(true)).resolves.toBe(false)
+      expect(getUpdateInfoAndProvider).not.toHaveBeenCalled()
+      expect(doInstall).not.toHaveBeenCalled()
+      // the marker stays, so that installPendingUpdateIfAvailable() can still install it
+      expect(await helper.getPendingInstallInfo()).toMatchObject({ installOnNextLaunch: true })
+    })
+
     test("takes isAdminRightsRequired from the latest update info when the pending cache says the install is per-machine", async () => {
       const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
       helper.markInstallOnNextLaunchSync(log)
