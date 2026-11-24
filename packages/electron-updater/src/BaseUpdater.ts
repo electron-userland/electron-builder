@@ -303,8 +303,9 @@ export abstract class BaseUpdater extends AppUpdater {
   /**
    * The file of the update info that this target downloads and installs, out of the files the provider resolved. An update
    * marked for install on next launch is matched against the file this picks from the latest update info, so the pending
-   * cache cannot choose another file of that update info. Each built-in target overrides it with its own rule; the default
-   * picks the first file.
+   * cache cannot choose another file of that update info. Each built-in target overrides it with its own rule, and a subclass
+   * that picks its download in another way overrides it too. Without an override, a pending update is matched by its checksum
+   * against every file of the latest update info instead; the default picks the first file.
    */
   protected findUpdateFile(files: Array<ResolvedUpdateFileInfo>): ResolvedUpdateFileInfo | null | undefined {
     return files[0]
@@ -564,8 +565,11 @@ export abstract class BaseUpdater extends AppUpdater {
     }
 
     // the file this target installs, picked from the latest update info as a download picks it: the pending cache only says
-    // which checksum it saved, and must not choose another file of that update info
-    const fileInfo = this.findUpdateFile(updateInfoAndProvider.provider.resolveFiles(latestInfo))
+    // which checksum it saved, and must not choose another file of that update info. A subclass without a findUpdateFile of
+    // its own picks the file it downloads itself, so its pending update is still matched by that checksum against every file
+    const files = updateInfoAndProvider.provider.resolveFiles(latestInfo)
+    const hasOwnFileRule = this.findUpdateFile !== BaseUpdater.prototype.findUpdateFile
+    const fileInfo = hasOwnFileRule ? this.findUpdateFile(files) : files.find(it => it.info.sha512 === pendingInfo.sha512)
     if (fileInfo == null || fileInfo.info.sha512 !== pendingInfo.sha512) {
       this.log.warn(
         `Pending update doesn't match the update file of the latest update info (version ${latestInfo.version}), clearing install-on-next-launch state. The new update must be downloaded again.`

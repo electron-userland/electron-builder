@@ -4,11 +4,22 @@ import { mkdir, outputFile, outputJson, pathExists, readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { DebUpdater, NsisUpdater } from "electron-updater"
+import { BaseUpdater, DebUpdater, NsisUpdater } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
-import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
+import type { DownloadExecutorResult, ResolvedUpdateFileInfo } from "electron-updater/src/types"
 import { makeLogger } from "../helpers/updaterTestUtil"
+
+/** A `BaseUpdater` subclass of another package: it picks the file it downloads itself and has no `findUpdateFile` of its own. */
+class ThirdPartyUpdater extends BaseUpdater {
+  protected doDownloadUpdate(): Promise<DownloadExecutorResult> {
+    return Promise.reject(new Error("these tests do not download"))
+  }
+
+  protected doInstall(): boolean {
+    return true
+  }
+}
 
 function makeStubApp(overrides: Partial<AppAdapter> = {}): AppAdapter & { quitCalls: number; emitQuit: (exitCode: number) => void; emitSessionEnd: () => void } {
   let quitHandler: ((exitCode: number) => void) | null = null
@@ -150,7 +161,7 @@ describe("install on next launch", { concurrent: false }, () => {
    * targets install asynchronously so their elevation dialog cannot block the main process; what those tests
    * exercise is BaseUpdater's orchestration, and the Linux execution itself is covered by linuxUpdaterUnitTest.
    */
-  function delegateAsyncInstallToSyncInstall(updater: DebUpdater | NsisUpdater): void {
+  function delegateAsyncInstallToSyncInstall(updater: BaseUpdater): void {
     ;(updater as any).doInstallAsync = (options: unknown) => Promise.resolve((updater as any).doInstall(options))
   }
 
@@ -329,7 +340,7 @@ describe("install on next launch", { concurrent: false }, () => {
   })
 
   describe("BaseUpdater.installPendingUpdateIfAvailable", () => {
-    function createUpdater(latestUpdateInfo: UpdateInfo | null, UpdaterClass: new (options: null, app: AppAdapter) => DebUpdater | NsisUpdater = DebUpdater) {
+    function createUpdater(latestUpdateInfo: UpdateInfo | null, UpdaterClass: new (options: null, app: AppAdapter) => BaseUpdater = DebUpdater) {
       const app = makeStubApp()
       const updater = new UpdaterClass(null, app)
       updater.logger = log
@@ -618,6 +629,17 @@ describe("install on next launch", { concurrent: false }, () => {
       await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
       expect(doInstall).not.toHaveBeenCalled()
       expect(await helper.getPendingInstallInfo()).toBeNull()
+    })
+
+    test("a subclass without a findUpdateFile of its own installs the pending file with the cached checksum, not only the first file", async () => {
+      // the subclass downloaded the second file of the update info
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1", fileName: "TestApp-1.0.1.zip" })
+      helper.markInstallOnNextLaunchSync(log)
+      const latestUpdateInfo: UpdateInfo = { ...seeded.updateInfo, files: [{ url: "TestApp-Setup-1.0.1.exe", sha512: "sha512-of-the-exe" }, ...seeded.updateInfo.files] }
+      const { updater, doInstall } = createUpdater(latestUpdateInfo, ThirdPartyUpdater)
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
+      expect(doInstall).toHaveBeenCalledTimes(1)
     })
 
     test("automatic startup path skips targets that install via an elevating package manager (deb) but explicit call installs them", async () => {
