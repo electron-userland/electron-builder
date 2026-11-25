@@ -1,6 +1,7 @@
+import { httpExecutor } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { GitHubPublisher, GitlabPublisher, KeygenPublisher, PublishContext } from "electron-publish"
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 // github.host, gitlab.host and keygen.host must be a host name with an optional port (gitlab.host may also have a path).
 
@@ -11,6 +12,10 @@ const MIGRATION_LINK = "See https://www.electron.build/docs/migration/v27-build-
 beforeEach(() => {
   vi.stubEnv("GITHUB_RELEASE_TOKEN", undefined)
   vi.stubEnv("KEYGEN_TOKEN", "keygen-token")
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
 })
 
 function github(host?: string) {
@@ -100,5 +105,25 @@ describe("Keygen", () => {
     const message = errorMessage(() => keygen(host))
     expect(message).toContain("keygen.host must be a host name")
     expect(message).toContain(MIGRATION_LINK)
+  })
+
+  test.each([
+    [undefined, "api.keygen.sh", undefined],
+    ["keygen.example.com", "keygen.example.com", undefined],
+    ["keygen.example.com:8443", "keygen.example.com", "8443"],
+    ["keygen_internal:8080", "keygen_internal", "8080"],
+    ["[::1]:8443", "::1", "8443"],
+  ])("host %s is sent as hostname and port", async (host, hostname, port) => {
+    const request = vi.spyOn(httpExecutor, "request").mockResolvedValue("{}")
+    const publisher = keygen(host)
+    await (publisher as any).getRelease()
+    await (publisher as any).createRelease()
+    await (publisher as any).createArtifact("release-id", "app.exe", 1)
+    await publisher.deleteRelease("release-id")
+    expect(request).toHaveBeenCalledTimes(4)
+    for (const [options] of request.mock.calls) {
+      expect(options.hostname).toBe(hostname)
+      expect(options.port).toBe(port)
+    }
   })
 })
