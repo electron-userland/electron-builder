@@ -455,6 +455,7 @@ describe("autoUpdater.crossOriginHeaders", () => {
         validateCachedPendingInstall: vi.fn().mockResolvedValue(installerPath),
         clearPendingInstallMarker: vi.fn().mockResolvedValue(undefined),
         clear: vi.fn().mockResolvedValue(undefined),
+        setVerifiedUpdateInfoAndProvider: vi.fn(),
       }
       vi.spyOn(updater as any, "getOrCreateDownloadHelper").mockResolvedValue(pendingInstall)
       vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })

@@ -1363,6 +1363,18 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   protected async executeDownload(taskOptions: DownloadExecutorTask): Promise<DownloadExecutorResult> {
     const fileInfo = taskOptions.fileInfo
+    // the file is hashed again against this checksum right before it is installed, so without one it could never be installed. Checked
+    // here for every provider: the GitLab and private GitHub providers and custom ones resolve files without resolveFiles' check
+    const sha512: string | undefined = fileInfo.info.sha512
+    const sha2 = "sha2" in fileInfo.info ? fileInfo.info.sha2 : undefined
+    if (!(typeof sha512 === "string" && sha512.length !== 0) && !(typeof sha2 === "string" && sha2.length !== 0)) {
+      throw newError(
+        `Update info doesn't contain a sha512 or sha2 checksum for ${urlWithoutQuery(fileInfo.info.url)}, so the update is not downloaded. ` +
+          "A downloaded update is hashed again right before it is installed, against the checksum of its update info. " +
+          "See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed",
+        "ERR_UPDATER_NO_CHECKSUM"
+      )
+    }
     if (fileInfo.info.sha512 == null && (fileInfo.info as any).sha2 != null) {
       this.log.warn(
         "Update artifact is validated with a SHA-256 (sha2) checksum only. sha2 is deprecated, and update metadata without sha512 will be rejected (fail-closed): publish sha512, which electron-builder generates by default, by regenerating latest*.yml with a current electron-builder and not pinning electronUpdaterCompatibility to a legacy (<2.15 / 1.x) range."
