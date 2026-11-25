@@ -1,7 +1,9 @@
 import { getMakeNsisPath } from "app-builder-lib/src/toolsets/nsis"
-import { serializeToYaml, spawnAndWriteWithOutput } from "builder-util"
+import { generateUpdateSigningKeypair, serializeToYaml, signUpdateManifest, spawnAndWriteWithOutput } from "builder-util"
 import { GenericServerOptions, UpdateInfo } from "builder-util-runtime"
 import { NsisUpdater, type VerifyUpdateFileAuthenticodeSignature, type VerifyUpdateFileResult } from "electron-updater"
+import type { UpdateInfoAndProvider } from "electron-updater/src/AppUpdater"
+import { resolveCatalogSignatureOptions } from "electron-updater/src/windowsExecutableCodeSignatureVerifier"
 import { readExecutableProductVersions } from "electron-updater/src/windowsExecutableVersion"
 import { createHash } from "crypto"
 import fsExtra from "fs-extra"
@@ -412,6 +414,63 @@ describe("NsisUpdater installer version check", () => {
       // reused, not downloaded again, and removed once rejected
       expect(requests.filter(url => url.includes(".exe"))).toEqual([])
       expect(await fsExtra.pathExists(cached?.updateFile ?? "")).toBe(false)
+    })
+
+    // a later update check replaces the update the updater reports, not the one the downloaded installer belongs to: the signature check
+    // before the async install applies the settings of the downloaded update's own manifest
+    test("an installer is verified before the async install under the manifest it was downloaded with, not a later one", async ({ expect, tmpDir }) => {
+      const root = await tmpDir.getTempDir({ prefix: "installer-version-server" })
+      const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+      const writeManifest = (info: UpdateInfo) =>
+        fsExtra.outputFile(path.join(root, "latest.yml"), serializeToYaml({ ...info, signature: signUpdateManifest(info, privateKeyPem) }))
+      const installer = windowsExecutable(["1.1.0"])
+      await fsExtra.outputFile(path.join(root, "TestApp-Setup-1.1.0.exe"), installer)
+      const file = { url: "TestApp-Setup-1.1.0.exe", sha512: createHash("sha512").update(installer).digest("base64"), size: installer.length }
+      // the signed manifest of 1.1.0 allows its catalog-signed installer
+      await writeManifest({
+        version: "1.1.0",
+        files: [file],
+        path: file.url,
+        sha512: file.sha512,
+        releaseDate: "2024-01-01T00:00:00.000Z",
+        allowCatalogSignature: true,
+      } as UpdateInfo)
+      const { server, port } = await createLocalServer(root)
+      servers.push(server)
+      const updater = await createNsisUpdater("1.0.0")
+      updater.updateConfigPath = await signedConfig(`http://127.0.0.1:${port}`)
+      updater.updateManifestPublicKey = publicKeyPem
+      // a catalog-signed installer: accepted only where the update it is verified for allows a catalog signature
+      const verifySignature = vi
+        .spyOn(updater as unknown as { verifySignature: (file: string, update: UpdateInfoAndProvider | null) => Promise<VerifyUpdateFileResult> }, "verifySignature")
+        .mockImplementation((_file, update) =>
+          Promise.resolve<VerifyUpdateFileResult>(
+            resolveCatalogSignatureOptions(updater.allowCatalogSignature, update, console).allowCatalogSignature === true
+              ? { response: "success" }
+              : { response: "failure", message: "catalog signature rejected" }
+          )
+        )
+      const errors: Array<Error> = []
+      updater.on("error", error => errors.push(error))
+      const downloaded = await (await updater.checkForUpdates())?.downloadPromise
+
+      // a later check finds 1.2.0, whose manifest does not allow a catalog signature, and does not download it
+      await writeManifest({
+        version: "1.2.0",
+        files: [{ ...file, url: "TestApp-Setup-1.2.0.exe", sha512: "c2hhNTEy" }],
+        path: "",
+        sha512: "",
+        releaseDate: "2024-02-01T00:00:00.000Z",
+      })
+      updater.autoDownload = false
+      expect((await updater.checkForUpdates())?.updateInfo.version).toBe("1.2.0")
+      const spawnLog = vi.spyOn(updater as unknown as { spawnLog: () => Promise<boolean> }, "spawnLog").mockResolvedValue(true)
+
+      await expect(updater.installAsync(true, false)).resolves.toBe(true)
+
+      expect(verifySignature).toHaveBeenLastCalledWith(downloaded?.updateFile, expect.objectContaining({ info: expect.objectContaining({ version: "1.1.0" }) }))
+      expect(spawnLog).toHaveBeenCalledWith(downloaded?.updateFile, ["--updated", "/S"])
+      expect(errors).toEqual([])
     })
 
     // the pending installer is matched to the latest update info by sha512 only, so a manifest of a newer version could otherwise install it

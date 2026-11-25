@@ -6,6 +6,7 @@ import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { DebUpdater, NsisUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
 import type { AppAdapter, CancellableQuitEvent } from "electron-updater/src/AppAdapter"
+import type { UpdateInfoAndProvider } from "electron-updater/src/AppUpdater"
 import { CommandExitError } from "electron-updater/src/BaseUpdater"
 import { ElevationDeniedError } from "electron-updater/src/LinuxUpdater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
@@ -103,8 +104,11 @@ describe("install on quit", { concurrent: false }, () => {
     vi.restoreAllMocks()
   })
 
-  /** `checksum: "sha2"`: update info written for legacy clients, with a sha2 (SHA-256) checksum and no sha512. */
-  async function seedDownloadedUpdate(fileName = "TestApp-1.0.1.deb", version = "1.0.1", checksum: "sha512" | "sha2" = "sha512"): Promise<void> {
+  /**
+   * `checksum: "sha2"`: update info written for legacy clients, with a sha2 (SHA-256) checksum and no sha512. Returns the update info and
+   * provider the update is recorded as verified against.
+   */
+  async function seedDownloadedUpdate(fileName = "TestApp-1.0.1.deb", version = "1.0.1", checksum: "sha512" | "sha2" = "sha512"): Promise<UpdateInfoAndProvider> {
     const installerPath = path.join(helper.cacheDirForPendingUpdate, fileName)
     await outputFile(installerPath, `installer binary content ${version}`)
     let fileInfo: UpdateFileInfo
@@ -116,6 +120,9 @@ describe("install on quit", { concurrent: false }, () => {
     }
     const updateInfo: UpdateInfo = { version, files: [fileInfo], path: fileName, sha512: fileInfo.sha512, releaseDate: "" }
     await helper.setDownloadedFile(installerPath, null, updateInfo, { url: new URL(`https://example.com/${fileName}`), info: fileInfo }, fileName, true)
+    const updateInfoAndProvider = { info: updateInfo, provider: {} as UpdateInfoAndProvider["provider"], manifestSignatureVerified: false }
+    helper.setVerifiedUpdateInfoAndProvider(updateInfoAndProvider)
+    return updateInfoAndProvider
   }
 
   /** The update install failure that the updater's own "error" listener logged, once per failure. */
@@ -1085,7 +1092,7 @@ describe("install on quit", { concurrent: false }, () => {
 
       expect(pkexecCalls).toEqual([])
       expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
-      expect(errors[0].message).toContain("Since electron-updater 7, a downloaded update is hashed again right before it is installed.")
+      expect(errors[0].message).toContain("It is removed and will be downloaded again on the next update check. A downloaded update is hashed again right before it is installed.")
       expect(errors[0].message.slice(-MIGRATION_LINK.length)).toBe(MIGRATION_LINK)
       await expectRemoved(debInstaller())
     })
@@ -1316,13 +1323,14 @@ describe("install on quit", { concurrent: false }, () => {
     })
 
     test("NSIS, async install: the signature is verified again right before the installer starts", async () => {
-      await seedDownloadedUpdate("TestApp-Setup-1.0.1.exe")
+      const verified = await seedDownloadedUpdate("TestApp-Setup-1.0.1.exe")
       const { updater, errors, spawnLog } = createNsisUpdater(makeStubApp())
       const verifySignature = vi.spyOn(updater as any, "verifySignature").mockResolvedValue({ response: "success" })
 
       await expect(updater.installAsync(true, false)).resolves.toBe(true)
 
-      expect(verifySignature).toHaveBeenCalledWith(nsisInstaller(), null)
+      // under the update the installer was verified with, not the one a later update check found
+      expect(verifySignature).toHaveBeenCalledWith(nsisInstaller(), verified)
       expect(spawnLog).toHaveBeenCalledWith(nsisInstaller(), ["--updated", "/S"])
       expect(errors).toEqual([])
     })
@@ -1336,6 +1344,47 @@ describe("install on quit", { concurrent: false }, () => {
 
       expect(spawnLog).not.toHaveBeenCalled()
       expect(errors).toEqual([expect.objectContaining({ code: "ERR_UPDATER_INVALID_SIGNATURE", message: expect.stringContaining("signed by someone else") })])
+      expect(errors[0].message).toContain("It is removed and will be downloaded again on the next update check.")
+      expect(errors[0].message.slice(-MIGRATION_LINK.length)).toBe(MIGRATION_LINK)
+      await expectRemoved(nsisInstaller())
+    })
+
+    // e.g. ERR_UPDATER_NO_PUBLISHER_NAME, or an app's own verifier that throws: the update must not stay for the install on quit
+    test("NSIS, async install: an installer whose signature verification throws is not started, and is removed", async () => {
+      await seedDownloadedUpdate("TestApp-Setup-1.0.1.exe")
+      const app = makeStubApp()
+      const { updater, errors, spawnLog } = createNsisUpdater(app)
+      const failure = Object.assign(new Error("no publisherName"), { code: "ERR_UPDATER_NO_PUBLISHER_NAME" })
+      vi.spyOn(updater as unknown as { verifySignature: () => Promise<VerifyUpdateFileResult> }, "verifySignature").mockRejectedValue(failure)
+
+      await expect(updater.installAsync(true, false)).resolves.toBe(false)
+
+      expect(spawnLog).not.toHaveBeenCalled()
+      expect(errors).toEqual([failure])
+      await expectRemoved(nsisInstaller())
+      // nothing is left for the install on quit
+      expect(app.quitApp()).toBe(true)
+      expect(spawnLog).not.toHaveBeenCalled()
+    })
+
+    test("NSIS, async install: an installer not verified in this session is not started, and is removed", async () => {
+      await seedDownloadedUpdate("TestApp-Setup-1.0.1.exe")
+      // the downloaded file is set again, and nothing records what it was verified against
+      const fileInfo = { url: "TestApp-Setup-1.0.1.exe", sha512: await hashFile(nsisInstaller()), size: 1024 }
+      const updateInfo: UpdateInfo = { version: "1.0.1", files: [fileInfo], path: fileInfo.url, sha512: fileInfo.sha512, releaseDate: "" }
+      await helper.setDownloadedFile(nsisInstaller(), null, updateInfo, { url: new URL(`https://example.com/${fileInfo.url}`), info: fileInfo }, fileInfo.url, true)
+      const { updater, errors, spawnLog } = createNsisUpdater(makeStubApp())
+      const verifySignature = vi
+        .spyOn(updater as unknown as { verifySignature: () => Promise<VerifyUpdateFileResult> }, "verifySignature")
+        .mockResolvedValue({ response: "success" })
+
+      await expect(updater.installAsync(true, false)).resolves.toBe(false)
+
+      expect(verifySignature).not.toHaveBeenCalled()
+      expect(spawnLog).not.toHaveBeenCalled()
+      expect(errors).toEqual([
+        expect.objectContaining({ code: "ERR_UPDATER_INVALID_SIGNATURE", message: expect.stringContaining("its signature was not verified in this session") }),
+      ])
       await expectRemoved(nsisInstaller())
     })
 

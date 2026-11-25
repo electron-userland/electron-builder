@@ -1352,6 +1352,8 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
       packageFile: null,
       verifyDownloadedFilesSync: options.verifyDownloadedFilesSync ?? (() => null),
       clearSync: () => {},
+      // the update the installer was verified with, which doInstallAsync verifies its signature against again
+      updateInfoAndProvider: { info: { version: "1.1.0" } },
     }
     const errors: Array<Error> = []
     updater.on("error", (e: Error) => errors.push(e))
@@ -1704,7 +1706,11 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
       const root = await tmpDir.getTempDir({ prefix: "installer-start" })
       const installerPath = path.join(root, "TestApp Setup 1.1.0.exe")
       Object.defineProperty(updater, "installerPath", { get: () => installerPath })
-      ;(updater as any).downloadedUpdateHelper = { downloadedFileInfo: { isAdminRightsRequired: false }, packageFile: path.join(root, "package-1.1.0.7z") }
+      ;(updater as any).downloadedUpdateHelper = {
+        downloadedFileInfo: { isAdminRightsRequired: false },
+        packageFile: path.join(root, "package-1.1.0.7z"),
+        updateInfoAndProvider: { info: { version: "1.1.0" } },
+      }
       updater.disableWebInstaller = true
       const errors: Array<Error> = []
       updater.on("error", (e: Error) => errors.push(e))

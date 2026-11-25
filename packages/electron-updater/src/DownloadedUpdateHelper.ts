@@ -2,6 +2,7 @@ import { BlockMapDataHolder, hashFile, UpdateFileInfo, UpdateInfo } from "builde
 import { detectSha512Encoding } from "builder-util-runtime/internal"
 import { BinaryToTextEncoding, createHash } from "crypto"
 import { closeSync, openSync, readSync } from "fs"
+import type { UpdateInfoAndProvider } from "./AppUpdater.js"
 import { NonThrowableLogger, ResolvedUpdateFileInfo } from "./types.js"
 import { Logger } from "./types.js"
 import fsExtra from "fs-extra"
@@ -67,6 +68,7 @@ export class DownloadedUpdateHelper {
   private versionInfo: UpdateInfo | null = null
   private fileInfo: ResolvedUpdateFileInfo | null = null
   private _downloadedUpdateId: string | null = null
+  private _updateInfoAndProvider: UpdateInfoAndProvider | null = null
 
   constructor(
     readonly cacheDir: string,
@@ -94,6 +96,19 @@ export class DownloadedUpdateHelper {
     return this._packageFile
   }
 
+  /**
+   * The update info and provider that {@link file} was verified against in this session, `null` when there is none. A later
+   * update check does not change it: the install verifies the file under the settings of the update it was downloaded for.
+   */
+  get updateInfoAndProvider(): UpdateInfoAndProvider | null {
+    return this._file == null ? null : this._updateInfoAndProvider
+  }
+
+  /** Records what {@link file} was just verified against (see {@link updateInfoAndProvider}). */
+  setVerifiedUpdateInfoAndProvider(updateInfoAndProvider: UpdateInfoAndProvider): void {
+    this._updateInfoAndProvider = updateInfoAndProvider
+  }
+
   get cacheDirForPendingUpdate(): string {
     return path.join(this.cacheDir, "pending")
   }
@@ -118,6 +133,8 @@ export class DownloadedUpdateHelper {
     }
     this.logger.info(`Update has already been downloaded to ${updateFile}).`)
     this._file = cachedUpdateFile
+    // not verified in this session yet
+    this._updateInfoAndProvider = null
     return cachedUpdateFile
   }
 
@@ -133,6 +150,8 @@ export class DownloadedUpdateHelper {
     this._packageFile = packageFile
     this.versionInfo = versionInfo
     this.fileInfo = fileInfo
+    // the caller records what it verified the file against
+    this._updateInfoAndProvider = null
     this._downloadedUpdateId = updateFileId(fileInfo.info, downloadedFile, versionInfo.version)
     this._downloadedFileInfo = {
       fileName: updateFileName,
@@ -215,6 +234,8 @@ export class DownloadedUpdateHelper {
       this._file = cachedUpdateFile
       // what verifyDownloadedFilesSync checks the files against right before the install
       this.fileInfo = fileInfo
+      // not verified in this session yet
+      this._updateInfoAndProvider = null
     }
     return cachedUpdateFile
   }
@@ -301,6 +322,7 @@ export class DownloadedUpdateHelper {
     this.versionInfo = null
     this.fileInfo = null
     this._downloadedUpdateId = null
+    this._updateInfoAndProvider = null
   }
 
   private async cleanCacheDirForPendingUpdate(): Promise<void> {
