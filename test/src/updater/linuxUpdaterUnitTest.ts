@@ -232,11 +232,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       expect(determineSudoCommand()).toBe(path.join(systemDir, "gksudo"))
       expect(determineSudoCommand()).toBe(path.join(systemDir, "gksudo"))
 
-      expect(warn.mock.calls).toEqual([
-        [
-          `pkexec found in PATH is not used: electron-updater runs an elevation helper only from ${systemDir} (a symlink there must lead into one of them). See ${UPDATE_ELEVATION_DOCS}`,
-        ],
-      ])
+      expect(warn.mock.calls).toEqual([[`pkexec found in PATH is not used: electron-updater runs an elevation helper only from ${systemDir}. See ${UPDATE_ELEVATION_DOCS}`]])
     })
 
     it("fails when not even sudo is in the system directories, with a link to the migration guide", async () => {
@@ -244,18 +240,36 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
       expect(() => determineSudoCommand()).toThrow(
         expect.objectContaining({
-          message: `sudo not found in ${systemDir}: electron-updater runs elevation helpers and package managers only from these directories (a symlink there must lead into one of them), not from elsewhere in PATH. See ${UPDATE_ELEVATION_DOCS}`,
+          message: `sudo not found in ${systemDir}: electron-updater runs elevation helpers and package managers only from these directories, not from elsewhere in PATH. See ${UPDATE_ELEVATION_DOCS}`,
           code: "ERR_UPDATER_ELEVATION_COMMAND_NOT_FOUND",
         })
       )
     })
 
-    it.skipIf(process.platform === "win32")("does not use a helper whose symlink leads out of the system directories", async () => {
+    it.skipIf(process.platform === "win32")("uses a helper in the system directories whose symlink leads out of them", async () => {
       await installHelpers(outsideDir, "pkexec")
       await symlink(path.join(outsideDir, "pkexec"), path.join(systemDir, "pkexec"))
       await installHelpers(systemDir, "kdesudo")
 
-      expect(determineSudoCommand()).toBe(path.join(systemDir, "kdesudo"))
+      expect(determineSudoCommand()).toBe(path.join(systemDir, "pkexec"))
+    })
+
+    it.skipIf(process.platform === "win32")("falls back to a sudo in the system directories that is a symlink to a file outside them", async () => {
+      await installHelpers(outsideDir, "sudo")
+      await symlink(path.join(outsideDir, "sudo"), path.join(systemDir, "sudo"))
+
+      expect(determineSudoCommand()).toBe(path.join(systemDir, "sudo"))
+    })
+
+    it.skipIf(process.platform === "win32")("falls back to a sudo reached through an alternatives symlink chain, as sudo-rs is", async ({ tmpDir }) => {
+      // /usr/bin/sudo -> /etc/alternatives/sudo -> /usr/lib/cargo/bin/sudo
+      const alternativesDir = await tmpDir.getTempDir({ prefix: "alternatives" })
+      await mkdir(alternativesDir, { recursive: true })
+      await installHelpers(outsideDir, "sudo")
+      await symlink(path.join(outsideDir, "sudo"), path.join(alternativesDir, "sudo"))
+      await symlink(path.join(alternativesDir, "sudo"), path.join(systemDir, "sudo"))
+
+      expect(determineSudoCommand()).toBe(path.join(systemDir, "sudo"))
     })
 
     it("warns once per updater, when it installs, that pkexec is used although a legacy helper is installed too", async () => {
@@ -383,14 +397,26 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       it("rejects a missing command, with a link to the migration guide", () => {
         expect(() => resolve("dpkg")).toThrow(
           expect.objectContaining({
-            message: `dpkg not found in ${trustedDir}: electron-updater runs elevation helpers and package managers only from these directories (a symlink there must lead into one of them), not from elsewhere in PATH. See ${UPDATE_ELEVATION_DOCS}`,
+            message: `dpkg not found in ${trustedDir}: electron-updater runs elevation helpers and package managers only from these directories, not from elsewhere in PATH. See ${UPDATE_ELEVATION_DOCS}`,
             code: "ERR_UPDATER_ELEVATION_COMMAND_NOT_FOUND",
           })
         )
       })
 
-      posixIt("rejects a symlink to an executable outside the trusted directories", async () => {
+      posixIt("follows a symlink to an executable file outside the trusted directories", async () => {
         await writeFile(path.join(outsideDir, "dpkg"), "#!/bin/sh\n", { mode: 0o755 })
+        await symlink(path.join(outsideDir, "dpkg"), path.join(trustedDir, "dpkg"))
+        expect(resolve("dpkg")).toBe(path.join(trustedDir, "dpkg"))
+      })
+
+      posixIt("rejects a symlink to a directory", async () => {
+        await mkdir(path.join(outsideDir, "dpkg"))
+        await symlink(path.join(outsideDir, "dpkg"), path.join(trustedDir, "dpkg"))
+        expect(() => resolve("dpkg")).toThrow(`dpkg not found in ${trustedDir}`)
+      })
+
+      posixIt("rejects a symlink to a file that is not executable", async () => {
+        await writeFile(path.join(outsideDir, "dpkg"), "#!/bin/sh\n", { mode: 0o644 })
         await symlink(path.join(outsideDir, "dpkg"), path.join(trustedDir, "dpkg"))
         expect(() => resolve("dpkg")).toThrow(`dpkg not found in ${trustedDir}`)
       })
@@ -449,7 +475,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       expect(spawnAsyncLog).not.toHaveBeenCalled()
       expect(dispatchError).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: `apt-get not found in /usr/sbin:/usr/bin:/sbin:/bin: electron-updater runs elevation helpers and package managers only from these directories (a symlink there must lead into one of them), not from elsewhere in PATH. See ${UPDATE_ELEVATION_DOCS}`,
+          message: `apt-get not found in /usr/sbin:/usr/bin:/sbin:/bin: electron-updater runs elevation helpers and package managers only from these directories, not from elsewhere in PATH. See ${UPDATE_ELEVATION_DOCS}`,
           code: "ERR_UPDATER_ELEVATION_COMMAND_NOT_FOUND",
         })
       )

@@ -1,5 +1,5 @@
 import { AllPublishOptions, newError } from "builder-util-runtime"
-import { accessSync, constants as fsConstants, realpathSync, statSync } from "fs"
+import { accessSync, constants as fsConstants, statSync } from "fs"
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter.js"
 import { BaseUpdater, CommandExitError, InstallOptions } from "./BaseUpdater.js"
@@ -21,39 +21,22 @@ const TRUSTED_COMMAND_DIRS: readonly string[] = ["/usr/sbin", "/usr/bin", "/sbin
 /** Ends every message about how a deb, rpm or pacman update is elevated: the v27 migration section. */
 const UPDATE_ELEVATION_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#linux-update-elevation"
 
-/** The directories that `dirs` resolve to, following symlinks (`/bin` is `/usr/bin` on merged-/usr systems). */
-function realDirs(dirs: readonly string[]): string[] {
-  const result: string[] = []
-  for (const dir of dirs) {
-    try {
-      result.push(realpathSync(dir))
-    } catch {
-      // a directory this system does not have
-    }
-  }
-  return result
-}
-
-function isWithin(file: string, dir: string): boolean {
-  const relative = path.relative(dir, file)
-  return relative.length !== 0 && !relative.startsWith("..") && !path.isAbsolute(relative)
-}
-
 /**
- * Whether `candidate` is an executable regular file that, symlinks followed, still lies in one of `trustedRealDirs`.
- * Symlinks are allowed: package managers are commonly reached through one (`/bin` → `/usr/bin` on merged-/usr systems,
- * `/usr/bin/dnf` → `dnf5`), and only root can create one in a trusted directory; the target has to be trusted as well.
+ * Whether `candidate`, a path in a trusted directory, is an executable regular file, symlinks followed. Trust comes from
+ * the directory the command is found in: only root can create or change an entry in a trusted directory, so a symlink
+ * there (`/bin` → `/usr/bin` on merged-/usr systems, `/usr/bin/sudo` → `/etc/alternatives/sudo` → sudo-rs) was put
+ * there by root, and checking where it leads adds nothing. A command planted in a user-writable directory of PATH is
+ * never looked up.
  */
-function isTrustedExecutable(candidate: string, trustedRealDirs: readonly string[]): boolean {
+function isTrustedExecutable(candidate: string): boolean {
   try {
-    const real = realpathSync(candidate)
-    if (!trustedRealDirs.some(dir => isWithin(real, dir)) || !statSync(real).isFile()) {
+    if (!statSync(candidate).isFile()) {
       return false
     }
-    accessSync(real, fsConstants.X_OK)
+    accessSync(candidate, fsConstants.X_OK)
     return true
   } catch {
-    // missing, or not executable
+    // missing, a dangling symlink, or not executable
     return false
   }
 }
@@ -315,7 +298,7 @@ export abstract class LinuxUpdater extends BaseUpdater {
 
   /**
    * Resolves a relative command name in {@link trustedCommandDirs}, for an elevation helper or a command it runs: the first
-   * executable regular file of that name, which, symlinks followed, lies in a trusted directory as well. Only a bare name is looked up: one with a `/`, `.` and `..` would reach outside those directories. Throws when
+   * executable regular file of that name, symlinks followed. Only a bare name is looked up: one with a `/`, `.` and `..` would reach outside those directories. Throws when
    * it is not found there; the install plan treats that as a failed command.
    */
   protected resolveTrustedCommand(command: string): string {
@@ -332,7 +315,7 @@ export abstract class LinuxUpdater extends BaseUpdater {
     const resolved = this.findTrustedCommand(command)
     if (resolved == null) {
       throw newError(
-        `${command} not found in ${dirs.join(":")}: electron-updater runs elevation helpers and package managers only from these directories (a symlink there must lead into one of them), not from elsewhere in PATH. See ${UPDATE_ELEVATION_DOCS}`,
+        `${command} not found in ${dirs.join(":")}: electron-updater runs elevation helpers and package managers only from these directories, not from elsewhere in PATH. See ${UPDATE_ELEVATION_DOCS}`,
         "ERR_UPDATER_ELEVATION_COMMAND_NOT_FOUND"
       )
     }
@@ -340,15 +323,13 @@ export abstract class LinuxUpdater extends BaseUpdater {
   }
 
   /**
-   * The first executable regular file named `command`, a bare command name, in {@link trustedCommandDirs} that, symlinks
-   * followed, lies in a trusted directory as well; `null` when there is none.
+   * The first executable regular file named `command`, a bare command name, in {@link trustedCommandDirs}, symlinks
+   * followed; `null` when there is none.
    */
   private findTrustedCommand(command: string): string | null {
-    const dirs = this.trustedCommandDirs
-    const trustedRealDirs = realDirs(dirs)
-    for (const dir of dirs) {
+    for (const dir of this.trustedCommandDirs) {
       const candidate = path.join(dir, command)
-      if (isTrustedExecutable(candidate, trustedRealDirs)) {
+      if (isTrustedExecutable(candidate)) {
         return candidate
       }
     }
@@ -510,7 +491,7 @@ export abstract class LinuxUpdater extends BaseUpdater {
       // a helper found only outside the trusted directories is skipped, with a warning
       if (this.hasCommand(sudo)) {
         this.limitedLogger(`elevation-helper-outside-system-directories ${sudo}`).warn(
-          `${sudo} found in PATH is not used: electron-updater runs an elevation helper only from ${this.trustedCommandDirs.join(":")} (a symlink there must lead into one of them). See ${UPDATE_ELEVATION_DOCS}`
+          `${sudo} found in PATH is not used: electron-updater runs an elevation helper only from ${this.trustedCommandDirs.join(":")}. See ${UPDATE_ELEVATION_DOCS}`
         )
       }
     }
