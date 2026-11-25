@@ -71,7 +71,7 @@ export class UpdaterSignal {
   /**
    * Emitted when an authenticating proxy or server is [asking for user credentials](https://github.com/electron/electron/blob/master/docs/api/client-request.md#event-login)
    * on an update request, with the URL of that request. Call the callback without arguments to cancel it; without a `login` listener the
-   * updater cancels it. When no listener takes `url`, a server's challenge from another origin than the update feed is cancelled too.
+   * updater cancels it.
    */
   login(handler: LoginHandler): void {
     addHandler(this.emitter, "login", handler)

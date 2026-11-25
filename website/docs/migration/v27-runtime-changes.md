@@ -17,7 +17,6 @@ What the installed app, its installer or its auto-updater does differently on yo
 | [`nsis-web` installer verifies and installs its own copy of the app package](#disablewebinstaller-defaults-to-true) | Silent until install | A `--package-file` package or a publish-URL download that does not match, or a `--package-file` package that cannot be copied, aborts the install (exit code `2`); the local package file is now left in place. Only if you run one web installer with a `--package-file` from another build: set `nsisWeb.allowUnverifiedAppPackage: true` |
 | [NSIS: per-machine builds set `isAdminRightsRequired` in the update info](#nsis-per-machine-builds-set-isadminrightsrequired) | Advisory | None for most apps. Their updates are started with `elevate.exe`; with `autoInstallEvent: "onNextLaunch"`, per-machine apps call `installPendingUpdateIfAvailable()` to install a pending update |
 | [Update credentials are only sent to the feed's origin (electron-updater)](#update-credentials-stay-on-the-feeds-origin) | Warns, advisory, runtime error, runtime log | Only if `latest*.yml` points downloads at another origin (another host, or another port or scheme) that needs your `requestHeaders` / `addAuthHeader` credentials or a token in the feed URL's query: serve the files from the feed origin or use pre-signed URLs. A custom provider returns its feed URL from `Provider.feedBaseUrl` (else `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`) |
-| [A `login` handler without the `url` argument gets only the feed's server challenges (electron-updater)](#login-handlers-without-url) | Runtime log | Only if your `login` handler takes `(authInfo, callback)` and answers a server's authentication challenge from another origin than the feed, such as a download host named in `latest*.yml` or a redirect target: take `(authInfo, callback, url)` and answer only when `new URL(url).origin` is the origin your credentials are meant for |
 | [The app chooses the headers sent to another origin (electron-updater, builder-util-runtime)](#cross-origin-headers) | Warns (no app file mentions `crossOriginHeaders`), runtime error | Every app sets `autoUpdater.crossOriginHeaders` before its first check, and before `ready` for an install at launch (else `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`): `autoUpdater.crossOriginHeaders = () => []` sends none of the app's headers to another origin; return the names of the ones an origin may receive to send them there |
 | [Update requests require https (electron-updater)](#update-requests-require-https) | Warns (generic/custom/github/s3 feed), advisory, runtime error | An `http` feed, download or redirect to a host that is not loopback fails with `ERR_UPDATER_INSECURE_FEED`: serve updates over `https`; for a test server on another machine, set `autoUpdater.allowInsecureFeed = !app.isPackaged` |
 | [Windows update signature verification fails closed (electron-updater)](#windows-update-signature-verification-fails-closed) | Runtime error | An NSIS update is installed only when PowerShell verifies it: one electron-updater 6 installed with a warning (PowerShell could not be started or run, Windows 7/8) is now rejected (`ERR_UPDATER_SIGNATURE_UNVERIFIABLE`); a catalog signature is rejected as an invalid signature (`ERR_UPDATER_INVALID_SIGNATURE`) unless the app opts in with `allowCatalogSignature = true` (or the release with `win.allowCatalogSignature` in a signed manifest). If PowerShell may be blocked on your users' machines, assign a native `verifyUpdateFileAuthenticodeSignature` in your first electron-updater 7 release |
@@ -111,38 +110,7 @@ electron-builder warns once per feed when a `generic` publish `url` (the feed wr
 
 > **Tip:** `electron-builder migrate-schema` prints an advisory for a `generic` publish configuration whose `url` has a query string.
 
-An authentication challenge on an update request, a proxy's or a server's, reaches the [`login` event](../features/auto-update.md#event-login) with the URL of that request as its third argument. Without a `login` listener it is cancelled, and electron-updater logs a warning once naming the challenger's host and port and whether it is a proxy or a server; so is one whose listener throws. A handler that takes the `url` argument answers a server only when `new URL(url).origin` is the origin your credentials are meant for; when no `login` handler takes it, a server's challenge from another origin than the feed is cancelled (see [A `login` handler without the `url` argument gets only the feed's server challenges](#login-handlers-without-url)).
-
-### A `login` handler without the `url` argument gets only the feed's server challenges {#login-handlers-without-url}
-
-**How you'll find out:** **Silent** at build time. electron-updater **logs a warning at runtime**, once per updater, the first time it cancels such a challenge, with a link here; the request then fails with the server's `401`.
-
-The [`login` event](../features/auto-update.md#event-login) gets the URL of the update request that got the authentication challenge as its third argument, `(authInfo, callback, url)`. A handler that takes only `(authInfo, callback)` cannot tell which server asks for its credentials, and would give them to any server that an absolute URL in `latest*.yml` or a redirect sends an update request to. So when no `login` listener takes the `url` argument, electron-updater cancels a server's challenge (HTTP 401) from another origin than the update feed instead of emitting `login`. Such a handler still gets:
-
-- a proxy's challenge (HTTP 407, `authInfo.isProxy`), whatever its host;
-- a server's challenge on the update feed's origin: the origin of `Provider.feedBaseUrl`, which gets every request header (see [Update credentials stay on the feed's origin](#update-credentials-stay-on-the-feeds-origin)), of the last update check and of the update being downloaded (a check of another feed, after `setFeedURL`, can run during a download), and the origin of `previousBlockmapBaseUrlOverride` when the app sets it, where the old blockmap is downloaded with every request header. Origins are compared like for the request headers: an `http` → `https` upgrade of the feed's host on the default ports is the feed's origin.
-
-A channel file (`latest*.yml`), download or redirect target on another origin is not on the feed's origin, and before the first update check no origin is. A listener that takes `url` gets every challenge, and so does every other `login` listener as soon as one takes it. electron-updater tells by the parameters the listener declares (`Function.length`), so `url` must be a plain third parameter, not a rest parameter (`(...args)`) or one with a default value. The warning names the challenger's host and port, the request's origin and the feed's origins, never the realm or any credentials.
-
-**Action:** none if your `login` handler answers only a proxy, or a server on the feed's origin. If it answers a server on another origin, such as a download host named by absolute URLs in `latest*.yml`, take the `url` argument and answer only the origin your credentials are meant for:
-
-```ts
-import { autoUpdater } from "electron-updater"
-
-const DOWNLOADS_ORIGIN = "https://downloads.example.com"
-const PROXY_HOST = "proxy.corp.example"
-
-autoUpdater.on("login", (authInfo, callback, url) => {
-  if (authInfo.isProxy) {
-    // the proxy's own credentials, never the download server's
-    authInfo.host === PROXY_HOST ? callback(proxyUsername, proxyPassword) : callback()
-  } else if (new URL(url).origin === DOWNLOADS_ORIGIN) {
-    callback(downloadsUsername, downloadsPassword)
-  } else {
-    callback()
-  }
-})
-```
+An authentication challenge on an update request, a proxy's or a server's, reaches the [`login` event](../features/auto-update.md#event-login) with the URL of that request as its third argument. Without a `login` listener it is cancelled, and electron-updater logs a warning once naming the challenger's host and port and whether it is a proxy or a server; so is one whose listener throws. A server's challenge from another origin than the feed logs a warning once when no `login` handler takes the `url` argument, as such a handler cannot tell which origin it is answering; electron-updater 8, the next major version, will cancel that challenge. Take `(authInfo, callback, url)` and answer a server only when `new URL(url).origin` is the origin your credentials are meant for.
 
 ### The app chooses the headers sent to another origin {#cross-origin-headers}
 

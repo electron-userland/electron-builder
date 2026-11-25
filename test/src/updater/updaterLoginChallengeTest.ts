@@ -11,11 +11,10 @@ import { TestAppAdapter } from "../helpers/TestAppAdapter.js"
 // Electron emits `login` on an update request for any authentication challenge: a proxy's (407) or a server's (401). The updater emits it
 // as its own `login` event with the URL of that request, so a handler answers only the proxy or the origin its credentials are meant for.
 // A challenge nothing answers is cancelled: the callback is called without credentials. A handler that does not take the URL cannot tell
-// the feed from another server, so it gets a server's challenge only on the update feed's origin.
+// the feed from another server: it still gets a server's challenge from another origin than the update feed, with a warning.
 
 const DOWNLOAD_URL = new URL("https://downloads.example.net/TestApp-Setup-1.1.0.exe")
 const LOGIN_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
-const LOGIN_WITHOUT_URL_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#login-handlers-without-url"
 const FEED = "https://feed.example.com/updates"
 const FEED_FILE_URL = new URL(`${FEED}/TestApp-Setup-1.1.0.exe`)
 const OTHER_FEED = "https://other-feed.example.org/updates"
@@ -140,17 +139,22 @@ describe("electron-updater login event", () => {
   })
 
   describe("a handler without the url argument", () => {
-    test("does not get a server's challenge from another origin than the feed: it is cancelled, with a warning", async ({ tmpDir, expect }) => {
+    // the warning of a challenge from another origin than the feed, before the challenger and origins
+    const OTHER_ORIGIN_WARNING =
+      "was passed to a login handler that does not take the url argument, so the handler cannot tell which origin it is answering. " +
+      "electron-updater 8, the next major version, will cancel such a challenge when no login handler takes the url argument. " +
+      "Take (authInfo, callback, url) in your login handler and call callback(username, password) only when new URL(url).origin is the origin your credentials are meant for. " +
+      LOGIN_DOCS
+
+    test("gets a server's challenge from another origin than the feed, with a warning", async ({ tmpDir, expect }) => {
       const { updater, logger } = await createCheckedUpdater(tmpDir)
       const onLogin = onLoginWithoutUrl(updater)
+      const server = { ...challenge("downloads.example.net", 443), realm: "corp-realm" }
 
-      expect(emitChallenge(updater, { ...challenge("downloads.example.net", 443), realm: "corp-realm" }, DOWNLOAD_URL).mock.calls).toEqual([[]])
-      expect(onLogin).not.toHaveBeenCalled()
+      expect(emitChallenge(updater, server, DOWNLOAD_URL).mock.calls).toEqual([["user", "secret"]])
+      expect(onLogin.mock.calls).toEqual([[server]])
       expect(logger.warns).toEqual([
-        "electron-updater cancels a server's authentication challenge from another origin than the update feed when no login handler takes the url argument: " +
-          "the challenge of the server downloads.example.net:443 on https://downloads.example.net, another origin than the update feed (https://feed.example.com), was cancelled. " +
-          "To answer it, take (authInfo, callback, url) in your login handler, which then gets every challenge, and call callback(username, password) only when new URL(url).origin is the origin your credentials are meant for. " +
-          LOGIN_WITHOUT_URL_DOCS,
+        `A login challenge from the server downloads.example.net:443 on https://downloads.example.net, outside the update feed (https://feed.example.com), ${OTHER_ORIGIN_WARNING}`,
       ])
       // the challenger's host and port, never its realm
       expect(logger.warns.join("\n")).not.toContain("corp-realm")
@@ -165,11 +169,11 @@ describe("electron-updater login event", () => {
         emitChallenge(updater, challenge("other.example.org", 443), new URL("https://other.example.org/TestApp-Setup-1.1.0.exe"))
       }
 
-      expect(first.logger.warns).toEqual([expect.stringContaining("the challenge of the server downloads.example.net:443 on https://downloads.example.net, ")])
+      expect(first.logger.warns).toEqual([expect.stringContaining("A login challenge from the server downloads.example.net:443 on https://downloads.example.net, ")])
       expect(second.logger.warns).toEqual(first.logger.warns)
     })
 
-    test("gets a proxy's challenge, whatever its host", async ({ tmpDir, expect }) => {
+    test("gets a proxy's challenge, whatever its host, without a warning", async ({ tmpDir, expect }) => {
       const { updater, logger } = await createCheckedUpdater(tmpDir)
       const onLogin = onLoginWithoutUrl(updater)
       const proxy = challenge("proxy.corp.example", 3128, true)
@@ -179,7 +183,7 @@ describe("electron-updater login event", () => {
       expect(logger.warns).toEqual([])
     })
 
-    test("gets a server's challenge on the feed's origin, an http → https upgrade of its host included", async ({ tmpDir, expect }) => {
+    test("gets a server's challenge on the feed's origin, an http → https upgrade of its host included, without a warning", async ({ tmpDir, expect }) => {
       const { updater, logger } = await createCheckedUpdater(tmpDir)
       const onLogin = onLoginWithoutUrl(updater)
 
@@ -193,39 +197,48 @@ describe("electron-updater login event", () => {
       // compared like the request headers: an http feed (here on a loopback host) upgraded to https on the default ports is the same origin
       const local = await createUpdater(tmpDir)
       await checkFeed(local, "http://localhost/updates")
+      const localLogger = makeLogger()
+      local.logger = localLogger
       onLoginWithoutUrl(local)
       expect(emitChallenge(local, challenge("localhost", 443), new URL("https://localhost/updates/TestApp-Setup-1.1.0.exe")).mock.calls).toEqual([["user", "secret"]])
+      expect(localLogger.warns).toEqual([])
     })
 
-    test("before any update check, does not get a server's challenge", async ({ tmpDir, expect }) => {
+    test("before any update check, gets a server's challenge, with a warning", async ({ tmpDir, expect }) => {
       const updater = await createUpdater(tmpDir)
       const logger = makeLogger()
       updater.logger = logger
       const onLogin = onLoginWithoutUrl(updater)
 
-      expect(emitChallenge(updater, challenge("feed.example.com", 443), FEED_FILE_URL).mock.calls).toEqual([[]])
-      expect(onLogin).not.toHaveBeenCalled()
-      expect(logger.warns).toEqual([
-        expect.stringContaining("the challenge of the server feed.example.com:443 on https://feed.example.com, before any update check, was cancelled. "),
-      ])
+      expect(emitChallenge(updater, challenge("feed.example.com", 443), FEED_FILE_URL).mock.calls).toEqual([["user", "secret"]])
+      expect(onLogin).toHaveBeenCalledTimes(1)
+      expect(logger.warns).toEqual([`A login challenge from the server feed.example.com:443 on https://feed.example.com, before any update check, ${OTHER_ORIGIN_WARNING}`])
     })
 
-    test("gets a server's challenge on the origin of previousBlockmapBaseUrlOverride, which gets every request header for the old blockmap", async ({ tmpDir, expect }) => {
-      const { updater } = await createCheckedUpdater(tmpDir)
+    test("gets a server's challenge on the origin of previousBlockmapBaseUrlOverride, which gets every request header for the old blockmap, without a warning", async ({
+      tmpDir,
+      expect,
+    }) => {
+      const { updater, logger } = await createCheckedUpdater(tmpDir)
       const onLogin = onLoginWithoutUrl(updater)
       const blockMapServer = challenge("blockmaps.example.org", 443)
       const blockMapUrl = new URL("https://blockmaps.example.org/releases/1.0.0/TestApp-Setup-1.0.0.exe.blockmap")
 
-      // not a URL, so no blockmap is downloaded from it
-      updater.previousBlockmapBaseUrlOverride = "releases/1.0.0"
-      expect(emitChallenge(updater, blockMapServer, blockMapUrl).mock.calls).toEqual([[]])
-
       updater.previousBlockmapBaseUrlOverride = "https://blockmaps.example.org/releases/1.0.0"
       expect(emitChallenge(updater, blockMapServer, blockMapUrl).mock.calls).toEqual([["user", "secret"]])
-      expect(onLogin).toHaveBeenCalledTimes(1)
+      expect(logger.warns).toEqual([])
+
+      // not a URL, so no blockmap is downloaded from it: no feed origin, and the login event listener does not throw
+      updater.previousBlockmapBaseUrlOverride = "releases/1.0.0"
+      expect(emitChallenge(updater, blockMapServer, blockMapUrl).mock.calls).toEqual([["user", "secret"]])
+      expect(onLogin).toHaveBeenCalledTimes(2)
+      expect(logger.warns).toEqual([expect.stringContaining("A login challenge from the server blockmaps.example.org:443 on https://blockmaps.example.org, ")])
     })
 
-    test("gets a server's challenge on the origin of the feed an update is downloaded from, while a check of another feed has run", async ({ tmpDir, expect }) => {
+    test("gets a server's challenge on the origin of the feed an update is downloaded from without a warning, while a check of another feed has run", async ({
+      tmpDir,
+      expect,
+    }) => {
       const { updater } = await createCheckedUpdater(tmpDir)
       const onLogin = onLoginWithoutUrl(updater)
       let finishDownload = (): void => undefined
@@ -236,29 +249,40 @@ describe("electron-updater login event", () => {
       const download = updater.downloadUpdate()
       // e.g. after setFeedURL: the check's requests go to the other feed, the download's still to the feed of its update
       await checkFeed(updater, OTHER_FEED)
+      const logger = makeLogger()
+      updater.logger = logger
 
       expect(emitChallenge(updater, challenge("feed.example.com", 443), FEED_FILE_URL).mock.calls).toEqual([["user", "secret"]])
       expect(emitChallenge(updater, challenge("other-feed.example.org", 443), new URL(`${OTHER_FEED}/latest.yml`)).mock.calls).toEqual([["user", "secret"]])
+      expect(logger.warns).toEqual([])
 
       finishDownload()
       await download
       // with the download over, only the feed of the last check is left
-      expect(emitChallenge(updater, challenge("feed.example.com", 443), FEED_FILE_URL).mock.calls).toEqual([[]])
-      expect(onLogin).toHaveBeenCalledTimes(2)
+      expect(emitChallenge(updater, challenge("feed.example.com", 443), FEED_FILE_URL).mock.calls).toEqual([["user", "secret"]])
+      expect(onLogin).toHaveBeenCalledTimes(3)
+      expect(logger.warns).toEqual([
+        `A login challenge from the server feed.example.com:443 on https://feed.example.com, outside the update feed (https://other-feed.example.org), ${OTHER_ORIGIN_WARNING}`,
+      ])
     })
 
-    test("does not get a server's challenge on the feed of a download that did not start", async ({ tmpDir, expect }) => {
+    test("gets a server's challenge on the feed of a download that did not start, with a warning", async ({ tmpDir, expect }) => {
       const { updater } = await createCheckedUpdater(tmpDir)
       // a check of another feed without an update keeps the update found on FEED
       await checkFeed(updater, OTHER_FEED, "1.0.0")
+      const logger = makeLogger()
+      updater.logger = logger
       const onLogin = onLoginWithoutUrl(updater)
       ;(updater as any).doDownloadUpdate = () => {
         throw new Error("the update files cannot be resolved")
       }
 
       expect(() => updater.downloadUpdate()).toThrow("the update files cannot be resolved")
-      expect(emitChallenge(updater, challenge("feed.example.com", 443), FEED_FILE_URL).mock.calls).toEqual([[]])
-      expect(onLogin).not.toHaveBeenCalled()
+      expect(emitChallenge(updater, challenge("feed.example.com", 443), FEED_FILE_URL).mock.calls).toEqual([["user", "secret"]])
+      expect(onLogin).toHaveBeenCalledTimes(1)
+      expect(logger.warns).toEqual([
+        expect.stringContaining("A login challenge from the server feed.example.com:443 on https://feed.example.com, outside the update feed (https://other-feed.example.org), "),
+      ])
     })
 
     // a plain-JavaScript provider can change its feedBaseUrl after the check that validated it
@@ -273,7 +297,7 @@ describe("electron-updater login event", () => {
         },
       ],
     ])("a download whose provider's feedBaseUrl %s starts, and adds no feed origin", async ([_what, feedBaseUrl], { tmpDir, expect }) => {
-      const { updater } = await createCheckedUpdater(tmpDir)
+      const { updater, logger } = await createCheckedUpdater(tmpDir)
       const onLogin = onLoginWithoutUrl(updater)
       Object.defineProperty((updater as any).updateInfoAndProvider.provider, "feedBaseUrl", { ...feedBaseUrl, configurable: true })
       let finishDownload = (): void => undefined
@@ -283,11 +307,15 @@ describe("electron-updater login event", () => {
         })
 
       const download = updater.downloadUpdate()
-      // another origin than the feed of the last check: cancelled, the login event listener does not throw
-      expect(emitChallenge(updater, challenge("downloads.example.net", 443), DOWNLOAD_URL).mock.calls).toEqual([[]])
-      // the feed of the last check still gets its challenge
+      // the feed of the last check is the only feed origin
       expect(emitChallenge(updater, challenge("feed.example.com", 443), FEED_FILE_URL).mock.calls).toEqual([["user", "secret"]])
-      expect(onLogin).toHaveBeenCalledTimes(1)
+      expect(logger.warns).toEqual([])
+      // another origin: emitted with a warning naming that feed alone, and the login event listener does not throw
+      expect(emitChallenge(updater, challenge("downloads.example.net", 443), DOWNLOAD_URL).mock.calls).toEqual([["user", "secret"]])
+      expect(onLogin).toHaveBeenCalledTimes(2)
+      expect(logger.warns).toEqual([
+        `A login challenge from the server downloads.example.net:443 on https://downloads.example.net, outside the update feed (https://feed.example.com), ${OTHER_ORIGIN_WARNING}`,
+      ])
 
       finishDownload()
       await expect(download).resolves.toEqual({ updateFile: "TestApp-Setup-1.1.0.exe" })
@@ -491,8 +519,8 @@ describe("the updater's own executor", () => {
   })
 
   // a redirect is a new request (see ElectronHttpExecutor.addRedirectHandlers), whose challenge is the target's
-  test("after a redirect, a handler without url gets a server's challenge only when the target is on the feed's origin", async ({ tmpDir, expect }) => {
-    const { updater } = await createCheckedUpdater(tmpDir)
+  test("after a redirect, a handler without url gets a server's challenge, with a warning only when the target is not on the feed's origin", async ({ tmpDir, expect }) => {
+    const { updater, logger } = await createCheckedUpdater(tmpDir)
     const onLogin = onLoginWithoutUrl(updater)
     // wired like the updater's own executor: the checked updater's executor is a fake that emits no login event
     const executor = new ElectronHttpExecutor((authInfo, callback, requestUrl) => (updater as any).handleLoginChallenge(authInfo, callback, requestUrl), {
@@ -511,8 +539,11 @@ describe("the updater's own executor", () => {
     })
 
     expect(requests).toHaveLength(3)
-    expect(offOriginCallback.mock.calls).toEqual([[]])
+    expect(offOriginCallback.mock.calls).toEqual([["user", "secret"]])
     expect(feedCallback.mock.calls).toEqual([["user", "secret"]])
-    expect(onLogin).toHaveBeenCalledTimes(1)
+    expect(onLogin).toHaveBeenCalledTimes(2)
+    expect(logger.warns).toEqual([
+      expect.stringContaining("A login challenge from the server downloads.example.net:443 on https://downloads.example.net, outside the update feed "),
+    ])
   })
 })

@@ -74,9 +74,6 @@ const DEFAULT_VERIFY_UPDATE_FILE: VerifyUpdateFile = _params => Promise.resolve(
 // the v27 migration section for the login warnings, which links the login event docs
 const LOGIN_MIGRATION_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
 
-// the v27 migration section for a server's challenge from another origin than the feed, cancelled when no login handler takes the url argument
-const LOGIN_WITHOUT_URL_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#login-handlers-without-url"
-
 const CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-headers"
 
 /** `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`, for `subject`: what needs `autoUpdater.crossOriginHeaders`. */
@@ -139,7 +136,7 @@ export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
   /**
    * `url` is the URL of the update request that got the authentication challenge (after a redirect, the redirect's target). When no
-   * listener takes `url`, a server's challenge from another origin than the update feed is cancelled without emitting `login`.
+   * listener takes `url`, a server's challenge from another origin than the update feed logs a warning: electron-updater 8 will cancel it.
    */
   login: (info: AuthInfo, callback: LoginCallback, url: string) => void
   "checking-for-update": () => void
@@ -1036,8 +1033,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * (Electron's `AuthInfo` names only the challenger's host and port). A challenge on a request whose URL cannot be determined (`null`),
    * or one emitted without a `login` listener (which logs a warning once), is cancelled: the callback is called once, without credentials, and
    * so is one whose listener throws. When no listener takes `url`, a server's challenge from another origin than the feed (see
-   * {@link loginFeedUrls}) is cancelled too, which logs a warning once: such a listener cannot tell the feed from another server. A listener
-   * that takes `url` gets every challenge.
+   * {@link loginFeedUrls}) is still emitted, with a warning once: such a listener cannot tell the feed from another server, and
+   * electron-updater 8 will cancel that challenge.
    * With `allowInsecureFeed`, a server's challenge on a request that is not `https` and not to a loopback host is cancelled too: nothing shows
    * that it comes from the server the credentials are meant for.
    * @internal
@@ -1069,18 +1066,17 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       callback()
       return
     }
-    // a handler without the url parameter cannot tell the feed from another server: it gets a server's challenge only on the feed's origin
+    // a handler without the url parameter cannot tell the feed from another server: it still gets a server's challenge from another origin
     if (!authInfo.isProxy && listeners.every(it => it.length < 3)) {
       const feedUrls = this.loginFeedUrls()
       if (feedUrls.every(it => HttpExecutor.isCrossOrigin(it, requestUrl))) {
         const feedOrigins = [...new Set(feedUrls.map(it => it.origin))]
         this.limitedLogger("login-challenge-other-origin").warn(
-          `electron-updater cancels a server's authentication challenge from another origin than the update feed when no login handler takes the url argument: ` +
-            `the challenge of ${challenger} on ${requestUrl.origin}, ${feedOrigins.length === 0 ? "before any update check" : `another origin than the update feed (${feedOrigins.join(", ")})`}, was cancelled. ` +
-            `To answer it, take (authInfo, callback, url) in your login handler, which then gets every challenge, and call callback(username, password) only when new URL(url).origin is the origin your credentials are meant for. ${LOGIN_WITHOUT_URL_DOCS}`
+          `A login challenge from ${challenger} on ${requestUrl.origin}, ${feedOrigins.length === 0 ? "before any update check" : `outside the update feed (${feedOrigins.join(", ")})`}, ` +
+            `was passed to a login handler that does not take the url argument, so the handler cannot tell which origin it is answering. ` +
+            `electron-updater 8, the next major version, will cancel such a challenge when no login handler takes the url argument. ` +
+            `Take (authInfo, callback, url) in your login handler and call callback(username, password) only when new URL(url).origin is the origin your credentials are meant for. ${LOGIN_MIGRATION_DOCS}`
         )
-        callback()
-        return
       }
     }
     let isAnswered = false
@@ -1101,7 +1097,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   /**
-   * The URLs on whose origins a server's authentication challenge reaches a `login` listener that does not take `url` (compared like the
+   * The URLs on whose origins a server's authentication challenge reaches a `login` listener that does not take `url` without a warning (compared like the
    * request headers, see `HttpExecutor.isCrossOrigin`): the update feed (`Provider.feedBaseUrl`) of the last update check, the one of the
    * update being downloaded, and `previousBlockmapBaseUrlOverride`, the origin the old blockmap is downloaded from with every request header.
    * A channel file, download or redirect target on another origin is not on one of them.
