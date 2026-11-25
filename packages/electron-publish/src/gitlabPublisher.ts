@@ -36,9 +36,10 @@ export class GitlabPublisher extends HttpPublisher {
   ) {
     super(context, true)
 
-    this.host = info.host || "gitlab.com"
+    const host = info.host || "gitlab.com"
     // a path is kept: a GitLab instance under a relative URL root is served at https://<host>/<path>/api/v4
-    parseConfiguredHost(this.host, "gitlab.host", true)
+    parseConfiguredHost(host, "gitlab.host", true)
+    this.host = host.endsWith("/") ? host.slice(0, -1) : host
     let token = info.token || null
     if (isEmptyOrSpaces(token)) {
       token = process.env.GITLAB_TOKEN || null

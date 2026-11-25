@@ -35,7 +35,7 @@ function errorMessage(create: () => unknown): string {
 }
 
 describe("GitHub", () => {
-  test.each([undefined, "github.com", "api.github.com", "ghe.example.com:8443", "[::1]:8443", "xn--bcher-kva.example"])("host %s is accepted", host => {
+  test.each([undefined, "github.com", "api.github.com", "ghe.example.com:8443", "[::1]:8443", "xn--bcher-kva.example", "ghe_internal:8080"])("host %s is accepted", host => {
     expect(() => github(host)).not.toThrow()
   })
 
@@ -58,12 +58,17 @@ describe("GitHub", () => {
 })
 
 describe("GitLab", () => {
-  test.each([undefined, "gitlab.com", "gitlab.example.com:8443"])("host %s is accepted", host => {
+  test.each([undefined, "gitlab.com", "gitlab.example.com:8443", "gitlab_ce:8080", "gitlab_ce:8080/gitlab"])("host %s is accepted", host => {
     expect(() => gitlab(host)).not.toThrow()
   })
 
-  test.each(["example.com/gitlab", "example.com:8443/group/gitlab", "example.com/gitlab/"])("a host with a path (relative URL root) %s is kept in the API URL", host => {
-    expect((gitlab(host) as any).baseApiPath).toBe(`https://${host}/api/v4`)
+  test.each([
+    ["example.com/gitlab", "https://example.com/gitlab/api/v4"],
+    ["example.com:8443/group/gitlab", "https://example.com:8443/group/gitlab/api/v4"],
+    ["example.com/gitlab/", "https://example.com/gitlab/api/v4"],
+    ["gitlab_ce:8080", "https://gitlab_ce:8080/api/v4"],
+  ])("host %s is kept in the API URL without a trailing slash", (host, expected) => {
+    expect((gitlab(host) as any).baseApiPath).toBe(expected)
   })
 
   test.each([
@@ -84,7 +89,7 @@ describe("GitLab", () => {
 })
 
 describe("Keygen", () => {
-  test.each([undefined, "api.keygen.sh", "keygen.example.com:8443"])("host %s is accepted", host => {
+  test.each([undefined, "api.keygen.sh", "keygen.example.com:8443", "keygen_internal:8080"])("host %s is accepted", host => {
     expect(() => keygen(host)).not.toThrow()
   })
 

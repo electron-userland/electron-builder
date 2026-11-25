@@ -36,7 +36,7 @@ export function parseConfiguredHost(host: string, option: string, allowPath = fa
   const pathStart = allowPath ? host.indexOf("/") : -1
   const authority = pathStart === -1 ? host : host.substring(0, pathStart)
   const path = pathStart === -1 ? "" : host.substring(pathStart)
-  const url = /^[A-Za-z0-9.:[\]-]+$/.test(authority) && /^(\/[A-Za-z0-9._~-]+)*\/?$/.test(path) ? URL.parse(`https://${authority}`) : null
+  const url = /^[A-Za-z0-9._:[\]-]+$/.test(authority) && /^(\/[A-Za-z0-9._~-]+)*\/?$/.test(path) ? URL.parse(`https://${authority}`) : null
   if (url == null || url.hostname === "") {
     const shape = allowPath
       ? 'optionally with a port and a path (e.g. "git.example.com:8443/gitlab"), without user info, query or fragment'
