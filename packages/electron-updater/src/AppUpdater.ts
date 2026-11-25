@@ -1396,6 +1396,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const cachedBlockMapFile = path.join(downloadedUpdateHelper.cacheDir, "current.blockmap")
     const done = async (isSaveCache: boolean) => {
       await downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo, updateFileName, isSaveCache)
+      downloadedUpdateHelper.setVerifiedUpdateInfoAndProvider(taskOptions.downloadUpdateOptions.updateInfoAndProvider)
       // before `taskOptions.done`: it emits `update-downloaded`, and an app that calls quitAndInstall() from that listener exits
       // before anything after it runs, which would leave the next update without the blockmap of the installed version
       if (await fsExtra.pathExists(pendingBlockMapFile)) {

@@ -361,7 +361,7 @@ export abstract class BaseUpdater extends AppUpdater {
     this.rejectDownloadedUpdate(
       newError(
         `The downloaded update is not installed: ${failure}. It is removed and will be downloaded again on the next update check. ` +
-          "Since electron-updater 7, a downloaded update is hashed again right before it is installed. " +
+          "A downloaded update is hashed again right before it is installed. " +
           "See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed",
         "ERR_UPDATER_UPDATE_FILE_CHANGED"
       )
@@ -641,6 +641,7 @@ export abstract class BaseUpdater extends AppUpdater {
     // clear the marker before spawning the installer so a silently failing install cannot produce an endless
     // spawn-and-quit loop on every launch
     await downloadedUpdateHelper.clearPendingInstallMarker(this.log)
+    downloadedUpdateHelper.setVerifiedUpdateInfoAndProvider(updateInfoAndProvider)
     this.updateInfoAndProvider = updateInfoAndProvider
     this.log.info(`Installing pending update ${latestInfo.version} on launch`)
     // a failed install returns to idle (see endInstall): with the pending marker cleared above, autoInstallEvent: "onQuit"
