@@ -162,8 +162,9 @@ describe("install on next launch", { concurrent: false }, () => {
 
   /**
    * Routes the async install path back to `doInstall`, which every assertion in this file spies on. Linux
-   * targets install asynchronously so their elevation dialog cannot block the main process; what those tests
-   * exercise is BaseUpdater's orchestration, and the Linux execution itself is covered by linuxUpdaterUnitTest.
+   * targets install asynchronously so their elevation dialog cannot block the main process, and NSIS waits for
+   * the installer to start; what those tests exercise is BaseUpdater's orchestration, and the execution itself
+   * is covered by linuxUpdaterUnitTest and nsisUpdaterTest.
    */
   function delegateAsyncInstallToSyncInstall(updater: BaseUpdater): void {
     ;(updater as any).doInstallAsync = (options: unknown) => Promise.resolve((updater as any).doInstall(options))
@@ -806,6 +807,7 @@ describe("install on next launch", { concurrent: false }, () => {
       const updater = new NsisUpdater(null, app)
       updater.logger = log
       const doInstall = vi.spyOn(updater as any, "doInstall").mockReturnValue(true)
+      delegateAsyncInstallToSyncInstall(updater)
       const getUpdateInfoAndProvider = vi.spyOn(updater as any, "getUpdateInfoAndProvider").mockResolvedValue({
         info: latestUpdateInfo,
         provider: { resolveFiles: (info: UpdateInfo) => info.files.map(it => makeResolvedFileInfo(it.sha512, it.url)) },

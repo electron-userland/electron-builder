@@ -506,6 +506,7 @@ describe("NsisUpdater installer version check", () => {
       await writeManifest("1.2.0")
       const updater = launch()
       const doInstall = vi.spyOn(updater as any, "doInstall").mockReturnValue(true)
+      const doInstallAsync = vi.spyOn(updater as any, "doInstallAsync").mockResolvedValue(true)
       const errors: Array<Error> = []
       updater.on("error", error => errors.push(error))
       // @ts-expect-error accessing a private method
@@ -513,6 +514,7 @@ describe("NsisUpdater installer version check", () => {
 
       await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
       expect(doInstall).not.toHaveBeenCalled()
+      expect(doInstallAsync).not.toHaveBeenCalled()
       expect(errors).toEqual([
         expect.objectContaining({
           code: "ERR_UPDATER_INSTALLER_VERSION_MISMATCH",

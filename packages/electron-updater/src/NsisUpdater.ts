@@ -270,7 +270,7 @@ export class NsisUpdater extends BaseUpdater {
       downloadUpdateOptions,
       fileInfo,
       // a cached installer is verified as a downloaded one is (see task): its signature, then its ProductVersion. Its signature, because it
-      // sat in the pending directory since an earlier launch, and the checksum check right before the install (see doInstall) pins the
+      // sat in the pending directory since an earlier launch, and the checksum check right before the install (see startInstaller) pins the
       // installer to a file verified in this session. Its ProductVersion, because the cache is matched by sha512 only, and an installer
       // cached for another version (e.g. an older release, kept after it was installed) must not be reused for this one
       verifyCachedFile: async cachedFile => {
@@ -469,7 +469,48 @@ export class NsisUpdater extends BaseUpdater {
     return true
   }
 
+  // the install on quit cannot wait for the installer to start: a start that is refused or fails emits "error" after this returned true
   protected doInstall(options: InstallOptions): boolean {
+    return this.startInstaller(options) !== false
+  }
+
+  // quitAndInstall and the install on launch verify the installer's signature again right before startInstaller starts it, as when it was
+  // downloaded, and wait for the installer to start, so that a start that is refused or fails returns false and the app does not quit.
+  // The install on quit cannot wait for either, and relies on the checksum check in startInstaller: it pins the installer to the file
+  // whose signature was verified in this session, when it was downloaded or reused from the cache.
+  protected async doInstallAsync(options: InstallOptions): Promise<boolean> {
+    const installerPath = this.installerPath
+    const downloadedUpdateHelper = this.downloadedUpdateHelper
+    if (installerPath != null) {
+      // the update the installer was verified with, not the one a later update check found (this.updateInfoAndProvider)
+      const update = downloadedUpdateHelper == null ? null : downloadedUpdateHelper.updateInfoAndProvider
+      let signatureFailure: string | null
+      try {
+        signatureFailure = update == null ? "its signature was not verified in this session" : verificationFailureMessage(await this.verifySignature(installerPath, update))
+      } catch (e: unknown) {
+        // a verification that cannot decide rejects the update like a failed one
+        this.rejectDownloadedUpdate(e instanceof Error ? e : new Error(String(e)))
+        return false
+      }
+      if (signatureFailure != null) {
+        this.rejectDownloadedUpdate(
+          newError(
+            `The downloaded update is not installed: it is not signed by the application owner: ${signatureFailure}. ` +
+              "It is removed and will be downloaded again on the next update check. The installer's signature is verified again right before it is started. " +
+              "See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed",
+            "ERR_UPDATER_INVALID_SIGNATURE"
+          )
+        )
+        return false
+      }
+    }
+    return await this.startInstaller(options)
+  }
+
+  // Returns false when a check before the start refuses the install (an "error" event was emitted). Otherwise starts the installer and
+  // returns the start: it resolves true once an installer process started, and false once its start was refused or failed (an "error"
+  // event was emitted). It never rejects.
+  private startInstaller(options: InstallOptions): false | Promise<boolean> {
     const installerPath = this.installerPath
     if (installerPath == null) {
       this.dispatchError(new Error("No update filepath provided, can't quit and install"))
@@ -502,22 +543,28 @@ export class NsisUpdater extends BaseUpdater {
       args.push(`/D=${this.installDirectory}`)
     }
 
-    const callUsingElevation = (): void => {
-      this.spawnLog(path.join(process.resourcesPath, "elevate.exe"), [installerPath].concat(args)).catch(e => this.dispatchError(e))
+    // an "error" listener that throws must not reject the start, which doInstall does not wait for
+    const fail = (error: unknown): false => {
+      try {
+        this.dispatchError(error instanceof Error ? error : new Error(String(error)))
+      } catch (nestedError: unknown) {
+        this.log.warn(`Cannot dispatch error event: ${nestedError instanceof Error ? (nestedError.stack ?? nestedError.message) : String(nestedError)}`)
+      }
+      return false
     }
+    const startUsingElevation = (): Promise<boolean> => this.spawnLog(path.join(process.resourcesPath, "elevate.exe"), [installerPath].concat(args)).then(() => true, fail)
 
     if (!this.verifyDownloadedUpdateBeforeInstall()) {
       return false
     }
 
-    // set when an update with isAdminRightsRequired found that elevate.exe may not run; an EACCES of the direct start below reuses it
+    // set when an update with isAdminRightsRequired found that elevate.exe may not run; an EACCES or UNKNOWN of the direct start below reuses it
     let adminRightsRefusal: string | null = null
     if (options.isAdminRightsRequired) {
       const refusal = this.elevationRefusal()
       if (refusal == null) {
         this.log.info("isAdminRightsRequired is set to true, run installer using elevate.exe")
-        callUsingElevation()
-        return true
+        return startUsingElevation()
       }
       // An app that already runs elevated (UAC turned off, the built-in Administrator, Run as administrator) can modify the files elevationRefusal
       // writes to as well, and elevate.exe adds nothing for it: the installer is started directly and gets the rights of the app, never more.
@@ -529,75 +576,48 @@ export class NsisUpdater extends BaseUpdater {
       adminRightsRefusal = refusal
     }
 
-    this.spawnLog(installerPath, args).catch((e: unknown) => {
-      const errorCode = e instanceof Error && "code" in e ? e.code : undefined
-      const message = e instanceof Error ? e.message : String(e)
-      // EACCES (the installer asks for elevation, so the app does not run elevated) is retried through elevate.exe, under the same rule as
-      // isAdminRightsRequired (see elevationRefusal). UNKNOWN (e.g. an AppLocker, WDAC or antivirus block) and ENOENT are not retried at all:
-      // neither elevated nor opened with the shell
-      if (errorCode === "EACCES") {
-        const refusal = adminRightsRefusal ?? this.elevationRefusal()
-        if (refusal != null) {
-          this.dispatchError(
-            newError(
-              `Cannot start the update installer through elevate.exe: the installer requires administrator rights (EACCES: ${message}), but ${refusal}. The update installer is started through elevate.exe only when the current user cannot modify elevate.exe, its folder or the install folder of the app; an app that runs with administrator rights starts the installer directly. Install per-machine apps into a folder only administrators can write, e.g. build them with nsis.perMachine: true; an update cannot switch an app installed per user to a per-machine installation unless the app runs with administrator rights. See ${INSTALLER_START_DOCS}`,
-              "ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"
-            )
-          )
-          return
-        }
-        this.log.info(`Cannot run installer (EACCES: "${message}"), run installer using elevate.exe`)
-        // the first start failed after the check in doInstall: the installer is checked again before it is started elevated
-        if (!this.verifyDownloadedUpdateBeforeInstall()) {
-          return
-        }
-        callUsingElevation()
-        return
-      }
-      if (errorCode === "UNKNOWN" || errorCode === "ENOENT") {
-        this.dispatchError(
-          newError(
-            `Cannot start the update installer (${errorCode}: ${message}). After this error electron-updater neither starts the installer through elevate.exe nor opens it with the shell: check whether security software (AppLocker, WDAC, antivirus) blocks the installer, or install the update manually. See ${INSTALLER_START_DOCS}`,
-            "ERR_UPDATER_INSTALLER_START_FAILED"
-          )
+    return (
+      this.spawnLog(installerPath, args)
+        .then(
+          () => true,
+          (e: unknown) => {
+            const errorCode = e instanceof Error && "code" in e ? e.code : undefined
+            const message = e instanceof Error ? e.message : String(e)
+            // EACCES (ERROR_ELEVATION_REQUIRED: the installer asks for elevation, so the app does not run elevated) and UNKNOWN (Windows errors
+            // libuv has no name for, e.g. ERROR_ACCESS_DISABLED_BY_POLICY: AppLocker or WDAC rules that let only administrators run files outside
+            // Program Files and Windows) are retried through elevate.exe, under the same rule as isAdminRightsRequired (see elevationRefusal).
+            // ENOENT (a missing installer) is neither elevated nor opened with the shell
+            if (errorCode === "EACCES" || errorCode === "UNKNOWN") {
+              const refusal = adminRightsRefusal ?? this.elevationRefusal()
+              if (refusal != null) {
+                return fail(
+                  newError(
+                    `Cannot start the update installer through elevate.exe: Windows refused to start the installer directly (${errorCode}: ${message}), which happens when it requires administrator rights or when a policy such as AppLocker or WDAC lets only administrators run it, but ${refusal}. The update installer is started through elevate.exe only when the current user cannot modify elevate.exe, its folder or the install folder of the app; an app that runs with administrator rights starts the installer directly. Install per-machine apps into a folder only administrators can write, e.g. build them with nsis.perMachine: true; an update cannot switch an app installed per user to a per-machine installation unless the app runs with administrator rights. See ${INSTALLER_START_DOCS}`,
+                    "ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"
+                  )
+                )
+              }
+              this.log.info(`Cannot run installer (${errorCode}: "${message}"), run installer using elevate.exe`)
+              // the first start failed after the check above: the installer is checked again before it is started elevated
+              if (!this.verifyDownloadedUpdateBeforeInstall()) {
+                return false
+              }
+              return startUsingElevation()
+            }
+            if (errorCode === "ENOENT") {
+              return fail(
+                newError(
+                  `Cannot start the update installer (${errorCode}: ${message}): the installer file or its folder is missing. A missing installer is neither started through elevate.exe nor opened with the shell. Check whether security software removed or quarantined the downloaded installer, or install the update manually. See ${INSTALLER_START_DOCS}`,
+                  "ERR_UPDATER_INSTALLER_START_FAILED"
+                )
+              )
+            }
+            return fail(e)
+          }
         )
-        return
-      }
-      this.dispatchError(e instanceof Error ? e : new Error(message))
-    })
-    return true
-  }
-
-  // quitAndInstall and the install on launch verify the installer's signature again right before doInstall starts it, as when it was
-  // downloaded. The install on quit cannot wait for the verification, and relies on the checksum check in doInstall: it pins the
-  // installer to the file whose signature was verified in this session, when it was downloaded or reused from the cache.
-  protected async doInstallAsync(options: InstallOptions): Promise<boolean> {
-    const installerPath = this.installerPath
-    const downloadedUpdateHelper = this.downloadedUpdateHelper
-    if (installerPath != null) {
-      // the update the installer was verified with, not the one a later update check found (this.updateInfoAndProvider)
-      const update = downloadedUpdateHelper == null ? null : downloadedUpdateHelper.updateInfoAndProvider
-      let signatureFailure: string | null
-      try {
-        signatureFailure = update == null ? "its signature was not verified in this session" : verificationFailureMessage(await this.verifySignature(installerPath, update))
-      } catch (e: unknown) {
-        // a verification that cannot decide rejects the update like a failed one
-        this.rejectDownloadedUpdate(e instanceof Error ? e : new Error(String(e)))
-        return false
-      }
-      if (signatureFailure != null) {
-        this.rejectDownloadedUpdate(
-          newError(
-            `The downloaded update is not installed: it is not signed by the application owner: ${signatureFailure}. ` +
-              "It is removed and will be downloaded again on the next update check. The installer's signature is verified again right before it is started. " +
-              "See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed",
-            "ERR_UPDATER_INVALID_SIGNATURE"
-          )
-        )
-        return false
-      }
-    }
-    return this.doInstall(options)
+        // the re-check before the elevated start emits "error" itself, and an "error" listener that throws must not reject the start either
+        .catch(fail)
+    )
   }
 
   // elevate.exe starts the update installer with administrator rights, so it is run only when the current user cannot modify it, the

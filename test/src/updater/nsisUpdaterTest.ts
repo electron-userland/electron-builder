@@ -3,7 +3,9 @@ import { NsisUpdater, UpdateCheckResult } from "electron-updater"
 import fs from "fs"
 import fsExtra from "fs-extra"
 import { createHash } from "crypto"
+import { EventEmitter } from "events"
 import * as http from "http"
+import Module from "module"
 import type { Socket } from "net"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert.js"
@@ -1310,17 +1312,25 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
 
   // The app runs from <root>/TestApp/TestApp.exe with elevate.exe in <root>/TestApp/resources. Writing to `writable` succeeds; the
   // attempts on the others fail with `deniedCode` (see denyWrites). spawnLog rejects a start of the installer itself with `startError`
-  // (EACCES: Windows refuses an installer that asks for administrator rights to an app that does not run elevated) and starts elevate.exe.
-  // `verifyDownloadedFilesSync` is the re-check of the downloaded installer before each start, unchanged by default.
+  // (EACCES: Windows refuses an installer that asks for administrator rights to an app that does not run elevated) and a start of
+  // elevate.exe with `elevateError`, and starts anything else. `verifyDownloadedFilesSync` is the re-check of the downloaded installer
+  // before each start, unchanged by default.
+  //
+  // `trigger` "doInstall" is the install on quit, which cannot wait for the start: `result` is what doInstall returned. "quitAndInstall"
+  // runs quitAndInstall({ isSilent: true }) with cancelQuitOnInstallFailure set: `result` is what its install resolved to, and `quit`
+  // counts the app quits that followed. `throwingErrorListener` adds an "error" listener that throws after the one recording `errors`.
   async function install(
     tmpDir: TmpDir,
     options: {
       isAdminRightsRequired: boolean
       startError?: unknown
+      elevateError?: unknown
       writable?: Array<Writable>
       elevateExe?: boolean
       deniedCode?: string
       verifyDownloadedFilesSync?: () => string | null
+      trigger?: "doInstall" | "quitAndInstall"
+      throwingErrorListener?: boolean
     }
   ) {
     const root = await tmpDir.getTempDir({ prefix: "installer-start" })
@@ -1337,12 +1347,25 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
 
     const updater = await createNsisUpdater("1.0.0")
     Object.defineProperty(updater, "installerPath", { get: () => installerPath })
-    ;(updater as any).downloadedUpdateHelper = { verifyDownloadedFilesSync: options.verifyDownloadedFilesSync ?? (() => null), clearSync: () => {} }
+    ;(updater as any).downloadedUpdateHelper = {
+      downloadedFileInfo: { isAdminRightsRequired: options.isAdminRightsRequired },
+      packageFile: null,
+      verifyDownloadedFilesSync: options.verifyDownloadedFilesSync ?? (() => null),
+      clearSync: () => {},
+      // the update the installer was verified with, which doInstallAsync verifies its signature against again
+      updateInfoAndProvider: { info: { version: "1.1.0" } },
+    }
     const errors: Array<Error> = []
     updater.on("error", (e: Error) => errors.push(e))
-    const spawnLog = vi
-      .spyOn(updater as unknown as { spawnLog: (file: string, args: Array<string>) => Promise<boolean> }, "spawnLog")
-      .mockImplementation(file => (file === installerPath && options.startError != null ? Promise.reject(options.startError) : Promise.resolve(true)))
+    if (options.throwingErrorListener === true) {
+      updater.on("error", () => {
+        throw new Error("error listener failure")
+      })
+    }
+    const spawnLog = vi.spyOn(updater as unknown as { spawnLog: (file: string, args: Array<string>) => Promise<boolean> }, "spawnLog").mockImplementation(file => {
+      const error = file === installerPath ? options.startError : file === elevatePath ? options.elevateError : undefined
+      return error == null ? Promise.resolve(true) : Promise.reject(error)
+    })
 
     const writable = options.writable ?? []
     denyWrites(
@@ -1356,11 +1379,28 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
     const originalResourcesPath = Object.getOwnPropertyDescriptor(process, "resourcesPath")
     Object.defineProperty(process, "execPath", { value: execPath, configurable: true, writable: true })
     Object.defineProperty(process, "resourcesPath", { value: resourcesPath, configurable: true, writable: true })
+    const quit = vi.spyOn((updater as any).app, "quit")
     try {
-      const result = (updater as any).doInstall({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: options.isAdminRightsRequired })
-      // a start failure is handled asynchronously, after doInstall returned
+      let result: unknown
+      if (options.trigger === "quitAndInstall") {
+        updater.cancelQuitOnInstallFailure = true
+        // once the install succeeded, quitAndInstall emits before-quit-for-update on Electron's autoUpdater, then quits
+        const load = (Module as any)._load
+        vi.spyOn(Module as any, "_load").mockImplementation(function (this: unknown, request: unknown, ...rest: Array<unknown>) {
+          return request === "electron" ? { autoUpdater: new EventEmitter() } : load.call(this, request, ...rest)
+        })
+        // the test installer is not signed: the signature verified again before the start passes
+        vi.spyOn(updater as any, "verifySignature").mockResolvedValue({ response: "success" })
+        const doInstallAsync = vi.spyOn(updater as any, "doInstallAsync")
+        updater.quitAndInstall({ isSilent: true })
+        result = await doInstallAsync.mock.results[0]?.value
+      } else {
+        result = (updater as any).doInstall({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: options.isAdminRightsRequired })
+      }
+      // a start failure is handled asynchronously, after doInstall returned; quitAndInstall quits from a later tick
       await new Promise(resolve => setImmediate(resolve))
-      return { result, errors, spawnLog, installerPath, elevatePath, resourcesPath, installFolder }
+      await new Promise(resolve => setImmediate(resolve))
+      return { result, errors, spawnLog, quit, installerPath, elevatePath, resourcesPath, installFolder }
     } finally {
       if (originalExecPath != null) {
         Object.defineProperty(process, "execPath", originalExecPath)
@@ -1373,17 +1413,17 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
     }
   }
 
-  for (const code of ["UNKNOWN", "ENOENT"]) {
-    test(`${code} fails the install without elevate.exe or the shell, even where elevate.exe may run`, config, async ({ expect, tmpDir }) => {
-      const { result, errors, spawnLog, installerPath } = await install(tmpDir, { isAdminRightsRequired: false, startError: spawnError(code) })
-      expect(result).toBe(true)
-      expect(spawnLog).toHaveBeenCalledTimes(1)
-      expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
-      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_START_FAILED"])
-      expect(errors[0].message).toContain("After this error electron-updater neither starts the installer through elevate.exe nor opens it with the shell")
-      expect(errors[0].message.slice(-MIGRATION_LINK.length)).toBe(MIGRATION_LINK)
-    })
-  }
+  test("ENOENT fails the install without elevate.exe or the shell, even where elevate.exe may run", config, async ({ expect, tmpDir }) => {
+    const { result, errors, spawnLog, installerPath } = await install(tmpDir, { isAdminRightsRequired: false, startError: spawnError("ENOENT") })
+    expect(result).toBe(true)
+    expect(spawnLog).toHaveBeenCalledTimes(1)
+    expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
+    expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_START_FAILED"])
+    expect(errors[0].message).toContain("(ENOENT: spawn ENOENT): the installer file or its folder is missing")
+    expect(errors[0].message).toContain("A missing installer is neither started through elevate.exe nor opened with the shell")
+    expect(errors[0].message).not.toContain("AppLocker")
+    expect(errors[0].message.slice(-MIGRATION_LINK.length)).toBe(MIGRATION_LINK)
+  })
 
   test("any other start error is emitted as it is", config, async ({ expect, tmpDir }) => {
     const error = spawnError("EPERM")
@@ -1401,20 +1441,48 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
     expect(errors[0].message).toBe("spawn failed")
   })
 
-  test("EACCES is not retried through elevate.exe when the installer changed after the first start", config, async ({ expect, tmpDir }) => {
-    const verifyDownloadedFilesSync = vi.fn<() => string | null>().mockReturnValueOnce(null).mockReturnValue("installer changed since it was verified")
-    const { errors, spawnLog } = await install(tmpDir, { isAdminRightsRequired: false, startError: spawnError("EACCES"), verifyDownloadedFilesSync })
-    expect(verifyDownloadedFilesSync).toHaveBeenCalledTimes(2)
-    expect(spawnLog).toHaveBeenCalledTimes(1)
-    expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
+  for (const code of ["EACCES", "UNKNOWN"]) {
+    test(`${code} is not retried through elevate.exe when the installer changed after the first start`, config, async ({ expect, tmpDir }) => {
+      const verifyDownloadedFilesSync = vi.fn<() => string | null>().mockReturnValueOnce(null).mockReturnValue("installer changed since it was verified")
+      const { errors, spawnLog } = await install(tmpDir, { isAdminRightsRequired: false, startError: spawnError(code), verifyDownloadedFilesSync })
+      expect(verifyDownloadedFilesSync).toHaveBeenCalledTimes(2)
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
+    })
+  }
+
+  // the re-check before the elevated start emits "error" itself
+  test('an "error" listener that throws on the re-check before the elevated start does not reject the start', config, async ({ expect, tmpDir }) => {
+    const unhandledRejections: Array<unknown> = []
+    const onUnhandledRejection = (reason: unknown) => unhandledRejections.push(reason)
+    process.on("unhandledRejection", onUnhandledRejection)
+    try {
+      const verifyDownloadedFilesSync = vi.fn<() => string | null>().mockReturnValueOnce(null).mockReturnValue("installer changed since it was verified")
+      const { result, errors, spawnLog } = await install(tmpDir, {
+        isAdminRightsRequired: false,
+        startError: spawnError("EACCES"),
+        verifyDownloadedFilesSync,
+        throwingErrorListener: true,
+      })
+      expect(result).toBe(true)
+      expect(errors.map(it => (it as any).code)[0]).toBe("ERR_UPDATER_UPDATE_FILE_CHANGED")
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(unhandledRejections).toEqual([])
+    } finally {
+      process.off("unhandledRejection", onUnhandledRejection)
+    }
   })
 
-  for (const { name, isAdminRightsRequired } of [
-    { name: "an update with isAdminRightsRequired", isAdminRightsRequired: true },
-    { name: "an installer start failing with EACCES", isAdminRightsRequired: false },
+  for (const { name, isAdminRightsRequired, code } of [
+    { name: "an update with isAdminRightsRequired", isAdminRightsRequired: true, code: "EACCES" },
+    { name: "an installer start failing with EACCES", isAdminRightsRequired: false, code: "EACCES" },
+    // e.g. default AppLocker or WDAC rules, which let only administrators run files outside Program Files and Windows: libuv has no name for
+    // ERROR_ACCESS_DISABLED_BY_POLICY
+    { name: "an installer start failing with UNKNOWN", isAdminRightsRequired: false, code: "UNKNOWN" },
   ]) {
-    // the app does not run elevated, so Windows refuses to start the installer, which asks for administrator rights
-    const startError = spawnError("EACCES")
+    // the app does not run elevated, so Windows refuses to start the installer, which asks for administrator rights (or which a policy
+    // lets only administrators run)
+    const startError = spawnError(code)
     // where elevate.exe may run, an update with isAdminRightsRequired is started through it right away
     const startCalls = isAdminRightsRequired ? 0 : 1
 
@@ -1428,6 +1496,7 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
     const expectRefused = (expect: ExpectStatic, { result, errors, spawnLog, installerPath }: Awaited<ReturnType<typeof install>>, reason: string) => {
       expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"])
       expect(errors[0].message).toContain(reason)
+      expect(errors[0].message).toContain(`Windows refused to start the installer directly (${code}: spawn ${code})`)
       expect(errors[0].message).toContain(
         "The update installer is started through elevate.exe only when the current user cannot modify elevate.exe, its folder or the install folder of the app"
       )
@@ -1520,7 +1589,7 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
 
     test("does not retry an installer Windows refuses to start through elevate.exe", config, async ({ expect, tmpDir }) => {
       const { errors, spawnLog, installerPath } = await install(tmpDir, { isAdminRightsRequired: true, writable, startError: spawnError("UNKNOWN") })
-      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_START_FAILED"])
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"])
       expect(spawnLog).toHaveBeenCalledTimes(1)
       expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
     })
@@ -1540,5 +1609,123 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
     expect(errors[0].message).toContain("an update cannot switch an app installed per user to a per-machine installation unless the app runs with administrator rights")
     expect(spawnLog).toHaveBeenCalledTimes(1)
     expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
+  })
+
+  // the install on quit cannot wait for the start, so a refused or failed start is reported after doInstall returned. An "error" listener
+  // that throws makes emitting "error" throw: the start, which nothing waits for, still settles without rejecting
+  test('an "error" listener that throws does not reject the start', config, async ({ expect, tmpDir }) => {
+    const unhandledRejections: Array<unknown> = []
+    const onUnhandledRejection = (reason: unknown) => unhandledRejections.push(reason)
+    process.on("unhandledRejection", onUnhandledRejection)
+    try {
+      const { result, errors, spawnLog } = await install(tmpDir, {
+        isAdminRightsRequired: false,
+        startError: spawnError("UNKNOWN"),
+        writable: ["elevate.exe"],
+        throwingErrorListener: true,
+      })
+      expect(result).toBe(true)
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"])
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(unhandledRejections).toEqual([])
+    } finally {
+      process.off("unhandledRejection", onUnhandledRejection)
+    }
+  })
+
+  // quitAndInstall waits for the installer to start: a start that is refused or fails returns false, and the app keeps running
+  describe("quitAndInstall", () => {
+    const trigger = "quitAndInstall"
+
+    test("quits once the installer started", config, async ({ expect, tmpDir }) => {
+      const { result, errors, quit, spawnLog, installerPath } = await install(tmpDir, { isAdminRightsRequired: false, trigger })
+      expect(result).toBe(true)
+      expect(errors).toEqual([])
+      expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
+      expect(quit).toHaveBeenCalledTimes(1)
+    })
+
+    for (const code of ["EACCES", "UNKNOWN"]) {
+      test(`quits once elevate.exe started after ${code}`, config, async ({ expect, tmpDir }) => {
+        const { result, errors, quit, spawnLog, installerPath, elevatePath } = await install(tmpDir, { isAdminRightsRequired: false, startError: spawnError(code), trigger })
+        expect(result).toBe(true)
+        expect(errors).toEqual([])
+        expect(spawnLog).toHaveBeenLastCalledWith(elevatePath, [installerPath, ...args])
+        expect(quit).toHaveBeenCalledTimes(1)
+      })
+
+      test(`does not quit when elevate.exe is refused after ${code}`, config, async ({ expect, tmpDir }) => {
+        const { result, errors, quit, spawnLog } = await install(tmpDir, { isAdminRightsRequired: false, startError: spawnError(code), writable: ["resources"], trigger })
+        expect(result).toBe(false)
+        expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"])
+        expect(spawnLog).toHaveBeenCalledTimes(1)
+        expect(quit).not.toHaveBeenCalled()
+      })
+    }
+
+    test("does not quit when the installer changed before the elevated start", config, async ({ expect, tmpDir }) => {
+      const verifyDownloadedFilesSync = vi.fn<() => string | null>().mockReturnValueOnce(null).mockReturnValue("installer changed since it was verified")
+      const { result, errors, quit, spawnLog } = await install(tmpDir, { isAdminRightsRequired: false, startError: spawnError("UNKNOWN"), verifyDownloadedFilesSync, trigger })
+      expect(result).toBe(false)
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(quit).not.toHaveBeenCalled()
+    })
+
+    test("does not quit when the installer is missing", config, async ({ expect, tmpDir }) => {
+      const { result, errors, quit } = await install(tmpDir, { isAdminRightsRequired: false, startError: spawnError("ENOENT"), trigger })
+      expect(result).toBe(false)
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_START_FAILED"])
+      expect(quit).not.toHaveBeenCalled()
+    })
+
+    test("does not quit when another start error is emitted", config, async ({ expect, tmpDir }) => {
+      const error = spawnError("EPERM")
+      const { result, errors, quit } = await install(tmpDir, { isAdminRightsRequired: false, startError: error, trigger })
+      expect(result).toBe(false)
+      expect(errors).toEqual([error])
+      expect(quit).not.toHaveBeenCalled()
+    })
+
+    for (const { name, isAdminRightsRequired, startError } of [
+      { name: "an update with isAdminRightsRequired", isAdminRightsRequired: true, startError: undefined },
+      { name: "the retry after EACCES", isAdminRightsRequired: false, startError: spawnError("EACCES") },
+    ]) {
+      test(`does not quit when elevate.exe fails to start for ${name}`, config, async ({ expect, tmpDir }) => {
+        const elevateError = spawnError("ENOENT")
+        const { result, errors, quit, spawnLog, elevatePath } = await install(tmpDir, { isAdminRightsRequired, startError, elevateError, trigger })
+        expect(result).toBe(false)
+        expect(errors).toEqual([elevateError])
+        expect(spawnLog).toHaveBeenLastCalledWith(elevatePath, expect.anything())
+        expect(quit).not.toHaveBeenCalled()
+      })
+    }
+
+    test("does not quit when a check before the start refuses the install", config, async ({ expect, tmpDir }) => {
+      const updater = await createNsisUpdater("1.0.0")
+      const root = await tmpDir.getTempDir({ prefix: "installer-start" })
+      const installerPath = path.join(root, "TestApp Setup 1.1.0.exe")
+      Object.defineProperty(updater, "installerPath", { get: () => installerPath })
+      ;(updater as any).downloadedUpdateHelper = {
+        downloadedFileInfo: { isAdminRightsRequired: false },
+        packageFile: path.join(root, "package-1.1.0.7z"),
+        updateInfoAndProvider: { info: { version: "1.1.0" } },
+      }
+      updater.disableWebInstaller = true
+      const errors: Array<Error> = []
+      updater.on("error", (e: Error) => errors.push(e))
+      const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
+      vi.spyOn(updater as any, "verifySignature").mockResolvedValue({ response: "success" })
+      const quit = vi.spyOn((updater as any).app, "quit")
+
+      await expect(updater.installAsync(true, false)).resolves.toBe(false)
+      updater.quitAndInstall({ isSilent: true })
+      await new Promise(resolve => setImmediate(resolve))
+      await new Promise(resolve => setImmediate(resolve))
+
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_WEB_INSTALLER_DISABLED", "ERR_UPDATER_WEB_INSTALLER_DISABLED"])
+      expect(spawnLog).not.toHaveBeenCalled()
+      expect(quit).not.toHaveBeenCalled()
+    })
   })
 })
