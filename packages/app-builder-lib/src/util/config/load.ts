@@ -128,8 +128,10 @@ export async function loadEnv(envFile: string) {
 
   const parsed = parseEnv<DotenvParseInput>(data)
 
-  // The hosts that may receive a publish token from the environment must be set by the publishing job, not by a file in the project
-  const ignored = PUBLISH_TOKEN_HOST_ENV_NAMES.filter(name => Object.prototype.hasOwnProperty.call(parsed, name))
+  // The hosts that may receive a publish token from the environment must be set by the publishing job, not by a file in the project.
+  // Names are compared case-insensitively: on Windows, process.env is, so a lower-case name in the file would set the same variable.
+  const tokenHostNames = new Set(PUBLISH_TOKEN_HOST_ENV_NAMES.map(name => name.toUpperCase()))
+  const ignored = Object.keys(parsed).filter(name => tokenHostNames.has(name.toUpperCase()))
   if (ignored.length > 0) {
     ignored.forEach(name => delete parsed[name])
     log.warn(

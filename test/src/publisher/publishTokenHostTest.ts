@@ -259,4 +259,31 @@ describe("electron-builder.env", () => {
     expect(() => github("ghe.example.com")).toThrow('GH_TOKEN is not sent to "ghe.example.com"')
     expect(() => gitlab("gitlab.example.com")).toThrow('GITLAB_TOKEN is not sent to "gitlab.example.com"')
   })
+
+  test("cannot set them with a name in another case, which Windows reads as the same variable", async ({ tmpDir }) => {
+    const names = ["electron_builder_publish_token_hosts", "Github_Server_Url", "github_api_url", "ci_server_url", "Ci_Api_V4_Url"]
+    for (const name of names) {
+      vi.stubEnv(name, undefined)
+    }
+    const envFile = path.join(await tmpDir.getTempDir({ prefix: "publish-token-host-env-case" }), "electron-builder.env")
+    await outputFile(
+      envFile,
+      [
+        "electron_builder_publish_token_hosts=ghe.example.com",
+        "Github_Server_Url=https://ghe.example.com",
+        "github_api_url=https://ghe.example.com/api/v3",
+        "ci_server_url=https://gitlab.example.com",
+        "Ci_Api_V4_Url=https://gitlab.example.com/api/v4",
+        "GH_TOKEN=" + SECRET,
+        "GITLAB_TOKEN=" + SECRET,
+      ].join("\n")
+    )
+    const parsed = await loadEnv(envFile)
+    expect(parsed).toEqual({ GH_TOKEN: SECRET, GITLAB_TOKEN: SECRET })
+    for (const name of [...names, "ELECTRON_BUILDER_PUBLISH_TOKEN_HOSTS", "GITHUB_SERVER_URL", "GITHUB_API_URL", "CI_SERVER_URL", "CI_API_V4_URL"]) {
+      expect(process.env[name]).toBeUndefined()
+    }
+    expect(() => github("ghe.example.com")).toThrow('GH_TOKEN is not sent to "ghe.example.com"')
+    expect(() => gitlab("gitlab.example.com")).toThrow('GITLAB_TOKEN is not sent to "gitlab.example.com"')
+  })
 })
