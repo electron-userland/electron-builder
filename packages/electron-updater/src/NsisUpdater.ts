@@ -26,6 +26,7 @@ import { URL } from "url"
 import { readExecutableProductVersions } from "./windowsExecutableVersion.js"
 
 const INSTALLER_VERSION_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#nsis-update-installers-must-carry-the-updates-version"
+const INSTALLER_START_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#nsis-update-installer-start-and-elevate-exe"
 
 function installerVersionMismatch(reason: string, expected: string): Error {
   return newError(
@@ -503,6 +504,8 @@ export class NsisUpdater extends BaseUpdater {
       return false
     }
 
+    // set when an update with isAdminRightsRequired found that elevate.exe may not run; an EACCES of the direct start below reuses it
+    let adminRightsRefusal: string | null = null
     if (options.isAdminRightsRequired) {
       const refusal = this.elevationRefusal()
       if (refusal == null) {
@@ -514,7 +517,10 @@ export class NsisUpdater extends BaseUpdater {
       // writes to as well, and elevate.exe adds nothing for it: the installer is started directly and gets the rights of the app, never more.
       // Windows refuses, with EACCES, to start a per-machine installer (RequestExecutionLevel admin) from an app that does not run elevated, and
       // that is refused below: a folder any process of the user can modify (e.g. an app installed per user) still gets no elevated installer
-      this.log.info(`isAdminRightsRequired is set to true, but elevate.exe is not used (${refusal}): run installer directly, it runs elevated only if the app does`)
+      this.log.info(
+        `isAdminRightsRequired is set to true, but elevate.exe is not used (${refusal}): the installer is started directly and gets the rights of the app, so it installs only if the app runs with administrator rights. See ${INSTALLER_START_DOCS}`
+      )
+      adminRightsRefusal = refusal
     }
 
     this.spawnLog(installerPath, args).catch((e: unknown) => {
@@ -524,11 +530,11 @@ export class NsisUpdater extends BaseUpdater {
       // isAdminRightsRequired (see elevationRefusal). UNKNOWN (e.g. an AppLocker, WDAC or antivirus block) and ENOENT are not retried at all:
       // neither elevated nor opened with the shell
       if (errorCode === "EACCES") {
-        const refusal = this.elevationRefusal()
+        const refusal = adminRightsRefusal ?? this.elevationRefusal()
         if (refusal != null) {
           this.dispatchError(
             newError(
-              `Cannot start the update installer through elevate.exe: the installer requires administrator rights (EACCES: ${message}), but ${refusal}. Since electron-updater 7, elevate.exe is used only when the current user cannot modify it, its folder or the install folder of the app, and an app that runs with administrator rights starts the installer directly instead. Install per-machine apps into a folder only administrators can write, e.g. build them with nsis.perMachine: true; an update cannot switch an app installed per user to a per-machine installation unless the app runs with administrator rights. See https://www.electron.build/docs/migration/v27-runtime-changes#nsis-a-failed-installer-start-is-no-longer-retried`,
+              `Cannot start the update installer through elevate.exe: the installer requires administrator rights (EACCES: ${message}), but ${refusal}. The update installer is started through elevate.exe only when the current user cannot modify elevate.exe, its folder or the install folder of the app; an app that runs with administrator rights starts the installer directly. Install per-machine apps into a folder only administrators can write, e.g. build them with nsis.perMachine: true; an update cannot switch an app installed per user to a per-machine installation unless the app runs with administrator rights. See ${INSTALLER_START_DOCS}`,
               "ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"
             )
           )
@@ -545,7 +551,7 @@ export class NsisUpdater extends BaseUpdater {
       if (errorCode === "UNKNOWN" || errorCode === "ENOENT") {
         this.dispatchError(
           newError(
-            `Cannot start the update installer (${errorCode}: ${message}). Since electron-updater 7, the installer is not started again through elevate.exe or opened with the shell after this error; check whether security software (AppLocker, WDAC, antivirus) blocks the installer, or install the update manually. See https://www.electron.build/docs/migration/v27-runtime-changes#nsis-a-failed-installer-start-is-no-longer-retried`,
+            `Cannot start the update installer (${errorCode}: ${message}). After this error electron-updater neither starts the installer through elevate.exe nor opens it with the shell: check whether security software (AppLocker, WDAC, antivirus) blocks the installer, or install the update manually. See ${INSTALLER_START_DOCS}`,
             "ERR_UPDATER_INSTALLER_START_FAILED"
           )
         )
@@ -576,10 +582,10 @@ export class NsisUpdater extends BaseUpdater {
   // replace it. Returns why it may not run, or null when it may.
   //
   // Node's fs.access does not read Windows ACLs, so writing is attempted for real: elevate.exe is opened for writing (r+, which neither
-  // truncates nor changes it) and a file with a unique name is created (wx) and removed in each folder. EACCES and EPERM mean the user
-  // cannot write there. ENOENT means the file or folder is missing; it counts as not modifiable because the folder that would hold it is
-  // checked as well, and a missing elevate.exe then fails to start with the spawn error. Any other error refuses elevate.exe: whether
-  // the user can modify it is unknown.
+  // truncates nor changes it) and a file with a unique name is created (wx) and removed in each folder. EACCES, EPERM and EROFS (a
+  // read-only volume) mean the user cannot write there. ENOENT means the file or folder is missing; it counts as not modifiable because
+  // the folder that would hold it is checked as well, and a missing elevate.exe then fails to start with the spawn error. Any other
+  // error refuses elevate.exe: whether the user can modify it is unknown.
   private elevationRefusal(): string | null {
     const elevatePath = path.join(process.resourcesPath, "elevate.exe")
     const canWrite = (attempt: () => void): boolean => {
@@ -588,7 +594,7 @@ export class NsisUpdater extends BaseUpdater {
         return true
       } catch (e: unknown) {
         const code = e instanceof Error && "code" in e ? e.code : undefined
-        if (code === "EACCES" || code === "EPERM" || code === "ENOENT") {
+        if (code === "EACCES" || code === "EPERM" || code === "EROFS" || code === "ENOENT") {
           return false
         }
         throw e

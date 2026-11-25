@@ -1300,7 +1300,7 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
   afterEach(() => vi.restoreAllMocks())
 
   const args = ["--updated", "/S"]
-  const MIGRATION_LINK = "https://www.electron.build/docs/migration/v27-runtime-changes#nsis-a-failed-installer-start-is-no-longer-retried"
+  const MIGRATION_LINK = "https://www.electron.build/docs/migration/v27-runtime-changes#nsis-update-installer-start-and-elevate-exe"
 
   function spawnError(code: string): Error {
     return Object.assign(new Error(`spawn ${code}`), { code })
@@ -1374,13 +1374,13 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
   }
 
   for (const code of ["UNKNOWN", "ENOENT"]) {
-    test(`${code} is not retried, not even where elevate.exe may run`, config, async ({ expect, tmpDir }) => {
+    test(`${code} fails the install without elevate.exe or the shell, even where elevate.exe may run`, config, async ({ expect, tmpDir }) => {
       const { result, errors, spawnLog, installerPath } = await install(tmpDir, { isAdminRightsRequired: false, startError: spawnError(code) })
       expect(result).toBe(true)
       expect(spawnLog).toHaveBeenCalledTimes(1)
       expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
       expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_START_FAILED"])
-      expect(errors[0].message).toContain("Since electron-updater 7, the installer is not started again through elevate.exe or opened with the shell")
+      expect(errors[0].message).toContain("After this error electron-updater neither starts the installer through elevate.exe nor opens it with the shell")
       expect(errors[0].message.slice(-MIGRATION_LINK.length)).toBe(MIGRATION_LINK)
     })
   }
@@ -1428,7 +1428,9 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
     const expectRefused = (expect: ExpectStatic, { result, errors, spawnLog, installerPath }: Awaited<ReturnType<typeof install>>, reason: string) => {
       expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"])
       expect(errors[0].message).toContain(reason)
-      expect(errors[0].message).toContain("Since electron-updater 7, elevate.exe is used only when the current user cannot modify it, its folder or the install folder of the app")
+      expect(errors[0].message).toContain(
+        "The update installer is started through elevate.exe only when the current user cannot modify elevate.exe, its folder or the install folder of the app"
+      )
       expect(errors[0].message.slice(-MIGRATION_LINK.length)).toBe(MIGRATION_LINK)
       // where elevate.exe may not run, an update with isAdminRightsRequired is started directly as well (it runs elevated only if the app
       // does); Windows refused that start, and elevate.exe is not started after it
@@ -1444,6 +1446,11 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
 
       test("runs elevate.exe when writing is denied with EPERM", config, async ({ expect, tmpDir }) => {
         expectElevated(expect, await install(tmpDir, { isAdminRightsRequired, startError, deniedCode: "EPERM" }))
+      })
+
+      // e.g. an install folder on a read-only volume
+      test("runs elevate.exe when writing is denied with EROFS", config, async ({ expect, tmpDir }) => {
+        expectElevated(expect, await install(tmpDir, { isAdminRightsRequired, startError, deniedCode: "EROFS" }))
       })
 
       // the folder that would hold it is not writable either, so nobody but an administrator can put one there: the spawn of the missing
