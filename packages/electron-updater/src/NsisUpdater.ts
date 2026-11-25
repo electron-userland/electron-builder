@@ -257,8 +257,6 @@ export class NsisUpdater extends BaseUpdater {
         )
       }
     }
-    const signatureError = (failure: string) =>
-      newError(`New version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${failure}`, "ERR_UPDATER_INVALID_SIGNATURE")
     return this.executeDownload({
       fileExtension: "exe",
       downloadUpdateOptions,
@@ -270,7 +268,12 @@ export class NsisUpdater extends BaseUpdater {
       verifyCachedFile: async cachedFile => {
         const signatureFailure = verificationFailureMessage(await this.verifySignature(cachedFile, downloadUpdateOptions.updateInfoAndProvider))
         if (signatureFailure != null) {
-          throw signatureError(signatureFailure)
+          throw newError(
+            `The cached installer of version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${signatureFailure}. ` +
+              "It is removed and will be downloaded again on the next update check. A cached installer is verified like a downloaded one before it is reused. " +
+              "See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed",
+            "ERR_UPDATER_INVALID_SIGNATURE"
+          )
         }
         await this.verifyInstallerVersion(cachedFile, downloadUpdateOptions.updateInfoAndProvider)
       },
@@ -301,7 +304,10 @@ export class NsisUpdater extends BaseUpdater {
         if (signatureFailure != null) {
           await removeTempDirIfAny()
           // noinspection ThrowInsideFinallyBlockJS
-          throw signatureError(signatureFailure)
+          throw newError(
+            `New version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${signatureFailure}`,
+            "ERR_UPDATER_INVALID_SIGNATURE"
+          )
         }
         await this.verifyInstallerVersion(destinationFile, downloadUpdateOptions.updateInfoAndProvider)
 
@@ -554,10 +560,27 @@ export class NsisUpdater extends BaseUpdater {
   // installer to the file whose signature was verified in this session, when it was downloaded or reused from the cache.
   protected async doInstallAsync(options: InstallOptions): Promise<boolean> {
     const installerPath = this.installerPath
+    const downloadedUpdateHelper = this.downloadedUpdateHelper
     if (installerPath != null) {
-      const signatureFailure = verificationFailureMessage(await this.verifySignature(installerPath, this.updateInfoAndProvider))
+      // the update the installer was verified with, not the one a later update check found (this.updateInfoAndProvider)
+      const update = downloadedUpdateHelper == null ? null : downloadedUpdateHelper.updateInfoAndProvider
+      let signatureFailure: string | null
+      try {
+        signatureFailure = update == null ? "its signature was not verified in this session" : verificationFailureMessage(await this.verifySignature(installerPath, update))
+      } catch (e: unknown) {
+        // a verification that cannot decide rejects the update like a failed one
+        this.rejectDownloadedUpdate(e instanceof Error ? e : new Error(String(e)))
+        return false
+      }
       if (signatureFailure != null) {
-        this.rejectDownloadedUpdate(newError(`The downloaded update is not signed by the application owner: ${signatureFailure}`, "ERR_UPDATER_INVALID_SIGNATURE"))
+        this.rejectDownloadedUpdate(
+          newError(
+            `The downloaded update is not installed: it is not signed by the application owner: ${signatureFailure}. ` +
+              "It is removed and will be downloaded again on the next update check. The installer's signature is verified again right before it is started. " +
+              "See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed",
+            "ERR_UPDATER_INVALID_SIGNATURE"
+          )
+        )
         return false
       }
     }

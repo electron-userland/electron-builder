@@ -7,6 +7,7 @@ import { hashFile } from "builder-util-runtime"
 import type { UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
 import { load } from "js-yaml"
 import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
+import type { UpdateInfoAndProvider } from "electron-updater/src/AppUpdater"
 import { makeLogger } from "../helpers/updaterTestUtil"
 
 function makeFileInfo(sha512: string, fileName = "TestApp Setup.exe"): ResolvedUpdateFileInfo {
@@ -575,6 +576,52 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
 
       expect(helper.file).toBeNull()
       expect(helper.verifyDownloadedFilesSync()).toBe("no verified update file")
+    })
+
+    // what the installer's signature is verified under again before the async install: only the update it was verified against itself
+    describe("updateInfoAndProvider", () => {
+      const verified = (version: string): UpdateInfoAndProvider => ({ info: makeUpdateInfo(version), provider: {} as UpdateInfoAndProvider["provider"] })
+
+      test("is the update the file was recorded as verified against", async () => {
+        await seed()
+        expect(helper.updateInfoAndProvider).toBeNull()
+        const update = verified("1.0.1")
+        helper.setVerifiedUpdateInfoAndProvider(update)
+        expect(helper.updateInfoAndProvider).toBe(update)
+      })
+
+      test("is forgotten with the file by clear() and clearSync()", async () => {
+        await seed()
+        helper.setVerifiedUpdateInfoAndProvider(verified("1.0.1"))
+        helper.clearSync()
+        expect(helper.updateInfoAndProvider).toBeNull()
+
+        const { installerPath, fileInfo } = await seed()
+        helper.setVerifiedUpdateInfoAndProvider(verified("1.0.1"))
+        await helper.clear()
+        expect(helper.updateInfoAndProvider).toBeNull()
+
+        // a file set again later is not verified under the forgotten update
+        await outputFile(installerPath, "installer")
+        await helper.setDownloadedFile(installerPath, null, makeUpdateInfo(), fileInfo, "TestApp Setup.exe", true)
+        expect(helper.updateInfoAndProvider).toBeNull()
+      })
+
+      test("is reset when another file is set or validated, until the caller records what it verified it against", async () => {
+        const { installerPath, fileInfo } = await seed()
+        const validate: Array<[string, () => Promise<unknown>]> = [
+          ["setDownloadedFile", () => helper.setDownloadedFile(installerPath, null, makeUpdateInfo(), fileInfo, "TestApp Setup.exe", true)],
+          ["validateCachedPendingInstall", () => helper.validateCachedPendingInstall(fileInfo)],
+          // a file cached by an earlier launch: another path than the one downloaded in this session
+          ["validateDownloadedPath", () => helper.validateDownloadedPath(path.join(helper.cacheDirForPendingUpdate, "other.exe"), makeUpdateInfo(), fileInfo)],
+        ]
+        for (const [name, run] of validate) {
+          helper.setVerifiedUpdateInfoAndProvider(verified("1.0.1"))
+          await run()
+          expect(helper.file, name).toBe(installerPath)
+          expect(helper.updateInfoAndProvider, name).toBeNull()
+        }
+      })
     })
   })
 })
