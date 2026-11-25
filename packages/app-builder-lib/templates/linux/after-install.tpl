@@ -11,10 +11,9 @@ else
 fi
 
 # Check if user namespaces are supported by the kernel and working with a quick test.
-# This script runs as root, and root is exempt from kernel.unprivileged_userns_clone and
-# kernel.apparmor_restrict_unprivileged_userns, so run the test as an unprivileged user
-# (uid/gid 65534, "nobody") to see what the app will get. Without setpriv the test can't
-# run unprivileged, so assume the app needs the SUID sandbox.
+# This script runs as root, and root is exempt from kernel.unprivileged_userns_clone, so run
+# the test as an unprivileged user (uid/gid 65534, "nobody") to see what the app will get.
+# Without setpriv the test can't run unprivileged, so assume the app needs the SUID sandbox.
 if ! { [[ -L /proc/self/ns/user ]] && hash setpriv 2>/dev/null &&
     setpriv --reuid=65534 --regid=65534 --clear-groups unshare --user true; }; then
     # Use SUID chrome-sandbox on systems without user namespaces, or without setpriv to check:
