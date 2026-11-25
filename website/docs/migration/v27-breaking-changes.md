@@ -93,7 +93,7 @@ The quickest way through an upgrade is:
 |---|---|---|
 | [macOS default entitlements drop `allow-unsigned-executable-memory`](./v27-runtime-changes.md#macos-default-entitlements-tightened) | Your app needs that entitlement. Only the library-validation part gets a build warning | Runtime |
 | [S3 publishing needs `awsCredentials.source`](./v27-build-changes.md#s3-publishing-requires-an-explicit-awscredentialssource) | You publish to S3. Builds that don't publish don't check it | Build |
-| [Publish tokens from the environment are bound to the provider host](./v27-build-changes.md#publish-tokens-from-the-environment-are-bound-to-the-provider-host) | You publish to a custom `host` with a token from the environment. Builds that don't publish don't check it, except Squirrel.Windows with `remoteReleases`, which checks it in every build | Build |
+| [`github.host` / `gitlab.host` / `keygen.host` must be a host name](./v27-build-changes.md#publish-host-must-be-a-host-name) | Your publish `host` has user info, a query, a fragment or (outside GitLab) a path. Builds that don't publish don't check it | Build |
 | [macOS: the ASAR integrity digest is embedded](./v27-runtime-changes.md#macos-asar-integrity-digest) | You merge separately built x64 and arm64 apps with `@electron/universal` yourself. The build only warns when you have an `afterPack` hook | Runtime |
 
 ---
