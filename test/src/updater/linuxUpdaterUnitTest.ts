@@ -234,7 +234,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
       expect(warn.mock.calls).toEqual([
         [
-          `pkexec found in PATH is not used: electron-updater 7 runs an elevation helper only from ${systemDir} (a symlink there must lead into one of them). See ${UPDATE_ELEVATION_DOCS}`,
+          `pkexec found in PATH is not used: electron-updater runs an elevation helper only from ${systemDir} (a symlink there must lead into one of them). See ${UPDATE_ELEVATION_DOCS}`,
         ],
       ])
     })
@@ -243,7 +243,10 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       await installHelpers(outsideDir, "sudo")
 
       expect(() => determineSudoCommand()).toThrow(
-        `sudo not found in ${systemDir}: electron-updater 7 runs elevation helpers and package managers only from these directories (a symlink there must lead into one of them), not from elsewhere in PATH. See ${UPDATE_ELEVATION_DOCS}`
+        expect.objectContaining({
+          message: `sudo not found in ${systemDir}: electron-updater runs elevation helpers and package managers only from these directories (a symlink there must lead into one of them), not from elsewhere in PATH. See ${UPDATE_ELEVATION_DOCS}`,
+          code: "ERR_UPDATER_ELEVATION_COMMAND_NOT_FOUND",
+        })
       )
     })
 
@@ -277,7 +280,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       // the helpers each updater spawned: the pkexec of the system directories
       const pkexec = path.join(systemDir, "pkexec")
       expect(spawnAsyncLogs.map(spawnAsyncLog => spawnAsyncLog.mock.calls.map(([cmd]) => cmd))).toEqual([[pkexec, pkexec], [pkexec]])
-      const warning = `electron-updater 7 elevates the install with pkexec (polkit), which it tries first, so the authentication prompt comes from polkit; kdesudo is only used on systems without polkit (electron-updater 6 tried gksudo and kdesudo before pkexec). See ${UPDATE_ELEVATION_DOCS}`
+      const warning = `electron-updater elevates the install with pkexec (polkit), which it tries first, so the authentication prompt comes from polkit; kdesudo is only used on systems without polkit. See ${UPDATE_ELEVATION_DOCS}`
       expect(warn.mock.calls).toEqual([[warning], [warning]])
     })
 
@@ -359,7 +362,12 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
         // a file the name would reach, if it were joined with the trusted directory
         await mkdir(path.join(trustedDir, "sub"), { recursive: true })
         await writeFile(path.join(trustedDir, "sub", "dpkg"), "#!/bin/sh\n", { mode: 0o755 })
-        expect(() => resolve(command)).toThrow(`${JSON.stringify(command)} is not a command name, it cannot be looked up in ${trustedDir}. See ${UPDATE_ELEVATION_DOCS}`)
+        expect(() => resolve(command)).toThrow(
+          expect.objectContaining({
+            message: `${JSON.stringify(command)} is not a command name, it cannot be looked up in ${trustedDir}. See ${UPDATE_ELEVATION_DOCS}`,
+            code: "ERR_UPDATER_ELEVATION_COMMAND_NOT_FOUND",
+          })
+        )
       })
 
       it("rejects a directory", async () => {
@@ -374,7 +382,10 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
       it("rejects a missing command, with a link to the migration guide", () => {
         expect(() => resolve("dpkg")).toThrow(
-          `dpkg not found in ${trustedDir}: electron-updater 7 runs elevation helpers and package managers only from these directories (a symlink there must lead into one of them), not from elsewhere in PATH. See ${UPDATE_ELEVATION_DOCS}`
+          expect.objectContaining({
+            message: `dpkg not found in ${trustedDir}: electron-updater runs elevation helpers and package managers only from these directories (a symlink there must lead into one of them), not from elsewhere in PATH. See ${UPDATE_ELEVATION_DOCS}`,
+            code: "ERR_UPDATER_ELEVATION_COMMAND_NOT_FOUND",
+          })
         )
       })
 
@@ -438,7 +449,8 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       expect(spawnAsyncLog).not.toHaveBeenCalled()
       expect(dispatchError).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: `apt-get not found in /usr/sbin:/usr/bin:/sbin:/bin: electron-updater 7 runs elevation helpers and package managers only from these directories (a symlink there must lead into one of them), not from elsewhere in PATH. See ${UPDATE_ELEVATION_DOCS}`,
+          message: `apt-get not found in /usr/sbin:/usr/bin:/sbin:/bin: electron-updater runs elevation helpers and package managers only from these directories (a symlink there must lead into one of them), not from elsewhere in PATH. See ${UPDATE_ELEVATION_DOCS}`,
+          code: "ERR_UPDATER_ELEVATION_COMMAND_NOT_FOUND",
         })
       )
     })
@@ -455,7 +467,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
       expect(warn.mock.calls).toEqual([
         [
-          `electron-updater 7 runs the package manager under kdesudo by its absolute path in a clean environment (env -i, PATH=/usr/sbin:/usr/bin:/sbin:/bin), so the app's environment variables, proxy settings included, no longer reach it; configure a proxy the package manager needs in its system configuration. See ${UPDATE_ELEVATION_DOCS}`,
+          `electron-updater runs the package manager under kdesudo by its absolute path in a clean environment (env -i, PATH=/usr/sbin:/usr/bin:/sbin:/bin), so the app's environment variables, proxy settings included, do not reach it; configure a proxy the package manager needs in its system configuration. See ${UPDATE_ELEVATION_DOCS}`,
         ],
       ])
     })

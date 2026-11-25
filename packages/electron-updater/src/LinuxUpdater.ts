@@ -324,12 +324,16 @@ export abstract class LinuxUpdater extends BaseUpdater {
     }
     const dirs = this.trustedCommandDirs
     if (command.length === 0 || command === "." || command === ".." || command.includes("/") || command.includes("\0")) {
-      throw new Error(`${JSON.stringify(command)} is not a command name, it cannot be looked up in ${dirs.join(":")}. See ${UPDATE_ELEVATION_DOCS}`)
+      throw newError(
+        `${JSON.stringify(command)} is not a command name, it cannot be looked up in ${dirs.join(":")}. See ${UPDATE_ELEVATION_DOCS}`,
+        "ERR_UPDATER_ELEVATION_COMMAND_NOT_FOUND"
+      )
     }
     const resolved = this.findTrustedCommand(command)
     if (resolved == null) {
-      throw new Error(
-        `${command} not found in ${dirs.join(":")}: electron-updater 7 runs elevation helpers and package managers only from these directories (a symlink there must lead into one of them), not from elsewhere in PATH. See ${UPDATE_ELEVATION_DOCS}`
+      throw newError(
+        `${command} not found in ${dirs.join(":")}: electron-updater runs elevation helpers and package managers only from these directories (a symlink there must lead into one of them), not from elsewhere in PATH. See ${UPDATE_ELEVATION_DOCS}`,
+        "ERR_UPDATER_ELEVATION_COMMAND_NOT_FOUND"
       )
     }
     return resolved
@@ -414,7 +418,7 @@ export abstract class LinuxUpdater extends BaseUpdater {
     if (elevation.kind === "wrapped") {
       checkWrappedInstallerPath(elevation.helper[0], rawInstallerPath)
       this.limitedLogger("wrapped-helper-clean-environment").warn(
-        `electron-updater 7 runs the package manager under ${path.basename(elevation.helper[0])} by its absolute path in a clean environment (env -i, PATH=${TRUSTED_COMMAND_DIRS.join(":")}), so the app's environment variables, proxy settings included, no longer reach it; configure a proxy the package manager needs in its system configuration. See ${UPDATE_ELEVATION_DOCS}`
+        `electron-updater runs the package manager under ${path.basename(elevation.helper[0])} by its absolute path in a clean environment (env -i, PATH=${TRUSTED_COMMAND_DIRS.join(":")}), so the app's environment variables, proxy settings included, do not reach it; configure a proxy the package manager needs in its system configuration. See ${UPDATE_ELEVATION_DOCS}`
       )
     }
     return { elevation, plan: this.resolveInstallPlan(installerPath) }
@@ -503,10 +507,10 @@ export abstract class LinuxUpdater extends BaseUpdater {
         }
         return helper
       }
-      // electron-updater 6 used a helper wherever PATH had it
+      // a helper found only outside the trusted directories is skipped, with a warning
       if (this.hasCommand(sudo)) {
         this.limitedLogger(`elevation-helper-outside-system-directories ${sudo}`).warn(
-          `${sudo} found in PATH is not used: electron-updater 7 runs an elevation helper only from ${this.trustedCommandDirs.join(":")} (a symlink there must lead into one of them). See ${UPDATE_ELEVATION_DOCS}`
+          `${sudo} found in PATH is not used: electron-updater runs an elevation helper only from ${this.trustedCommandDirs.join(":")} (a symlink there must lead into one of them). See ${UPDATE_ELEVATION_DOCS}`
         )
       }
     }
@@ -524,7 +528,7 @@ export abstract class LinuxUpdater extends BaseUpdater {
     const installed = ["gksudo", "kdesudo"].filter(helper => this.findTrustedCommand(helper) != null)
     if (installed.length !== 0) {
       this.log.warn(
-        `electron-updater 7 elevates the install with pkexec (polkit), which it tries first, so the authentication prompt comes from polkit; ${installed.join(" and ")} ${installed.length === 1 ? "is" : "are"} only used on systems without polkit (electron-updater 6 tried gksudo and kdesudo before pkexec). See ${UPDATE_ELEVATION_DOCS}`
+        `electron-updater elevates the install with pkexec (polkit), which it tries first, so the authentication prompt comes from polkit; ${installed.join(" and ")} ${installed.length === 1 ? "is" : "are"} only used on systems without polkit. See ${UPDATE_ELEVATION_DOCS}`
       )
     }
   }
