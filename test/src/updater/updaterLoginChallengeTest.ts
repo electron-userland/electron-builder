@@ -147,7 +147,7 @@ describe("electron-updater login event", () => {
       expect(emitChallenge(updater, { ...challenge("downloads.example.net", 443), realm: "corp-realm" }, DOWNLOAD_URL).mock.calls).toEqual([[]])
       expect(onLogin).not.toHaveBeenCalled()
       expect(logger.warns).toEqual([
-        "electron-updater 7 (electron-builder v27) cancels a server's authentication challenge from another origin than the update feed when no login handler takes the url argument: " +
+        "electron-updater cancels a server's authentication challenge from another origin than the update feed when no login handler takes the url argument: " +
           "the challenge of the server downloads.example.net:443 on https://downloads.example.net, another origin than the update feed (https://feed.example.com), was cancelled. " +
           "To answer it, take (authInfo, callback, url) in your login handler, which then gets every challenge, and call callback(username, password) only when new URL(url).origin is the origin your credentials are meant for. " +
           LOGIN_WITHOUT_URL_DOCS,
@@ -259,6 +259,38 @@ describe("electron-updater login event", () => {
       expect(() => updater.downloadUpdate()).toThrow("the update files cannot be resolved")
       expect(emitChallenge(updater, challenge("feed.example.com", 443), FEED_FILE_URL).mock.calls).toEqual([[]])
       expect(onLogin).not.toHaveBeenCalled()
+    })
+
+    // a plain-JavaScript provider can change its feedBaseUrl after the check that validated it
+    test.for<[string, PropertyDescriptor]>([
+      ["returns a string", { get: () => FEED }],
+      [
+        "throws",
+        {
+          get: () => {
+            throw new Error("no feed")
+          },
+        },
+      ],
+    ])("a download whose provider's feedBaseUrl %s starts, and adds no feed origin", async ([_what, feedBaseUrl], { tmpDir, expect }) => {
+      const { updater } = await createCheckedUpdater(tmpDir)
+      const onLogin = onLoginWithoutUrl(updater)
+      Object.defineProperty((updater as any).updateInfoAndProvider.provider, "feedBaseUrl", { ...feedBaseUrl, configurable: true })
+      let finishDownload = (): void => undefined
+      ;(updater as any).doDownloadUpdate = () =>
+        new Promise(resolve => {
+          finishDownload = () => resolve({ updateFile: "TestApp-Setup-1.1.0.exe" })
+        })
+
+      const download = updater.downloadUpdate()
+      // another origin than the feed of the last check: cancelled, the login event listener does not throw
+      expect(emitChallenge(updater, challenge("downloads.example.net", 443), DOWNLOAD_URL).mock.calls).toEqual([[]])
+      // the feed of the last check still gets its challenge
+      expect(emitChallenge(updater, challenge("feed.example.com", 443), FEED_FILE_URL).mock.calls).toEqual([["user", "secret"]])
+      expect(onLogin).toHaveBeenCalledTimes(1)
+
+      finishDownload()
+      await expect(download).resolves.toEqual({ updateFile: "TestApp-Setup-1.1.0.exe" })
     })
 
     test("next to a handler that takes url, gets every challenge, as that handler does", async ({ tmpDir, expect }) => {

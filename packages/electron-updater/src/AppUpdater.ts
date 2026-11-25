@@ -1075,7 +1075,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       if (feedUrls.every(it => HttpExecutor.isCrossOrigin(it, requestUrl))) {
         const feedOrigins = [...new Set(feedUrls.map(it => it.origin))]
         this.limitedLogger("login-challenge-other-origin").warn(
-          `electron-updater 7 (electron-builder v27) cancels a server's authentication challenge from another origin than the update feed when no login handler takes the url argument: ` +
+          `electron-updater cancels a server's authentication challenge from another origin than the update feed when no login handler takes the url argument: ` +
             `the challenge of ${challenger} on ${requestUrl.origin}, ${feedOrigins.length === 0 ? "before any update check" : `another origin than the update feed (${feedOrigins.join(", ")})`}, was cancelled. ` +
             `To answer it, take (authInfo, callback, url) in your login handler, which then gets every challenge, and call callback(username, password) only when new URL(url).origin is the origin your credentials are meant for. ${LOGIN_WITHOUT_URL_DOCS}`
         )
@@ -1226,7 +1226,15 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       })
     // the feed this download's requests are meant for, whichever feed a check made meanwhile uses (see loginFeedUrls), validated by the
     // check that found the update. Once doDownloadUpdate has returned: one that throws (e.g. from resolveFiles) starts no download
-    this.downloadFeedBaseUrl = updateInfoAndProvider.provider.feedBaseUrl
+    // Read once and narrowed like feedBaseUrlOf: a plain-JavaScript provider's getter can throw or return no URL by now, and neither may
+    // throw from downloadUpdate or reach the login event listener (the download's own requests fail on it)
+    let downloadFeed: unknown = null
+    try {
+      downloadFeed = updateInfoAndProvider.provider.feedBaseUrl
+    } catch {
+      // no feed origin for this download's login challenges
+    }
+    this.downloadFeedBaseUrl = downloadFeed instanceof URL ? downloadFeed : null
 
     return this.downloadPromise
   }
