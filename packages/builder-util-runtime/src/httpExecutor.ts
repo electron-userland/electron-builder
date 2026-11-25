@@ -20,10 +20,10 @@ const debug = _debug("electron-builder")
 // Shared by both registries so lookup is always separator-agnostic.
 const normalizeName = (name: string): string => name.toLowerCase().replace(/[-_]/g, "")
 
-// HTTP header names (normalised) that builder-util-runtime 9 (electron-builder v26) left off a redirect to another origin, sending every other
-// header on. The default policy now sends only CROSS_ORIGIN_REDIRECT_HEADERS, and reports the names it leaves out that are not in here: the
-// ones it is the first to stop sending (see createDefaultCrossOriginHeaderPolicy). Stored normalised; lookup normalises the key with normalizeName().
-const V26_DROPPED_REDIRECT_HEADERS: ReadonlySet<string> = new Set([
+// HTTP header names (normalised) of well-known credentials. The default policy leaves them off a redirect to another origin like every header
+// not in CROSS_ORIGIN_REDIRECT_HEADERS, but does not report them to onDropped (see createDefaultCrossOriginHeaderPolicy): no server expects
+// them to follow a redirect to another origin, so leaving them out needs no warning. Stored normalised; lookup normalises the key with normalizeName().
+const UNREPORTED_CREDENTIAL_HEADERS: ReadonlySet<string> = new Set([
   "authorization",
   "proxyauthorization",
   "privatetoken",
@@ -76,8 +76,8 @@ const CROSS_ORIGIN_REDIRECT_HEADERS: ReadonlySet<string> = new Set([
  * The cross-origin header policy of an HttpExecutor without one of its own, such as electron-builder's publishers: it sends only `Accept`,
  * `Accept-Encoding`, `Accept-Language`, `Cache-Control`, `Content-Encoding`, `Content-Language`, `Content-Length`, `Content-Type`, `If-Match`,
  * `If-Modified-Since`, `If-None-Match`, `If-Range`, `If-Unmodified-Since`, `Pragma`, `Range` and `User-Agent`, which carry no credential, and
- * leaves every other header, a custom one too, on the original origin. `onDropped` gets the lowercase names of the headers it leaves out that
- * electron-builder v26 sent on, never their values, when there are any: every name but `Authorization`, `Proxy-Authorization`, `Cookie`,
+ * leaves every other header, a custom one too, on the original origin. `onDropped` gets the lowercase names of the headers it leaves out,
+ * never their values, when there are any, except the well-known credential headers `Authorization`, `Proxy-Authorization`, `Cookie`,
  * `PRIVATE-TOKEN`, `X-Api-Key`, `X-Auth-Token`, `X-Access-Token`, `X-GitLab-Token` and `X-CSRF-Token` (with any `-` or `_` separators).
  */
 export function createDefaultCrossOriginHeaderPolicy(onDropped?: (headerNames: ReadonlyArray<string>, hop: CrossOriginHop) => void): CrossOriginHeaderPolicy {
@@ -85,7 +85,7 @@ export function createDefaultCrossOriginHeaderPolicy(onDropped?: (headerNames: R
     const isSent = (name: string) => CROSS_ORIGIN_REDIRECT_HEADERS.has(name.toLowerCase())
     if (onDropped != null) {
       const droppedNames = Object.entries(headers)
-        .filter(([name, value]) => value != null && !isSent(name) && !V26_DROPPED_REDIRECT_HEADERS.has(normalizeName(name)))
+        .filter(([name, value]) => value != null && !isSent(name) && !UNREPORTED_CREDENTIAL_HEADERS.has(normalizeName(name)))
         .map(([name]) => name.toLowerCase())
       if (droppedNames.length !== 0) {
         onDropped([...new Set(droppedNames)], hop)

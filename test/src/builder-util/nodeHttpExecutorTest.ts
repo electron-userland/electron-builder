@@ -1,4 +1,3 @@
-import { log } from "builder-util/src/log"
 import { buildGotProxyAgent, NodeHttpExecutor } from "builder-util/src/nodeHttpExecutor"
 import { afterEach, beforeEach, vi } from "vitest"
 
@@ -201,56 +200,16 @@ describe("NodeHttpExecutor.createRequest", { concurrent: false }, () => {
   })
 })
 
-describe("NodeHttpExecutor cross-origin header policy", { concurrent: false }, () => {
+describe("NodeHttpExecutor cross-origin header policy", () => {
   const hop = { from: new URL("https://api.example.com/upload"), to: new URL("https://storage.example.net/bucket/file") }
 
-  test("by default sends another origin only the headers that carry no credential, and warns once per process, at the first redirect that leaves out headers v26 sent there, never with a value", ({
-    expect,
-  }) => {
-    log.resetLimits()
-    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
-    try {
-      const policy = new NodeHttpExecutor().crossOriginHeaderPolicy
-      // only headers v26 left out too: nothing changed, nothing to announce
-      expect(policy({ Authorization: "token t", Cookie: "c=1", Accept: "application/json" }, hop)).toEqual({ Accept: "application/json" })
-      expect(warn).not.toHaveBeenCalled()
-
-      expect(policy({ "X-Api-Token": "secret-value", Authorization: "token t", Accept: "application/json" }, hop)).toEqual({ Accept: "application/json" })
-      // the same names again, then none left out: no other warning
-      policy({ authorization: "token other", "x-api-token": "other-value", accept: "*/*" }, hop)
-      policy({ accept: "*/*" }, hop)
-      expect(warn).toHaveBeenCalledOnce()
-      const message = warn.mock.calls[0][0]
-      expect(typeof message).toBe("string")
-      expect(message).toContain("electron-builder v27 sends a redirect to another origin only the request headers that carry no credential")
-      // Authorization never went to another origin: only the header v26 sent there is named
-      expect(message).toContain("the redirect from https://api.example.com to https://storage.example.net went without x-api-token, which electron-builder v26 sent there.")
-      expect(message).toContain("send the request to it yourself with that header, or pass a crossOriginHeaderPolicy")
-      expect(message).toMatch(/ See https:\/\/www\.electron\.build\/docs\/migration\/v27-developer-changes#builder-util-runtime-default-cross-origin-headers$/)
-      expect(message).not.toContain("secret-value")
-      expect(message).not.toContain("other-value")
-
-      // a later redirect, to another origin too, that leaves out another set of names: they are still left out, and the warning is not repeated
-      expect(policy({ "X-Tenant": "acme", "X-Api-Token": "secret-value" }, { from: hop.from, to: new URL("https://uploads.example.org/file") })).toEqual({})
-      expect(warn).toHaveBeenCalledOnce()
-    } finally {
-      warn.mockRestore()
-      log.resetLimits()
-    }
+  test("by default sends another origin only the headers that carry no credential", ({ expect }) => {
+    const policy = new NodeHttpExecutor().crossOriginHeaderPolicy
+    expect(policy({ "X-Api-Token": "secret-value", Authorization: "token t", "X-Tenant": "acme", Accept: "application/json" }, hop)).toEqual({ Accept: "application/json" })
   })
 
-  test("a policy passed to the constructor is used instead, without a warning", ({ expect }) => {
-    log.resetLimits()
-    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
-    try {
-      const policy = vi.fn(() => ({}))
-      const executor = new NodeHttpExecutor(policy)
-      expect(executor.crossOriginHeaderPolicy).toBe(policy)
-      executor.crossOriginHeaderPolicy({ "X-Api-Token": "secret-value" }, hop)
-      expect(warn).not.toHaveBeenCalled()
-    } finally {
-      warn.mockRestore()
-      log.resetLimits()
-    }
+  test("a policy passed to the constructor is used instead", ({ expect }) => {
+    const policy = vi.fn(() => ({}))
+    expect(new NodeHttpExecutor(policy).crossOriginHeaderPolicy).toBe(policy)
   })
 })

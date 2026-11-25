@@ -9,15 +9,14 @@ import { isEmptyOrSpaces } from "./stringUtil.js"
 
 const DEFAULT_CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-developer-changes#builder-util-runtime-default-cross-origin-headers"
 
-// builder-util-runtime's default policy, announcing the v27 change once per process: at the first redirect that leaves out headers v26 sent
-// there, naming them and both origins, never a value
+// builder-util-runtime's default policy, with a warning once per process: at the first redirect that leaves out headers other than the well-known
+// credential headers, naming them and both origins, never a value
 const defaultCrossOriginHeaderPolicy = createDefaultCrossOriginHeaderPolicy((headerNames, hop) => {
   const names = [...headerNames].sort().join(", ")
   log
     .once("cross-origin-headers-dropped")
     .warn(
-      `electron-builder v27 sends a redirect to another origin only the request headers that carry no credential (Accept, Content-Type, Range, User-Agent and the like): ` +
-        `the redirect from ${hop.from.origin} to ${hop.to.origin} went without ${names}, which electron-builder v26 sent there. ` +
+      `The redirect from ${hop.from.origin} to ${hop.to.origin} did not forward ${names}: a redirect to another origin forwards only the request headers that carry no credential (Accept, Content-Type, Range, User-Agent and the like). ` +
         `If ${hop.to.origin} needs one of them, send the request to it yourself with that header, or pass a crossOriginHeaderPolicy that keeps it for that origin to the NodeHttpExecutor constructor. ` +
         `See ${DEFAULT_CROSS_ORIGIN_HEADERS_DOCS}`
     )
@@ -27,7 +26,7 @@ export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
   /**
    * @param crossOriginHeaderPolicy see {@link HttpExecutor}; by default builder-util-runtime's, which sends only the headers that carry no
    * credential on a redirect to another origin, and here logs a warning once per process, at the first redirect that leaves out headers
-   * electron-builder v26 sent there, naming them
+   * other than the well-known credential headers (`Authorization`, `Cookie` and the like), naming them
    */
   constructor(crossOriginHeaderPolicy: CrossOriginHeaderPolicy = defaultCrossOriginHeaderPolicy) {
     super(crossOriginHeaderPolicy)

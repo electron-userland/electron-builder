@@ -169,19 +169,23 @@ An `HttpExecutor` follows each redirect to another origin with the headers its c
 
 ### builder-util-runtime: a redirect to another origin sends only the headers that carry no credential {#builder-util-runtime-default-cross-origin-headers}
 
-**How you'll find out:** **Warns during the build** when a request through builder-util's `httpExecutor` or another `NodeHttpExecutor` without a policy of its own (a custom publisher's, for example) follows a redirect to another origin without headers that v26 sent there: once per process, at the first such redirect, naming the headers it went without (never their values) and both origins, with a link here. Leaving out `Authorization` or another of the credential headers v26 left out too is not announced. A subclass of builder-util-runtime's `HttpExecutor` that passes no policy gets no warning: **Silent**.
+**How you'll find out:** **Warns during the build** when a request through builder-util's `httpExecutor` or another `NodeHttpExecutor` without a policy of its own (a custom publisher's, for example) follows a redirect to another origin without some of its headers: once per process, at the first such redirect, naming the headers it did not forward (never their values) and both origins, with a link here. Leaving out only the well-known credential headers (`Authorization`, `Proxy-Authorization`, `Cookie`, `PRIVATE-TOKEN`, `X-Api-Key`, `X-Auth-Token`, `X-Access-Token`, `X-GitLab-Token`, `X-CSRF-Token`) is not announced. A subclass of builder-util-runtime's `HttpExecutor` that passes no policy gets no warning: **Silent**.
 
-An `HttpExecutor` without a cross-origin header policy of its own sends a redirect to another origin (another scheme, host or port; an `http` → `https` upgrade of the same host on the default ports is the same origin) only the headers that carry no credential: `Accept`, `Accept-Encoding`, `Accept-Language`, `Cache-Control`, `Content-Encoding`, `Content-Language`, `Content-Length`, `Content-Type`, `If-Match`, `If-Modified-Since`, `If-None-Match`, `If-Range`, `If-Unmodified-Since`, `Pragma`, `Range` and `User-Agent`. Every other header, a custom one too, stays on the original origin. In v26 it sent every header but `Authorization`, `Proxy-Authorization`, `Cookie`, `PRIVATE-TOKEN`, `X-Api-Key`, `X-Auth-Token`, `X-Access-Token`, `X-GitLab-Token` and `X-CSRF-Token`, so a credential in a header with another name, such as `X-Api-Token`, went on to the other origin. The request's own headers (`ownHeaders`) and the default `User-Agent` and `Cache-Control` are still sent, and its `auth` option is still dropped.
+An `HttpExecutor` without a cross-origin header policy of its own sends a redirect to another origin (another scheme, host or port; an `http` → `https` upgrade of the same host on the default ports is the same origin) only the headers that carry no credential: `Accept`, `Accept-Encoding`, `Accept-Language`, `Cache-Control`, `Content-Encoding`, `Content-Language`, `Content-Length`, `Content-Type`, `If-Match`, `If-Modified-Since`, `If-None-Match`, `If-Range`, `If-Unmodified-Since`, `Pragma`, `Range` and `User-Agent`. Every other header, a custom one too, stays on the original origin, so a credential in a header of any name, such as `X-Api-Token`, never reaches the other origin. The request's own headers (`ownHeaders`) and the default `User-Agent` and `Cache-Control` are always sent, and its `auth` option never is.
 
-This is the policy of builder-util's `httpExecutor`, which electron-builder's publishers use, and of every `HttpExecutor` subclass that passes no policy to its constructor. The built-in publishers send their tokens in `Authorization` or `PRIVATE-TOKEN`, which never went to another origin. electron-updater is not affected: its requests and redirects to another origin send what the app's [`autoUpdater.crossOriginHeaders`](./v27-runtime-changes.md#cross-origin-headers) keeps.
+This is the policy of builder-util's `httpExecutor`, which electron-builder's publishers use, and of every `HttpExecutor` subclass that passes no policy to its constructor. The built-in publishers send their tokens in `Authorization` or `PRIVATE-TOKEN`, which stay on the original origin. electron-updater is not affected: its requests and redirects to another origin send what the app's [`autoUpdater.crossOriginHeaders`](./v27-runtime-changes.md#cross-origin-headers) keeps.
 
 **Action:** if a server on another origin needs one of your headers after a redirect, send the request to that server yourself, with the header, so that the header goes only to the origin it is meant for. Or pass a `CrossOriginHeaderPolicy` to the executor's constructor that keeps it for that origin:
 
 ```ts
 import { httpExecutor, NodeHttpExecutor } from "builder-util"
 
-// a redirect to uploads.example.com gets every header; a redirect to any other origin, only the headers listed above
-const executor = new NodeHttpExecutor((headers, hop) => (hop.to.origin === "https://uploads.example.com" ? headers : httpExecutor.crossOriginHeaderPolicy(headers, hop)))
+// the default policy, plus the X-Upload-Ticket header (set as "x-upload-ticket") on a redirect to uploads.example.com and no other origin
+const executor = new NodeHttpExecutor((headers, hop) => {
+  const { "x-upload-ticket": ticket, ...otherHeaders } = headers
+  const sent = httpExecutor.crossOriginHeaderPolicy(otherHeaders, hop)
+  return hop.to.origin === "https://uploads.example.com" && ticket != null ? { ...sent, "x-upload-ticket": ticket } : sent
+})
 ```
 
 ### Custom electron-updater providers return a URL from `feedBaseUrl` {#custom-provider-feed-base-url}
