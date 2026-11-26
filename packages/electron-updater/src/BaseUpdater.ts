@@ -23,6 +23,9 @@ export const WEB_INSTALLER_DISABLED_HINT =
   "Set autoUpdater.disableWebInstaller to false to allow web-installer updates. " +
   "See https://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true"
 
+/** Where the rule that a pending update must be the file `findUpdateFile` picks is described. */
+const PENDING_FILE_RULE_DOCS = "See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed"
+
 /**
  * The command line a shell runs for `cmd` and `args`. Given `shell: true` and an argv array, Node joins them with spaces
  * and warns (DEP0190) that nothing is escaped; passing the joined line itself runs exactly the same command, without the
@@ -302,10 +305,10 @@ export abstract class BaseUpdater extends AppUpdater {
 
   /**
    * The file of the update info that this target downloads and installs, out of the files the provider resolved. An update
-   * marked for install on next launch is matched against the file this picks from the latest update info, so the pending
-   * cache cannot choose another file of that update info. Each built-in target overrides it with its own rule, and a subclass
-   * that picks its download in another way overrides it too. Without an override, a pending update is matched by its checksum
-   * against every file of the latest update info instead; the default picks the first file.
+   * marked for install on next launch is installed only when it is the file this picks from the latest update info, so the
+   * pending cache cannot choose another file of that update info. Each built-in target overrides it with its own rule. The
+   * default picks the first file: a subclass whose `doDownloadUpdate` downloads another file, whether it extends `BaseUpdater`
+   * or a built-in target, must override this to return that file, or its pending update is not installed on next launch.
    */
   protected findUpdateFile(files: Array<ResolvedUpdateFileInfo>): ResolvedUpdateFileInfo | null | undefined {
     return files[0]
@@ -565,15 +568,21 @@ export abstract class BaseUpdater extends AppUpdater {
     }
 
     // the file this target installs, picked from the latest update info as a download picks it: the pending cache only says
-    // which checksum it saved, and must not choose another file of that update info. A subclass without a findUpdateFile of
-    // its own picks the file it downloads itself, so its pending update is still matched by that checksum against every file
+    // which checksum it saved, and must not choose another file of that update info
     const files = updateInfoAndProvider.provider.resolveFiles(latestInfo)
-    const hasOwnFileRule = this.findUpdateFile !== BaseUpdater.prototype.findUpdateFile
-    const fileInfo = hasOwnFileRule ? this.findUpdateFile(files) : files.find(it => it.info.sha512 === pendingInfo.sha512)
+    const fileInfo = this.findUpdateFile(files)
     if (fileInfo == null || fileInfo.info.sha512 !== pendingInfo.sha512) {
       this.log.warn(
         `Pending update doesn't match the update file of the latest update info (version ${latestInfo.version}), clearing install-on-next-launch state. The new update must be downloaded again.`
       )
+      // another file of the update info has the cached checksum: most likely a subclass downloads a file its findUpdateFile does not pick
+      if (files.some(it => it.info.sha512 === pendingInfo.sha512)) {
+        this.limitedLogger("pending-update-file-not-picked").warn(
+          `Since electron-updater v27, an update pending for the next launch is installed only when it is the file findUpdateFile picks from the latest update info. ` +
+            `The pending update ${latestInfo.version} was downloaded from another file of that update info, so it is not installed. ` +
+            `An updater subclass whose doDownloadUpdate downloads another file must override findUpdateFile to return that file. ${PENDING_FILE_RULE_DOCS}`
+        )
+      }
       await downloadedUpdateHelper.clearPendingInstallMarker(this.log)
       return false
     }

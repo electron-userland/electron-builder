@@ -25,6 +25,27 @@ class ThirdPartyUpdater extends BaseUpdater {
   }
 }
 
+/** A `BaseUpdater` subclass of another package that downloads the second file of the update info and says so in `findUpdateFile`. */
+class ThirdPartyUpdaterWithFileRule extends ThirdPartyUpdater {
+  protected findUpdateFile(files: Array<ResolvedUpdateFileInfo>): ResolvedUpdateFileInfo | null | undefined {
+    return files[1]
+  }
+}
+
+/** An app's `NsisUpdater` subclass that downloads the second file of the update info, not the .exe its parent picks, and keeps the parent's `findUpdateFile`. */
+class NsisUpdaterDownloadingAnotherFile extends NsisUpdater {
+  protected doDownloadUpdate(): Promise<DownloadExecutorResult> {
+    return Promise.reject(new Error("these tests do not download"))
+  }
+}
+
+/** The same `NsisUpdater` subclass that also overrides `findUpdateFile` to return the file it downloads. */
+class NsisUpdaterDownloadingAnotherFileWithFileRule extends NsisUpdaterDownloadingAnotherFile {
+  protected findUpdateFile(files: Array<ResolvedUpdateFileInfo>): ResolvedUpdateFileInfo | null | undefined {
+    return files[1]
+  }
+}
+
 function makeStubApp(overrides: Partial<AppAdapter> = {}): AppAdapter & { quitCalls: number; emitQuit: (exitCode: number) => void; emitSessionEnd: () => void } {
   let quitHandler: ((exitCode: number) => void) | null = null
   const sessionEndHandlers: Array<() => void> = []
@@ -636,12 +657,40 @@ describe("install on next launch", { concurrent: false }, () => {
       expect(await helper.getPendingInstallInfo()).toBeNull()
     })
 
-    test("a subclass without a findUpdateFile of its own installs the pending file with the cached checksum, not only the first file", async () => {
-      // the subclass downloaded the second file of the update info
+    // each subclass downloaded the second file of the update info, not the .exe listed first
+    async function seedSecondFilePending(): Promise<UpdateInfo> {
       const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1", fileName: "TestApp-1.0.1.zip" })
       helper.markInstallOnNextLaunchSync(log)
-      const latestUpdateInfo: UpdateInfo = { ...seeded.updateInfo, files: [{ url: "TestApp-Setup-1.0.1.exe", sha512: "sha512-of-the-exe" }, ...seeded.updateInfo.files] }
-      const { updater, doInstall } = createUpdater(latestUpdateInfo, ThirdPartyUpdater)
+      return { ...seeded.updateInfo, files: [{ url: "TestApp-Setup-1.0.1.exe", sha512: "sha512-of-the-exe" }, ...seeded.updateInfo.files] }
+    }
+
+    test("a BaseUpdater subclass without a findUpdateFile of its own does not install a pending file other than the first one, and clears the marker", async () => {
+      const { updater, doInstall } = createUpdater(await seedSecondFilePending(), ThirdPartyUpdater)
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(await helper.getPendingInstallInfo()).toBeNull()
+    })
+
+    test("a BaseUpdater subclass whose findUpdateFile returns the file it downloads installs the pending update", async () => {
+      const { updater, doInstall } = createUpdater(await seedSecondFilePending(), ThirdPartyUpdaterWithFileRule)
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
+      expect(doInstall).toHaveBeenCalledTimes(1)
+    })
+
+    test("an NsisUpdater subclass that only overrides doDownloadUpdate does not install a pending file its inherited findUpdateFile does not pick, and clears the marker", async () => {
+      const { updater, doInstall } = createUpdater(await seedSecondFilePending(), NsisUpdaterDownloadingAnotherFile)
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(await helper.getPendingInstallInfo()).toBeNull()
+    })
+
+    test("an NsisUpdater subclass that also overrides findUpdateFile to return the file it downloads installs the pending update", async () => {
+      const { updater, doInstall } = createUpdater(await seedSecondFilePending(), NsisUpdaterDownloadingAnotherFileWithFileRule)
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
 
       await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
       expect(doInstall).toHaveBeenCalledTimes(1)
