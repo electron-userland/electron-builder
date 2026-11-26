@@ -1826,7 +1826,10 @@ function verifyBlockMapSha512(data: Buffer, expected: string | null | undefined,
   }
   const actual = createHash("sha512").update(data).digest("base64")
   if (actual !== expected) {
-    throw newError(`Blockmap "${source}" does not match the blockMapSha512 of the update manifest (expected ${expected}, got ${actual})`, ERR_UPDATER_INVALID_BLOCKMAP)
+    throw newError(
+      `Blockmap "${source}" does not match the blockMapSha512 of the update manifest (expected ${JSON.stringify(expected)}, got ${actual})`,
+      ERR_UPDATER_INVALID_BLOCKMAP
+    )
   }
 }
 
