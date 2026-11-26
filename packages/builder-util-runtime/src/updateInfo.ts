@@ -49,8 +49,10 @@ export interface UpdateFileInfo extends BlockMapDataHolder {
   /**
    * Base64 SHA-512 of the file's `.blockmap` as published. When present, electron-updater checks the new block map it downloads (or
    * assembles from Range requests) against it before using or caching it, and downloads the update in full on a mismatch; when absent,
-   * the block map is not checked. Not written by electron-builder: an updater that verifies signed manifests but does not know this
-   * field rejects a signed manifest that carries it. Covered by the manifest signature when present.
+   * the block map is not checked. Not written by electron-builder. Not covered by an `EBUM1` signature, so it never makes an updater
+   * that verifies only `EBUM1` reject a signed manifest. An `EBUM2` signature covers it like every field: adding or changing it after
+   * signing leaves the manifest verifiable through its `EBUM1` signatures only (see `EBUM1_MANIFEST_FIELDS`). Either way the update
+   * itself must still match the signed `sha512`.
    */
   blockMapSha512?: string
 }

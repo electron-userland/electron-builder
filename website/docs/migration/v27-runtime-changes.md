@@ -111,7 +111,7 @@ electron-builder warns once per feed when a `generic` publish `url` (the feed wr
 
 > **Tip:** `electron-builder migrate-schema` prints an advisory for a `generic` publish configuration whose `url` has a query string.
 
-An authentication challenge on an update request, a proxy's or a server's, reaches the [`login` event](../features/auto-update.md#event-login) with the URL of that request as its third argument. Without a `login` listener it is cancelled, and electron-updater logs a warning once naming the challenger's host and port and whether it is a proxy or a server; so is one whose listener throws. A server's challenge from another origin than the feed logs a warning once when no `login` handler takes the `url` argument: answer a server only when `new URL(url).origin` is the origin your credentials are meant for.
+An authentication challenge on an update request, a proxy's or a server's, reaches the [`login` event](../features/auto-update.md#event-login) with the URL of that request as its third argument. Without a `login` listener it is cancelled, and electron-updater logs a warning once naming the challenger's host and port and whether it is a proxy or a server; so is one whose listener throws. A server's challenge from another origin than the feed logs a warning once when no `login` handler takes the `url` argument, as such a handler cannot tell which origin it is answering; electron-updater 8, the next major version, will cancel that challenge. Take `(authInfo, callback, url)` and answer a server only when `new URL(url).origin` is the origin your credentials are meant for.
 
 ### The app chooses the headers sent to another origin {#cross-origin-headers}
 

@@ -123,8 +123,8 @@ export async function readEmbeddedUpdateConfig(distDir: string): Promise<Embedde
  * of alpha.14 is unchanged from alpha.13): it knows no `format`, collects every
  * entry with a non-empty `signature`, and tries each against the EBUM1 payload. Its EBUM1 canonicalizer and shape check are the current
  * `canonicalizeForSigning` and `validateSignedManifestShape` (whose wire format is pinned in updateManifestSignatureTest), as shipped in
- * alpha.12 to alpha.14; alpha.8 to alpha.11 lack only the `allowCatalogSignature:true` line, and every one of them lacks the
- * `files[].blockMapSha512` fields of the file record, which no manifest here carries either.
+ * alpha.12 to alpha.14; alpha.8 to alpha.11 lack only the `allowCatalogSignature:true` line, which no manifest here carries. Like
+ * them, the current canonicalizer leaves `files[].blockMapSha512` out of the payload.
  */
 export function alpha11VerifyManifestSignatures(info: UpdateInfo, publicKeys: Array<string>): { ok: boolean; keyId?: string; reason?: string } {
   const candidates: Array<{ keyId?: string; signature: string }> = []
