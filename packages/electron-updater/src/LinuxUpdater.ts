@@ -46,7 +46,7 @@ function isTrustedExecutable(candidate: string): boolean {
  * escaping and the way the command is spawned cannot disagree.
  * - `root`: no elevation needed; the command is spawned directly, as argv.
  * - `argv`: the helper (pkexec, sudo) takes the command as an argv array, so no shell and no escaping are involved.
- * - `wrapped`: the helper (gksudo, kdesudo, beesu) takes a single command string: `/bin/bash -c '…'` and an escaped path.
+ * - `wrapped`: the helper (gksudo, kdesudo, beesu) takes a single command string: `/bin/bash --norc --noprofile -c '…'` and an escaped path.
  */
 export type Elevation = { readonly kind: "root" } | { readonly kind: "argv" | "wrapped"; readonly helper: string[] }
 
@@ -67,7 +67,7 @@ const UNSAFE_INSTALLER_PATH_DOCS = "https://www.electron.build/docs/migration/v2
  * Throws when `rawPath` cannot be passed to `helper`, a `wrapped` elevation helper. The install command reaches it as one
  * string that is parsed several times: by the `/bin/sh -c` of `shell: true`, inside the double-quoted wrapper (where `\$`
  * and `` \` `` lose their backslash), then by gksu's own tokenizer (which drops every backslash and splits on spaces) or
- * kdesudo's `sh -c`, then by `/bin/bash -c`. No escaping is right for all of them, so the path may only hold characters
+ * kdesudo's `sh -c`, then by the root `/bin/bash`. No escaping is right for all of them, so the path may only hold characters
  * that none of them treats specially. How beesu parses the string is not known, so it gets no space either.
  */
 function checkWrappedInstallerPath(helper: string, rawPath: string): void {
@@ -126,7 +126,7 @@ export class ElevationDeniedError extends Error {
  * path, passed as argv without a shell.
  *
  * sudo exits with 1 when the authentication fails, the same code a failing dpkg exits with, and gksudo, kdesudo and
- * beesu run the command through `/bin/bash -c`, where 126 and 127 are the shell's: neither tells a refusal apart from a
+ * beesu run the command through `/bin/bash`, where 126 and 127 are the shell's: neither tells a refusal apart from a
  * failed command, so their failures keep running the recovery chain.
  */
 function elevationDenial(error: unknown, elevation: Elevation): ElevationDeniedError | null {
@@ -349,6 +349,9 @@ export abstract class LinuxUpdater extends BaseUpdater {
    * {@link resolveTrustedCommand} found, and `env -i` starts `/bin/bash` with an empty environment but for a PATH of
    * {@link TRUSTED_COMMAND_DIRS}: whatever of the app's environment the helper passes on to root (`BASH_ENV`, which
    * `bash -c` sources, `ENV`, `LD_PRELOAD`, `PYTHONPATH` …) reaches neither the shell nor the package manager.
+   * `--norc --noprofile` keep it that way: with SHLVL unset and stdin a socket, as it is under `spawnSync`, bash takes
+   * itself for a shell started by a remote shell daemon and sources `~/.bashrc` and, where it is built with one, the
+   * system bashrc (`/etc/bash.bashrc`, `/etc/bashrc`), which may set PATH and other variables again.
    */
   protected elevatedCommand(commandWithArgs: string[], elevation: Elevation): { cmd: string; args: string[]; useShell: boolean } {
     const [command, ...args] = commandWithArgs
@@ -364,7 +367,7 @@ export abstract class LinuxUpdater extends BaseUpdater {
     const wrapper = this.commandWrapperFor(elevation.helper)
     const rootCommand = [this.resolveTrustedCommand(command), ...args].join(" ")
     const cleanEnv = ["-i", `PATH=${TRUSTED_COMMAND_DIRS.join(":")}`]
-    return { cmd: sudo, args: [...sudoArgs, `${wrapper}/usr/bin/env`, ...cleanEnv, "/bin/bash", "-c", `'${rootCommand}'${wrapper}`], useShell: true }
+    return { cmd: sudo, args: [...sudoArgs, `${wrapper}/usr/bin/env`, ...cleanEnv, "/bin/bash", "--norc", "--noprofile", "-c", `'${rootCommand}'${wrapper}`], useShell: true }
   }
 
   /** {@link runCommandWithSudoIfNeeded} without blocking the main process while the elevation dialog is open. */
@@ -385,7 +388,7 @@ export abstract class LinuxUpdater extends BaseUpdater {
 
   /**
    * Resolves once per install how its commands are elevated, and the plan they run. The installer path is only escaped
-   * when the commands go through the `/bin/bash -c` wrapper; as an argv element the escapes would reach the package
+   * when the commands go through the `/bin/bash` wrapper; as an argv element the escapes would reach the package
    * manager literally. Throws when the package cannot be installed, or when its path cannot be passed safely to a wrapped
    * helper.
    */

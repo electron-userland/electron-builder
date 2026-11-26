@@ -14,8 +14,8 @@ vi.mock("child_process", async importOriginal => {
   return { ...actual, spawn: vi.fn(actual.spawn), spawnSync: vi.fn(actual.spawnSync) }
 })
 
-/** How a wrapped helper's command string starts: bash with an empty environment and a PATH of system directories only. */
-const cleanRootShell = [`"/usr/bin/env`, "-i", "PATH=/usr/sbin:/usr/bin:/sbin:/bin", "/bin/bash", "-c"]
+/** How a wrapped helper's command string starts: bash with no startup files, an empty environment and a PATH of system directories only. */
+const cleanRootShell = [`"/usr/bin/env`, "-i", "PATH=/usr/sbin:/usr/bin:/sbin:/bin", "/bin/bash", "--norc", "--noprofile", "-c"]
 
 const UPDATE_ELEVATION_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#linux-update-elevation"
 
