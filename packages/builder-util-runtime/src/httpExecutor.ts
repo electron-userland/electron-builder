@@ -20,9 +20,10 @@ const debug = _debug("electron-builder")
 // Shared by both registries so lookup is always separator-agnostic.
 const normalizeName = (name: string): string => name.toLowerCase().replace(/[-_]/g, "")
 
-// HTTP header names (normalised) of well-known credentials: the default cross-origin header policy leaves them off a hop to another origin
-// without failing the request (see defaultCrossOriginHeaderPolicy). Stored normalised; lookup normalises the key with normalizeName().
-const WELL_KNOWN_CREDENTIAL_HEADERS: ReadonlySet<string> = new Set([
+// HTTP header names (normalised) of well-known credentials. The default policy leaves them off a redirect to another origin like every header
+// not in CROSS_ORIGIN_REDIRECT_HEADERS, but does not report them to onDropped (see createDefaultCrossOriginHeaderPolicy): no server expects
+// them to follow a redirect to another origin, so leaving them out needs no warning. Stored normalised; lookup normalises the key with normalizeName().
+const UNREPORTED_CREDENTIAL_HEADERS: ReadonlySet<string> = new Set([
   "authorization",
   "proxyauthorization",
   "privatetoken",
@@ -71,34 +72,30 @@ const CROSS_ORIGIN_REDIRECT_HEADERS: ReadonlySet<string> = new Set([
   "user-agent",
 ])
 
-const DEFAULT_CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-developer-changes#builder-util-runtime-default-cross-origin-headers"
-
 /**
- * The cross-origin header policy of an HttpExecutor without one of its own, such as builder-util's `httpExecutor`: it sends `Accept`,
+ * The cross-origin header policy of an HttpExecutor without one of its own, such as electron-builder's publishers: it sends only `Accept`,
  * `Accept-Encoding`, `Accept-Language`, `Cache-Control`, `Content-Encoding`, `Content-Language`, `Content-Length`, `Content-Type`, `If-Match`,
  * `If-Modified-Since`, `If-None-Match`, `If-Range`, `If-Unmodified-Since`, `Pragma`, `Range` and `User-Agent`, which carry no credential, and
- * leaves out the well-known credential headers `Authorization`, `Proxy-Authorization`, `Cookie`, `PRIVATE-TOKEN`, `X-Api-Key`, `X-Auth-Token`,
- * `X-Access-Token`, `X-GitLab-Token` and `X-CSRF-Token` (with any `-` or `_` separators). Any other header with a value, a custom one too,
- * fails the request with `ERR_CROSS_ORIGIN_HEADERS_NOT_KEPT`, whose message names those headers (never their values) and both origins: an
- * executor that sends such a header across origins takes a policy of its own that keeps or leaves it out.
+ * leaves every other header, a custom one too, on the original origin. `onDropped` gets the lowercase names of the headers it leaves out,
+ * never their values, when there are any, except the well-known credential headers `Authorization`, `Proxy-Authorization`, `Cookie`,
+ * `PRIVATE-TOKEN`, `X-Api-Key`, `X-Auth-Token`, `X-Access-Token`, `X-GitLab-Token` and `X-CSRF-Token` (with any `-` or `_` separators).
  */
-const defaultCrossOriginHeaderPolicy: CrossOriginHeaderPolicy = (headers, hop) => {
-  const isSent = (name: string) => CROSS_ORIGIN_REDIRECT_HEADERS.has(name.toLowerCase())
-  const notKept = Object.entries(headers)
-    .filter(([name, value]) => value != null && !isSent(name) && !WELL_KNOWN_CREDENTIAL_HEADERS.has(normalizeName(name)))
-    .map(([name]) => name.toLowerCase())
-  if (notKept.length !== 0) {
-    const names = [...new Set(notKept)].sort().join(", ")
-    throw newError(
-      `Cannot follow the redirect from ${hop.from.origin} to ${hop.to.origin} with the request headers ${names}: without a crossOriginHeaderPolicy, a redirect to another origin ` +
-        `sends only the headers that carry no credential (Accept, Content-Type, Range, User-Agent and the like) and leaves out the well-known credential headers (Authorization, Cookie and the like). ` +
-        `Pass a crossOriginHeaderPolicy that keeps these headers for ${hop.to.origin} to the HttpExecutor or NodeHttpExecutor constructor, or stop sending them. ` +
-        `See ${DEFAULT_CROSS_ORIGIN_HEADERS_DOCS}`,
-      "ERR_CROSS_ORIGIN_HEADERS_NOT_KEPT"
-    )
+export function createDefaultCrossOriginHeaderPolicy(onDropped?: (headerNames: ReadonlyArray<string>, hop: CrossOriginHop) => void): CrossOriginHeaderPolicy {
+  return (headers, hop) => {
+    const isSent = (name: string) => CROSS_ORIGIN_REDIRECT_HEADERS.has(name.toLowerCase())
+    if (onDropped != null) {
+      const droppedNames = Object.entries(headers)
+        .filter(([name, value]) => value != null && !isSent(name) && !UNREPORTED_CREDENTIAL_HEADERS.has(normalizeName(name)))
+        .map(([name]) => name.toLowerCase())
+      if (droppedNames.length !== 0) {
+        onDropped([...new Set(droppedNames)], hop)
+      }
+    }
+    return filterHeaders(headers, isSent)
   }
-  return filterHeaders(headers, isSent)
 }
+
+const defaultCrossOriginHeaderPolicy = createDefaultCrossOriginHeaderPolicy()
 
 /**
  * A copy of the headers of `headers` that `keep` accepts. Built with {@link deepAssign}, which never assigns `__proto__`, `constructor` or
@@ -231,8 +228,7 @@ export abstract class HttpExecutor<T extends Request> {
 
   /**
    * @param crossOriginHeaderPolicy chooses the headers each redirect to another origin sends on; the default sends only the headers that carry
-   * no credential, such as `Accept`, `Content-Type`, `Range` and `User-Agent`, leaves out the well-known credential headers, such as
-   * `Authorization`, and fails the request with `ERR_CROSS_ORIGIN_HEADERS_NOT_KEPT` when it carries any other header, a custom one too.
+   * no credential, such as `Accept`, `Content-Type`, `Range` and `User-Agent`, and leaves every other one, a custom one too, on the original origin.
    */
   constructor(readonly crossOriginHeaderPolicy: CrossOriginHeaderPolicy = defaultCrossOriginHeaderPolicy) {}
 

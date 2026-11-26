@@ -203,16 +203,9 @@ describe("NodeHttpExecutor.createRequest", { concurrent: false }, () => {
 describe("NodeHttpExecutor cross-origin header policy", () => {
   const hop = { from: new URL("https://api.example.com/upload"), to: new URL("https://storage.example.net/bucket/file") }
 
-  test("by default sends another origin the headers that carry no credential and leaves out the well-known credential headers", ({ expect }) => {
+  test("by default sends another origin only the headers that carry no credential", ({ expect }) => {
     const policy = new NodeHttpExecutor().crossOriginHeaderPolicy
-    expect(policy({ Authorization: "token t", "X-Api-Key": "k", Accept: "application/json", Range: "bytes=0-9" }, hop)).toEqual({ Accept: "application/json", Range: "bytes=0-9" })
-  })
-
-  test("by default fails with ERR_CROSS_ORIGIN_HEADERS_NOT_KEPT on a custom header, without its value", ({ expect }) => {
-    const policy = new NodeHttpExecutor().crossOriginHeaderPolicy
-    expect(() => policy({ "X-Tenant": "acme-tenant", Accept: "application/json" }, hop)).toThrow(
-      expect.objectContaining({ code: "ERR_CROSS_ORIGIN_HEADERS_NOT_KEPT", message: expect.not.stringContaining("acme-tenant") })
-    )
+    expect(policy({ "X-Api-Token": "secret-value", Authorization: "token t", "X-Tenant": "acme", Accept: "application/json" }, hop)).toEqual({ Accept: "application/json" })
   })
 
   test("a policy passed to the constructor is used instead", ({ expect }) => {
