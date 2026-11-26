@@ -578,7 +578,7 @@ export abstract class BaseUpdater extends AppUpdater {
       // another file of the update info has the cached checksum: most likely a subclass downloads a file its findUpdateFile does not pick
       if (files.some(it => it.info.sha512 === pendingInfo.sha512)) {
         this.limitedLogger("pending-update-file-not-picked").warn(
-          `Since electron-updater v27, an update pending for the next launch is installed only when it is the file findUpdateFile picks from the latest update info. ` +
+          `An update pending for the next launch is installed only when it is the file findUpdateFile picks from the latest update info. ` +
             `The pending update ${latestInfo.version} was downloaded from another file of that update info, so it is not installed. ` +
             `An updater subclass whose doDownloadUpdate downloads another file must override findUpdateFile to return that file. ${PENDING_FILE_RULE_DOCS}`
         )
