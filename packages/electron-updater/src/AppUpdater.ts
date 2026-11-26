@@ -134,7 +134,10 @@ export function createCrossOriginHeaderPolicy(
 
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
-  /** `url` is the URL of the update request that got the authentication challenge (after a redirect, the redirect's target). */
+  /**
+   * `url` is the URL of the update request that got the authentication challenge (after a redirect, the redirect's target). When no
+   * listener takes `url`, a server's challenge from another origin than the update feed logs a warning: electron-updater 8 will cancel it.
+   */
   login: (info: AuthInfo, callback: LoginCallback, url: string) => void
   "checking-for-update": () => void
   "update-not-available": (info: UpdateInfo) => void
@@ -483,8 +486,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   crossOriginHeaders: CrossOriginHeadersCallback | null = null
 
-  // the origin of the update feed (Provider.feedBaseUrl) of the last update check, null before the first one
-  private feedOrigin: string | null = null
+  // the update feed (Provider.feedBaseUrl) of the last update check, null before the first one
+  private feedBaseUrl: URL | null = null
+  // the update feed of the update being downloaded, null while none is: a check of another feed (after setFeedURL) can run meanwhile
+  private downloadFeedBaseUrl: URL | null = null
 
   // the updater's executor, provider requests and downloads ask the app's crossOriginHeaders through it, at each hop
   // Dropped headers are announced once per origin, names and origins only (never a value): a host or CDN that starts redirecting to a new
@@ -917,7 +922,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     const client = await this.clientPromise
     // before the request headers are handed over: only the feed's origin gets every one of them
-    this.feedOrigin = feedBaseUrlOf(client).origin
+    this.feedBaseUrl = feedBaseUrlOf(client)
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({ "x-user-staging-id": stagingUserId }))
     // autoUpdater.maxUpdateInfoSize wins over the publish configuration, so an app can raise the limit even when its config is invalid
@@ -1027,7 +1032,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * Electron's `login` event of the update request to `requestUrl`: emitted as `login`, with the request's URL as its third argument
    * (Electron's `AuthInfo` names only the challenger's host and port). A challenge on a request whose URL cannot be determined (`null`),
    * or one emitted without a `login` listener (which logs a warning once), is cancelled: the callback is called once, without credentials, and
-   * so is one whose listener throws. A server's challenge from another origin than the feed logs a warning once when no listener takes `url`.
+   * so is one whose listener throws. When no listener takes `url`, a server's challenge from another origin than the feed (see
+   * {@link loginFeedUrls}) is still emitted, with a warning once: such a listener cannot tell the feed from another server, and
+   * electron-updater 8 will cancel that challenge.
    * With `allowInsecureFeed`, a server's challenge on a request that is not `https` and not to a loopback host is cancelled too: nothing shows
    * that it comes from the server the credentials are meant for.
    * @internal
@@ -1059,12 +1066,18 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       callback()
       return
     }
-    // a handler without the url parameter cannot tell the feed from another origin
-    if (!authInfo.isProxy && this.feedOrigin != null && requestUrl.origin !== this.feedOrigin && listeners.every(it => it.length < 3)) {
-      this.limitedLogger("login-challenge-other-origin").warn(
-        `${challenger}, on ${requestUrl.origin}, another origin than the update feed (${this.feedOrigin}), asked for credentials, and every login handler answers without the url argument: ` +
-          `such a handler answers a challenge from any server. Take (authInfo, callback, url) and answer only when new URL(url).origin is the origin your credentials are meant for. ${LOGIN_MIGRATION_DOCS}`
-      )
+    // a handler without the url parameter cannot tell the feed from another server: it still gets a server's challenge from another origin
+    if (!authInfo.isProxy && listeners.every(it => it.length < 3)) {
+      const feedUrls = this.loginFeedUrls()
+      if (feedUrls.every(it => HttpExecutor.isCrossOrigin(it, requestUrl))) {
+        const feedOrigins = [...new Set(feedUrls.map(it => it.origin))]
+        this.limitedLogger("login-challenge-other-origin").warn(
+          `A login challenge from ${challenger} on ${requestUrl.origin}, ${feedOrigins.length === 0 ? "before any update check" : `outside the update feed (${feedOrigins.join(", ")})`}, ` +
+            `was passed to a login handler that does not take the url argument, so the handler cannot tell which origin it is answering. ` +
+            `electron-updater 8, the next major version, will cancel such a challenge when no login handler takes the url argument. ` +
+            `Take (authInfo, callback, url) in your login handler and call callback(username, password) only when new URL(url).origin is the origin your credentials are meant for. ${LOGIN_MIGRATION_DOCS}`
+        )
+      }
     }
     let isAnswered = false
     // the arguments as given: Electron cancels on a call without any
@@ -1081,6 +1094,25 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       this.limitedLogger("login-listener-threw").warn(`A login listener threw for ${challenger}: the challenge was cancelled. ${LOGIN_MIGRATION_DOCS}`)
       answer()
     }
+  }
+
+  /**
+   * The URLs on whose origins a server's authentication challenge reaches a `login` listener that does not take `url` without a warning (compared like the
+   * request headers, see `HttpExecutor.isCrossOrigin`): the update feed (`Provider.feedBaseUrl`) of the last update check, the one of the
+   * update being downloaded, and `previousBlockmapBaseUrlOverride`, the origin the old blockmap is downloaded from with every request header.
+   * A channel file, download or redirect target on another origin is not on one of them.
+   */
+  private loginFeedUrls(): Array<URL> {
+    const urls = [this.feedBaseUrl, this.downloadFeedBaseUrl].filter((it): it is URL => it != null)
+    const override = this.previousBlockmapBaseUrlOverride
+    if (override != null) {
+      try {
+        urls.push(new URL(override))
+      } catch {
+        // not a URL: no blockmap is downloaded from it, and a login event listener must not throw
+      }
+    }
+    return urls
   }
 
   private createProviderRuntimeOptions(): ProviderRuntimeOptions {
@@ -1186,7 +1218,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       })
       .finally(() => {
         this.downloadPromise = null
+        this.downloadFeedBaseUrl = null
       })
+    // the feed this download's requests are meant for, whichever feed a check made meanwhile uses (see loginFeedUrls), validated by the
+    // check that found the update. Once doDownloadUpdate has returned: one that throws (e.g. from resolveFiles) starts no download
+    // Read once and narrowed like feedBaseUrlOf: a plain-JavaScript provider's getter can throw or return no URL by now, and neither may
+    // throw from downloadUpdate or reach the login event listener (the download's own requests fail on it)
+    let downloadFeed: unknown = null
+    try {
+      downloadFeed = updateInfoAndProvider.provider.feedBaseUrl
+    } catch {
+      // no feed origin for this download's login challenges
+    }
+    this.downloadFeedBaseUrl = downloadFeed instanceof URL ? downloadFeed : null
 
     return this.downloadPromise
   }
