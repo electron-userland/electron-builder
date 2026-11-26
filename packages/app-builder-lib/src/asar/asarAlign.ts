@@ -160,9 +160,15 @@ export async function relayoutAsarContent<P extends { offsets: Array<number> }>(
   const header = JSON.parse(headerJson) as Node
   const contentStart = 8 + headerSize
   const sizeBefore = (await fs.stat(asarFile)).size
-
   const files: Array<PackedFile> = []
   collectPackedFiles(header, "", files)
+  // A re-layout (alignment or stableLayout) copies each file from its header offset and drops bytes after the last file, so a drifted archive
+  // would come out the right size and pass the sanity check. Refuse it before anything is rewritten.
+  const expectedSizeBefore = contentStart + files.reduce((end, file) => Math.max(end, file.offset + file.size), 0)
+  if (sizeBefore !== expectedSizeBefore) {
+    throw new Error(`"${asarFile}" is corrupted: the header describes an archive of ${expectedSizeBefore} bytes, but it is ${sizeBefore} bytes; refusing to re-lay it out`)
+  }
+
   const units = groupIntoUnits(files)
   const plan = planner(units.map(it => it.unit))
   const newOffsets = plan.offsets
