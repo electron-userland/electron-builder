@@ -1,4 +1,4 @@
-import { GenericServerOptions, S3Options } from "builder-util-runtime"
+import { GenericServerOptions, newError, S3Options } from "builder-util-runtime"
 import { NsisUpdater, UpdateCheckResult } from "electron-updater"
 import fs from "fs"
 import fsExtra from "fs-extra"
@@ -274,6 +274,81 @@ test("the installer signature is verified again for a cached update reused after
 
     expect(verifySignature).toHaveBeenCalledWith(firstDownload!.updateFile, expect.anything())
     await assertThat(expect, firstDownload!.updateFile).doesNotExist()
+  } finally {
+    await close()
+  }
+})
+
+// a periodic update check that finds the update downloaded in this session reuses its installer: the signature check, which can time out,
+// must not remove an update that is ready to install
+test("an installer verified in this session is reused by a later update check without verifying its signature again", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const updater = await createNsisUpdater()
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+    const verifySignature = vi.spyOn(updater as any, "verifySignature").mockResolvedValue({ response: "success" })
+    const firstDownload = await (await updater.checkForUpdates())?.downloadPromise
+    expect(verifySignature).toHaveBeenCalledTimes(1)
+
+    verifySignature.mockClear()
+    verifySignature.mockRejectedValue(newError("Timed out verifying the signature", "ERR_UPDATER_SIGNATURE_UNVERIFIABLE"))
+    const secondDownload = await (await updater.checkForUpdates())?.downloadPromise
+
+    expect(verifySignature).not.toHaveBeenCalled()
+    expect(secondDownload?.updateFile).toBe(firstDownload?.updateFile)
+    await assertThat(expect, firstDownload!.updateFile).isFile()
+  } finally {
+    await close()
+  }
+})
+
+// the install verifies the installer under the update info and provider it was verified with, which a later check does not replace
+test("a later update check that reuses the installer keeps the update info it was verified with", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const updater = await createNsisUpdater()
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+    vi.spyOn(updater as any, "verifySignature").mockResolvedValue({ response: "success" })
+    await (
+      await updater.checkForUpdates()
+    )?.downloadPromise
+    const verifiedWith = (updater as any).updateInfoAndProvider
+    expect((updater as any).downloadedUpdateHelper.updateInfoAndProvider).toBe(verifiedWith)
+
+    await (
+      await updater.checkForUpdates()
+    )?.downloadPromise
+
+    // the later check's own update info and provider are reported, not recorded for the installer
+    expect((updater as any).updateInfoAndProvider).not.toBe(verifiedWith)
+    expect((updater as any).downloadedUpdateHelper.updateInfoAndProvider).toBe(verifiedWith)
+  } finally {
+    await close()
+  }
+})
+
+// an installer cached by an earlier launch has not been verified in this session: its signature is verified, under the check that reuses it
+test("a cached installer reused after an app relaunch is verified under the update check that reuses it", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const appAdapter = await createTestAppAdapter()
+    const updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+    const launch = () => {
+      const updater = new NsisUpdater(null, appAdapter)
+      tuneTestUpdater(updater)
+      updater.updateConfigPath = updateConfigPath
+      vi.spyOn(updater as any, "verifySignature").mockResolvedValue({ response: "success" })
+      return updater
+    }
+    const firstDownload = await (await launch().checkForUpdates())?.downloadPromise
+
+    const secondLaunch = launch()
+    const secondDownload = await (await secondLaunch.checkForUpdates())?.downloadPromise
+
+    expect(secondDownload?.updateFile).toBe(firstDownload?.updateFile)
+    const verifiedWith = (secondLaunch as any).updateInfoAndProvider
+    expect((secondLaunch as any).verifySignature).toHaveBeenCalledExactlyOnceWith(firstDownload?.updateFile, verifiedWith)
+    expect((secondLaunch as any).downloadedUpdateHelper.updateInfoAndProvider).toBe(verifiedWith)
   } finally {
     await close()
   }

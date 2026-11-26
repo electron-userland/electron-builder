@@ -1406,9 +1406,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     const pendingBlockMapFile = path.join(cacheDir, "current.blockmap")
     const cachedBlockMapFile = path.join(downloadedUpdateHelper.cacheDir, "current.blockmap")
-    const done = async (isSaveCache: boolean) => {
+    // `verifiedWith`: the update info and provider the file was verified against, which the install verifies it with again
+    const done = async (isSaveCache: boolean, verifiedWith: UpdateInfoAndProvider) => {
       await downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo, updateFileName, isSaveCache)
-      downloadedUpdateHelper.setVerifiedUpdateInfoAndProvider(taskOptions.downloadUpdateOptions.updateInfoAndProvider)
+      downloadedUpdateHelper.setVerifiedUpdateInfoAndProvider(verifiedWith)
       // before `taskOptions.done`: it emits `update-downloaded`, and an app that calls quitAndInstall() from that listener exits
       // before anything after it runs, which would leave the next update without the blockmap of the installed version
       if (await fsExtra.pathExists(pendingBlockMapFile)) {
@@ -1461,17 +1462,21 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       updateFile = cachedUpdateFile
       // the package validated together with the cached installer, under the name it was saved with
       packageFile = downloadedUpdateHelper.packageFile
+      // set when the file is the one this session already downloaded or reused and verified (a later check found the same update),
+      // `null` for a file cached by an earlier launch. The file stays verified against what it was verified with: this check's update
+      // info is the same, but its provider settings may not be
+      const verifiedInSession = downloadedUpdateHelper.updateInfoAndProvider
       // an update downloaded by an earlier session is about to be announced as ready to install without being
       // downloaded again, so the custom verifier has to gate it here too — its only other gate is the sha512 taken
       // from the very update metadata a custom verifier exists to distrust
       try {
-        await taskOptions.verifyCachedFile?.(updateFile)
+        await taskOptions.verifyCachedFile?.(updateFile, verifiedInSession)
         await verifyUpdateFile(updateFile)
       } catch (e: any) {
         await removeFileIfAny()
         throw e
       }
-      return await done(false)
+      return await done(false, verifiedInSession ?? taskOptions.downloadUpdateOptions.updateInfoAndProvider)
     }
 
     // a fresh download starts — drop any blockmap left over from a previous update round, so that when this round
@@ -1522,7 +1527,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
 
     this.log.info(`New version ${version} has been downloaded to ${updateFile}`)
-    return await done(true)
+    return await done(true, taskOptions.downloadUpdateOptions.updateInfoAndProvider)
   }
   /**
    * Logs why a differential download failed, before the full download it falls back to. Never throws: neither a throwing
@@ -1933,9 +1938,11 @@ export interface DownloadExecutorTask {
 
   /**
    * Runs before an update file that is already in the cache (matched by its sha512) is reused for this update instead of being
-   * downloaded. Throws to reject it, like a check `task` makes on a downloaded file.
+   * downloaded. Throws to reject it, like a check `task` makes on a downloaded file. `verifiedInSession` is the update info and
+   * provider the file was already verified against in this session (a later check found the same update), `null` for a file cached
+   * by an earlier launch.
    */
-  readonly verifyCachedFile?: (cachedFile: string) => Promise<void>
+  readonly verifyCachedFile?: (cachedFile: string, verifiedInSession: UpdateInfoAndProvider | null) => Promise<void>
 
   readonly done?: (event: UpdateDownloadedEvent) => Promise<any>
 }

@@ -265,18 +265,23 @@ export class NsisUpdater extends BaseUpdater {
       // a cached installer is verified as a downloaded one is (see task): its signature, then its ProductVersion. Its signature, because it
       // sat in the pending directory since an earlier launch, and the checksum check right before the install (see startInstaller) pins the
       // installer to a file verified in this session. Its ProductVersion, because the cache is matched by sha512 only, and an installer
-      // cached for another version (e.g. an older release, kept after it was installed) must not be reused for this one
-      verifyCachedFile: async cachedFile => {
-        const signatureFailure = verificationFailureMessage(await this.verifySignature(cachedFile, downloadUpdateOptions.updateInfoAndProvider))
-        if (signatureFailure != null) {
-          throw newError(
-            `The cached installer of version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${signatureFailure}. ` +
-              "It is removed and will be downloaded again on the next update check. A cached installer is verified like a downloaded one before it is reused. " +
-              "See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed",
-            "ERR_UPDATER_INVALID_SIGNATURE"
-          )
+      // cached for another version (e.g. an older release, kept after it was installed) must not be reused for this one.
+      // The installer this session already verified (a later update check found the same update) keeps that verification, and its signature
+      // is not checked again here: a periodic update check must not remove an update that is ready to install when the check cannot run.
+      // doInstallAsync checks it again before the install, against the update it was verified with
+      verifyCachedFile: async (cachedFile, verifiedInSession) => {
+        if (verifiedInSession == null) {
+          const signatureFailure = verificationFailureMessage(await this.verifySignature(cachedFile, downloadUpdateOptions.updateInfoAndProvider))
+          if (signatureFailure != null) {
+            throw newError(
+              `The cached installer of version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${signatureFailure}. ` +
+                "It is removed and will be downloaded again on the next update check. A cached installer is verified like a downloaded one before it is reused. " +
+                "See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed",
+              "ERR_UPDATER_INVALID_SIGNATURE"
+            )
+          }
         }
-        await this.verifyInstallerVersion(cachedFile, downloadUpdateOptions.updateInfoAndProvider)
+        await this.verifyInstallerVersion(cachedFile, verifiedInSession ?? downloadUpdateOptions.updateInfoAndProvider)
       },
       task: async (destinationFile, downloadOptions, packageFile, removeTempDirIfAny) => {
         const packageInfo = fileInfo.packageInfo
