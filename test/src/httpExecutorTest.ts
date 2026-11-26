@@ -1,6 +1,6 @@
 import { expect, test, describe, vi } from "vitest"
 import { type ApiRequestOptions, CancellationToken, type CrossOriginHeaderPolicy, type CrossOriginHop, DigestTransform, HttpError, HttpExecutor } from "builder-util-runtime"
-import { hashSensitiveValue, REDACTED_VALUE, safeStringifyJson, urlWithoutQuery } from "builder-util-runtime/internal"
+import { filterHeaders, hashSensitiveValue, REDACTED_VALUE, safeStringifyJson, urlWithoutQuery } from "builder-util-runtime/internal"
 import { addSensitiveFieldPattern, createDefaultCrossOriginHeaderPolicy, detectSha512Encoding, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
 import { createHash } from "crypto"
 import { createRequire } from "module"
@@ -1059,9 +1059,9 @@ class NodeExecutor extends HttpExecutor<http.ClientRequest> {
     return http.request(options, callback)
   }
 
-  runDownload(url: URL, timeout: number, callback: (error: Error | null) => void, agent?: http.Agent): void {
+  runDownload(url: URL, timeout: number, callback: (error: Error | null) => void, agent?: http.Agent, headers?: OutgoingHttpHeaders): void {
     this.doDownload(
-      { protocol: url.protocol, hostname: url.hostname, port: url.port, path: url.pathname, timeout, agent },
+      { protocol: url.protocol, hostname: url.hostname, port: url.port, path: url.pathname, timeout, agent, headers },
       {
         responseHandler: (response, done) => {
           response.resume()
@@ -1357,13 +1357,13 @@ describe("HttpExecutor request auth option on a redirect", () => {
   })
 })
 
-// An HttpExecutor subclass without a cross-origin header policy of its own sends a credential in a custom header that no list of credential
-// header names has, X-Api-Token, and follows a 302 to another origin
-describe("the default cross-origin header policy on a redirect", () => {
-  async function headersAtTarget(crossOrigin: boolean): Promise<http.IncomingHttpHeaders | null> {
-    let received: http.IncomingHttpHeaders | null = null
+// An HttpExecutor follows a 302 to another origin (two servers on different ports) with a credential in a custom header that no list of
+// credential header names has, X-Api-Token, through a request and a download
+describe("the cross-origin header policy on a redirect", () => {
+  async function withServers(crossOrigin: boolean, run: (startUrl: URL) => Promise<unknown>): Promise<{ result: unknown; atTarget: http.IncomingHttpHeaders | null }> {
+    let atTarget: http.IncomingHttpHeaders | null = null
     const target = http.createServer((request, response) => {
-      received = request.headers
+      atTarget = request.headers
       response.end("ok")
     })
     const targetPort = await listen(target)
@@ -1372,20 +1372,14 @@ describe("the default cross-origin header policy on a redirect", () => {
         response.writeHead(302, { Location: crossOrigin ? `http://127.0.0.1:${targetPort}/target` : "/target" })
         response.end()
       } else {
-        received = request.headers
+        atTarget = request.headers
         response.end("ok")
       }
     })
     const originPort = await listen(origin)
     try {
-      await new NodeExecutor().request({
-        protocol: "http:",
-        hostname: "127.0.0.1",
-        port: originPort,
-        path: "/start",
-        headers: { "X-Api-Token": "secret", Accept: "application/json" },
-      })
-      return received
+      const result = await run(new URL(`http://127.0.0.1:${originPort}/start`))
+      return { result, atTarget }
     } finally {
       for (const server of [origin, target]) {
         server.closeAllConnections()
@@ -1394,16 +1388,55 @@ describe("the default cross-origin header policy on a redirect", () => {
     }
   }
 
-  test("does not send a custom credential header to another origin", async () => {
-    const headers = await headersAtTarget(true)
-    expect(headers?.["x-api-token"]).toBeUndefined()
-    // the redirect reached the other origin, with the headers that carry no credential
-    expect(headers?.accept).toBe("application/json")
-  })
+  const headers = (): OutgoingHttpHeaders => ({ "X-Api-Token": "secret", Authorization: "token secret", Accept: "application/json" })
 
-  test("keeps it on the same origin", async () => {
-    expect((await headersAtTarget(false))?.["x-api-token"]).toBe("secret")
-  })
+  const request = (executor: NodeExecutor) => (startUrl: URL) =>
+    executor.request({ protocol: "http:", hostname: startUrl.hostname, port: startUrl.port, path: startUrl.pathname, headers: headers() }).then(
+      () => null,
+      (e: unknown) => e
+    )
+
+  const download = (executor: NodeExecutor) => (startUrl: URL) => new Promise<Error | null>(resolve => executor.runDownload(startUrl, 5000, resolve, undefined, headers()))
+
+  for (const [label, run] of [
+    ["a request", request],
+    ["a download", download],
+  ] as const) {
+    test(`${label} reaches another origin without the custom and credential headers, by default`, async () => {
+      const { result, atTarget } = await withServers(true, run(new NodeExecutor()))
+      expect(result).toBeNull()
+      expect(atTarget?.["x-api-token"]).toBeUndefined()
+      expect(atTarget?.authorization).toBeUndefined()
+      // the headers that carry no credential go on
+      expect(atTarget?.accept).toBe("application/json")
+    })
+
+    test(`${label} keeps them on the same origin`, async () => {
+      const { result, atTarget } = await withServers(false, run(new NodeExecutor()))
+      expect(result).toBeNull()
+      expect(atTarget?.["x-api-token"]).toBe("secret")
+      expect(atTarget?.authorization).toBe("token secret")
+    })
+
+    test(`${label} gives the default policy's onDropped the custom header it leaves out, with both origins`, async () => {
+      const onDropped = vi.fn()
+      const { result } = await withServers(true, run(new NodeExecutor(createDefaultCrossOriginHeaderPolicy(onDropped))))
+      expect(result).toBeNull()
+      expect(onDropped).toHaveBeenCalledOnce()
+      const [names, hop] = onDropped.mock.calls[0]
+      // Authorization is a well-known credential header: left out without being reported
+      expect(names).toEqual(["x-api-token"])
+      expect(hop.from.origin).not.toBe(hop.to.origin)
+    })
+
+    test(`${label} sends another origin a header that a constructor-passed policy keeps`, async () => {
+      const keepApiToken: CrossOriginHeaderPolicy = given => filterHeaders(given, name => ["x-api-token", "accept"].includes(name.toLowerCase()))
+      const { result, atTarget } = await withServers(true, run(new NodeExecutor(keepApiToken)))
+      expect(result).toBeNull()
+      expect(atTarget?.["x-api-token"]).toBe("secret")
+      expect(atTarget?.authorization).toBeUndefined()
+    })
+  }
 })
 
 describe("createDefaultCrossOriginHeaderPolicy", () => {
