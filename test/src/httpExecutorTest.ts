@@ -1,7 +1,7 @@
 import { expect, test, describe, vi } from "vitest"
 import { type ApiRequestOptions, CancellationToken, type CrossOriginHeaderPolicy, type CrossOriginHop, DigestTransform, HttpError, HttpExecutor } from "builder-util-runtime"
 import { hashSensitiveValue, REDACTED_VALUE, safeStringifyJson, urlWithoutQuery } from "builder-util-runtime/internal"
-import { addSensitiveFieldPattern, createDefaultCrossOriginHeaderPolicy, detectSha512Encoding, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
+import { addSensitiveFieldPattern, detectSha512Encoding, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
 import { createHash } from "crypto"
 import { createRequire } from "module"
 import * as path from "path"
@@ -1059,9 +1059,9 @@ class NodeExecutor extends HttpExecutor<http.ClientRequest> {
     return http.request(options, callback)
   }
 
-  runDownload(url: URL, timeout: number, callback: (error: Error | null) => void, agent?: http.Agent): void {
+  runDownload(url: URL, timeout: number, callback: (error: Error | null) => void, agent?: http.Agent, headers?: OutgoingHttpHeaders): void {
     this.doDownload(
-      { protocol: url.protocol, hostname: url.hostname, port: url.port, path: url.pathname, timeout, agent },
+      { protocol: url.protocol, hostname: url.hostname, port: url.port, path: url.pathname, timeout, agent, headers },
       {
         responseHandler: (response, done) => {
           response.resume()
@@ -1243,17 +1243,16 @@ describe("HttpExecutor.crossOriginHeaders and header names that are object keys"
     expect(Object.keys(result)).toEqual(["X-Tenant"])
   })
 
-  test("the default policy drops them too", () => {
-    const options = HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", {
-      protocol: "https:",
-      hostname: "feed.example.com",
-      path: "/app.exe",
-      headers: hostile(),
-    })
+  test("the default policy fails the redirect on them, without polluting a prototype", () => {
+    expect(() =>
+      HttpExecutor.prepareRedirectUrlOptions("https://cdn.example.net/app.exe", {
+        protocol: "https:",
+        hostname: "feed.example.com",
+        path: "/app.exe",
+        headers: hostile(),
+      })
+    ).toThrow(expect.objectContaining({ code: "ERR_CROSS_ORIGIN_HEADERS_NOT_KEPT" }))
     expect(({} as Record<string, unknown>).polluted).toBeUndefined()
-    expect(Object.getPrototypeOf(options.headers)).toBe(Object.prototype)
-    // X-Tenant is not one of the headers it sends to another origin: only the default User-Agent and Cache-Control are left
-    expect(Object.keys(options.headers ?? {})).toEqual(["User-Agent", "Cache-Control"])
   })
 })
 
@@ -1357,13 +1356,12 @@ describe("HttpExecutor request auth option on a redirect", () => {
   })
 })
 
-// An HttpExecutor subclass without a cross-origin header policy of its own sends a credential in a custom header that no list of credential
-// header names has, X-Api-Token, and follows a 302 to another origin
+// An HttpExecutor subclass without a cross-origin header policy of its own follows a 302 to another origin (two servers on different ports)
 describe("the default cross-origin header policy on a redirect", () => {
-  async function headersAtTarget(crossOrigin: boolean): Promise<http.IncomingHttpHeaders | null> {
-    let received: http.IncomingHttpHeaders | null = null
+  async function withServers<T>(crossOrigin: boolean, run: (startUrl: URL) => Promise<T>): Promise<{ result: T; atTarget: http.IncomingHttpHeaders | null }> {
+    let atTarget: http.IncomingHttpHeaders | null = null
     const target = http.createServer((request, response) => {
-      received = request.headers
+      atTarget = request.headers
       response.end("ok")
     })
     const targetPort = await listen(target)
@@ -1372,20 +1370,14 @@ describe("the default cross-origin header policy on a redirect", () => {
         response.writeHead(302, { Location: crossOrigin ? `http://127.0.0.1:${targetPort}/target` : "/target" })
         response.end()
       } else {
-        received = request.headers
+        atTarget = request.headers
         response.end("ok")
       }
     })
     const originPort = await listen(origin)
     try {
-      await new NodeExecutor().request({
-        protocol: "http:",
-        hostname: "127.0.0.1",
-        port: originPort,
-        path: "/start",
-        headers: { "X-Api-Token": "secret", Accept: "application/json" },
-      })
-      return received
+      const result = await run(new URL(`http://127.0.0.1:${originPort}/start`))
+      return { result, atTarget }
     } finally {
       for (const server of [origin, target]) {
         server.closeAllConnections()
@@ -1394,20 +1386,45 @@ describe("the default cross-origin header policy on a redirect", () => {
     }
   }
 
-  test("does not send a custom credential header to another origin", async () => {
-    const headers = await headersAtTarget(true)
-    expect(headers?.["x-api-token"]).toBeUndefined()
-    // the redirect reached the other origin, with the headers that carry no credential
-    expect(headers?.accept).toBe("application/json")
-  })
+  const request = (headers: OutgoingHttpHeaders) => (startUrl: URL) =>
+    new NodeExecutor().request({ protocol: "http:", hostname: startUrl.hostname, port: startUrl.port, path: startUrl.pathname, headers }).then(
+      () => null,
+      (e: unknown) => e
+    )
 
-  test("keeps it on the same origin", async () => {
-    expect((await headersAtTarget(false))?.["x-api-token"]).toBe("secret")
-  })
+  const download = (headers: OutgoingHttpHeaders) => (startUrl: URL) =>
+    new Promise<Error | null>(resolve => new NodeExecutor().runDownload(startUrl, 5000, resolve, undefined, headers))
+
+  for (const [label, run] of [
+    ["a request", request],
+    ["a download", download],
+  ] as const) {
+    test(`${label} with a custom header fails with ERR_CROSS_ORIGIN_HEADERS_NOT_KEPT, and the other origin gets no request`, async () => {
+      const { result, atTarget } = await withServers(true, run({ "X-Api-Token": "secret-value", Accept: "application/json" }))
+      expect(result).toMatchObject({ code: "ERR_CROSS_ORIGIN_HEADERS_NOT_KEPT" })
+      expect(String(result)).toContain("x-api-token")
+      expect(String(result)).not.toContain("secret-value")
+      expect(atTarget).toBeNull()
+    })
+
+    test(`${label} with only the well-known credential headers reaches the other origin without them`, async () => {
+      const { result, atTarget } = await withServers(true, run({ Authorization: "token secret", Accept: "application/json" }))
+      expect(result).toBeNull()
+      expect(atTarget?.authorization).toBeUndefined()
+      expect(atTarget?.accept).toBe("application/json")
+    })
+
+    test(`${label} keeps a custom header on the same origin`, async () => {
+      const { result, atTarget } = await withServers(false, run({ "X-Api-Token": "secret" }))
+      expect(result).toBeNull()
+      expect(atTarget?.["x-api-token"]).toBe("secret")
+    })
+  }
 })
 
-describe("createDefaultCrossOriginHeaderPolicy", () => {
+describe("the default cross-origin header policy", () => {
   const hop = { from: new URL("https://api.example.com/upload"), to: new URL("https://storage.example.net/bucket/file") }
+  const policy: CrossOriginHeaderPolicy = (headers, hop) => new NodeExecutor().crossOriginHeaderPolicy(headers, hop)
   const headersWithoutCredential = (): OutgoingHttpHeaders => ({
     Accept: "application/json",
     "Accept-Encoding": "gzip",
@@ -1427,23 +1444,7 @@ describe("createDefaultCrossOriginHeaderPolicy", () => {
     "user-agent": "electron-builder",
   })
 
-  test("sends the headers that carry no credential, whatever their case, and no other one", ({ expect }) => {
-    const policy = createDefaultCrossOriginHeaderPolicy()
-    expect(policy({ ...headersWithoutCredential(), "X-Api-Token": "secret", Authorization: "token t", Cookie: "c=1", "X-Tenant": "acme" }, hop)).toEqual(headersWithoutCredential())
-  })
-
-  test("gives onDropped the lowercase names of the headers it leaves out other than the well-known credential headers, once each and never their values", ({ expect }) => {
-    const onDropped = vi.fn()
-    const policy = createDefaultCrossOriginHeaderPolicy(onDropped)
-    policy({ ...headersWithoutCredential(), "X-Api-Token": "secret", "x-api-token": "secret", "X-Tenant": "acme", Authorization: "token t", "X-Unset": undefined }, hop)
-    expect(onDropped).toHaveBeenCalledExactlyOnceWith(["x-api-token", "x-tenant"], hop)
-  })
-
-  test("does not call onDropped when it leaves out none, or only the well-known credential headers", ({ expect }) => {
-    const onDropped = vi.fn()
-    const policy = createDefaultCrossOriginHeaderPolicy(onDropped)
-    policy(headersWithoutCredential(), hop)
-    // the well-known credential header names, whatever their case and separators
+  test("sends the headers that carry no credential, whatever their case, and leaves out the well-known credential headers, whatever their case and separators", ({ expect }) => {
     const wellKnownCredentials = {
       Authorization: "token t",
       "Proxy-Authorization": "Basic p",
@@ -1455,8 +1456,30 @@ describe("createDefaultCrossOriginHeaderPolicy", () => {
       "X-GitLab-Token": "g",
       "x-csrf-token": "c",
     }
-    expect(policy({ ...headersWithoutCredential(), ...wellKnownCredentials }, hop)).toEqual(headersWithoutCredential())
-    expect(onDropped).not.toHaveBeenCalled()
+    expect(policy({ ...headersWithoutCredential(), ...wellKnownCredentials, "X-Unset": undefined }, hop)).toEqual(headersWithoutCredential())
+  })
+
+  test("fails with ERR_CROSS_ORIGIN_HEADERS_NOT_KEPT on any other header, naming each once in lowercase with both origins, never a value", ({ expect }) => {
+    let thrown: unknown = null
+    try {
+      policy({ ...headersWithoutCredential(), "X-Tenant": "acme-tenant", "x-tenant": "acme-tenant", "X-Api-Token": "secret-value", Authorization: "token t" }, hop)
+    } catch (e: unknown) {
+      thrown = e
+    }
+    expect(thrown).toBeInstanceOf(Error)
+    expect(thrown).toMatchObject({ code: "ERR_CROSS_ORIGIN_HEADERS_NOT_KEPT" })
+    const message = thrown instanceof Error ? thrown.message : ""
+    expect(message).toContain("Cannot follow the redirect from https://api.example.com to https://storage.example.net with the request headers x-api-token, x-tenant:")
+    expect(message).toContain("Pass a crossOriginHeaderPolicy that keeps these headers for https://storage.example.net to the HttpExecutor or NodeHttpExecutor constructor")
+    expect(message).toMatch(/ See https:\/\/www\.electron\.build\/docs\/migration\/v27-developer-changes#builder-util-runtime-default-cross-origin-headers$/)
+    for (const value of ["acme-tenant", "secret-value", "token t"]) {
+      expect(message).not.toContain(value)
+    }
+  })
+
+  test("a same-origin redirect keeps a custom header", ({ expect }) => {
+    const result = HttpExecutor.prepareRedirectUrlOptions("/other", { protocol: "https:", hostname: "api.example.com", path: "/upload", headers: { "X-Tenant": "acme" } })
+    expect(result.headers?.["X-Tenant"]).toBe("acme")
   })
 })
 

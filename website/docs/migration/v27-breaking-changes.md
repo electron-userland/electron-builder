@@ -76,7 +76,6 @@ The quickest way through an upgrade is:
 | [The embedded update feed follows target-level `publish`](./v27-build-changes.md#app-updateyml-feed-follows-the-update-writing-targets) | You set `publish` on a target (e.g. `nsis.publish`), or the first provider has `publishAutoUpdate: false` | Build |
 | [`latest*.yml` drops the top-level `path` / `sha512`](./v27-build-changes.md#latestyml-drops-legacy-top-level-pathsha512) | App code or tooling reads `info.path` / `info.sha512`, or you still ship electron-updater 2.15 or older | Build |
 | [NSIS `customInstallMode` macro guard casing](./v27-developer-changes.md#nsis-custominstallmode-macro-guard-casing-corrected) | Your custom NSIS script defines `customInstallmode` (lowercase `m`) | Developer |
-| [A builder-util-runtime redirect to another origin sends only the headers that carry no credential](./v27-developer-changes.md#builder-util-runtime-default-cross-origin-headers) | Your code subclasses builder-util-runtime's `HttpExecutor` without a cross-origin header policy, and a server on another origin it is redirected to needs one of your custom headers. builder-util's `NodeHttpExecutor` warns instead | Developer |
 
 ### Info log only {#info-log-only}
 
