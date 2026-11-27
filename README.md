@@ -194,6 +194,7 @@ build({ targets: Platform.MAC.createTarget(), config: {} })
 * [electron-vue-vite](https://github.com/caoxiemeihao/electron-vue-vite) A real simple Electron + Vue3 + Vite5 boilerplate.
 * [vite-electron-builder](https://github.com/cawa-93/vite-electron-builder) Secure boilerplate for Electron app based on Vite. Supports multiple frameworks.
 * [electronjs-with-nextjs](https://github.com/saulotarsobc/electronjs-with-nextjs) ElectronJS application with NextJS and TypeScript.
+* [electron-appstack](https://electron-appstack.com) Electron boilerplate with React, TypeScript, typed IPC with tRPC, SQLite, auto update and signed releases built with electron-builder.
 
 ## Debug
 
