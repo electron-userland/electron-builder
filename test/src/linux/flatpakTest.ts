@@ -12,7 +12,7 @@ import { assertLinuxTargetConfig, packageJson } from "../helpers/packTester"
 
 // No flatpak or flatpak-builder is needed: effectiveOptionComputed returns true, which skips the build, so these tests
 // only validate the options, with the manifest in them, that the target hands to buildFlatpakBundle (and that the config
-// schema accepts the options). The targets are built from a stub app directory (assertLinuxTargetConfig), not a packaged app.
+// schema accepts the options), through assertLinuxTargetConfig.
 // The command lines built from the options are covered by flatpakBundleTest.ts, real builds by flatpak.e2e.ts.
 //
 // Not on Windows: the target assembles its in-sandbox paths with the host path module.

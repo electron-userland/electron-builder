@@ -7,8 +7,8 @@ import { app, assertLinuxTargetConfig, EXTENDED_TIMEOUT, snapTarget } from "../h
 // causes all its describe() blocks to execute here, registering heavy tests twice.
 //
 // No snapcraft binary is needed: every test but the Multipass builds uses effectiveOptionComputed: () => true to skip
-// the actual build and only validates the generated snapcraft.yaml descriptor, built from a stub app directory
-// (assertLinuxTargetConfig) instead of a packaged app. Real snap builds are in snapHeavy.e2e.ts and snapTest.ts.
+// the actual build and only validates the generated snapcraft.yaml descriptor (assertLinuxTargetConfig).
+// Real snap builds are in snapHeavy.e2e.ts and snapTest.ts.
 const hasSnapInstalled = () => process.platform !== "win32"
 
 describe.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false }, () => {

@@ -10,7 +10,6 @@ import {
   Configuration,
   DIR_TARGET,
   getArchSuffix,
-  LinuxPackager,
   MacOsTargetName,
   Packager,
   PackagerOptions,
@@ -520,44 +519,11 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   )
 }
 
-// The top-level entries of an Electron Linux app directory other than the executable, as a build lays them out. The core24 snap target
-// maps each of them in the `organize` of its snapcraft.yaml.
-const ELECTRON_LINUX_APP_FILES = [
-  "LICENSE.electron.txt",
-  "LICENSES.chromium.html",
-  "chrome-sandbox",
-  "chrome_100_percent.pak",
-  "chrome_200_percent.pak",
-  "chrome_crashpad_handler",
-  "icudtl.dat",
-  "libEGL.so",
-  "libGLESv2.so",
-  "libffmpeg.so",
-  "libvk_swiftshader.so",
-  "libvulkan.so.1",
-  "resources.pak",
-  "snapshot_blob.bin",
-  "v8_context_snapshot.bin",
-  "vk_swiftshader_icd.json",
-]
-const ELECTRON_LINUX_APP_DIRS = ["locales", "resources"]
-
-// Lays out the app directory with empty stand-ins for the entries of an Electron Linux app instead of assembling the app
-class StubAppLinuxPackager extends LinuxPackager {
-  protected override async doPack({ appOutDir }: { appOutDir: string }): Promise<void> {
-    for (const dir of ELECTRON_LINUX_APP_DIRS) {
-      await mkdir(path.join(appOutDir, dir), { recursive: true })
-    }
-    for (const file of [...ELECTRON_LINUX_APP_FILES, this.executableName]) {
-      await fs.writeFile(path.join(appOutDir, file), "")
-    }
-  }
-}
-
 /**
  * `app` for the tests of what a Linux target computes (its `effectiveOptionComputed` options, warnings and errors) rather than what it
- * packages: the targets are built from a stub app directory (StubAppLinuxPackager), so the fixture's dependencies are not installed and
- * no Electron is downloaded or assembled. The artifacts are snapshotted as `assertPack` does.
+ * packages: the app is assembled from the real Electron distribution, but the fixture has no dependencies to install and the tests stop
+ * the target before it runs the external tool (snapcraft, flatpak-builder) through `effectiveOptionComputed`. The artifacts are
+ * snapshotted as `assertPack` does.
  */
 export async function assertLinuxTargetConfig(
   expect: ExpectStatic,
@@ -574,7 +540,6 @@ export async function assertLinuxTargetConfig(
     ...packagerOptions,
     // unsigned update manifests, as assertPack sets them
     config: { updateManifest: false, ...(packagerOptions.config as Configuration | undefined) },
-    platformPackagerFactory: info => new StubAppLinuxPackager(info),
   })
   const publishManager = new PublishManager(packager, { publish: "never" })
   const artifacts = collectArtifacts(expect, packager)
