@@ -10,7 +10,7 @@ import FormData from "form-data"
 import { URL } from "url"
 import { HttpPublisher } from "./httpPublisher.js"
 import { PublishContext } from "./index.js"
-import { trimStringWithWarn, validateResolvedToken } from "./util.js"
+import { parseConfiguredHost, trimStringWithWarn, validateResolvedToken } from "./util.js"
 
 type RequestProcessor = (request: ClientRequest, reject: (error: Error) => void) => void
 
@@ -36,6 +36,10 @@ export class GitlabPublisher extends HttpPublisher {
   ) {
     super(context, true)
 
+    const host = info.host || "gitlab.com"
+    // a path is kept: a GitLab instance under a relative URL root is served at https://<host>/<path>/api/v4
+    parseConfiguredHost(host, "gitlab.host", true)
+    this.host = host.endsWith("/") ? host.slice(0, -1) : host
     let token = info.token || null
     if (isEmptyOrSpaces(token)) {
       token = process.env.GITLAB_TOKEN || null
@@ -43,7 +47,6 @@ export class GitlabPublisher extends HttpPublisher {
     }
 
     this.token = token
-    this.host = info.host || "gitlab.com"
     this.projectId = this.resolveProjectId()
     this.baseApiPath = `https://${this.host}/api/v4`
 
