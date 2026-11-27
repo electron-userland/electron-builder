@@ -1,5 +1,36 @@
 # app-builder-lib
 
+## 27.0.0-alpha.16
+### Minor Changes
+
+- Feat(asar): experimental opt-in `asar.stableLayout` that keeps every packed file of `app.asar` at its offset in a previous release's archive (`stableLayout.previous`), placing new files and files that outgrew their slot into freed slots or after the previous content, with an optional per-file `growthMargin`. Adding, removing or growing a file then no longer shifts every later file's header offset, so a differential update stops re-downloading most of the asar header. Off by default; the default layout is unchanged. `asar.contentAlignment` now keeps `@electron/asar`'s de-duplicated files sharing one copy instead of writing each again _[`#10499`](https://github.com/electron-userland/electron-builder/pull/10499) [`0c8138c`](https://github.com/electron-userland/electron-builder/commit/0c8138c578858751263fe0f64a60b421324e06e6)_
+
+### Patch Changes
+
+- Fix: the `app.asar` sanity check now also compares the archive's size with the size its header describes. Before, an `app.asar` with extra or missing bytes passed as long as the entry file and `package.json` had a non-zero size in the header. After, an archive with extra bytes past what its header describes fails the build and names both byte counts. A header that describes more bytes than the file has (such as asarmor's default bloat patch, whose entries point far past the end of the file) only logs a warning, and the build goes on, unless the file has bytes after its last entry that fits in it. A truncated `app.asar` cut inside a file now fails for the same reason. An `app.asar` cut at a file boundary, or right after its header, fails when the cut removes `package.json` or the entry file; a cut that removes only other files still only logs the warning. With `asar.contentAlignment` set, the archive is also checked against its header before it is rewritten, so alignment refuses it instead of rewriting it. _[`#10547`](https://github.com/electron-userland/electron-builder/pull/10547) [`072f05f`](https://github.com/electron-userland/electron-builder/commit/072f05ff4b67f422e8d8d274a199e0072e9e7fe3)_
+- Fix: the `app.asar` sanity check reads the archive header once per archive instead of once per checked file, and checks the entry file and `package.json` against a header read from the archive on disk, so a build to the same output path earlier in the same process cannot fail it. The warning for a header that describes more bytes than the archive has is logged once per process and says that afterPack hooks that patch the header (such as asarmor) cause it, and that `asar.disableSanityCheck` skips the check. With `asar.stableLayout` set, the archive is checked against its header before it is re-laid out too, the same as with `asar.contentAlignment`. _[`#10547`](https://github.com/electron-userland/electron-builder/pull/10547) [`072f05f`](https://github.com/electron-userland/electron-builder/commit/072f05ff4b67f422e8d8d274a199e0072e9e7fe3)_
+- Fix(nsis): Update Italian strings for NSIS installers _[`#10619`](https://github.com/electron-userland/electron-builder/pull/10619) [`18720c1`](https://github.com/electron-userland/electron-builder/commit/18720c18b43880291fcc27af4b1394db710cdacd)_
+- Fix(mac): normalize bundle file names to NFD before code signing. Before, a bundle entry carrying a precomposed (NFC) non-ASCII name — `설명서.txt`, `café.txt`, a nested `앱 Helper.app` — was sealed under that name, and the HFS+ volume in a DMG rewrote it to the decomposed (NFD) form, so every such file became a missing sealed resource and macOS refused to launch the app with "the application is damaged". It passed `codesign --verify` and notarization on the build machine, so it only ever surfaced for whoever installed the app. Now, non-ASCII file and directory names inside the signed `.app` bundle are renamed on disk to their NFD form before signing, which matches what the volume stores and keeps the signature valid regardless of `dmg.filesystem`. Opening a file by its precomposed name still works on macOS, but an app that compares `readdir` results against NFC string literals should normalize both sides (e.g. `name.normalize("NFC")`). _[`#10466`](https://github.com/electron-userland/electron-builder/pull/10466) [`b7f3480`](https://github.com/electron-userland/electron-builder/commit/b7f3480f28a7d383485332db4320860c9ff8c2ae)_
+- Upgrade `minimatch` to `^11.0.1` and `@electron/asar` to `^4.3.2` (which moves to `minimatch` ^11.0.1 and `glob` ^14) to pick up the fix for GHSA-g3hv-75wg-m249. Also upgrade `ejs` (used for the MSI project templates) to `^7.0.2`, which no longer depends on `jake`, removing the `minimatch` 3 and 5 copies that `jake` and `filelist` brought in. _[`#10539`](https://github.com/electron-userland/electron-builder/pull/10539) [`dbc5014`](https://github.com/electron-userland/electron-builder/commit/dbc5014658d35c93fd0d215091067ce8ea174993)_
+- Fix(publish): `electron-builder publish -f` works with a configuration that has a `publish` list: it loaded the configuration and then had it merged into the same file again, which failed validation (JSON, YAML) or crashed with "Converting circular structure to JSON" (a JS config). A `-c` path without a dot (`-c ci/ebconfig`) is read as the configuration file, and an absolute `extends` path without a dot given in the options is too, as one with a dot already was _[`#10630`](https://github.com/electron-userland/electron-builder/pull/10630) [`7fc52ed`](https://github.com/electron-userland/electron-builder/commit/7fc52edab86fada2876e6c0e8879778902f32cac)_
+- Fix: parallel builds that take turns on electron-builder's shared cross-process locks (the toolset lock that Squirrel.Windows and MSI hold for a whole installer build, and the signtool and icons locks) wait up to about 60 minutes for the lock instead of giving up after about 8 minutes while other builds still hold it. A crashed holder's lock is still taken over after 2 minutes. When the wait does run out, the error names the lock file instead of proper-lockfile's bare "Lock file is already being held". _[`#10654`](https://github.com/electron-userland/electron-builder/pull/10654) [`476dd91`](https://github.com/electron-userland/electron-builder/commit/476dd91424987f1c603db60cca5466fd8c8a0e4d)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`d0d4046`](https://github.com/electron-userland/electron-builder/commit/d0d4046bd2a30f57150ecfa2ef615315dcb96619) [`027550d`](https://github.com/electron-userland/electron-builder/commit/027550d128b5ecba362de994d1539a80441784cc) [`027550d`](https://github.com/electron-userland/electron-builder/commit/027550d128b5ecba362de994d1539a80441784cc) [`100cf40`](https://github.com/electron-userland/electron-builder/commit/100cf40d45310bff0fc6bf1d52be8136093eb22c)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.15`
+- `electron-publish@27.0.0-alpha.16`
+- `builder-util@27.0.0-alpha.16`
+- `dmg-builder@27.0.0-alpha.16`
+- `electron-builder-squirrel-windows@27.0.0-alpha.16`
+
+</details>
+
 ## 27.0.0-alpha.15
 ### Major Changes
 
