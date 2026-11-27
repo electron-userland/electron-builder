@@ -142,13 +142,15 @@ describe("install on quit", { concurrent: false }, () => {
     const errors: Error[] = []
     updater.on("error", (error: Error) => errors.push(error))
     vi.spyOn(updater as any, "isRunningAsRoot").mockReturnValue(false)
-    vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === "dpkg" || args[0] === "pkexec")
+    vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === "dpkg")
+    // pkexec is the only elevation helper in the system directories
+    vi.spyOn(updater as any, "findTrustedCommand").mockImplementation((...args: unknown[]) => (args[0] === "pkexec" ? "/usr/bin/pkexec" : null))
     vi.spyOn(updater as any, "resolveTrustedCommand").mockImplementation((...args: unknown[]) => `/usr/bin/${String(args[0])}`)
     const pkexecCalls: string[][] = []
     const pkexec = { exitCode: pkexecExitCode }
     vi.spyOn(updater as any, "spawnSyncLog").mockImplementation((...args: unknown[]) => {
       const [cmd, cmdArgs] = args
-      if (cmd === "pkexec") {
+      if (cmd === "/usr/bin/pkexec") {
         pkexecCalls.push(Array.isArray(cmdArgs) ? cmdArgs.map(String) : [])
         if (pkexec.exitCode !== 0) {
           throw new CommandExitError(`Command pkexec exited with code ${pkexec.exitCode}`, "pkexec", pkexec.exitCode, null)
@@ -1229,12 +1231,14 @@ describe("install on quit", { concurrent: false }, () => {
       updater.on("error", (error: Error) => errors.push(error))
       const packageManager = target === "rpm" ? "dnf" : "pacman"
       vi.spyOn(updater as any, "isRunningAsRoot").mockReturnValue(false)
-      vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === packageManager || args[0] === "pkexec")
+      vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === packageManager)
+      // pkexec is the only elevation helper in the system directories
+      vi.spyOn(updater as any, "findTrustedCommand").mockImplementation((...args: unknown[]) => (args[0] === "pkexec" ? "/usr/bin/pkexec" : null))
       vi.spyOn(updater as any, "resolveTrustedCommand").mockImplementation((...args: unknown[]) => `/usr/bin/${String(args[0])}`)
       const pkexecCalls: string[][] = []
       vi.spyOn(updater as any, "spawnSyncLog").mockImplementation((...args: unknown[]) => {
         const [cmd, cmdArgs] = args
-        if (cmd === "pkexec") {
+        if (cmd === "/usr/bin/pkexec") {
           pkexecCalls.push(Array.isArray(cmdArgs) ? cmdArgs.map(String) : [])
         }
         return ""
@@ -1281,7 +1285,7 @@ describe("install on quit", { concurrent: false }, () => {
 
       await expect(updater.installAsync(true, false)).resolves.toBe(true)
 
-      expect(spawnAsyncLog).toHaveBeenCalledWith("pkexec", ["--disable-internal-agent", "/usr/bin/dpkg", "-i", debInstaller()], {}, false)
+      expect(spawnAsyncLog).toHaveBeenCalledWith("/usr/bin/pkexec", ["--disable-internal-agent", "/usr/bin/dpkg", "-i", debInstaller()], {}, false)
       expect(errors).toEqual([])
     })
 
