@@ -98,6 +98,9 @@ export class AppImageUpdater extends BaseUpdater {
       this.dispatchError(new Error("No update filepath provided, can't quit and install"))
       return false
     }
+    if (!this.verifyDownloadedUpdateBeforeInstall()) {
+      return false
+    }
 
     let destination: string
     const existingBaseName = path.basename(appImageFile)

@@ -1,4 +1,4 @@
-import { GenericServerOptions, S3Options } from "builder-util-runtime"
+import { GenericServerOptions, newError, S3Options } from "builder-util-runtime"
 import { NsisUpdater, UpdateCheckResult } from "electron-updater"
 import fs from "fs"
 import fsExtra from "fs-extra"
@@ -244,6 +244,111 @@ test("verifyUpdateFile also gates a cached update reused after an app relaunch",
     expect(rejecting.mock).toHaveBeenCalledTimes(1)
     expect(rejecting.observations[0].updateFilePath).toBe(firstDownload!.updateFile)
     await assertThat(expect, firstDownload!.updateFile).doesNotExist()
+  } finally {
+    await close()
+  }
+})
+
+test("the installer signature is verified again for a cached update reused after an app relaunch", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const appAdapter = await createTestAppAdapter()
+    const updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+
+    const firstLaunch = new NsisUpdater(null, appAdapter)
+    tuneTestUpdater(firstLaunch)
+    firstLaunch.updateConfigPath = updateConfigPath
+    const firstDownload = await (await firstLaunch.checkForUpdates())?.downloadPromise
+    await assertThat(expect, firstDownload!.updateFile).isFile()
+
+    // a fresh updater instance, as after a restart: nothing is downloaded again, but the signature is verified again
+    const secondLaunch = new NsisUpdater(null, appAdapter)
+    tuneTestUpdater(secondLaunch)
+    secondLaunch.updateConfigPath = updateConfigPath
+    const verifySignature = vi.spyOn(secondLaunch as any, "verifySignature").mockResolvedValue({ response: "failure", message: "signed by someone else" })
+
+    await expect((await secondLaunch.checkForUpdates())?.downloadPromise).rejects.toMatchObject({
+      code: "ERR_UPDATER_INVALID_SIGNATURE",
+      message: expect.stringContaining("signed by someone else"),
+    })
+
+    expect(verifySignature).toHaveBeenCalledWith(firstDownload!.updateFile, expect.anything())
+    await assertThat(expect, firstDownload!.updateFile).doesNotExist()
+  } finally {
+    await close()
+  }
+})
+
+// a periodic update check that finds the update downloaded in this session reuses its installer: the signature check, which can time out,
+// must not remove an update that is ready to install
+test("an installer verified in this session is reused by a later update check without verifying its signature again", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const updater = await createNsisUpdater()
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+    const verifySignature = vi.spyOn(updater as any, "verifySignature").mockResolvedValue({ response: "success" })
+    const firstDownload = await (await updater.checkForUpdates())?.downloadPromise
+    expect(verifySignature).toHaveBeenCalledTimes(1)
+
+    verifySignature.mockClear()
+    verifySignature.mockRejectedValue(newError("Timed out verifying the signature", "ERR_UPDATER_SIGNATURE_UNVERIFIABLE"))
+    const secondDownload = await (await updater.checkForUpdates())?.downloadPromise
+
+    expect(verifySignature).not.toHaveBeenCalled()
+    expect(secondDownload?.updateFile).toBe(firstDownload?.updateFile)
+    await assertThat(expect, firstDownload!.updateFile).isFile()
+  } finally {
+    await close()
+  }
+})
+
+// the install verifies the installer under the update info and provider it was verified with, which a later check does not replace
+test("a later update check that reuses the installer keeps the update info it was verified with", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const updater = await createNsisUpdater()
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+    vi.spyOn(updater as any, "verifySignature").mockResolvedValue({ response: "success" })
+    await (
+      await updater.checkForUpdates()
+    )?.downloadPromise
+    const verifiedWith = (updater as any).updateInfoAndProvider
+    expect((updater as any).downloadedUpdateHelper.updateInfoAndProvider).toBe(verifiedWith)
+
+    await (
+      await updater.checkForUpdates()
+    )?.downloadPromise
+
+    // the later check's own update info and provider are reported, not recorded for the installer
+    expect((updater as any).updateInfoAndProvider).not.toBe(verifiedWith)
+    expect((updater as any).downloadedUpdateHelper.updateInfoAndProvider).toBe(verifiedWith)
+  } finally {
+    await close()
+  }
+})
+
+// an installer cached by an earlier launch has not been verified in this session: its signature is verified, under the check that reuses it
+test("a cached installer reused after an app relaunch is verified under the update check that reuses it", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const appAdapter = await createTestAppAdapter()
+    const updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+    const launch = () => {
+      const updater = new NsisUpdater(null, appAdapter)
+      tuneTestUpdater(updater)
+      updater.updateConfigPath = updateConfigPath
+      vi.spyOn(updater as any, "verifySignature").mockResolvedValue({ response: "success" })
+      return updater
+    }
+    const firstDownload = await (await launch().checkForUpdates())?.downloadPromise
+
+    const secondLaunch = launch()
+    const secondDownload = await (await secondLaunch.checkForUpdates())?.downloadPromise
+
+    expect(secondDownload?.updateFile).toBe(firstDownload?.updateFile)
+    const verifiedWith = (secondLaunch as any).updateInfoAndProvider
+    expect((secondLaunch as any).verifySignature).toHaveBeenCalledExactlyOnceWith(firstDownload?.updateFile, verifiedWith)
+    expect((secondLaunch as any).downloadedUpdateHelper.updateInfoAndProvider).toBe(verifiedWith)
   } finally {
     await close()
   }
@@ -1283,7 +1388,8 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
   // The app runs from <root>/TestApp/TestApp.exe with elevate.exe in <root>/TestApp/resources. Writing to `writable` succeeds; the
   // attempts on the others fail with `deniedCode` (see denyWrites). spawnLog rejects a start of the installer itself with `startError`
   // (EACCES: Windows refuses an installer that asks for administrator rights to an app that does not run elevated) and a start of
-  // elevate.exe with `elevateError`, and starts anything else.
+  // elevate.exe with `elevateError`, and starts anything else. `verifyDownloadedFilesSync` is the re-check of the downloaded installer
+  // before each start, unchanged by default.
   //
   // `trigger` "doInstall" is the install on quit, which cannot wait for the start: `result` is what doInstall returned. "quitAndInstall"
   // runs quitAndInstall({ isSilent: true }) with cancelQuitOnInstallFailure set: `result` is what its install resolved to, and `quit`
@@ -1297,6 +1403,7 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
       writable?: Array<Writable>
       elevateExe?: boolean
       deniedCode?: string
+      verifyDownloadedFilesSync?: () => string | null
       trigger?: "doInstall" | "quitAndInstall"
       throwingErrorListener?: boolean
     }
@@ -1315,7 +1422,14 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
 
     const updater = await createNsisUpdater("1.0.0")
     Object.defineProperty(updater, "installerPath", { get: () => installerPath })
-    ;(updater as any).downloadedUpdateHelper = { downloadedFileInfo: { isAdminRightsRequired: options.isAdminRightsRequired }, packageFile: null }
+    ;(updater as any).downloadedUpdateHelper = {
+      downloadedFileInfo: { isAdminRightsRequired: options.isAdminRightsRequired },
+      packageFile: null,
+      verifyDownloadedFilesSync: options.verifyDownloadedFilesSync ?? (() => null),
+      clearSync: () => {},
+      // the update the installer was verified with, which doInstallAsync verifies its signature against again
+      updateInfoAndProvider: { info: { version: "1.1.0" } },
+    }
     const errors: Array<Error> = []
     updater.on("error", (e: Error) => errors.push(e))
     if (options.throwingErrorListener === true) {
@@ -1350,6 +1464,8 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
         vi.spyOn(Module as any, "_load").mockImplementation(function (this: unknown, request: unknown, ...rest: Array<unknown>) {
           return request === "electron" ? { autoUpdater: new EventEmitter() } : load.call(this, request, ...rest)
         })
+        // the test installer is not signed: the signature verified again before the start passes
+        vi.spyOn(updater as any, "verifySignature").mockResolvedValue({ response: "success" })
         const doInstallAsync = vi.spyOn(updater as any, "doInstallAsync")
         updater.quitAndInstall({ isSilent: true })
         result = await doInstallAsync.mock.results[0]?.value
@@ -1398,6 +1514,38 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
     expect(errors).toHaveLength(1)
     expect(errors[0]).toBeInstanceOf(Error)
     expect(errors[0].message).toBe("spawn failed")
+  })
+
+  for (const code of ["EACCES", "UNKNOWN"]) {
+    test(`${code} is not retried through elevate.exe when the installer changed after the first start`, config, async ({ expect, tmpDir }) => {
+      const verifyDownloadedFilesSync = vi.fn<() => string | null>().mockReturnValueOnce(null).mockReturnValue("installer changed since it was verified")
+      const { errors, spawnLog } = await install(tmpDir, { isAdminRightsRequired: false, startError: spawnError(code), verifyDownloadedFilesSync })
+      expect(verifyDownloadedFilesSync).toHaveBeenCalledTimes(2)
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
+    })
+  }
+
+  // the re-check before the elevated start emits "error" itself
+  test('an "error" listener that throws on the re-check before the elevated start does not reject the start', config, async ({ expect, tmpDir }) => {
+    const unhandledRejections: Array<unknown> = []
+    const onUnhandledRejection = (reason: unknown) => unhandledRejections.push(reason)
+    process.on("unhandledRejection", onUnhandledRejection)
+    try {
+      const verifyDownloadedFilesSync = vi.fn<() => string | null>().mockReturnValueOnce(null).mockReturnValue("installer changed since it was verified")
+      const { result, errors, spawnLog } = await install(tmpDir, {
+        isAdminRightsRequired: false,
+        startError: spawnError("EACCES"),
+        verifyDownloadedFilesSync,
+        throwingErrorListener: true,
+      })
+      expect(result).toBe(true)
+      expect(errors.map(it => (it as any).code)[0]).toBe("ERR_UPDATER_UPDATE_FILE_CHANGED")
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(unhandledRejections).toEqual([])
+    } finally {
+      process.off("unhandledRejection", onUnhandledRejection)
+    }
   })
 
   for (const { name, isAdminRightsRequired, code } of [
@@ -1590,6 +1738,15 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
       })
     }
 
+    test("does not quit when the installer changed before the elevated start", config, async ({ expect, tmpDir }) => {
+      const verifyDownloadedFilesSync = vi.fn<() => string | null>().mockReturnValueOnce(null).mockReturnValue("installer changed since it was verified")
+      const { result, errors, quit, spawnLog } = await install(tmpDir, { isAdminRightsRequired: false, startError: spawnError("UNKNOWN"), verifyDownloadedFilesSync, trigger })
+      expect(result).toBe(false)
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(quit).not.toHaveBeenCalled()
+    })
+
     test("does not quit when the installer is missing", config, async ({ expect, tmpDir }) => {
       const { result, errors, quit } = await install(tmpDir, { isAdminRightsRequired: false, startError: spawnError("ENOENT"), trigger })
       expect(result).toBe(false)
@@ -1624,11 +1781,16 @@ describe("NsisUpdater — installer start failure and elevate.exe", () => {
       const root = await tmpDir.getTempDir({ prefix: "installer-start" })
       const installerPath = path.join(root, "TestApp Setup 1.1.0.exe")
       Object.defineProperty(updater, "installerPath", { get: () => installerPath })
-      ;(updater as any).downloadedUpdateHelper = { downloadedFileInfo: { isAdminRightsRequired: false }, packageFile: path.join(root, "package-1.1.0.7z") }
+      ;(updater as any).downloadedUpdateHelper = {
+        downloadedFileInfo: { isAdminRightsRequired: false },
+        packageFile: path.join(root, "package-1.1.0.7z"),
+        updateInfoAndProvider: { info: { version: "1.1.0" } },
+      }
       updater.disableWebInstaller = true
       const errors: Array<Error> = []
       updater.on("error", (e: Error) => errors.push(e))
       const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
+      vi.spyOn(updater as any, "verifySignature").mockResolvedValue({ response: "success" })
       const quit = vi.spyOn((updater as any).app, "quit")
 
       await expect(updater.installAsync(true, false)).resolves.toBe(false)

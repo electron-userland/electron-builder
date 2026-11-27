@@ -1407,6 +1407,18 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   protected async executeDownload(taskOptions: DownloadExecutorTask): Promise<DownloadExecutorResult> {
     const fileInfo = taskOptions.fileInfo
+    // the file is hashed again against this checksum right before it is installed, so without one it could never be installed. Checked
+    // here for every provider: the GitLab and private GitHub providers and custom ones resolve files without resolveFiles' check
+    const sha512: string | undefined = fileInfo.info.sha512
+    const sha2 = "sha2" in fileInfo.info ? fileInfo.info.sha2 : undefined
+    if (!(typeof sha512 === "string" && sha512.length !== 0) && !(typeof sha2 === "string" && sha2.length !== 0)) {
+      throw newError(
+        `Update info doesn't contain a sha512 or sha2 checksum for ${urlWithoutQuery(fileInfo.info.url)}, so the update is not downloaded. ` +
+          "A downloaded update is hashed again right before it is installed, against the checksum of its update info. " +
+          "See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed",
+        "ERR_UPDATER_NO_CHECKSUM"
+      )
+    }
     if (fileInfo.info.sha512 == null && (fileInfo.info as any).sha2 != null) {
       this.log.warn(
         "Update artifact is validated with a SHA-256 (sha2) checksum only. sha2 is deprecated, and update metadata without sha512 will be rejected (fail-closed): publish sha512, which electron-builder generates by default, by regenerating latest*.yml with a current electron-builder and not pinning electronUpdaterCompatibility to a legacy (<2.15 / 1.x) range."
@@ -1438,8 +1450,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     const pendingBlockMapFile = path.join(cacheDir, "current.blockmap")
     const cachedBlockMapFile = path.join(downloadedUpdateHelper.cacheDir, "current.blockmap")
-    const done = async (isSaveCache: boolean) => {
+    // `verifiedWith`: the update info and provider the file was verified against, which the install verifies it with again
+    const done = async (isSaveCache: boolean, verifiedWith: UpdateInfoAndProvider) => {
       await downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo, updateFileName, isSaveCache)
+      downloadedUpdateHelper.setVerifiedUpdateInfoAndProvider(verifiedWith)
       // before `taskOptions.done`: it emits `update-downloaded`, and an app that calls quitAndInstall() from that listener exits
       // before anything after it runs, which would leave the next update without the blockmap of the installed version
       if (await fsExtra.pathExists(pendingBlockMapFile)) {
@@ -1492,17 +1506,21 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       updateFile = cachedUpdateFile
       // the package validated together with the cached installer, under the name it was saved with
       packageFile = downloadedUpdateHelper.packageFile
+      // set when the file is the one this session already downloaded or reused and verified (a later check found the same update),
+      // `null` for a file cached by an earlier launch. The file stays verified against what it was verified with: this check's update
+      // info is the same, but its provider settings may not be
+      const verifiedInSession = downloadedUpdateHelper.updateInfoAndProvider
       // an update downloaded by an earlier session is about to be announced as ready to install without being
       // downloaded again, so the custom verifier has to gate it here too — its only other gate is the sha512 taken
       // from the very update metadata a custom verifier exists to distrust
       try {
-        await taskOptions.verifyCachedFile?.(updateFile)
+        await taskOptions.verifyCachedFile?.(updateFile, verifiedInSession)
         await verifyUpdateFile(updateFile)
       } catch (e: any) {
         await removeFileIfAny()
         throw e
       }
-      return await done(false)
+      return await done(false, verifiedInSession ?? taskOptions.downloadUpdateOptions.updateInfoAndProvider)
     }
 
     // a fresh download starts — drop any blockmap left over from a previous update round, so that when this round
@@ -1553,7 +1571,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
 
     this.log.info(`New version ${version} has been downloaded to ${updateFile}`)
-    return await done(true)
+    return await done(true, taskOptions.downloadUpdateOptions.updateInfoAndProvider)
   }
   /**
    * Logs why a differential download failed, before the full download it falls back to. Never throws: neither a throwing
@@ -1967,9 +1985,11 @@ export interface DownloadExecutorTask {
 
   /**
    * Runs before an update file that is already in the cache (matched by its sha512) is reused for this update instead of being
-   * downloaded. Throws to reject it, like a check `task` makes on a downloaded file.
+   * downloaded. Throws to reject it, like a check `task` makes on a downloaded file. `verifiedInSession` is the update info and
+   * provider the file was already verified against in this session (a later check found the same update), `null` for a file cached
+   * by an earlier launch.
    */
-  readonly verifyCachedFile?: (cachedFile: string) => Promise<void>
+  readonly verifyCachedFile?: (cachedFile: string, verifiedInSession: UpdateInfoAndProvider | null) => Promise<void>
 
   readonly done?: (event: UpdateDownloadedEvent) => Promise<any>
 }
