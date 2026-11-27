@@ -8,6 +8,7 @@ import { PlatformPackager } from "./platformPackager.js"
 import AppImageTarget from "./targets/linux/appimage/AppImageTarget.js"
 import FlatpakTarget from "./targets/linux/FlatpakTarget.js"
 import FpmTarget from "./targets/linux/FpmTarget.js"
+import GentooTarget from "./targets/linux/GentooTarget.js"
 import { LinuxTargetHelper } from "./targets/linux/LinuxTargetHelper.js"
 import SnapTarget from "./targets/linux/snap/SnapTarget.js"
 import { createCommonTarget } from "./targets/targetFactory.js"
@@ -64,7 +65,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
         continue
       }
 
-      const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FlatpakTarget | typeof FpmTarget | null = (() => {
+      const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FlatpakTarget | typeof FpmTarget | typeof GentooTarget | null = (() => {
         switch (name) {
           case "appimage":
             return AppImageTarget
@@ -72,6 +73,8 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
             return SnapTarget
           case "flatpak":
             return FlatpakTarget
+          case "gentoo":
+            return GentooTarget
           case "deb":
           case "rpm":
           case "sh":
@@ -90,6 +93,9 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
           return createCommonTarget(name, outDir, this)
         }
 
+        if (targetClass === GentooTarget) {
+          return new GentooTarget(name, this, getHelper(), outDir, targets)
+        }
         return new targetClass(name, this, getHelper(), outDir)
       })
     }
