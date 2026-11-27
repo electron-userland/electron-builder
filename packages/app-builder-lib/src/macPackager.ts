@@ -32,6 +32,7 @@ import { forceCodeSigningError, forceCodeSigningOverrideHint, VERIFICATION_FAILE
 import { isAutoDiscoveryCodeSignIdentity } from "./util/flags.js"
 import { CodeSigningInfo, createKeychain, CreateKeychainOptions, Identity, isSignAllowed, macSigningUnavailableError, removeKeychain, sign } from "./codeSign/mac/macCodeSign.js"
 import { validateStapledTicket, verifyMacCodeSignature } from "./codeSign/mac/macSignatureVerifier.js"
+import { normalizeFileNamesToNfd } from "./codeSign/mac/unicodeFileNames.js"
 import { combineSignResults, isSignResultSigned, SigningResult } from "./codeSign/signResult.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { AfterPackContext, ElectronPlatformName } from "./index.js"
@@ -727,6 +728,20 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
     if (!isMacOsHighSierra()) {
       throw new InvalidConfigurationError("macOS High Sierra 10.13.6 is required to sign")
+    }
+
+    // Seal the names the DMG will actually contain. Both signing paths funnel through here — the mac flow
+    // via signApp/doSignAfterPack and the MAS flow, which calls sign() directly — so this is the one place
+    // that covers every flavor. See normalizeFileNamesToNfd.
+    for (const skipped of (await normalizeFileNamesToNfd(appPath)).skipped) {
+      if (skipped.reason === "collision") {
+        log.warn({ file: log.filePath(skipped.file) }, "not normalizing the file name to NFD: a sibling already has the decomposed name")
+      } else {
+        log.warn(
+          { file: log.filePath(skipped.file), error: skipped.error },
+          "cannot normalize the file name to NFD — the code signature may be reported as damaged when the app is installed from a DMG"
+        )
+      }
     }
 
     const signOptions = await this.helper.buildSignOptions(appPath, identity, signOpts, keychainFile, arch, targetPlatform, hasCustomSign)

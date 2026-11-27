@@ -1,14 +1,14 @@
 import * as path from "path"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { CancellationToken } from "electron-updater"
-import { AppImageUpdater, DebUpdater, type VerifyUpdateFile } from "electron-updater"
+import { AppImageUpdater, DebUpdater, NsisUpdater, PacmanUpdater, RpmUpdater, type BaseUpdater, type VerifyUpdateFile } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import type { InstallOptions } from "electron-updater/src/BaseUpdater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
 import type { DownloadExecutorTask } from "electron-updater/src/AppUpdater"
 import { outputFile, pathExists, readFile, stat } from "fs-extra"
 import { createVerifyUpdateFileMock, expectVerifyUpdateFileFailure, makeLogger } from "../helpers/updaterTestUtil.js"
-import { CancellationError } from "builder-util-runtime"
+import { CancellationError, hashFile } from "builder-util-runtime"
 
 const stubApp: AppAdapter = {
   name: "TestApp",
@@ -179,6 +179,7 @@ describe.ifNotWindows("AppImageUpdater doInstall file replacement", () => {
     vi.stubEnv("PATH", path.join(dir, "empty"))
     const updater = new AppImageUpdater(null, stubApp)
     Object.defineProperty(updater, "installerPath", { get: () => installerPath })
+    ;(updater as any).downloadedUpdateHelper = { verifyDownloadedFilesSync: () => null }
     vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
     return { appImageFile, installerPath, updater, install: () => (updater as any).doInstall({ ...installOpts, isForceRunAfter: true }) }
   }
@@ -202,6 +203,39 @@ describe.ifNotWindows("AppImageUpdater doInstall file replacement", () => {
     expect(await readFile(newFile, "utf8")).toBe("new")
     expect(await pathExists(appImageFile)).toBe(false)
     expect(renamed).toHaveBeenCalledWith(newFile)
+  })
+
+  // the update as downloaded and verified in this session, in the pending directory of a real download helper
+  async function seedVerifiedDownload(dir: string, updater: AppImageUpdater, installerPath: string) {
+    const helper = new DownloadedUpdateHelper(dir, makeLogger())
+    const sha512 = await hashFile(installerPath)
+    const fileInfo = { url: new URL("https://example.com/TestApp-2.0.0.AppImage"), info: { url: "TestApp-2.0.0.AppImage", sha512, size: 3 } }
+    await helper.setDownloadedFile(installerPath, null, { version: "2.0.0", files: [fileInfo.info], path: "", sha512, releaseDate: "" }, fileInfo, "TestApp-2.0.0.AppImage", true)
+    ;(updater as any).downloadedUpdateHelper = helper
+    const errors: Error[] = []
+    updater.on("error", (error: Error) => errors.push(error))
+    return errors
+  }
+
+  it("installs the downloaded AppImage when it is unchanged", async context => {
+    const dir = await context.tmpDir.createTempDir()
+    const { appImageFile, installerPath, updater, install } = await setup(dir, true)
+    const errors = await seedVerifiedDownload(dir, updater, installerPath)
+    expect(install()).toBe(true)
+    expect(await readFile(appImageFile, "utf8")).toBe("new")
+    expect(errors).toEqual([])
+  })
+
+  it("does not install a downloaded AppImage that changed since it was verified", async context => {
+    const dir = await context.tmpDir.createTempDir()
+    const { appImageFile, installerPath, updater, install } = await setup(dir, true)
+    const errors = await seedVerifiedDownload(dir, updater, installerPath)
+    await outputFile(installerPath, "replaced")
+    expect(install()).toBe(false)
+    expect(await readFile(appImageFile, "utf8")).toBe("old")
+    expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_UPDATE_FILE_CHANGED"])
+    // removed, so that the next update check downloads it again
+    expect(await pathExists(installerPath)).toBe(false)
   })
 
   it("keeps the installed AppImage when the swap fails", async context => {
@@ -436,5 +470,39 @@ describe("BaseUpdater verifyUpdateFile integration", () => {
 
     await expectVerifyUpdateFileFailure({ expect, downloadPromise, verifyUpdateFile: mock, observations, expectedErrorMessageSubstring: "nope" })
     expect(afterVerification).not.toHaveBeenCalled()
+  })
+})
+
+describe("doDownloadUpdate when the update info has no file for the target", () => {
+  /** NsisUpdater's own rule always picks a file (the first one when there is no .exe), so only a subclass's rule can find none. */
+  class NsisUpdaterWithoutFile extends NsisUpdater {
+    protected findUpdateFile(): null {
+      return null
+    }
+  }
+
+  const targets: Array<{ extension: string; UpdaterClass: new (options: null, app: AppAdapter) => BaseUpdater; urls: Array<string> }> = [
+    { extension: "AppImage", UpdaterClass: AppImageUpdater, urls: ["TestApp-2.0.0.deb", "TestApp-2.0.0.rpm", "TestApp-2.0.0.pacman"] },
+    { extension: "deb", UpdaterClass: DebUpdater, urls: ["TestApp-2.0.0.AppImage", "TestApp-2.0.0.rpm", "TestApp-2.0.0.pacman"] },
+    { extension: "rpm", UpdaterClass: RpmUpdater, urls: ["TestApp-2.0.0.AppImage", "TestApp-2.0.0.deb", "TestApp-2.0.0.pacman"] },
+    { extension: "pacman", UpdaterClass: PacmanUpdater, urls: ["TestApp-2.0.0.AppImage", "TestApp-2.0.0.deb", "TestApp-2.0.0.rpm"] },
+    { extension: "exe", UpdaterClass: NsisUpdaterWithoutFile, urls: ["TestApp-Setup-2.0.0.exe"] },
+  ]
+
+  it.each(targets)(".$extension: rejects with ERR_UPDATER_UPDATE_FILE_NOT_FOUND and downloads nothing", async ({ extension, UpdaterClass, urls }) => {
+    const updater = new UpdaterClass(null, stubApp)
+    updater.logger = null
+    const executeDownload = vi.spyOn(updater as any, "executeDownload").mockResolvedValue({ updateFile: "" })
+    const files = urls.map(url => ({ url: new URL(`https://example.com/${url}`), info: { url, sha512: `sha512-of-${url}`, size: 1024 } }))
+
+    await expect(
+      (updater as any).doDownloadUpdate({
+        updateInfoAndProvider: { info: { version: "2.0.0", files: files.map(it => it.info), path: "", sha512: "", releaseDate: "" }, provider: { resolveFiles: () => files } },
+        requestHeaders: {},
+        cancellationToken: new CancellationToken(),
+        disableDifferentialDownload: true,
+      })
+    ).rejects.toMatchObject({ code: "ERR_UPDATER_UPDATE_FILE_NOT_FOUND", message: `No .${extension} file in the files of update 2.0.0` })
+    expect(executeDownload).not.toHaveBeenCalled()
   })
 })

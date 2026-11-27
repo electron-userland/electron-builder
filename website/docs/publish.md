@@ -22,6 +22,10 @@ If `GITHUB_RELEASE_TOKEN` is defined, it will be used instead of (`GH_TOKEN` or 
 - you could make your `GITHUB_TOKEN` "Read-only" when creating a fine-grained personal access token, and "Read and write" for the `GITHUB_RELEASE_TOKEN`.
 - "Contents" fine-grained permission was sufficient. (at time of writing - Apr 2024)
 
+:::info[Custom `host`]
+`github.host`, `gitlab.host` and `keygen.host` must be an ASCII host name (punycode for an internationalized name), optionally with a port. `gitlab.host` may also have a path, for a GitLab instance under a relative URL root (e.g. `example.com/gitlab`). A value with user info, a query, a fragment, a backslash, `%` or an empty path segment, or a path in `github.host` / `keygen.host`, fails at publish with an `InvalidConfigurationError`. See [the breaking-change note](./migration/v27-build-changes.md#publish-host-must-be-a-host-name).
+:::
+
 :::warning[Implicit publishing was removed in v27]
 In v26 and earlier, electron-builder auto-detected when to publish based on CI environment conditions (npm lifecycle event, a git tag in CI, etc.). **As of v27 this implicit behavior is removed** — publishing never happens unless you request it. This closes a hole where unfinished work or secrets could be published unintentionally.
 

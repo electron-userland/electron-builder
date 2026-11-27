@@ -7,7 +7,7 @@ import { parse as parseUrl, UrlWithStringQuery } from "url"
 import { HttpPublisher } from "./httpPublisher.js"
 import { PublishContext, PublishOptions } from "./index.js"
 import { getCiTag } from "./publisher.js"
-import { trimStringWithWarn, validateResolvedToken } from "./util.js"
+import { parseConfiguredHost, trimStringWithWarn, validateResolvedToken } from "./util.js"
 
 export interface Release {
   id: number
@@ -48,6 +48,7 @@ export class GitHubPublisher extends HttpPublisher {
   ) {
     super(context, true)
 
+    parseConfiguredHost(info.host || "api.github.com", "github.host")
     let token = info.token
     if (isEmptyOrSpaces(token) || process.env.GITHUB_RELEASE_TOKEN) {
       token = process.env.GITHUB_RELEASE_TOKEN ? process.env.GITHUB_RELEASE_TOKEN : process.env.GH_TOKEN || process.env.GITHUB_TOKEN
