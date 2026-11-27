@@ -10,7 +10,10 @@ const MIN_VERSIONS = { flatpak: "1.12.4", "flatpak-builder": "1.2.2" }
 
 // the freedesktop SDK 24.08 and newer recommend it for meson and cmake modules
 const MODULES_FLATPAK_BUILDER_VERSION = "1.4.4"
-const MODULES_FREEDESKTOP_SDK_VERSION = "24.8.0"
+// from 24.08 on the freedesktop SDK no longer ships appstream-compose, and recommends flatpak-builder 1.4.4 for meson and cmake modules
+const FREEDESKTOP_SDK_WITHOUT_APPSTREAM_COMPOSE = "24.8.0"
+// 1.4 composes AppStream metadata with appstreamcli; before that flatpak-builder runs appstream-compose
+const METAINFO_FLATPAK_BUILDER_VERSION = "1.4.0"
 
 const NEW_IN_V27 = `This is new in electron-builder v27. See ${BUILD_CHANGES_URL}#flatpak-tooling-requirements`
 
@@ -44,6 +47,8 @@ export interface FlatpakBundleOptions {
   tempDir: string
   /** `[source, destination]` pairs, copied in order; a destination is relative to the app prefix (`/app` in the sandbox) */
   files: [string, string][]
+  /** whether `files` stages `share/metainfo/<id>.metainfo.xml` (`linux.metainfo`), which flatpak-builder composes into AppStream metadata */
+  hasMetainfo: boolean
   /** `[target, link]` pairs, both relative to the app prefix */
   symlinks: [string, string][]
   /** the refs to install when they are missing and update when they are installed; the others are used as installed, and have to be */
@@ -93,6 +98,17 @@ async function requireTool(tools: FlatpakTools, tool: keyof typeof MIN_VERSIONS,
     )
   }
   return version
+}
+
+/**
+ * Whether the manifest's SDK is a freedesktop SDK older than 24.08, which still ships appstream-compose and does not yet recommend
+ * flatpak-builder 1.4.4 for modules. Any other SDK is not modelled and counts as a current one. Loose, because the strict coerce
+ * rejects the zero-padded minor of "22.08".
+ */
+function isOldFreedesktopSdk(manifest: FlatpakBuilderManifest): boolean {
+  // the sdk has the version of the runtime
+  const sdkVersion = manifest.sdk === "org.freedesktop.Sdk" ? semver.coerce(manifest["runtime-version"], { loose: true }) : null
+  return sdkVersion != null && semver.lt(sdkVersion, FREEDESKTOP_SDK_WITHOUT_APPSTREAM_COMPOSE)
 }
 
 function isInside(dir: string, file: string): boolean {
@@ -212,11 +228,41 @@ export async function buildFlatpakBundle(options: FlatpakBundleOptions): Promise
   }
   await requireTool(tools, "flatpak", cwd)
   const builderVersion = await requireTool(tools, "flatpak-builder", cwd)
-  // a freedesktop SDK before 24.08 is left out; any other SDK is not modelled and warned about. Loose, because the strict coerce rejects
-  // the zero-padded minor of "22.08"
-  const sdkVersion = manifest.sdk === "org.freedesktop.Sdk" ? semver.coerce(manifest["runtime-version"], { loose: true }) : null
-  const isOldFreedesktopSdk = sdkVersion != null && semver.lt(sdkVersion, MODULES_FREEDESKTOP_SDK_VERSION)
-  if ((manifest.modules?.length ?? 0) > 0 && builderVersion != null && semver.lt(builderVersion, MODULES_FLATPAK_BUILDER_VERSION) && !isOldFreedesktopSdk) {
+  const oldFreedesktopSdk = isOldFreedesktopSdk(manifest)
+  // flatpak-builder before 1.4 composes the staged metainfo file with appstream-compose, which the freedesktop SDK no longer ships from
+  // 24.08 on: without this check the build would fail much later, after the refs are installed, with a misleading
+  // "bwrap: execvp appstream-compose" error. An SDK that still ships the tool (freedesktop before 24.08) composes fine and is left out;
+  // any other SDK is not modelled and treated like a current one, since the ones in use are built on the freedesktop SDK
+  if (options.hasMetainfo && builderVersion != null && semver.lt(builderVersion, METAINFO_FLATPAK_BUILDER_VERSION) && !oldFreedesktopSdk) {
+    throw new InvalidConfigurationError(
+      `linux.metainfo stages share/metainfo/${manifest.id}.metainfo.xml, which flatpak-builder ${builderVersion.version} composes with appstream-compose, a tool the freedesktop SDK no longer ships from 24.08 on. ` +
+        `Upgrade flatpak-builder to ${METAINFO_FLATPAK_BUILDER_VERSION} or newer, which composes with appstreamcli, or set flatpak: { metainfo: null } to leave the file out of the flatpak target. See ${FLATPAK_DOCS}#build-requirements`
+    )
+  }
+  // flatpak-builder 1.4 and newer compose the staged metainfo file with appstreamcli, which runs on the build machine and which
+  // flatpak-builder itself looks up on PATH (execvp): without it the build fails late, after the refs are installed and the app is
+  // built, with 'Failed to execute child process "appstreamcli"'
+  if (options.hasMetainfo && builderVersion != null && semver.gte(builderVersion, METAINFO_FLATPAK_BUILDER_VERSION)) {
+    // resolved like every other host program (toolsets.executables or the default install locations, never through this
+    // process's PATH); found-but-broken fails the same way as absent
+    const appstreamCli = Executables.find("appstreamcli")
+    let runs = false
+    if (appstreamCli != null) {
+      try {
+        await exec(appstreamCli, ["--version"], { cwd })
+        runs = true
+      } catch (_e: any) {
+        // reported below
+      }
+    }
+    if (!runs) {
+      throw new InvalidConfigurationError(
+        `linux.metainfo stages share/metainfo/${manifest.id}.metainfo.xml, which flatpak-builder ${builderVersion.version} composes with appstreamcli, and appstreamcli is not installed (flatpak-builder runs it from PATH). ` +
+          `Install it (the "appstream" package on Debian/Ubuntu, Fedora and Arch Linux), or set flatpak: { metainfo: null } to leave the file out of the flatpak target. See ${FLATPAK_DOCS}#build-requirements`
+      )
+    }
+  }
+  if ((manifest.modules?.length ?? 0) > 0 && builderVersion != null && semver.lt(builderVersion, MODULES_FLATPAK_BUILDER_VERSION) && !oldFreedesktopSdk) {
     // once per process: every arch is built with the same flatpak-builder
     log
       .once("flatpak-builder-modules-version")
@@ -262,7 +308,19 @@ export async function buildFlatpakBundle(options: FlatpakBundleOptions): Promise
         // not ship; it runs only when the app has a metainfo or appdata file named after its id
         [
           "execvp appstream-compose",
-          `flatpak-builder could not compose the AppStream metadata of the app (share/metainfo/${manifest.id}.metainfo.xml or share/appdata/${manifest.id}.appdata.xml, from flatpak.files or a module): it runs appstream-compose, which the freedesktop SDK no longer ships from 24.08 on. flatpak-builder 1.4 and newer use appstreamcli instead: update flatpak-builder, or leave the file out. See ${FLATPAK_DOCS}#build-requirements`,
+          `flatpak-builder could not compose the AppStream metadata of the app (share/metainfo/${manifest.id}.metainfo.xml or share/appdata/${manifest.id}.appdata.xml, from linux.metainfo, flatpak.files or a module): it runs appstream-compose, which the freedesktop SDK no longer ships from 24.08 on. flatpak-builder 1.4 and newer use appstreamcli instead: update flatpak-builder, or leave the file out. See ${FLATPAK_DOCS}#build-requirements`,
+        ],
+        // the appstreamcli compose that flatpak-builder 1.4 and newer run filters for the flatpak id: a metainfo <id> that differs
+        // composes no component at all
+        [
+          // the bare tag: compose prints it as "E: <component-id>: filters-but-no-output" or "E: filters-but-no-output"
+          "filters-but-no-output",
+          `appstreamcli compose produced no AppStream component for ${manifest.id}: the <id> in the staged metainfo file (share/metainfo/${manifest.id}.metainfo.xml, from linux.metainfo) does not match the flatpak application id. Set the metainfo <id> to "${manifest.id}", or set flatpak: { metainfo: null } to leave the file out of the flatpak target. See ${FLATPAK_DOCS}#build-requirements`,
+        ],
+        // compose finds the icon through the .desktop file the launchable names, so a wrong launchable surfaces as a missing icon
+        [
+          "gui-app-without-icon",
+          `appstreamcli compose did not find the icon of the app, which it looks up through the .desktop file that the <launchable type="desktop-id"> element of the staged metainfo file (share/metainfo/${manifest.id}.metainfo.xml, from linux.metainfo) names: set the launchable to "${manifest.id}.desktop", the .desktop file the flatpak installs, or set flatpak: { metainfo: null } to leave the file out of the flatpak target. See ${FLATPAK_DOCS}#build-requirements`,
         ]
       )
     )

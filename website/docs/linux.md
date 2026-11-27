@@ -126,6 +126,45 @@ Files must be named `NxN.png` (e.g., `256x256.png`, `512x512.png`). If not speci
 
 Recommended sizes: 16, 24, 32, 48, 64, 96, 128, 256, 512 pixels.
 
+## AppStream Metainfo (`metainfo`)
+
+[AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) files describe your application to Linux software centers (GNOME Software, KDE Discover, Flathub, AppImageHub, etc.) — screenshots, long description, release notes, content rating. Point `linux.metainfo` at a metainfo XML file you maintain (path resolved relative to the build resources directory, then the project directory) and electron-builder installs it into the right place for each target:
+
+```yaml
+linux:
+  metainfo: build/com.example.MyApp.metainfo.xml
+```
+
+| Target | Install location |
+|---|---|
+| `deb`, `rpm`, `pacman`, `apk` | `/usr/share/metainfo/` |
+| `AppImage` | `usr/share/metainfo/` inside the image |
+| `flatpak` | `share/metainfo/` in the app prefix, always as `<flatpak id>.metainfo.xml` |
+| `freebsd`, `p5p`, `sh` | not supported, the option is ignored (no AppStream consumer, or a different install prefix) |
+| `snap` | not supported: `snap.metainfo` is rejected by the schema, and a `linux.metainfo` value is ignored (snap store listings are managed via the Snap Store) |
+
+Because the option cascades from `linux` into each target's options, you can also set it per target (e.g. only under `appImage`) or opt a single target out with `null`:
+
+```yaml
+linux:
+  metainfo: build/com.example.MyApp.metainfo.xml
+appImage:
+  metainfo: null   # skip staging for AppImage only
+```
+
+**Installed file name:** the file is installed as `<component-id>.metainfo.xml`, the name the AppStream spec and `appstreamcli validate` expect. A basename ending in `.appdata.xml` (legacy naming, still the convention appimagetool/AppImageHub look for in AppImages) is kept as-is. The `flatpak` target is the exception: `flatpak-builder` composes AppStream data only from a file named after the [flatpak application id](flatpak.md#application-id), so there the file is always installed as `<flatpak id>.metainfo.xml`, whatever its source name.
+
+**Flatpak build requirement:** composing the metainfo file needs `flatpak-builder` 1.4 or newer on the freedesktop SDK `24.08` or newer (the default) — older `flatpak-builder` composes with `appstream-compose`, which those SDKs no longer ship, so the build fails early with instructions (see [flatpak build requirements](flatpak.md#build-requirements)). `flatpak-builder` 1.4 and newer compose with `appstreamcli`, which must be installed on the build machine (the `appstream` package on Debian/Ubuntu, Fedora and Arch Linux) — the build checks for it up front. Note that this compose step validates the file itself, so a flatpak build can still fail on the file even with `metainfo: { validate: false }`. Upgrade `flatpak-builder`, or set `flatpak: { metainfo: null }` to opt only the flatpak target out.
+
+**Validation:** the file is checked at build time. The build fails for a missing/unreadable file, malformed XML, a root element other than `<component type="desktop-application">` (the legacy `desktop` type alias is accepted), or a missing/empty `<id>`, `<name>`, `<summary>`, `<description>` or `<metadata_license>`. Non-fatal warnings are logged when the `<id>` is not reverse-DNS-shaped, differs from your `appId`, or when `<launchable type="desktop-id">` is missing or doesn't match the `.desktop` file the target installs. If `appstreamcli` is installed (found through [`toolsets.executables`](toolsets.md#executables) or at its default install locations — never looked up on `PATH`), `appstreamcli validate --no-net` is additionally run and its findings are reported as warnings (never fatal). Each warning is logged once per build, not once per target and arch. To skip all validation, use the object form; the file is still staged:
+
+```yaml
+linux:
+  metainfo:
+    file: build/com.example.MyApp.metainfo.xml
+    validate: false
+```
+
 ## Debian Package (`deb`)
 
 The `deb` target creates a `.deb` package installable via `apt` on Debian, Ubuntu, Mint, and other Debian-based distributions.

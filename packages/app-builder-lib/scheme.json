@@ -111,6 +111,20 @@
             "string"
           ]
         },
+        "metainfo": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxMetainfoConfiguration"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "A user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file: a path (relative to the build resources or to the project directory), or `{ file, validate }`.\n\nInstalled into `/usr/share/metainfo` for `deb`, `rpm`, `pacman` and `apk`, into `usr/share/metainfo` inside the AppImage, and into `share/metainfo` for `flatpak`.\nThe other fpm targets (`freebsd`, `p5p`, `sh`) and `snap` don't use it, so setting it at the `linux` level is safe.\n\nThe file is installed as `<component-id>.metainfo.xml`, except that a basename ending in `.appdata.xml` (the AppImageHub convention) is kept. Flatpak always installs it as `<flatpak id>.metainfo.xml`.\nSet to `null` on a specific target to leave the file out of that target."
+        },
         "mimeTypes": {
           "anyOf": [
             {
@@ -859,6 +873,20 @@
             "string"
           ]
         },
+        "metainfo": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxMetainfoConfiguration"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "A user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file: a path (relative to the build resources or to the project directory), or `{ file, validate }`.\n\nInstalled into `/usr/share/metainfo` for `deb`, `rpm`, `pacman` and `apk`, into `usr/share/metainfo` inside the AppImage, and into `share/metainfo` for `flatpak`.\nThe other fpm targets (`freebsd`, `p5p`, `sh`) and `snap` don't use it, so setting it at the `linux` level is safe.\n\nThe file is installed as `<component-id>.metainfo.xml`, except that a basename ending in `.appdata.xml` (the AppImageHub convention) is kept. Flatpak always installs it as `<flatpak id>.metainfo.xml`.\nSet to `null` on a specific target to leave the file out of that target."
+        },
         "mimeTypes": {
           "anyOf": [
             {
@@ -1440,6 +1468,23 @@
             }
           ],
           "description": "One file:// URI, or a list of them, of the `actool` executable on the build machine, such as `file:///opt/homebrew/bin/actool` or `file:///C:/Program%20Files/actool/actool.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "appstreamcli": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `appstreamcli` executable on the build machine, such as `file:///opt/homebrew/bin/appstreamcli` or `file:///C:/Program%20Files/appstreamcli/appstreamcli.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
         },
         "codesign": {
           "anyOf": [
@@ -2161,6 +2206,20 @@
             "null",
             "string"
           ]
+        },
+        "metainfo": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxMetainfoConfiguration"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "A user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file: a path (relative to the build resources or to the project directory), or `{ file, validate }`.\n\nInstalled into `/usr/share/metainfo` for `deb`, `rpm`, `pacman` and `apk`, into `usr/share/metainfo` inside the AppImage, and into `share/metainfo` for `flatpak`.\nThe other fpm targets (`freebsd`, `p5p`, `sh`) and `snap` don't use it, so setting it at the `linux` level is safe.\n\nThe file is installed as `<component-id>.metainfo.xml`, except that a basename ending in `.appdata.xml` (the AppImageHub convention) is kept. Flatpak always installs it as `<flatpak id>.metainfo.xml`.\nSet to `null` on a specific target to leave the file out of that target."
         },
         "mimeTypes": {
           "anyOf": [
@@ -3042,6 +3101,20 @@
             "string"
           ]
         },
+        "metainfo": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxMetainfoConfiguration"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "A user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file: a path (relative to the build resources or to the project directory), or `{ file, validate }`.\n\nInstalled into `/usr/share/metainfo` for `deb`, `rpm`, `pacman` and `apk`, into `usr/share/metainfo` inside the AppImage, and into `share/metainfo` for `flatpak`.\nThe other fpm targets (`freebsd`, `p5p`, `sh`) and `snap` don't use it, so setting it at the `linux` level is safe.\n\nThe file is installed as `<component-id>.metainfo.xml`, except that a basename ending in `.appdata.xml` (the AppImageHub convention) is kept. Flatpak always installs it as `<flatpak id>.metainfo.xml`.\nSet to `null` on a specific target to leave the file out of that target."
+        },
         "mimeTypes": {
           "anyOf": [
             {
@@ -3215,6 +3288,24 @@
       },
       "type": "object"
     },
+    "LinuxMetainfoConfiguration": {
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "description": "The path to the metainfo XML file, relative to the [build resources](https://www.electron.build/contents#extraresources) or to the project directory.",
+          "type": "string"
+        },
+        "validate": {
+          "default": true,
+          "description": "Whether to validate the file at build time (structure checks and the optional `appstreamcli validate --no-net` run). When `false` the file is still staged into the package.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "file"
+      ],
+      "type": "object"
+    },
     "LinuxTargetSpecificOptions": {
       "additionalProperties": false,
       "properties": {
@@ -3342,6 +3433,20 @@
             "null",
             "string"
           ]
+        },
+        "metainfo": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxMetainfoConfiguration"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "A user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file: a path (relative to the build resources or to the project directory), or `{ file, validate }`.\n\nInstalled into `/usr/share/metainfo` for `deb`, `rpm`, `pacman` and `apk`, into `usr/share/metainfo` inside the AppImage, and into `share/metainfo` for `flatpak`.\nThe other fpm targets (`freebsd`, `p5p`, `sh`) and `snap` don't use it, so setting it at the `linux` level is safe.\n\nThe file is installed as `<component-id>.metainfo.xml`, except that a basename ending in `.appdata.xml` (the AppImageHub convention) is kept. Flatpak always installs it as `<flatpak id>.metainfo.xml`.\nSet to `null` on a specific target to leave the file out of that target."
         },
         "mimeTypes": {
           "anyOf": [
@@ -6187,6 +6292,20 @@
             "string"
           ]
         },
+        "metainfo": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxMetainfoConfiguration"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "A user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file: a path (relative to the build resources or to the project directory), or `{ file, validate }`.\n\nInstalled into `/usr/share/metainfo` for `deb`, `rpm`, `pacman` and `apk`, into `usr/share/metainfo` inside the AppImage, and into `share/metainfo` for `flatpak`.\nThe other fpm targets (`freebsd`, `p5p`, `sh`) and `snap` don't use it, so setting it at the `linux` level is safe.\n\nThe file is installed as `<component-id>.metainfo.xml`, except that a basename ending in `.appdata.xml` (the AppImageHub convention) is kept. Flatpak always installs it as `<flatpak id>.metainfo.xml`.\nSet to `null` on a specific target to leave the file out of that target."
+        },
         "mimeTypes": {
           "anyOf": [
             {
@@ -7122,6 +7241,20 @@
             "null",
             "string"
           ]
+        },
+        "metainfo": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxMetainfoConfiguration"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "A user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file: a path (relative to the build resources or to the project directory), or `{ file, validate }`.\n\nInstalled into `/usr/share/metainfo` for `deb`, `rpm`, `pacman` and `apk`, into `usr/share/metainfo` inside the AppImage, and into `share/metainfo` for `flatpak`.\nThe other fpm targets (`freebsd`, `p5p`, `sh`) and `snap` don't use it, so setting it at the `linux` level is safe.\n\nThe file is installed as `<component-id>.metainfo.xml`, except that a basename ending in `.appdata.xml` (the AppImageHub convention) is kept. Flatpak always installs it as `<flatpak id>.metainfo.xml`.\nSet to `null` on a specific target to leave the file out of that target."
         },
         "mimeTypes": {
           "anyOf": [
