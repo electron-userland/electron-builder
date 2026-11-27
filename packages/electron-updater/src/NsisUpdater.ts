@@ -1,5 +1,5 @@
-import { createRequire } from "node:module"
 import { AllPublishOptions, newError, PackageFileInfo, CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME } from "builder-util-runtime"
+import { urlWithoutQuery } from "builder-util-runtime/internal"
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter.js"
 import { DownloadUpdateOptions, UpdateInfoAndProvider } from "./AppUpdater.js"
@@ -7,10 +7,12 @@ import { BaseUpdater, InstallOptions, WEB_INSTALLER_DISABLED_HINT } from "./Base
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
-import { DOWNLOAD_PROGRESS, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
+import { DOWNLOAD_PROGRESS, DownloadExecutorResult, verificationFailureMessage, ResolvedUpdateFileInfo } from "./types.js"
 import type { VerifyUpdateCodeSignature, VerifyUpdateFileAuthenticodeSignature, VerifyUpdateFileResult } from "./types.js"
 import { findFile, Provider } from "./providers/Provider.js"
 import fsExtra from "fs-extra"
+import fs from "fs"
+import { randomBytes } from "crypto"
 import { throwIfCancelled } from "./util.js"
 import {
   isUpdateCodeSignatureVerificationDisabled,
@@ -21,9 +23,18 @@ import {
   verifySignature,
 } from "./windowsExecutableCodeSignatureVerifier.js"
 import { URL } from "url"
+import { readExecutableProductVersions } from "./windowsExecutableVersion.js"
 
-// import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
-const require = createRequire(import.meta.url ?? process.execPath)
+const INSTALLER_VERSION_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#nsis-update-installers-must-carry-the-updates-version"
+const INSTALLER_START_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#nsis-update-installer-start-and-elevate-exe"
+
+function installerVersionMismatch(reason: string, expected: string): Error {
+  return newError(
+    `The installer of version ${expected} is rejected: ${reason}. electron-updater installs an update whose manifest is not signed only when the ProductVersion of its installer is the update version. ` +
+      `Publish the installer built for that version with its latest.yml, or sign update manifests (updateManifestPublicKey). ${INSTALLER_VERSION_DOCS}`,
+    "ERR_UPDATER_INSTALLER_VERSION_MISMATCH"
+  )
+}
 
 export class NsisUpdater extends BaseUpdater {
   /**
@@ -52,6 +63,21 @@ export class NsisUpdater extends BaseUpdater {
    * @default false
    */
   allowCatalogSignature = false
+
+  /**
+   * The subject(s) of the certificate that signs your updates, in distinguished name (DN) format (e.g. `"CN=My Company, O=My Company, C=US"`),
+   * to verify the Authenticode signature of an update against when the update config has no `publisherName`: an `app-update.yml` without
+   * one, or a packaged app whose update config file (`app-update.yml` or the `updateConfigPath` file) is missing when the update is
+   * verified. The `publisherName` that electron-builder writes to `app-update.yml` wins over it, and it wins over
+   * `verifyUpdateCodeSignature: false` in `app-update.yml` (the update is then verified).
+   *
+   * Without it, a packaged app whose update config file is missing when the update is verified rejects the update
+   * (`ERR_UPDATER_NO_PUBLISHER_NAME`). A download reads that file first, so this happens only when the file goes missing after it was read,
+   * for example when `updateConfigPath` is set to a file that does not exist after an earlier download; a packaged app without the file
+   * fails the download itself, reading it (`ENOENT`).
+   * @default null
+   */
+  publisherName: string | Array<string> | null = null
 
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
@@ -150,9 +176,12 @@ export class NsisUpdater extends BaseUpdater {
    *
    * Assigning `null` restores the default verify function.
    *
-   * It is called only with the `publisherName` of `app-update.yml`. Without one, the update is rejected
-   * (`ERR_UPDATER_INVALID_SIGNATURE`) before any verify function runs, unless `app-update.yml` opts out with
-   * `verifyUpdateCodeSignature: false` (written by electron-builder for `win.verifyUpdateCodeSignature: false`).
+   * It is called only with a `publisherName`: the one of `app-update.yml` (or the `dev-app-update.yml` / `updateConfigPath` file), else
+   * {@link publisherName}. Without either, no verify function runs and the update is rejected:
+   * - when the update config file has no `publisherName`, the verification fails (`ERR_UPDATER_INVALID_SIGNATURE`), unless the file opts out
+   *   with `verifyUpdateCodeSignature: false` (written by electron-builder for `win.verifyUpdateCodeSignature: false`);
+   * - when the update config file of a packaged app is missing at the time the update is verified, `ERR_UPDATER_NO_PUBLISHER_NAME` is thrown
+   *   (only after the file was read for the download: without it, the download fails first, reading it).
    */
   get verifyUpdateFileAuthenticodeSignature(): VerifyUpdateFileAuthenticodeSignature {
     return this._verifyUpdateFileAuthenticodeSignature
@@ -192,14 +221,35 @@ export class NsisUpdater extends BaseUpdater {
     }
   }
 
+  protected findUpdateFile(files: Array<ResolvedUpdateFileInfo>): ResolvedUpdateFileInfo | null | undefined {
+    return findFile(files, "exe")
+  }
+
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "exe")!
+    const fileInfo = this.findUpdateFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info))
+    if (fileInfo == null) {
+      return Promise.reject(newError(`No .exe file in the files of update ${downloadUpdateOptions.updateInfoAndProvider.info.version}`, "ERR_UPDATER_UPDATE_FILE_NOT_FOUND"))
+    }
     const webInstallerDisabled = downloadUpdateOptions.disableWebInstaller ?? true
     // the app set disableWebInstaller to false (read with the options above), not the default of an install made by an nsis-web installer
     const webInstallerEnabledByApp = this.isWebInstallerEnabledByApp
     // checked before executeDownload, so that it also applies to an update cached by a previous launch
+    const info = downloadUpdateOptions.updateInfoAndProvider.info
+    const packages = "packages" in info ? info.packages : null
+    // a web installer started as an update without --package-file aborts (installer.nsh), so an update without a package for this arch
+    // (the resolved one is of process.arch, else ia32) is rejected before it is downloaded
+    if (packages != null && typeof packages === "object" && fileInfo.packageInfo == null) {
+      return Promise.reject(
+        newError(
+          `Unable to download new version ${info.version}: its web installer has no app package for the arch ${process.arch} (packages: ${Object.keys(packages).join(", ") || "none"}). ` +
+            `Build the nsis-web target for ${process.arch} (or ia32) and publish its package with latest.yml. ` +
+            "https://www.electron.build/docs/migration/v27-runtime-changes#an-nsis-web-installer-started-as-an-update-needs-a-package-file",
+          "ERR_UPDATER_NO_WEB_PACKAGE_FOR_ARCH"
+        )
+      )
+    }
     if (fileInfo.packageInfo != null) {
       if (webInstallerDisabled) {
         return Promise.reject(
@@ -210,13 +260,36 @@ export class NsisUpdater extends BaseUpdater {
         )
       }
       if (fileInfo.packageInfo.sha512 == null) {
-        return Promise.reject(newError(`Update info doesn't contain sha512 checksum for the web installer package: ${fileInfo.packageInfo.path}`, "ERR_UPDATER_NO_CHECKSUM"))
+        return Promise.reject(
+          newError(`Update info doesn't contain sha512 checksum for the web installer package: ${urlWithoutQuery(fileInfo.packageInfo.path)}`, "ERR_UPDATER_NO_CHECKSUM")
+        )
       }
     }
     return this.executeDownload({
       fileExtension: "exe",
       downloadUpdateOptions,
       fileInfo,
+      // a cached installer is verified as a downloaded one is (see task): its signature, then its ProductVersion. Its signature, because it
+      // sat in the pending directory since an earlier launch, and the checksum check right before the install (see startInstaller) pins the
+      // installer to a file verified in this session. Its ProductVersion, because the cache is matched by sha512 only, and an installer
+      // cached for another version (e.g. an older release, kept after it was installed) must not be reused for this one.
+      // The installer this session already verified (a later update check found the same update) keeps that verification, and its signature
+      // is not checked again here: a periodic update check must not remove an update that is ready to install when the check cannot run.
+      // doInstallAsync checks it again before the install, against the update it was verified with
+      verifyCachedFile: async (cachedFile, verifiedInSession) => {
+        if (verifiedInSession == null) {
+          const signatureFailure = verificationFailureMessage(await this.verifySignature(cachedFile, downloadUpdateOptions.updateInfoAndProvider))
+          if (signatureFailure != null) {
+            throw newError(
+              `The cached installer of version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${signatureFailure}. ` +
+                "It is removed and will be downloaded again on the next update check. A cached installer is verified like a downloaded one before it is reused. " +
+                "See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed",
+              "ERR_UPDATER_INVALID_SIGNATURE"
+            )
+          }
+        }
+        await this.verifyInstallerVersion(cachedFile, verifiedInSession ?? downloadUpdateOptions.updateInfoAndProvider)
+      },
       task: async (destinationFile, downloadOptions, packageFile, removeTempDirIfAny) => {
         const packageInfo = fileInfo.packageInfo
         const isWebInstaller = packageInfo != null && packageFile != null
@@ -249,6 +322,7 @@ export class NsisUpdater extends BaseUpdater {
             "ERR_UPDATER_INVALID_SIGNATURE"
           )
         }
+        await this.verifyInstallerVersion(destinationFile, downloadUpdateOptions.updateInfoAndProvider)
 
         if (isWebInstaller) {
           if (await this.differentialDownloadWebPackage(downloadUpdateOptions, packageInfo, packageFile, provider)) {
@@ -280,33 +354,42 @@ export class NsisUpdater extends BaseUpdater {
   // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
   // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
   //
-  // Fails closed: when the update config has no publisherName the update is rejected, unless the config opts out explicitly
-  // (`verifyUpdateCodeSignature: false`, written by electron-builder for `win.verifyUpdateCodeSignature: false`). A custom verifier is
-  // never called without a publisherName: it would get no names to match, and one checking them with e.g. `every` would accept any signer.
-  // An app with no update config file at all (dev mode, or a feed set only with setFeedURL) is not verified, as before: its feed is
-  // configured by the developer, not by electron-builder.
+  // Fails closed. The update is verified against the publisherName of the update config, else the app's own `publisherName` property.
+  // A custom verifier is never called without a publisherName: it would get no names to match, and one checking them with e.g. `every`
+  // would accept any signer. Without a publisherName the update is rejected:
+  // - update config file without publisherName: a failure result (ERR_UPDATER_INVALID_SIGNATURE at the caller), unless the config opts
+  //   out explicitly (`verifyUpdateCodeSignature: false`, written by electron-builder for `win.verifyUpdateCodeSignature: false`). The
+  //   opt-out applies only without a publisherName: the app's `publisherName` property wins over it, like one in the config;
+  // - packaged app without an update config file: ERR_UPDATER_NO_PUBLISHER_NAME is thrown. A download reads the config before it starts,
+  //   so this is reached when updateConfigPath names a missing file after an earlier download of this updater.
+  // An unpackaged app (dev mode) without an update config file is not verified.
   //
   // `update` is the update the file belongs to: the default verify function accepts a catalog signature for it when its verified manifest
   // allows one (see allowCatalogSignature). Without it, only NsisUpdater.allowCatalogSignature does.
   private async verifySignature(tempUpdateFile: string, update: UpdateInfoAndProvider | null = null): Promise<VerifyUpdateFileResult> {
-    let config: unknown
-    try {
-      config = await this.configOnDisk.value
-    } catch (e: any) {
-      if (e?.code === "ENOENT") {
-        // no app-update.yml at all (unpackaged/dev mode, or a feed set only with setFeedURL): nothing to verify against, stay silent
-        return { response: "success" }
-      }
-      throw e
+    const resolved = await this.resolveUpdatePublisherNames()
+    if (resolved == null) {
+      // no dev-app-update.yml in dev mode: nothing to verify against, stay silent
+      return { response: "success" }
     }
-
-    const publisherNames = readConfiguredPublisherNames(config)
+    const { publisherNames, config, hasConfigFile } = resolved
     if (publisherNames != null) {
       const implementation = this._verifyUpdateFileAuthenticodeSignature
       if (implementation === this._defaultVerifyUpdateFileAuthenticodeSignature) {
         return await this.defaultVerifyAuthenticodeSignature(publisherNames, tempUpdateFile, update)
       }
       return await implementation.call(this, publisherNames, tempUpdateFile)
+    }
+    if (!hasConfigFile) {
+      // a custom verifier is not called either: it would get no names to match
+      throw newError(
+        "The update is rejected: the update config file of the packaged app (app-update.yml or the updateConfigPath file) is missing, " +
+          "so there is no publisherName to verify its Authenticode signature against (a custom verifyUpdateFileAuthenticodeSignature is called only with a publisherName). " +
+          "Make sure the file exists (build the app with a publish configuration so that electron-builder writes app-update.yml with the publisherName), " +
+          "or set autoUpdater.publisherName to the subject of the certificate that signs your updates. " +
+          "https://www.electron.build/docs/migration/v27-build-changes#missing-publishername-fails-update-verification",
+        "ERR_UPDATER_NO_PUBLISHER_NAME"
+      )
     }
     if (isUpdateCodeSignatureVerificationDisabled(config)) {
       this.limitedLogger("update-signature-verification-disabled").warn(
@@ -317,10 +400,72 @@ export class NsisUpdater extends BaseUpdater {
     return { response: "failure", message: missingPublisherNameMessage() }
   }
 
-  // the cached installer sat on disk since a previous launch, so its Authenticode signature is re-verified before an
-  // install-on-next-launch is executed (same check as at download time)
-  protected verifyInstallerSignatureOnLaunch(installerPath: string, updateInfoAndProvider: UpdateInfoAndProvider): Promise<VerifyUpdateFileResult> {
-    return this.verifySignature(installerPath, updateInfoAndProvider)
+  // The publisherName an update is verified against (see verifySignature): the one of the update config, else the app's `publisherName`
+  // property. `null` for an unpackaged app (dev mode) without an update config file, which is not verified. `config` is null when a
+  // packaged app has no update config file.
+  private async resolveUpdatePublisherNames(): Promise<{ publisherNames: Array<string> | null; config: unknown; hasConfigFile: boolean } | null> {
+    let config: unknown = null
+    let hasConfigFile = true
+    try {
+      config = await this.configOnDisk.value
+    } catch (e: unknown) {
+      if (!(e instanceof Error && "code" in e && e.code === "ENOENT")) {
+        throw e
+      }
+      if (!this.app.isPackaged) {
+        return null
+      }
+      hasConfigFile = false
+    }
+    // the runtime value goes through the same normalizer as the config's: a string, or the string entries of an array, else null
+    const publisherNames = readConfiguredPublisherNames(config) ?? readConfiguredPublisherNames({ publisherName: this.publisherName })
+    return { publisherNames, config, hasConfigFile }
+  }
+
+  // A signature proves that the installer is a release of the app, not which one: an update manifest that is not signed could announce a
+  // newer version and serve the signed installer of an older release, or a web installer built for another version. The ProductVersion
+  // that electron-builder writes into the installer (the app version, also the version of latest.yml) must therefore be the version of the
+  // update. Checked whenever verifySignature verifies the signature against a publisherName (of the update config, or the app's
+  // `publisherName` property). Not checked when the manifest signature was verified (it binds the installer by its sha512), and not
+  // without a publisherName: the signature is then not verified (dev mode, `verifyUpdateCodeSignature: false`) or the update is rejected.
+  private async verifyInstallerVersion(installerPath: string, update: UpdateInfoAndProvider): Promise<void> {
+    if (update.manifestSignatureVerified === true) {
+      return
+    }
+    const resolved = await this.resolveUpdatePublisherNames()
+    if (resolved?.publisherNames == null) {
+      return
+    }
+    const expected = update.info.version
+    let versions: Array<string>
+    try {
+      versions = await readExecutableProductVersions(installerPath)
+    } catch (e: unknown) {
+      // a file system error (e.g. EBUSY or EACCES while an antivirus scans the installer) is no verdict on the installer
+      if (e instanceof Error && "syscall" in e) {
+        throw e
+      }
+      throw installerVersionMismatch(`its ProductVersion cannot be read (${e instanceof Error ? e.message : String(e)})`, expected)
+    }
+    if (versions.length === 0) {
+      throw installerVersionMismatch("it has no ProductVersion", expected)
+    }
+    const other = versions.find(it => it !== expected)
+    if (other != null) {
+      throw installerVersionMismatch(`its ProductVersion is ${JSON.stringify(other)}`, expected)
+    }
+  }
+
+  // the cached installer sat on disk since a previous launch, so its Authenticode signature and its ProductVersion are re-verified before
+  // an install-on-next-launch is executed (same checks as at download time). The pending installer is matched to the latest update info
+  // by sha512 only, so a manifest announcing another version for it is rejected here (ERR_UPDATER_INSTALLER_VERSION_MISMATCH is thrown,
+  // and the caller clears the pending update, so it is not retried on every launch).
+  protected async verifyInstallerSignatureOnLaunch(installerPath: string, updateInfoAndProvider: UpdateInfoAndProvider): Promise<VerifyUpdateFileResult> {
+    const signature = await this.verifySignature(installerPath, updateInfoAndProvider)
+    if (signature.response === "success") {
+      await this.verifyInstallerVersion(installerPath, updateInfoAndProvider)
+    }
+    return signature
   }
 
   // per-user NSIS installs run without an elevation prompt (per-machine installs are filtered separately via
@@ -329,7 +474,48 @@ export class NsisUpdater extends BaseUpdater {
     return true
   }
 
+  // the install on quit cannot wait for the installer to start: a start that is refused or fails emits "error" after this returned true
   protected doInstall(options: InstallOptions): boolean {
+    return this.startInstaller(options) !== false
+  }
+
+  // quitAndInstall and the install on launch verify the installer's signature again right before startInstaller starts it, as when it was
+  // downloaded, and wait for the installer to start, so that a start that is refused or fails returns false and the app does not quit.
+  // The install on quit cannot wait for either, and relies on the checksum check in startInstaller: it pins the installer to the file
+  // whose signature was verified in this session, when it was downloaded or reused from the cache.
+  protected async doInstallAsync(options: InstallOptions): Promise<boolean> {
+    const installerPath = this.installerPath
+    const downloadedUpdateHelper = this.downloadedUpdateHelper
+    if (installerPath != null) {
+      // the update the installer was verified with, not the one a later update check found (this.updateInfoAndProvider)
+      const update = downloadedUpdateHelper == null ? null : downloadedUpdateHelper.updateInfoAndProvider
+      let signatureFailure: string | null
+      try {
+        signatureFailure = update == null ? "its signature was not verified in this session" : verificationFailureMessage(await this.verifySignature(installerPath, update))
+      } catch (e: unknown) {
+        // a verification that cannot decide rejects the update like a failed one
+        this.rejectDownloadedUpdate(e instanceof Error ? e : new Error(String(e)))
+        return false
+      }
+      if (signatureFailure != null) {
+        this.rejectDownloadedUpdate(
+          newError(
+            `The downloaded update is not installed: it is not signed by the application owner: ${signatureFailure}. ` +
+              "It is removed and will be downloaded again on the next update check. The installer's signature is verified again right before it is started. " +
+              "See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed",
+            "ERR_UPDATER_INVALID_SIGNATURE"
+          )
+        )
+        return false
+      }
+    }
+    return await this.startInstaller(options)
+  }
+
+  // Returns false when a check before the start refuses the install (an "error" event was emitted). Otherwise starts the installer and
+  // returns the start: it resolves true once an installer process started, and false once its start was refused or failed (an "error"
+  // event was emitted). It never rejects.
+  private startInstaller(options: InstallOptions): false | Promise<boolean> {
     const installerPath = this.installerPath
     if (installerPath == null) {
       this.dispatchError(new Error("No update filepath provided, can't quit and install"))
@@ -362,34 +548,132 @@ export class NsisUpdater extends BaseUpdater {
       args.push(`/D=${this.installDirectory}`)
     }
 
-    const callUsingElevation = (): void => {
-      this.spawnLog(path.join(process.resourcesPath, "elevate.exe"), [installerPath].concat(args)).catch(e => this.dispatchError(e))
-    }
-
-    if (options.isAdminRightsRequired) {
-      this.log.info("isAdminRightsRequired is set to true, run installer using elevate.exe")
-      callUsingElevation()
-      return true
-    }
-
-    this.spawnLog(installerPath, args).catch((e: Error) => {
-      // https://github.com/electron-userland/electron-builder/issues/1129
-      // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
-      const errorCode = (e as NodeJS.ErrnoException).code
-      this.log.info(
-        `Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using elevate if EACCES, and will try to use electron.shell.openItem if ENOENT`
-      )
-      if (errorCode === "UNKNOWN" || errorCode === "EACCES") {
-        callUsingElevation()
-      } else if (errorCode === "ENOENT") {
-        require("electron")
-          .shell.openPath(installerPath)
-          .catch((err: Error) => this.dispatchError(err))
-      } else {
-        this.dispatchError(e)
+    // an "error" listener that throws must not reject the start, which doInstall does not wait for
+    const fail = (error: unknown): false => {
+      try {
+        this.dispatchError(error instanceof Error ? error : new Error(String(error)))
+      } catch (nestedError: unknown) {
+        this.log.warn(`Cannot dispatch error event: ${nestedError instanceof Error ? (nestedError.stack ?? nestedError.message) : String(nestedError)}`)
       }
-    })
-    return true
+      return false
+    }
+    const startUsingElevation = (): Promise<boolean> => this.spawnLog(path.join(process.resourcesPath, "elevate.exe"), [installerPath].concat(args)).then(() => true, fail)
+
+    if (!this.verifyDownloadedUpdateBeforeInstall()) {
+      return false
+    }
+
+    // set when an update with isAdminRightsRequired found that elevate.exe may not run; an EACCES or UNKNOWN of the direct start below reuses it
+    let adminRightsRefusal: string | null = null
+    if (options.isAdminRightsRequired) {
+      const refusal = this.elevationRefusal()
+      if (refusal == null) {
+        this.log.info("isAdminRightsRequired is set to true, run installer using elevate.exe")
+        return startUsingElevation()
+      }
+      // An app that already runs elevated (UAC turned off, the built-in Administrator, Run as administrator) can modify the files elevationRefusal
+      // writes to as well, and elevate.exe adds nothing for it: the installer is started directly and gets the rights of the app, never more.
+      // Windows refuses, with EACCES, to start a per-machine installer (RequestExecutionLevel admin) from an app that does not run elevated, and
+      // that is refused below: a folder any process of the user can modify (e.g. an app installed per user) still gets no elevated installer
+      this.log.info(
+        `isAdminRightsRequired is set to true, but elevate.exe is not used (${refusal}): the installer is started directly and gets the rights of the app, so it installs only if the app runs with administrator rights. See ${INSTALLER_START_DOCS}`
+      )
+      adminRightsRefusal = refusal
+    }
+
+    return (
+      this.spawnLog(installerPath, args)
+        .then(
+          () => true,
+          (e: unknown) => {
+            const errorCode = e instanceof Error && "code" in e ? e.code : undefined
+            const message = e instanceof Error ? e.message : String(e)
+            // EACCES (ERROR_ELEVATION_REQUIRED: the installer asks for elevation, so the app does not run elevated) and UNKNOWN (Windows errors
+            // libuv has no name for, e.g. ERROR_ACCESS_DISABLED_BY_POLICY: AppLocker or WDAC rules that let only administrators run files outside
+            // Program Files and Windows) are retried through elevate.exe, under the same rule as isAdminRightsRequired (see elevationRefusal).
+            // ENOENT (a missing installer) is neither elevated nor opened with the shell
+            if (errorCode === "EACCES" || errorCode === "UNKNOWN") {
+              const refusal = adminRightsRefusal ?? this.elevationRefusal()
+              if (refusal != null) {
+                return fail(
+                  newError(
+                    `Cannot start the update installer through elevate.exe: Windows refused to start the installer directly (${errorCode}: ${message}), which happens when it requires administrator rights or when a policy such as AppLocker or WDAC lets only administrators run it, but ${refusal}. The update installer is started through elevate.exe only when the current user cannot modify elevate.exe, its folder or the install folder of the app; an app that runs with administrator rights starts the installer directly. Install per-machine apps into a folder only administrators can write, e.g. build them with nsis.perMachine: true; an update cannot switch an app installed per user to a per-machine installation unless the app runs with administrator rights. See ${INSTALLER_START_DOCS}`,
+                    "ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"
+                  )
+                )
+              }
+              this.log.info(`Cannot run installer (${errorCode}: "${message}"), run installer using elevate.exe`)
+              // the first start failed after the check above: the installer is checked again before it is started elevated
+              if (!this.verifyDownloadedUpdateBeforeInstall()) {
+                return false
+              }
+              return startUsingElevation()
+            }
+            if (errorCode === "ENOENT") {
+              return fail(
+                newError(
+                  `Cannot start the update installer (${errorCode}: ${message}): the installer file or its folder is missing. A missing installer is neither started through elevate.exe nor opened with the shell. Check whether security software removed or quarantined the downloaded installer, or install the update manually. See ${INSTALLER_START_DOCS}`,
+                  "ERR_UPDATER_INSTALLER_START_FAILED"
+                )
+              )
+            }
+            return fail(e)
+          }
+        )
+        // the re-check before the elevated start emits "error" itself, and an "error" listener that throws must not reject the start either
+        .catch(fail)
+    )
+  }
+
+  // elevate.exe starts the update installer with administrator rights, so it is run only when the current user cannot modify it, the
+  // folder that holds it or the install folder of the app (the folder of process.execPath): only then can nobody but an administrator
+  // replace it. Returns why it may not run, or null when it may.
+  //
+  // Node's fs.access does not read Windows ACLs, so writing is attempted for real: elevate.exe is opened for writing (r+, which neither
+  // truncates nor changes it) and a file with a unique name is created (wx) and removed in each folder. EACCES, EPERM and EROFS (a
+  // read-only volume) mean the user cannot write there. ENOENT means the file or folder is missing; it counts as not modifiable because
+  // the folder that would hold it is checked as well, and a missing elevate.exe then fails to start with the spawn error. Any other
+  // error refuses elevate.exe: whether the user can modify it is unknown.
+  private elevationRefusal(): string | null {
+    const elevatePath = path.join(process.resourcesPath, "elevate.exe")
+    const canWrite = (attempt: () => void): boolean => {
+      try {
+        attempt()
+        return true
+      } catch (e: unknown) {
+        const code = e instanceof Error && "code" in e ? e.code : undefined
+        if (code === "EACCES" || code === "EPERM" || code === "EROFS" || code === "ENOENT") {
+          return false
+        }
+        throw e
+      }
+    }
+
+    let target = elevatePath
+    let reason: string | null = null
+    try {
+      if (canWrite(() => fs.closeSync(fs.openSync(elevatePath, "r+")))) {
+        reason = `the current user can modify ${elevatePath}`
+      } else {
+        for (const dir of [path.dirname(elevatePath), path.dirname(process.execPath)]) {
+          target = dir
+          const probeFile = path.join(dir, `.elevate-check-${randomBytes(8).toString("hex")}.tmp`)
+          if (canWrite(() => fs.closeSync(fs.openSync(probeFile, "wx")))) {
+            try {
+              fs.unlinkSync(probeFile)
+            } catch (e: unknown) {
+              this.log.warn(`Cannot remove ${probeFile}: ${e instanceof Error ? e.message : String(e)}`)
+            }
+            reason = `the current user can create files in ${dir}`
+            break
+          }
+        }
+      }
+    } catch (e: unknown) {
+      const code = e instanceof Error && "code" in e ? e.code : undefined
+      reason = `cannot tell whether the current user can modify ${target} (${String(code)}: ${e instanceof Error ? e.message : String(e)})`
+    }
+    return reason
   }
 
   private async differentialDownloadWebPackage(

@@ -13,7 +13,14 @@ import {
 } from "../codeSign/win/authenticodeSignature.js"
 import type { Configuration } from "../configuration.js"
 import { shouldSignWindowsFile } from "../options/winOptions.js"
-import { compareListedFilesInOutput, mayBeUpdateInfo, readUpdateInfo, updateManifestPlatform, verifyUpdateManifestContent } from "../publish/updateManifestVerifier.js"
+import {
+  compareListedFilesInOutput,
+  mayBeUpdateInfo,
+  readUpdateInfo,
+  UPDATE_INFO_ALIASES_MESSAGE,
+  updateManifestPlatform,
+  verifyUpdateManifestContent,
+} from "../publish/updateManifestVerifier.js"
 
 /**
  * - `verified` — the check passed
@@ -115,9 +122,7 @@ export async function verifyBuildOutput(options: VerifyBuildOutputOptions): Prom
       continue
     }
     if (updateInfo.hasAliases) {
-      const message =
-        "uses YAML aliases, which electron-builder never writes and electron-updater rejects once they expand past its limit (ERR_UPDATER_INVALID_UPDATE_INFO): regenerate it without aliases"
-      results.push({ status: "failed", check: "update manifest YAML", file, message })
+      results.push({ status: "failed", check: "update manifest YAML", file, message: UPDATE_INFO_ALIASES_MESSAGE })
     }
     manifests.push({ file, platform: updateManifestPlatform(file), content, info: updateInfo.info })
   }

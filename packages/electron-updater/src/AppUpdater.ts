@@ -24,7 +24,7 @@ import {
   verifyManifestSignatures,
   type LimitedLogger,
 } from "builder-util-runtime"
-import { randomBytes } from "crypto"
+import { createHash, randomBytes } from "crypto"
 import { release } from "os"
 import { EventEmitter } from "events"
 import fsExtra from "fs-extra"
@@ -44,7 +44,7 @@ import type { TypedEmitter } from "tiny-typed-emitter"
 type Session = Electron.Session
 import type { AuthInfo } from "electron"
 import { gunzipSync } from "zlib"
-import { blockMapSizeLimit, DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
+import { blockMapSizeLimit, DifferentialDownloaderOptions, ERR_UPDATER_INVALID_BLOCKMAP } from "./differentialDownloader/DifferentialDownloader.js"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
 import { fetchBlockMapV3 } from "./differentialDownloader/blockMapV3Fetcher.js"
 import { nonThrowingAppLogger, nonThrowingLogger, throwIfCancelled } from "./util.js"
@@ -71,7 +71,8 @@ const require = createRequire(import.meta.url ?? process.execPath)
 // shared rather than per-instance so that `updater.verifyUpdateFile === DEFAULT_VERIFY_UPDATE_FILE` identifies "no custom verifier"
 const DEFAULT_VERIFY_UPDATE_FILE: VerifyUpdateFile = _params => Promise.resolve({ response: "success" })
 
-const LOGIN_EVENT_DOCS = "https://www.electron.build/docs/features/auto-update#event-login"
+// the v27 migration section for the login warnings, which links the login event docs
+const LOGIN_MIGRATION_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
 
 const CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-headers"
 
@@ -133,7 +134,10 @@ export function createCrossOriginHeaderPolicy(
 
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
-  /** `url` is the URL of the update request that got the authentication challenge (after a redirect, the redirect's target). */
+  /**
+   * `url` is the URL of the update request that got the authentication challenge (after a redirect, the redirect's target). When no
+   * listener takes `url`, a server's challenge from another origin than the update feed logs a warning: electron-updater 8 will cancel it.
+   */
   login: (info: AuthInfo, callback: LoginCallback, url: string) => void
   "checking-for-update": () => void
   "update-not-available": (info: UpdateInfo) => void
@@ -417,7 +421,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   private publishConfigMaxUpdateInfoSize: unknown = undefined
 
   /**
-   * The largest channel file (`latest*.yml`) read, in bytes. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`.
+   * The largest channel file (`latest*.yml`) read, in bytes. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`.
    * Release feeds and provider API responses (release listings and lookups) are not limited. A positive integer, or `0` for no
    * limit; anything else throws `ERR_UPDATER_INVALID_MAX_UPDATE_INFO_SIZE`.
    *
@@ -482,8 +486,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   crossOriginHeaders: CrossOriginHeadersCallback | null = null
 
-  // the origin of the update feed (Provider.feedBaseUrl) of the last update check, null before the first one
-  private feedOrigin: string | null = null
+  // the update feed (Provider.feedBaseUrl) of the last update check, null before the first one
+  private feedBaseUrl: URL | null = null
+  // the update feed of the update being downloaded, null while none is: a check of another feed (after setFeedURL) can run meanwhile
+  private downloadFeedBaseUrl: URL | null = null
 
   // the updater's executor, provider requests and downloads ask the app's crossOriginHeaders through it, at each hop
   // Dropped headers are announced once per origin, names and origins only (never a value): a host or CDN that starts redirecting to a new
@@ -903,7 +909,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       this.limitedLogger("insecure-feed-packaged").warn(
         "autoUpdater.allowInsecureFeed is true in a packaged app: its update requests and redirects may use plain http to any host, where anyone on the network path can tamper with them. " +
           "It is meant for development only: set `autoUpdater.allowInsecureFeed = !app.isPackaged` and serve the production feed over https. " +
-          "https://www.electron.build/docs/features/auto-update#allowinsecurefeed"
+          "https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https"
       )
     }
 
@@ -916,7 +922,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     const client = await this.clientPromise
     // before the request headers are handed over: only the feed's origin gets every one of them
-    this.feedOrigin = feedBaseUrlOf(client).origin
+    this.feedBaseUrl = feedBaseUrlOf(client)
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({ "x-user-staging-id": stagingUserId }))
     // autoUpdater.maxUpdateInfoSize wins over the publish configuration, so an app can raise the limit even when its config is invalid
@@ -1026,7 +1032,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * Electron's `login` event of the update request to `requestUrl`: emitted as `login`, with the request's URL as its third argument
    * (Electron's `AuthInfo` names only the challenger's host and port). A challenge on a request whose URL cannot be determined (`null`),
    * or one emitted without a `login` listener (which logs a warning once), is cancelled: the callback is called once, without credentials, and
-   * so is one whose listener throws. A server's challenge from another origin than the feed logs a warning once when no listener takes `url`.
+   * so is one whose listener throws. When no listener takes `url`, a server's challenge from another origin than the feed (see
+   * {@link loginFeedUrls}) is still emitted, with a warning once: such a listener cannot tell the feed from another server, and
+   * electron-updater 8 will cancel that challenge.
    * With `allowInsecureFeed`, a server's challenge on a request that is not `https` and not to a loopback host is cancelled too: nothing shows
    * that it comes from the server the credentials are meant for.
    * @internal
@@ -1053,17 +1061,23 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     if (listeners.length === 0) {
       this.limitedLogger("login-challenge-no-listener").warn(
         `${challenger} asked for credentials on an update request, and the challenge was cancelled: autoUpdater has no login listener. ` +
-          `Add one that answers it, or serve the updates without authentication. ${LOGIN_EVENT_DOCS}`
+          `Add one that answers it, or serve the updates without authentication. ${LOGIN_MIGRATION_DOCS}`
       )
       callback()
       return
     }
-    // a handler without the url parameter cannot tell the feed from another origin
-    if (!authInfo.isProxy && this.feedOrigin != null && requestUrl.origin !== this.feedOrigin && listeners.every(it => it.length < 3)) {
-      this.limitedLogger("login-challenge-other-origin").warn(
-        `${challenger}, on ${requestUrl.origin}, another origin than the update feed (${this.feedOrigin}), asked for credentials, and every login handler answers without the url argument: ` +
-          `such a handler answers a challenge from any server. Take (authInfo, callback, url) and answer only when new URL(url).origin is the origin your credentials are meant for. ${LOGIN_EVENT_DOCS}`
-      )
+    // a handler without the url parameter cannot tell the feed from another server: it still gets a server's challenge from another origin
+    if (!authInfo.isProxy && listeners.every(it => it.length < 3)) {
+      const feedUrls = this.loginFeedUrls()
+      if (feedUrls.every(it => HttpExecutor.isCrossOrigin(it, requestUrl))) {
+        const feedOrigins = [...new Set(feedUrls.map(it => it.origin))]
+        this.limitedLogger("login-challenge-other-origin").warn(
+          `A login challenge from ${challenger} on ${requestUrl.origin}, ${feedOrigins.length === 0 ? "before any update check" : `outside the update feed (${feedOrigins.join(", ")})`}, ` +
+            `was passed to a login handler that does not take the url argument, so the handler cannot tell which origin it is answering. ` +
+            `electron-updater 8, the next major version, will cancel such a challenge when no login handler takes the url argument. ` +
+            `Take (authInfo, callback, url) in your login handler and call callback(username, password) only when new URL(url).origin is the origin your credentials are meant for. ${LOGIN_MIGRATION_DOCS}`
+        )
+      }
     }
     let isAnswered = false
     // the arguments as given: Electron cancels on a call without any
@@ -1077,9 +1091,28 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       this.emit("login", authInfo, answer, requestUrl.href)
     } catch {
       // a throwing handler must not stall the request; never its error's message, which could hold the credentials
-      this.limitedLogger("login-listener-threw").warn(`A login listener threw for ${challenger}: the challenge was cancelled. ${LOGIN_EVENT_DOCS}`)
+      this.limitedLogger("login-listener-threw").warn(`A login listener threw for ${challenger}: the challenge was cancelled. ${LOGIN_MIGRATION_DOCS}`)
       answer()
     }
+  }
+
+  /**
+   * The URLs on whose origins a server's authentication challenge reaches a `login` listener that does not take `url` without a warning (compared like the
+   * request headers, see `HttpExecutor.isCrossOrigin`): the update feed (`Provider.feedBaseUrl`) of the last update check, the one of the
+   * update being downloaded, and `previousBlockmapBaseUrlOverride`, the origin the old blockmap is downloaded from with every request header.
+   * A channel file, download or redirect target on another origin is not on one of them.
+   */
+  private loginFeedUrls(): Array<URL> {
+    const urls = [this.feedBaseUrl, this.downloadFeedBaseUrl].filter((it): it is URL => it != null)
+    const override = this.previousBlockmapBaseUrlOverride
+    if (override != null) {
+      try {
+        urls.push(new URL(override))
+      } catch {
+        // not a URL: no blockmap is downloaded from it, and a login event listener must not throw
+      }
+    }
+    return urls
   }
 
   private createProviderRuntimeOptions(): ProviderRuntimeOptions {
@@ -1185,7 +1218,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       })
       .finally(() => {
         this.downloadPromise = null
+        this.downloadFeedBaseUrl = null
       })
+    // the feed this download's requests are meant for, whichever feed a check made meanwhile uses (see loginFeedUrls), validated by the
+    // check that found the update. Once doDownloadUpdate has returned: one that throws (e.g. from resolveFiles) starts no download
+    // Read once and narrowed like feedBaseUrlOf: a plain-JavaScript provider's getter can throw or return no URL by now, and neither may
+    // throw from downloadUpdate or reach the login event listener (the download's own requests fail on it)
+    let downloadFeed: unknown = null
+    try {
+      downloadFeed = updateInfoAndProvider.provider.feedBaseUrl
+    } catch {
+      // no feed origin for this download's login challenges
+    }
+    this.downloadFeedBaseUrl = downloadFeed instanceof URL ? downloadFeed : null
 
     return this.downloadPromise
   }
@@ -1362,6 +1407,18 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   protected async executeDownload(taskOptions: DownloadExecutorTask): Promise<DownloadExecutorResult> {
     const fileInfo = taskOptions.fileInfo
+    // the file is hashed again against this checksum right before it is installed, so without one it could never be installed. Checked
+    // here for every provider: the GitLab and private GitHub providers and custom ones resolve files without resolveFiles' check
+    const sha512: string | undefined = fileInfo.info.sha512
+    const sha2 = "sha2" in fileInfo.info ? fileInfo.info.sha2 : undefined
+    if (!(typeof sha512 === "string" && sha512.length !== 0) && !(typeof sha2 === "string" && sha2.length !== 0)) {
+      throw newError(
+        `Update info doesn't contain a sha512 or sha2 checksum for ${urlWithoutQuery(fileInfo.info.url)}, so the update is not downloaded. ` +
+          "A downloaded update is hashed again right before it is installed, against the checksum of its update info. " +
+          "See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed",
+        "ERR_UPDATER_NO_CHECKSUM"
+      )
+    }
     if (fileInfo.info.sha512 == null && (fileInfo.info as any).sha2 != null) {
       this.log.warn(
         "Update artifact is validated with a SHA-256 (sha2) checksum only. sha2 is deprecated, and update metadata without sha512 will be rejected (fail-closed): publish sha512, which electron-builder generates by default, by regenerating latest*.yml with a current electron-builder and not pinning electronUpdaterCompatibility to a legacy (<2.15 / 1.x) range."
@@ -1393,8 +1450,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     const pendingBlockMapFile = path.join(cacheDir, "current.blockmap")
     const cachedBlockMapFile = path.join(downloadedUpdateHelper.cacheDir, "current.blockmap")
-    const done = async (isSaveCache: boolean) => {
+    // `verifiedWith`: the update info and provider the file was verified against, which the install verifies it with again
+    const done = async (isSaveCache: boolean, verifiedWith: UpdateInfoAndProvider) => {
       await downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo, updateFileName, isSaveCache)
+      downloadedUpdateHelper.setVerifiedUpdateInfoAndProvider(verifiedWith)
       // before `taskOptions.done`: it emits `update-downloaded`, and an app that calls quitAndInstall() from that listener exits
       // before anything after it runs, which would leave the next update without the blockmap of the installed version
       if (await fsExtra.pathExists(pendingBlockMapFile)) {
@@ -1447,16 +1506,21 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       updateFile = cachedUpdateFile
       // the package validated together with the cached installer, under the name it was saved with
       packageFile = downloadedUpdateHelper.packageFile
+      // set when the file is the one this session already downloaded or reused and verified (a later check found the same update),
+      // `null` for a file cached by an earlier launch. The file stays verified against what it was verified with: this check's update
+      // info is the same, but its provider settings may not be
+      const verifiedInSession = downloadedUpdateHelper.updateInfoAndProvider
       // an update downloaded by an earlier session is about to be announced as ready to install without being
       // downloaded again, so the custom verifier has to gate it here too — its only other gate is the sha512 taken
       // from the very update metadata a custom verifier exists to distrust
       try {
+        await taskOptions.verifyCachedFile?.(updateFile, verifiedInSession)
         await verifyUpdateFile(updateFile)
       } catch (e: any) {
         await removeFileIfAny()
         throw e
       }
-      return await done(false)
+      return await done(false, verifiedInSession ?? taskOptions.downloadUpdateOptions.updateInfoAndProvider)
     }
 
     // a fresh download starts — drop any blockmap left over from a previous update round, so that when this round
@@ -1507,7 +1571,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
 
     this.log.info(`New version ${version} has been downloaded to ${updateFile}`)
-    return await done(true)
+    return await done(true, taskOptions.downloadUpdateOptions.updateInfoAndProvider)
   }
   /**
    * Logs why a differential download failed, before the full download it falls back to. Never throws: neither a throwing
@@ -1516,7 +1580,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   protected logDifferentialDownloadFallback(error: unknown): void {
     try {
-      this.log.error(`Cannot download differentially, fallback to full download: ${error instanceof Error ? error.stack || String(error) : String(error)}`)
+      // a rejected block map is fully described by its message: one line, without a stack trace
+      const isRejectedBlockMap = error instanceof Error && "code" in error && error.code === ERR_UPDATER_INVALID_BLOCKMAP
+      const details = error instanceof Error ? (isRejectedBlockMap ? error.message : error.stack || String(error)) : String(error)
+      this.log.error(`Cannot download differentially, fallback to full download: ${details}`)
     } catch (_ignored) {
       // a throwing logger must not stop the fallback
     }
@@ -1533,6 +1600,12 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     try {
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
+      }
+      // a differential download is planned against the update's size, so without a positive one no block map is worth fetching
+      const newFileSize = fileInfo.info.size
+      if (newFileSize == null || !Number.isSafeInteger(newFileSize) || newFileSize <= 0) {
+        const size = newFileSize == null ? "unknown" : newFileSize === 0 ? "0 bytes" : `invalid (${newFileSize})`
+        throw newError(`The size of the update "${urlWithoutQuery(fileInfo.url)}" is ${size}, it cannot be downloaded differentially`, ERR_UPDATER_INVALID_BLOCKMAP)
       }
       const provider = downloadUpdateOptions.updateInfoAndProvider.provider
       const override = this.previousBlockmapBaseUrlOverride
@@ -1552,10 +1625,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       // a v2 map may inflate to, and a v3 map may be, at most this many bytes; the old map is held to the new file's limit too: it has
       // ample headroom for a release of a different size
       const blockMapLimit = blockMapSizeLimit(fileInfo.info.size)
-      // a v3 map of the update is rejected before its records are decoded when it describes a file of another size; an old map is held
-      // to the size limit and then matched to the cached installer by isBlockMapOfFile
-      const newFileSize = fileInfo.info.size ?? null
-      const downloadBlockMap = async (url: URL, expectedFileSize: number | null, originUrl?: URL): Promise<LoadedBlockMap> => {
+      const downloadBlockMap = async (url: URL, originUrl?: URL): Promise<Buffer> => {
         // a block map as published (gzipped JSON or binary) is never larger than the limit, so the download stops once the bytes it
         // delivers (after any Content-Encoding is decoded) pass the limit
         const data = await this.httpExecutor.downloadToBuffer(url, {
@@ -1566,9 +1636,27 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         })
 
         if (data == null || data.length === 0) {
-          throw new Error(`Blockmap "${urlWithoutQuery(url)}" is empty`)
+          throw newError(`Blockmap "${urlWithoutQuery(url)}" is empty`, ERR_UPDATER_INVALID_BLOCKMAP)
         }
-        return parseBlockMapData(data, urlWithoutQuery(url), blockMapLimit, expectedFileSize)
+        return data
+      }
+
+      // the new map must be the published one when the manifest names its sha512 (checked before it is decoded or cached for the
+      // next update), and its blocks must end at the update's size (a v3 map is rejected before its records are decoded when it
+      // describes a file of another size); an old map is held to the size limit and then matched to the cached installer by
+      // isBlockMapOfFile
+      const loadNewBlockMap = (data: Buffer): LoadedBlockMap => {
+        const source = urlWithoutQuery(newBlockMapUrl)
+        verifyBlockMapSha512(data, fileInfo.info.blockMapSha512, source)
+        const loaded = parseBlockMapData(data, source, blockMapLimit, newFileSize)
+        const end = getBlockMapEnd(loaded.map)
+        if (end == null || end !== newFileSize) {
+          throw newError(
+            `Blockmap "${source}" does not describe the ${newFileSize}-byte update (${end == null ? "malformed" : `its blocks end at ${end}`})`,
+            ERR_UPDATER_INVALID_BLOCKMAP
+          )
+        }
+        return loaded
       }
 
       const downloadOptions: DifferentialDownloaderOptions = {
@@ -1628,7 +1716,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
             isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
             logger: this.log,
           })
-          newBlockMapData = parseBlockMapData(fetched.buffer, urlWithoutQuery(newBlockMapUrl), blockMapLimit, newFileSize)
+          // the assembled map is byte-identical to the published file, so blockMapSha512 covers it like a whole download
+          newBlockMapData = loadNewBlockMap(fetched.buffer)
         } catch (e: unknown) {
           // a host or CDN that mishandles Range requests, or a map that fails verification: a plain GET of the new map still
           // allows a differential update
@@ -1636,7 +1725,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
           this.log.warn(`Cannot fetch the changed parts of the block map "${urlWithoutQuery(newBlockMapUrl)}", downloading it whole: ${e instanceof Error ? e.message : String(e)}`)
         }
       }
-      newBlockMapData ??= await downloadBlockMap(newBlockMapUrl, newFileSize)
+      newBlockMapData ??= loadNewBlockMap(await downloadBlockMap(newBlockMapUrl))
       await saveBlockMapToCacheDir(newBlockMapData, this.downloadedUpdateHelper!.cacheDirForPendingUpdate)
 
       if (oldBlockMapData == null) {
@@ -1662,7 +1751,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         }
         this.log.info(`No cached blockmap for the old installer, downloading it from "${urlWithoutQuery(oldBlockMapUrl)}"`)
         // the old blockmap comes from previousBlockmapBaseUrlOverride when the app sets it, so that origin gets the credentials
-        oldBlockMapData = await downloadBlockMap(oldBlockMapUrl, null, override ? new URL(override) : undefined)
+        const oldData = await downloadBlockMap(oldBlockMapUrl, override ? new URL(override) : undefined)
+        oldBlockMapData = parseBlockMapData(oldData, urlWithoutQuery(oldBlockMapUrl), blockMapLimit, null)
         if (!(await isBlockMapOfFile(oldBlockMapData.map, downloadOptions.oldFile))) {
           // e.g. a server that serves another release's blockmap under the derived name: planned against it, the download fails the sha512 check
           this.log.info(
@@ -1739,8 +1829,25 @@ function parseBlockMapData(data: Buffer, source: string, maxSize: number, expect
       return { format: "v3", data, map: toBlockMap(decodeBlockMapV3(data, expectedFileSize, maxSize)) }
     }
     return { format: "v2", data, map: JSON.parse(gunzipSync(data, { maxOutputLength: maxSize }).toString()) }
-  } catch (e: any) {
-    throw new Error(`Cannot parse blockmap "${source}", error: ${e}`)
+  } catch (e: unknown) {
+    throw newError(`Cannot parse blockmap "${source}", error: ${e}`, ERR_UPDATER_INVALID_BLOCKMAP)
+  }
+}
+
+/**
+ * Checks `data` against the `blockMapSha512` of the update manifest, a base64 SHA-512 (the field is new, so unlike `sha512` it has no
+ * legacy hex form). Nothing is checked when the manifest has none (electron-builder does not write it yet).
+ */
+function verifyBlockMapSha512(data: Buffer, expected: string | null | undefined, source: string): void {
+  if (expected == null) {
+    return
+  }
+  const actual = createHash("sha512").update(data).digest("base64")
+  if (actual !== expected) {
+    throw newError(
+      `Blockmap "${source}" does not match the blockMapSha512 of the update manifest (expected ${JSON.stringify(expected)}, got ${actual})`,
+      ERR_UPDATER_INVALID_BLOCKMAP
+    )
   }
 }
 
@@ -1752,7 +1859,8 @@ function parseBlockMapData(data: Buffer, source: string, maxSize: number, expect
  */
 export async function isBlockMapOfFile(blockMap: unknown, file: string): Promise<boolean> {
   const end = getBlockMapEnd(blockMap)
-  if (end == null) {
+  // a map without a single byte describes nothing, even a 0-byte file: there is no block to copy from it
+  if (end == null || end === 0) {
     return false
   }
   const stat = await fsExtra.stat(file).catch(() => null)
@@ -1874,6 +1982,14 @@ export interface DownloadExecutorTask {
    * For anything that must not be done to a file that is still unverified — making it executable, in particular.
    */
   readonly afterVerification?: (destinationFile: string) => Promise<void>
+
+  /**
+   * Runs before an update file that is already in the cache (matched by its sha512) is reused for this update instead of being
+   * downloaded. Throws to reject it, like a check `task` makes on a downloaded file. `verifiedInSession` is the update info and
+   * provider the file was already verified against in this session (a later check found the same update), `null` for a file cached
+   * by an earlier launch.
+   */
+  readonly verifyCachedFile?: (cachedFile: string, verifiedInSession: UpdateInfoAndProvider | null) => Promise<void>
 
   readonly done?: (event: UpdateDownloadedEvent) => Promise<any>
 }

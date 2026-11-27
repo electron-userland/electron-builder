@@ -9,7 +9,7 @@ import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersio
 import { AppAdapter, CancellableQuitEvent } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask, UpdateInfoAndProvider } from "./AppUpdater.js"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper.js"
-import type { Logger, VerifyUpdateFileResult } from "./types.js"
+import type { Logger, ResolvedUpdateFileInfo, VerifyUpdateFileResult } from "./types.js"
 import { QuitAndInstallOptions, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
 
 // import.meta is empty when a bundler inlines this module into a CommonJS bundle; Electron resolves "electron" from any base path
@@ -22,6 +22,9 @@ const STDERR_MESSAGE_BYTES = 8 * 1024
 export const WEB_INSTALLER_DISABLED_HINT =
   "Set autoUpdater.disableWebInstaller to false to allow web-installer updates. " +
   "See https://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true"
+
+/** Where the rule that a pending update must be the file `findUpdateFile` picks is described. */
+const PENDING_FILE_RULE_DOCS = "See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed"
 
 /**
  * The command line a shell runs for `cmd` and `args`. Given `shell: true` and an argv array, Node joins them with spaces
@@ -301,6 +304,17 @@ export abstract class BaseUpdater extends AppUpdater {
   }
 
   /**
+   * The file of the update info that this target downloads and installs, out of the files the provider resolved. An update
+   * marked for install on next launch is installed only when it is the file this picks from the latest update info, so the
+   * pending cache cannot choose another file of that update info. Each built-in target overrides it with its own rule. The
+   * default picks the first file: a subclass whose `doDownloadUpdate` downloads another file, whether it extends `BaseUpdater`
+   * or a built-in target, must override this to return that file, or its pending update is not installed on next launch.
+   */
+  protected findUpdateFile(files: Array<ResolvedUpdateFileInfo>): ResolvedUpdateFileInfo | null | undefined {
+    return files[0]
+  }
+
+  /**
    * Whether a quit can be cancelled for this target (see {@link handleWillQuit}): a quit waits for an install that is
    * running, and with {@link cancelQuitOnInstallFailure} the install on quit runs while the quit can still be cancelled,
    * which a failed install then does. Only for targets whose {@link doInstall} has finished, and knows whether it
@@ -333,6 +347,35 @@ export abstract class BaseUpdater extends AppUpdater {
 
   protected get installerPath(): string | null {
     return this.downloadedUpdateHelper == null ? null : this.downloadedUpdateHelper.file
+  }
+
+  /**
+   * Called by {@link doInstall} right before it starts the installer: hashes the downloaded update again (see
+   * `DownloadedUpdateHelper.verifyDownloadedFilesSync`). Synchronous, so that the install on quit can call it. When the
+   * update changed since it was verified, it is not installed: it is removed, so that the next update check downloads it
+   * again, and an `error` event is emitted.
+   */
+  protected verifyDownloadedUpdateBeforeInstall(): boolean {
+    const downloadedUpdateHelper = this.downloadedUpdateHelper
+    const failure = downloadedUpdateHelper == null ? "no update was downloaded" : downloadedUpdateHelper.verifyDownloadedFilesSync()
+    if (failure == null) {
+      return true
+    }
+    this.rejectDownloadedUpdate(
+      newError(
+        `The downloaded update is not installed: ${failure}. It is removed and will be downloaded again on the next update check. ` +
+          "A downloaded update is hashed again right before it is installed. " +
+          "See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed",
+        "ERR_UPDATER_UPDATE_FILE_CHANGED"
+      )
+    )
+    return false
+  }
+
+  /** Removes the downloaded update, which must not be installed, and emits `error`. Synchronous, for the install on quit. */
+  protected rejectDownloadedUpdate(error: Error): void {
+    this.downloadedUpdateHelper?.clearSync()
+    this.dispatchError(error)
   }
 
   // must be sync
@@ -497,6 +540,8 @@ export abstract class BaseUpdater extends AppUpdater {
       return false
     }
 
+    // the pending cache, which the user can write to, can only make the automatic install skip an update here, which spares
+    // the request for the latest update info; an update it marks per-user is checked against the latest update info below
     if (isAutomatic && pendingInfo.isAdminRightsRequired) {
       this.log.info(
         "Skipping automatic install of the pending update on launch: it is a per-machine installation (isAdminRightsRequired is true). Call installPendingUpdateIfAvailable() explicitly to install it."
@@ -522,12 +567,31 @@ export abstract class BaseUpdater extends AppUpdater {
       return false
     }
 
-    const fileInfo = updateInfoAndProvider.provider.resolveFiles(latestInfo).find(it => it.info.sha512 === pendingInfo.sha512)
-    if (fileInfo == null) {
+    // the file this target installs, picked from the latest update info as a download picks it: the pending cache only says
+    // which checksum it saved, and must not choose another file of that update info
+    const files = updateInfoAndProvider.provider.resolveFiles(latestInfo)
+    const fileInfo = this.findUpdateFile(files)
+    if (fileInfo == null || fileInfo.info.sha512 !== pendingInfo.sha512) {
       this.log.warn(
-        `Pending update doesn't match any file of the latest update info (version ${latestInfo.version}), clearing install-on-next-launch state. The new update must be downloaded again.`
+        `Pending update doesn't match the update file of the latest update info (version ${latestInfo.version}), clearing install-on-next-launch state. The new update must be downloaded again.`
       )
+      // another file of the update info has the cached checksum: most likely a subclass downloads a file its findUpdateFile does not pick
+      if (files.some(it => it.info.sha512 === pendingInfo.sha512)) {
+        this.limitedLogger("pending-update-file-not-picked").warn(
+          `An update pending for the next launch is installed only when it is the file findUpdateFile picks from the latest update info. ` +
+            `The pending update ${latestInfo.version} was downloaded from another file of that update info, so it is not installed. ` +
+            `An updater subclass whose doDownloadUpdate downloads another file must override findUpdateFile to return that file. ${PENDING_FILE_RULE_DOCS}`
+        )
+      }
       await downloadedUpdateHelper.clearPendingInstallMarker(this.log)
+      return false
+    }
+
+    // read from the latest update info, not from the pending cache, which the user can write to
+    if (isAutomatic && fileInfo.info.isAdminRightsRequired === true) {
+      this.log.info(
+        "Skipping automatic install of the pending update on launch: the latest update info marks it as a per-machine installation (isAdminRightsRequired is true). Call installPendingUpdateIfAvailable() explicitly to install it."
+      )
       return false
     }
 
@@ -551,7 +615,16 @@ export abstract class BaseUpdater extends AppUpdater {
         // ignore
       })
 
-    const signatureFailure = verificationFailureMessage(await this.verifyInstallerSignatureOnLaunch(installerPath, updateInfoAndProvider))
+    let signatureResult: VerifyUpdateFileResult
+    try {
+      signatureResult = await this.verifyInstallerSignatureOnLaunch(installerPath, updateInfoAndProvider)
+    } catch (e: unknown) {
+      // a verification that cannot decide (e.g. ERR_UPDATER_NO_PUBLISHER_NAME) rejects the pending update like a failed one
+      await clearPendingCache()
+      this.dispatchError(e instanceof Error ? e : new Error(String(e)))
+      return false
+    }
+    const signatureFailure = verificationFailureMessage(signatureResult)
     if (signatureFailure != null) {
       await clearPendingCache()
       this.dispatchError(newError(`Pending update ${latestInfo.version} is not signed by the application owner: ${signatureFailure}`, "ERR_UPDATER_INVALID_SIGNATURE"))
@@ -577,6 +650,7 @@ export abstract class BaseUpdater extends AppUpdater {
     // clear the marker before spawning the installer so a silently failing install cannot produce an endless
     // spawn-and-quit loop on every launch
     await downloadedUpdateHelper.clearPendingInstallMarker(this.log)
+    downloadedUpdateHelper.setVerifiedUpdateInfoAndProvider(updateInfoAndProvider)
     this.updateInfoAndProvider = updateInfoAndProvider
     this.log.info(`Installing pending update ${latestInfo.version} on launch`)
     // a failed install returns to idle (see endInstall): with the pending marker cleared above, autoInstallEvent: "onQuit"

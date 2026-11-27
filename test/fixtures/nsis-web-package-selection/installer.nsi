@@ -10,6 +10,12 @@ SilentInstall silent
 !define RunningX64 '$R8 != "32"'
 !define APP_PACKAGE_STORE_FILE "unused.7z"
 !define UNINSTALL_FILENAME "unused.exe"
+# the --updated flag, as NsisTarget generates it
+!macro _isUpdated _a _b _t _f
+  ${StdUtils.TestParameter} $R9 "updated"
+  StrCmp "$R9" "true" `${_t}` `${_f}`
+!macroend
+!define isUpdated `"" isUpdated ""`
 Var installMode
 !include installer.nsh
 

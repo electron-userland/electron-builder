@@ -1,6 +1,7 @@
 import type { FuseConfig, FuseV1Config } from "@electron/fuses"
 import { dynamicImport } from "./util/dynamicImport.js"
 import { CONTENT_ALIGNMENT_WARN_THRESHOLD, validateContentAlignment } from "./asar/asarAlign.js"
+import { resolveStableLayoutPrevious, validateStableLayoutOptions } from "./asar/asarStableLayout.js"
 import {
   Arch,
   asArray,
@@ -36,7 +37,7 @@ import { AppInfo } from "./appInfo.js"
 import { isSignResultSigned, SigningResult } from "./codeSign/signResult.js"
 import { FORCE_CODE_SIGNING_DOCS, forceCodeSigningOverrideHint } from "./codeSign/forceCodeSigning.js"
 import { BUILD_CHANGES_URL } from "./util/config/legacyOptions.js"
-import { checkFileInArchive } from "./asar/asarFileChecker.js"
+import { checkFilesInArchive } from "./asar/asarFileChecker.js"
 import { AsarPackager } from "./asar/asarUtil.js"
 import { AsarIntegrity, computeData } from "./asar/integrity.js"
 import { FuseOptionsV1 } from "./options/FuseOptionsV1.js"
@@ -817,6 +818,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
           fileMatcher = null
         }
       }
+      // `previous` may name the archive per arch (`${arch}`); it must not be one this build overwrites
+      const stableLayoutPrevious =
+        asarOptions.stableLayout == null
+          ? null
+          : resolveStableLayoutPrevious(this.expandMacro(asarOptions.stableLayout.previous, Arch[packContext.arch]), this.projectDir, [packContext.outDir, packContext.appOutDir])
       taskManager.addTask(
         _computeFileSets(mainMatchers).then(async fileSets => {
           for (const fileSet of fileSets) {
@@ -828,6 +834,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
             resourcePath,
             options: asarOptions,
             unpackPattern: fileMatcher?.createFilter(),
+            stableLayoutPrevious,
           }).pack(fileSets)
         })
       )
@@ -881,6 +888,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         )
       }
     }
+    if (asarOptions.stableLayout != null) {
+      validateStableLayoutOptions(asarOptions.stableLayout)
+    }
     return asarOptions
   }
 
@@ -910,16 +920,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Resources")
   }
 
-  private async checkFileInPackage(resourcesDir: string, file: string, messagePrefix: string, isAsar: boolean, disableSanityCheckAsar: boolean) {
-    if (isAsar && disableSanityCheckAsar) {
-      return
-    }
-    const relativeFile = path.relative(this.info.appDir, path.resolve(this.info.appDir, file))
-    if (isAsar) {
-      checkFileInArchive(path.join(resourcesDir, "app.asar"), relativeFile, messagePrefix)
-      return
-    }
-
+  private async checkFileInPackage(resourcesDir: string, file: string, messagePrefix: string) {
+    const relativeFile = this.relativeToAppDir(file)
     const pathParsed = path.parse(file)
     // Even when packaging to asar is disabled, it does not imply that the main file can not be inside an .asar archive.
     // This may occur when the packaging is done manually before processing with electron-builder.
@@ -936,7 +938,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const asarPath = path.join(...pathSplit.slice(0, partWithAsarIndex + 1))
       let mainPath = pathSplit.length > partWithAsarIndex + 1 ? path.join.apply(pathSplit.slice(partWithAsarIndex + 1)) : ""
       mainPath += path.join(mainPath, pathParsed.base)
-      checkFileInArchive(path.join(resourcesDir, "app", asarPath), mainPath, messagePrefix)
+      await checkFilesInArchive(path.join(resourcesDir, "app", asarPath), [{ file: mainPath, messagePrefix }])
     } else {
       const fullPath = path.join(resourcesDir, "app", relativeFile)
       const outStat = await statOrNull(fullPath)
@@ -964,8 +966,20 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const resourcesDir = this.getResourcesDir(appOutDir)
     const mainFile = (framework.getMainFile == null ? null : framework.getMainFile(this.platform)) || this.info.metadata.main || "index.js"
-    await this.checkFileInPackage(resourcesDir, mainFile, "Application entry file", isAsar, disableSanityCheckAsar)
-    await this.checkFileInPackage(resourcesDir, "package.json", "Application", isAsar, disableSanityCheckAsar)
+    if (!isAsar) {
+      await this.checkFileInPackage(resourcesDir, mainFile, "Application entry file")
+      await this.checkFileInPackage(resourcesDir, "package.json", "Application")
+    } else if (!disableSanityCheckAsar) {
+      // one call per archive, so its header is read once
+      await checkFilesInArchive(path.join(resourcesDir, "app.asar"), [
+        { file: this.relativeToAppDir(mainFile), messagePrefix: "Application entry file" },
+        { file: this.relativeToAppDir("package.json"), messagePrefix: "Application" },
+      ])
+    }
+  }
+
+  private relativeToAppDir(file: string): string {
+    return path.relative(this.info.appDir, path.resolve(this.info.appDir, file))
   }
 
   // tslint:disable-next-line:no-invalid-template-strings

@@ -4,21 +4,28 @@
     ":semanticCommitType(chore)",
     ":label(renovate)",
     ":prHourlyLimit2",
-    ":prConcurrentLimit10",
-    ":prNotPending",
     "group:recommended",
     "group:monorepos",
     ":enableVulnerabilityAlerts",
     "helpers:pinGitHubActionDigests",
   ],
+  // Never auto-rebase; only rebase when the rebase checkbox in the PR description is ticked, so merges
+  // to master don't re-trigger the full test matrix on every open Renovate PR. Open Renovate branches
+  // also don't pick up newer versions until that checkbox is ticked.
+  rebaseWhen: "never",
+  // Bound how many Renovate PRs and branch pushes hit CI at once (with :prHourlyLimit2 above).
+  prConcurrentLimit: 2,
+  commitHourlyLimit: 2,
   npm: {
     extends: [
       ":noUnscheduledUpdates",
       ":maintainLockFilesWeekly",
       "security:minimumReleaseAgeNpm",
       "helpers:disableTypesNodeMajor",
+      // Monday before 4am, the same window as lock file maintenance; weekly so a full prConcurrentLimit
+      // doesn't hold npm updates back for a whole month
+      "schedule:weekly",
     ],
-    schedule: ["before 3am on the first day of the month"],
     packageRules: [
       {
         // oxlint and oxlint-tsgolint are version-coupled; keep the oxc tooling on one PR

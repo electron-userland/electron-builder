@@ -1,0 +1,529 @@
+import { getMakeNsisPath } from "app-builder-lib/src/toolsets/nsis"
+import { generateUpdateSigningKeypair, serializeToYaml, signUpdateManifest, spawnAndWriteWithOutput } from "builder-util"
+import { GenericServerOptions, UpdateInfo } from "builder-util-runtime"
+import { NsisUpdater, type VerifyUpdateFileAuthenticodeSignature, type VerifyUpdateFileResult } from "electron-updater"
+import type { UpdateInfoAndProvider } from "electron-updater/src/AppUpdater"
+import { resolveCatalogSignatureOptions } from "electron-updater/src/windowsExecutableCodeSignatureVerifier"
+import { readExecutableProductVersions } from "electron-updater/src/windowsExecutableVersion"
+import { createHash } from "crypto"
+import fsExtra from "fs-extra"
+import type { Server } from "http"
+import * as path from "path"
+import { NtExecutable, NtExecutableResource, Resource } from "resedit"
+import type { TmpDir } from "temp-file"
+import { afterEach, describe, test, vi } from "vitest"
+import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
+import { createNsisUpdater, createTestAppAdapter, trackEvents, tuneTestUpdater, windowsExecutable, writeRawUpdateConfig, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
+
+// An update manifest that is not signed binds the installer only by a checksum it chooses itself, so NsisUpdater also requires the
+// ProductVersion of a signed installer to be the update version (the version electron-builder writes into both).
+
+const DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#nsis-update-installers-must-carry-the-updates-version"
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+
+async function writeExecutable(tmpDir: TmpDir, content: Buffer): Promise<string> {
+  const file = path.join(await tmpDir.getTempDir({ prefix: "installer-version" }), "installer.exe")
+  await fsExtra.outputFile(file, content)
+  return file
+}
+
+// offsets of the structures of a windowsExecutable() the tests corrupt
+function layout(exe: Buffer) {
+  const pe = exe.readUInt32LE(0x3c)
+  const optionalHeader = pe + 24
+  const directoriesCount = optionalHeader + (exe.readUInt16LE(optionalHeader) === 0x20b ? 108 : 92)
+  const resourceDirectory = directoriesCount + 4 + 2 * 8
+  const sectionTable = optionalHeader + exe.readUInt16LE(pe + 20)
+  const resourceRva = exe.readUInt32LE(resourceDirectory)
+  let resourceSection = -1
+  for (let i = 0; i < exe.readUInt16LE(pe + 6); i++) {
+    const section = sectionTable + i * 40
+    const virtualAddress = exe.readUInt32LE(section + 12)
+    if (resourceRva >= virtualAddress && resourceRva < virtualAddress + exe.readUInt32LE(section + 8)) {
+      resourceSection = section
+    }
+  }
+  const resourceRoot = resourceSection === -1 ? -1 : exe.readUInt32LE(resourceSection + 20) + resourceRva - exe.readUInt32LE(resourceSection + 12)
+  const key = (text: string) => exe.indexOf(Buffer.from(text, "utf16le")) - 6
+  return { pe, optionalHeader, directoriesCount, resourceDirectory, resourceSection, resourceRoot, versionInfo: key("VS_VERSION_INFO"), productVersion: key("ProductVersion") }
+}
+
+function corrupt(change: (exe: Buffer, offsets: ReturnType<typeof layout>) => void): Buffer {
+  const exe = windowsExecutable(["1.1.0"])
+  change(exe, layout(exe))
+  return exe
+}
+
+describe("readExecutableProductVersions", () => {
+  test("reads the ProductVersion of a 64-bit and a 32-bit executable", async ({ expect, tmpDir }) => {
+    for (const is32Bit of [false, true]) {
+      const file = await writeExecutable(tmpDir, windowsExecutable(["1.2.3-beta.1"], { is32Bit }))
+      expect(await readExecutableProductVersions(file)).toEqual(["1.2.3-beta.1"])
+    }
+  })
+
+  test("reads the ProductVersion of every string table", async ({ expect, tmpDir }) => {
+    const file = await writeExecutable(tmpDir, windowsExecutable(["1.1.0", "1.0.0"]))
+    expect(await readExecutableProductVersions(file)).toEqual(["1.1.0", "1.0.0"])
+  })
+
+  // the installer is what electron-builder compiles: VIAddVersionKey ProductVersion is the app version (see NsisTarget.computeVersionKey)
+  test("reads the ProductVersion of an installer compiled by makensis", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "installer-version-makensis" })
+    await fsExtra.ensureDir(dir)
+    const installer = path.join(dir, "installer.exe")
+    const makensis = await getMakeNsisPath(undefined, dir)
+    const script = [
+      "Unicode true",
+      "SilentInstall silent",
+      `OutFile "${installer}"`,
+      'VIProductVersion "1.2.3.0"',
+      'VIAddVersionKey /LANG=1033 ProductName "Test App"',
+      'VIAddVersionKey /LANG=1033 FileDescription "Test App"',
+      'VIAddVersionKey /LANG=1033 LegalCopyright "Test"',
+      'VIAddVersionKey /LANG=1033 ProductVersion "1.2.3-beta.1"',
+      'VIAddVersionKey /LANG=1033 FileVersion "1.2.3.0"',
+      "Section",
+      "SectionEnd",
+    ]
+    await spawnAndWriteWithOutput(makensis.path, ["-WX", "-V2", "-"], script.join("\n"), { env: { ...process.env, ...makensis.env } })
+    expect(await readExecutableProductVersions(installer)).toEqual(["1.2.3-beta.1"])
+    // the same as resedit reads
+    const resources = NtExecutableResource.from(NtExecutable.from(await fsExtra.readFile(installer), { ignoreCert: true }))
+    const resedit = Resource.VersionInfo.fromEntries(resources.entries).flatMap(info =>
+      info.getAllLanguagesForStringValues().map(language => info.getStringValues(language).ProductVersion)
+    )
+    expect(resedit).toEqual(["1.2.3-beta.1"])
+  })
+
+  test("is empty without a version resource, or without a ProductVersion in it", async ({ expect, tmpDir }) => {
+    expect(await readExecutableProductVersions(await writeExecutable(tmpDir, windowsExecutable([])))).toEqual([])
+    expect(await readExecutableProductVersions(await writeExecutable(tmpDir, windowsExecutable([null])))).toEqual([])
+  })
+
+  test("is empty when the optional header has no resource directory entry", async ({ expect, tmpDir }) => {
+    const exe = corrupt((exe, { directoriesCount }) => exe.writeUInt32LE(2, directoriesCount))
+    expect(await readExecutableProductVersions(await writeExecutable(tmpDir, exe))).toEqual([])
+  })
+
+  test.for<[string, () => Buffer, string]>([
+    ["a file shorter than a DOS header", () => Buffer.from("MZ"), "unexpected end of file"],
+    ["a file that is no executable", () => Buffer.alloc(128, "not an executable"), "no MZ signature"],
+    ["an executable without a PE signature", () => corrupt((exe, { pe }) => exe.writeUInt32LE(0, pe)), "no PE signature"],
+    ["an unknown optional header", () => corrupt((exe, { optionalHeader }) => exe.writeUInt16LE(0x107, optionalHeader)), "unknown optional header magic 0x107"],
+    [
+      "an optional header too short for the resource directory entry",
+      () => corrupt((exe, { pe }) => exe.writeUInt16LE(100, pe + 20)),
+      "the optional header has 100 bytes, too few for the resource directory entry",
+    ],
+    // the RT_VERSION entry of the root directory points back to the root
+    [
+      "a resource directory that references itself",
+      () => corrupt((exe, { resourceRoot }) => exe.writeUInt32LE(0x80000000, resourceRoot + 16 + 4)),
+      "the resource directory at 0x0 is referenced more than once",
+    ],
+    [
+      "more than 64 version resources",
+      () => {
+        const exe = NtExecutable.createEmpty(false, false)
+        const resources = NtExecutableResource.from(exe)
+        for (let language = 0x0400; language <= 0x0440; language++) {
+          Resource.VersionInfo.create(language, {}, [{ lang: language, codepage: 1200, values: { ProductVersion: "1.1.0" } }]).outputToResourceEntries(resources.entries)
+        }
+        resources.outputResource(exe)
+        return Buffer.from(exe.generate())
+      },
+      "the executable has more than 64 version resources",
+    ],
+    [
+      "a resource directory in no section",
+      () => corrupt((exe, { resourceDirectory }) => exe.writeUInt32LE(0x7fff0000, resourceDirectory)),
+      "the resource directory is in no section",
+    ],
+    [
+      "a resource section larger than 16 MB",
+      () => corrupt((exe, { resourceSection }) => exe.writeUInt32LE(16 * 1024 * 1024 + 1, resourceSection + 16)),
+      "the resource section has 16777217 bytes",
+    ],
+    [
+      "resource directory entries beyond the resource section",
+      () => corrupt((exe, { resourceRoot }) => exe.writeUInt16LE(0xffff, resourceRoot + 14)),
+      "is outside the resource section",
+    ],
+    ["a version resource longer than its data", () => corrupt((exe, { versionInfo }) => exe.writeUInt16LE(0xffff, versionInfo)), "a version resource block has an invalid length"],
+    // a block of length 0 would be read again and again
+    ["a string of length 0", () => corrupt((exe, { productVersion }) => exe.writeUInt16LE(0, productVersion)), "a version resource block has an invalid length"],
+    [
+      "a version resource that is no VS_VERSIONINFO",
+      () => corrupt((exe, { versionInfo }) => exe.write("X", versionInfo + 6, "utf16le")),
+      "the version resource is no VS_VERSIONINFO",
+    ],
+  ])("throws for %s", async ([, content, message], { expect, tmpDir }) => {
+    await expect(readExecutableProductVersions(await writeExecutable(tmpDir, content()))).rejects.toThrow(message)
+  })
+})
+
+describe("NsisUpdater installer version check", () => {
+  const signedConfig = (url = "https://example.com/updates") => writeRawUpdateConfig<GenericServerOptions>({ provider: "generic", url, publisherName: ["CN=Test"] })
+  const update = (version: string, manifestSignatureVerified = false) => ({ info: { version } as UpdateInfo, manifestSignatureVerified })
+
+  async function signedUpdater() {
+    const updater = await createNsisUpdater("1.0.0")
+    updater.updateConfigPath = await signedConfig()
+    return updater
+  }
+
+  test("accepts an installer whose every ProductVersion is the update version", async ({ expect, tmpDir }) => {
+    const updater = await signedUpdater()
+    const file = await writeExecutable(tmpDir, windowsExecutable(["1.1.0", "1.1.0"]))
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifyInstallerVersion(file, update("1.1.0"))).resolves.toBeUndefined()
+  })
+
+  test.for<[string, Array<string | null>, string]>([
+    ["of an older release", ["1.0.0"], 'its ProductVersion is "1.0.0"'],
+    ["with one string table of another version", ["1.1.0", "1.0.0"], 'its ProductVersion is "1.0.0"'],
+    ["without a ProductVersion", [null], "it has no ProductVersion"],
+  ])("rejects an installer %s", async ([, productVersions, reason], { expect, tmpDir }) => {
+    const updater = await signedUpdater()
+    const file = await writeExecutable(tmpDir, windowsExecutable(productVersions))
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifyInstallerVersion(file, update("1.1.0"))).rejects.toMatchObject({
+      code: "ERR_UPDATER_INSTALLER_VERSION_MISMATCH",
+      message: expect.stringMatching(
+        new RegExp(
+          `^The installer of version 1\\.1\\.0 is rejected: ${escapeRegExp(reason)}\\. electron-updater installs an update whose manifest is not signed only when .*updateManifestPublicKey.* ${escapeRegExp(DOCS)}$`
+        )
+      ),
+    })
+  })
+
+  test("rejects an installer whose ProductVersion cannot be read", async ({ expect, tmpDir }) => {
+    const updater = await signedUpdater()
+    const file = await writeExecutable(tmpDir, Buffer.alloc(128, "not an executable"))
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifyInstallerVersion(file, update("1.1.0"))).rejects.toMatchObject({
+      code: "ERR_UPDATER_INSTALLER_VERSION_MISMATCH",
+      message: expect.stringContaining("its ProductVersion cannot be read (no MZ signature)"),
+    })
+  })
+
+  test("rejects with the file system error when the installer cannot be read", async ({ expect, tmpDir }) => {
+    const updater = await signedUpdater()
+    const file = path.join(await tmpDir.getTempDir({ prefix: "installer-version" }), "missing.exe")
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifyInstallerVersion(file, update("1.1.0"))).rejects.toMatchObject({ code: "ENOENT" })
+  })
+
+  // a verified manifest binds the installer by its sha512
+  test("is skipped for an update whose manifest signature was verified", async ({ expect, tmpDir }) => {
+    const updater = await signedUpdater()
+    const file = await writeExecutable(tmpDir, windowsExecutable(["1.0.0"]))
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifyInstallerVersion(file, update("1.1.0", true))).resolves.toBeUndefined()
+  })
+
+  // without a signature check, any installer is accepted anyway
+  test("is skipped when the update config opts out of signature verification", async ({ expect, tmpDir }) => {
+    const updater = await createNsisUpdater("1.0.0")
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: "https://example.com/updates" })
+    const file = await writeExecutable(tmpDir, windowsExecutable(["1.0.0"]))
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifyInstallerVersion(file, update("1.1.0"))).resolves.toBeUndefined()
+  })
+
+  // the publisherName is resolved as verifySignature resolves it, so an app verified against autoUpdater.publisherName is checked too
+  test.for<[string, (updater: NsisUpdater) => Promise<void>]>([
+    [
+      "a packaged app without an update config file",
+      async updater => {
+        updater.updateConfigPath = "/nonexistent/dir/app-update.yml"
+      },
+    ],
+    [
+      "an update config without publisherName",
+      async updater => {
+        updater.updateConfigPath = await writeRawUpdateConfig<GenericServerOptions>({ provider: "generic", url: "https://example.com/updates" })
+      },
+    ],
+    [
+      "an update config that opts out with verifyUpdateCodeSignature: false",
+      async updater => {
+        updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: "https://example.com/updates" })
+      },
+    ],
+  ])("checks the installer of %s verified against autoUpdater.publisherName", async ([, configure], { expect, tmpDir }) => {
+    const updater = await createNsisUpdater("1.0.0")
+    await configure(updater)
+    updater.publisherName = ["CN=Test"]
+    const file = await writeExecutable(tmpDir, windowsExecutable(["1.0.0"]))
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifyInstallerVersion(file, update("1.1.0"))).rejects.toMatchObject({ code: "ERR_UPDATER_INSTALLER_VERSION_MISMATCH" })
+  })
+
+  test("is skipped for an unpackaged app (dev mode) without an update config file, even with autoUpdater.publisherName", async ({ expect, tmpDir }) => {
+    const updater = await createNsisUpdater("1.0.0")
+    // @ts-expect-error accessing the protected app adapter
+    vi.spyOn(updater.app, "isPackaged", "get").mockReturnValue(false)
+    updater.updateConfigPath = "/nonexistent/dir/dev-app-update.yml"
+    updater.publisherName = ["CN=Test"]
+    const file = await writeExecutable(tmpDir, windowsExecutable(["1.0.0"]))
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifyInstallerVersion(file, update("1.1.0"))).resolves.toBeUndefined()
+  })
+
+  test("is skipped without an update config file", async ({ expect, tmpDir }) => {
+    const updater = await createNsisUpdater("1.0.0")
+    updater.updateConfigPath = "/nonexistent/dir/app-update.yml"
+    const file = await writeExecutable(tmpDir, windowsExecutable(["1.0.0"]))
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifyInstallerVersion(file, update("1.1.0"))).resolves.toBeUndefined()
+  })
+
+  // as in verifySignature, which reads the same config first
+  test("rejects the update when the update config cannot be read", async ({ expect, tmpDir }) => {
+    const updater = await createNsisUpdater("1.0.0")
+    const config = path.join(await tmpDir.getTempDir({ prefix: "installer-version-config" }), "app-update.yml")
+    await fsExtra.outputFile(config, "provider: [generic")
+    updater.updateConfigPath = config
+    const file = await writeExecutable(tmpDir, windowsExecutable(["1.1.0"]))
+    // @ts-expect-error accessing a private method
+    const result: Promise<void> = updater.verifyInstallerVersion(file, update("1.1.0"))
+    await expect(result).rejects.toBeInstanceOf(Error)
+    await expect(result).rejects.not.toMatchObject({ code: "ERR_UPDATER_INSTALLER_VERSION_MISMATCH" })
+  })
+
+  describe("download", () => {
+    const servers: Array<Server> = []
+    afterEach(() => {
+      for (const server of servers.splice(0)) {
+        server.close()
+      }
+    })
+
+    async function checkForUpdates(tmpDir: TmpDir, installer: Buffer) {
+      const root = await tmpDir.getTempDir({ prefix: "installer-version-server" })
+      await fsExtra.outputFile(path.join(root, "TestApp-Setup-1.1.0.exe"), installer)
+      const sha512 = createHash("sha512").update(installer).digest("base64")
+      await fsExtra.outputFile(
+        path.join(root, "latest.yml"),
+        serializeToYaml({ version: "1.1.0", files: [{ url: "TestApp-Setup-1.1.0.exe", sha512, size: installer.length }], releaseDate: "2024-01-01T00:00:00.000Z" })
+      )
+      const { server, port } = await createLocalServer(root)
+      servers.push(server)
+      const updater = await createNsisUpdater("1.0.0")
+      updater.updateConfigPath = await signedConfig(`http://127.0.0.1:${port}`)
+      updater.verifyUpdateFileAuthenticodeSignature = () => Promise.resolve({ response: "success" })
+      const events = trackEvents(updater)
+      return { events, result: await updater.checkForUpdates() }
+    }
+
+    test("a signed installer of an older release served under a newer version is rejected", async ({ expect, tmpDir }) => {
+      const { events, result } = await checkForUpdates(tmpDir, windowsExecutable(["1.0.0"]))
+      await expect(result?.downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_INSTALLER_VERSION_MISMATCH" })
+      expect(events).toEqual(["checking-for-update", "update-available", "error"])
+    })
+
+    test("the signed installer of the update version is downloaded", async ({ expect, tmpDir }) => {
+      const { events, result } = await checkForUpdates(tmpDir, windowsExecutable(["1.1.0"]))
+      await expect(result?.downloadPromise).resolves.toBeDefined()
+      expect(events).toEqual(["checking-for-update", "update-available", "update-downloaded"])
+    })
+
+    // the cache is matched by the installer's sha512 only, so a manifest of a newer version could otherwise reuse a cached older installer
+    test("a cached installer of an older release is not reused for a newer version", async ({ expect, tmpDir }) => {
+      const root = await tmpDir.getTempDir({ prefix: "installer-version-server" })
+      const installer = windowsExecutable(["1.1.0"])
+      const sha512 = createHash("sha512").update(installer).digest("base64")
+      const writeManifest = (version: string) =>
+        fsExtra.outputFile(
+          path.join(root, "latest.yml"),
+          serializeToYaml({ version, files: [{ url: "TestApp-Setup-1.1.0.exe", sha512, size: installer.length }], releaseDate: "2024-01-01T00:00:00.000Z" })
+        )
+      await fsExtra.outputFile(path.join(root, "TestApp-Setup-1.1.0.exe"), installer)
+      await writeManifest("1.1.0")
+      const requests: Array<string> = []
+      const { server, port } = await createLocalServer(root, "127.0.0.1", url => requests.push(url))
+      servers.push(server)
+      const app = await createTestAppAdapter("1.0.0")
+      const config = await signedConfig(`http://127.0.0.1:${port}`)
+      const launch = () => {
+        const updater = new NsisUpdater(null, app)
+        tuneTestUpdater(updater)
+        updater.updateConfigPath = config
+        updater.verifyUpdateFileAuthenticodeSignature = () => Promise.resolve({ response: "success" })
+        return updater
+      }
+
+      await expect((await launch().checkForUpdates())?.downloadPromise).resolves.toBeDefined()
+      // a later launch: the feed announces 1.2.0 with the checksum of the cached 1.1.0 installer
+      await writeManifest("1.2.0")
+      requests.length = 0
+      const updater = launch()
+      const events = trackEvents(updater)
+      await expect((await updater.checkForUpdates())?.downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_INSTALLER_VERSION_MISMATCH" })
+      expect(events).toEqual(["checking-for-update", "update-available", "error"])
+      expect(requests.filter(url => url.includes(".exe"))).toEqual([])
+    })
+
+    // a cached installer is verified as a downloaded one is: its signature first, then its ProductVersion. Each case fails when the reuse
+    // runs only one of the two checks
+    test.for<[string, VerifyUpdateFileResult, string, boolean]>([
+      ["accepted", { response: "success" }, "ERR_UPDATER_INSTALLER_VERSION_MISMATCH", true],
+      ["rejected", { response: "failure", message: "signed by someone else" }, "ERR_UPDATER_INVALID_SIGNATURE", false],
+    ])("a cached installer whose signature is %s is verified before its ProductVersion when it is reused", async ([, signature, code, isVersionChecked], { expect, tmpDir }) => {
+      const root = await tmpDir.getTempDir({ prefix: "installer-version-server" })
+      const installer = windowsExecutable(["1.1.0"])
+      const sha512 = createHash("sha512").update(installer).digest("base64")
+      const writeManifest = (version: string) =>
+        fsExtra.outputFile(
+          path.join(root, "latest.yml"),
+          serializeToYaml({ version, files: [{ url: "TestApp-Setup-1.1.0.exe", sha512, size: installer.length }], releaseDate: "2024-01-01T00:00:00.000Z" })
+        )
+      await fsExtra.outputFile(path.join(root, "TestApp-Setup-1.1.0.exe"), installer)
+      await writeManifest("1.1.0")
+      const requests: Array<string> = []
+      const { server, port } = await createLocalServer(root, "127.0.0.1", url => requests.push(url))
+      servers.push(server)
+      const app = await createTestAppAdapter("1.0.0")
+      const config = await signedConfig(`http://127.0.0.1:${port}`)
+      const launch = (verify: VerifyUpdateFileAuthenticodeSignature) => {
+        const updater = new NsisUpdater(null, app)
+        tuneTestUpdater(updater)
+        updater.updateConfigPath = config
+        updater.verifyUpdateFileAuthenticodeSignature = verify
+        return updater
+      }
+
+      const cached = await (await launch(() => Promise.resolve({ response: "success" })).checkForUpdates())?.downloadPromise
+      // a later launch: the feed announces 1.2.0 with the checksum of the cached 1.1.0 installer
+      await writeManifest("1.2.0")
+      requests.length = 0
+      const verify = vi.fn<VerifyUpdateFileAuthenticodeSignature>(() => Promise.resolve(signature))
+      const updater = launch(verify)
+      const verifyInstallerVersion = vi.spyOn(updater as unknown as { verifyInstallerVersion: (installerPath: string, update: unknown) => Promise<void> }, "verifyInstallerVersion")
+
+      await expect((await updater.checkForUpdates())?.downloadPromise).rejects.toMatchObject({ code })
+      expect(verify).toHaveBeenCalledTimes(1)
+      expect(verify).toHaveBeenCalledWith(["CN=Test"], cached?.updateFile)
+      expect(verifyInstallerVersion).toHaveBeenCalledTimes(isVersionChecked ? 1 : 0)
+      if (isVersionChecked) {
+        expect(verifyInstallerVersion).toHaveBeenCalledWith(cached?.updateFile, expect.objectContaining({ info: expect.objectContaining({ version: "1.2.0" }) }))
+        expect(verify.mock.invocationCallOrder[0]).toBeLessThan(verifyInstallerVersion.mock.invocationCallOrder[0])
+      }
+      // reused, not downloaded again, and removed once rejected
+      expect(requests.filter(url => url.includes(".exe"))).toEqual([])
+      expect(await fsExtra.pathExists(cached?.updateFile ?? "")).toBe(false)
+    })
+
+    // a later update check replaces the update the updater reports, not the one the downloaded installer belongs to: the signature check
+    // before the async install applies the settings of the downloaded update's own manifest
+    test("an installer is verified before the async install under the manifest it was downloaded with, not a later one", async ({ expect, tmpDir }) => {
+      const root = await tmpDir.getTempDir({ prefix: "installer-version-server" })
+      const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+      const writeManifest = (info: UpdateInfo) =>
+        fsExtra.outputFile(path.join(root, "latest.yml"), serializeToYaml({ ...info, signature: signUpdateManifest(info, privateKeyPem) }))
+      const installer = windowsExecutable(["1.1.0"])
+      await fsExtra.outputFile(path.join(root, "TestApp-Setup-1.1.0.exe"), installer)
+      const file = { url: "TestApp-Setup-1.1.0.exe", sha512: createHash("sha512").update(installer).digest("base64"), size: installer.length }
+      // the signed manifest of 1.1.0 allows its catalog-signed installer
+      await writeManifest({
+        version: "1.1.0",
+        files: [file],
+        path: file.url,
+        sha512: file.sha512,
+        releaseDate: "2024-01-01T00:00:00.000Z",
+        allowCatalogSignature: true,
+      } as UpdateInfo)
+      const { server, port } = await createLocalServer(root)
+      servers.push(server)
+      const updater = await createNsisUpdater("1.0.0")
+      updater.updateConfigPath = await signedConfig(`http://127.0.0.1:${port}`)
+      updater.updateManifestPublicKey = publicKeyPem
+      // a catalog-signed installer: accepted only where the update it is verified for allows a catalog signature
+      const verifySignature = vi
+        .spyOn(updater as unknown as { verifySignature: (file: string, update: UpdateInfoAndProvider | null) => Promise<VerifyUpdateFileResult> }, "verifySignature")
+        .mockImplementation((_file, update) =>
+          Promise.resolve<VerifyUpdateFileResult>(
+            resolveCatalogSignatureOptions(updater.allowCatalogSignature, update, console).allowCatalogSignature === true
+              ? { response: "success" }
+              : { response: "failure", message: "catalog signature rejected" }
+          )
+        )
+      const errors: Array<Error> = []
+      updater.on("error", error => errors.push(error))
+      const downloaded = await (await updater.checkForUpdates())?.downloadPromise
+
+      // a later check finds 1.2.0, whose manifest does not allow a catalog signature, and does not download it
+      await writeManifest({
+        version: "1.2.0",
+        files: [{ ...file, url: "TestApp-Setup-1.2.0.exe", sha512: "c2hhNTEy" }],
+        path: "",
+        sha512: "",
+        releaseDate: "2024-02-01T00:00:00.000Z",
+      })
+      updater.autoDownload = false
+      expect((await updater.checkForUpdates())?.updateInfo.version).toBe("1.2.0")
+      const spawnLog = vi.spyOn(updater as unknown as { spawnLog: () => Promise<boolean> }, "spawnLog").mockResolvedValue(true)
+
+      await expect(updater.installAsync(true, false)).resolves.toBe(true)
+
+      expect(verifySignature).toHaveBeenLastCalledWith(downloaded?.updateFile, expect.objectContaining({ info: expect.objectContaining({ version: "1.1.0" }) }))
+      expect(spawnLog).toHaveBeenCalledWith(downloaded?.updateFile, ["--updated", "/S"])
+      expect(errors).toEqual([])
+    })
+
+    // the pending installer is matched to the latest update info by sha512 only, so a manifest of a newer version could otherwise install it
+    test("a pending installer is not installed on the next launch when the manifest announces it under a newer version", async ({ expect, tmpDir }) => {
+      const root = await tmpDir.getTempDir({ prefix: "installer-version-server" })
+      const installer = windowsExecutable(["1.1.0"])
+      const sha512 = createHash("sha512").update(installer).digest("base64")
+      const writeManifest = (version: string) =>
+        fsExtra.outputFile(
+          path.join(root, "latest.yml"),
+          serializeToYaml({ version, files: [{ url: "TestApp-Setup-1.1.0.exe", sha512, size: installer.length }], releaseDate: "2024-01-01T00:00:00.000Z" })
+        )
+      await fsExtra.outputFile(path.join(root, "TestApp-Setup-1.1.0.exe"), installer)
+      await writeManifest("1.1.0")
+      const { server, port } = await createLocalServer(root)
+      servers.push(server)
+      const app = await createTestAppAdapter("1.0.0")
+      const config = await signedConfig(`http://127.0.0.1:${port}`)
+      const launch = () => {
+        const updater = new NsisUpdater(null, app)
+        tuneTestUpdater(updater)
+        // the test installs the pending update itself, not the automatic install at launch
+        updater.autoInstallEvent = "manual"
+        updater.updateConfigPath = config
+        updater.verifyUpdateFileAuthenticodeSignature = () => Promise.resolve({ response: "success" })
+        return updater
+      }
+
+      const lastLaunch = launch()
+      await expect((await lastLaunch.checkForUpdates())?.downloadPromise).resolves.toBeDefined()
+      lastLaunch.quitAndInstall({ isSilent: true, isForceRunAfter: true, waitUntilNextLaunch: true })
+      // the next launch: the feed announces 1.2.0 with the checksum of the pending 1.1.0 installer
+      await writeManifest("1.2.0")
+      const updater = launch()
+      const doInstall = vi.spyOn(updater as any, "doInstall").mockReturnValue(true)
+      const doInstallAsync = vi.spyOn(updater as any, "doInstallAsync").mockResolvedValue(true)
+      const errors: Array<Error> = []
+      updater.on("error", error => errors.push(error))
+      // @ts-expect-error accessing a private method
+      expect(await updater.isPendingInstallMarked()).toBe(true)
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(doInstallAsync).not.toHaveBeenCalled()
+      expect(errors).toEqual([
+        expect.objectContaining({
+          code: "ERR_UPDATER_INSTALLER_VERSION_MISMATCH",
+          message: expect.stringContaining('The installer of version 1.2.0 is rejected: its ProductVersion is "1.1.0"'),
+        }),
+      ])
+      // the pending update is cleared, not retried on every launch
+      // @ts-expect-error accessing a private method
+      expect(await updater.isPendingInstallMarked()).toBe(false)
+    })
+  })
+})

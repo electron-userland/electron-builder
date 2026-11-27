@@ -58,6 +58,13 @@ function encodeField(value: unknown): string {
  * `latest.yml` without re-signing. The `isAdminRightsRequired` column of the `package:` records below is part of
  * the `EBUM1` wire format for historic reasons; electron-updater does not read it from `packages`.
  *
+ * `files[].blockMapSha512` is NOT signed either. electron-updater versions that verify `EBUM1` but predate the field leave it out of
+ * the payload they check, so a signature over a payload that carried it would fail there. The `EBUM1` file record therefore stays
+ * `url`, `sha512`, `size` and `blockMapUrl`, and a file record canonicalizes to the same bytes with or without it. electron-updater
+ * still checks the new block map against it when present; the block map only plans a differential download, whose result must match
+ * the signed `sha512`, so tampering with the field cannot change what gets installed — at worst the differential download fails and
+ * the update is downloaded in full.
+ *
  * Wire format (`EBUM1`): one record per line, `label:` followed by tab-separated fields, e.g.
  *
  *     EBUM1
@@ -96,7 +103,7 @@ export function canonicalizeForSigning(info: UpdateInfo): string {
 
   const files = (info.files ?? []).map(f => {
     const record = `file:${encodeField(f?.url)}\t${encodeField(f?.sha512)}\t${encodeField(f?.size)}`
-    // only emitted when present, so manifests without a blockMapUrl canonicalize exactly as before
+    // only emitted when present, so manifests without a blockMapUrl canonicalize exactly as before (blockMapSha512 is not signed, see above)
     return f?.blockMapUrl == null ? record : `${record}\t${encodeField(f.blockMapUrl)}`
   })
   // Sort so file ordering in the manifest cannot change the signed payload.

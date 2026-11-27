@@ -94,7 +94,7 @@ electron-builder sign-update-manifest dist/latest-linux.yml --rehash            
 
 A listed file whose `sha512` or `size` does not match its entry makes the command fail (files are looked for next to the manifest and in the build output folder, as `verify` looks for them); `--rehash` takes both from the file, for an artifact a release step changed after the build. See [Re-signing after a file changed](./features/signed-update-manifests.md#re-signing-after-a-file-changed).
 
-`--verify` runs the manifest check of [`verify`](#verify) on the given files only, against `updateManifest.publicKey`, and never loads a signing key; use `verify` for the whole build output.
+`--verify` runs the manifest check of [`verify`](#verify) on the given files only, against `updateManifest.publicKey`, and never loads a signing key; use `verify` for the whole build output. A manifest that uses YAML aliases fails `--verify`, as it fails `verify`; signing writes it without them (every alias expanded) and warns.
 
 See [Re-signing a published manifest](./features/signed-update-manifests.md#re-signing-a-published-manifest).
 
@@ -110,7 +110,7 @@ electron-builder migrate-schema --dry-run  # preview without writing (alias: -n)
 - Auto-detects your config: the `package.json` `build` key, or `electron-builder.{yml,yaml,json,json5,toml,js,cjs,mjs,ts}`. Pass `--config <path>` for a non-default file and `--project-dir <dir>` for the project root.
 - Rewrites **static** configs (`json`/`json5`/`yaml`/`package.json`) and **programmatic** ones (`.js`/`.ts`/`.cjs`/`.mjs`, via an AST codemod that preserves comments and formatting when the config reduces to a single object literal).
 - **TOML** is detected but not rewritten (the `toml` library is read-only) — it prints the required changes for you to apply. **JSON5** is re-serialized as JSON (comments are not preserved).
-- Prints a **warning** for anything it cannot rewrite mechanically (e.g. `squirrelWindows.customSquirrelVendorDir`) and an **advisory** for runtime defaults and behavior changes worth checking (an `nsis-web` target, a per-machine `nsis` / `nsisWeb` installer, a custom `win.sign.sign` hook without a publisher name, a `generic` publish `url` with a query string, macOS configs relying on the default entitlements, `forceCodeSigning`). Advisories never change the file. See [what it does and does not do](./migration/v27-breaking-changes.md#new-command-migrate-schema).
+- Prints a **warning** for anything it cannot rewrite mechanically (e.g. `squirrelWindows.customSquirrelVendorDir`) and an **advisory** for runtime defaults and behavior changes worth checking (an `nsis-web` target, a per-machine `nsis` / `nsisWeb` installer, a custom `win.sign.sign` hook without a publisher name, a `generic` publish `url` with a query string, a publish feed over plain `http` to a host that is not loopback ([update requests require https](./migration/v27-runtime-changes.md#update-requests-require-https)), macOS configs relying on the default entitlements, `forceCodeSigning`). Advisories never change the file. See [what it does and does not do](./migration/v27-breaking-changes.md#new-command-migrate-schema).
 
 :::note[Removed CLI flags]
 The v22-era `--em.build` / `--em.directories` flags were removed — pass build config inline with `-c` (e.g. `-c.directories.output=dist`). Implicit publishing was also removed: pass [`--publish`](./publish) explicitly.

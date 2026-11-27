@@ -1,0 +1,129 @@
+import { httpExecutor } from "builder-util"
+import { CancellationToken } from "builder-util-runtime"
+import { GitHubPublisher, GitlabPublisher, KeygenPublisher, PublishContext } from "electron-publish"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+
+// github.host, gitlab.host and keygen.host must be a host name with an optional port (gitlab.host may also have a path).
+
+const context: PublishContext = { cancellationToken: new CancellationToken(), progress: null }
+const TOKEN = "config-token"
+const MIGRATION_LINK = "See https://www.electron.build/docs/migration/v27-build-changes#publish-host-must-be-a-host-name"
+
+beforeEach(() => {
+  vi.stubEnv("GITHUB_RELEASE_TOKEN", undefined)
+  vi.stubEnv("KEYGEN_TOKEN", "keygen-token")
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+function github(host?: string) {
+  return new GitHubPublisher(context, { provider: "github", owner: "acme", repo: "app", host, token: TOKEN }, "1.0.0")
+}
+
+function gitlab(host?: string) {
+  return new GitlabPublisher(context, { provider: "gitlab", projectId: "acme/app", host, token: TOKEN }, "1.0.0")
+}
+
+function keygen(host?: string) {
+  return new KeygenPublisher(context, { provider: "keygen", account: "acme", product: "app", host }, "1.0.0")
+}
+
+function errorMessage(create: () => unknown): string {
+  try {
+    create()
+  } catch (e: any) {
+    return e.message
+  }
+  return ""
+}
+
+describe("GitHub", () => {
+  test.each([undefined, "github.com", "api.github.com", "ghe.example.com:8443", "[::1]:8443", "xn--bcher-kva.example", "ghe_internal:8080"])("host %s is accepted", host => {
+    expect(() => github(host)).not.toThrow()
+  })
+
+  test.each([
+    ["user info", "user:password@ghe.example.com"],
+    ["a path (accepted only for GitLab)", "ghe.example.com/api"],
+    ["a backslash", "ghe.example.com\\api"],
+    ["a query", "ghe.example.com?x=1"],
+    ["a fragment", "ghe.example.com#x"],
+    ["whitespace", " ghe.example.com"],
+    ["a percent-encoded character", "%61pi.github.com"],
+    ["a semicolon", "ghe.example.com;api.github.com"],
+    ["a non-ASCII character", "ａｐｉ.github.com"],
+  ])("a host with %s is rejected", (_label, host) => {
+    const message = errorMessage(() => github(host))
+    expect(message).toContain("github.host must be a host name")
+    expect(message).toContain(MIGRATION_LINK)
+    expect(message).not.toContain("password")
+  })
+})
+
+describe("GitLab", () => {
+  test.each([undefined, "gitlab.com", "gitlab.example.com:8443", "gitlab_ce:8080", "gitlab_ce:8080/gitlab"])("host %s is accepted", host => {
+    expect(() => gitlab(host)).not.toThrow()
+  })
+
+  test.each([
+    ["example.com/gitlab", "https://example.com/gitlab/api/v4"],
+    ["example.com:8443/group/gitlab", "https://example.com:8443/group/gitlab/api/v4"],
+    ["example.com/gitlab/", "https://example.com/gitlab/api/v4"],
+    ["gitlab_ce:8080", "https://gitlab_ce:8080/api/v4"],
+  ])("host %s is kept in the API URL without a trailing slash", (host, expected) => {
+    expect((gitlab(host) as any).baseApiPath).toBe(expected)
+  })
+
+  test.each([
+    ["user info", "user:password@example.com/gitlab"],
+    ["user info in the path", "example.com/user:password@evil.example.com"],
+    ["a query", "example.com/gitlab?x=1"],
+    ["a fragment", "example.com/gitlab#x"],
+    ["a backslash", "example.com\\gitlab"],
+    ["an empty path segment", "example.com//evil.example.com"],
+    ["a percent-encoded character", "example.com/%2e%2e"],
+    ["no host name", "/gitlab"],
+  ])("a host with %s is rejected", (_label, host) => {
+    const message = errorMessage(() => gitlab(host))
+    expect(message).toContain("gitlab.host must be a host name")
+    expect(message).toContain(MIGRATION_LINK)
+    expect(message).not.toContain("password")
+  })
+})
+
+describe("Keygen", () => {
+  test.each([undefined, "api.keygen.sh", "keygen.example.com:8443", "keygen_internal:8080"])("host %s is accepted", host => {
+    expect(() => keygen(host)).not.toThrow()
+  })
+
+  test.each([
+    ["user info", "api.keygen.sh@keygen.example.com"],
+    ["a path", "keygen.example.com/v1"],
+  ])("a host with %s is rejected", (_label, host) => {
+    const message = errorMessage(() => keygen(host))
+    expect(message).toContain("keygen.host must be a host name")
+    expect(message).toContain(MIGRATION_LINK)
+  })
+
+  test.each([
+    [undefined, "api.keygen.sh", undefined],
+    ["keygen.example.com", "keygen.example.com", undefined],
+    ["keygen.example.com:8443", "keygen.example.com", "8443"],
+    ["keygen_internal:8080", "keygen_internal", "8080"],
+    ["[::1]:8443", "::1", "8443"],
+  ])("host %s is sent as hostname and port", async (host, hostname, port) => {
+    const request = vi.spyOn(httpExecutor, "request").mockResolvedValue("{}")
+    const publisher = keygen(host)
+    await (publisher as any).getRelease()
+    await (publisher as any).createRelease()
+    await (publisher as any).createArtifact("release-id", "app.exe", 1)
+    await publisher.deleteRelease("release-id")
+    expect(request).toHaveBeenCalledTimes(4)
+    for (const [options] of request.mock.calls) {
+      expect(options.hostname).toBe(hostname)
+      expect(options.port).toBe(port)
+    }
+  })
+})

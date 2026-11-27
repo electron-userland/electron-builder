@@ -1,14 +1,50 @@
 import { CancellationToken, hashFile } from "builder-util-runtime"
 import type { UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
-import { mkdir, outputFile, pathExists, readJson } from "fs-extra"
+import { mkdir, outputFile, outputJson, pathExists, readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
-import { DebUpdater, NsisUpdater } from "electron-updater"
+import { BaseUpdater, DebUpdater, NsisUpdater } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
-import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
+import type { DownloadExecutorResult, ResolvedUpdateFileInfo } from "electron-updater/src/types"
 import { makeLogger } from "../helpers/updaterTestUtil"
+
+/** A `BaseUpdater` subclass of another package: it picks the file it downloads itself and has no `findUpdateFile` of its own. */
+class ThirdPartyUpdater extends BaseUpdater {
+  constructor(options: null, app: AppAdapter) {
+    super(options, app)
+  }
+
+  protected doDownloadUpdate(): Promise<DownloadExecutorResult> {
+    return Promise.reject(new Error("these tests do not download"))
+  }
+
+  protected doInstall(): boolean {
+    return true
+  }
+}
+
+/** A `BaseUpdater` subclass of another package that downloads the second file of the update info and says so in `findUpdateFile`. */
+class ThirdPartyUpdaterWithFileRule extends ThirdPartyUpdater {
+  protected findUpdateFile(files: Array<ResolvedUpdateFileInfo>): ResolvedUpdateFileInfo | null | undefined {
+    return files[1]
+  }
+}
+
+/** An app's `NsisUpdater` subclass that downloads the second file of the update info, not the .exe its parent picks, and keeps the parent's `findUpdateFile`. */
+class NsisUpdaterDownloadingAnotherFile extends NsisUpdater {
+  protected doDownloadUpdate(): Promise<DownloadExecutorResult> {
+    return Promise.reject(new Error("these tests do not download"))
+  }
+}
+
+/** The same `NsisUpdater` subclass that also overrides `findUpdateFile` to return the file it downloads. */
+class NsisUpdaterDownloadingAnotherFileWithFileRule extends NsisUpdaterDownloadingAnotherFile {
+  protected findUpdateFile(files: Array<ResolvedUpdateFileInfo>): ResolvedUpdateFileInfo | null | undefined {
+    return files[1]
+  }
+}
 
 function makeStubApp(overrides: Partial<AppAdapter> = {}): AppAdapter & { quitCalls: number; emitQuit: (exitCode: number) => void; emitSessionEnd: () => void } {
   let quitHandler: ((exitCode: number) => void) | null = null
@@ -147,10 +183,11 @@ describe("install on next launch", { concurrent: false }, () => {
 
   /**
    * Routes the async install path back to `doInstall`, which every assertion in this file spies on. Linux
-   * targets install asynchronously so their elevation dialog cannot block the main process; what those tests
-   * exercise is BaseUpdater's orchestration, and the Linux execution itself is covered by linuxUpdaterUnitTest.
+   * targets install asynchronously so their elevation dialog cannot block the main process, and NSIS waits for
+   * the installer to start; what those tests exercise is BaseUpdater's orchestration, and the execution itself
+   * is covered by linuxUpdaterUnitTest and nsisUpdaterTest.
    */
-  function delegateAsyncInstallToSyncInstall(updater: DebUpdater | NsisUpdater): void {
+  function delegateAsyncInstallToSyncInstall(updater: BaseUpdater): void {
     ;(updater as any).doInstallAsync = (options: unknown) => Promise.resolve((updater as any).doInstall(options))
   }
 
@@ -329,7 +366,7 @@ describe("install on next launch", { concurrent: false }, () => {
   })
 
   describe("BaseUpdater.installPendingUpdateIfAvailable", () => {
-    function createUpdater(latestUpdateInfo: UpdateInfo | null, UpdaterClass: new (options: null, app: AppAdapter) => DebUpdater | NsisUpdater = DebUpdater) {
+    function createUpdater(latestUpdateInfo: UpdateInfo | null, UpdaterClass: new (options: null, app: AppAdapter) => BaseUpdater = DebUpdater) {
       const app = makeStubApp()
       const updater = new UpdaterClass(null, app)
       updater.logger = log
@@ -347,9 +384,9 @@ describe("install on next launch", { concurrent: false }, () => {
         getUpdateInfoAndProvider.mockResolvedValue({
           info: latestUpdateInfo,
           provider: {
-            // like Provider.resolveFiles: web-installer updates carry the package of the current arch (undefined otherwise)
+            // like Provider.resolveFiles: the file entry as is, and web-installer updates carry the package of the current arch (undefined otherwise)
             resolveFiles: (info: UpdateInfo) =>
-              info.files.map(it => ({ ...makeResolvedFileInfo(it.sha512, it.url), packageInfo: (info as WindowsUpdateInfo).packages?.[process.arch] })),
+              info.files.map(it => ({ url: new URL(`https://example.com/${it.url}`), info: it, packageInfo: (info as WindowsUpdateInfo).packages?.[process.arch] })),
           },
         })
       }
@@ -452,6 +489,23 @@ describe("install on next launch", { concurrent: false }, () => {
       expect(errors.some(it => it.message.includes("unknown error"))).toBe(true)
     })
 
+    test("clears the pending update and reports the error when the launch-time signature re-verification throws", async () => {
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1", fileName: "TestApp-Setup.exe" })
+      const { updater, app, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
+      helper.markInstallOnNextLaunchSync(log)
+      // a packaged app whose update config file is missing, without autoUpdater.publisherName
+      ;(app as any).isPackaged = true
+      updater.updateConfigPath = "/nonexistent/dir/app-update.yml"
+      const errors: Error[] = []
+      updater.on("error", error => errors.push(error))
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(errors).toEqual([expect.objectContaining({ code: "ERR_UPDATER_NO_PUBLISHER_NAME" })])
+      expect(await helper.getPendingInstallInfo()).toBeNull()
+      expect(await pathExists(seeded.installerPath)).toBe(false)
+    })
+
     test("does not install when verifyUpdateFile rejects the pending installer", async () => {
       const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
       const { updater, doInstall } = createUpdater(seeded.updateInfo)
@@ -511,15 +565,21 @@ describe("install on next launch", { concurrent: false }, () => {
       expect(app.quitCalls).toBe(1)
     })
 
+    /** The update info of a per-machine build: its file entry sets `isAdminRightsRequired`. */
+    function perMachineUpdateInfo(updateInfo: UpdateInfo): UpdateInfo {
+      return { ...updateInfo, files: updateInfo.files.map(it => ({ ...it, isAdminRightsRequired: true })) }
+    }
+
     test("automatic startup path skips per-machine installs but explicit call installs them", async () => {
       const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
-      const { updater, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
+      const latestUpdateInfo = perMachineUpdateInfo(seeded.updateInfo)
+      const { updater, doInstall } = createUpdater(latestUpdateInfo, NsisUpdater)
       vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
       // simulate a per-machine install record
       await helper.setDownloadedFile(
         seeded.installerPath,
         null,
-        seeded.updateInfo,
+        latestUpdateInfo,
         { ...seeded.fileInfo, info: { ...seeded.fileInfo.info, isAdminRightsRequired: true } },
         "TestApp-Setup.deb",
         true
@@ -535,6 +595,105 @@ describe("install on next launch", { concurrent: false }, () => {
       await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
       expect(doInstall).toHaveBeenCalledTimes(1)
       expect(doInstall).toHaveBeenCalledWith(expect.objectContaining({ isAdminRightsRequired: true }))
+    })
+
+    test("takes isAdminRightsRequired from the latest update info when the pending cache says the install is per-user", async () => {
+      // the pending cache records a per-user install, the latest update info a per-machine one
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
+      helper.markInstallOnNextLaunchSync(log)
+      expect(await helper.getPendingInstallInfo()).toMatchObject({ isAdminRightsRequired: false })
+      helper = new DownloadedUpdateHelper(cacheDir, log)
+      const { updater, doInstall } = createUpdater(perMachineUpdateInfo(seeded.updateInfo), NsisUpdater)
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
+
+      await expect((updater as any).installPendingUpdate(true)).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(await helper.getPendingInstallInfo()).toMatchObject({ installOnNextLaunch: true })
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
+      expect(doInstall).toHaveBeenCalledTimes(1)
+      expect(doInstall).toHaveBeenCalledWith(expect.objectContaining({ isAdminRightsRequired: true }))
+    })
+
+    test("the automatic install at launch skips an update the pending cache marks per-machine without requesting the update info", async () => {
+      await seedDownloadedUpdate(helper, { version: "1.0.1" })
+      helper.markInstallOnNextLaunchSync(log)
+      const infoFile = path.join(helper.cacheDirForPendingUpdate, "update-info.json")
+      await outputJson(infoFile, { ...(await readJson(infoFile)), isAdminRightsRequired: true })
+      // without update info, a request for it fails the install
+      const { updater, doInstall, getUpdateInfoAndProvider } = createUpdater(null, NsisUpdater)
+
+      await expect((updater as any).installPendingUpdate(true)).resolves.toBe(false)
+      expect(getUpdateInfoAndProvider).not.toHaveBeenCalled()
+      expect(doInstall).not.toHaveBeenCalled()
+      // the marker stays, so that installPendingUpdateIfAvailable() can still install it
+      expect(await helper.getPendingInstallInfo()).toMatchObject({ installOnNextLaunch: true })
+    })
+
+    test("takes isAdminRightsRequired from the latest update info when the pending cache says the install is per-machine", async () => {
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
+      helper.markInstallOnNextLaunchSync(log)
+      // the pending cache is edited to ask for elevate.exe, which the latest update info does not
+      const infoFile = path.join(helper.cacheDirForPendingUpdate, "update-info.json")
+      await outputJson(infoFile, { ...(await readJson(infoFile)), isAdminRightsRequired: true })
+      helper = new DownloadedUpdateHelper(cacheDir, log)
+      const { updater, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
+      expect(doInstall).toHaveBeenCalledTimes(1)
+      expect(doInstall).toHaveBeenCalledWith(expect.objectContaining({ isAdminRightsRequired: false }))
+    })
+
+    test("the pending cache cannot choose another file of the latest update info than the one the target installs", async () => {
+      // the pending cache holds the AppImage of the update, which a deb install would not download
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1", fileName: "TestApp.AppImage" })
+      helper.markInstallOnNextLaunchSync(log)
+      const latestUpdateInfo: UpdateInfo = { ...seeded.updateInfo, files: [{ url: "TestApp-Setup.deb", sha512: "sha512-of-the-deb" }, ...seeded.updateInfo.files] }
+      const { updater, doInstall } = createUpdater(latestUpdateInfo, DebUpdater)
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(await helper.getPendingInstallInfo()).toBeNull()
+    })
+
+    // each subclass downloaded the second file of the update info, not the .exe listed first
+    async function seedSecondFilePending(): Promise<UpdateInfo> {
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1", fileName: "TestApp-1.0.1.zip" })
+      helper.markInstallOnNextLaunchSync(log)
+      return { ...seeded.updateInfo, files: [{ url: "TestApp-Setup-1.0.1.exe", sha512: "sha512-of-the-exe" }, ...seeded.updateInfo.files] }
+    }
+
+    test("a BaseUpdater subclass without a findUpdateFile of its own does not install a pending file other than the first one, and clears the marker", async () => {
+      const { updater, doInstall } = createUpdater(await seedSecondFilePending(), ThirdPartyUpdater)
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(await helper.getPendingInstallInfo()).toBeNull()
+    })
+
+    test("a BaseUpdater subclass whose findUpdateFile returns the file it downloads installs the pending update", async () => {
+      const { updater, doInstall } = createUpdater(await seedSecondFilePending(), ThirdPartyUpdaterWithFileRule)
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
+      expect(doInstall).toHaveBeenCalledTimes(1)
+    })
+
+    test("an NsisUpdater subclass that only overrides doDownloadUpdate does not install a pending file its inherited findUpdateFile does not pick, and clears the marker", async () => {
+      const { updater, doInstall } = createUpdater(await seedSecondFilePending(), NsisUpdaterDownloadingAnotherFile)
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(await helper.getPendingInstallInfo()).toBeNull()
+    })
+
+    test("an NsisUpdater subclass that also overrides findUpdateFile to return the file it downloads installs the pending update", async () => {
+      const { updater, doInstall } = createUpdater(await seedSecondFilePending(), NsisUpdaterDownloadingAnotherFileWithFileRule)
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
+      expect(doInstall).toHaveBeenCalledTimes(1)
     })
 
     test("automatic startup path skips targets that install via an elevating package manager (deb) but explicit call installs them", async () => {
@@ -697,11 +856,14 @@ describe("install on next launch", { concurrent: false }, () => {
       const updater = new NsisUpdater(null, app)
       updater.logger = log
       const doInstall = vi.spyOn(updater as any, "doInstall").mockReturnValue(true)
+      delegateAsyncInstallToSyncInstall(updater)
       const getUpdateInfoAndProvider = vi.spyOn(updater as any, "getUpdateInfoAndProvider").mockResolvedValue({
         info: latestUpdateInfo,
         provider: { resolveFiles: (info: UpdateInfo) => info.files.map(it => makeResolvedFileInfo(it.sha512, it.url)) },
       })
       vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
+      // the signature check right before the install
+      vi.spyOn(updater as any, "verifySignature").mockResolvedValue({ response: "success" })
       return { updater, app, ready, whenReady, doInstall, getUpdateInfoAndProvider }
     }
 

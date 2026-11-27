@@ -5,6 +5,8 @@ import {
   getConfig,
   listedFileFolders,
   normalizeExplicitPublicKeys,
+  readUpdateInfo,
+  UPDATE_INFO_ALIASES_MESSAGE,
   updateManifestPlatform,
   verifyUpdateManifestContent,
 } from "app-builder-lib/internal"
@@ -85,6 +87,8 @@ export interface SignedUpdateManifest {
   readonly keyIds: Array<string>
   /** The listed files whose sha512 and size `rehash` took from the local file, by url. */
   readonly rehashed: Array<string>
+  /** Whether the manifest used YAML aliases, which electron-updater rejects once they expand past its limit: it is written with every alias expanded. */
+  readonly expandedYamlAliases: boolean
 }
 
 export interface VerifiedUpdateManifest {
@@ -322,21 +326,25 @@ class ManifestSigningSettings {
 
 async function resignUpdateManifests(files: Array<string>, settings: ManifestSigningSettings, rehash: boolean): Promise<Array<SignedUpdateManifest>> {
   // sign every file before writing any, so a manifest that cannot be signed leaves all of them untouched
-  const signed: Array<{ file: string; result: ReturnType<typeof resignUpdateManifest>; rehashed: Array<string> }> = []
+  const signed: Array<{ file: string; result: ReturnType<typeof resignUpdateManifest>; rehashed: Array<string>; expandedYamlAliases: boolean }> = []
   for (const file of files) {
     const keys = settings.requireSigningKeys(updateManifestPlatform(file), file)
     await requireRegularFile(file)
-    const { info, rehashed } = await checkListedFiles(parseUpdateManifestYaml(await readFile(file, "utf8"), file), file, settings.outputFolder(file), rehash)
-    signed.push({ file, result: resignUpdateManifest(info, keys, file), rehashed })
+    const content = await readFile(file, "utf8")
+    const { info, rehashed } = await checkListedFiles(parseUpdateManifestYaml(content, file), file, settings.outputFolder(file), rehash)
+    signed.push({ file, result: resignUpdateManifest(info, keys, file), rehashed, expandedYamlAliases: usesYamlAliases(content) })
   }
   for (const { file, result } of signed) {
     await writeManifestInPlace(file, result.content)
   }
 
-  return signed.map(({ file, result, rehashed }) => {
+  return signed.map(({ file, result, rehashed, expandedYamlAliases }) => {
     const keyIds = result.signatures.map(it => it.keyId)
+    if (expandedYamlAliases) {
+      log.warn({ file }, "the manifest used YAML aliases, which electron-updater rejects once they expand past its limit: it is written without them, every alias expanded")
+    }
     log.info({ file, version: result.info.version, keyIds, ...(rehashed.length > 0 ? { rehashed } : {}) }, "update manifest signed")
-    return { file, version: result.info.version, keyIds, rehashed }
+    return { file, version: result.info.version, keyIds, rehashed, expandedYamlAliases }
   })
 }
 
@@ -479,6 +487,15 @@ async function checkListedFiles(info: UpdateInfo, manifestFile: string, outDir: 
   return { info: updated as UpdateInfo, rehashed }
 }
 
+// the YAML aliases electron-builder verify fails update info for; YAML that is not valid or not update info is reported elsewhere
+function usesYamlAliases(content: string): boolean {
+  try {
+    return readUpdateInfo(content)?.hasAliases === true
+  } catch {
+    return false
+  }
+}
+
 function readVersion(content: string, file: string): string | null {
   try {
     const version = parseUpdateManifestYaml(content, file).version
@@ -489,7 +506,8 @@ function readVersion(content: string, file: string): string | null {
 }
 
 /**
- * Verifies each manifest with `verifyUpdateManifestContent`, the check `electron-builder verify` runs, and maps the outcome the same way:
+ * Verifies each manifest with `verifyUpdateManifestContent`, the check `electron-builder verify` runs, and maps the outcome the same way
+ * (a manifest with YAML aliases fails first, as `verify` fails it):
  * `updateManifest: false` is skipped, and a manifest no trusted key validates is skipped rather than failed when
  * `updateManifest.allowSigningKeyOutsideTrustList` marks the release as a deliberate cutover.
  */
@@ -499,6 +517,11 @@ async function verifyUpdateManifests(files: Array<string>, settings: ManifestSig
     const policy = settings.verificationPolicy(updateManifestPlatform(file), file)
     const content = await readFile(file, "utf8")
     const version = readVersion(content, file)
+    // electron-builder verify fails aliases whatever the manifest's signing settings
+    if (usesYamlAliases(content)) {
+      results.push({ file, version, status: "failed", reason: UPDATE_INFO_ALIASES_MESSAGE })
+      continue
+    }
     if (policy.optedOut) {
       results.push({ file, version, status: "skipped", reason: "updateManifest is false in the configuration, so the manifest is not signed" })
       continue

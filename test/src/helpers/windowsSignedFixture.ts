@@ -2,7 +2,7 @@ import { appendFile, copyFile, writeFile } from "fs/promises"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 import { vi } from "vitest"
-import { createSelfSignedCodeSigningIdentity } from "./selfSignedIdentity"
+import { createSelfSignedCodeSigningIdentity, SelfSignedIdentity } from "./selfSignedIdentity"
 
 // Real-certificate Windows signing fixture for e2e tests of the executable signature verifier.
 //
@@ -73,10 +73,16 @@ async function createFixture(): Promise<WindowsSignedFixture> {
   const pfxPath = path.join(dir, "verifier-test.pfx")
   await writeFile(pfxPath, Buffer.from(identity.p12Base64, "base64"))
 
-  // Install the PUBLIC certificate into LocalMachine\Root (self-signed, so Root accepts it) and echo
-  // "<thumbprint>|<subject>". X509Certificate2::new never prompts (unlike Get-PfxCertificate).
+  const { thumbprint, subject } = await installRootCertificate(pfxPath, "")
+  return { subject, commonName: FIXTURE_COMMON_NAME, thumbprint, pfxPath }
+}
+
+// Installs the PUBLIC certificate of a PFX into LocalMachine\Root (a self-signed one, so Root accepts it).
+// X509Certificate2::new never prompts (unlike Get-PfxCertificate).
+async function installRootCertificate(pfxPath: string, password: string): Promise<{ thumbprint: string; subject: string }> {
+  // echoes "<thumbprint>|<subject>"
   const out = await runPowerShell(
-    `$pfx = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new(${psQuote(pfxPath)}, '', 'Exportable'); ` +
+    `$pfx = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new(${psQuote(pfxPath)}, ${psQuote(password)}, 'Exportable'); ` +
       `$publicCert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($pfx.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert)); ` +
       `$store = [System.Security.Cryptography.X509Certificates.X509Store]::new([System.Security.Cryptography.X509Certificates.StoreName]::Root, [System.Security.Cryptography.X509Certificates.StoreLocation]::LocalMachine); ` +
       `$store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite); ` +
@@ -89,12 +95,54 @@ async function createFixture(): Promise<WindowsSignedFixture> {
   if (separatorIndex <= 0) {
     throw new Error(`unexpected certificate install output: ${out}`)
   }
-  return {
-    subject: out.substring(separatorIndex + 1).trim(),
-    commonName: FIXTURE_COMMON_NAME,
-    thumbprint: out.substring(0, separatorIndex).trim(),
-    pfxPath,
+  return { thumbprint: out.substring(0, separatorIndex).trim(), subject: out.substring(separatorIndex + 1).trim() }
+}
+
+// Removes the certificate with `thumbprint` from LocalMachine\Root, and fails when it is still there afterwards.
+async function removeRootCertificate(thumbprint: string): Promise<void> {
+  await runPowerShell(
+    `$store = [System.Security.Cryptography.X509Certificates.X509Store]::new([System.Security.Cryptography.X509Certificates.StoreName]::Root, [System.Security.Cryptography.X509Certificates.StoreLocation]::LocalMachine); ` +
+      `$store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite); ` +
+      `foreach ($cert in $store.Certificates.Find([System.Security.Cryptography.X509Certificates.X509FindType]::FindByThumbprint, ${psQuote(thumbprint)}, $false)) { $store.Remove($cert) }; ` +
+      `$left = $store.Certificates.Find([System.Security.Cryptography.X509Certificates.X509FindType]::FindByThumbprint, ${psQuote(thumbprint)}, $false).Count; ` +
+      `$store.Close(); ` +
+      `if ($left -ne 0) { throw ('the certificate ' + ${psQuote(thumbprint)} + ' is still in LocalMachine\\Root') }`,
+    60_000
+  )
+}
+
+/** A certificate that {@link trustSigningIdentityInMachineRoot} added to LocalMachine\Root. */
+export interface TrustedRootCertificate {
+  readonly thumbprint: string
+  /** Certificate Subject exactly as PowerShell/.NET reports it. */
+  readonly subject: string
+  /** Removes the certificate from LocalMachine\Root again; fails when it is still there afterwards. */
+  untrust(): Promise<void>
+}
+
+/**
+ * Adds the certificate of `identity` (getWindowsSigningIdentity(), which the blackbox builds are signed with) to LocalMachine\Root, so that
+ * the default verifier of electron-updater (Get-AuthenticodeSignature) reports their signature Valid. Null for a provided certificate
+ * (CSC_LINK / WIN_CSC_LINK, whose subject the tests do not know), off Windows, and in a session that is not elevated; throws when an elevated
+ * session cannot add it.
+ */
+export async function trustSigningIdentityInMachineRoot(identity: SelfSignedIdentity, tmpDir: TmpDir): Promise<TrustedRootCertificate | null> {
+  if (identity.commonName === "provided" || process.platform !== "win32") {
+    return null
   }
+  // only a session that is not elevated skips: any other failure to add the certificate fails the test
+  const isElevated = await runPowerShell(
+    "([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)",
+    60_000
+  )
+  if (isElevated.trim() !== "True") {
+    console.warn("cannot add the signing identity to LocalMachine\\Root: the session is not elevated")
+    return null
+  }
+  const pfxPath = path.join(await tmpDir.createTempDir({ prefix: "trusted-signing-identity" }), "identity.pfx")
+  await writeFile(pfxPath, Buffer.from(identity.p12Base64, "base64"))
+  const installed = await installRootCertificate(pfxPath, identity.password)
+  return { ...installed, untrust: () => removeRootCertificate(installed.thumbprint) }
 }
 
 /**
@@ -155,13 +203,7 @@ export async function cleanupWindowsSignedFixture(): Promise<void> {
   fixturePromise = undefined
   try {
     if (fixture != null) {
-      await runPowerShell(
-        `$store = [System.Security.Cryptography.X509Certificates.X509Store]::new([System.Security.Cryptography.X509Certificates.StoreName]::Root, [System.Security.Cryptography.X509Certificates.StoreLocation]::LocalMachine); ` +
-          `$store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite); ` +
-          `foreach ($cert in $store.Certificates.Find([System.Security.Cryptography.X509Certificates.X509FindType]::FindByThumbprint, ${psQuote(fixture.thumbprint)}, $false)) { $store.Remove($cert) }; ` +
-          `$store.Close()`,
-        60_000
-      )
+      await removeRootCertificate(fixture.thumbprint)
     }
   } catch (error: any) {
     console.warn(`failed to remove fixture certificate from LocalMachine\\Root: ${error.message ?? error}`)

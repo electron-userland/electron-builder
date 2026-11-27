@@ -397,15 +397,17 @@ export function spawnAndWriteWithOutput(command: string, args: Array<string>, da
       reject(err)
     })
 
-    childProcess.stdout!.on("data", (chunk: Buffer) => {
-      stdout += chunk.toString()
+    childProcess.stdout!.setEncoding("utf8")
+    childProcess.stdout!.on("data", (chunk: string) => {
+      stdout += chunk
       if (isDebugEnabled) {
         process.stdout.write(chunk)
       }
     })
 
-    childProcess.stderr!.on("data", (chunk: Buffer) => {
-      stderr += chunk.toString()
+    childProcess.stderr!.setEncoding("utf8")
+    childProcess.stderr!.on("data", (chunk: string) => {
+      stderr += chunk
       if (isDebugEnabled) {
         process.stderr.write(chunk)
       }
@@ -454,6 +456,7 @@ function handleProcess(event: string, childProcess: ChildProcess, command: strin
 
   let out = ""
   if (childProcess.stdout != null) {
+    childProcess.stdout.setEncoding("utf8")
     childProcess.stdout.on("data", (data: string) => {
       out += data
     })
@@ -461,6 +464,7 @@ function handleProcess(event: string, childProcess: ChildProcess, command: strin
 
   let errorOut = ""
   if (childProcess.stderr != null) {
+    childProcess.stderr.setEncoding("utf8")
     childProcess.stderr.on("data", (data: string) => {
       errorOut += data
     })

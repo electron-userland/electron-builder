@@ -14,6 +14,10 @@ export function mayBeUpdateInfo(file: string): boolean {
   return /\.ya?ml$/.test(file) && !NOT_UPDATE_INFO.has(path.basename(file))
 }
 
+/** Why `electron-builder verify` and `sign-update-manifest --verify` fail update info with YAML aliases ({@link readUpdateInfo}). */
+export const UPDATE_INFO_ALIASES_MESSAGE =
+  "uses YAML aliases, which electron-builder never writes and electron-updater rejects once they expand past its limit (ERR_UPDATER_INVALID_UPDATE_INFO): regenerate it without aliases"
+
 /**
  * Parses update info with js-yaml's `load`, as electron-updater's `parseUpdateInfo` does, and tells whether it uses YAML aliases (the nodes
  * that function's listener charges against its budget). Null when the YAML is not update info (a mapping with `version` and a `files`

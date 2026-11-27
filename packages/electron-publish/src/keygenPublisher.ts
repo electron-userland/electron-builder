@@ -5,6 +5,7 @@ import { getCompleteExtname } from "builder-util/internal"
 import { ClientRequest, RequestOptions } from "http"
 import { PublishContext } from "./index.js"
 import { HttpPublisher } from "./httpPublisher.js"
+import { parseConfiguredHost } from "./util.js"
 
 type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>
@@ -86,9 +87,8 @@ export class KeygenPublisher extends HttpPublisher {
   private readonly version: string
   private readonly basePath: string
 
-  get hostname() {
-    return this.info.host || this.defaultHostname
-  }
+  readonly hostname: string
+  private readonly port: string | undefined
 
   constructor(context: PublishContext, info: KeygenOptions, version: string) {
     super(context)
@@ -99,6 +99,10 @@ export class KeygenPublisher extends HttpPublisher {
     }
 
     this.info = info
+    // keygen.host may carry a port, which Node's request options take apart from the host name
+    const host = parseConfiguredHost(info.host || this.defaultHostname, "keygen.host")
+    this.hostname = host.hostname.startsWith("[") ? host.hostname.slice(1, -1) : host.hostname
+    this.port = host.port || undefined
     this.auth = `Bearer ${token.trim()}`
     this.version = version
     this.basePath = `/v1/accounts/${this.info.account}`
@@ -151,6 +155,7 @@ export class KeygenPublisher extends HttpPublisher {
   private async createArtifact(releaseId: any, fileName: string, dataLength: number): Promise<{ data?: KeygenArtifact; errors?: KeygenError[] }> {
     const upload: RequestOptions = {
       hostname: this.hostname,
+      port: this.port,
       path: `${this.basePath}/artifacts`,
       headers: {
         "Content-Type": "application/vnd.api+json",
@@ -211,6 +216,7 @@ export class KeygenPublisher extends HttpPublisher {
   private async getRelease(): Promise<{ data?: KeygenRelease; errors?: KeygenError[] }> {
     const req: RequestOptions = {
       hostname: this.hostname,
+      port: this.port,
       path: `${this.basePath}/releases/${this.version}?product=${this.info.product}`,
       headers: {
         Accept: "application/vnd.api+json",
@@ -225,6 +231,7 @@ export class KeygenPublisher extends HttpPublisher {
   private async createRelease(): Promise<{ data?: KeygenRelease; errors?: KeygenError[] }> {
     const req: RequestOptions = {
       hostname: this.hostname,
+      port: this.port,
       path: `${this.basePath}/releases`,
       headers: {
         "Content-Type": "application/vnd.api+json",
@@ -259,6 +266,7 @@ export class KeygenPublisher extends HttpPublisher {
   async deleteRelease(releaseId: string): Promise<void> {
     const req: RequestOptions = {
       hostname: this.hostname,
+      port: this.port,
       path: `${this.basePath}/releases/${releaseId}`,
       headers: {
         Accept: "application/vnd.api+json",

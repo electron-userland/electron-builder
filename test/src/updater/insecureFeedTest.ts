@@ -238,7 +238,7 @@ describe("allowInsecureFeed in a packaged app", () => {
   const ANNOUNCEMENT =
     "autoUpdater.allowInsecureFeed is true in a packaged app: its update requests and redirects may use plain http to any host, where anyone on the network path can tamper with them. " +
     "It is meant for development only: set `autoUpdater.allowInsecureFeed = !app.isPackaged` and serve the production feed over https. " +
-    "https://www.electron.build/docs/features/auto-update#allowinsecurefeed"
+    "https://www.electron.build/docs/migration/v27-runtime-changes#update-requests-require-https"
 
   async function checkTwice(tmpDir: TmpDir, configure: (updater: NsisUpdater) => void): Promise<Array<string>> {
     const updater = new NsisUpdater(null, new TestAppAdapter("1.0.0", await tmpDir.getTempDir({ prefix: "insecure-feed-app" })))

@@ -460,6 +460,17 @@
           "description": "Whether to automatically unpack executables files.",
           "type": "boolean"
         },
+        "stableLayout": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AsarStableLayoutOptions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Experimental. Keep every packed file of `app.asar` at the offset it had in a previous release, so that the\nasar header (which stores every file's absolute offset) only changes in the entries of the files that changed.\nOff when unset; see the `AsarStableLayoutOptions` docs for how files are placed."
+        },
         "unpack": {
           "anyOf": [
             {
@@ -480,6 +491,28 @@
       },
       "type": "object"
     },
+    "AsarStableLayoutOptions": {
+      "additionalProperties": false,
+      "description": "`asar.stableLayout`: lay `app.asar` out like the previous release's archive.\n\nBy default every file is packed right after the one before it, so adding, removing or growing one file\nshifts the offset of every later file and the asar header changes all over: a differential update then\nre-downloads most of the header even though the content blocks of the moved files are still found. With a\nstable layout a file that still fits its previous slot (its size plus the padding up to the next file) keeps its\noffset; a new file, or one that outgrew its slot, goes into a freed slot it fits or after the previous content, so\nit never shifts another file. Files are matched by path. When the unused space before the last kept file (freed\nslots, and slack left in a slot by a file that shrank) exceeds 10 % of the packed bytes the archive is laid out\nafresh (one update then pays for the whole header). Space after the last kept file is reused for appended files, so\ngrowing, shrinking or removing the last file does not count.\n\nEvery packed file starts at a multiple of `asar.contentAlignment` when that is set: a file only keeps an offset that\nis a multiple of it, so changing the alignment (or adopting it with a previous archive packed without it) moves\nevery misaligned file once, or lays the archive out afresh when that leaves too much unused.\n\nFile sizes, the header's entry order and per-file integrity are unchanged, and Electron's asar integrity is computed\nfrom the result. The layout is applied when electron-builder packs `app.asar`, so — like `contentAlignment` — it is\nlost when the archive is rebuilt afterwards (macOS universal builds with `mac.universal.mergeASARs`, `--prepackaged`).\nFiles that keep their offset ignore `asar.ordering`; it still orders the files that are placed afresh.\n\nMeasured with the v3 block map on a synthetic 25 MB asar with 1,962 files (`test/src/asarLayoutBenchTest.ts`): adding\n4 files cost 544 KB of differential download with the default layout and 27 KB with a stable layout plus\n`contentAlignment: 512`; over 10 releases that each grow, add, remove and edit a few files the mean update went\nfrom 567 KB to 84 KB, for 2.3 % more asar size (almost all of it the alignment).",
+      "properties": {
+        "growthMargin": {
+          "default": 0,
+          "description": "Share of each file's size reserved after it when it is placed afresh, so it can grow by that much in later\nreleases without moving. Between `0` and `1`. Rarely worth it: a file that outgrows its slot just moves without\nshifting any other file. In the benchmark above `0.02` saved 7 KB when 5 files grew, nothing over the 10-release\nchain, and cost 1.7 % more asar size. No margin is kept after the last file, since the archive ends with it.",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
+        "previous": {
+          "description": "Path to the `app.asar` of the previous release (any asar works: only its header is read), relative to the\nproject directory. `${arch}` and `${os}` are expanded, so each build can keep its own, e.g.\n`.cache/asar/${os}-${arch}/app.asar`. Keep it from the previous build, e.g. in a CI cache, outside the output\ndirectory: a path inside it is rejected, since the build overwrites it before it is read. When the file does not\nexist the archive is laid out afresh with the growth margins and a warning is logged — the first release of a\nstable layout. A file that is not a valid asar (a header offset past its end, overlapping files) fails the build.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "previous"
+      ],
+      "type": "object"
+    },
     "BitbucketOptions": {
       "additionalProperties": false,
       "description": "Bitbucket options.\nhttps://bitbucket.org/\nDefine `BITBUCKET_TOKEN` environment variable.\n\nBitbucket Cloud is [retiring app passwords](https://www.atlassian.com/blog/bitbucket/bitbucket-cloud-transitions-to-api-tokens-enhancing-security-with-app-password-deprecation) in favor of API tokens and access tokens. Authentication is selected by whether a `username` is provided:\n- With `username` — the token is sent via HTTP Basic auth. Use a Bitbucket username + [app password](https://bitbucket.org/account/settings/app-passwords/), or an Atlassian account email + [API token](https://support.atlassian.com/bitbucket-cloud/docs/using-api-tokens/).\n- Without `username` — the token is sent as a repository/project/workspace [access token](https://support.atlassian.com/bitbucket-cloud/docs/using-access-tokens/) via Bearer auth.\n\nFor the auto-updater on a private repository, pass the matching header to `autoUpdater.addAuthHeader(...)`:\n```typescript\n// access token (no username)\nautoUpdater.addAuthHeader(`Bearer ${token}`)\n// app password or API token (with username)\nautoUpdater.addAuthHeader(`Basic ${Buffer.from(`${username}:${token}`).toString(\"base64\")}`)\n```",
@@ -494,7 +527,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -619,7 +652,7 @@
       "properties": {
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -1198,23 +1231,22 @@
     },
     "DmgWindow": {
       "additionalProperties": false,
+      "description": "With a background image (the default), each unset value is derived from the image. With `backgroundColor`, the unset values of a set\n`window` use fixed defaults; without `window`, dmgbuild's own window defaults apply.",
       "properties": {
         "height": {
-          "description": "The height. Defaults to background image height or 380.",
+          "description": "The height. Defaults to the background image height (380 for the default background), or 300 with `backgroundColor`.",
           "type": "number"
         },
         "width": {
-          "description": "The width. Defaults to background image width or 540.",
+          "description": "The width. Defaults to the background image width (540 for the default background), or 540 with `backgroundColor`.",
           "type": "number"
         },
         "x": {
-          "default": 400,
-          "description": "The X position relative to left of the screen.",
+          "description": "The X position relative to left of the screen. Defaults to 400 with a background image, or 100 with `backgroundColor`.",
           "type": "number"
         },
         "y": {
-          "default": 100,
-          "description": "The Y position relative to bottom of the screen.",
+          "description": "The Y position relative to bottom of the screen. Defaults to (1440 - background image height) / 2, rounded, with a background image,\nor 400 with `backgroundColor`.",
           "type": "number"
         }
       },
@@ -2358,7 +2390,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -2470,7 +2502,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -2639,7 +2671,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -2790,7 +2822,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -5000,6 +5032,11 @@
           "description": "*assisted installer only.* Whether to allow user to change installation directory.",
           "type": "boolean"
         },
+        "allowUnelevatedPerMachineUpdate": {
+          "default": false,
+          "description": "*assisted installer only, with `perMachine` not set.* Let a silent update (`--updated`) of a per-machine installation run without a UAC\nprompt when the user already holds every access right the update uses. Off by default: the update elevates, as before.\n\nAn update removes and re-creates the installation folder, the app's `HKLM` registration and the all-users shortcuts, so this applies\nonly where an administrator granted standard users those rights: on the folder and its files, its parent folder, the\n`INSTALL_REGISTRY_KEY` and Uninstall keys and their parent keys (`HKLM\\Software`,\n`HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall`), and the Start Menu folder and Public Desktop. The installer and\nthe uninstaller check each right without changing anything, and elevate when one is missing, when a per-user installation exists too,\nand for an interactive install or uninstall.\n\nelectron-builder does not recommend granting these rights: an unelevated process could then change the `UninstallString` that the\nelevated uninstaller, and deployment tools running as SYSTEM, later execute. The option is for machines whose administrators already\ndid.\n\nAn update runs the uninstaller of the installed version, so the first update to a build with this option still elevates.\n\nNot checked: `HKLM\\Software\\Classes` (file associations and protocols), writes made by `customInstall` or `customUnInstall`, and\nshortcuts or a Start Menu folder that an earlier version created under another name. Without elevation, a write there that is\ndenied fails without an error, so leave this option off if the update needs one.",
+          "type": "boolean"
+        },
         "artifactName": {
           "description": "The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.",
           "type": [
@@ -5072,7 +5109,7 @@
         },
         "installerDebugLogging": {
           "default": false,
-          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). In your custom NSIS scripts, write to the log via `${LogText}`.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. From `toolsets.nsis` `\"2.0.4\"` (the\ndefault) on, each NSIS release publishes a log-enabled bundle next to the default one, and electron-builder downloads it when this\noption is `true` (the default bundle otherwise). Its stubs make the installer and uninstaller up to about 8 KB larger, and they\nwrite a log only once `LogSet on` runs, which this option adds. The older pinned bundles (`\"0.0.0\"`, `\"1.2.1\"`) have no\nlog-enabled variant, and the build fails with one of them. A custom `toolsets.nsis` bundle must be log-enabled itself.\nReplaces the v26 `customNsisBinary.debugLogging`.",
+          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). The installer logs from the install of the files on (once the previous version is uninstalled); the uninstaller logs\nfrom its start and leaves the open `install.log` in place when an update moves the installation directory aside. In your custom\nNSIS scripts, write to the log via `${LogText}`; in `customInit` / `preInit` nothing is logged yet.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. From `toolsets.nsis` `\"2.0.4\"` (the\ndefault) on, each NSIS release publishes a log-enabled bundle next to the default one, and electron-builder downloads it when this\noption is `true` (the default bundle otherwise). Its stubs make the installer and uninstaller up to about 8 KB larger, and they\nwrite a log only once `LogSet on` runs, which this option adds. The older pinned bundles (`\"0.0.0\"`, `\"1.2.1\"`) have no\nlog-enabled variant, and the build fails with one of them. A custom `toolsets.nsis` bundle must be log-enabled itself.\nReplaces the v26 `customNsisBinary.debugLogging`.",
           "type": "boolean"
         },
         "installerHeader": {
@@ -5347,6 +5384,11 @@
           "description": "*assisted installer only.* Whether to allow user to change installation directory.",
           "type": "boolean"
         },
+        "allowUnelevatedPerMachineUpdate": {
+          "default": false,
+          "description": "*assisted installer only, with `perMachine` not set.* Let a silent update (`--updated`) of a per-machine installation run without a UAC\nprompt when the user already holds every access right the update uses. Off by default: the update elevates, as before.\n\nAn update removes and re-creates the installation folder, the app's `HKLM` registration and the all-users shortcuts, so this applies\nonly where an administrator granted standard users those rights: on the folder and its files, its parent folder, the\n`INSTALL_REGISTRY_KEY` and Uninstall keys and their parent keys (`HKLM\\Software`,\n`HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall`), and the Start Menu folder and Public Desktop. The installer and\nthe uninstaller check each right without changing anything, and elevate when one is missing, when a per-user installation exists too,\nand for an interactive install or uninstall.\n\nelectron-builder does not recommend granting these rights: an unelevated process could then change the `UninstallString` that the\nelevated uninstaller, and deployment tools running as SYSTEM, later execute. The option is for machines whose administrators already\ndid.\n\nAn update runs the uninstaller of the installed version, so the first update to a build with this option still elevates.\n\nNot checked: `HKLM\\Software\\Classes` (file associations and protocols), writes made by `customInstall` or `customUnInstall`, and\nshortcuts or a Start Menu folder that an earlier version created under another name. Without elevation, a write there that is\ndenied fails without an error, so leave this option off if the update needs one.",
+          "type": "boolean"
+        },
         "allowUnverifiedAppPackage": {
           "default": false,
           "description": "Whether the web installer may install an app package that doesn't match any package built with it: a package passed via `--package-file`,\nor (when `appPackageUrl` is not set) the downloaded package. By default such a package aborts the installation.\n\nEnable only if you intentionally run one web installer with packages of other builds (e.g. a version-independent installer with `--package-file`).",
@@ -5432,7 +5474,7 @@
         },
         "installerDebugLogging": {
           "default": false,
-          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). In your custom NSIS scripts, write to the log via `${LogText}`.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. From `toolsets.nsis` `\"2.0.4\"` (the\ndefault) on, each NSIS release publishes a log-enabled bundle next to the default one, and electron-builder downloads it when this\noption is `true` (the default bundle otherwise). Its stubs make the installer and uninstaller up to about 8 KB larger, and they\nwrite a log only once `LogSet on` runs, which this option adds. The older pinned bundles (`\"0.0.0\"`, `\"1.2.1\"`) have no\nlog-enabled variant, and the build fails with one of them. A custom `toolsets.nsis` bundle must be log-enabled itself.\nReplaces the v26 `customNsisBinary.debugLogging`.",
+          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). The installer logs from the install of the files on (once the previous version is uninstalled); the uninstaller logs\nfrom its start and leaves the open `install.log` in place when an update moves the installation directory aside. In your custom\nNSIS scripts, write to the log via `${LogText}`; in `customInit` / `preInit` nothing is logged yet.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. From `toolsets.nsis` `\"2.0.4\"` (the\ndefault) on, each NSIS release publishes a log-enabled bundle next to the default one, and electron-builder downloads it when this\noption is `true` (the default bundle otherwise). Its stubs make the installer and uninstaller up to about 8 KB larger, and they\nwrite a log only once `LogSet on` runs, which this option adds. The older pinned bundles (`\"0.0.0\"`, `\"1.2.1\"`) have no\nlog-enabled variant, and the build fails with one of them. A custom `toolsets.nsis` bundle must be log-enabled itself.\nReplaces the v26 `customNsisBinary.debugLogging`.",
           "type": "boolean"
         },
         "installerHeader": {
@@ -6831,7 +6873,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -7458,7 +7500,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -8150,7 +8192,7 @@
               "type": "null"
             }
           ],
-          "description": "Environment variables injected into the snap's runtime environment.\nMerged with the electron-builder default `{ TMPDIR: \"$XDG_RUNTIME_DIR\" }`.\nUser-supplied values take precedence."
+          "description": "Environment variables injected into the snap's runtime environment (the app's `environment` in the snap YAML).\nMerged over the electron-builder defaults `PATH` (the snap's `bin`/`sbin` directories, then `$PATH`) and\n`SNAP_DESKTOP_RUNTIME` (`$SNAP/gnome-platform`); user-supplied values take precedence.\n`DISABLE_WAYLAND=1` is always added when native Wayland is disabled (see `allowNativeWayland`).\n\nThe snap's library path goes into the snap YAML as `ELECTRON_BUILDER_SNAP_LD_LIBRARY_PATH`, not `LD_LIBRARY_PATH`\n(snapd expands it as usual), and the snap's `command.sh` launcher exports it as `LD_LIBRARY_PATH` without empty\nentries, such as the one an unset `$SNAP_LIBRARY_PATH` or `$LD_LIBRARY_PATH` reference leaves, because the dynamic\nlinker searches the current directory for an empty entry. By default the library path is `$SNAP_LIBRARY_PATH`, the\nsnap's library directories, the caller's `$LD_LIBRARY_PATH`, then the snap's library directories again.\nSetting `LD_LIBRARY_PATH` here replaces that default library path, so include every directory the app needs.\n\nIgnored with `confinement: \"classic\"`, where no environment is written and the launcher does not set `LD_LIBRARY_PATH`."
         },
         "executableArgs": {
           "anyOf": [
@@ -8377,7 +8419,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -8878,7 +8920,7 @@
         },
         "maxUpdateInfoSize": {
           "default": 10485760,
-          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_HTTP_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
+          "description": "The largest channel file (`latest*.yml`) electron-updater reads, in bytes: it is read into memory and parsed before anything\nverifies it. A larger one fails the update check with `ERR_UPDATER_RESPONSE_TOO_LARGE`. Release feeds and provider API responses\n(release listings and lookups) are not limited. Written into `app-update.yml`, so installed apps use it; `autoUpdater.maxUpdateInfoSize`\noverrides it at runtime. A positive integer, or `0` for no limit.",
           "type": [
             "null",
             "number"
@@ -9835,7 +9877,7 @@
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"
@@ -9876,7 +9918,7 @@
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"
@@ -9940,7 +9982,7 @@
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"
@@ -9981,7 +10023,7 @@
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"
@@ -10058,7 +10100,7 @@
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the [RFC 3161](https://www.ietf.org/rfc/rfc3161.txt) timestamp server, used for\nSHA-256 and nested/appended signatures (signtool's `/tr` flag). Timestamping records *when*\nthe file was signed so the signature stays valid after the signing certificate expires.\nIgnored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"
@@ -10099,7 +10141,7 @@
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",
-          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE=true`.",
+          "description": "The URL of the legacy Authenticode timestamp server, used for SHA-1 signatures (signtool's\n`/t` flag). This is also the timestamp server used by `osslsigncode` (`-t`) when signing on\nmacOS/Linux. See [rfc3161TimeStampServer](#rfc3161TimeStampServer) for SHA-256 / nested\nsignatures. Ignored when the build runs with `ELECTRON_BUILDER_OFFLINE` set to `true` or `1`.",
           "type": [
             "null",
             "string"

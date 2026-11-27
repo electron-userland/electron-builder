@@ -4,6 +4,8 @@ export { _testingOnly, readCertInfo } from "./codeSign/certInfo.js"
 export { createKeychain, findIdentity, isSignAllowed, macSigningUnavailableError, removeKeychain } from "./codeSign/mac/macCodeSign.js"
 export type { Identity } from "./codeSign/mac/macCodeSign.js"
 export { verifyMacCodeSignature } from "./codeSign/mac/macSignatureVerifier.js"
+export { normalizeFileNamesToNfd } from "./codeSign/mac/unicodeFileNames.js"
+export type { NfdNormalizationResult } from "./codeSign/mac/unicodeFileNames.js"
 export { forceCodeSigningError, forceCodeSigningOverrideHint, VERIFICATION_FAILED_ERROR_CODE } from "./codeSign/forceCodeSigning.js"
 export { CustomWindowsSign, WindowsSignTaskConfiguration } from "./codeSign/win/windowsSignToolManager.js"
 export { Configuration, DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES, ToolsetConfig, ToolsetCustom } from "./configuration.js"
@@ -94,7 +96,14 @@ export {
 } from "./util/electronGet.js"
 export { checkUpdateManifestBeforeUpload, warnAboutUpdateFilesBeforeUpload } from "./publish/manifestUploadCheck.js"
 export { verifyBuildOutput } from "./util/buildOutputVerifier.js"
-export { compareListedFilesInOutput, listedFileFolders, updateManifestPlatform, verifyUpdateManifestContent } from "./publish/updateManifestVerifier.js"
+export {
+  compareListedFilesInOutput,
+  listedFileFolders,
+  readUpdateInfo,
+  UPDATE_INFO_ALIASES_MESSAGE,
+  updateManifestPlatform,
+  verifyUpdateManifestContent,
+} from "./publish/updateManifestVerifier.js"
 export type { UpdateManifestVerification } from "./publish/updateManifestVerifier.js"
 export type { VerificationResult, VerificationStatus, VerifyBuildOutputOptions } from "./util/buildOutputVerifier.js"
 export { buildSourceCandidates, convertIcon, getPngSize } from "./util/iconConverter.js"
