@@ -209,7 +209,7 @@ describe("differentialDownloadInstaller rejects unusable block maps", { concurre
     const expected = sha512(gzippedJson(v2BlockMap([700, 400], "another 2.0.0")))
     expect(await differentialDownloadInstaller({ blockMapSha512: expected })).toBe(true)
     expect(planned).toBe(false)
-    expectOneLineFallback(log, `does not match the blockMapSha512 of the update manifest (expected ${expected}, got ${sha512(servedNewBlockMap)})`)
+    expectOneLineFallback(log, `does not match the blockMapSha512 of the update manifest (expected ${JSON.stringify(expected)}, got ${sha512(servedNewBlockMap)})`)
     expect(await pathExists(path.join(cacheDir, "pending", "current.blockmap"))).toBe(false)
   })
 
@@ -217,6 +217,25 @@ describe("differentialDownloadInstaller rejects unusable block maps", { concurre
     expect(await differentialDownloadInstaller({ blockMapSha512: "" })).toBe(true)
     expect(planned).toBe(false)
     expectOneLineFallback(log, "does not match the blockMapSha512 of the update manifest")
+  })
+
+  // blockMapSha512 is not covered by the manifest signature, so the error (logged before the fallback) quotes it: a forged value
+  // cannot start a new log line or inject terminal escapes
+  test("an unsigned blockMapSha512 with control characters is quoted in the mismatch error", async () => {
+    updater._testOnlyOptions = { platform: "linux", isUseDifferentialDownload: true }
+    const expected = "abc\nCannot download differentially: forged\u001b[31mred\u001b[0m"
+    const error = await differentialDownloadInstaller({ blockMapSha512: expected }).then(
+      () => null,
+      (e: unknown) => e
+    )
+    expect(error).toBeInstanceOf(Error)
+    expect(error).toHaveProperty("code", "ERR_UPDATER_INVALID_BLOCKMAP")
+    const message = error instanceof Error ? error.message : ""
+    expect(message).toContain(`(expected ${JSON.stringify(expected)}, got ${sha512(servedNewBlockMap)})`)
+    expect(message).toContain(String.raw`"abc\nCannot download differentially: forged\u001b[31mred\u001b[0m"`)
+    expect(message).not.toContain("\n")
+    expect(message).not.toContain("\u001b")
+    expect(planned).toBe(false)
   })
 
   test("an empty block map does not pair with an empty or missing installer", async () => {
@@ -390,6 +409,6 @@ describe("blockMapSha512 of a v3 map fetched by Range requests", { concurrent: f
     // the Range requests, then one plain GET of the whole map
     expect(server.requests.filter(it => it == null)).toHaveLength(1)
     expect(log.warns.some(it => it.startsWith("Cannot fetch the changed parts of the block map") && it.includes("blockMapSha512"))).toBe(true)
-    expectOneLineFallback(log, `does not match the blockMapSha512 of the update manifest (expected ${expected}`)
+    expectOneLineFallback(log, `does not match the blockMapSha512 of the update manifest (expected ${JSON.stringify(expected)}`)
   })
 })

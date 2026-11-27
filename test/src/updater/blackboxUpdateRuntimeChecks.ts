@@ -414,7 +414,12 @@ export async function runNsisInstallerChecksTest(context: TestContext, toolsets:
       fromVersion: OLD_VERSION_NUMBER,
       toVersion: NEW_VERSION_NUMBER,
       env: fixtureEnv(VERIFIED_BY_STUB),
-      assertLaunch: stdout => expect(authenticodeStubCalls(stdout)).toEqual([{ publisherNames: [WIN_SIGNING_PUBLISHER_NAME] }]),
+      // verified when it is downloaded, and again by quitAndInstall right before the installer is started
+      assertLaunch: stdout =>
+        expect(authenticodeStubCalls(stdout), "verified on download and again before the install").toEqual([
+          { publisherNames: [WIN_SIGNING_PUBLISHER_NAME] },
+          { publisherNames: [WIN_SIGNING_PUBLISHER_NAME] },
+        ]),
     })
     await expectInstalledNsis(ctx)
   })
@@ -475,7 +480,8 @@ async function expectManualModeKeepsPendingUpdate(ctx: ScenarioContext, knobs: F
 
 /**
  * The install at launch of an update queued with waitUntilNextLaunch, in its modes (#10525) and with a forged version (#10601). Every
- * launch has VERIFIED_BY_STUB, so the pending installer is verified again at launch, ProductVersion included:
+ * launch has VERIFIED_BY_STUB, so the pending installer is verified again at launch, ProductVersion included, and its signature once more
+ * right before the installer is started:
  *   1. queued; 2. a pending-only launch (default autoInstallEvent "onQuit") against update info that announces another version for the
  *   installer rejects it and clears the pending update; 3. queued again; 4. "manual" leaves it alone; 5. the default installs it.
  */
@@ -503,7 +509,11 @@ export async function runNsisNextLaunchModesTest(context: TestContext, toolsets:
     // the quit timeout also ends the app that the installer starts again (--force-run), which inherits this env
     await launchInstalled(ctx, { ...VERIFIED_BY_STUB, pendingOnlyQuitAfterMs: 20_000 }, stdout => {
       expect(countOf(stdout, `Installing pending update ${NEW_VERSION_NUMBER} on launch`)).toBe(1)
-      expect(authenticodeStubCalls(stdout)).toEqual([{ publisherNames: [WIN_SIGNING_PUBLISHER_NAME] }])
+      // validated against the latest update info, and verified again right before the installer is started
+      expect(authenticodeStubCalls(stdout), "verified when validated and again before the install").toEqual([
+        { publisherNames: [WIN_SIGNING_PUBLISHER_NAME] },
+        { publisherNames: [WIN_SIGNING_PUBLISHER_NAME] },
+      ])
       expect(stdout).toMatch(/Executing: .*\\pending\\TestApp Setup\.exe with args: --updated,\/S,--force-run/i)
     })
     await pollUntilNewVersionInstalled(expect, { ...ctx, packageManagerToTest: ctx.packageManager })
