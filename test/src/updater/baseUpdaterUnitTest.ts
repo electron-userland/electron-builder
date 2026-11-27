@@ -1,7 +1,7 @@
 import * as path from "path"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { CancellationToken } from "electron-updater"
-import { AppImageUpdater, DebUpdater, type VerifyUpdateFile } from "electron-updater"
+import { AppImageUpdater, DebUpdater, NsisUpdater, PacmanUpdater, RpmUpdater, type BaseUpdater, type VerifyUpdateFile } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import type { InstallOptions } from "electron-updater/src/BaseUpdater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
@@ -470,5 +470,39 @@ describe("BaseUpdater verifyUpdateFile integration", () => {
 
     await expectVerifyUpdateFileFailure({ expect, downloadPromise, verifyUpdateFile: mock, observations, expectedErrorMessageSubstring: "nope" })
     expect(afterVerification).not.toHaveBeenCalled()
+  })
+})
+
+describe("doDownloadUpdate when the update info has no file for the target", () => {
+  /** NsisUpdater's own rule always picks a file (the first one when there is no .exe), so only a subclass's rule can find none. */
+  class NsisUpdaterWithoutFile extends NsisUpdater {
+    protected findUpdateFile(): null {
+      return null
+    }
+  }
+
+  const targets: Array<{ extension: string; UpdaterClass: new (options: null, app: AppAdapter) => BaseUpdater; urls: Array<string> }> = [
+    { extension: "AppImage", UpdaterClass: AppImageUpdater, urls: ["TestApp-2.0.0.deb", "TestApp-2.0.0.rpm", "TestApp-2.0.0.pacman"] },
+    { extension: "deb", UpdaterClass: DebUpdater, urls: ["TestApp-2.0.0.AppImage", "TestApp-2.0.0.rpm", "TestApp-2.0.0.pacman"] },
+    { extension: "rpm", UpdaterClass: RpmUpdater, urls: ["TestApp-2.0.0.AppImage", "TestApp-2.0.0.deb", "TestApp-2.0.0.pacman"] },
+    { extension: "pacman", UpdaterClass: PacmanUpdater, urls: ["TestApp-2.0.0.AppImage", "TestApp-2.0.0.deb", "TestApp-2.0.0.rpm"] },
+    { extension: "exe", UpdaterClass: NsisUpdaterWithoutFile, urls: ["TestApp-Setup-2.0.0.exe"] },
+  ]
+
+  it.each(targets)(".$extension: rejects with ERR_UPDATER_UPDATE_FILE_NOT_FOUND and downloads nothing", async ({ extension, UpdaterClass, urls }) => {
+    const updater = new UpdaterClass(null, stubApp)
+    updater.logger = null
+    const executeDownload = vi.spyOn(updater as any, "executeDownload").mockResolvedValue({ updateFile: "" })
+    const files = urls.map(url => ({ url: new URL(`https://example.com/${url}`), info: { url, sha512: `sha512-of-${url}`, size: 1024 } }))
+
+    await expect(
+      (updater as any).doDownloadUpdate({
+        updateInfoAndProvider: { info: { version: "2.0.0", files: files.map(it => it.info), path: "", sha512: "", releaseDate: "" }, provider: { resolveFiles: () => files } },
+        requestHeaders: {},
+        cancellationToken: new CancellationToken(),
+        disableDifferentialDownload: true,
+      })
+    ).rejects.toMatchObject({ code: "ERR_UPDATER_UPDATE_FILE_NOT_FOUND", message: `No .${extension} file in the files of update 2.0.0` })
+    expect(executeDownload).not.toHaveBeenCalled()
   })
 })

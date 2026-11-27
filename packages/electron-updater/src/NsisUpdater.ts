@@ -7,7 +7,7 @@ import { BaseUpdater, InstallOptions, WEB_INSTALLER_DISABLED_HINT } from "./Base
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
-import { DOWNLOAD_PROGRESS, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
+import { DOWNLOAD_PROGRESS, DownloadExecutorResult, verificationFailureMessage, ResolvedUpdateFileInfo } from "./types.js"
 import type { VerifyUpdateCodeSignature, VerifyUpdateFileAuthenticodeSignature, VerifyUpdateFileResult } from "./types.js"
 import { findFile, Provider } from "./providers/Provider.js"
 import fsExtra from "fs-extra"
@@ -221,10 +221,17 @@ export class NsisUpdater extends BaseUpdater {
     }
   }
 
+  protected findUpdateFile(files: Array<ResolvedUpdateFileInfo>): ResolvedUpdateFileInfo | null | undefined {
+    return findFile(files, "exe")
+  }
+
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "exe")!
+    const fileInfo = this.findUpdateFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info))
+    if (fileInfo == null) {
+      return Promise.reject(newError(`No .exe file in the files of update ${downloadUpdateOptions.updateInfoAndProvider.info.version}`, "ERR_UPDATER_UPDATE_FILE_NOT_FOUND"))
+    }
     const webInstallerDisabled = downloadUpdateOptions.disableWebInstaller ?? true
     // the app set disableWebInstaller to false (read with the options above), not the default of an install made by an nsis-web installer
     const webInstallerEnabledByApp = this.isWebInstallerEnabledByApp
