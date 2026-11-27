@@ -28,6 +28,24 @@ const CHROME_SANDBOX = "chrome-sandbox"
 // Launcher script name used when the app command cannot be expressed inline (see resolveSnapCommand).
 const SNAP_COMMAND_LAUNCHER = "command.sh"
 
+/**
+ * The `organize` of the app part: the configured mapping, plus every top-level entry of the app directory (in sorted order)
+ * that it does not map yet, moved under `app/`. The `excluded` entries are left where they are.
+ */
+export function computeAppPartOrganize(entries: ReadonlyArray<string>, configured: Record<string, string> | Nullish, excluded: ReadonlyArray<string>): Record<string, string> {
+  // Null-prototype map: entry names come from the filesystem, so a top-level file named
+  // "__proto__" / "constructor" / "toString" must not read inherited keys (which would make
+  // the membership check below skip it) or interact with Object.prototype on assignment.
+  const organize: Record<string, string> = Object.assign(Object.create(null), configured)
+  for (const entry of [...entries].sort()) {
+    if (!entry || excluded.includes(entry) || organize[entry]) {
+      continue
+    }
+    organize[entry] = `app/${entry}`
+  }
+  return organize
+}
+
 /** Snap build strategy for core24 — generates a native snapcraft.yaml and invokes the snapcraft CLI. */
 export class SnapCore24 extends SnapCore<SnapOptions24> {
   // App-level default plugs. browser-support is intentionally absent here; resolveCore24Plugs adds it (without
@@ -116,31 +134,11 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     try {
       const appPart = snap.parts[snap.name]
       if (appPart) {
-        const entries = (await readdir(appOutDir)).sort()
-        // Null-prototype map: entry names come from the filesystem, so a top-level file named
-        // "__proto__" / "constructor" / "toString" must not read inherited keys (which would make
-        // the membership check below skip it) or interact with Object.prototype on assignment.
-        const organize: Record<string, string> = Object.assign(Object.create(null), appPart.organize)
-        for (const entry of entries) {
-          if (!entry) {
-            continue
-          }
-          // Skip files no longer present in the staged app dir (e.g. removed chrome-sandbox) so
-          // snapcraft doesn't fail trying to organize a missing source.
-          if (this.removeChromeSandbox && entry === CHROME_SANDBOX) {
-            continue
-          }
-          // Never organize the launcher under app/. It must stay at the snap root ($SNAP/command.sh)
-          // to match apps.<name>.command. This matters when appOutDir === appDir, where readdir
-          // would otherwise pick up the launcher we just wrote.
-          if (entry === SNAP_COMMAND_LAUNCHER) {
-            continue
-          }
-          if (organize[entry]) {
-            continue
-          }
-          organize[entry] = `app/${entry}`
-        }
+        // Skip chrome-sandbox when it was removed from the staged app dir so snapcraft doesn't fail trying to organize a
+        // missing source. Never organize the launcher under app/: it must stay at the snap root ($SNAP/command.sh) to match
+        // apps.<name>.command, and readdir picks it up when appOutDir === appDir.
+        const excluded = this.removeChromeSandbox ? [SNAP_COMMAND_LAUNCHER, CHROME_SANDBOX] : [SNAP_COMMAND_LAUNCHER]
+        const organize = computeAppPartOrganize(await readdir(appOutDir), appPart.organize, excluded)
         appPart.organize = organize
 
         const updatedYaml = yaml.dump(snap, SNAPCRAFT_YAML_OPTIONS)

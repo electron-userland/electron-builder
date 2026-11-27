@@ -1,15 +1,17 @@
 import { outputFile, readFile } from "fs-extra"
 import * as path from "path"
 import * as which from "which"
-import { app, appThrows, assertPack, EXTENDED_TIMEOUT, snapTarget } from "../helpers/packTester"
+import { assertThat } from "../helpers/fileAssert"
+import { app, assertLinuxTargetConfig, EXTENDED_TIMEOUT, snapTarget } from "../helpers/packTester"
 // Inline so snapcraftTest.ts does NOT import from snapHeavy.e2e.ts — importing that file
 // causes all its describe() blocks to execute here, registering heavy tests twice.
 //
-// No snapcraft binary is needed: every test uses effectiveOptionComputed: () => true to skip
-// the actual build and only validates the generated snapcraft.yaml descriptor.
+// No snapcraft binary is needed: every test but the Multipass builds uses effectiveOptionComputed: () => true to skip
+// the actual build and only validates the generated snapcraft.yaml descriptor (assertLinuxTargetConfig).
+// Real snap builds are in snapHeavy.e2e.ts and snapTest.ts.
 const hasSnapInstalled = () => process.platform !== "win32"
 
-describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeout: EXTENDED_TIMEOUT }, () => {
+describe.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false }, () => {
   // ─── legacy cores (core18 / core20 / core22) ─────────────────────────────────
   //
   // Each iteration mirrors the test cases in snapTest.ts but uses the new
@@ -17,9 +19,9 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
   // deprecated flat `snap:` key.
 
   for (const core of ["core18", "core20", "core22"] as const) {
-    test(`default stagePackages (${core})`, async ({ expect }) => {
+    test(`default stagePackages (${core})`, async ({ expect, tmpDir }) => {
       for (const p of [["default"], ["default", "custom"], ["custom", "default"], ["foo1", "default", "foo2"]]) {
-        await assertPack(expect, "test-app-one", {
+        await assertLinuxTargetConfig(expect, tmpDir, {
           targets: snapTarget,
           config: {
             artifactName: "${productName}-${version}-${arch}.${ext}",
@@ -38,8 +40,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       }
     })
 
-    test(`classic confinement (${core})`, ({ expect }) =>
-      app(expect, {
+    test(`classic confinement (${core})`, ({ expect, tmpDir }) =>
+      assertLinuxTargetConfig(expect, tmpDir, {
         targets: snapTarget,
         config: {
           extraMetadata: { name: "cl-co-app" },
@@ -52,8 +54,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
         },
       }))
 
-    test(`buildPackages (${core})`, async ({ expect }) => {
-      await assertPack(expect, "test-app-one", {
+    test(`buildPackages (${core})`, async ({ expect, tmpDir }) => {
+      await assertLinuxTargetConfig(expect, tmpDir, {
         targets: snapTarget,
         config: {
           productName: "Sep",
@@ -67,12 +69,12 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       })
     })
 
-    test(`plugs option (${core})`, async ({ expect }) => {
+    test(`plugs option (${core})`, async ({ expect, tmpDir }) => {
       for (const p of [
         [{ "browser-sandbox": { interface: "browser-support", "allow-sandbox": true } }, "another-simple-plug-name"],
         { "browser-sandbox": { interface: "browser-support", "allow-sandbox": true }, "another-simple-plug-name": null },
       ]) {
-        await assertPack(expect, "test-app-one", {
+        await assertLinuxTargetConfig(expect, tmpDir, {
           targets: snapTarget,
           config: { snapcraft: { base: core, [core]: { plugs: p, useTemplateApp: false } } },
           effectiveOptionComputed: async ({ snap, args }) => {
@@ -85,12 +87,12 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       }
     })
 
-    test(`slots option (${core})`, async ({ expect }) => {
+    test(`slots option (${core})`, async ({ expect, tmpDir }) => {
       for (const slots of [
         ["foo", "bar"],
         [{ mpris: { interface: "mpris", name: "chromium" } }, "another-simple-slot-name"],
       ]) {
-        await assertPack(expect, "test-app-one", {
+        await assertLinuxTargetConfig(expect, tmpDir, {
           targets: snapTarget,
           config: {
             productName: "Sep",
@@ -104,8 +106,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       }
     })
 
-    test(`custom env (${core})`, ({ expect }) =>
-      app(expect, {
+    test(`custom env (${core})`, ({ expect, tmpDir }) =>
+      assertLinuxTargetConfig(expect, tmpDir, {
         targets: snapTarget,
         config: {
           productName: "Sep",
@@ -117,8 +119,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
         },
       }))
 
-    test(`custom after, no desktop (${core})`, ({ expect }) =>
-      app(expect, {
+    test(`custom after, no desktop (${core})`, ({ expect, tmpDir }) =>
+      assertLinuxTargetConfig(expect, tmpDir, {
         targets: snapTarget,
         config: {
           productName: "Sep",
@@ -130,8 +132,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
         },
       }))
 
-    test(`no desktop plugs (${core})`, ({ expect }) =>
-      app(expect, {
+    test(`no desktop plugs (${core})`, ({ expect, tmpDir }) =>
+      assertLinuxTargetConfig(expect, tmpDir, {
         targets: snapTarget,
         config: {
           productName: "Sep",
@@ -144,8 +146,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
         },
       }))
 
-    test(`auto start (${core})`, ({ expect }) =>
-      app(expect, {
+    test(`auto start (${core})`, ({ expect, tmpDir }) =>
+      assertLinuxTargetConfig(expect, tmpDir, {
         targets: snapTarget,
         config: {
           extraMetadata: { name: "sep" },
@@ -159,8 +161,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
         },
       }))
 
-    test(`compression option (${core})`, ({ expect }) =>
-      app(expect, {
+    test(`compression option (${core})`, ({ expect, tmpDir }) =>
+      assertLinuxTargetConfig(expect, tmpDir, {
         targets: snapTarget,
         config: {
           productName: "Sep",
@@ -174,8 +176,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
         },
       }))
 
-    test(`use template app (${core})`, ({ expect }) =>
-      app(expect, {
+    test(`use template app (${core})`, ({ expect, tmpDir }) =>
+      assertLinuxTargetConfig(expect, tmpDir, {
         targets: snapTarget,
         config: {
           snapcraft: { base: core, [core]: { useTemplateApp: true, compression: "xz" } },
@@ -197,8 +199,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
 
   // ─── core24 tests ────────────────────────────────────────────────────────────
 
-  test("core24 default (gnome extension)", ({ expect }) =>
-    app(expect, {
+  test("core24 default (gnome extension)", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         artifactName: "${productName}-${version}-${arch}.${ext}",
@@ -213,17 +215,20 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       },
     }))
 
-  test("core24 gnome extension throws in destructive-mode", ({ expect }) =>
-    appThrows(expect, {
-      targets: snapTarget,
-      config: {
-        productName: "Sep",
-        snapcraft: { base: "core24", core24: { useDestructiveMode: true, extensions: ["gnome"] } },
-      },
-    }))
+  test("core24 gnome extension throws in destructive-mode", ({ expect, tmpDir }) =>
+    assertThat(
+      expect,
+      assertLinuxTargetConfig(expect, tmpDir, {
+        targets: snapTarget,
+        config: {
+          productName: "Sep",
+          snapcraft: { base: "core24", core24: { useDestructiveMode: true, extensions: ["gnome"] } },
+        },
+      })
+    ).throws())
 
-  test("core24 no gnome extension", ({ expect }) =>
-    app(expect, {
+  test("core24 no gnome extension", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         productName: "Sep",
@@ -244,8 +249,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       },
     }))
 
-  test("core24 classic confinement omits plugs and layout", ({ expect }) =>
-    app(expect, {
+  test("core24 classic confinement omits plugs and layout", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: "cl-co-app" },
@@ -267,8 +272,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       },
     }))
 
-  test("core24 omits the app desktop mapping (single desktop entry)", ({ expect }) =>
-    app(expect, {
+  test("core24 omits the app desktop mapping (single desktop entry)", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: "sep", desktopName: "com.example.sep.desktop" },
@@ -283,9 +288,9 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       },
     }))
 
-  test("core24 wayland disabled", ({ expect }) => {
+  test("core24 wayland disabled", ({ expect, tmpDir }) => {
     const appName = "sep"
-    return app(expect, {
+    return assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: appName },
@@ -306,9 +311,9 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
     })
   })
 
-  test("core24 command always points at the launcher script and keeps it at the snap root", ({ expect }) => {
+  test("core24 command always points at the launcher script and keeps it at the snap root", ({ expect, tmpDir }) => {
     const appName = "sep"
-    return app(expect, {
+    return assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: appName },
@@ -327,9 +332,9 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
     })
   })
 
-  test("core24 removes chrome-sandbox when launching with --no-sandbox", ({ expect }) => {
+  test("core24 removes chrome-sandbox when launching with --no-sandbox", ({ expect, tmpDir }) => {
     const appName = "sep"
-    return app(expect, {
+    return assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: appName },
@@ -347,9 +352,9 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
     })
   })
 
-  test("core24 default plugs launch with --no-sandbox and drop chrome-sandbox", ({ expect }) => {
+  test("core24 default plugs launch with --no-sandbox and drop chrome-sandbox", ({ expect, tmpDir }) => {
     const appName = "sep"
-    return app(expect, {
+    return assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: appName },
@@ -369,9 +374,9 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
     })
   })
 
-  test("core24 keeps chrome-sandbox when plugs explicitly allow the browser sandbox", ({ expect }) => {
+  test("core24 keeps chrome-sandbox when plugs explicitly allow the browser sandbox", ({ expect, tmpDir }) => {
     const appName = "sep"
-    return app(expect, {
+    return assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: appName },
@@ -389,8 +394,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
     })
   })
 
-  test("core24 custom plugs with default expansion", ({ expect }) =>
-    app(expect, {
+  test("core24 custom plugs with default expansion", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         productName: "Sep",
@@ -414,8 +419,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       },
     }))
 
-  test("core24 useMultipass build mode", ({ expect }) =>
-    app(expect, {
+  test("core24 useMultipass build mode", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         productName: "Sep",
@@ -429,8 +434,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       },
     }))
 
-  test("core24 useLXD build mode", ({ expect }) =>
-    app(expect, {
+  test("core24 useLXD build mode", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         productName: "Sep",
@@ -444,8 +449,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       },
     }))
 
-  test("core24 remoteBuild build mode", ({ expect }) =>
-    app(expect, {
+  test("core24 remoteBuild build mode", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         productName: "Sep",
@@ -463,8 +468,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       },
     }))
 
-  test("core24 remoteBuild: buildFor array is forwarded correctly", ({ expect }) =>
-    app(expect, {
+  test("core24 remoteBuild: buildFor array is forwarded correctly", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         productName: "Sep",
@@ -479,10 +484,10 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       },
     }))
 
-  test("custom snap yamlPath pass-through", async ({ expect }) => {
-    await assertPack(
+  test("custom snap yamlPath pass-through", async ({ expect, tmpDir }) => {
+    await assertLinuxTargetConfig(
       expect,
-      "test-app-one",
+      tmpDir,
       {
         targets: snapTarget,
         config: {
@@ -533,8 +538,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
   // are coalesced into each core's options so they reach snapcraft.yaml and
   // the .desktop file without requiring duplication under core24/core18/etc.
 
-  test("core24: linux.description propagates to snap.description", ({ expect }) =>
-    app(expect, {
+  test("core24: linux.description propagates to snap.description", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: "sep" },
@@ -549,8 +554,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       },
     }))
 
-  test("core24: per-core description overrides linux.description", ({ expect }) =>
-    app(expect, {
+  test("core24: per-core description overrides linux.description", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: "sep" },
@@ -566,8 +571,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
     }))
 
   for (const core of ["core18", "core20", "core22"] as const) {
-    test(`${core}: linux.description propagates to snap.description`, ({ expect }) =>
-      app(expect, {
+    test(`${core}: linux.description propagates to snap.description`, ({ expect, tmpDir }) =>
+      assertLinuxTargetConfig(expect, tmpDir, {
         targets: snapTarget,
         config: {
           extraMetadata: { name: "sep" },
@@ -581,8 +586,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
         },
       }))
 
-    test(`${core}: per-core description overrides linux.description`, ({ expect }) =>
-      app(expect, {
+    test(`${core}: per-core description overrides linux.description`, ({ expect, tmpDir }) =>
+      assertLinuxTargetConfig(expect, tmpDir, {
         targets: snapTarget,
         config: {
           extraMetadata: { name: "sep" },
@@ -597,8 +602,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       }))
   }
 
-  test("core22: linux.category propagates to desktop Categories", ({ expect }) =>
-    app(expect, {
+  test("core22: linux.category propagates to desktop Categories", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: "sep" },
@@ -615,8 +620,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
 
   // ─── linux.compression → snap algorithm mapping ──────────────────────────────
 
-  test("core24: linux.compression 'store' maps to lzo", ({ expect }) =>
-    app(expect, {
+  test("core24: linux.compression 'store' maps to lzo", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: "sep" },
@@ -631,8 +636,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       },
     }))
 
-  test("core24: linux.compression 'maximum' maps to xz", ({ expect }) =>
-    app(expect, {
+  test("core24: linux.compression 'maximum' maps to xz", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: "sep" },
@@ -647,8 +652,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       },
     }))
 
-  test("core24: linux.compression 'normal' leaves compression unset", ({ expect }) =>
-    app(expect, {
+  test("core24: linux.compression 'normal' leaves compression unset", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: "sep" },
@@ -663,8 +668,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       },
     }))
 
-  test("core24: per-core compression overrides linux.compression mapping", ({ expect }) =>
-    app(expect, {
+  test("core24: per-core compression overrides linux.compression mapping", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: "sep" },
@@ -680,8 +685,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
     }))
 
   for (const core of ["core18", "core20", "core22"] as const) {
-    test(`${core}: linux.compression 'store' maps to lzo`, ({ expect }) =>
-      app(expect, {
+    test(`${core}: linux.compression 'store' maps to lzo`, ({ expect, tmpDir }) =>
+      assertLinuxTargetConfig(expect, tmpDir, {
         targets: snapTarget,
         config: {
           extraMetadata: { name: "sep" },
@@ -695,8 +700,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
         },
       }))
 
-    test(`${core}: linux.compression 'maximum' maps to xz`, ({ expect }) =>
-      app(expect, {
+    test(`${core}: linux.compression 'maximum' maps to xz`, ({ expect, tmpDir }) =>
+      assertLinuxTargetConfig(expect, tmpDir, {
         targets: snapTarget,
         config: {
           extraMetadata: { name: "sep" },
@@ -711,8 +716,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       }))
   }
 
-  test("core22: linux.compression 'normal' leaves compression unset", ({ expect }) =>
-    app(expect, {
+  test("core22: linux.compression 'normal' leaves compression unset", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: "sep" },
@@ -726,8 +731,8 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       },
     }))
 
-  test("core22: per-core compression overrides linux.compression mapping", ({ expect }) =>
-    app(expect, {
+  test("core22: per-core compression overrides linux.compression mapping", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(expect, tmpDir, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: "sep" },
@@ -741,10 +746,10 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       },
     }))
 
-  test("custom pass-through: linux.description is not injected", ({ expect }) =>
-    assertPack(
+  test("custom pass-through: linux.description is not injected", ({ expect, tmpDir }) =>
+    assertLinuxTargetConfig(
       expect,
-      "test-app-one",
+      tmpDir,
       {
         targets: snapTarget,
         config: {
@@ -792,7 +797,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
   // "core24 useLXD build mode" effectiveOptionComputed test above.
   const hasMultipassInstalled = () => which.sync("multipass", { nothrow: true }) != null
 
-  describe.skipIf(!hasMultipassInstalled())("core24 Multipass real build", { concurrent: false, timeout: EXTENDED_TIMEOUT }, () => {
+  describe.heavy.ifEnv(hasMultipassInstalled())("core24 Multipass real build", { concurrent: false, timeout: EXTENDED_TIMEOUT }, () => {
     test("core24 useMultipass full build", async ({ expect }) => {
       await app(expect, {
         targets: snapTarget,

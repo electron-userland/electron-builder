@@ -547,6 +547,35 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   )
 }
 
+/**
+ * `app` for the tests of what a Linux target computes (its `effectiveOptionComputed` options, warnings and errors) rather than what it
+ * packages: the app is assembled from the real Electron distribution, but the fixture has no dependencies to install and the tests stop
+ * the target before it runs the external tool (snapcraft, flatpak-builder) through `effectiveOptionComputed`. The artifacts are
+ * snapshotted as `assertPack` does.
+ */
+export async function assertLinuxTargetConfig(
+  expect: ExpectStatic,
+  tmpDir: TmpDir,
+  packagerOptions: PackagerOptions,
+  checkOptions: { readonly projectDirCreated?: (projectDir: string) => Promise<any> } = {}
+): Promise<void> {
+  const projectDir = await tmpDir.getTempDir({ prefix: "test_project" })
+  await copyDir(path.join(getFixtureDir(), "test-app-one"), projectDir)
+  await checkOptions.projectDirCreated?.(projectDir)
+
+  const packager = new Packager({
+    projectDir,
+    ...packagerOptions,
+    // unsigned update manifests, as assertPack sets them
+    config: { updateManifest: false, ...(packagerOptions.config as Configuration | undefined) },
+  })
+  const publishManager = new PublishManager(packager, { publish: "never" })
+  const artifacts = collectArtifacts(expect, packager)
+  await packager.build()
+  await publishManager.awaitTasks()
+  expect(await toArtifactSnapshot(packagerOptions.targets!, artifacts)).toMatchSnapshot()
+}
+
 function createPackedContext(outDir: string, packager: Packager, projectDir: string, tmpDir: TmpDir): PackedContext {
   const getAppPath = function (platform: Platform, arch?: Arch): string {
     return path.join(outDir, `${platform.buildConfigurationKey}${getArchSuffix(arch ?? Arch.x64)}${platform === Platform.MAC ? "" : "-unpacked"}`)
@@ -737,6 +766,46 @@ async function packAndCheck(
   ;(packager as any).runtimeEnvironmentVariables = runtimeEnv
   const publishManager = new PublishManager(packager, { publish: "publish" in checkOptions ? checkOptions.publish : "never" })
 
+  const artifacts = collectArtifacts(expect, packager)
+
+  const { outDir, platformToTargets } = await packager.build()
+  await publishManager.awaitTasks()
+
+  if (packagerOptions.platformPackagerFactory != null) {
+    return { packager, outDir }
+  }
+
+  expect(await toArtifactSnapshot(packagerOptions.targets!, artifacts)).toMatchSnapshot()
+
+  c: for (const [platform, archToType] of packagerOptions.targets!) {
+    // the archs the build resolved: the requested ones, or the ones the platform's `target` option names (the build leaves `targets` as requested)
+    const key = platform.buildConfigurationKey
+    const platformOptions = (key === "mac" || key === "win" || key === "linux" ? packager.config[key] : null) ?? {}
+    for (const [arch, targets] of computeArchToTargetNamesMap(archToType, { platformOptions, defaultTarget: [] }, platform)) {
+      if (targets.length === 1 && targets[0] === DIR_TARGET) {
+        continue c
+      }
+
+      const nameToTarget = platformToTargets.get(platform)!
+      if (platform === Platform.MAC) {
+        const subDir = nameToTarget.has("mas-dev") ? "mas-dev" : nameToTarget.has("mas") ? "mas" : "mac"
+        const packedAppDir = path.join(outDir, `${subDir}${getArchSuffix(arch)}`, `${packager.appInfo.productFilename}.app`)
+        await checkMacResult(expect, packager, packagerOptions, checkOptions, packedAppDir)
+      } else if (earlyExited.has(`${platform.buildConfigurationKey}:${arch}`)) {
+        // afterPackTestHook skipped the target builds for this arch — nothing to check beyond the artifact snapshot
+        continue
+      } else if (platform === Platform.LINUX) {
+        await checkLinuxResult(expect, outDir, packager, arch, nameToTarget)
+      } else if (platform === Platform.WINDOWS) {
+        await checkWindowsResult(expect, packager, checkOptions, artifacts.get(platform)!, nameToTarget)
+      }
+    }
+  }
+
+  return { packager, outDir }
+}
+
+function collectArtifacts(expect: ExpectStatic, packager: Packager): Map<Platform, Array<ArtifactCreated>> {
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
   packager.onArtifactCreated(event => {
     if (event.file == null) {
@@ -746,16 +815,13 @@ async function packAndCheck(
     assertThat(expect, event.file).isAbsolute()
     addValue(artifacts, event.packager.platform, event)
   })
+  return artifacts
+}
 
-  const { outDir, platformToTargets } = await packager.build()
-  await publishManager.awaitTasks()
-
-  if (packagerOptions.platformPackagerFactory != null) {
-    return { packager, outDir }
-  }
-
+/** The artifacts of a build, by platform, without the properties that vary from run to run or only add noise */
+async function toArtifactSnapshot(targets: ReadonlyMap<Platform, unknown>, artifacts: ReadonlyMap<Platform, Array<ArtifactCreated>>): Promise<any> {
   const objectToCompare: any = {}
-  for (const platform of packagerOptions.targets!.keys()) {
+  for (const platform of targets.keys()) {
     objectToCompare[platform.buildConfigurationKey] = await Promise.all(
       (artifacts.get(platform) || []).sort(sortArtifacts).map(async it => {
         const result: any = { ...it }
@@ -801,34 +867,7 @@ async function packAndCheck(
     )
   }
 
-  expect(objectToCompare).toMatchSnapshot()
-
-  c: for (const [platform, archToType] of packagerOptions.targets!) {
-    // the archs the build resolved: the requested ones, or the ones the platform's `target` option names (the build leaves `targets` as requested)
-    const key = platform.buildConfigurationKey
-    const platformOptions = (key === "mac" || key === "win" || key === "linux" ? packager.config[key] : null) ?? {}
-    for (const [arch, targets] of computeArchToTargetNamesMap(archToType, { platformOptions, defaultTarget: [] }, platform)) {
-      if (targets.length === 1 && targets[0] === DIR_TARGET) {
-        continue c
-      }
-
-      const nameToTarget = platformToTargets.get(platform)!
-      if (platform === Platform.MAC) {
-        const subDir = nameToTarget.has("mas-dev") ? "mas-dev" : nameToTarget.has("mas") ? "mas" : "mac"
-        const packedAppDir = path.join(outDir, `${subDir}${getArchSuffix(arch)}`, `${packager.appInfo.productFilename}.app`)
-        await checkMacResult(expect, packager, packagerOptions, checkOptions, packedAppDir)
-      } else if (earlyExited.has(`${platform.buildConfigurationKey}:${arch}`)) {
-        // afterPackTestHook skipped the target builds for this arch — nothing to check beyond the artifact snapshot
-        continue
-      } else if (platform === Platform.LINUX) {
-        await checkLinuxResult(expect, outDir, packager, arch, nameToTarget)
-      } else if (platform === Platform.WINDOWS) {
-        await checkWindowsResult(expect, packager, checkOptions, artifacts.get(platform)!, nameToTarget)
-      }
-    }
-  }
-
-  return { packager, outDir }
+  return objectToCompare
 }
 
 async function checkLinuxResult(expect: ExpectStatic, outDir: string, packager: Packager, arch: Arch, nameToTarget: Map<string, Target>) {
