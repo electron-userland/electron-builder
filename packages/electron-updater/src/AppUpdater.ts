@@ -22,10 +22,12 @@ import {
   collectManifestSignatures,
   normalizePublicKeyList,
   verifyManifestSignatures,
+  UPDATE_MANIFEST_UNSIGNED_FIELDS,
   type LimitedLogger,
 } from "builder-util-runtime"
 import { createHash, randomBytes } from "crypto"
 import { release } from "os"
+import { isDeepStrictEqual } from "util"
 import { EventEmitter } from "events"
 import fsExtra from "fs-extra"
 import { OutgoingHttpHeaders } from "http"
@@ -39,7 +41,7 @@ import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor.js"
 import { GenericProvider } from "./providers/GenericProvider.js"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory.js"
-import { acceptHeaderOf, feedBaseUrlOf, Provider, ProviderPlatform, ProviderRuntimeOptions } from "./providers/Provider.js"
+import { acceptHeaderOf, feedBaseUrlOf, Provider, ProviderPlatform, ProviderRuntimeOptions, reparseUpdateManifest } from "./providers/Provider.js"
 import type { TypedEmitter } from "tiny-typed-emitter"
 type Session = Electron.Session
 import type { AuthInfo } from "electron"
@@ -75,6 +77,10 @@ const DEFAULT_VERIFY_UPDATE_FILE: VerifyUpdateFile = _params => Promise.resolve(
 const LOGIN_MIGRATION_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
 
 const CROSS_ORIGIN_HEADERS_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#cross-origin-headers"
+const EBUM2_VERIFICATION_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#update-manifests-are-verified-with-ebum2"
+// how a custom provider hands the updater the manifest as published, named where its update info has none
+const MANIFEST_SOURCE_REPLACEMENT =
+  "Parse latest*.yml with parseUpdateInfo from electron-updater, and pass any copy the provider returns through carryUpdateManifestSource(parsed, copy)"
 
 /** `ERR_UPDATER_CROSS_ORIGIN_HEADERS_NOT_CONFIGURED`, for `subject`: what needs `autoUpdater.crossOriginHeaders`. */
 function crossOriginHeadersNotConfiguredError(subject: string): Error {
@@ -973,7 +979,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * a release to be dual-signed while installs trust `[old, new]` during key rotation. Never fails open once
    * a key is configured. A throw here propagates before any download starts (fail-closed).
    *
-   * Resolves to `true` when a trusted key verified the manifest, `false` when verification was skipped (no key configured).
+   * Resolves to `true` when a trusted key verified the manifest — through an EBUM2 signature, or an EBUM1 signature for a manifest
+   * whose fields EBUM1 vouches for — and `false` when verification was skipped (no key configured).
    */
   private async verifyManifestSignature(info: UpdateInfo): Promise<boolean> {
     let trustedKeys = normalizePublicKeyList(this.updateManifestPublicKey)
@@ -996,16 +1003,34 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return false
     }
 
-    if (collectManifestSignatures(info).length === 0) {
+    // Verify the manifest as published: EBUM2 signs every field, so it must not see the fields a provider adds after
+    // parsing (a GitHub `tag`, PrivateGitHub `assets`, a release name from the feed). A custom provider that builds the
+    // UpdateInfo itself has no recorded text; its object is verified as it is.
+    const recorded = reparseUpdateManifest(info)
+    const published = recorded ?? info
+    if (collectManifestSignatures(published).length === 0) {
       throw newError(`Update manifest for version ${info.version} is not signed, but updateManifestPublicKey is configured. Refusing to update.`, "ERR_UPDATER_MANIFEST_NOT_SIGNED")
     }
 
-    const result = verifyManifestSignatures(info, trustedKeys)
+    let result = verifyManifestSignatures(published, trustedKeys)
+    // the refusal follows from a rule EBUM2 brought in v27, so the error links its migration section
+    let ebum2Refusal = result.ebum2Refusal === true
+    if (result.ok && recorded != null) {
+      // the updater goes on to use `info`, so every signed field must still be what was verified
+      const changed = Object.keys(published).filter(
+        key => !UPDATE_MANIFEST_UNSIGNED_FIELDS.includes(key) && !isDeepStrictEqual(Reflect.get(published, key), Reflect.get(info, key))
+      )
+      if (changed.length > 0) {
+        result = { ok: false, reason: `the update provider changed signed field(s) ${changed.map(it => JSON.stringify(it)).join(", ")} after parsing` }
+        ebum2Refusal = true
+      }
+    }
     if (!result.ok) {
-      // `reason` is set when the manifest fails the structural checks a signed manifest must pass (e.g. an empty
-      // `files` list or control characters in a signed field) — those are rejected before any key is tried.
+      // `reason` is set when the manifest is refused for a reason other than a plain signature mismatch: it fails the
+      // structural checks a signed manifest must pass (e.g. an empty `files` list or control characters in a signed field),
+      // it has fields only an EBUM2 signature covers but no valid one, or its EBUM2 payload cannot be computed.
       const cause =
-        result.reason == null ? `none of the ${trustedKeys.length} trusted key(s) validates any of its signatures` : `the signed manifest is malformed (${result.reason})`
+        result.reason == null ? `none of the ${trustedKeys.length} trusted key(s) validates any of its signatures` : `the signed manifest was refused (${result.reason})`
       // download URLs written into latest*.yml after signing (e.g. pre-signed URLs) are the likely cause, rather than tampering
       const blockMapUrlHint = (info.files ?? []).some(it => it?.blockMapUrl != null)
         ? " files[].blockMapUrl is covered by the signature, like files[].url, so it has to be in latest*.yml before the manifest is signed: " +
@@ -1017,14 +1042,29 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
           ? ""
           : " stagingPercentage is covered by the signature. If it was set or changed after latest*.yml was signed, sign latest*.yml again: " +
             "https://www.electron.build/docs/features/auto-update#staged-rollouts"
+      // a custom provider that does not record the manifest text: any field it added after parsing counts against the signature
+      const manifestSourceHint =
+        recorded == null
+          ? " The update provider returned update info without the manifest text it was parsed from, so its signature was checked over the update info as returned, " +
+            `including any field the provider added after parsing. ${MANIFEST_SOURCE_REPLACEMENT}.`
+          : ""
+      const migrationLink = ebum2Refusal || recorded == null ? ` ${EBUM2_VERIFICATION_DOCS}` : ""
       throw newError(
-        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.${blockMapUrlHint}${stagingPercentageHint}`,
+        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.${blockMapUrlHint}${stagingPercentageHint}${manifestSourceHint}${migrationLink}`,
         "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID"
       )
     }
+    if (recorded == null) {
+      // verified, but over the update info as returned: a field the provider adds later fails verification in this release
+      this.limitedLogger("update-manifest-source-not-recorded").warn(
+        `electron-updater 7 (electron-builder v27) verifies the update manifest as published, but the update provider returned update info for version ${info.version} ` +
+          "without the manifest text it was parsed from, so its signature was checked over the update info as returned: a field the provider adds to it fails verification. " +
+          `${MANIFEST_SOURCE_REPLACEMENT}. ${EBUM2_VERIFICATION_DOCS}`
+      )
+    }
 
-    this.log.debug(`Update manifest for version ${info.version} verified with trusted key ${result.keyId}`)
-    this.log.info(`Update manifest signature verified for version ${info.version}`)
+    this.log.debug(`Update manifest for version ${info.version} verified with trusted key ${result.keyId} (${result.format})`)
+    this.log.info(`Update manifest signature verified for version ${info.version} (${result.format})`)
     return true
   }
 

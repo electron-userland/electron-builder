@@ -208,18 +208,27 @@ describe("verifyManifestSignatures (trust list, multi-signature)", () => {
   const newKey = generateUpdateSigningKeypair()
   const strangerKey = generateUpdateSigningKeypair()
 
-  test("createUpdateManifestSignatures emits one tagged entry per key, in order", () => {
+  test("createUpdateManifestSignatures emits one tagged EBUM1 entry per key, in order, then one EBUM2 entry per key", () => {
     const signatures = createUpdateManifestSignatures(makeInfo(), [oldKey.privateKeyPem, newKey.privateKeyPem])
-    expect(signatures.map(it => it.keyId)).toEqual([computeUpdateManifestKeyId(oldKey.publicKeyPem), computeUpdateManifestKeyId(newKey.publicKeyPem)])
+    const oldId = computeUpdateManifestKeyId(oldKey.publicKeyPem)
+    const newId = computeUpdateManifestKeyId(newKey.publicKeyPem)
+    expect(signatures.map(it => [it.keyId, it.format])).toEqual([
+      [oldId, "EBUM1"],
+      [newId, "EBUM1"],
+      [oldId, "EBUM2"],
+      [newId, "EBUM2"],
+    ])
     expect(signatures[0].signature).toBe(signUpdateManifest(makeInfo(), oldKey.privateKeyPem))
     expect(signatures[1].signature).toBe(signUpdateManifest(makeInfo(), newKey.privateKeyPem))
+    expect(signatures[2].signature).toBe(signUpdateManifest(makeInfo(), oldKey.privateKeyPem, "EBUM2"))
+    expect(signatures[3].signature).toBe(signUpdateManifest(makeInfo(), newKey.privateKeyPem, "EBUM2"))
     expect(() => createUpdateManifestSignatures(makeInfo(), [])).toThrow(/no signing key/)
   })
 
   test("dual-signed manifest verifies with old-only, new-only and both trusted", () => {
     const info = multiSigned(makeInfo(), [oldKey.privateKeyPem, newKey.privateKeyPem])
-    expect(verifyManifestSignatures(info, [oldKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(oldKey.publicKeyPem) })
-    expect(verifyManifestSignatures(info, [newKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(newKey.publicKeyPem) })
+    expect(verifyManifestSignatures(info, [oldKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(oldKey.publicKeyPem), format: "EBUM2" })
+    expect(verifyManifestSignatures(info, [newKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(newKey.publicKeyPem), format: "EBUM2" })
     expect(verifyManifestSignatures(info, [oldKey.publicKeyPem, newKey.publicKeyPem]).ok).toBe(true)
     // the trust-list order decides which key is reported
     expect(verifyManifestSignatures(info, [newKey.publicKeyPem, oldKey.publicKeyPem]).keyId).toBe(computeUpdateManifestKeyId(newKey.publicKeyPem))
@@ -228,7 +237,11 @@ describe("verifyManifestSignatures (trust list, multi-signature)", () => {
   test("legacy single `signature` verifies against a trust list containing the signer", () => {
     const info = signed(makeInfo(), oldKey.privateKeyPem)
     expect(info.signatures).toBeUndefined()
-    expect(verifyManifestSignatures(info, [newKey.publicKeyPem, oldKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(oldKey.publicKeyPem) })
+    expect(verifyManifestSignatures(info, [newKey.publicKeyPem, oldKey.publicKeyPem])).toEqual({
+      ok: true,
+      keyId: computeUpdateManifestKeyId(oldKey.publicKeyPem),
+      format: "EBUM1",
+    })
     expect(verifyManifestSignatures(info, [newKey.publicKeyPem]).ok).toBe(false)
   })
 
@@ -252,7 +265,7 @@ describe("verifyManifestSignatures (trust list, multi-signature)", () => {
       // tagged with old's id but produced by a stranger — must not be accepted, and must not prevent fallback
       signatures: [{ keyId: computeUpdateManifestKeyId(oldKey.publicKeyPem), signature: signUpdateManifest(base, strangerKey.privateKeyPem) }],
     }
-    expect(verifyManifestSignatures(info, [oldKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(oldKey.publicKeyPem) })
+    expect(verifyManifestSignatures(info, [oldKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(oldKey.publicKeyPem), format: "EBUM1" })
   })
 
   test("a signature tagged with an unknown keyId is still tried by no trusted key unless untagged", () => {
@@ -301,12 +314,16 @@ describe("collectManifestSignatures", () => {
     const legacy = signUpdateManifest(base, privateKeyPem)
     const other = signUpdateManifest(base, generateUpdateSigningKeypair().privateKeyPem)
     const keyId = computeUpdateManifestKeyId(publicKeyPem)
-    expect(collectManifestSignatures({ ...base, signature: legacy, signatures: [{ keyId, signature: other }] })).toEqual([{ keyId, signature: other }, { signature: legacy }])
+    expect(collectManifestSignatures({ ...base, signature: legacy, signatures: [{ keyId, signature: other }] })).toEqual([
+      { keyId, signature: other, format: "EBUM1" },
+      { signature: legacy, format: "EBUM1" },
+    ])
   })
 
   test("does not duplicate the legacy signature when `signatures` already carries it", () => {
     const info = multiSigned(makeInfo(), [privateKeyPem])
-    expect(collectManifestSignatures(info)).toHaveLength(1)
+    // the key's EBUM1 entry (which is also the legacy `signature`) and its EBUM2 entry
+    expect(collectManifestSignatures(info).map(it => it.format)).toEqual(["EBUM1", "EBUM2"])
   })
 
   test("is empty for an unsigned manifest", () => {
@@ -682,10 +699,11 @@ describe("blockMapSha512 is not signed", () => {
     expect(cryptoSign(null, Buffer.from(RELEASED_PAYLOAD, "utf8"), createPrivateKey(privateKeyPem)).toString("base64")).toBe(signatures[0].signature)
 
     const info: WindowsUpdateInfo = { ...released, signature: signatures[0].signature, signatures }
-    expect(verifyManifestSignatures(info, [publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(publicKeyPem) })
-    // it can be changed, removed or added after signing; the blockMapUrl next to it stays signed
+    expect(verifyManifestSignatures(info, [publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(publicKeyPem), format: "EBUM2" })
+    // it can be changed, removed or added after signing; the blockMapUrl next to it stays signed. EBUM2 covers it like every field, so
+    // a changed manifest verifies through its EBUM1 signature, which leaves it out
     const withFirstFile = (file: Partial<UpdateFileInfo>): WindowsUpdateInfo => ({ ...info, files: [{ ...info.files[0], ...file }, ...info.files.slice(1)] })
-    expect(verifyManifestSignatures(withFirstFile({ blockMapSha512: "b3RoZXI=" }), [publicKeyPem]).ok).toBe(true)
+    expect(verifyManifestSignatures(withFirstFile({ blockMapSha512: "b3RoZXI=" }), [publicKeyPem])).toMatchObject({ ok: true, format: "EBUM1" })
     expect(verifyManifestSignatures(withFirstFile({ blockMapSha512: undefined }), [publicKeyPem]).ok).toBe(true)
     expect(verifyManifestSignatures({ ...info, files: info.files.map(it => ({ ...it, blockMapSha512: SHA })) }, [publicKeyPem]).ok).toBe(true)
     expect(verifyManifestSignatures(withFirstFile({ blockMapUrl: BLOCKMAP }), [publicKeyPem]).ok).toBe(false)

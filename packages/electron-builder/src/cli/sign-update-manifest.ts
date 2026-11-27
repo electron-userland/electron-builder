@@ -339,7 +339,8 @@ async function resignUpdateManifests(files: Array<string>, settings: ManifestSig
   }
 
   return signed.map(({ file, result, rehashed, expandedYamlAliases }) => {
-    const keyIds = result.signatures.map(it => it.keyId)
+    // each key signs in both formats (an EBUM1 and an EBUM2 entry): its id is listed once
+    const keyIds = [...new Set(result.signatures.map(it => it.keyId))]
     if (expandedYamlAliases) {
       log.warn({ file }, "the manifest used YAML aliases, which electron-updater rejects once they expand past its limit: it is written without them, every alias expanded")
     }
