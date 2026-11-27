@@ -11,6 +11,7 @@ else
   _ELECTRON_BUILDER_CACHE_DEFAULT="$HOME/.cache/electron-builder"
 fi
 
+# Docker Hub until the first deploy to ghcr.io/electron-userland/builder is public; a follow-up switches it to GHCR
 _IMAGE="${TEST_RUNNER_IMAGE_TAG:-electronuserland/builder:22-wine-mono}"
 
 # Pull with retries so transient registry timeouts don't fail the whole run.

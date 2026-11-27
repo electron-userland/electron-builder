@@ -1,5 +1,5 @@
 ARG IMAGE_VERSION=base
-FROM --platform=linux/x86_64 electronuserland/builder:$IMAGE_VERSION
+FROM --platform=linux/x86_64 ghcr.io/electron-userland/builder:$IMAGE_VERSION
 
 ARG NODE_VERSION
 

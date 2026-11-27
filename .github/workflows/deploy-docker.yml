@@ -4,35 +4,108 @@ on:
   # release:
   #   types: [published]
   # a new version of the private package docker, from the Release workflow (pr-release.yml) on master, which also pushes
-  # its tag docker@<version>. There is no tag trigger: the Docker Hub secrets are in the `release` environment, whose
-  # branch policy a run on a tag does not pass, so pushing a docker@ tag starts nothing
+  # its tag docker@<version>. There is no tag trigger: the deploy job is in the `release` environment, whose branch policy
+  # a run on a tag does not pass, so pushing a docker@ tag starts nothing
   workflow_call:
-    # environment secrets of `release` (the deploy job): the caller has to pass them by name, or they are empty in a
-    # reusable workflow; required makes a caller that does not pass them fail
-    secrets:
-      DOCKERHUB_USERNAME:
-        required: true
-      DOCKERHUB_TOKEN:
-        required: true
+  # by hand from the Actions tab, to deploy a released version again from its own commit, e.g. after its deploy by the
+  # Release workflow failed. It builds, and pushes and attests only with `push` checked, only on master, and only while
+  # master's HEAD is the commit of the tag docker@<version> of the version in docker/package.json: a branch that has not
+  # been reviewed and merged must not push to the registry, and a versioned tag only ever gets the images of its release
+  # commit. Otherwise, with `push` checked, the check-ref job fails the run before anything is built
   workflow_dispatch:
+    inputs:
+      push:
+        description: Push and attest the images (unchecked, the run only builds)
+        type: boolean
+        default: false
 
-permissions:
-  contents: read
+# every job states what it needs; a caller (pr-release.yml) has to grant at least as much to its deploy-docker job
+permissions: {}
 
 env:
   LATEST_IMAGE_NODE_MAJOR_VERSION: 24
+  IMAGE: ghcr.io/electron-userland/builder
 
 jobs:
+  # images are pushed from master only, by both triggers: the Release workflow calls this workflow on master only (its tag
+  # step runs on master only, and tags this commit docker@<version> first), and a manual run pushes only on master, on
+  # the commit of the tag of its version. Fails early, before the builds, otherwise
+  check-ref:
+    name: Push from master only
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Fail a push from another ref than master
+        if: ${{ github.ref != 'refs/heads/master' && (github.event_name != 'workflow_dispatch' || inputs.push) }}
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          echo "::error::The images are pushed from master only, not from $REF. Run the workflow on master, or uncheck push to only build"
+          exit 1
+
+      # the version of the docker package at this commit, the one docker-build.yml tags the images with (build.sh)
+      - name: Checkout docker/package.json
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: docker/package.json
+          sparse-checkout-cone-mode: false
+
+      - name: Read the docker package version
+        id: version
+        run: |
+          set -euo pipefail
+          version=$(jq -r .version docker/package.json)
+          echo "docker@$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # A manual push deploys a released version again, from the commit its tag docker@<version> is on, as the Release
+      # workflow did: master's HEAD can have the version of a release made at an earlier commit, whose images it must
+      # not push to that version's immutable tags. The Release workflow tags its commit before it calls this workflow
+      - name: Fail a manual push from another commit than the version's tag
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.push }}
+        env:
+          TAG: docker@${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          # the commit of an annotated tag is its peeled ref (^{}), that of a lightweight tag the ref itself
+          refs=$(git ls-remote origin "refs/tags/$TAG" "refs/tags/$TAG^{}")
+          commit=$(awk -v ref="refs/tags/$TAG" '$2 == ref "^{}" { peeled = $1 } $2 == ref { direct = $1 } END { print (peeled != "" ? peeled : direct) }' <<< "$refs")
+          if [ "$commit" != "$GITHUB_SHA" ]; then
+            echo "::error::A manual push deploys a released version from its own commit, which has to be master's HEAD: $TAG is on '${commit:-no commit (not tagged)}', not on $GITHUB_SHA. Re-run the failed jobs of the version's Release run instead, or release a new docker version"
+            exit 1
+          fi
+
   run-docker-build:
+    needs: check-ref
+    permissions:
+      contents: read
     uses: $/.github/workflows/docker-build.yml
 
   deploy:
     name: Build and Push Docker
-    needs: run-docker-build
+    needs: [check-ref, run-docker-build]
     runs-on: ubuntu-24.04
-    # DOCKERHUB_USERNAME and DOCKERHUB_TOKEN; the environment allows master, release/* and changeset-release/* only, so
-    # a manual run (workflow_dispatch) has to be on one of them
+    # no secrets: the push authenticates with the job's GITHUB_TOKEN (packages: write) and the attestations are signed
+    # with a short-lived Sigstore certificate from the job's OIDC token (id-token: write). It pushes from master only
+    # (check-ref, and PUSH below); the environment allows master, release/* and changeset-release/* only, so a manual run
+    # that only builds has to be on one of them
     environment: release
+    permissions:
+      contents: read
+      # push to ghcr.io/electron-userland/builder
+      packages: write
+      # OIDC token for the Sigstore signing certificate of the provenance attestations
+      id-token: write
+      # store the provenance attestations in the repository's attestations API
+      attestations: write
+    env:
+      # 'true' when this job pushes and attests the images: a run from the Release workflow, or a manual run with push
+      # checked, on master only (check-ref already failed the run otherwise; the ref is checked again here)
+      PUSH: ${{ (github.event_name != 'workflow_dispatch' || inputs.push) && github.ref == 'refs/heads/master' }}
     strategy:
       # each Node.js version is pushed by its own job: a failed one must not cancel the others in the middle of their
       # pushes. Re-run the failed jobs while the image artifacts are kept (a day, docker-build.yml)
@@ -59,25 +132,155 @@ jobs:
       - name: Tag LTS (${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }}) images for electron-builder latest/wine/wine-chrome/wine-mono
         if: ${{ matrix.nodeMajorVersion == env.LATEST_IMAGE_NODE_MAJOR_VERSION }}
         run: |
-          docker image tag "electronuserland/builder:$LATEST_IMAGE_NODE_MAJOR_VERSION" electronuserland/builder:latest
-          docker image tag "electronuserland/builder:$LATEST_IMAGE_NODE_MAJOR_VERSION-wine" electronuserland/builder:wine
-          docker image tag "electronuserland/builder:$LATEST_IMAGE_NODE_MAJOR_VERSION-wine-mono" electronuserland/builder:wine-mono
-          docker image tag "electronuserland/builder:$LATEST_IMAGE_NODE_MAJOR_VERSION-wine-chrome" electronuserland/builder:wine-chrome
+          docker image tag "$IMAGE:$LATEST_IMAGE_NODE_MAJOR_VERSION" "$IMAGE:latest"
+          docker image tag "$IMAGE:$LATEST_IMAGE_NODE_MAJOR_VERSION-wine" "$IMAGE:wine"
+          docker image tag "$IMAGE:$LATEST_IMAGE_NODE_MAJOR_VERSION-wine-mono" "$IMAGE:wine-mono"
+          docker image tag "$IMAGE:$LATEST_IMAGE_NODE_MAJOR_VERSION-wine-chrome" "$IMAGE:wine-chrome"
 
       - name: List all images and tags
         run: docker image ls -a
 
-      - name: Login to DockerHub
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push all Docker images (workflow_dispatch test)
-        if: github.event_name == 'workflow_dispatch'
-        run: echo "TESTING step logic. (this would normally trigger docker push)"
+      - name: Skip the push (workflow_dispatch without push)
+        if: env.PUSH != 'true'
+        run: echo "Not pushing (run the workflow on master with push checked to push and attest the images)"
 
+      # The versioned tags (<image>-<version>) are immutable: before it pushes anything, the job checks each one in the
+      # registry. One that is there with another image fails the job, so a version is never overwritten (release a new
+      # version instead). One that is there with this job's image was pushed by an earlier attempt of this job (a re-run
+      # of the failed jobs loads the same images artifact), so it is not pushed again, and the job goes on with the moving
+      # tags and the attestations. The moving tags (<node>, <node>-wine, …, latest, wine, …) move to the new images. Only
+      # the LTS job pushes base and base-<version>: every job builds its own base, and only one of them can have the
+      # versioned tag. The digests are those of the registry's manifests, read back after the push: the attestations
+      # name them. The moving tags are the same manifests as the versioned ones, so they are covered too
       - name: Push all Docker images
-        if: github.event_name != 'workflow_dispatch'
-        run: docker image push --all-tags electronuserland/builder
+        id: push
+        if: env.PUSH == 'true'
+        run: |
+          set -euo pipefail
+          # <output key>=<image>: the image is tagged <image> (moving) and <image>-<version> (immutable)
+          images="node=$NODE_MAJOR_VERSION wine=$NODE_MAJOR_VERSION-wine wine-mono=$NODE_MAJOR_VERSION-wine-mono \
+            wine-chrome=$NODE_MAJOR_VERSION-wine-chrome"
+          aliases=""
+          if [ "$NODE_MAJOR_VERSION" = "$LATEST_IMAGE_NODE_MAJOR_VERSION" ]; then
+            images="base=base $images"
+            aliases="latest wine wine-mono wine-chrome"
+          fi
 
+          # the HTTP status of the repository's tag list, with a bearer token for the credentials of the login step (read
+          # from the docker config, never printed): 404 when the package does not exist yet
+          repository_status() {
+            local auth token
+            auth=$(jq -r '.auths["ghcr.io"].auth // empty' "$HOME/.docker/config.json")
+            token=$(curl -sS -K - "https://ghcr.io/token?scope=repository:${IMAGE#ghcr.io/}:pull" \
+              <<< "header = \"Authorization: Basic $auth\"" | jq -r '.token // empty')
+            curl -sS -o /dev/null -w '%{http_code}' -K - "https://ghcr.io/v2/${IMAGE#ghcr.io/}/tags/list" \
+              <<< "header = \"Authorization: Bearer $token\""
+          }
+
+          # the versioned tags that are not in the registry yet
+          missing=""
+          for entry in $images; do
+            tag="${entry#*=}-$VERSION"
+            if ! out=$(docker buildx imagetools inspect --raw "$IMAGE:$tag" 2>&1); then
+              # ghcr.io answers denied, not not found, for a package that does not exist yet (before the first deploy).
+              # Anything else (e.g. a registry or auth error) stops the job: it cannot tell that the push would not
+              # overwrite
+              if grep -qiE 'not found|manifest unknown|name unknown' <<< "$out" \
+                || { grep -qiE 'denied|unauthorized' <<< "$out" && [ "$(repository_status)" = 404 ]; }; then
+                missing="$missing $entry"
+                continue
+              fi
+              echo "::error::Could not check whether $IMAGE:$tag is in the registry: $out"
+              exit 1
+            fi
+            # the image of a manifest is its config digest, the local image ID (classic image store). An index (build.sh
+            # builds none) is read by its linux/amd64 manifest. With the containerd image store, the local image ID is
+            # the digest of the manifest itself
+            if [ "$(jq -r '.manifests != null' <<< "$out")" = true ]; then
+              out=$(docker buildx imagetools inspect --raw "$IMAGE@$(jq -r \
+                '[.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64")][0].digest' <<< "$out")")
+            fi
+            config=$(jq -r '.config.digest' <<< "$out")
+            manifest=$(docker buildx imagetools inspect "$IMAGE:$tag" --format '{{json .Manifest}}' | jq -r .digest)
+            id=$(docker image inspect --format '{{.Id}}' "$IMAGE:$tag")
+            if [ "$id" != "$config" ] && [ "$id" != "$manifest" ]; then
+              echo "::error::$IMAGE:$tag is already in the registry with another image ($manifest, config $config; this job's is $id), and a versioned tag is never overwritten. Release a new docker version (a changeset for docker) to deploy again"
+              exit 1
+            fi
+            echo "$IMAGE:$tag is already in the registry with this job's image (an earlier attempt of this job): not pushing it again"
+          done
+
+          # the versioned tags first, then the moving ones
+          for entry in $missing; do
+            docker image push "$IMAGE:${entry#*=}-$VERSION"
+          done
+          for entry in $images; do
+            docker image push "$IMAGE:${entry#*=}"
+          done
+          for alias in $aliases; do
+            docker image push "$IMAGE:$alias"
+          done
+
+          for entry in $images; do
+            tag="${entry#*=}-$VERSION"
+            digest=$(docker buildx imagetools inspect "$IMAGE:$tag" --format '{{json .Manifest}}' | jq -r .digest)
+            echo "$IMAGE:$tag $digest"
+            echo "${entry%%=*}=$digest" >> "$GITHUB_OUTPUT"
+          done
+        env:
+          NODE_MAJOR_VERSION: ${{ matrix.nodeMajorVersion }}
+          VERSION: ${{ needs.check-ref.outputs.version }}
+
+      # one attestation per image: push-to-registry takes a single subject, the digest of the image's versioned tag
+      - name: Attest base
+        if: ${{ env.PUSH == 'true' && matrix.nodeMajorVersion == env.LATEST_IMAGE_NODE_MAJOR_VERSION }}
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.base }}
+          push-to-registry: true
+          # a storage record needs the artifact-metadata permission; the attestation does not
+          create-storage-record: false
+
+      - name: Attest ${{ matrix.nodeMajorVersion }}
+        if: env.PUSH == 'true'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.node }}
+          push-to-registry: true
+          create-storage-record: false
+
+      - name: Attest ${{ matrix.nodeMajorVersion }}-wine
+        if: env.PUSH == 'true'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.wine }}
+          push-to-registry: true
+          create-storage-record: false
+
+      - name: Attest ${{ matrix.nodeMajorVersion }}-wine-mono
+        if: env.PUSH == 'true'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.wine-mono }}
+          push-to-registry: true
+          create-storage-record: false
+
+      - name: Attest ${{ matrix.nodeMajorVersion }}-wine-chrome
+        if: env.PUSH == 'true'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.wine-chrome }}
+          push-to-registry: true
+          create-storage-record: false

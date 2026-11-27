@@ -38,7 +38,7 @@ electron-builder never adds the two arguments on its own. They do not change the
 
 The image needs three things:
 
-- **`flatpak` 1.12.4 or newer and `flatpak-builder` 1.2.2 or newer.** The stock packages of Debian 12, Ubuntu 22.04 and newer releases are new enough. This image uses Debian 13, whose `flatpak-builder` 1.4.4 also handles AppStream metadata and meson and cmake modules with the current SDKs — see [Build Requirements](../flatpak.md#build-requirements). The `electronuserland/builder` images with a date tag newer than `-05.26` include both tools, and one of them can be used in place of this image — see [Use an electronuserland/builder Image](#electronuserland-builder-image).
+- **`flatpak` 1.12.4 or newer and `flatpak-builder` 1.2.2 or newer.** The stock packages of Debian 12, Ubuntu 22.04 and newer releases are new enough. This image uses Debian 13, whose `flatpak-builder` 1.4.4 also handles AppStream metadata and meson and cmake modules with the current SDKs — see [Build Requirements](../flatpak.md#build-requirements). The `ghcr.io/electron-userland/builder` images include both tools, and one of them can be used in place of this image — see [Use a ghcr.io/electron-userland/builder Image](#electronuserland-builder-image).
 - **A user for the build, with Flathub as a remote of its user installation.** electron-builder installs with `flatpak install --user`, which only searches user-level remotes.
 - **The runtime, the SDK and the base app, installed for that user** in the versions from your configuration.
 
@@ -124,9 +124,9 @@ Root is exempt from that lookup, so `flatpak` installs and updates the base app 
 
 In a CI service, use the image as the image of the job and the wrapped command as its script.
 
-## Use an electronuserland/builder Image {#electronuserland-builder-image}
+## Use a ghcr.io/electron-userland/builder Image {#electronuserland-builder-image}
 
-The `electronuserland/builder` images with a date tag newer than `-05.26` include `flatpak` and `flatpak-builder`; those up to `-05.26` include neither — see [Flatpak in the Docker Images](../features/multi-platform-build.md#flatpak-in-the-docker-images). One of them can take the place of the image above. The [configuration](#configure-electron-builder) stays the same: the two additional arguments are needed in any container that is not privileged. Three things differ:
+The `ghcr.io/electron-userland/builder` images include `flatpak` and `flatpak-builder`; the old Docker Hub images up to `-05.26` include neither — see [Flatpak in the Docker Images](../features/multi-platform-build.md#flatpak-in-the-docker-images). One of them can take the place of the image above. The [configuration](#configure-electron-builder) stays the same: the two additional arguments are needed in any container that is not privileged. Three things differ:
 
 - **The runtime, the SDK and the base app are not in the image.** The first build downloads and installs them; [Flatpak in the Docker Images](../features/multi-platform-build.md#flatpak-in-the-docker-images) has the sizes. They go into the user installation of root, `/root/.local/share/flatpak`. With a named volume mounted there, later builds only bring them up to date. Without one, every container downloads them again, which the image above avoids.
 - **The build runs as root**, and root needs no `dbus-run-session` wrapper.
@@ -134,7 +134,7 @@ The `electronuserland/builder` images with a date tag newer than `-05.26` includ
 
 ```bash
 docker run --rm -v "$PWD":/project -v electron-builder-flatpak:/root/.local/share/flatpak \
-  electronuserland/builder:22 \
+  ghcr.io/electron-userland/builder:22 \
   npx electron-builder --linux flatpak --publish never
 ```
 
@@ -142,7 +142,7 @@ As above, the project's dependencies have to be installed before this command ru
 
 ## Run a Privileged Container in GitHub Actions {#github-actions}
 
-On a GitHub-hosted runner, the `electronuserland/builder` image can run as a privileged container. electron-builder's own flatpak tests run this way, in the `test-flatpak` job of its [test workflow](https://github.com/electron-userland/electron-builder/blob/master/.github/workflows/test.yaml), with the image `electronuserland/builder:22-wine-chrome` (the `-wine-chrome` variant has Xvfb, which the tests need to start the app). The runtime, the SDK and the base app go into the user installation of the runner's user, `~/.local/share/flatpak`, and that directory is mounted into the container:
+On a GitHub-hosted runner, the `ghcr.io/electron-userland/builder` image can run as a privileged container. electron-builder's own flatpak tests run this way, in the `test-flatpak` job of its [test workflow](https://github.com/electron-userland/electron-builder/blob/master/.github/workflows/test.yaml), with the image `ghcr.io/electron-userland/builder:22-wine-chrome` (the `-wine-chrome` variant has Xvfb, which the tests need to start the app). The runtime, the SDK and the base app go into the user installation of the runner's user, `~/.local/share/flatpak`, and that directory is mounted into the container:
 
 ```yaml
 - name: Allow unprivileged user namespaces

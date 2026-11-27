@@ -50,11 +50,11 @@ To build flatpak:
 sudo apt-get install -y flatpak flatpak-builder fuse3
 ```
 
-`flatpak` 1.12.4+ and `flatpak-builder` 1.2.2+ are required: the stock packages of Ubuntu 22.04, Debian 12 and newer releases are new enough. See [Flatpak](../flatpak.md). The [Docker](#docker) images with a date tag newer than `-05.26` include both tools — see [Flatpak in the Docker Images](#flatpak-in-the-docker-images).
+`flatpak` 1.12.4+ and `flatpak-builder` 1.2.2+ are required: the stock packages of Ubuntu 22.04, Debian 12 and newer releases are new enough. See [Flatpak](../flatpak.md). The `ghcr.io/electron-userland/builder` [Docker](#docker) images include both tools — see [Flatpak in the Docker Images](#flatpak-in-the-docker-images).
 
 ### Build for Windows on Linux
 
-[Docker](#docker) (`electronuserland/builder:wine`) is recommended to avoid installing system dependencies.
+[Docker](#docker) (`ghcr.io/electron-userland/builder:wine`) is recommended to avoid installing system dependencies.
 
 - Install Wine 2.0+ — see [WineHQ Binary Packages](https://www.winehq.org/download#binary).
 - Install [Mono](http://www.mono-project.com/download/#download-lin) 4.2+ if you want to use Squirrel.Windows (NSIS doesn't require Mono).
@@ -92,48 +92,58 @@ docker run --rm -ti \
   -v ${PWD##*/}-node-modules:/project/node_modules \
   -v ~/.cache/electron:/root/.cache/electron \
   -v ~/.cache/electron-builder:/root/.cache/electron-builder \
-  electronuserland/builder:wine
+  ghcr.io/electron-userland/builder:wine
 ```
 
 Then run `yarn && yarn dist` inside the container.
 
 :::tip
-If you don't need to build for Windows, use `electronuserland/builder` — Wine is not included in that image.
+If you don't need to build for Windows, use `ghcr.io/electron-userland/builder` — Wine is not included in that image.
 :::
 
 ### Provided Docker Images
 
+:::info[The images moved to the GitHub Container Registry]
+The images are published as `ghcr.io/electron-userland/builder`, with the same moving tags as before (`latest`, `22`, `24`, `wine`, …). The dated tags (`-MM.YY`) are replaced by tags with the version of the images (see below). The Docker Hub repository `electronuserland/builder` is no longer updated: its images can still be pulled, but get no Node.js, Wine or security updates, and it will be deleted. Replace `electronuserland/builder` with `ghcr.io/electron-userland/builder` in your `docker run` commands, `FROM` lines and CI configuration — see [Docker images moved to ghcr.io](../migration/v27-build-changes.md#docker-images-moved-to-ghcr).
+
+Each image is published with a signed build provenance attestation. To check that an image was built by electron-builder's release workflow:
+
+```sh
+gh attestation verify oci://ghcr.io/electron-userland/builder:wine --owner electron-userland
+```
+:::
+
 :::tip
-Lock your `FROM` to a specific date-tag (e.g. `builder:24-07.23`) or digest rather than `latest`, to prevent unexpected toolset upgrades.
+Lock your `FROM` to a versioned tag (e.g. `builder:24-wine-27.0.0`) or a digest rather than `latest`, to prevent unexpected toolset upgrades.
 :::
 
 :::note[v27 requires Node.js &gt;=22.12]
-The images are now published in **Node.js 22 and 24** flavors (e.g. `builder:22`, `builder:24`). The old Node.js 20 tags do not satisfy v27's minimum runtime — use a `22`/`24` tag. See the [tags list](https://hub.docker.com/r/electronuserland/builder/tags).
+The images are now published in **Node.js 22 and 24** flavors (e.g. `builder:22`, `builder:24`). The old Node.js 20 tags do not satisfy v27's minimum runtime — use a `22`/`24` tag. See the [tags list](https://github.com/electron-userland/electron-builder/pkgs/container/builder).
 :::
 
-:::note[Flatpak needs an image newer than -05.26]
-Images with a date tag newer than `-05.26`, the first ones published after this release, include `flatpak` and `flatpak-builder` and can build the `flatpak` target. Images with the date tag `-05.26` or an older one include neither tool — see [Flatpak in the Docker Images](#flatpak-in-the-docker-images).
+:::note[Flatpak needs a ghcr.io image or a Docker Hub image newer than -05.26]
+Every `ghcr.io/electron-userland/builder` image includes `flatpak` and `flatpak-builder` and can build the `flatpak` target. Of the old Docker Hub images (`electronuserland/builder`), those with a date tag newer than `-05.26` include them, and those with the date tag `-05.26` or an older one include neither tool — see [Flatpak in the Docker Images](#flatpak-in-the-docker-images).
 :::
 
 | Image | Contents |
 |---|---|
-| `electronuserland/builder` or `electronuserland/builder:24` | Node.js 24 (also available as `:22`) + Linux build dependencies. Use for Linux-only targets (for `flatpak`, see [Flatpak in the Docker Images](#flatpak-in-the-docker-images)). |
-| `electronuserland/builder:wine` | Wine + Node.js. Use for Windows targets. |
-| `electronuserland/builder:wine-mono` | Mono for Squirrel.Windows. |
-| `electronuserland/builder:wine-chrome` | `google-chrome-stable` + `xvfb`. Use for headless Electron testing. |
-| `electronuserland/builder:base` | System dependencies only. Not meant for direct use. |
+| `ghcr.io/electron-userland/builder` or `ghcr.io/electron-userland/builder:24` | Node.js 24 (also available as `:22`) + Linux build dependencies. Use for Linux-only targets (for `flatpak`, see [Flatpak in the Docker Images](#flatpak-in-the-docker-images)). |
+| `ghcr.io/electron-userland/builder:wine` | Wine + Node.js. Use for Windows targets. |
+| `ghcr.io/electron-userland/builder:wine-mono` | Mono for Squirrel.Windows. |
+| `ghcr.io/electron-userland/builder:wine-chrome` | `google-chrome-stable` + `xvfb`. Use for headless Electron testing. |
+| `ghcr.io/electron-userland/builder:base` | System dependencies only. Not meant for direct use. |
 
-Images are also tagged with a date suffix `-%m.%y` (e.g. `builder:24-07.23`) for pinning. Full build script: [build.sh](https://github.com/electron-userland/electron-builder/blob/master/docker/build.sh)
+Images are also tagged with the version of the images as a suffix (e.g. `builder:24-wine-27.0.0`; `latest`, `wine`, `wine-mono` and `wine-chrome` have none) for pinning. A versioned tag is immutable: it is never pushed again, so it always names the same image, while the tags without a version move to every new release. The versions and what changed in each are in the [images' changelog](https://github.com/electron-userland/electron-builder/blob/master/docker/CHANGELOG.md), and the [tags list](https://github.com/electron-userland/electron-builder/pkgs/container/builder) shows the published ones. On Docker Hub, the images were tagged with a date suffix `-%m.%y` (e.g. `builder:24-07.23`) instead. Full build script: [build.sh](https://github.com/electron-userland/electron-builder/blob/master/docker/build.sh)
 
 ### Flatpak in the Docker Images
 
-Images with a date tag newer than `-05.26` include `flatpak` and `flatpak-builder` — every variant in the table above, since all of them are built on `base`. The tools come from the Flatpak team's PPA (`ppa:flatpak/stable`) rather than from Ubuntu 22.04, which the images are based on: its own packages (Flatpak 1.12.7, `flatpak-builder` 1.2.2) meet the [requirements](../flatpak.md#build-requirements), but `flatpak-builder` 1.4 and newer also handle AppStream metadata with the current SDKs, and 1.4.4 and newer meson and cmake modules. In October 2026 the PPA provided Flatpak 1.18.4 and `flatpak-builder` 1.4.8 for Ubuntu 22.04. Together with `elfutils` and `zstd`, two packages that `flatpak-builder` recommends, the tools add about 62 MB to an image.
+The `ghcr.io/electron-userland/builder` images, and the Docker Hub images with a date tag newer than `-05.26`, include `flatpak` and `flatpak-builder` — every variant in the table above, since all of them are built on `base`. The tools come from the Flatpak team's PPA (`ppa:flatpak/stable`) rather than from Ubuntu 22.04, which the images are based on: its own packages (Flatpak 1.12.7, `flatpak-builder` 1.2.2) meet the [requirements](../flatpak.md#build-requirements), but `flatpak-builder` 1.4 and newer also handle AppStream metadata with the current SDKs, and 1.4.4 and newer meson and cmake modules. In October 2026 the PPA provided Flatpak 1.18.4 and `flatpak-builder` 1.4.8 for Ubuntu 22.04. Together with `elfutils` and `zstd`, two packages that `flatpak-builder` recommends, the tools add about 62 MB to an image.
 
 :::note[Images up to -05.26]
-The images with the date tag `-05.26`, published in May 2026, and all older ones include neither tool: the `flatpak` target fails in them with `cannot run flatpak - flatpak and flatpak-builder must be installed to build the flatpak target`. An undated tag (`latest`, `24`, `wine`, …) has the tools once it points to a newer image: the [tags list](https://hub.docker.com/r/electronuserland/builder/tags) shows whether a date tag newer than `-05.26` exists. Pull the tag again if your copy is older. To check an image:
+The Docker Hub images with the date tag `-05.26`, published in May 2026, and all older ones include neither tool: the `flatpak` target fails in them with `cannot run flatpak - flatpak and flatpak-builder must be installed to build the flatpak target`. Pull a `ghcr.io/electron-userland/builder` tag instead, or pull it again if your copy is from Docker Hub. To check an image:
 
 ```sh
-docker run --rm electronuserland/builder flatpak --version
+docker run --rm ghcr.io/electron-userland/builder flatpak --version
 ```
 
 This prints the version of `flatpak`, or fails with `exec: "flatpak": executable file not found in $PATH`. For an image without the tools, [Prepare the Image](../tutorials/flatpak-in-ci-and-containers.md#prepare-the-image) shows how to build one of your own.

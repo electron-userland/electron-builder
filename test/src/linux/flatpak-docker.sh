@@ -27,6 +27,7 @@ if [[ $# -eq 0 ]]; then
   exit 2
 fi
 
+# Docker Hub until the first deploy to ghcr.io/electron-userland/builder is public; a follow-up switches it to GHCR
 _IMAGE="${FLATPAK_TEST_IMAGE:-electronuserland/builder:22-wine-chrome}"
 
 # docker would create missing mount sources owned by root

@@ -37,6 +37,10 @@ permissions:
 
 env:
   TEST_IMAGE_NODE_MAJOR_VERSION: 22
+  # The tests run in the Docker Hub images until the first deploy to ghcr.io/electron-userland/builder (deploy-docker.yml)
+  # is public; a follow-up switches them to GHCR. A rebuilt image (run-docker-build, which tags ghcr.io/…) is tagged with
+  # this name after it is loaded, so run-tests.sh and flatpak-docker.sh find it locally and do not pull
+  TEST_IMAGE: electronuserland/builder
 
 jobs:
   check-if-docker-build:
@@ -184,6 +188,7 @@ jobs:
         if: needs.run-docker-build.result == 'success'
         run: |
           docker image load --input "$RUNNER_TEMP/electron-builder-all-$TEST_IMAGE_NODE_MAJOR_VERSION.tar"
+          docker image tag "ghcr.io/electron-userland/builder:$TEST_IMAGE_NODE_MAJOR_VERSION-wine-mono" "$TEST_IMAGE:$TEST_IMAGE_NODE_MAJOR_VERSION-wine-mono"
           docker image ls -a
 
       - name: Write Docker secrets env file
@@ -199,7 +204,7 @@ jobs:
           pnpm test:linux
         env:
           ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SHARD_INDEX=${{ matrix.shard }} -e VITEST_EXPECTED_SHARD_COUNT=${{ strategy.job-total }} -e VITEST_SMART_CACHE_SOURCE=${{ needs.validate-and-shard.outputs.smart-cache-source }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }} -e VITEST_COVERAGE=${{ inputs.collect-coverage }}"
-          TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
+          TEST_RUNNER_IMAGE_TAG: ${{ env.TEST_IMAGE }}:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
       - name: Upload test artifacts
         if: always()
@@ -382,6 +387,7 @@ jobs:
         if: needs.run-docker-build.result == 'success'
         run: |
           docker image load --input "$RUNNER_TEMP/electron-builder-all-$TEST_IMAGE_NODE_MAJOR_VERSION.tar"
+          docker image tag "ghcr.io/electron-userland/builder:$TEST_IMAGE_NODE_MAJOR_VERSION-wine-mono" "$TEST_IMAGE:$TEST_IMAGE_NODE_MAJOR_VERSION-wine-mono"
           docker image ls -a
 
       # The updater tests no longer hit live provider endpoints, so no provider tokens are injected.
@@ -413,7 +419,7 @@ jobs:
           pnpm test:linux
         env:
           TEST_FILES: nsisUpdaterTest,PublishManager,differentialUpdateTest,GitlabPublisherTest,R2PublisherTest
-          TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
+          TEST_RUNNER_IMAGE_TAG: ${{ env.TEST_IMAGE }}:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
           ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }} -e VITEST_COVERAGE=${{ inputs.collect-coverage }}"
 
       - name: Upload test artifacts
@@ -549,13 +555,14 @@ jobs:
         if: needs.run-docker-build.result == 'success'
         run: |
           docker image load --input "$RUNNER_TEMP/electron-builder-all-$TEST_IMAGE_NODE_MAJOR_VERSION.tar"
+          docker image tag "ghcr.io/electron-userland/builder:$TEST_IMAGE_NODE_MAJOR_VERSION-wine-chrome" "$TEST_IMAGE:$TEST_IMAGE_NODE_MAJOR_VERSION-wine-chrome"
           docker image ls -a
 
       # The tests run in the container as the runner's user, whose bubblewrap needs the unprivileged user namespaces that
       # Ubuntu 24.04 restricts via AppArmor: lift that on the host. See test/src/linux/flatpak-docker.sh.
       - name: Prepare flatpak test image
         run: |
-          IMAGE="electronuserland/builder:${TEST_IMAGE_NODE_MAJOR_VERSION}-wine-chrome"
+          IMAGE="$TEST_IMAGE:${TEST_IMAGE_NODE_MAJOR_VERSION}-wine-chrome"
           echo "FLATPAK_TEST_IMAGE=$IMAGE" >> "$GITHUB_ENV"
           if ! docker image inspect "$IMAGE" > /dev/null 2>&1; then
             for i in 1 2 3; do

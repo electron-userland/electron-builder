@@ -60,7 +60,7 @@ The stock packages of Ubuntu 22.04, Debian 12, RHEL 8 and 9 and newer releases a
 
 Newer tools are available for older distributions: [`ppa:flatpak/stable`](https://launchpad.net/~flatpak/+archive/ubuntu/stable) for Ubuntu 22.04, and `bookworm-backports` for Debian 12 (`sudo apt-get install -t bookworm-backports flatpak-builder`, which works with the stock `flatpak`).
 
-The `electronuserland/builder` Docker images with a date tag newer than `-05.26` include both tools, from that PPA, but no runtime, SDK or base app — see [Flatpak in the Docker Images](features/multi-platform-build.md#flatpak-in-the-docker-images). Images up to `-05.26` include neither tool.
+The `ghcr.io/electron-userland/builder` Docker images include both tools, from that PPA, but no runtime, SDK or base app — see [Flatpak in the Docker Images](features/multi-platform-build.md#flatpak-in-the-docker-images). Of the old Docker Hub images (`electronuserland/builder`), those with a date tag newer than `-05.26` include them too, and those up to `-05.26` include neither tool.
 
 Two more things have to be in place:
 
@@ -415,7 +415,7 @@ flatpak:
 - `--disable-sandbox` does not skip icon validation: icons are still validated, just not inside a sandbox.
 - [`modules`](#extra-modules) cannot be built in such a container at all. `flatpak-builder` always runs a module's build commands under bubblewrap, and no argument turns that off.
 
-Such a container usually differs from a desktop in two more ways: the runtime, the SDK and the base app are not installed in it yet, and it has no system D-Bus, which stops a build that does not run as root from installing or updating the base app. [Building Flatpak Bundles in CI and Containers](tutorials/flatpak-in-ci-and-containers.md) shows how to prepare an image, or use an `electronuserland/builder` one, and how to run the build in it.
+Such a container usually differs from a desktop in two more ways: the runtime, the SDK and the base app are not installed in it yet, and it has no system D-Bus, which stops a build that does not run as root from installing or updating the base app. [Building Flatpak Bundles in CI and Containers](tutorials/flatpak-in-ci-and-containers.md) shows how to prepare an image, or use an `ghcr.io/electron-userland/builder` one, and how to run the build in it.
 
 ## Troubleshooting
 

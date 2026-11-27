@@ -47,8 +47,8 @@ jobs:
       - name: List and export images
         shell: bash
         run: |
-          docker images --filter=reference="electronuserland/builder:*"
-          docker save -o "$RUNNER_TEMP/electron-builder-all-${NODE_TAG}.tar" electronuserland/builder
+          docker images --filter=reference="ghcr.io/electron-userland/builder:*"
+          docker save -o "$RUNNER_TEMP/electron-builder-all-${NODE_TAG}.tar" ghcr.io/electron-userland/builder
 
       - name: Bundle all images
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
