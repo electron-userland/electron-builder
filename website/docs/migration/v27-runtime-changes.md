@@ -124,7 +124,7 @@ electron-updater asks the app which request headers to send on each request and 
 - The headers electron-updater builds for each request itself are sent whatever it returns: its default `User-Agent`, `Cache-Control`, the `Accept` it or the provider sets, and `Range`, so differential downloads redirected to a CDN keep working with `() => []`. A `User-Agent` of your own from `requestHeaders` goes to another origin only when it keeps `user-agent`.
 - A callback that throws, or returns anything but an array of strings, fails that request, unsent, with `ERR_UPDATER_INVALID_CROSS_ORIGIN_HEADERS`; the message names the property and the origins, never the result or a header value.
 - The first time a request to an origin goes without some of the app's or a provider's headers, electron-updater logs a warning, once per origin, naming those headers and both origins, never a value, with a link here.
-- builder-util-runtime's `addSensitiveRedirectHeader` does not affect electron-updater: its callback decides every header sent to another origin.
+- builder-util-runtime's default cross-origin header policy, which electron-builder's publishers use, does not apply to electron-updater: its callback decides every header sent to another origin.
 - A `Host` header is never sent to another origin, whatever the callback returns.
 - It is read at each hop, before the first check and for the install at launch alike. See [`autoUpdater.crossOriginHeaders`](../features/auto-update.md#crossoriginheaders) for the full API.
 

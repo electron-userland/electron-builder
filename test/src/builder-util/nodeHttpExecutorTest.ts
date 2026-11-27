@@ -199,3 +199,17 @@ describe("NodeHttpExecutor.createRequest", { concurrent: false }, () => {
     })
   })
 })
+
+describe("NodeHttpExecutor cross-origin header policy", () => {
+  const hop = { from: new URL("https://api.example.com/upload"), to: new URL("https://storage.example.net/bucket/file") }
+
+  test("by default sends another origin only the headers that carry no credential", ({ expect }) => {
+    const policy = new NodeHttpExecutor().crossOriginHeaderPolicy
+    expect(policy({ "X-Api-Token": "secret-value", Authorization: "token t", "X-Tenant": "acme", Accept: "application/json" }, hop)).toEqual({ Accept: "application/json" })
+  })
+
+  test("a policy passed to the constructor is used instead", ({ expect }) => {
+    const policy = vi.fn(() => ({}))
+    expect(new NodeHttpExecutor(policy).crossOriginHeaderPolicy).toBe(policy)
+  })
+})

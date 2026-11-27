@@ -20,9 +20,20 @@ const debug = _debug("electron-builder")
 // Shared by both registries so lookup is always separator-agnostic.
 const normalizeName = (name: string): string => name.toLowerCase().replace(/[-_]/g, "")
 
-// HTTP header names (normalised) that an HttpExecutor without a cross-origin header policy of its own (electron-builder's publishers)
-// leaves off a redirect to another origin. Stored normalised; lookup normalises the incoming key with normalizeName().
-const SENSITIVE_REDIRECT_HEADERS = new Set(["authorization", "proxyauthorization", "privatetoken", "xapikey", "xauthtoken", "xaccesstoken", "xgitlabtoken", "cookie", "xcsrftoken"])
+// HTTP header names (normalised) of well-known credentials. The default policy leaves them off a redirect to another origin like every header
+// not in CROSS_ORIGIN_REDIRECT_HEADERS, but does not report them to onDropped (see createDefaultCrossOriginHeaderPolicy): no server expects
+// them to follow a redirect to another origin, so leaving them out needs no warning. Stored normalised; lookup normalises the key with normalizeName().
+const UNREPORTED_CREDENTIAL_HEADERS: ReadonlySet<string> = new Set([
+  "authorization",
+  "proxyauthorization",
+  "privatetoken",
+  "xapikey",
+  "xauthtoken",
+  "xaccesstoken",
+  "xgitlabtoken",
+  "cookie",
+  "xcsrftoken",
+])
 
 /** A request, or a redirect, from one origin to another (see {@link HttpExecutor.isCrossOrigin}). */
 export interface CrossOriginHop {
@@ -39,8 +50,52 @@ export interface CrossOriginHop {
  */
 export type CrossOriginHeaderPolicy = (headers: OutgoingHttpHeaders, hop: CrossOriginHop) => OutgoingHttpHeaders
 
-// the policy of an HttpExecutor without its own (electron-builder's publishers): every header but the credential-bearing ones
-const dropSensitiveHeaders: CrossOriginHeaderPolicy = headers => filterHeaders(headers, name => !SENSITIVE_REDIRECT_HEADERS.has(normalizeName(name)))
+// The request headers (lowercase) that an HttpExecutor without a cross-origin header policy of its own sends on a redirect to another origin:
+// content negotiation, caching, conditional and range requests, and the description of the request's body, which a redirect sends again.
+// None of them carries a credential.
+const CROSS_ORIGIN_REDIRECT_HEADERS: ReadonlySet<string> = new Set([
+  "accept",
+  "accept-encoding",
+  "accept-language",
+  "cache-control",
+  "content-encoding",
+  "content-language",
+  "content-length",
+  "content-type",
+  "if-match",
+  "if-modified-since",
+  "if-none-match",
+  "if-range",
+  "if-unmodified-since",
+  "pragma",
+  "range",
+  "user-agent",
+])
+
+/**
+ * The cross-origin header policy of an HttpExecutor without one of its own, such as electron-builder's publishers: it sends only `Accept`,
+ * `Accept-Encoding`, `Accept-Language`, `Cache-Control`, `Content-Encoding`, `Content-Language`, `Content-Length`, `Content-Type`, `If-Match`,
+ * `If-Modified-Since`, `If-None-Match`, `If-Range`, `If-Unmodified-Since`, `Pragma`, `Range` and `User-Agent`, which carry no credential, and
+ * leaves every other header, a custom one too, on the original origin. `onDropped` gets the lowercase names of the headers it leaves out,
+ * never their values, when there are any, except the well-known credential headers `Authorization`, `Proxy-Authorization`, `Cookie`,
+ * `PRIVATE-TOKEN`, `X-Api-Key`, `X-Auth-Token`, `X-Access-Token`, `X-GitLab-Token` and `X-CSRF-Token` (with any `-` or `_` separators).
+ */
+export function createDefaultCrossOriginHeaderPolicy(onDropped?: (headerNames: ReadonlyArray<string>, hop: CrossOriginHop) => void): CrossOriginHeaderPolicy {
+  return (headers, hop) => {
+    const isSent = (name: string) => CROSS_ORIGIN_REDIRECT_HEADERS.has(name.toLowerCase())
+    if (onDropped != null) {
+      const droppedNames = Object.entries(headers)
+        .filter(([name, value]) => value != null && !isSent(name) && !UNREPORTED_CREDENTIAL_HEADERS.has(normalizeName(name)))
+        .map(([name]) => name.toLowerCase())
+      if (droppedNames.length !== 0) {
+        onDropped([...new Set(droppedNames)], hop)
+      }
+    }
+    return filterHeaders(headers, isSent)
+  }
+}
+
+const defaultCrossOriginHeaderPolicy = createDefaultCrossOriginHeaderPolicy()
 
 /**
  * A copy of the headers of `headers` that `keep` accepts. Built with {@link deepAssign}, which never assigns `__proto__`, `constructor` or
@@ -49,15 +104,6 @@ const dropSensitiveHeaders: CrossOriginHeaderPolicy = headers => filterHeaders(h
  */
 export function filterHeaders(headers: OutgoingHttpHeaders, keep: (name: string, value: OutgoingHttpHeaders[string]) => boolean): OutgoingHttpHeaders {
   return deepAssign<OutgoingHttpHeaders>({}, Object.fromEntries(Object.entries(headers).filter(([name, value]) => keep(name, value))))
-}
-
-/**
- * Register an additional HTTP header to strip on cross-origin redirects by an HttpExecutor without a cross-origin header policy of its own,
- * such as electron-builder's publishers. Intended for custom publishers (e.g. GenericPublisher with a non-standard auth header).
- * electron-updater does not use this list: the app chooses the headers sent to another origin with `autoUpdater.crossOriginHeaders`.
- */
-export function addSensitiveRedirectHeader(header: string): void {
-  SENSITIVE_REDIRECT_HEADERS.add(normalizeName(header))
 }
 
 // Substrings: a field name containing any of these (after normalization) is redacted.
@@ -181,10 +227,10 @@ export abstract class HttpExecutor<T extends Request> {
   protected readonly maxRedirects = 10
 
   /**
-   * @param crossOriginHeaderPolicy chooses the headers each redirect to another origin sends on; the default leaves out the credential-bearing
-   * ones (see {@link addSensitiveRedirectHeader}).
+   * @param crossOriginHeaderPolicy chooses the headers each redirect to another origin sends on; the default sends only the headers that carry
+   * no credential, such as `Accept`, `Content-Type`, `Range` and `User-Agent`, and leaves every other one, a custom one too, on the original origin.
    */
-  constructor(readonly crossOriginHeaderPolicy: CrossOriginHeaderPolicy = dropSensitiveHeaders) {}
+  constructor(readonly crossOriginHeaderPolicy: CrossOriginHeaderPolicy = defaultCrossOriginHeaderPolicy) {}
 
   request(options: ApiRequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any } | null): Promise<string | null> {
     configureRequestOptions(options)
@@ -520,7 +566,11 @@ Please double check that your authentication token is correct. Due to security r
    * option, which Node.js sends as an `Authorization` header for the original origin, is dropped. The default `User-Agent` and
    * `Cache-Control` are set after that (see {@link configureRequestOptions}).
    */
-  static prepareRedirectUrlOptions(redirectUrl: string, options: ApiRequestOptions, crossOriginHeaderPolicy: CrossOriginHeaderPolicy = dropSensitiveHeaders): ApiRequestOptions {
+  static prepareRedirectUrlOptions(
+    redirectUrl: string,
+    options: ApiRequestOptions,
+    crossOriginHeaderPolicy: CrossOriginHeaderPolicy = defaultCrossOriginHeaderPolicy
+  ): ApiRequestOptions {
     const originalUrl = HttpExecutor.reconstructOriginalUrl(options)
     const parsedRedirectUrl = parseUrl(redirectUrl, options)
     const newOptions: ApiRequestOptions = { ...options }
