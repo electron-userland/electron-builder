@@ -1,5 +1,27 @@
 # electron-publish
 
+## 27.0.0-alpha.16
+### Major Changes
+
+- Fix(publish)!: `github.host`, `gitlab.host` and `keygen.host` must be an ASCII host name (punycode for an internationalized name), optionally with a port, and for `gitlab.host` optionally with a path (a GitLab instance under a relative URL root). A value with user info, a query, a fragment, a backslash, `%` or an empty path segment, or a path in `github.host` / `keygen.host`, fails at publish with `InvalidConfigurationError`. See https://www.electron.build/docs/migration/v27-build-changes#publish-host-must-be-a-host-name _[`#10667`](https://github.com/electron-userland/electron-builder/pull/10667) [`027550d`](https://github.com/electron-userland/electron-builder/commit/027550d128b5ecba362de994d1539a80441784cc)_
+
+### Patch Changes
+
+- Fix(publish): `keygen.host` with a port (e.g. `keygen.example.com:8443`) sends the port separately instead of failing with `ENOTFOUND`, a trailing slash in `gitlab.host` no longer doubles the slash before `/api/v4`, and a host name with `_` (e.g. `gitlab_ce:8080`) is accepted. _[`#10667`](https://github.com/electron-userland/electron-builder/pull/10667) [`027550d`](https://github.com/electron-userland/electron-builder/commit/027550d128b5ecba362de994d1539a80441784cc)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`d0d4046`](https://github.com/electron-userland/electron-builder/commit/d0d4046bd2a30f57150ecfa2ef615315dcb96619) [`100cf40`](https://github.com/electron-userland/electron-builder/commit/100cf40d45310bff0fc6bf1d52be8136093eb22c)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.15`
+- `builder-util@27.0.0-alpha.16`
+
+</details>
+
 ## 27.0.0-alpha.15
 ### Patch Changes
 

@@ -1,5 +1,22 @@
 # builder-util
 
+## 27.0.0-alpha.16
+### Patch Changes
+
+- Fix: decode child process output as UTF-8 across chunks. Before, a multi-byte character split between two pipe reads became `�` in `spawn` and `spawnAndWriteWithOutput` output and in `ExecError` messages, which could corrupt workspace paths, DMG mount paths and `makensis` output. After, split characters are decoded correctly. _[`#10625`](https://github.com/electron-userland/electron-builder/pull/10625) [`100cf40`](https://github.com/electron-userland/electron-builder/commit/100cf40d45310bff0fc6bf1d52be8136093eb22c)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`d0d4046`](https://github.com/electron-userland/electron-builder/commit/d0d4046bd2a30f57150ecfa2ef615315dcb96619)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.15`
+
+</details>
+
 ## 27.0.0-alpha.15
 ### Minor Changes
 

@@ -1,5 +1,10 @@
 # builder-util-runtime
 
+## 10.0.0-alpha.15
+### Minor Changes
+
+- Feat: add the optional `blockMapSha512` field to `UpdateFileInfo`. It is not covered by the manifest signature. `decodeBlockMapV3` and `checkBlockMapV3Header` reject an empty map (no blocks, or a 0-byte file), a region that is empty or extends past the file, and blocks that do not cover the file _[`#10496`](https://github.com/electron-userland/electron-builder/pull/10496) [`d0d4046`](https://github.com/electron-userland/electron-builder/commit/d0d4046bd2a30f57150ecfa2ef615315dcb96619)_
+
 ## 10.0.0-alpha.14
 ### Major Changes
 

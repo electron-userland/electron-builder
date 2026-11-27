@@ -1,5 +1,32 @@
 ## 7.0.0-alpha.13
 
+## 7.0.0-alpha.15
+### Major Changes
+
+- Feat(updater)!: a missing NSIS update installer (`ENOENT`) fails the install with `ERR_UPDATER_INSTALLER_START_FAILED`; electron-updater neither starts it elevated nor opens it with the shell. `quitAndInstall()` and the install on launch wait for the installer to start and keep the app running when the start is refused or fails. `elevate.exe` (for `isAdminRightsRequired` and the retry after `EACCES` or `UNKNOWN`, e.g. AppLocker or WDAC rules that let only administrators run the installer) runs only when the current user cannot modify it, its folder or the install folder of the app; elsewhere the installer is started directly, which installs in an app that runs with administrator rights and fails with `ERR_UPDATER_INSTALLER_ELEVATION_REFUSED` in any other, so an update cannot switch an app installed per user to a per-machine build unless the app runs with administrator rights: install per-machine apps into a folder only administrators can write, e.g. with `nsis.perMachine: true` _[`#10660`](https://github.com/electron-userland/electron-builder/pull/10660) [`f0dc4dd`](https://github.com/electron-userland/electron-builder/commit/f0dc4dd3ae4c97c0aa368ebb720771584eef342d)_
+
+### Minor Changes
+
+- Feat: reject block maps that cannot be planned on. An update of unknown, zero or invalid size is downloaded in full without fetching any block map. A block map (v2 or v3, separate or embedded) that is empty, describes a 0-byte file, does not end at the update's size or plans no data is rejected with one log line (`ERR_UPDATER_INVALID_BLOCKMAP`) and the update is downloaded in full. When the update manifest has a `blockMapSha512` for a file, the new block map (downloaded whole, or assembled from Range requests) is checked against it before it is decoded, used or cached, and a mismatch error quotes the manifest value; `blockMapSha512` is base64 only _[`#10496`](https://github.com/electron-userland/electron-builder/pull/10496) [`d0d4046`](https://github.com/electron-userland/electron-builder/commit/d0d4046bd2a30f57150ecfa2ef615315dcb96619)_
+- Feat(updater): when no `login` listener takes the `url` argument, a server's authentication challenge from another origin than the update feed (`Provider.feedBaseUrl` of the last update check or of the update being downloaded, or `previousBlockmapBaseUrlOverride`) still reaches `login`, and logs a warning once per updater that the handler cannot tell which origin it is answering. electron-updater 8, the next major version, will cancel such a challenge; take `(authInfo, callback, url)` and answer only when `new URL(url).origin` is the origin your credentials are meant for. See https://www.electron.build/docs/features/auto-update#event-login _[`#10666`](https://github.com/electron-userland/electron-builder/pull/10666) [`26cae9e`](https://github.com/electron-userland/electron-builder/commit/26cae9e523456d21c8ec64609ceed79cf6448360)_
+
+### Patch Changes
+
+- Fix(updater): an update pending for the next launch is installed only when the cached file is the installer the target picks from the update info fetched on that launch (new protected `BaseUpdater.findUpdateFile`, which picks the first file unless a target overrides it; an updater subclass that downloads another file overrides it to return that file, and otherwise logs a warning and does not install the pending update), and is started with that update info's `isAdminRightsRequired`, as a cached update that an update check reuses is. A pending cache that marks the update per-machine makes the automatic install at launch skip it without a request, and a deb, rpm, pacman or AppImage download whose update info has no file for the target rejects with `ERR_UPDATER_UPDATE_FILE_NOT_FOUND`. See https://www.electron.build/docs/migration/v27-runtime-changes#downloaded-updates-are-checked-again-before-they-are-installed _[`#10663`](https://github.com/electron-userland/electron-builder/pull/10663) [`6f4d55e`](https://github.com/electron-userland/electron-builder/commit/6f4d55e03b061bf18be3be5d4388a0e2da283502)_
+- Fix(updater): hash the downloaded update again right before it is installed, and verify an NSIS installer's signature again before `quitAndInstall()`, `installAsync()` or the install on launch starts it and before an installer cached by an earlier launch is reused, and refuse to download an update file whose update info has no checksum (`ERR_UPDATER_NO_CHECKSUM`) with every provider, including GitLab, private GitHub and custom ones _[`#10661`](https://github.com/electron-userland/electron-builder/pull/10661) [`47c9a1d`](https://github.com/electron-userland/electron-builder/commit/47c9a1da5f7b7b03d1a4df5e4d7206763453b0b6)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`d0d4046`](https://github.com/electron-userland/electron-builder/commit/d0d4046bd2a30f57150ecfa2ef615315dcb96619)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.15`
+
+</details>
+
 ## 7.0.0-alpha.14
 ### Major Changes
 
