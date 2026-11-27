@@ -940,6 +940,8 @@ describe("install on quit", { concurrent: false }, () => {
           .spyOn(updater as any, "doInstall")
           .mockReturnValueOnce(false)
           .mockReturnValue(true)
+        // installAsync() waits for the installer to start (doInstallAsync); keep both installs on the doInstall spy
+        ;(updater as any).doInstallAsync = (options: unknown) => Promise.resolve((updater as any).doInstall(options))
 
         expect(await updater[method](true, false)).toBe(false)
         expect(stateOf(updater)).toEqual({ kind: "idle" })

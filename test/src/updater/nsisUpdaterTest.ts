@@ -1,8 +1,11 @@
 import { GenericServerOptions, S3Options } from "builder-util-runtime"
 import { NsisUpdater, UpdateCheckResult } from "electron-updater"
+import fs from "fs"
 import fsExtra from "fs-extra"
 import { createHash } from "crypto"
+import { EventEmitter } from "events"
 import * as http from "http"
+import Module from "module"
 import type { Socket } from "net"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert.js"
@@ -21,9 +24,22 @@ import {
 } from "../helpers/updaterTestUtil.js"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { serializeToYaml, TmpDir } from "builder-util"
-import { ExpectStatic, vi } from "vitest"
+import { afterEach, ExpectStatic, vi } from "vitest"
 
 const config = { retry: 3 }
+
+// The current user cannot write to `files` or create files in `dirs`: NsisUpdater finds out by trying (Node's fs.access does not read
+// Windows ACLs), and those attempts fail with `code`. Every other path is opened as usual. Restore with vi.restoreAllMocks().
+function denyWrites(files: Array<string>, dirs: Array<string>, code = "EACCES") {
+  const openSync = fs.openSync
+  return vi.spyOn(fs, "openSync").mockImplementation((file: fs.PathLike, flags?: fs.OpenMode, mode?: fs.Mode | null) => {
+    const target = String(file)
+    if ((flags === "r+" && files.includes(target)) || (flags === "wx" && dirs.includes(path.dirname(target)))) {
+      throw Object.assign(new Error(`${code}: open '${target}'`), { code })
+    }
+    return openSync(file, flags ?? "r", mode)
+  })
+}
 
 // All update payloads are served from an in-repo localhost static server (createLocalServer) via the
 // generic provider — the exact download path the s3/spaces providers resolve to at runtime (see
@@ -1043,11 +1059,14 @@ describe("NsisUpdater — disableWebInstaller", () => {
           const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
           // process.resourcesPath is only set in Electron; set here for the install only (the constructor reads the package-type marker from it)
           const resourcesPath = await tmpDir.getTempDir({ prefix: "resources" })
+          // elevate.exe runs only where the current user cannot modify it (see "NsisUpdater — installer start failure and elevate.exe")
+          const deniedWrites = denyWrites([path.join(resourcesPath, "elevate.exe")], [resourcesPath, path.dirname(process.execPath)])
           const original = Object.getOwnPropertyDescriptor(process, "resourcesPath")
           Object.defineProperty(process, "resourcesPath", { value: resourcesPath, configurable: true, writable: true })
           try {
             expect(updater.install(true, false)).toBe(true)
           } finally {
+            deniedWrites.mockRestore()
             if (original == null) {
               delete (process as any).resourcesPath
             } else {
@@ -1243,5 +1262,383 @@ describe("NsisUpdater — package-type pre-seeds disableWebInstaller", () => {
 
   test("missing marker leaves the secure default (disableWebInstaller=true)", config, async ({ expect }) => {
     await withResourcesMarker(null, disableWebInstaller => expect(disableWebInstaller).toBe(true))
+  })
+})
+
+// a failed start of the update installer is not retried elevated or with the shell; EACCES is retried through elevate.exe, which (like
+// for an update with isAdminRightsRequired) is run only when the current user cannot modify it, its folder or the install folder of the app.
+// Elsewhere an update with isAdminRightsRequired is started directly, which runs it elevated only in an app that runs elevated
+describe("NsisUpdater — installer start failure and elevate.exe", () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  const args = ["--updated", "/S"]
+  const MIGRATION_LINK = "https://www.electron.build/docs/migration/v27-runtime-changes#nsis-update-installer-start-and-elevate-exe"
+
+  function spawnError(code: string): Error {
+    return Object.assign(new Error(`spawn ${code}`), { code })
+  }
+
+  type Writable = "elevate.exe" | "resources" | "install folder"
+
+  // The app runs from <root>/TestApp/TestApp.exe with elevate.exe in <root>/TestApp/resources. Writing to `writable` succeeds; the
+  // attempts on the others fail with `deniedCode` (see denyWrites). spawnLog rejects a start of the installer itself with `startError`
+  // (EACCES: Windows refuses an installer that asks for administrator rights to an app that does not run elevated) and a start of
+  // elevate.exe with `elevateError`, and starts anything else.
+  //
+  // `trigger` "doInstall" is the install on quit, which cannot wait for the start: `result` is what doInstall returned. "quitAndInstall"
+  // runs quitAndInstall({ isSilent: true }) with cancelQuitOnInstallFailure set: `result` is what its install resolved to, and `quit`
+  // counts the app quits that followed. `throwingErrorListener` adds an "error" listener that throws after the one recording `errors`.
+  async function install(
+    tmpDir: TmpDir,
+    options: {
+      isAdminRightsRequired: boolean
+      startError?: unknown
+      elevateError?: unknown
+      writable?: Array<Writable>
+      elevateExe?: boolean
+      deniedCode?: string
+      trigger?: "doInstall" | "quitAndInstall"
+      throwingErrorListener?: boolean
+    }
+  ) {
+    const root = await tmpDir.getTempDir({ prefix: "installer-start" })
+    const installFolder = path.join(root, "TestApp")
+    const resourcesPath = path.join(installFolder, "resources")
+    const execPath = path.join(installFolder, "TestApp.exe")
+    const elevatePath = path.join(resourcesPath, "elevate.exe")
+    await fsExtra.outputFile(execPath, "app")
+    await fsExtra.ensureDir(resourcesPath)
+    if (options.elevateExe !== false) {
+      await fsExtra.outputFile(elevatePath, "elevate")
+    }
+    const installerPath = path.join(root, "pending", "TestApp Setup 1.1.0.exe")
+
+    const updater = await createNsisUpdater("1.0.0")
+    Object.defineProperty(updater, "installerPath", { get: () => installerPath })
+    ;(updater as any).downloadedUpdateHelper = { downloadedFileInfo: { isAdminRightsRequired: options.isAdminRightsRequired }, packageFile: null }
+    const errors: Array<Error> = []
+    updater.on("error", (e: Error) => errors.push(e))
+    if (options.throwingErrorListener === true) {
+      updater.on("error", () => {
+        throw new Error("error listener failure")
+      })
+    }
+    const spawnLog = vi.spyOn(updater as unknown as { spawnLog: (file: string, args: Array<string>) => Promise<boolean> }, "spawnLog").mockImplementation(file => {
+      const error = file === installerPath ? options.startError : file === elevatePath ? options.elevateError : undefined
+      return error == null ? Promise.resolve(true) : Promise.reject(error)
+    })
+
+    const writable = options.writable ?? []
+    denyWrites(
+      // a missing elevate.exe fails to open with ENOENT
+      writable.includes("elevate.exe") || options.elevateExe === false ? [] : [elevatePath],
+      [writable.includes("resources") ? null : resourcesPath, writable.includes("install folder") ? null : installFolder].filter(it => it != null),
+      options.deniedCode
+    )
+
+    const originalExecPath = Object.getOwnPropertyDescriptor(process, "execPath")
+    const originalResourcesPath = Object.getOwnPropertyDescriptor(process, "resourcesPath")
+    Object.defineProperty(process, "execPath", { value: execPath, configurable: true, writable: true })
+    Object.defineProperty(process, "resourcesPath", { value: resourcesPath, configurable: true, writable: true })
+    const quit = vi.spyOn((updater as any).app, "quit")
+    try {
+      let result: unknown
+      if (options.trigger === "quitAndInstall") {
+        updater.cancelQuitOnInstallFailure = true
+        // once the install succeeded, quitAndInstall emits before-quit-for-update on Electron's autoUpdater, then quits
+        const load = (Module as any)._load
+        vi.spyOn(Module as any, "_load").mockImplementation(function (this: unknown, request: unknown, ...rest: Array<unknown>) {
+          return request === "electron" ? { autoUpdater: new EventEmitter() } : load.call(this, request, ...rest)
+        })
+        const doInstallAsync = vi.spyOn(updater as any, "doInstallAsync")
+        updater.quitAndInstall({ isSilent: true })
+        result = await doInstallAsync.mock.results[0]?.value
+      } else {
+        result = (updater as any).doInstall({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: options.isAdminRightsRequired })
+      }
+      // a start failure is handled asynchronously, after doInstall returned; quitAndInstall quits from a later tick
+      await new Promise(resolve => setImmediate(resolve))
+      await new Promise(resolve => setImmediate(resolve))
+      return { result, errors, spawnLog, quit, installerPath, elevatePath, resourcesPath, installFolder }
+    } finally {
+      if (originalExecPath != null) {
+        Object.defineProperty(process, "execPath", originalExecPath)
+      }
+      if (originalResourcesPath == null) {
+        delete (process as any).resourcesPath
+      } else {
+        Object.defineProperty(process, "resourcesPath", originalResourcesPath)
+      }
+    }
+  }
+
+  test("ENOENT fails the install without elevate.exe or the shell, even where elevate.exe may run", config, async ({ expect, tmpDir }) => {
+    const { result, errors, spawnLog, installerPath } = await install(tmpDir, { isAdminRightsRequired: false, startError: spawnError("ENOENT") })
+    expect(result).toBe(true)
+    expect(spawnLog).toHaveBeenCalledTimes(1)
+    expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
+    expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_START_FAILED"])
+    expect(errors[0].message).toContain("(ENOENT: spawn ENOENT): the installer file or its folder is missing")
+    expect(errors[0].message).toContain("A missing installer is neither started through elevate.exe nor opened with the shell")
+    expect(errors[0].message).not.toContain("AppLocker")
+    expect(errors[0].message.slice(-MIGRATION_LINK.length)).toBe(MIGRATION_LINK)
+  })
+
+  test("any other start error is emitted as it is", config, async ({ expect, tmpDir }) => {
+    const error = spawnError("EPERM")
+    const { errors, spawnLog } = await install(tmpDir, { isAdminRightsRequired: false, startError: error })
+    expect(spawnLog).toHaveBeenCalledTimes(1)
+    expect(errors).toEqual([error])
+  })
+
+  // spawnLog is protected, so a subclass can reject with a value that is not an Error
+  test("a start failure that is not an Error is emitted as one", config, async ({ expect, tmpDir }) => {
+    const { errors, spawnLog } = await install(tmpDir, { isAdminRightsRequired: false, startError: "spawn failed" })
+    expect(spawnLog).toHaveBeenCalledTimes(1)
+    expect(errors).toHaveLength(1)
+    expect(errors[0]).toBeInstanceOf(Error)
+    expect(errors[0].message).toBe("spawn failed")
+  })
+
+  for (const { name, isAdminRightsRequired, code } of [
+    { name: "an update with isAdminRightsRequired", isAdminRightsRequired: true, code: "EACCES" },
+    { name: "an installer start failing with EACCES", isAdminRightsRequired: false, code: "EACCES" },
+    // e.g. default AppLocker or WDAC rules, which let only administrators run files outside Program Files and Windows: libuv has no name for
+    // ERROR_ACCESS_DISABLED_BY_POLICY
+    { name: "an installer start failing with UNKNOWN", isAdminRightsRequired: false, code: "UNKNOWN" },
+  ]) {
+    // the app does not run elevated, so Windows refuses to start the installer, which asks for administrator rights (or which a policy
+    // lets only administrators run)
+    const startError = spawnError(code)
+    // where elevate.exe may run, an update with isAdminRightsRequired is started through it right away
+    const startCalls = isAdminRightsRequired ? 0 : 1
+
+    const expectElevated = (expect: ExpectStatic, { result, errors, spawnLog, installerPath, elevatePath }: Awaited<ReturnType<typeof install>>) => {
+      expect(errors).toEqual([])
+      expect(result).toBe(true)
+      expect(spawnLog).toHaveBeenCalledTimes(startCalls + 1)
+      expect(spawnLog).toHaveBeenLastCalledWith(elevatePath, [installerPath, ...args])
+    }
+
+    const expectRefused = (expect: ExpectStatic, { result, errors, spawnLog, installerPath }: Awaited<ReturnType<typeof install>>, reason: string) => {
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"])
+      expect(errors[0].message).toContain(reason)
+      expect(errors[0].message).toContain(`Windows refused to start the installer directly (${code}: spawn ${code})`)
+      expect(errors[0].message).toContain(
+        "The update installer is started through elevate.exe only when the current user cannot modify elevate.exe, its folder or the install folder of the app"
+      )
+      expect(errors[0].message.slice(-MIGRATION_LINK.length)).toBe(MIGRATION_LINK)
+      // where elevate.exe may not run, an update with isAdminRightsRequired is started directly as well (it runs elevated only if the app
+      // does); Windows refused that start, and elevate.exe is not started after it
+      expect(result).toBe(true)
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
+    }
+
+    describe(name, () => {
+      test("runs elevate.exe when the current user cannot modify it or the folders around it", config, async ({ expect, tmpDir }) => {
+        expectElevated(expect, await install(tmpDir, { isAdminRightsRequired, startError }))
+      })
+
+      test("runs elevate.exe when writing is denied with EPERM", config, async ({ expect, tmpDir }) => {
+        expectElevated(expect, await install(tmpDir, { isAdminRightsRequired, startError, deniedCode: "EPERM" }))
+      })
+
+      // e.g. an install folder on a read-only volume
+      test("runs elevate.exe when writing is denied with EROFS", config, async ({ expect, tmpDir }) => {
+        expectElevated(expect, await install(tmpDir, { isAdminRightsRequired, startError, deniedCode: "EROFS" }))
+      })
+
+      // the folder that would hold it is not writable either, so nobody but an administrator can put one there: the spawn of the missing
+      // elevate.exe fails with its own error
+      test("runs a missing elevate.exe in a folder the current user cannot write", config, async ({ expect, tmpDir }) => {
+        expectElevated(expect, await install(tmpDir, { isAdminRightsRequired, startError, elevateExe: false }))
+      })
+
+      test("is refused when the current user can modify elevate.exe", config, async ({ expect, tmpDir }) => {
+        const installed = await install(tmpDir, { isAdminRightsRequired, startError, writable: ["elevate.exe"] })
+        expectRefused(expect, installed, `the current user can modify ${installed.elevatePath}`)
+        // opened for writing without changing it
+        expect(await fsExtra.readFile(installed.elevatePath, "utf8")).toBe("elevate")
+      })
+
+      for (const [folder, folderPath] of [
+        ["resources", (it: Awaited<ReturnType<typeof install>>) => it.resourcesPath],
+        ["install folder", (it: Awaited<ReturnType<typeof install>>) => it.installFolder],
+      ] as const) {
+        test(
+          `is refused when the current user can create files in the ${folder === "resources" ? "folder of elevate.exe" : "install folder of the app"}`,
+          config,
+          async ({ expect, tmpDir }) => {
+            const installed = await install(tmpDir, { isAdminRightsRequired, startError, writable: [folder] })
+            expectRefused(expect, installed, `the current user can create files in ${folderPath(installed)}`)
+            // the file created to find out is removed
+            expect((await fsExtra.readdir(installed.resourcesPath)).sort()).toEqual(["elevate.exe"])
+            expect((await fsExtra.readdir(installed.installFolder)).sort()).toEqual(["TestApp.exe", "resources"])
+          }
+        )
+      }
+
+      // a missing elevate.exe could be put there
+      test("is refused when elevate.exe is missing from a folder the current user can write", config, async ({ expect, tmpDir }) => {
+        const installed = await install(tmpDir, { isAdminRightsRequired, startError, elevateExe: false, writable: ["resources"] })
+        expectRefused(expect, installed, `the current user can create files in ${installed.resourcesPath}`)
+      })
+
+      test("is refused when it cannot be told whether the current user can modify elevate.exe", config, async ({ expect, tmpDir }) => {
+        const installed = await install(tmpDir, { isAdminRightsRequired, startError, deniedCode: "EBUSY" })
+        expectRefused(expect, installed, `cannot tell whether the current user can modify ${installed.elevatePath} (EBUSY: `)
+      })
+
+      // a user who may create files in a folder but not delete them still can put an elevate.exe there
+      test("is refused when the file created to find out cannot be removed", config, async ({ expect, tmpDir }) => {
+        vi.spyOn(fs, "unlinkSync").mockImplementation(() => {
+          throw Object.assign(new Error("EACCES: permission denied, unlink"), { code: "EACCES" })
+        })
+        const installed = await install(tmpDir, { isAdminRightsRequired, startError, writable: ["resources"] })
+        expectRefused(expect, installed, `the current user can create files in ${installed.resourcesPath}`)
+      })
+    })
+  }
+
+  // UAC turned off, the built-in Administrator or Run as administrator: the app can modify elevate.exe and the folders around it, and Windows
+  // starts an installer that asks for administrator rights from it without asking again
+  describe("an update with isAdminRightsRequired in an app that runs elevated", () => {
+    const writable: Array<Writable> = ["elevate.exe", "resources", "install folder"]
+
+    test("starts the installer directly, without elevate.exe", config, async ({ expect, tmpDir }) => {
+      const { result, errors, spawnLog, installerPath } = await install(tmpDir, { isAdminRightsRequired: true, writable })
+      expect(errors).toEqual([])
+      expect(result).toBe(true)
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
+    })
+
+    test("does not retry an installer Windows refuses to start through elevate.exe", config, async ({ expect, tmpDir }) => {
+      const { errors, spawnLog, installerPath } = await install(tmpDir, { isAdminRightsRequired: true, writable, startError: spawnError("UNKNOWN") })
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"])
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
+    })
+  })
+
+  // any process of the user can modify the folders of an app installed per user, and the app does not run elevated: Windows refuses to start
+  // the per-machine installer, and elevate.exe may not run
+  test("an update cannot switch an app installed per user that does not run elevated to a per-machine installation", config, async ({ expect, tmpDir }) => {
+    const { result, errors, spawnLog, installerPath, elevatePath } = await install(tmpDir, {
+      isAdminRightsRequired: true,
+      writable: ["elevate.exe", "resources", "install folder"],
+      startError: spawnError("EACCES"),
+    })
+    expect(result).toBe(true)
+    expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"])
+    expect(errors[0].message).toContain(`but the current user can modify ${elevatePath}`)
+    expect(errors[0].message).toContain("an update cannot switch an app installed per user to a per-machine installation unless the app runs with administrator rights")
+    expect(spawnLog).toHaveBeenCalledTimes(1)
+    expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
+  })
+
+  // the install on quit cannot wait for the start, so a refused or failed start is reported after doInstall returned. An "error" listener
+  // that throws makes emitting "error" throw: the start, which nothing waits for, still settles without rejecting
+  test('an "error" listener that throws does not reject the start', config, async ({ expect, tmpDir }) => {
+    const unhandledRejections: Array<unknown> = []
+    const onUnhandledRejection = (reason: unknown) => unhandledRejections.push(reason)
+    process.on("unhandledRejection", onUnhandledRejection)
+    try {
+      const { result, errors, spawnLog } = await install(tmpDir, {
+        isAdminRightsRequired: false,
+        startError: spawnError("UNKNOWN"),
+        writable: ["elevate.exe"],
+        throwingErrorListener: true,
+      })
+      expect(result).toBe(true)
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"])
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(unhandledRejections).toEqual([])
+    } finally {
+      process.off("unhandledRejection", onUnhandledRejection)
+    }
+  })
+
+  // quitAndInstall waits for the installer to start: a start that is refused or fails returns false, and the app keeps running
+  describe("quitAndInstall", () => {
+    const trigger = "quitAndInstall"
+
+    test("quits once the installer started", config, async ({ expect, tmpDir }) => {
+      const { result, errors, quit, spawnLog, installerPath } = await install(tmpDir, { isAdminRightsRequired: false, trigger })
+      expect(result).toBe(true)
+      expect(errors).toEqual([])
+      expect(spawnLog).toHaveBeenCalledWith(installerPath, args)
+      expect(quit).toHaveBeenCalledTimes(1)
+    })
+
+    for (const code of ["EACCES", "UNKNOWN"]) {
+      test(`quits once elevate.exe started after ${code}`, config, async ({ expect, tmpDir }) => {
+        const { result, errors, quit, spawnLog, installerPath, elevatePath } = await install(tmpDir, { isAdminRightsRequired: false, startError: spawnError(code), trigger })
+        expect(result).toBe(true)
+        expect(errors).toEqual([])
+        expect(spawnLog).toHaveBeenLastCalledWith(elevatePath, [installerPath, ...args])
+        expect(quit).toHaveBeenCalledTimes(1)
+      })
+
+      test(`does not quit when elevate.exe is refused after ${code}`, config, async ({ expect, tmpDir }) => {
+        const { result, errors, quit, spawnLog } = await install(tmpDir, { isAdminRightsRequired: false, startError: spawnError(code), writable: ["resources"], trigger })
+        expect(result).toBe(false)
+        expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_ELEVATION_REFUSED"])
+        expect(spawnLog).toHaveBeenCalledTimes(1)
+        expect(quit).not.toHaveBeenCalled()
+      })
+    }
+
+    test("does not quit when the installer is missing", config, async ({ expect, tmpDir }) => {
+      const { result, errors, quit } = await install(tmpDir, { isAdminRightsRequired: false, startError: spawnError("ENOENT"), trigger })
+      expect(result).toBe(false)
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_INSTALLER_START_FAILED"])
+      expect(quit).not.toHaveBeenCalled()
+    })
+
+    test("does not quit when another start error is emitted", config, async ({ expect, tmpDir }) => {
+      const error = spawnError("EPERM")
+      const { result, errors, quit } = await install(tmpDir, { isAdminRightsRequired: false, startError: error, trigger })
+      expect(result).toBe(false)
+      expect(errors).toEqual([error])
+      expect(quit).not.toHaveBeenCalled()
+    })
+
+    for (const { name, isAdminRightsRequired, startError } of [
+      { name: "an update with isAdminRightsRequired", isAdminRightsRequired: true, startError: undefined },
+      { name: "the retry after EACCES", isAdminRightsRequired: false, startError: spawnError("EACCES") },
+    ]) {
+      test(`does not quit when elevate.exe fails to start for ${name}`, config, async ({ expect, tmpDir }) => {
+        const elevateError = spawnError("ENOENT")
+        const { result, errors, quit, spawnLog, elevatePath } = await install(tmpDir, { isAdminRightsRequired, startError, elevateError, trigger })
+        expect(result).toBe(false)
+        expect(errors).toEqual([elevateError])
+        expect(spawnLog).toHaveBeenLastCalledWith(elevatePath, expect.anything())
+        expect(quit).not.toHaveBeenCalled()
+      })
+    }
+
+    test("does not quit when a check before the start refuses the install", config, async ({ expect, tmpDir }) => {
+      const updater = await createNsisUpdater("1.0.0")
+      const root = await tmpDir.getTempDir({ prefix: "installer-start" })
+      const installerPath = path.join(root, "TestApp Setup 1.1.0.exe")
+      Object.defineProperty(updater, "installerPath", { get: () => installerPath })
+      ;(updater as any).downloadedUpdateHelper = { downloadedFileInfo: { isAdminRightsRequired: false }, packageFile: path.join(root, "package-1.1.0.7z") }
+      updater.disableWebInstaller = true
+      const errors: Array<Error> = []
+      updater.on("error", (e: Error) => errors.push(e))
+      const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
+      const quit = vi.spyOn((updater as any).app, "quit")
+
+      await expect(updater.installAsync(true, false)).resolves.toBe(false)
+      updater.quitAndInstall({ isSilent: true })
+      await new Promise(resolve => setImmediate(resolve))
+      await new Promise(resolve => setImmediate(resolve))
+
+      expect(errors.map(it => (it as any).code)).toEqual(["ERR_UPDATER_WEB_INSTALLER_DISABLED", "ERR_UPDATER_WEB_INSTALLER_DISABLED"])
+      expect(spawnLog).not.toHaveBeenCalled()
+      expect(quit).not.toHaveBeenCalled()
+    })
   })
 })
