@@ -40,8 +40,7 @@ function encodeField(value: unknown): string {
  *   - `allowCatalogSignature` — (`WindowsUpdateInfo`) only when it is exactly `true`, as an extra line; a manifest without it, or
  *                               with `false`, canonicalizes exactly as before, and adding `true` after signing breaks the signature
  *   - each file's `url`, `sha512`, `size` — the artifact identity + integrity hash the updater enforces — and its
- *     `blockMapUrl` when present (an extra field on the file record only then, so other manifests are unaffected), and its
- *     `blockMapSha512` when present (two extra fields then: the `blockMapUrl`, empty when absent, and the `blockMapSha512`)
+ *     `blockMapUrl` when present (an extra field on the file record only then, so other manifests are unaffected)
  *   - each NSIS web-installer package's arch key and `path`, `sha512`, `size`, `blockMapSize`, `isAdminRightsRequired`
  *     (`WindowsUpdateInfo.packages`, keyed by arch) — the payload the web installer downloads and verifies
  *
@@ -59,6 +58,13 @@ function encodeField(value: unknown): string {
  * `latest.yml` without re-signing. The `isAdminRightsRequired` column of the `package:` records below is part of
  * the `EBUM1` wire format for historic reasons; electron-updater does not read it from `packages`.
  *
+ * `files[].blockMapSha512` is NOT signed either. electron-updater versions that verify `EBUM1` but predate the field leave it out of
+ * the payload they check, so a signature over a payload that carried it would fail there. The `EBUM1` file record therefore stays
+ * `url`, `sha512`, `size` and `blockMapUrl`, and a file record canonicalizes to the same bytes with or without it. electron-updater
+ * still checks the new block map against it when present; the block map only plans a differential download, whose result must match
+ * the signed `sha512`, so tampering with the field cannot change what gets installed — at worst the differential download fails and
+ * the update is downloaded in full.
+ *
  * Wire format (`EBUM1`): one record per line, `label:` followed by tab-separated fields, e.g.
  *
  *     EBUM1
@@ -68,7 +74,6 @@ function encodeField(value: unknown): string {
  *     allowCatalogSignature:true                                                (only with allowCatalogSignature: true)
  *     file:"App-1.2.3.exe"<TAB>"<sha512>"<TAB>8123456
  *     file:"App-1.2.4.exe"<TAB>"<sha512>"<TAB>8123456<TAB>"https://cdn.example.com/App-1.2.4.exe.blockmap?sig=…"   (with a blockMapUrl)
- *     file:"App-1.2.5.exe"<TAB>"<sha512>"<TAB>8123456<TAB><TAB>"<sha512 of the .blockmap>"   (with a blockMapSha512, no blockMapUrl)
  *     package:"x64"<TAB>"App-1.2.3-x64.nsis.7z"<TAB>"<sha512>"<TAB>5000<TAB>120<TAB>1
  *
  * Every value goes through {@link encodeField} (JSON-quoted strings, bare numbers, empty for absent), which is
@@ -98,11 +103,7 @@ export function canonicalizeForSigning(info: UpdateInfo): string {
 
   const files = (info.files ?? []).map(f => {
     const record = `file:${encodeField(f?.url)}\t${encodeField(f?.sha512)}\t${encodeField(f?.size)}`
-    // only emitted when present, so a file record without a blockMapUrl or blockMapSha512 has three fields; with a blockMapSha512 the
-    // blockMapUrl field is always emitted (empty when absent), so the two fields cannot be confused
-    if (f?.blockMapSha512 != null) {
-      return `${record}\t${encodeField(f.blockMapUrl)}\t${encodeField(f.blockMapSha512)}`
-    }
+    // only emitted when present, so manifests without a blockMapUrl canonicalize exactly as before (blockMapSha512 is not signed, see above)
     return f?.blockMapUrl == null ? record : `${record}\t${encodeField(f.blockMapUrl)}`
   })
   // Sort so file ordering in the manifest cannot change the signed payload.
@@ -157,7 +158,7 @@ function isNonEmptyString(value: unknown): value is string {
  * so that a manifest the updater would reject is never signed in the first place:
  *   - `version` is a non-empty string
  *   - `files` is a non-empty array whose entries have a non-empty string `url` and `sha512` (and a numeric
- *     `size` and a non-empty string `blockMapUrl` and `blockMapSha512` when present) — a signed manifest must describe its own files, so the updater never consults the
+ *     `size` and a non-empty string `blockMapUrl` when present) — a signed manifest must describe its own files, so the updater never consults the
  *     unsigned legacy top-level `path`/`sha512` for it
  *   - `stagingPercentage` is a number when present, `minimumSystemVersion` a string when present, `allowCatalogSignature`
  *     a boolean when present
@@ -206,12 +207,6 @@ export function validateSignedManifestShape(info: UpdateInfo): string | null {
         return `files[${i}].blockMapUrl must be a non-empty string`
       }
       strings.push([`files[${i}].blockMapUrl`, file.blockMapUrl])
-    }
-    if (file.blockMapSha512 != null) {
-      if (!isNonEmptyString(file.blockMapSha512)) {
-        return `files[${i}].blockMapSha512 must be a non-empty string`
-      }
-      strings.push([`files[${i}].blockMapSha512`, file.blockMapSha512])
     }
   }
 

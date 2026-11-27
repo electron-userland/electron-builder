@@ -87,6 +87,8 @@ export interface SignedUpdateManifest {
   readonly keyIds: Array<string>
   /** The listed files whose sha512 and size `rehash` took from the local file, by url. */
   readonly rehashed: Array<string>
+  /** Whether the manifest used YAML aliases, which electron-updater rejects once they expand past its limit: it is written with every alias expanded. */
+  readonly expandedYamlAliases: boolean
 }
 
 export interface VerifiedUpdateManifest {
@@ -324,25 +326,25 @@ class ManifestSigningSettings {
 
 async function resignUpdateManifests(files: Array<string>, settings: ManifestSigningSettings, rehash: boolean): Promise<Array<SignedUpdateManifest>> {
   // sign every file before writing any, so a manifest that cannot be signed leaves all of them untouched
-  const signed: Array<{ file: string; result: ReturnType<typeof resignUpdateManifest>; rehashed: Array<string> }> = []
+  const signed: Array<{ file: string; result: ReturnType<typeof resignUpdateManifest>; rehashed: Array<string>; expandedYamlAliases: boolean }> = []
   for (const file of files) {
     const keys = settings.requireSigningKeys(updateManifestPlatform(file), file)
     await requireRegularFile(file)
     const content = await readFile(file, "utf8")
     const { info, rehashed } = await checkListedFiles(parseUpdateManifestYaml(content, file), file, settings.outputFolder(file), rehash)
-    signed.push({ file, result: resignUpdateManifest(info, keys, file), rehashed })
-    if (usesYamlAliases(content)) {
-      log.warn({ file }, "the manifest used YAML aliases, which electron-updater rejects once they expand past its limit: it is written without them, every alias expanded")
-    }
+    signed.push({ file, result: resignUpdateManifest(info, keys, file), rehashed, expandedYamlAliases: usesYamlAliases(content) })
   }
   for (const { file, result } of signed) {
     await writeManifestInPlace(file, result.content)
   }
 
-  return signed.map(({ file, result, rehashed }) => {
+  return signed.map(({ file, result, rehashed, expandedYamlAliases }) => {
     const keyIds = result.signatures.map(it => it.keyId)
+    if (expandedYamlAliases) {
+      log.warn({ file }, "the manifest used YAML aliases, which electron-updater rejects once they expand past its limit: it is written without them, every alias expanded")
+    }
     log.info({ file, version: result.info.version, keyIds, ...(rehashed.length > 0 ? { rehashed } : {}) }, "update manifest signed")
-    return { file, version: result.info.version, keyIds, rehashed }
+    return { file, version: result.info.version, keyIds, rehashed, expandedYamlAliases }
   })
 }
 

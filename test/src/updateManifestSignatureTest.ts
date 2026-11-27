@@ -5,6 +5,7 @@ import {
   computeUpdateManifestKeyId,
   normalizePublicKeyList,
   splitPemBlocks,
+  UpdateFileInfo,
   UpdateInfo,
   UPDATE_MANIFEST_SIGNATURE_VERSION,
   validateSignedManifestShape,
@@ -13,7 +14,7 @@ import {
   WindowsUpdateInfo,
 } from "builder-util-runtime"
 import { createUpdateManifestSignatures, derivePublicKeyPem, generateUpdateSigningKeypair, parsePrivateKey, signUpdateManifest } from "builder-util"
-import { createPublicKey, generateKeyPairSync } from "crypto"
+import { createPrivateKey, createPublicKey, generateKeyPairSync, sign as cryptoSign, verify as cryptoVerify } from "crypto"
 
 function makeInfo(overrides: Partial<UpdateInfo> = {}): UpdateInfo {
   return {
@@ -611,45 +612,93 @@ describe("blockMapUrl is signed only when present", () => {
   })
 })
 
-describe("blockMapSha512 is signed only when present", () => {
+describe("blockMapSha512 is not signed", () => {
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
   const BLOCKMAP = "https://cdn.example.com/App-1.2.3.exe.blockmap"
   const SHA = "c2hhNTEyIG9mIHRoZSBibG9ja21hcA=="
   const withFields = (fields: { blockMapUrl?: unknown; blockMapSha512?: unknown }) =>
     makeInfo({ files: [{ url: "App-1.2.3.exe", sha512: "abc123", size: 8123456, ...(fields as { blockMapUrl?: string; blockMapSha512?: string }) }] })
-  const header = ["EBUM1", 'version:"1.2.3"', "staging:", "minimumSystemVersion:"]
 
-  test("adds the blockMapUrl (empty when absent) and the blockMapSha512 to the file record; a file without it has no extra field", ({ expect }) => {
-    expect(canonicalizeForSigning(withFields({ blockMapSha512: SHA }))).toBe([...header, `file:"App-1.2.3.exe"\t"abc123"\t8123456\t\t"${SHA}"`].join("\n"))
-    expect(canonicalizeForSigning(withFields({ blockMapUrl: BLOCKMAP, blockMapSha512: SHA }))).toBe(
-      [...header, `file:"App-1.2.3.exe"\t"abc123"\t8123456\t${JSON.stringify(BLOCKMAP)}\t"${SHA}"`].join("\n")
-    )
-    expect(canonicalizeForSigning(withFields({ blockMapSha512: undefined }))).toBe(canonicalizeForSigning(makeInfo()))
-    expect(canonicalizeForSigning(withFields({ blockMapUrl: BLOCKMAP, blockMapSha512: null }))).toBe(canonicalizeForSigning(withFields({ blockMapUrl: BLOCKMAP })))
+  // Every kind of EBUM1 record, with a blockMapSha512 on two files. RELEASED_PAYLOAD is what the canonicalizer of 27.0.0-alpha.15
+  // (builder-util-runtime 10.0.0-alpha.14, the verifier of electron-updater 7.0.0-alpha.14; release commit 1b1696b65) produces for
+  // this manifest, whose shape check it also passes. No released verifier knows blockMapSha512, so this is the payload they check.
+  const released: WindowsUpdateInfo = {
+    version: "2.0.0",
+    stagingPercentage: 50,
+    minimumSystemVersion: "10.0.19041",
+    allowCatalogSignature: true,
+    files: [
+      { url: "Zoë Setup 2.0.0.exe", sha512: "c2V0dXA=", size: 81234567, isAdminRightsRequired: true, blockMapSha512: "bWFwIG9mIHNldHVw" },
+      {
+        url: "https://cdn.example.com/Zoe-Setup-2.0.0-arm64.exe?sig=a1",
+        sha512: "YXJtNjQ=",
+        size: 7654321,
+        blockMapUrl: "https://cdn.example.com/Zoe-Setup-2.0.0-arm64.exe.blockmap?sig=b2",
+        blockMapSha512: "bWFwIG9mIGFybTY0",
+      },
+      { url: "Zoe-Setup-2.0.0-ia32.exe", sha512: "aWEzMg==", size: 6543210, blockMapUrl: "Zoe-Setup-2.0.0-ia32.exe.blockmap" },
+    ],
+    packages: {
+      x64: { path: "zoe-2.0.0-x64.nsis.7z", sha512: "eDY0", size: 5000, blockMapSize: 120, isAdminRightsRequired: true },
+      arm64: { path: "zoe-2.0.0-arm64.nsis.7z", sha512: "YXJt", size: 4000 },
+    },
+    path: "Zoë Setup 2.0.0.exe",
+    sha512: "c2V0dXA=",
+    releaseDate: "2026-11-23T00:00:00.000Z",
+    releaseNotes: "not signed",
+  }
+  const RELEASED_PAYLOAD = [
+    "EBUM1",
+    'version:"2.0.0"',
+    "staging:50",
+    'minimumSystemVersion:"10.0.19041"',
+    "allowCatalogSignature:true",
+    'file:"Zoe-Setup-2.0.0-ia32.exe"\t"aWEzMg=="\t6543210\t"Zoe-Setup-2.0.0-ia32.exe.blockmap"',
+    'file:"Zoë Setup 2.0.0.exe"\t"c2V0dXA="\t81234567',
+    'file:"https://cdn.example.com/Zoe-Setup-2.0.0-arm64.exe?sig=a1"\t"YXJtNjQ="\t7654321\t"https://cdn.example.com/Zoe-Setup-2.0.0-arm64.exe.blockmap?sig=b2"',
+    'package:"arm64"\t"zoe-2.0.0-arm64.nsis.7z"\t"YXJt"\t4000\t\t',
+    'package:"x64"\t"zoe-2.0.0-x64.nsis.7z"\t"eDY0"\t5000\t120\t1',
+  ].join("\n")
+
+  test.for<[string, unknown]>([
+    ["a base64 blockMapSha512", SHA],
+    ["an empty blockMapSha512", ""],
+    ["a non-string blockMapSha512", 1],
+    ["a blockMapSha512 with a control character", "a\nb"],
+  ])("a file record with %s canonicalizes to the same bytes as the same record without it", ([, blockMapSha512], { expect }) => {
+    expect(canonicalizeForSigning(withFields({ blockMapSha512 }))).toBe(canonicalizeForSigning(withFields({})))
+    expect(canonicalizeForSigning(withFields({ blockMapUrl: BLOCKMAP, blockMapSha512 }))).toBe(canonicalizeForSigning(withFields({ blockMapUrl: BLOCKMAP })))
   })
 
-  test("a blockMapSha512 cannot pass for a blockMapUrl", ({ expect }) => {
-    expect(canonicalizeForSigning(withFields({ blockMapSha512: SHA }))).not.toBe(canonicalizeForSigning(withFields({ blockMapUrl: SHA })))
+  test("pins the EBUM1 payload to the released form: a file record is its url, sha512, size and blockMapUrl when present", ({ expect }) => {
+    expect(canonicalizeForSigning(released)).toBe(RELEASED_PAYLOAD)
   })
 
-  test("a signed manifest with a blockMapSha512 verifies; a changed, added or removed blockMapSha512 does not", ({ expect }) => {
-    const info = signed(withFields({ blockMapSha512: SHA }), privateKeyPem)
-    expect(verifyManifestSignatures(info, [publicKeyPem]).ok).toBe(true)
+  test("a manifest with a blockMapSha512 signed by the builder verifies over the released payload, also after the field changes", ({ expect }) => {
+    const signatures = createUpdateManifestSignatures(released, [privateKeyPem])
+    // what a released verifier checks after its shape check: the signature over the released payload
+    expect(cryptoVerify(null, Buffer.from(RELEASED_PAYLOAD, "utf8"), createPublicKey(publicKeyPem), Buffer.from(signatures[0].signature, "base64"))).toBe(true)
+    // Ed25519 is deterministic: a released signer, which signs the released payload, writes the same signature
+    expect(cryptoSign(null, Buffer.from(RELEASED_PAYLOAD, "utf8"), createPrivateKey(privateKeyPem)).toString("base64")).toBe(signatures[0].signature)
 
-    const files = (blockMapSha512?: string) => [{ ...info.files[0], blockMapSha512 }]
-    expect(verifyManifestSignatures({ ...info, files: files("b3RoZXI=") }, [publicKeyPem]).ok).toBe(false)
-    expect(verifyManifestSignatures({ ...info, files: files(undefined) }, [publicKeyPem]).ok).toBe(false)
-
-    const plain = signed(makeInfo(), privateKeyPem)
-    expect(verifyManifestSignatures({ ...plain, files: [{ ...plain.files[0], blockMapSha512: SHA }] }, [publicKeyPem]).ok).toBe(false)
+    const info: WindowsUpdateInfo = { ...released, signature: signatures[0].signature, signatures }
+    expect(verifyManifestSignatures(info, [publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(publicKeyPem) })
+    // it can be changed, removed or added after signing; the blockMapUrl next to it stays signed
+    const withFirstFile = (file: Partial<UpdateFileInfo>): WindowsUpdateInfo => ({ ...info, files: [{ ...info.files[0], ...file }, ...info.files.slice(1)] })
+    expect(verifyManifestSignatures(withFirstFile({ blockMapSha512: "b3RoZXI=" }), [publicKeyPem]).ok).toBe(true)
+    expect(verifyManifestSignatures(withFirstFile({ blockMapSha512: undefined }), [publicKeyPem]).ok).toBe(true)
+    expect(verifyManifestSignatures({ ...info, files: info.files.map(it => ({ ...it, blockMapSha512: SHA })) }, [publicKeyPem]).ok).toBe(true)
+    expect(verifyManifestSignatures(withFirstFile({ blockMapUrl: BLOCKMAP }), [publicKeyPem]).ok).toBe(false)
   })
 
-  test.for<[string, unknown, RegExp]>([
-    ["a non-string blockMapSha512", 1, /files\[0\]\.blockMapSha512 must be a non-empty string/],
-    ["an empty blockMapSha512", "", /files\[0\]\.blockMapSha512 must be a non-empty string/],
-    ["a control character in blockMapSha512", "a\nb", /files\[0\]\.blockMapSha512 contains a control character/],
-  ])("the shape check rejects %s", ([_name, blockMapSha512, expected], { expect }) => {
-    expect(validateSignedManifestShape(withFields({ blockMapSha512 }))).toMatch(expected)
+  test.for<[string, unknown]>([
+    ["a non-string value", 1],
+    ["an empty value", ""],
+    ["a control character", "a\nb"],
+  ])("the shape check and the signer, which cover signed fields only, ignore a blockMapSha512 with %s", ([, blockMapSha512], { expect }) => {
+    const info = withFields({ blockMapSha512 })
+    expect(validateSignedManifestShape(info)).toBeNull()
+    expect(verifyManifestSignatures(signed(info, privateKeyPem), [publicKeyPem]).ok).toBe(true)
   })
 })
 

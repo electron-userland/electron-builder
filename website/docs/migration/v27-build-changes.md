@@ -48,6 +48,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [Block map format follows `electronUpdaterCompatibility` (default `>=7`)](#block-map-format-follows-electronupdatercompatibility) | Fails build / warns | Apps on electron-updater 6 fail the build: upgrade electron-updater to 7, or set `electronUpdaterCompatibility` to a range that includes them (e.g. `">=6"`), which keeps the JSON `.blockmap` and warns. Installs still on electron-updater 6 download the first release with a binary map in full once |
 | [S3 publishing requires an explicit `awsCredentials.source`](#s3-publishing-requires-an-explicit-awscredentialssource) | Fails at publish | Add `awsCredentials: { source: "env" }` (for `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`), `{ source: "profile", profile: "<name>" }` (for `AWS_PROFILE` / `~/.aws` / SSO) or `{ source: "sso-role-chain", profile: "<name>" }` (for a role assumed from an SSO `source_profile`) |
 | [Bitbucket Cloud publishing: token without username → Bearer auth](#bitbucket-cloud-publishing-token-without-username-uses-bearer-auth) | Warns at publish | Set `BITBUCKET_USERNAME` if your token is an app password / API token |
+| [`github.host` / `gitlab.host` / `keygen.host` must be a host name](#publish-host-must-be-a-host-name) | Fails at publish | Remove user info, a query or a fragment from `host`, and a path from `github.host` / `keygen.host`; write an internationalized host name in punycode |
 | [Flatpak target requires `flatpak` >= 1.12.4 and `flatpak-builder` >= 1.2.2](#flatpak-tooling-requirements) | Fails build | Only for tools older than the stock packages of Ubuntu 22.04 and Debian 12: update them (the `electronuserland/builder` images with a date tag newer than `-05.26` include them, those up to `-05.26` none); replace `DEBUG=@malept/flatpak-bundler` with `DEBUG=electron-builder` |
 | [Flatpak `runtimeVersion` / `baseVersion` default to `26.08`](#flatpak-tooling-requirements) | Warns | A build that sets neither is built for the `26.08` runtime and installs the three `26.08` refs (about 3.2 GB) on the build machine if they are missing — install them in images and on offline machines that held the `20.08` ones. Set both to `"20.08"` to keep the previous, end-of-life runtime |
 | [Flatpak `files` and `symlinks` must stay inside the app](#flatpak-tooling-requirements) | Fails build | A `flatpak.files` destination or `flatpak.symlinks` link that leaves the app prefix with `..`, or a directory in `flatpak.files` copied onto a symlink to a directory, now fails the build |
@@ -644,6 +645,14 @@ The Bitbucket publisher now selects its authentication scheme by whether a usern
 - **No username** → the token is sent as `Authorization: Bearer <token>` (a repository / project / workspace **access token**). This is the new behavior; previously a token was always sent as Basic auth using the repository owner as the username.
 
 **Action is required only if** your CI sets `BITBUCKET_TOKEN` (or `bitbucket.token`) to an **app password / API token without a username** — those requests now go out as Bearer and will fail authentication. Set `BITBUCKET_USERNAME` (or `bitbucket.username`) so Basic auth is used. Genuine access tokens need no username.
+
+### `github.host`, `gitlab.host` and `keygen.host` must be a host name {#publish-host-must-be-a-host-name}
+
+**How you'll find out:** **Fails at publish** with an `InvalidConfigurationError` that names the option (never its value), with a link here. Builds that don't publish are silent.
+
+`github.host`, `gitlab.host` and `keygen.host` must be an ASCII host name (punycode for an internationalized name), optionally with a port. `gitlab.host` may also have a path, for a GitLab instance under a relative URL root (e.g. `example.com/gitlab`); the path is kept in the API URL. A value with user info (`user@host`), a query, a fragment, a backslash, `%` or an empty path segment, or a path in `github.host` or `keygen.host`, fails at publish.
+
+**Action is required only if** `host` holds more than a host name and port: remove user info, a query or a fragment, and a path from `github.host` or `keygen.host`. Write an internationalized host name in punycode (e.g. `xn--bcher-kva.example`).
 
 ---
 
