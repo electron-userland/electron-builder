@@ -279,7 +279,7 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       vi.spyOn(other as any, "trustedCommandDirs", "get").mockReturnValue([systemDir])
       const spawnAsyncLogs = [updater, other].map(target => {
         target.logger = { info() {}, warn, error() {} }
-        ;(target as any).downloadedUpdateHelper = { file: "/tmp/update-1.0.2.deb", downloadedFileInfo: { isAdminRightsRequired: false } }
+        ;(target as any).downloadedUpdateHelper = { verifyDownloadedFilesSync: () => null, file: "/tmp/update-1.0.2.deb", downloadedFileInfo: { isAdminRightsRequired: false } }
         vi.spyOn(target as any, "isRunningAsRoot").mockReturnValue(false)
         vi.spyOn(target as any, "spawnSyncLog").mockReturnValue("")
         vi.spyOn(target as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === "dpkg")
